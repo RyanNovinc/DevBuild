@@ -1,0 +1,84 @@
+{
+  "expo": {
+    "name": "LifeCompass",
+    "slug": "lifecompass",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "backgroundColor": "#4CAF50"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "remote-notification",
+          "remote-notification"
+        ],
+        "NSUserNotificationsUsageDescription": "Allow notifications to be reminded of your scheduled time blocks.",
+        "SKAdNetworkItems": [
+          {
+            "SKAdNetworkIdentifier": "cstr6suwn9.skadnetwork"
+          },
+          {
+            "SKAdNetworkIdentifier": "cstr6suwn9.skadnetwork"
+          }
+        ],
+        "NSUserTrackingUsageDescription": "This identifier will be used to deliver personalized ads to you.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "entitlements": {
+        "aps-environment": "development"
+      },
+      "bundleIdentifier": "com.lifecompass.app",
+      "jsEngine": "hermes",
+      "config": {
+        "googleMobileAdsAppId": "ca-app-pub-3464348366745772~3096567438"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#4CAF50"
+      },
+      "permissions": [
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE"
+      ],
+      "package": "com.lifecompass.app",
+      "jsEngine": "hermes",
+      "config": {
+        "googleMobileAdsAppId": "ca-app-pub-3464348366745772~3096567438"
+      }
+    },
+    "web": {},
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "color": "#4CAF50",
+          "mode": "production"
+        }
+      ],
+      [
+        "expo-ads-admob",
+        {
+          "userTrackingPermission": "This identifier will be used to deliver personalized ads to you."
+        }
+      ]
+    ],
+    "sdkVersion": "53.0.0",
+    "jsEngine": "hermes",
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "8ca9bf3c-0bc3-4c72-9620-9231e63acdba"
+      }
+    },
+    "owner": "ryan_novinc"
+  }
+}

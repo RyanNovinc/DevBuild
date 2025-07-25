@@ -1,0 +1,20 @@
+{
+  "NSPrivacyAccessedAPITypes": [
+    {
+      "NSPrivacyAccessedAPIType": "NSFileTimestampsAccessedAPI",
+      "NSPrivacyAccessedAPITypeReasons": ["C617.1"]
+    },
+    {
+      "NSPrivacyAccessedAPIType": "NSUserDefaultsAccessedAPI",
+      "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+    },
+    {
+      "NSPrivacyAccessedAPIType": "NSSystemBootTimeAccessedAPI",
+      "NSPrivacyAccessedAPITypeReasons": ["35F9.1"]
+    },
+    {
+      "NSPrivacyAccessedAPIType": "NSFileSystemFreeSpaceAccessedAPI",
+      "NSPrivacyAccessedAPITypeReasons": ["E174.1"]
+    }
+  ]
+}
