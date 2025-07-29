@@ -1,7 +1,5 @@
 // src/screens/TodoListScreen/components/TodoButtonOverlay.js
-// Improved version with better confirmation handling, lower position, and limit checking
-import React, { useState, useEffect, useRef } from 'react';
-import FeatureExplorerTracker from '../../../services/FeatureExplorerTracker';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   View, 
   Text, 
@@ -10,7 +8,8 @@ import {
   Alert,
   Animated,
   Easing,
-  Dimensions
+  Dimensions,
+  InteractionManager
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Share, Clipboard } from 'react-native';
@@ -25,9 +24,9 @@ const CONFIRMATION_SETTING_KEY = 'todo_action_confirmation_enabled';
 
 /**
  * A separate component for the bottom action buttons
- * Modified to handle confirmations better, position lower on screen, and check limits
+ * Optimized for smooth animations and zero-flash state changes
  */
-const TodoButtonOverlay = ({
+const TodoButtonOverlay = React.memo(({
   activeTab,
   todos,
   setTodos,
@@ -41,9 +40,8 @@ const TodoButtonOverlay = ({
   moveLaterItemsToTomorrow,
   theme,
   showSuccess,
-  // New props for limit checking
+  // Props for limit checking
   canAddMoreTodos,
-  calculateWeightedTodoCount,
   showFeatureLimitBanner
 }) => {
   // State for confirmation setting - DEFAULT TO TRUE so it always asks for confirmation
@@ -61,19 +59,22 @@ const TodoButtonOverlay = ({
   
   // Run entrance animation on mount
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeIn, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true
-      }),
-      Animated.timing(slideUp, {
-        toValue: 0,
-        duration: 400,
-        easing: Easing.out(Easing.back(1.5)),
-        useNativeDriver: true
-      })
-    ]).start();
+    // Using requestAnimationFrame to ensure smooth animation
+    requestAnimationFrame(() => {
+      Animated.parallel([
+        Animated.timing(fadeIn, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true
+        }),
+        Animated.timing(slideUp, {
+          toValue: 0,
+          duration: 400,
+          easing: Easing.out(Easing.back(1.5)),
+          useNativeDriver: true
+        })
+      ]).start();
+    });
   }, []);
   
   // Load confirmation setting on mount
@@ -109,7 +110,7 @@ const TodoButtonOverlay = ({
   }, [confirmationEnabled]);
   
   // Get the correct todos array based on active tab
-  const getCurrentTodos = () => {
+  const getCurrentTodos = useCallback(() => {
     switch (activeTab) {
       case 'today':
         return todos;
@@ -120,10 +121,10 @@ const TodoButtonOverlay = ({
       default:
         return [];
     }
-  };
+  }, [activeTab, todos, tomorrowTodos, laterTodos]);
   
   // Set the correct todos array based on active tab
-  const setCurrentTodos = (newTodos) => {
+  const setCurrentTodos = useCallback((newTodos) => {
     switch (activeTab) {
       case 'today':
         setTodos(newTodos);
@@ -135,10 +136,10 @@ const TodoButtonOverlay = ({
         setLaterTodos(newTodos);
         break;
     }
-  };
+  }, [activeTab, setTodos, setTomorrowTodos, setLaterTodos]);
   
   // Get completed and total counts for the current tab
-  const getCurrentCounts = () => {
+  const getCurrentCounts = useCallback(() => {
     const currentTodos = getCurrentTodos();
     
     // First, find all valid groups
@@ -155,7 +156,6 @@ const TodoButtonOverlay = ({
       
       // For items with a groupId, make sure the group exists
       if (todo.groupId && !validGroupIds.includes(todo.groupId)) {
-        console.log(`Found orphaned item: ${todo.id} - ${todo.title} in group ${todo.groupId}`);
         return false;
       }
       
@@ -168,10 +168,10 @@ const TodoButtonOverlay = ({
     const completedCount = validTodos.filter(todo => todo && !todo.isGroup && todo.completed).length;
     
     return { completedCount, totalCount };
-  };
+  }, [getCurrentTodos]);
   
   // Button press animation
-  const animateButtonPress = (index) => {
+  const animateButtonPress = useCallback((index) => {
     Animated.sequence([
       Animated.timing(buttonScale[index], {
         toValue: 0.9,
@@ -185,10 +185,10 @@ const TodoButtonOverlay = ({
         useNativeDriver: true
       })
     ]).start();
-  };
+  }, [buttonScale]);
   
   // Toggle confirmation setting
-  const toggleConfirmationSetting = () => {
+  const toggleConfirmationSetting = useCallback(() => {
     // If turning on confirmations, show an explanation
     if (!confirmationEnabled) {
       Alert.alert(
@@ -223,10 +223,10 @@ const TodoButtonOverlay = ({
         ]
       );
     }
-  };
+  }, [confirmationEnabled, showSuccess]);
   
   // Clean up todos - Remove orphaned children and null values
-  const cleanupTodos = () => {
+  const cleanupTodos = useCallback(() => {
     const currentTodos = getCurrentTodos();
     
     // Find all valid group IDs
@@ -258,10 +258,10 @@ const TodoButtonOverlay = ({
     }
     
     return false;
-  };
+  }, [getCurrentTodos, setCurrentTodos, showSuccess]);
   
   // Long press on counter to trigger cleanup
-  const handleCounterLongPress = () => {
+  const handleCounterLongPress = useCallback(() => {
     Alert.alert(
       "Cleanup Todo List",
       "Do you want to clean up any invalid or orphaned items?",
@@ -278,10 +278,10 @@ const TodoButtonOverlay = ({
         }
       ]
     );
-  };
+  }, [cleanupTodos, showSuccess]);
   
   // Clear completed todos for the current tab
-  const clearCompleted = () => {
+  const clearCompleted = useCallback(() => {
     // Animate the button press
     animateButtonPress(2);
     
@@ -300,10 +300,10 @@ const TodoButtonOverlay = ({
         }
       ]
     );
-  };
+  }, [animateButtonPress]);
   
   // Actual implementation of clear completed
-  const performClearCompleted = () => {
+  const performClearCompleted = useCallback(() => {
     // First clean up any invalid items
     cleanupTodos();
     
@@ -336,10 +336,10 @@ const TodoButtonOverlay = ({
     
     setCurrentTodos(remainingTodos);
     showSuccess('Completed to-dos cleared');
-  };
+  }, [cleanupTodos, getCurrentTodos, setCurrentTodos, showSuccess]);
   
   // Share todos from the current tab
-  const shareTodos = () => {
+  const shareTodos = useCallback(() => {
     // Animate the button press
     animateButtonPress(1);
     
@@ -362,10 +362,10 @@ const TodoButtonOverlay = ({
       console.error('Error sharing todos:', error);
       showSuccess('Failed to share todos', { type: 'error' });
     }
-  };
+  }, [activeTab, animateButtonPress, getCurrentTodos, showSuccess]);
   
   // Copy todos to clipboard from the current tab
-  const copyTodosToClipboard = () => {
+  const copyTodosToClipboard = useCallback(() => {
     // Animate the button press
     animateButtonPress(0);
     
@@ -385,124 +385,115 @@ const TodoButtonOverlay = ({
       console.error('Error copying todos:', error);
       showSuccess('Failed to copy todos', { type: 'error' });
     }
-  };
+  }, [animateButtonPress, getCurrentTodos, showSuccess]);
   
   // Updated move functions with limit checking
-  const moveTomorrowTodosToTodayWithLimits = () => {
-  if (tomorrowTodos.length === 0) {
-    showSuccess('No todos to move', { type: 'warning' });
-    return;
-  }
-  
-  // Calculate if this would exceed the today limit for free users
-  if (canAddMoreTodos) {
-    // Calculate weighted counts
-    const currentTodayCount = calculateWeightedTodoCount ? calculateWeightedTodoCount(todos) : todos.length;
-    const tomorrowCount = calculateWeightedTodoCount ? calculateWeightedTodoCount(tomorrowTodos) : tomorrowTodos.length;
-    
-    if ((currentTodayCount + tomorrowCount) > 10) { // Using hardcoded limit of 10 for Today
-      if (showFeatureLimitBanner) {
-        showFeatureLimitBanner(
-          `Moving all items would exceed today's limit of 10. Upgrade to Pro for unlimited todos.`
-        );
-      } else {
-        showSuccess(`Moving all items would exceed today's limit of 10`, { type: 'warning' });
-      }
+  const moveTomorrowTodosToTodayWithLimits = useCallback(() => {
+    if (tomorrowTodos.length === 0) {
+      showSuccess('No todos to move', { type: 'warning' });
       return;
     }
-  }
-  
-  setTodos([...todos, ...tomorrowTodos]);
-  setTomorrowTodos([]);
-  showSuccess(`Tomorrow's to-dos moved to today`);
-  
-  // Track todo batch organization for achievement
-  try {
-    FeatureExplorerTracker.trackTodoBatchOrganization(showSuccess);
-  } catch (error) {
-    console.error('Error tracking todo batch organization achievement:', error);
-    // Silently handle tracking errors without affecting main functionality
-  }
-};
-  
-  const moveIncompleteTodosToTomorrowWithLimits = () => {
-  const incompleteTodos = todos.filter(todo => !todo.completed);
-  
-  if (incompleteTodos.length === 0) {
-    showSuccess('No incomplete todos to move', { type: 'warning' });
-    return;
-  }
-  
-  // Calculate if this would exceed the tomorrow limit for free users
-  if (canAddMoreTodos) {
-    // Calculate weighted counts
-    const currentTomorrowCount = calculateWeightedTodoCount ? calculateWeightedTodoCount(tomorrowTodos) : tomorrowTodos.length;
-    const incompleteCount = calculateWeightedTodoCount ? calculateWeightedTodoCount(incompleteTodos) : incompleteTodos.length;
     
-    if ((currentTomorrowCount + incompleteCount) > 7) { // Using hardcoded limit of 7 for Tomorrow
-      if (showFeatureLimitBanner) {
-        showFeatureLimitBanner(
-          `Moving all items would exceed tomorrow's limit of 7. Upgrade to Pro for unlimited todos.`
-        );
-      } else {
-        showSuccess(`Moving all items would exceed tomorrow's limit of 7`, { type: 'warning' });
+    // Calculate if this would exceed the today limit for free users
+    if (canAddMoreTodos) {
+      // Get weighted counts
+      const currentTodayCount = todos.length;
+      const tomorrowCount = tomorrowTodos.length;
+      
+      if ((currentTodayCount + tomorrowCount) > 10) { // Using hardcoded limit of 10 for Today
+        if (showFeatureLimitBanner) {
+          showFeatureLimitBanner(
+            `Moving all items would exceed today's limit of 10. Upgrade to Pro for unlimited todos.`
+          );
+        } else {
+          showSuccess(`Moving all items would exceed today's limit of 10`, { type: 'warning' });
+        }
+        return;
       }
+    }
+    
+    moveTomorrowTodosToToday();
+  }, [
+    tomorrowTodos, 
+    todos, 
+    canAddMoreTodos, 
+    showFeatureLimitBanner, 
+    showSuccess, 
+    moveTomorrowTodosToToday
+  ]);
+  
+  const moveIncompleteTodosToTomorrowWithLimits = useCallback(() => {
+    const incompleteTodos = todos.filter(todo => !todo.completed);
+    
+    if (incompleteTodos.length === 0) {
+      showSuccess('No incomplete todos to move', { type: 'warning' });
       return;
     }
-  }
-  
-  setTomorrowTodos([...tomorrowTodos, ...incompleteTodos]);
-  setTodos(todos.filter(todo => todo.completed));
-  showSuccess(`Today's incomplete to-dos moved to tomorrow`);
-  
-  // Track todo batch organization for achievement
-  try {
-    FeatureExplorerTracker.trackTodoBatchOrganization(showSuccess);
-  } catch (error) {
-    console.error('Error tracking todo batch organization achievement:', error);
-    // Silently handle tracking errors without affecting main functionality
-  }
-};
-  
-  const moveLaterItemsToTomorrowWithLimits = () => {
-  if (laterTodos.length === 0) {
-    showSuccess('No todos to move', { type: 'warning' });
-    return;
-  }
-  
-  // Calculate if this would exceed the tomorrow limit for free users
-  if (canAddMoreTodos) {
-    // Calculate weighted counts
-    const currentTomorrowCount = calculateWeightedTodoCount ? calculateWeightedTodoCount(tomorrowTodos) : tomorrowTodos.length;
-    const laterCount = calculateWeightedTodoCount ? calculateWeightedTodoCount(laterTodos) : laterTodos.length;
     
-    if ((currentTomorrowCount + laterCount) > 7) { // Using hardcoded limit of 7 for Tomorrow
-      if (showFeatureLimitBanner) {
-        showFeatureLimitBanner(
-          `Moving all items would exceed tomorrow's limit of 7. Upgrade to Pro for unlimited todos.`
-        );
-      } else {
-        showSuccess(`Moving all items would exceed tomorrow's limit of 7`, { type: 'warning' });
+    // Calculate if this would exceed the tomorrow limit for free users
+    if (canAddMoreTodos) {
+      // Get counts
+      const currentTomorrowCount = tomorrowTodos.length;
+      const incompleteCount = incompleteTodos.length;
+      
+      if ((currentTomorrowCount + incompleteCount) > 7) { // Using hardcoded limit of 7 for Tomorrow
+        if (showFeatureLimitBanner) {
+          showFeatureLimitBanner(
+            `Moving all items would exceed tomorrow's limit of 7. Upgrade to Pro for unlimited todos.`
+          );
+        } else {
+          showSuccess(`Moving all items would exceed tomorrow's limit of 7`, { type: 'warning' });
+        }
+        return;
       }
+    }
+    
+    moveIncompleteTodosToTomorrow();
+  }, [
+    todos, 
+    tomorrowTodos, 
+    canAddMoreTodos, 
+    showFeatureLimitBanner, 
+    showSuccess, 
+    moveIncompleteTodosToTomorrow
+  ]);
+  
+  const moveLaterItemsToTomorrowWithLimits = useCallback(() => {
+    if (laterTodos.length === 0) {
+      showSuccess('No todos to move', { type: 'warning' });
       return;
     }
-  }
-  
-  setTomorrowTodos([...tomorrowTodos, ...laterTodos]);
-  setLaterTodos([]);
-  showSuccess('Later items moved to Tomorrow');
-  
-  // Track todo batch organization for achievement
-  try {
-    FeatureExplorerTracker.trackTodoBatchOrganization(showSuccess);
-  } catch (error) {
-    console.error('Error tracking todo batch organization achievement:', error);
-    // Silently handle tracking errors without affecting main functionality
-  }
-};
+    
+    // Calculate if this would exceed the tomorrow limit for free users
+    if (canAddMoreTodos) {
+      // Get counts
+      const currentTomorrowCount = tomorrowTodos.length;
+      const laterCount = laterTodos.length;
+      
+      if ((currentTomorrowCount + laterCount) > 7) { // Using hardcoded limit of 7 for Tomorrow
+        if (showFeatureLimitBanner) {
+          showFeatureLimitBanner(
+            `Moving all items would exceed tomorrow's limit of 7. Upgrade to Pro for unlimited todos.`
+          );
+        } else {
+          showSuccess(`Moving all items would exceed tomorrow's limit of 7`, { type: 'warning' });
+        }
+        return;
+      }
+    }
+    
+    moveLaterItemsToTomorrow();
+  }, [
+    laterTodos, 
+    tomorrowTodos, 
+    canAddMoreTodos, 
+    showFeatureLimitBanner, 
+    showSuccess, 
+    moveLaterItemsToTomorrow
+  ]);
   
   // Handle move function - Use confirmation setting and limit checking
-  const handleMove = () => {
+  const handleMove = useCallback(() => {
     // Animate the button press
     animateButtonPress(3);
     
@@ -527,10 +518,10 @@ const TodoButtonOverlay = ({
       // Execute without confirmation when disabled
       moveFunction();
     }
-  };
+  }, [confirmationEnabled, animateButtonPress]);
   
   // Get the right move function based on the active tab (now with limit checking)
-  const getMoveFunction = () => {
+  const getMoveFunction = useCallback(() => {
     switch (activeTab) {
       case 'today':
         return moveIncompleteTodosToTomorrowWithLimits;
@@ -541,10 +532,15 @@ const TodoButtonOverlay = ({
       default:
         return () => {};
     }
-  };
+  }, [
+    activeTab, 
+    moveIncompleteTodosToTomorrowWithLimits, 
+    moveTomorrowTodosToTodayWithLimits,
+    moveLaterItemsToTomorrowWithLimits
+  ]);
   
   // Get description for the move action based on active tab
-  const getMoveActionDescription = () => {
+  const getMoveActionDescription = useCallback(() => {
     switch (activeTab) {
       case 'today':
         return {
@@ -567,10 +563,10 @@ const TodoButtonOverlay = ({
           message: "Are you sure you want to move these to-dos?"
         };
     }
-  };
+  }, [activeTab]);
   
   // Get the right move icon based on the active tab
-  const getMoveIcon = () => {
+  const getMoveIcon = useCallback(() => {
     switch (activeTab) {
       case 'today':
         return "arrow-forward-outline"; // Move to tomorrow
@@ -581,7 +577,7 @@ const TodoButtonOverlay = ({
       default:
         return "arrow-forward-outline";
     }
-  };
+  }, [activeTab]);
   
   // Get the counts
   const { completedCount, totalCount } = getCurrentCounts();
@@ -673,12 +669,12 @@ const TodoButtonOverlay = ({
       </View>
     </Animated.View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: -5, // MODIFIED: Increased from 20 to 50 to move buttons lower
+    bottom: -5, // Keep buttons lower on screen for better UX
     left: 0,
     right: 0,
     backgroundColor: 'transparent',
@@ -753,4 +749,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default React.memo(TodoButtonOverlay);
+export default TodoButtonOverlay;

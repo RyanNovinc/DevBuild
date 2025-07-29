@@ -7,28 +7,25 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		12BC06E0DD6C5A53513713CD /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C1CECCAD24712329B8456B6 /* ExpoModulesProvider.swift */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		184A77D2B65A622497DB095A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = E1D55D847D18B30314D96578 /* PrivacyInfo.xcprivacy */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		98E4DD16934A47A78170CC47 /* noop-file.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F2A3E49AC1F44A08C98B59B /* noop-file.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		C89477B4553B257576DAA382 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB9C549F7E4442FC6A382E65 /* ExpoModulesProvider.swift */; };
-		D0C605A7FA2D5A6DEC507B0E /* libPods-LifeCompass.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B84A8F44909BAE5B005BAF60 /* libPods-LifeCompass.a */; };
+		DCDB54B975010E2BE729B952 /* libPods-LifeCompass.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7AA7F7A112EA9B570C460286 /* libPods-LifeCompass.a */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0654957070C112940B66C37B /* Pods-LifeCompass.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LifeCompass.release.xcconfig"; path = "Target Support Files/Pods-LifeCompass/Pods-LifeCompass.release.xcconfig"; sourceTree = "<group>"; };
+		0C1CECCAD24712329B8456B6 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-LifeCompass/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* LifeCompass.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LifeCompass.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = LifeCompass/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = LifeCompass/Info.plist; sourceTree = "<group>"; };
-		3AC1D31245C11595901046BF /* Pods-LifeCompass.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LifeCompass.debug.xcconfig"; path = "Target Support Files/Pods-LifeCompass/Pods-LifeCompass.debug.xcconfig"; sourceTree = "<group>"; };
-		3F2A3E49AC1F44A08C98B59B /* noop-file.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = "noop-file.swift"; path = "LifeCompass/noop-file.swift"; sourceTree = "<group>"; };
+		7AA7F7A112EA9B570C460286 /* libPods-LifeCompass.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-LifeCompass.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = LifeCompass/SplashScreen.storyboard; sourceTree = "<group>"; };
-		AB9C549F7E4442FC6A382E65 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-LifeCompass/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		B65A0E106B5A2D256947D0AB /* Pods-LifeCompass.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LifeCompass.release.xcconfig"; path = "Target Support Files/Pods-LifeCompass/Pods-LifeCompass.release.xcconfig"; sourceTree = "<group>"; };
-		B84A8F44909BAE5B005BAF60 /* libPods-LifeCompass.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-LifeCompass.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		AE7774E3E7715032802D9520 /* Pods-LifeCompass.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LifeCompass.debug.xcconfig"; path = "Target Support Files/Pods-LifeCompass/Pods-LifeCompass.debug.xcconfig"; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		E1D55D847D18B30314D96578 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = LifeCompass/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		E93595E2DDBD0275AE4A065A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = LifeCompass/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = LifeCompass/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* LifeCompass-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "LifeCompass-Bridging-Header.h"; path = "LifeCompass/LifeCompass-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -39,7 +36,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D0C605A7FA2D5A6DEC507B0E /* libPods-LifeCompass.a in Frameworks */,
+				DCDB54B975010E2BE729B952 /* libPods-LifeCompass.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -55,16 +52,7 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				3F2A3E49AC1F44A08C98B59B /* noop-file.swift */,
-				E1D55D847D18B30314D96578 /* PrivacyInfo.xcprivacy */,
-			);
-			name = LifeCompass;
-			sourceTree = "<group>";
-		};
-		2AFAF644541D37B72EDD92AB /* LifeCompass */ = {
-			isa = PBXGroup;
-			children = (
-				AB9C549F7E4442FC6A382E65 /* ExpoModulesProvider.swift */,
+				E93595E2DDBD0275AE4A065A /* PrivacyInfo.xcprivacy */,
 			);
 			name = LifeCompass;
 			sourceTree = "<group>";
@@ -73,18 +61,9 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				B84A8F44909BAE5B005BAF60 /* libPods-LifeCompass.a */,
+				7AA7F7A112EA9B570C460286 /* libPods-LifeCompass.a */,
 			);
 			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		2E433B7E7DBACCFB5F25C087 /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-				3AC1D31245C11595901046BF /* Pods-LifeCompass.debug.xcconfig */,
-				B65A0E106B5A2D256947D0AB /* Pods-LifeCompass.release.xcconfig */,
-			);
-			path = Pods;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -101,8 +80,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				2E433B7E7DBACCFB5F25C087 /* Pods */,
-				EAA5BEA322AADE218627DDFD /* ExpoModulesProviders */,
+				9D6F62242BE5C8B631AAC65C /* Pods */,
+				EBC0B8273696E37C01E13BFC /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -117,6 +96,23 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		9D6F62242BE5C8B631AAC65C /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				AE7774E3E7715032802D9520 /* Pods-LifeCompass.debug.xcconfig */,
+				0654957070C112940B66C37B /* Pods-LifeCompass.release.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
+		A91496E2844982250734D9B4 /* LifeCompass */ = {
+			isa = PBXGroup;
+			children = (
+				0C1CECCAD24712329B8456B6 /* ExpoModulesProvider.swift */,
+			);
+			name = LifeCompass;
+			sourceTree = "<group>";
+		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
 			isa = PBXGroup;
 			children = (
@@ -126,10 +122,10 @@
 			path = LifeCompass/Supporting;
 			sourceTree = "<group>";
 		};
-		EAA5BEA322AADE218627DDFD /* ExpoModulesProviders */ = {
+		EBC0B8273696E37C01E13BFC /* ExpoModulesProviders */ = {
 			isa = PBXGroup;
 			children = (
-				2AFAF644541D37B72EDD92AB /* LifeCompass */,
+				A91496E2844982250734D9B4 /* LifeCompass */,
 			);
 			name = ExpoModulesProviders;
 			sourceTree = "<group>";
@@ -141,14 +137,13 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "LifeCompass" */;
 			buildPhases = (
-				06BC35C6F1E4438BAA131DB4 /* [CP] Check Pods Manifest.lock */,
-				1A18B0682BCE1355B1AA1EB3 /* [Expo] Configure project */,
+				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
+				B284B2648D2B3DBE376E4060 /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
-				D69B87BAF9FF3C71C8194706 /* [CP] Embed Pods Frameworks */,
-				F849E9FBE17F9042076C54D0 /* [CP] Copy Pods Resources */,
+				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -198,7 +193,6 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				184A77D2B65A622497DB095A /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -218,9 +212,9 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Add debugging at the beginning\necho \"DEBUG START: Script environment\"\necho \"DEBUG: Current directory: $(pwd)\"\necho \"DEBUG: NODE_BINARY before sourcing: $NODE_BINARY\"\necho \"DEBUG: PATH: $PATH\"\necho \"DEBUG: which node: $(which node)\"\n\n\nif [[ -f \"$PODS_ROOT/../.xcode.env\" ]]; then\n  echo \"DEBUG: Sourcing .xcode.env\"\n  source \"$PODS_ROOT/../.xcode.env\"\nfi\n\n\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  echo \"DEBUG: Sourcing .xcode.env.local\"\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n\n# Ensure NODE_BINARY is set no matter what\nif [[ -z \"$NODE_BINARY\" ]]; then\n  echo \"DEBUG: NODE_BINARY was not set, forcing to $(which node)\"\n  export NODE_BINARY=$(which node)\nfi\n\n\necho \"DEBUG: NODE_BINARY after sourcing: $NODE_BINARY\"\n\n\n# The project root by default is one level up from the ios directory\nexport PROJECT_ROOT=\"$PROJECT_DIR\"/..\necho \"DEBUG: PROJECT_ROOT: $PROJECT_ROOT\"\n\n\nif [[ \"$CONFIGURATION\" = *Debug* ]]; then\n  export SKIP_BUNDLING=1\n  echo \"DEBUG: SKIP_BUNDLING set to 1 for Debug configuration\"\nfi\n\n\nif [[ -z \"$ENTRY_FILE\" ]]; then\n  # Set the entry JS file using the bundler's entry resolution.\n  echo \"DEBUG: Setting ENTRY_FILE using Node\"\n  export ENTRY_FILE=\"$(\"$NODE_BINARY\" -e \"require('expo/scripts/resolveAppEntry')\" \"$PROJECT_ROOT\" ios absolute | tail -n 1)\"\n  echo \"DEBUG: ENTRY_FILE set to: $ENTRY_FILE\"\nfi\n\n\nif [[ -z \"$CLI_PATH\" ]]; then\n  # Use Expo CLI\n  echo \"DEBUG: Setting CLI_PATH\"\n  export CLI_PATH=\"$(\"$NODE_BINARY\" --print \"require.resolve('@expo/cli', { paths: [require.resolve('expo/package.json')] })\")\"\n  echo \"DEBUG: CLI_PATH set to: $CLI_PATH\"\nfi\n\n\nif [[ -z \"$BUNDLE_COMMAND\" ]]; then\n  # Default Expo CLI command for bundling\n  export BUNDLE_COMMAND=\"export:embed\"\n  echo \"DEBUG: BUNDLE_COMMAND set to: $BUNDLE_COMMAND\"\nfi\n\n\n# Source .xcode.env.updates if it exists to allow\n# SKIP_BUNDLING to be unset if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.updates\" ]]; then\n  echo \"DEBUG: Sourcing .xcode.env.updates\"\n  source \"$PODS_ROOT/../.xcode.env.updates\"\nfi\n\n\n# Source local changes to allow overrides\n# if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  echo \"DEBUG: Sourcing .xcode.env.local again\"\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n\necho \"DEBUG: Final NODE_BINARY before execution: $NODE_BINARY\"\necho \"DEBUG: About to execute react-native-xcode.sh\"\n\n\n# Try with direct path if NODE_BINARY fails\nif [[ ! -x \"$NODE_BINARY\" ]]; then\n  echo \"DEBUG: NODE_BINARY not executable, trying direct path\"\n  export NODE_BINARY=$(which node)\n  echo \"DEBUG: Reset NODE_BINARY to: $NODE_BINARY\"\nfi\n\n\n`\"$NODE_BINARY\" --print \"require('path').dirname(require.resolve('react-native/package.json')) + '/scripts/react-native-xcode.sh'\"`\n\n\n\n";
+			shellScript = "if [[ -f \"$PODS_ROOT/../.xcode.env\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env\"\nfi\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n# The project root by default is one level up from the ios directory\nexport PROJECT_ROOT=\"$PROJECT_DIR\"/..\n\nif [[ \"$CONFIGURATION\" = *Debug* ]]; then\n  export SKIP_BUNDLING=1\nfi\nif [[ -z \"$ENTRY_FILE\" ]]; then\n  # Set the entry JS file using the bundler's entry resolution.\n  export ENTRY_FILE=\"$(\"$NODE_BINARY\" -e \"require('expo/scripts/resolveAppEntry')\" \"$PROJECT_ROOT\" ios absolute | tail -n 1)\"\nfi\n\nif [[ -z \"$CLI_PATH\" ]]; then\n  # Use Expo CLI\n  export CLI_PATH=\"$(\"$NODE_BINARY\" --print \"require.resolve('@expo/cli', { paths: [require.resolve('expo/package.json')] })\")\"\nfi\nif [[ -z \"$BUNDLE_COMMAND\" ]]; then\n  # Default Expo CLI command for bundling\n  export BUNDLE_COMMAND=\"export:embed\"\nfi\n\n# Source .xcode.env.updates if it exists to allow\n# SKIP_BUNDLING to be unset if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.updates\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.updates\"\nfi\n# Source local changes to allow overrides\n# if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n`\"$NODE_BINARY\" --print \"require('path').dirname(require.resolve('react-native/package.json')) + '/scripts/react-native-xcode.sh'\"`\n\n";
 		};
-		06BC35C6F1E4438BAA131DB4 /* [CP] Check Pods Manifest.lock */ = {
+		08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -242,44 +236,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		1A18B0682BCE1355B1AA1EB3 /* [Expo] Configure project */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "[Expo] Configure project";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-LifeCompass/expo-configure-project.sh\"\n";
-		};
-		D69B87BAF9FF3C71C8194706 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-LifeCompass/Pods-LifeCompass-frameworks.sh",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-LifeCompass/Pods-LifeCompass-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		F849E9FBE17F9042076C54D0 /* [CP] Copy Pods Resources */ = {
+		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -333,6 +290,25 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-LifeCompass/Pods-LifeCompass-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
+		B284B2648D2B3DBE376E4060 /* [Expo] Configure project */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "[Expo] Configure project";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-LifeCompass/expo-configure-project.sh\"\n";
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -341,8 +317,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				98E4DD16934A47A78170CC47 /* noop-file.swift in Sources */,
-				C89477B4553B257576DAA382 /* ExpoModulesProvider.swift in Sources */,
+				12BC06E0DD6C5A53513713CD /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -351,14 +326,14 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 3AC1D31245C11595901046BF /* Pods-LifeCompass.debug.xcconfig */;
+			baseConfigurationReference = AE7774E3E7715032802D9520 /* Pods-LifeCompass.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = LifeCompass/LifeCompass.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = RJL5VQK2DK;
 				ENABLE_BITCODE = NO;
-				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
 					"FB_SONARKIT_ENABLED=1",
@@ -388,13 +363,13 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = B65A0E106B5A2D256947D0AB /* Pods-LifeCompass.release.xcconfig */;
+			baseConfigurationReference = 0654957070C112940B66C37B /* Pods-LifeCompass.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = LifeCompass/LifeCompass.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
-				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				DEVELOPMENT_TEAM = RJL5VQK2DK;
 				INFOPLIST_FILE = LifeCompass/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -472,14 +447,11 @@
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
-				USE_HERMES = true;
+				USE_HERMES = false;
 			};
 			name = Debug;
 		};
@@ -530,13 +502,10 @@
 				);
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = NO;
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
-				USE_HERMES = true;
+				USE_HERMES = false;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;

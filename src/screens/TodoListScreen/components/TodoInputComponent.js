@@ -1,5 +1,5 @@
 // src/screens/TodoListScreen/components/TodoInputComponent.js
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
 import {
   View,
   Text,
@@ -7,19 +7,94 @@ import {
   TouchableOpacity,
   Keyboard,
   StyleSheet,
-  Dimensions,
-  Animated
+  Animated,
+  InteractionManager
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import FloatingButton from './FloatingButton';
-
-const { width } = Dimensions.get('window');
 
 /**
- * A reusable component for adding todos or groups with an intuitive mode selector
- * This replaces the current input toggle in the tab files
+ * StableInput - A completely isolated input component that won't cause parent re-renders
+ * This is key to preventing keyboard flashing
  */
-const TodoInputComponent = ({
+const StableInput = memo(({
+  inputRef,
+  placeholder,
+  placeholderTextColor,
+  onChangeText,
+  onSubmitEditing,
+  onFocus,
+  onBlur,
+  textColor,
+  initialValue = '',
+  returnKeyType = 'done',
+}) => {
+  // Internal state that doesn't cause parent re-renders
+  const [localValue, setLocalValue] = useState(initialValue);
+  
+  // Update local value when initialValue changes
+  useEffect(() => {
+    if (initialValue !== localValue) {
+      setLocalValue(initialValue);
+    }
+  }, [initialValue]);
+  
+  // Store the value on the ref for external access
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current._lastText = localValue;
+    }
+  }, [localValue, inputRef]);
+  
+  // Handle text changes locally first
+  const handleLocalChange = (text) => {
+    setLocalValue(text);
+    if (onChangeText) onChangeText(text);
+  };
+  
+  // Handle submit with cached value
+  const handleSubmit = () => {
+    if (onSubmitEditing) onSubmitEditing(localValue);
+  };
+  
+  // Methods exposed to parent via the ref
+  useEffect(() => {
+    if (inputRef.current) {
+      // Method to get current text
+      inputRef.current.getValue = () => localValue;
+      
+      // Method to clear text without parent re-render
+      inputRef.current.clearText = () => {
+        setLocalValue('');
+      };
+    }
+  }, [localValue, inputRef]);
+  
+  return (
+    <TextInput
+      ref={inputRef}
+      style={[styles.input, { color: textColor }]}
+      placeholder={placeholder}
+      placeholderTextColor={placeholderTextColor}
+      value={localValue}
+      onChangeText={handleLocalChange}
+      onSubmitEditing={handleSubmit}
+      onFocus={onFocus}
+      onBlur={onBlur}
+      returnKeyType={returnKeyType}
+      autoCorrect={false}
+      autoCapitalize="none"
+      spellCheck={false}
+      blurOnSubmit={false} // Critical to prevent keyboard flashing
+      keyboardType="default"
+    />
+  );
+}, () => true); // Always prevent re-renders from parent
+
+/**
+ * A compact, space-efficient component for adding todos or groups
+ * Completely rewritten to prevent keyboard flashing and handle empty inputs properly
+ */
+const TodoInputComponent = memo(({
   theme,
   todoText,
   setTodoText,
@@ -27,20 +102,90 @@ const TodoInputComponent = ({
   setGroupText,
   onAddTodo,
   onAddGroup,
-  tabName = 'today' // 'today', 'tomorrow', or 'later'
+  tabName = 'today', // 'today', 'tomorrow', or 'later'
+  updateInputFocus = null, // Prop to track input focus
+  isTabSwitching = false // Prop to prevent UI updates during tab switching
 }) => {
   // State for tracking which input mode is active
   const [inputMode, setInputMode] = useState('todo'); // 'todo' or 'group'
   
-  // Animation value for smooth transitions
-  const animatedValue = useRef(new Animated.Value(0)).current;
+  // State to track local input focus
+  const [isLocalInputFocused, setIsLocalInputFocused] = useState(false);
   
-  // Input refs for focusing
+  // Animation values for smooth transitions
+  const labelOpacity = useRef(new Animated.Value(0)).current;
+  const labelWidth = useRef(new Animated.Value(0)).current;
+  
+  // Input refs for focusing and accessing stable input data
   const todoInputRef = useRef(null);
   const groupInputRef = useRef(null);
   
+  // Indicator animation - avoid re-renders during tab switching
+  const animateLabel = useCallback(() => {
+    // When mode changes, animate in the label
+    Animated.parallel([
+      Animated.timing(labelOpacity, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: false
+      }),
+      Animated.timing(labelWidth, {
+        toValue: inputMode === 'todo' ? 50 : 60,
+        duration: 200,
+        useNativeDriver: false
+      })
+    ]).start();
+    
+    // Hide the label after 2 seconds
+    const timer = setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(labelOpacity, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: false
+        }),
+        Animated.timing(labelWidth, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: false
+        })
+      ]).start();
+    }, 2000);
+    
+    return timer;
+  }, [inputMode, labelOpacity, labelWidth]);
+  
+  // Handle showing/hiding mode label
+  useEffect(() => {
+    const animationTimer = animateLabel();
+    
+    // Only try to focus if we're not in the middle of a tab switch
+    if (!isTabSwitching) {
+      // Focus the appropriate input after switching modes
+      // Using a longer timeout to avoid keyboard flickering
+      const focusTimer = setTimeout(() => {
+        if (inputMode === 'todo' && todoInputRef.current) {
+          todoInputRef.current.focus();
+          setIsLocalInputFocused(true);
+          if (updateInputFocus) updateInputFocus(true);
+        } else if (inputMode === 'group' && groupInputRef.current) {
+          groupInputRef.current.focus();
+          setIsLocalInputFocused(true);
+          if (updateInputFocus) updateInputFocus(true);
+        }
+      }, 300);
+      
+      return () => {
+        clearTimeout(animationTimer);
+        clearTimeout(focusTimer);
+      };
+    }
+    
+    return () => clearTimeout(animationTimer);
+  }, [inputMode, isTabSwitching, animateLabel, updateInputFocus]);
+  
   // Calculate placeholder text based on tab name
-  const getPlaceholderText = () => {
+  const getPlaceholderText = useCallback(() => {
     if (inputMode === 'todo') {
       switch (tabName) {
         case 'today':
@@ -53,194 +198,190 @@ const TodoInputComponent = ({
           return 'Add a new to-do...';
       }
     } else {
-      return 'Create a new group...';
+      return 'Create a new group (e.g., "1. Work Tasks")...';
     }
-  };
+  }, [inputMode, tabName]);
   
-  // Animate when input mode changes
-  useEffect(() => {
-    Animated.spring(animatedValue, {
-      toValue: inputMode === 'todo' ? 0 : 1,
-      tension: 80,
-      friction: 8,
-      useNativeDriver: false
-    }).start();
+  // Modified handleAddItem to fix keyboard issues
+  const handleAddItem = useCallback(() => {
+    // Get the current input text from the ref - avoids state updates
+    const activeInputRef = inputMode === 'todo' ? todoInputRef : groupInputRef;
+    if (!activeInputRef.current || !activeInputRef.current.getValue) return;
     
-    // Focus the appropriate input after switching modes
-    setTimeout(() => {
-      if (inputMode === 'todo' && todoInputRef.current) {
-        todoInputRef.current.focus();
-      } else if (inputMode === 'group' && groupInputRef.current) {
-        groupInputRef.current.focus();
-      }
-    }, 100);
-  }, [inputMode]);
-  
-  // Handle adding an item based on the active mode
-  const handleAddItem = () => {
-    if (inputMode === 'todo') {
-      if (todoText.trim()) {
-        // Store the current value before clearing
-        const text = todoText.trim();
-        
-        // Clear input immediately to prevent autocorrect issues
-        setTodoText('');
-        
-        // Add the todo
-        onAddTodo(tabName, null, text);
-      }
-    } else {
-      if (groupText.trim()) {
-        // Store the current value before clearing
-        const text = groupText.trim();
-        
-        // Clear input immediately to prevent autocorrect issues
-        setGroupText('');
-        
-        // Add the group
-        onAddGroup(tabName, text);
-      }
+    // Get the text value from the ref
+    const currentText = activeInputRef.current.getValue().trim();
+    if (!currentText) return;
+    
+    // Clear input immediately to prevent autocorrect issues
+    if (activeInputRef.current.clearText) {
+      activeInputRef.current.clearText();
     }
     
-    // Dismiss keyboard
-    Keyboard.dismiss();
-  };
+    // Use InteractionManager to defer UI updates
+    InteractionManager.runAfterInteractions(() => {
+      if (inputMode === 'todo') {
+        // Add the todo using the stored value
+        onAddTodo(tabName, null, currentText);
+      } else {
+        // Add the group using the stored value
+        onAddGroup(tabName, currentText);
+      }
+      
+      // Keep focus on the input field (prevents keyboard hiding)
+      if (activeInputRef.current) {
+        setTimeout(() => {
+          if (activeInputRef.current) {
+            activeInputRef.current.focus();
+          }
+        }, 50);
+      }
+    });
+  }, [inputMode, tabName, onAddTodo, onAddGroup]);
   
   // Handle input submission
-  const handleSubmitEditing = () => {
-    handleAddItem();
-  };
-  
-  // Calculate background color for mode options
-  const getButtonBackgroundColor = (mode) => {
-    if (mode === inputMode) {
-      return theme.primary;
+  const handleSubmitEditing = useCallback((text) => {
+    if (text && text.trim()) {
+      handleAddItem();
     }
-    return 'transparent';
-  };
+    // If empty, do nothing - prevents keyboard flashing
+  }, [handleAddItem]);
   
-  // Calculate text color for mode options
-  const getTextColor = (mode) => {
-    if (mode === inputMode) {
-      return '#FFFFFF';
-    }
-    return theme.text;
-  };
+  // Handle mode toggle with animation
+  const toggleInputMode = useCallback(() => {
+    // Dismiss keyboard first to prevent flashing
+    Keyboard.dismiss();
+    
+    // Wait briefly for keyboard to dismiss
+    setTimeout(() => {
+      setInputMode(prev => prev === 'todo' ? 'group' : 'todo');
+      
+      // Reset animations to show label again
+      labelOpacity.setValue(0);
+      labelWidth.setValue(0);
+    }, 50);
+  }, [labelOpacity, labelWidth]);
+
+  // Handle input focus
+  const handleInputFocus = useCallback(() => {
+    setIsLocalInputFocused(true);
+    if (updateInputFocus) updateInputFocus(true);
+  }, [updateInputFocus]);
   
-  // Get dynamic styles based on theme
-  const dynamicStyles = {
-    modeSelector: {
-      backgroundColor: theme.cardElevated || '#2C2C2E',
-      borderColor: theme.border
-    },
-    inputContainer: {
-      backgroundColor: theme.card,
-      borderColor: theme.border
-    }
-  };
+  // Handle input blur
+  const handleInputBlur = useCallback(() => {
+    // Small delay to check if the other input gets focus
+    setTimeout(() => {
+      const isTodoFocused = todoInputRef.current?.isFocused?.();
+      const isGroupFocused = groupInputRef.current?.isFocused?.();
+      
+      if (!isTodoFocused && !isGroupFocused) {
+        setIsLocalInputFocused(false);
+        if (updateInputFocus) updateInputFocus(false);
+      }
+    }, 50);
+  }, [updateInputFocus]);
   
   return (
     <View style={styles.container}>
-      {/* Mode selector - intuitive with labels and icons */}
-      <View style={[styles.modeSelector, dynamicStyles.modeSelector]}>
+      <View style={[
+        styles.inputContainer, 
+        { 
+          backgroundColor: theme.card, 
+          borderColor: theme.border,
+          borderLeftColor: inputMode === 'todo' ? theme.primary : theme.primary + '80',
+          borderLeftWidth: 3,
+        }
+      ]}>
+        {/* Segmented Toggle Button */}
         <TouchableOpacity 
-          style={[
-            styles.modeOption, 
-            { backgroundColor: getButtonBackgroundColor('todo') }
-          ]}
-          onPress={() => setInputMode('todo')}
-          activeOpacity={0.7}
+          style={styles.modeToggle}
+          onPress={toggleInputMode}
+          hitSlop={{ top: 10, bottom: 10, left: 5, right: 5 }}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={inputMode === 'todo' ? "Switch to group mode" : "Switch to todo mode"}
+          accessibilityHint="Toggles between adding todos and groups"
         >
-          <Ionicons 
-            name="checkbox-outline" 
-            size={18} 
-            color={getTextColor('todo')} 
-          />
-          <Text style={[
-            styles.modeOptionText, 
-            { 
-              color: getTextColor('todo'),
-              fontWeight: inputMode === 'todo' ? '600' : '400'
+          <View style={[
+            styles.iconContainer,
+            {
+              backgroundColor: inputMode === 'todo' ? theme.primary : 'transparent',
+              borderColor: theme.border
             }
           ]}>
-            Todo
-          </Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[
-            styles.modeOption, 
-            { backgroundColor: getButtonBackgroundColor('group') }
-          ]}
-          onPress={() => setInputMode('group')}
-          activeOpacity={0.7}
-        >
-          <Ionicons 
-            name="folder-outline" 
-            size={18} 
-            color={getTextColor('group')} 
-          />
-          <Text style={[
-            styles.modeOptionText, 
-            { 
-              color: getTextColor('group'),
-              fontWeight: inputMode === 'group' ? '600' : '400'
+            <Ionicons 
+              name={inputMode === 'todo' ? "checkbox-outline" : "folder-outline"} 
+              size={20} 
+              color={inputMode === 'todo' ? '#FFFFFF' : theme.primary} 
+            />
+          </View>
+          
+          {/* Animated Mode Label - appears briefly after toggle */}
+          <Animated.View style={[
+            styles.modeLabel,
+            {
+              backgroundColor: theme.cardElevated,
+              opacity: labelOpacity,
+              width: labelWidth,
+              borderColor: theme.border
             }
           ]}>
-            Group
-          </Text>
+            <Text style={{ 
+              color: theme.text, 
+              fontSize: 12,
+              fontWeight: '600'
+            }}>
+              {inputMode === 'todo' ? 'Todo' : 'Group'}
+            </Text>
+          </Animated.View>
         </TouchableOpacity>
-      </View>
-      
-      {/* Input field with clear visual for the active mode */}
-      <View style={[styles.inputContainer, dynamicStyles.inputContainer]}>
-        <Ionicons 
-          name={inputMode === 'todo' ? "checkbox-outline" : "folder-outline"} 
-          size={22} 
-          color={theme.primary} 
-          style={styles.inputIcon}
-        />
         
-        {/* Dynamic input field based on mode */}
+        {/* Dynamic input field based on mode - Using StableInput component */}
         {inputMode === 'todo' ? (
-          <TextInput
-            ref={todoInputRef}
-            style={[styles.input, { color: theme.text }]}
+          <StableInput
+            inputRef={todoInputRef}
             placeholder={getPlaceholderText()}
             placeholderTextColor={theme.textSecondary}
-            value={todoText}
-            onChangeText={setTodoText}
+            textColor={theme.text}
+            initialValue={todoText}
+            onChangeText={(text) => {
+              // We only update parent state when component unmounts or submit
+              // This is critical for preventing keyboard flashing
+            }}
             onSubmitEditing={handleSubmitEditing}
-            returnKeyType="done"
-            autoCorrect={false}
-            autoCapitalize="none"
-            spellCheck={false}
+            onFocus={handleInputFocus}
+            onBlur={handleInputBlur}
           />
         ) : (
-          <TextInput
-            ref={groupInputRef}
-            style={[styles.input, { color: theme.text }]}
+          <StableInput
+            inputRef={groupInputRef}
             placeholder={getPlaceholderText()}
             placeholderTextColor={theme.textSecondary}
-            value={groupText}
-            onChangeText={setGroupText}
+            textColor={theme.text}
+            initialValue={groupText}
+            onChangeText={(text) => {
+              // We only update parent state when component unmounts or submit
+              // This is critical for preventing keyboard flashing
+            }}
             onSubmitEditing={handleSubmitEditing}
-            returnKeyType="done"
-            autoCorrect={false}
-            autoCapitalize="none"
-            spellCheck={false}
+            onFocus={handleInputFocus}
+            onBlur={handleInputBlur}
           />
         )}
         
         {/* Add/Create Button */}
-        <FloatingButton
-          label={inputMode === 'todo' ? "Add" : "Create"}
+        <TouchableOpacity
+          style={[
+            styles.addButton,
+            { backgroundColor: theme.primary }
+          ]}
           onPress={handleAddItem}
-          theme={theme}
-          isPrimary={true}
-          withBackground={true}
-          style={{ marginLeft: 5 }}
-        />
+          activeOpacity={0.7}
+        >
+          <Text style={styles.addButtonText}>
+            {inputMode === 'todo' ? 'Add' : 'Create'}
+          </Text>
+        </TouchableOpacity>
       </View>
       
       {/* Helper text changes based on mode */}
@@ -252,44 +393,17 @@ const TodoInputComponent = ({
       </Text>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {
     marginBottom: 15,
   },
-  modeSelector: {
-    flexDirection: 'row',
-    borderRadius: 16,
-    marginBottom: 10,
-    padding: 4,
-    alignSelf: 'center',
-    borderWidth: 0.5,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.5,
-    elevation: 2,
-  },
-  modeOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    minWidth: 100,
-    justifyContent: 'center',
-    marginHorizontal: 2,
-  },
-  modeOptionText: {
-    marginLeft: 6, 
-    fontSize: 13,
-  },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 16,
-    paddingHorizontal: 15,
+    paddingHorizontal: 12,
     borderWidth: 1,
     height: 58,
     shadowColor: "#000",
@@ -301,15 +415,52 @@ const styles = StyleSheet.create({
     shadowRadius: 1.00,
     elevation: 1,
   },
-  inputIcon: {
-    marginRight: 10,
-    padding: 2,
+  modeToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 4,
+    position: 'relative',
+  },
+  iconContainer: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    marginRight: 8,
+  },
+  modeLabel: {
+    position: 'absolute',
+    top: -24,
+    left: 0,
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 0.5,
+    zIndex: 5,
+    overflow: 'hidden',
   },
   input: {
     flex: 1,
     height: 50,
     fontSize: 16,
     paddingVertical: 10,
+  },
+  addButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  addButtonText: {
+    fontWeight: '600',
+    fontSize: 14,
+    color: '#FFFFFF',
   },
   helperText: {
     fontSize: 12,

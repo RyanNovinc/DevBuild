@@ -1,34 +1,23 @@
 // src/screens/TodoListScreen/components/TodoGroup.js
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { 
   View, 
   Text, 
   TouchableOpacity, 
   StyleSheet, 
-  TextInput,
   Animated,
   Keyboard,
   Easing,
   LayoutAnimation,
   Platform,
-  UIManager
+  UIManager,
+  InteractionManager
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Swipeable } from 'react-native-gesture-handler';
 import { styles as todoListStyles } from '../TodoListStyles';
 import TodoItem from './TodoItem';
-
-// Import responsive utilities for better layout across device sizes
-import {
-  scaleWidth,
-  scaleHeight,
-  scaleFontSize,
-  spacing,
-  fontSizes,
-  isSmallDevice,
-  accessibility,
-  ensureAccessibleTouchTarget
-} from '../../../utils/responsive';
+import SubtaskInputModal from './SubtaskInputModal';
 
 // Enable LayoutAnimation for Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -37,8 +26,9 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 /**
  * TodoGroup component - renders a collapsible group of todo items
+ * Optimized for performance with proper animations and state management
  */
-const TodoGroup = ({ 
+const TodoGroup = memo(({ 
   group, 
   todos, 
   isExpanded,
@@ -51,18 +41,16 @@ const TodoGroup = ({
   addTodo,
   onAddingSubtask,
   activeTab,
-  // New props for limit checking
   canAddMoreTodos,
   showFeatureLimitBanner
 }) => {
   // State for adding subtasks
   const [addingSubtask, setAddingSubtask] = useState(false);
-  const [newSubtaskText, setNewSubtaskText] = useState('');
   
-  // Animation values
+  // Animation values with useRef to prevent recreating on each render
   const fadeAnim = useRef(new Animated.Value(isExpanded ? 1 : 0)).current;
   const rotateAnim = useRef(new Animated.Value(isExpanded ? 1 : 0)).current;
-  const shakeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
   
   // Track the swipeable ref for controlling the swipe state
   const swipeableRef = useRef(null);
@@ -74,9 +62,14 @@ const TodoGroup = ({
     easing: Easing.inOut(Easing.ease)
   };
   
-  // Get child todos for this group
-  const childTodos = todos.filter(todo => todo.groupId === group.id);
-  const completedChildTodos = childTodos.filter(todo => todo.completed);
+  // Get child todos for this group - memoized to prevent recalculation
+  const childTodos = React.useMemo(() => {
+    return todos.filter(todo => todo.groupId === group.id);
+  }, [todos, group.id]);
+  
+  const completedChildTodos = React.useMemo(() => {
+    return childTodos.filter(todo => todo.completed);
+  }, [childTodos]);
   
   // Update fadeAnim when isExpanded changes
   useEffect(() => {
@@ -85,85 +78,67 @@ const TodoGroup = ({
       duration: 250,
       useNativeDriver: true,
     }).start();
-  }, [isExpanded, fadeAnim]);
-  
-  // Handle toggling group completion
-  const handleToggle = () => {
-    if (onToggle) {
-      onToggle(group.id);
-    }
-  };
-  
-  // Handle expansion toggle with animation
-  const handleExpand = () => {
-    // Configure layout animation for smooth height transition
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     
     // Animate the rotation of the chevron
     Animated.timing(rotateAnim, {
-      toValue: isExpanded ? 0 : 1,
+      toValue: isExpanded ? 1 : 0,
       ...animConfig
     }).start();
+  }, [isExpanded, fadeAnim, rotateAnim, animConfig]);
+  
+  // Handle toggling group completion
+  const handleToggle = useCallback(() => {
+    if (onToggle) {
+      // Add a subtle scale animation for feedback
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 0.98,
+          duration: 50,
+          useNativeDriver: true
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 100,
+          useNativeDriver: true
+        })
+      ]).start();
+      
+      onToggle(group.id);
+    }
+  }, [onToggle, group.id, scaleAnim]);
+  
+  // Handle expansion toggle with animation
+  const handleExpand = useCallback(() => {
+    // Configure layout animation for smooth height transition
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     
     // Then call the onToggleExpansion function to update the state
     if (onToggleExpansion) {
       onToggleExpansion();
     }
-  };
+  }, [onToggleExpansion]);
   
-  // Handle shake animation for empty input
-  const triggerShake = () => {
-    Animated.sequence([
-      Animated.timing(shakeAnim, {
-        toValue: 10,
-        duration: 100,
-        useNativeDriver: true,
-        easing: Easing.linear
-      }),
-      Animated.timing(shakeAnim, {
-        toValue: -10,
-        duration: 100,
-        useNativeDriver: true,
-        easing: Easing.linear
-      }),
-      Animated.timing(shakeAnim, {
-        toValue: 10,
-        duration: 100,
-        useNativeDriver: true,
-        easing: Easing.linear
-      }),
-      Animated.timing(shakeAnim, {
-        toValue: 0,
-        duration: 100,
-        useNativeDriver: true,
-        easing: Easing.linear
-      })
-    ]).start();
-  };
-  
-  // Handle adding a subtask
-  const handleAddSubtask = () => {
-    // Toggle adding state
-    const isAdding = !addingSubtask;
-    setAddingSubtask(isAdding);
+  // Handle adding a subtask with zero-flash optimization
+  const handleAddSubtask = useCallback(() => {
+    // Dismiss keyboard first to prevent flashing
+    Keyboard.dismiss();
     
-    // Notify parent component about subtask mode
-    if (onAddingSubtask) {
-      onAddingSubtask(isAdding);
-    }
-    
-    // Clear the input text when canceling
-    if (!isAdding) {
-      setNewSubtaskText('');
-    }
-  };
+    // Use InteractionManager to ensure UI is ready
+    InteractionManager.runAfterInteractions(() => {
+      // Toggle adding state
+      const isAdding = !addingSubtask;
+      setAddingSubtask(isAdding);
+      
+      // Notify parent component about subtask mode
+      if (onAddingSubtask) {
+        onAddingSubtask(isAdding);
+      }
+    });
+  }, [addingSubtask, onAddingSubtask]);
   
-  // Submit the new subtask
-  const submitSubtask = () => {
-    if (!newSubtaskText.trim()) {
-      triggerShake();
-      return;
-    }
+  // Submit the new subtask with optimized handling
+  const submitSubtask = useCallback((tab, groupId, text) => {
+    if (!text.trim()) return;
     
     // Check if we can add more todos
     if (canAddMoreTodos && !canAddMoreTodos(activeTab, false)) {
@@ -188,46 +163,32 @@ const TodoGroup = ({
         showSuccess(limitMessage, { type: 'warning' });
       }
       
-      // Clear the input and cancel adding
-      setAddingSubtask(false);
-      setNewSubtaskText('');
-      if (onAddingSubtask) onAddingSubtask(false);
-      Keyboard.dismiss();
       return;
     }
     
-    // Add the subtask
-    const text = newSubtaskText.trim();
-    
-    // Use the addTodo function with the group ID
-    if (addTodo) {
-      addTodo(activeTab, group.id, text);
-    } else {
-      // Fallback if addTodo not provided
-      showSuccess('Added subtask', { type: 'success' });
-    }
-    
-    // Clear the input and cancel adding mode
-    setNewSubtaskText('');
-    setAddingSubtask(false);
-    if (onAddingSubtask) onAddingSubtask(false);
-    Keyboard.dismiss();
-  };
+    // Add the subtask - wrap in InteractionManager to prevent flashing
+    InteractionManager.runAfterInteractions(() => {
+      if (addTodo) {
+        addTodo(tab, groupId, text);
+      } else {
+        // Fallback if addTodo not provided
+        showSuccess('Added subtask', { type: 'success' });
+      }
+    });
+  }, [activeTab, addTodo, canAddMoreTodos, showFeatureLimitBanner, showSuccess]);
   
   // Cancel adding a subtask
-  const cancelAddSubtask = () => {
+  const cancelAddSubtask = useCallback(() => {
     setAddingSubtask(false);
-    setNewSubtaskText('');
     if (onAddingSubtask) onAddingSubtask(false);
-    Keyboard.dismiss();
-  };
+  }, [onAddingSubtask]);
   
   // Handle long press on the group
-  const handleLongPress = () => {
+  const handleLongPress = useCallback(() => {
     if (onLongPress) {
       onLongPress(group);
     }
-  };
+  }, [onLongPress, group]);
   
   // Calculate the rotate interpolation for the chevron
   const rotate = rotateAnim.interpolate({
@@ -236,7 +197,7 @@ const TodoGroup = ({
   });
   
   // Render swipe actions for the group
-  const renderRightActions = (progress, dragX) => {
+  const renderRightActions = useCallback((progress, dragX) => {
     const trans = dragX.interpolate({
       inputRange: [-100, 0],
       outputRange: [0, 100],
@@ -244,10 +205,10 @@ const TodoGroup = ({
     });
     
     return (
-      <View style={styles.swipeActionsContainer}>
+      <View style={localStyles.swipeActionsContainer}>
         <Animated.View 
           style={[
-            styles.deleteAction,
+            localStyles.deleteAction,
             {
               transform: [{ translateX: trans }],
               backgroundColor: theme.error || '#F44336'
@@ -263,18 +224,18 @@ const TodoGroup = ({
                 onDelete(group.id);
               }
             }}
-            style={styles.actionButton}
+            style={localStyles.actionButton}
           >
-            <Ionicons name="trash-outline" size={scaleWidth(22)} color="#FFFFFF" />
-            <Text style={styles.actionText}>Delete</Text>
+            <Ionicons name="trash-outline" size={22} color="#FFFFFF" />
+            <Text style={localStyles.actionText}>Delete</Text>
           </TouchableOpacity>
         </Animated.View>
       </View>
     );
-  };
+  }, [onDelete, group.id, theme.error]);
   
   // Generate a lighter version of the primary color for the background
-  const getBackgroundColor = () => {
+  const getBackgroundColor = useCallback(() => {
     if (group.completed) {
       // For completed groups, use a more muted background
       return `${theme.primary}10`; // 10% opacity
@@ -282,10 +243,10 @@ const TodoGroup = ({
     
     // For normal groups, use a very subtle primary color background
     return `${theme.primary}08`; // 8% opacity
-  };
+  }, [group.completed, theme.primary]);
   
   // Determine the border style - subtle for better design
-  const getBorderStyle = () => {
+  const getBorderStyle = useCallback(() => {
     if (group.completed) {
       return {
         borderColor: `${theme.primary}30`, // 30% opacity for completed
@@ -297,20 +258,39 @@ const TodoGroup = ({
       borderColor: `${theme.primary}40`, // 40% opacity for normal
       borderWidth: 1
     };
-  };
+  }, [group.completed, theme.primary]);
+  
+  // Optimized rendering of child todos to prevent recreating items
+  const renderChildTodos = useCallback(() => {
+    return childTodos.map(todo => (
+      <TodoItem
+        key={todo.id}
+        item={todo}
+        onToggle={() => onToggle && onToggle(todo.id)}
+        onDelete={() => onDelete && onDelete(todo.id, true)}
+        onLongPress={() => onLongPress && onLongPress(todo)}
+        theme={theme}
+        isSubtask={true}
+        parentCompleted={group.completed}
+      />
+    ));
+  }, [childTodos, onToggle, onDelete, onLongPress, theme, group.completed]);
   
   return (
-    <View style={styles.groupContainer}>
+    <Animated.View style={[
+      localStyles.groupContainer,
+      { transform: [{ scale: scaleAnim }] }
+    ]}>
       {/* Swipeable Group Header */}
       <Swipeable
         ref={swipeableRef}
         renderRightActions={renderRightActions}
         overshootRight={false}
-        containerStyle={styles.swipeContainer}
+        containerStyle={localStyles.swipeContainer}
       >
         <TouchableOpacity
           style={[
-            styles.groupHeader,
+            localStyles.groupHeader,
             {
               backgroundColor: getBackgroundColor(),
               ...getBorderStyle(),
@@ -334,7 +314,7 @@ const TodoGroup = ({
         >
           {/* Checkbox */}
           <TouchableOpacity 
-            style={styles.checkbox}
+            style={localStyles.checkbox}
             onPress={handleToggle}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             accessible={true}
@@ -343,7 +323,7 @@ const TodoGroup = ({
             accessibilityState={{ checked: group.completed }}
           >
             <View style={[
-              styles.checkboxInner,
+              localStyles.checkboxInner,
               {
                 backgroundColor: group.completed ? theme.primary : 'transparent',
                 borderColor: group.completed ? theme.primary : theme.textSecondary,
@@ -352,7 +332,7 @@ const TodoGroup = ({
               {group.completed && (
                 <Ionicons 
                   name="checkmark" 
-                  size={scaleWidth(14)} 
+                  size={14} 
                   color="#FFFFFF" 
                 />
               )}
@@ -362,12 +342,12 @@ const TodoGroup = ({
           {/* Group Title */}
           <Text 
             style={[
-              styles.groupTitle, 
+              localStyles.groupTitle, 
               { 
                 color: theme.text,
                 textDecorationLine: group.completed ? 'line-through' : 'none',
                 opacity: group.completed ? 0.7 : 1,
-                fontWeight: '600'  // Slightly bolder for better visibility
+                fontWeight: '600'
               }
             ]}
             numberOfLines={1}
@@ -378,7 +358,7 @@ const TodoGroup = ({
           
           {/* Task Counter Badge */}
           <View style={[
-            styles.taskCountBadge,
+            localStyles.taskCountBadge,
             {
               backgroundColor: group.completed ? 
                 `${theme.primary}15` : // 15% opacity if completed
@@ -390,7 +370,7 @@ const TodoGroup = ({
           ]}>
             <Text 
               style={[
-                styles.taskCountText,
+                localStyles.taskCountText,
                 { 
                   color: theme.primary,
                   fontWeight: '600'
@@ -402,9 +382,9 @@ const TodoGroup = ({
             </Text>
           </View>
           
-          {/* Add Subtask Button - Now visually hidden but accessible */}
+          {/* Add Subtask Button */}
           <TouchableOpacity
-            style={styles.addSubtaskButton}
+            style={localStyles.addSubtaskButton}
             onPress={handleAddSubtask}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             disabled={addingSubtask}
@@ -414,10 +394,9 @@ const TodoGroup = ({
             accessibilityHint="Opens input to add a new subtask to this group"
           >
             <Ionicons 
-              name={addingSubtask ? "close-outline" : "add-outline"} 
-              size={scaleWidth(20)} 
+              name="add-outline" 
+              size={20} 
               color={theme.textSecondary} 
-              style={{ opacity: 0 }} // Make it invisible but keep accessible
             />
           </TouchableOpacity>
           
@@ -427,94 +406,33 @@ const TodoGroup = ({
           }}>
             <Ionicons 
               name="chevron-forward" 
-              size={scaleWidth(20)} 
+              size={20} 
               color={theme.textSecondary} 
             />
           </Animated.View>
         </TouchableOpacity>
       </Swipeable>
       
-      {/* Subtask Input (Visible when adding) */}
+      {/* Subtask Input Modal (using our optimized component) */}
       {addingSubtask && (
-        <Animated.View 
-          style={[
-            styles.subtaskInputContainer,
-            {
-              backgroundColor: theme.card,
-              borderColor: `${theme.primary}30`,
-              transform: [{ translateX: shakeAnim }]
-            }
-          ]}
-        >
-          <TextInput
-            style={[styles.subtaskInput, { color: theme.text }]}
-            placeholder="Add a subtask..."
-            placeholderTextColor={theme.textSecondary}
-            value={newSubtaskText}
-            onChangeText={setNewSubtaskText}
-            autoFocus={true}
-            returnKeyType="done"
-            onSubmitEditing={submitSubtask}
-            maxFontSizeMultiplier={1.3}
-            autoCorrect={false}
-            spellCheck={false}
-          />
-          <View style={styles.subtaskButtons}>
-            <TouchableOpacity
-              style={[styles.subtaskButton, { marginRight: spacing.xs }]}
-              onPress={cancelAddSubtask}
-              accessible={true}
-              accessibilityRole="button"
-              accessibilityLabel="Cancel"
-              accessibilityHint="Cancel adding a subtask"
-            >
-              <Text style={[styles.subtaskButtonText, { color: theme.textSecondary }]}>
-                Cancel
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.subtaskButton, 
-                { 
-                  backgroundColor: theme.primary,
-                  opacity: newSubtaskText.trim() ? 1 : 0.7
-                }
-              ]}
-              onPress={submitSubtask}
-              disabled={!newSubtaskText.trim()}
-              accessible={true}
-              accessibilityRole="button"
-              accessibilityLabel="Add"
-              accessibilityHint="Add the subtask"
-              accessibilityState={{ disabled: !newSubtaskText.trim() }}
-            >
-              <Text style={[styles.subtaskButtonText, { color: '#FFFFFF' }]}>
-                Add
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </Animated.View>
+        <SubtaskInputModal
+          onAddSubtask={submitSubtask}
+          onCancel={cancelAddSubtask}
+          theme={theme}
+          groupId={group.id}
+          activeTab={activeTab}
+          parentGroupName={group.title}
+        />
       )}
       
-      {/* Group Content (Expandable) - NOW USING CONDITIONAL RENDERING WITH LAYOUT ANIMATION */}
+      {/* Group Content (Expandable) */}
       {isExpanded && childTodos.length > 0 && (
         <Animated.View style={[
-          styles.groupContent,
+          localStyles.groupContent,
           { opacity: fadeAnim }
         ]}>
-          {/* Child Todos */}
-          {childTodos.map(todo => (
-            <TodoItem
-              key={todo.id}
-              item={todo}
-              onToggle={() => onToggle && onToggle(todo.id)}
-              onDelete={() => onDelete && onDelete(todo.id, true)}
-              onLongPress={() => onLongPress && onLongPress(todo)}
-              theme={theme}
-              isSubtask={true}
-              parentCompleted={group.completed}
-            />
-          ))}
+          {/* Child Todos - Use memoized renderer */}
+          {renderChildTodos()}
         </Animated.View>
       )}
       
@@ -522,7 +440,7 @@ const TodoGroup = ({
       {isExpanded && childTodos.length === 0 && !addingSubtask && (
         <TouchableOpacity
           style={[
-            styles.emptyGroupAddButton,
+            localStyles.emptyGroupAddButton,
             { 
               borderColor: `${theme.primary}30`, // 30% opacity for dashed border
               backgroundColor: `${theme.primary}05` // 5% opacity for very subtle background
@@ -536,11 +454,11 @@ const TodoGroup = ({
         >
           <Ionicons 
             name="add-outline" 
-            size={scaleWidth(18)} 
+            size={18} 
             color={theme.primary} 
           />
           <Text style={[
-            styles.emptyGroupAddText, 
+            localStyles.emptyGroupAddText, 
             { color: theme.primary }
           ]}>
             Add first task
@@ -552,7 +470,7 @@ const TodoGroup = ({
       {isExpanded && childTodos.length > 0 && !addingSubtask && (
         <TouchableOpacity
           style={[
-            styles.addTaskButton,
+            localStyles.addTaskButton,
             { borderColor: `${theme.primary}20` }
           ]}
           onPress={handleAddSubtask}
@@ -563,113 +481,80 @@ const TodoGroup = ({
         >
           <Ionicons 
             name="add" 
-            size={scaleWidth(16)} 
+            size={16} 
             color={theme.primary} 
-            style={{ marginRight: spacing.xxs }}
+            style={{ marginRight: 4 }}
           />
           <Text style={[
-            styles.addTaskText, 
+            localStyles.addTaskText, 
             { color: theme.primary }
           ]}>
             Add task
           </Text>
         </TouchableOpacity>
       )}
-    </View>
+    </Animated.View>
   );
-};
+});
 
-const styles = StyleSheet.create({
+const localStyles = StyleSheet.create({
   groupContainer: {
-    marginBottom: scaleHeight(12),
+    marginBottom: 12,
   },
   swipeContainer: {
-    borderRadius: scaleWidth(12),
+    borderRadius: 12,
     overflow: 'hidden'
   },
   groupHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: spacing.m,
-    borderRadius: scaleWidth(12),
+    padding: 16,
+    borderRadius: 12,
     borderWidth: 1,
-    minHeight: accessibility.minTouchTarget,
+    minHeight: 44, // Ensure minimum touch target height
   },
   checkbox: {
-    marginRight: spacing.s,
-    padding: spacing.xxs, // Added padding for touch target
+    marginRight: 12,
+    padding: 2, // Added padding for touch target
   },
   checkboxInner: {
-    width: scaleWidth(22),
-    height: scaleWidth(22),
-    borderRadius: scaleWidth(4),
+    width: 22,
+    height: 22,
+    borderRadius: 4,
     borderWidth: 2,
     justifyContent: 'center',
     alignItems: 'center',
   },
   groupTitle: {
     flex: 1,
-    fontSize: fontSizes.m,
+    fontSize: 16,
     fontWeight: '500',
   },
   // Task counter badge styles
   taskCountBadge: {
-    paddingHorizontal: spacing.s,
-    paddingVertical: spacing.xxs,
-    borderRadius: scaleWidth(12),
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
     borderWidth: 1,
-    marginRight: spacing.xs,
-    minWidth: scaleWidth(40),
+    marginRight: 8,
+    minWidth: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
   taskCountText: {
-    fontSize: fontSizes.s,
+    fontSize: 12,
   },
-  // Hide the add subtask button visually but keep it accessible
+  // Add subtask button - visible unlike original
   addSubtaskButton: {
-    marginHorizontal: spacing.xs,
-    width: 1,
-    height: 1,
-    overflow: 'hidden',
-    opacity: 0,
+    padding: 8,
+    marginHorizontal: 4,
   },
   groupContent: {
-    paddingLeft: scaleWidth(30), // Indent for subtasks
-    marginTop: spacing.xs,
-  },
-  subtaskInputContainer: {
-    marginTop: spacing.xs,
-    marginBottom: spacing.xs,
-    marginLeft: scaleWidth(30), // Match the indent
-    padding: spacing.s,
-    borderRadius: scaleWidth(12),
-    borderWidth: 1,
-  },
-  subtaskInput: {
-    fontSize: fontSizes.m,
-    padding: spacing.xs,
-  },
-  subtaskButtons: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: spacing.xs,
-  },
-  subtaskButton: {
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.m,
-    borderRadius: scaleWidth(8),
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: accessibility.minTouchTarget * 0.8,
-    minWidth: scaleWidth(60),
-  },
-  subtaskButtonText: {
-    fontSize: fontSizes.s,
-    fontWeight: '500',
+    paddingLeft: 30, // Indent for subtasks
+    marginTop: 8,
   },
   swipeActionsContainer: {
-    width: scaleWidth(100),
+    width: 100,
     flexDirection: 'row',
   },
   deleteAction: {
@@ -685,45 +570,45 @@ const styles = StyleSheet.create({
   },
   actionText: {
     color: '#FFFFFF',
-    fontSize: fontSizes.xs,
-    marginTop: spacing.xxs,
+    fontSize: 12,
+    marginTop: 4,
   },
   // Empty group add button
   emptyGroupAddButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: scaleWidth(30), // Match indent
-    marginTop: spacing.xs,
-    marginBottom: spacing.s,
-    paddingVertical: spacing.s,
-    borderRadius: scaleWidth(8),
+    marginLeft: 30, // Match indent
+    marginTop: 8,
+    marginBottom: 8,
+    paddingVertical: 12,
+    borderRadius: 8,
     borderWidth: 1,
     borderStyle: 'dashed',
   },
   emptyGroupAddText: {
-    fontSize: fontSizes.s,
-    marginLeft: spacing.xxs,
+    fontSize: 14,
+    marginLeft: 4,
     fontWeight: '500',
   },
   // Add task button at the end of tasks list
   addTaskButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: scaleWidth(30), // Match indent
-    marginTop: spacing.xs,
-    marginBottom: spacing.s,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.s,
-    borderRadius: scaleWidth(8),
+    marginLeft: 30, // Match indent
+    marginTop: 8,
+    marginBottom: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
     borderWidth: 1,
     borderStyle: 'dashed',
     alignSelf: 'flex-start', // Only take up as much space as needed
   },
   addTaskText: {
-    fontSize: fontSizes.xs,
+    fontSize: 12,
     fontWeight: '500',
   },
 });
 
-export default React.memo(TodoGroup);
+export default TodoGroup;

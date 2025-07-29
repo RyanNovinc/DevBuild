@@ -1,24 +1,27 @@
 // src/screens/TodoListScreen/components/TabInputComponent.js
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   Animated,
   Keyboard,
   StyleSheet,
-  Dimensions
+  Dimensions,
+  InteractionManager
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+
+// Import StableInput to prevent keyboard flashing
+import StableInput from './StableInput';
 
 const { width } = Dimensions.get('window');
 
 /**
  * A reusable component for adding todos or groups with a tab-based interface
- * This replaces the current input toggle in the tab files
+ * Optimized to fix keyboard flashing issues and handle empty inputs properly
  */
-const TabInputComponent = ({
+const TabInputComponent = memo(({
   theme,
   todoText,
   setTodoText,
@@ -26,20 +29,25 @@ const TabInputComponent = ({
   setGroupText,
   onAddTodo,
   onAddGroup,
-  tabName = 'today' // 'today', 'tomorrow', or 'later'
+  tabName = 'today', // 'today', 'tomorrow', or 'later'
+  updateInputFocus = null, // Prop to track input focus
+  isTabSwitching = false // Prop to prevent UI updates during tab switching
 }) => {
   // State for tracking which input mode is active
   const [activeTab, setActiveTab] = useState('todo'); // 'todo' or 'group'
   
+  // State to track local input focus
+  const [isLocalInputFocused, setIsLocalInputFocused] = useState(false);
+  
   // Animation value for the tab indicator
   const tabIndicatorPosition = useRef(new Animated.Value(0)).current;
   
-  // Input refs for focusing
+  // Input refs for focusing and data access
   const todoInputRef = useRef(null);
   const groupInputRef = useRef(null);
   
-  // Calculate placeholder text based on tab name
-  const getPlaceholderText = () => {
+  // Memoized placeholder text based on tab name
+  const getPlaceholderText = useCallback(() => {
     if (activeTab === 'todo') {
       switch (tabName) {
         case 'today':
@@ -54,7 +62,7 @@ const TabInputComponent = ({
     } else {
       return 'Create a new group...';
     }
-  };
+  }, [activeTab, tabName]);
   
   // Animate tab indicator when active tab changes
   useEffect(() => {
@@ -65,50 +73,105 @@ const TabInputComponent = ({
       useNativeDriver: false
     }).start();
     
-    // Focus the appropriate input after switching tabs
-    setTimeout(() => {
-      if (activeTab === 'todo' && todoInputRef.current) {
-        todoInputRef.current.focus();
-      } else if (activeTab === 'group' && groupInputRef.current) {
-        groupInputRef.current.focus();
-      }
-    }, 100);
-  }, [activeTab]);
+    // Only try to focus if we're not in the middle of a tab switch
+    if (!isTabSwitching) {
+      // Focus the appropriate input after switching tabs
+      // Using a longer timeout to avoid keyboard flickering
+      const focusTimer = setTimeout(() => {
+        if (activeTab === 'todo' && todoInputRef.current) {
+          todoInputRef.current.focus();
+          setIsLocalInputFocused(true);
+          if (updateInputFocus) updateInputFocus(true);
+        } else if (activeTab === 'group' && groupInputRef.current) {
+          groupInputRef.current.focus();
+          setIsLocalInputFocused(true);
+          if (updateInputFocus) updateInputFocus(true);
+        }
+      }, 300);
+      
+      return () => {
+        clearTimeout(focusTimer);
+      };
+    }
+  }, [activeTab, isTabSwitching, updateInputFocus, tabIndicatorPosition]);
   
-  // Handle adding an item based on the active tab
-  const handleAddItem = () => {
-    if (activeTab === 'todo') {
-      if (todoText.trim()) {
-        // Store the current value before clearing
-        const text = todoText.trim();
-        
-        // Clear input immediately to prevent autocorrect issues
-        setTodoText('');
-        
-        // Add the todo
-        onAddTodo(tabName, null, text);
-      }
-    } else {
-      if (groupText.trim()) {
-        // Store the current value before clearing
-        const text = groupText.trim();
-        
-        // Clear input immediately to prevent autocorrect issues
-        setGroupText('');
-        
-        // Add the group
-        onAddGroup(tabName, text);
-      }
+  // Handle adding item with optimized keyboard handling
+  const handleAddItem = useCallback(() => {
+    // Get active input ref
+    const activeInputRef = activeTab === 'todo' ? todoInputRef : groupInputRef;
+    
+    // Get text from ref - prevents state updates during keyboard handling
+    let currentText = '';
+    if (activeInputRef.current && activeInputRef.current.getValue) {
+      currentText = activeInputRef.current.getValue().trim();
     }
     
-    // Dismiss keyboard
-    Keyboard.dismiss();
-  };
+    if (!currentText) return;
+    
+    // Clear input field immediately to prevent autocorrect issues
+    if (activeInputRef.current && activeInputRef.current.clearText) {
+      activeInputRef.current.clearText();
+    }
+    
+    // Use InteractionManager to defer the state update
+    InteractionManager.runAfterInteractions(() => {
+      if (activeTab === 'todo') {
+        // Add the todo with the stored value
+        onAddTodo(tabName, null, currentText);
+      } else {
+        // Add the group with the stored value
+        onAddGroup(tabName, currentText);
+      }
+      
+      // Re-focus the input to keep keyboard open
+      setTimeout(() => {
+        if (activeInputRef.current) {
+          activeInputRef.current.focus();
+        }
+      }, 50);
+    });
+  }, [activeTab, tabName, onAddTodo, onAddGroup]);
   
-  // Handle input submission
-  const handleSubmitEditing = () => {
-    handleAddItem();
-  };
+  // Handle input submission - pass text from StableInput
+  const handleSubmitEditing = useCallback((text) => {
+    if (text && text.trim()) {
+      handleAddItem();
+    }
+    // If empty, do nothing to prevent keyboard flashing
+  }, [handleAddItem]);
+  
+  // Handle tab switch with improved keyboard handling
+  const handleTabSwitch = useCallback((tab) => {
+    if (tab === activeTab) return;
+    
+    // Dismiss keyboard first to prevent flashing
+    Keyboard.dismiss();
+    
+    // Short delay before changing tab
+    setTimeout(() => {
+      setActiveTab(tab);
+    }, 50);
+  }, [activeTab]);
+  
+  // Handle input focus
+  const handleInputFocus = useCallback(() => {
+    setIsLocalInputFocused(true);
+    if (updateInputFocus) updateInputFocus(true);
+  }, [updateInputFocus]);
+  
+  // Handle input blur
+  const handleInputBlur = useCallback(() => {
+    // Short delay to check if the other input gets focus
+    setTimeout(() => {
+      const isTodoFocused = todoInputRef.current?.isFocused?.();
+      const isGroupFocused = groupInputRef.current?.isFocused?.();
+      
+      if (!isTodoFocused && !isGroupFocused) {
+        setIsLocalInputFocused(false);
+        if (updateInputFocus) updateInputFocus(false);
+      }
+    }, 50);
+  }, [updateInputFocus]);
   
   return (
     <View style={styles.container}>
@@ -128,8 +191,12 @@ const TabInputComponent = ({
         {/* Todo Tab */}
         <TouchableOpacity 
           style={styles.tab}
-          onPress={() => setActiveTab('todo')}
+          onPress={() => handleTabSwitch('todo')}
           activeOpacity={0.7}
+          accessible={true}
+          accessibilityRole="tab"
+          accessibilityLabel="Add todo tab"
+          accessibilityState={{ selected: activeTab === 'todo' }}
         >
           <Ionicons 
             name="checkbox-outline" 
@@ -152,8 +219,12 @@ const TabInputComponent = ({
         {/* Group Tab */}
         <TouchableOpacity 
           style={styles.tab}
-          onPress={() => setActiveTab('group')}
+          onPress={() => handleTabSwitch('group')}
           activeOpacity={0.7}
+          accessible={true}
+          accessibilityRole="tab"
+          accessibilityLabel="Add group tab"
+          accessibilityState={{ selected: activeTab === 'group' }}
         >
           <Ionicons 
             name="folder-outline" 
@@ -175,7 +246,10 @@ const TabInputComponent = ({
       </View>
       
       {/* Input Container */}
-      <View style={[styles.inputContainer, { backgroundColor: theme.card, borderColor: theme.border }]}>
+      <View style={[
+        styles.inputContainer, 
+        { backgroundColor: theme.card, borderColor: theme.border }
+      ]}>
         {/* Icon based on active tab */}
         <Ionicons 
           name={activeTab === 'todo' ? "checkbox-outline" : "folder-outline"} 
@@ -184,42 +258,42 @@ const TabInputComponent = ({
           style={styles.inputIcon}
         />
         
-        {/* Dynamic Input Field */}
+        {/* Dynamic Input Field - Using StableInput to prevent keyboard flashing */}
         {activeTab === 'todo' ? (
-          <TextInput
-            ref={todoInputRef}
-            style={[styles.input, { color: theme.text }]}
+          <StableInput
+            inputRef={todoInputRef}
             placeholder={getPlaceholderText()}
             placeholderTextColor={theme.textSecondary}
-            value={todoText}
-            onChangeText={setTodoText}
+            textColor={theme.text}
+            initialValue={todoText}
             onSubmitEditing={handleSubmitEditing}
-            returnKeyType="done"
-            autoCorrect={false}
-            autoCapitalize="none"
-            spellCheck={false}
+            onFocus={handleInputFocus}
+            onBlur={handleInputBlur}
           />
         ) : (
-          <TextInput
-            ref={groupInputRef}
-            style={[styles.input, { color: theme.text }]}
+          <StableInput
+            inputRef={groupInputRef}
             placeholder={getPlaceholderText()}
             placeholderTextColor={theme.textSecondary}
-            value={groupText}
-            onChangeText={setGroupText}
+            textColor={theme.text}
+            initialValue={groupText}
             onSubmitEditing={handleSubmitEditing}
-            returnKeyType="done"
-            autoCorrect={false}
-            autoCapitalize="none"
-            spellCheck={false}
+            onFocus={handleInputFocus}
+            onBlur={handleInputBlur}
           />
         )}
         
         {/* Add Button */}
         <TouchableOpacity
-          style={[styles.addButton, { backgroundColor: theme.primary }]}
+          style={[
+            styles.addButton, 
+            { backgroundColor: theme.primary }
+          ]}
           onPress={handleAddItem}
           activeOpacity={0.7}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={activeTab === 'todo' ? "Add to-do" : "Create group"}
         >
           <Text style={styles.addButtonText}>
             {activeTab === 'todo' ? 'Add' : 'Create'}
@@ -235,7 +309,7 @@ const TabInputComponent = ({
       </Text>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -253,6 +327,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 12,
+    minHeight: 44, // Ensure minimum height for touch target
   },
   tabText: {
     fontSize: 14,
@@ -284,12 +359,6 @@ const styles = StyleSheet.create({
     marginRight: 8,
     padding: 2,
   },
-  input: {
-    flex: 1,
-    height: 48,
-    fontSize: 16,
-    paddingVertical: 8,
-  },
   addButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -297,6 +366,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 8,
+    minHeight: 36, // Ensure minimum height for touch target
   },
   addButtonText: {
     fontWeight: '600',

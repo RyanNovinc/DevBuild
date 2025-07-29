@@ -34,7 +34,8 @@ import {
 } from '../../../../utils/responsive';
 
 /**
- * TomorrowTab component with improved input handling and simplified confirmation dialog
+ * TomorrowTab component with improved input handling and consistent layout structure
+ * to prevent keyboard flickering
  */
 const TomorrowTab = ({
   todos: todosFromProps,
@@ -494,6 +495,7 @@ const TomorrowTab = ({
                 accessible={true}
                 accessibilityLabel="New to-do for tomorrow input"
                 accessibilityHint="Enter text for a new to-do item for tomorrow"
+                blurOnSubmit={false} // Prevent keyboard dismissal
               />
             ) : (
               <TextInput
@@ -540,6 +542,7 @@ const TomorrowTab = ({
                 accessible={true}
                 accessibilityLabel="New group input"
                 accessibilityHint="Enter text for a new group"
+                blurOnSubmit={false} // Prevent keyboard dismissal
               />
             )}
             
@@ -584,40 +587,44 @@ const TomorrowTab = ({
         </View>
       </TouchableWithoutFeedback>
       
-      {/* Todo List */}
-      {topLevelItems.length > 0 ? (
-        <ScrollView 
-          style={styles.todoList}
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{ 
-            paddingBottom: scaleHeight(140),
-            paddingHorizontal: isSmallDevice ? spacing.xxs : spacing.xs,
-          }} // Extra padding for bottom buttons
-        >
-          {/* Sort by priority numbers first, then groups, then non-group items */}
-          {sortItemsByPriority(tomorrowTodos).map(item => renderTodoItem(item))}
-          
-          {/* Add padding at the bottom for better scrolling */}
-          <View style={{ height: scaleHeight(120) }} />
-        </ScrollView>
-      ) : (
-        <View style={[
-          styles.emptyState,
-          {
-            paddingHorizontal: spacing.m,
-            paddingTop: scaleHeight(40),
-          }
-        ]}>
-          <EmptyState
-            title="Plan for Tomorrow"
-            message="Stay ahead by planning tomorrow's tasks today. Use numbers like '1. Priority Task' or '2.1 Subtask' to order them."
-            icon="calendar"
-            iconColor={theme.primary}
-            theme={theme}
-            illustration={<EmptyTodoIllustration theme={theme} />}
-          />
-        </View>
-      )}
+      {/* Todo List - ALWAYS USE SCROLLVIEW FOR CONSISTENT LAYOUT */}
+      <ScrollView 
+        style={styles.todoList}
+        keyboardShouldPersistTaps="always" // Changed from "handled" to "always"
+        maintainVisibleContentPosition={{ // Add this to prevent layout shifts
+          minIndexForVisible: 0,
+          autoscrollToTopThreshold: 100,
+        }}
+        contentContainerStyle={{ 
+          flexGrow: 1, // Makes content expand to fill space
+          paddingBottom: scaleHeight(140),
+          paddingHorizontal: isSmallDevice ? spacing.xxs : spacing.xs,
+          minHeight: scaleHeight(300), // Ensure minimum height to maintain layout
+        }}
+      >
+        {topLevelItems.length > 0 ? (
+          // Render todo items when there are items
+          sortItemsByPriority(tomorrowTodos).map(item => renderTodoItem(item))
+        ) : (
+          // Render empty state within the ScrollView
+          <View style={[
+            localStyles.emptyStateContainer, 
+            { height: scaleHeight(400) } // Fixed height to prevent layout shifts
+          ]}>
+            <EmptyState
+              title="Plan for Tomorrow"
+              message="Stay ahead by planning tomorrow's tasks today. Use numbers like '1. Priority Task' or '2.1 Subtask' to order them."
+              icon="calendar"
+              iconColor={theme.primary}
+              theme={theme}
+              illustration={<EmptyTodoIllustration theme={theme} />}
+            />
+          </View>
+        )}
+        
+        {/* Add padding at the bottom for better scrolling */}
+        <View style={{ height: scaleHeight(120) }} />
+      </ScrollView>
       
       {/* No bottom buttons here - they're now in TodoButtonOverlay component */}
     </View>
@@ -629,6 +636,13 @@ const localStyles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: spacing.xs,
+  },
+  emptyStateContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: scaleHeight(40),
+    paddingHorizontal: spacing.m,
   },
 });
 

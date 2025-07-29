@@ -116,11 +116,11 @@ const TodoTab = (props) => {
       <KeyboardAwareScrollView
         contentContainerStyle={{ flexGrow: 1 }}
         keyboardShouldPersistTaps="handled"
-        enableOnAndroid={false}
+        enableOnAndroid={true} // Changed to true for better keyboard handling
         enableResetScrollToCoords={false}
         keyboardOpeningTime={0}
-        extraHeight={Platform.OS === 'ios' ? scaleHeight(130) : 0}
-        extraScrollHeight={Platform.OS === 'ios' ? scaleHeight(30) : 0}
+        extraHeight={Platform.OS === 'ios' ? scaleHeight(130) : scaleHeight(100)} // Added for Android
+        extraScrollHeight={Platform.OS === 'ios' ? scaleHeight(30) : scaleHeight(20)} // Added for Android
         style={{ backgroundColor: theme.background, flex: 1 }}
       >
         <Animated.View 
@@ -129,7 +129,6 @@ const TodoTab = (props) => {
             {
               opacity: contentOpacity,
               flex: 1,
-              
             }
           ]}
         >
@@ -193,11 +192,11 @@ const NotesTab = (props) => {
       <KeyboardAwareScrollView
         contentContainerStyle={{ flexGrow: 1 }}
         keyboardShouldPersistTaps="handled"
-        enableOnAndroid={false}
+        enableOnAndroid={true} // Changed to true
         enableResetScrollToCoords={false}
         keyboardOpeningTime={0}
-        extraHeight={Platform.OS === 'ios' ? scaleHeight(130) : 0}
-        extraScrollHeight={Platform.OS === 'ios' ? scaleHeight(30) : 0}
+        extraHeight={Platform.OS === 'ios' ? scaleHeight(130) : scaleHeight(100)} // Added for Android
+        extraScrollHeight={Platform.OS === 'ios' ? scaleHeight(30) : scaleHeight(20)} // Added for Android
         style={{ backgroundColor: theme.background, flex: 1 }}
       >
         <Animated.View 
@@ -277,6 +276,10 @@ const TodoListScreen = () => {
   const [keyboardShowing, setKeyboardShowing] = useState(false);
   const [isAddingSubtask, setIsAddingSubtask] = useState(false);
   
+  // Add state for tracking UI interactions to prevent flashing
+  const [isTabSwitching, setIsTabSwitching] = useState(false);
+  const [isInputFocused, setIsInputFocused] = useState(false);
+  
   // Add state for upgrade modal (similar to IncomeTab)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [upgradeMessage, setUpgradeMessage] = useState('');
@@ -307,15 +310,43 @@ const TodoListScreen = () => {
   
   // Track tab change
   const handleTabChange = (tabName) => {
-    setMainActiveTab(tabName);
-    
-    // Update route params at the ROOT tab navigator level
-    const currentView = tabName === 'TODO' ? 'todo' : 'notes';
-    
-    // Get the parent navigator
-    const rootNavigation = navigation.getParent();
-    if (rootNavigation) {
-      rootNavigation.setParams({ currentView });
+    // Prevent keyboard flashing during tab change
+    if (isKeyboardVisible || keyboardShowing) {
+      Keyboard.dismiss();
+      
+      // Use a flag to prevent re-renders during tab switch
+      setIsTabSwitching(true);
+      
+      // Delay tab change until keyboard is fully hidden
+      setTimeout(() => {
+        setMainActiveTab(tabName);
+        
+        // Update route params at the ROOT tab navigator level
+        const currentView = tabName === 'TODO' ? 'todo' : 'notes';
+        
+        // Get the parent navigator
+        const rootNavigation = navigation.getParent();
+        if (rootNavigation) {
+          rootNavigation.setParams({ currentView });
+        }
+        
+        // Reset tab switching flag after a delay
+        setTimeout(() => {
+          setIsTabSwitching(false);
+        }, 300);
+      }, 100);
+    } else {
+      // If keyboard not showing, switch tabs immediately
+      setMainActiveTab(tabName);
+      
+      // Update route params at the ROOT tab navigator level
+      const currentView = tabName === 'TODO' ? 'todo' : 'notes';
+      
+      // Get the parent navigator
+      const rootNavigation = navigation.getParent();
+      if (rootNavigation) {
+        rootNavigation.setParams({ currentView });
+      }
     }
   };
 
@@ -346,46 +377,83 @@ const TodoListScreen = () => {
     }, [showFullScreenNote, isEditing])
   );
   
-  // Add keyboard event listeners
+  // ----------------
+  // COMPLETELY REWRITTEN KEYBOARD HANDLING - FIX FOR FLASHING ISSUE
+  // ----------------
   useEffect(() => {
+    // Keep track of whether a keyboard event is in progress
+    let isKeyboardEventInProgress = false;
+    
+    // Create a debounced keyboard visibility setter
+    const setKeyboardVisibleState = (isVisible) => {
+      // If switching tabs, don't update keyboard state
+      if (isTabSwitching) return;
+      
+      // Set the keyboard state
+      setIsKeyboardVisible(isVisible);
+      setKeyboardShowing(isVisible);
+      
+      // Animate button opacity based on keyboard visibility
+      Animated.timing(fadeAnim, {
+        toValue: isVisible ? 0 : 1,
+        duration: isVisible ? 100 : 250, // Faster hiding, slower showing
+        useNativeDriver: true,
+      }).start();
+    };
+    
+    // Show keyboard handler - shows immediately
+    const keyboardDidShowHandler = () => {
+      if (isKeyboardEventInProgress) return;
+      isKeyboardEventInProgress = true;
+      
+      // Set immediately
+      setKeyboardVisibleState(true);
+      
+      // Reset flag after a delay
+      setTimeout(() => {
+        isKeyboardEventInProgress = false;
+      }, 300);
+    };
+    
+    // Hide keyboard handler - uses delay to prevent flashing
+    const keyboardDidHideHandler = () => {
+      if (isKeyboardEventInProgress) return;
+      isKeyboardEventInProgress = true;
+      
+      // Only update state if an input isn't focused
+      if (!isInputFocused) {
+        // Add a small delay to prevent UI flicker when refocusing inputs
+        setTimeout(() => {
+          // Double-check we're still not focusing an input
+          if (!isInputFocused) {
+            setKeyboardVisibleState(false);
+          }
+        }, 150);
+      }
+      
+      // Reset flag after a delay
+      setTimeout(() => {
+        isKeyboardEventInProgress = false;
+      }, 300);
+    };
+    
+    // Set up the event listeners
     const keyboardDidShowListener = Keyboard.addListener(
       'keyboardDidShow',
-      () => {
-        setIsKeyboardVisible(true);
-        setKeyboardShowing(true);
-        
-        // Fade out floating buttons when keyboard shows
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: true,
-        }).start();
-      }
+      keyboardDidShowHandler
     );
     
     const keyboardDidHideListener = Keyboard.addListener(
       'keyboardDidHide',
-      () => {
-        // Add a small delay to prevent UI flicker
-        setTimeout(() => {
-          setIsKeyboardVisible(false);
-          setKeyboardShowing(false);
-          
-          // Fade in floating buttons when keyboard hides
-          Animated.timing(fadeAnim, {
-            toValue: 1,
-            duration: 250,
-            useNativeDriver: true,
-          }).start();
-        }, 100);
-      }
+      keyboardDidHideHandler
     );
-
+    
+    // Clean up on unmount
     return () => {
       keyboardDidShowListener.remove();
       keyboardDidHideListener.remove();
     };
-  }, []);
+  }, [isInputFocused, isTabSwitching]); // Dependencies include input focus state
 
   // Update StatusBar based on theme
   useEffect(() => {
@@ -480,32 +548,76 @@ const TodoListScreen = () => {
   const handleSubTabChange = (tab) => {
     if (tab === activeTab) return;
     
-    // Calculate the indicator position based on the tab index
-    const tabIndex = tab === 'today' ? 0 : tab === 'tomorrow' ? 1 : 2;
-    
-    // Animate tab indicator and content
-    Animated.parallel([
-      Animated.timing(tabIndicatorPosition, {
-        toValue: tabIndex,
-        duration: 250,
-        useNativeDriver: false,
-      }),
-      Animated.sequence([
-        Animated.timing(contentOpacity, {
-          toValue: 0,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-        Animated.timing(contentOpacity, {
-          toValue: 1,
+    // Dismiss keyboard to prevent flashing
+    if (isKeyboardVisible || keyboardShowing) {
+      Keyboard.dismiss();
+      
+      // Set tab switching flag
+      setIsTabSwitching(true);
+      
+      // Wait for keyboard to fully dismiss
+      setTimeout(() => {
+        // Now proceed with tab change
+        // Calculate the indicator position based on the tab index
+        const tabIndex = tab === 'today' ? 0 : tab === 'tomorrow' ? 1 : 2;
+        
+        // Animate tab indicator and content
+        Animated.parallel([
+          Animated.timing(tabIndicatorPosition, {
+            toValue: tabIndex,
+            duration: 250,
+            useNativeDriver: false,
+          }),
+          Animated.sequence([
+            Animated.timing(contentOpacity, {
+              toValue: 0,
+              duration: 150,
+              useNativeDriver: true,
+            }),
+            Animated.timing(contentOpacity, {
+              toValue: 1,
+              duration: 250,
+              useNativeDriver: true,
+            })
+          ])
+        ]).start();
+        
+        // Update the active tab
+        setActiveTab(tab);
+        
+        // Reset tab switching flag
+        setTimeout(() => {
+          setIsTabSwitching(false);
+        }, 300);
+      }, 100);
+    } else {
+      // If keyboard not showing, switch tabs immediately
+      const tabIndex = tab === 'today' ? 0 : tab === 'tomorrow' ? 1 : 2;
+      
+      // Animate tab indicator and content
+      Animated.parallel([
+        Animated.timing(tabIndicatorPosition, {
+          toValue: tabIndex,
           duration: 250,
-          useNativeDriver: true,
-        })
-      ])
-    ]).start();
-    
-    // Update the active tab
-    setActiveTab(tab);
+          useNativeDriver: false,
+        }),
+        Animated.sequence([
+          Animated.timing(contentOpacity, {
+            toValue: 0,
+            duration: 150,
+            useNativeDriver: true,
+          }),
+          Animated.timing(contentOpacity, {
+            toValue: 1,
+            duration: 250,
+            useNativeDriver: true,
+          })
+        ])
+      ]).start();
+      
+      // Update the active tab
+      setActiveTab(tab);
+    }
   };
 
   // Calculate the weighted count of todos (groups count as 0.5, todos as 1)
@@ -583,6 +695,11 @@ const TodoListScreen = () => {
   const showFeatureLimitBanner = (message) => {
     // Instead of showing the banner, show the modal
     showUpgradePrompt(message);
+  };
+
+  // Update input focus tracking for better keyboard handling
+  const updateInputFocus = (isFocused) => {
+    setIsInputFocused(isFocused);
   };
 
   // Add a new todo - Modified to accept custom text and check limits
@@ -1033,7 +1150,8 @@ const TodoListScreen = () => {
     showSuccess,
     isKeyboardVisible: keyboardShowing,
     setIsAddingSubtask,
-    fadeAnim
+    fadeAnim,
+    updateInputFocus // Add this to track input focus for better keyboard handling
   };
   
   // Props for the todo screen
@@ -1068,7 +1186,9 @@ const TodoListScreen = () => {
     moveLaterItemsToTomorrow,
     isAddingSubtask,
     canAddMoreTodos,
-    showFeatureLimitBanner
+    calculateWeightedTodoCount,
+    showFeatureLimitBanner,
+    isTabSwitching // Pass this to prevent UI updates during tab switching
   };
   
   // Props for the notes screen
@@ -1099,7 +1219,8 @@ const TodoListScreen = () => {
     createNewNote,
     startEditNote,
     saveEditedNote,
-    cancelEditingNote
+    cancelEditingNote,
+    isTabSwitching // Pass this to prevent UI updates during tab switching
   };
 
   // Calculate tab bar indicator width properly for each tab

@@ -1,4 +1,4 @@
-​​{
+{
   "expo": {
     "name": "LifeCompass",
     "slug": "lifecompass",
@@ -6,10 +6,10 @@
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "backgroundColor": "#4ACAF50"
+      "backgroundColor": "#4CAF50"
     },
     "assetBundlePatterns": [
-      "*/*"
+      "**/*"
     ],
     "ios": {
       "supportsTablet": true,
@@ -17,48 +17,45 @@
         "UIBackgroundModes": [
           "remote-notification"
         ],
-        "remote-notification"
+        "NSUserNotificationsUsageDescription": "Allow notifications to be reminded of your scheduled time blocks.",
+        "SKAdNetworkItems": [
+          {
+            "SKAdNetworkIdentifier": "cstr6suwn9.skadnetwork"
+          }
+        ],
+        "NSUserTrackingUsageDescription": "This identifier will be used to deliver personalized ads to you.",
+        "ITSAppUsesNonExemptEncryption": false
       },
-      "NSUserNotificationsUsageDescription": "Allow notifications to be reminded of your scheduled time blocks.",
-      "SKAdNetworkItems": [
-        {
-          "SKAdNetworkIdentifier": "cstr6suwn9.skadnetwork"
-        },
-        {
-          "SKAdNetworkIdentifier": "cstr6suwn9.skadnetwork"
-        }
-      ],
-      "NSUserTrackingUsageDescription": "This identifier will be used to deliver personalized ads to you.",
-      "ITSAppUsesNonExemptEncryption": false,
       "bundleIdentifier": "com.lifecompass.app",
-      "jsEngine": "hermes"
-    },
-    "entitlements": {
-      "aps-environment": "development"
+      "jsEngine": "jsc",
+      "minimalIOSVersion": "16.0",
+      "entitlements": {
+        "aps-environment": "development"
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#4ACAF50"
+        "backgroundColor": "#4CAF50"
       },
       "permissions": [
         "RECEIVE_BOOT_COMPLETED",
         "VIBRATE"
       ],
       "package": "com.lifecompass.app",
-      "jsEngine": "hermes"
+      "jsEngine": "jsc"
     },
     "web": {},
     "plugins": [
       [
         "expo-notifications",
         {
-          "color": "#4ACAF50",
+          "color": "#4CAF50",
           "mode": "production"
         }
       ]
     ],
     "sdkVersion": "53.0.0",
-    "jsEngine": "hermes",
+    "jsEngine": "jsc",
     "runtimeVersion": {
       "policy": "sdkVersion"
     },

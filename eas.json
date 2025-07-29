@@ -9,12 +9,13 @@
       "distribution": "internal",
       "ios": {
         "simulator": false,
-        "resourceClass": "m-medium",
-        "buildConfiguration": "Debug"
+        "resourceClass": "m-medium"
       },
       "env": {
-        "EXPO_PUBLIC_NEW_ARCH_ENABLED": "false"
-      }
+        "EXPO_USE_HERMES": "0",
+        "RCT_NEW_ARCH_ENABLED": "0"
+      },
+      "prebuildCommand": "./eas-hooks/prebuild/fix-privacy-info.sh"
     },
     "preview": {
       "distribution": "internal"
@@ -27,4 +28,3 @@
     "production": {}
   }
 }
-

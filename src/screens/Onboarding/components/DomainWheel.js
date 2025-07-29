@@ -144,7 +144,6 @@ const DomainWheel = ({ domains, onDomainSelected, selectedDomain, onCenterButton
                   stroke="rgba(255,255,255,0.2)"
                   strokeWidth={0.5}
                   opacity={isSelected ? 1 : 0.7}
-                  onPress={() => onDomainSelected(slice.domain)}
                 />
                 
                 {/* Domain label outside wheel */}
@@ -180,7 +179,6 @@ const DomainWheel = ({ domains, onDomainSelected, selectedDomain, onCenterButton
                   fill={isSelected ? slice.domain.color : 'rgba(255,255,255,0.15)'}
                   stroke={isSelected ? '#FFFFFF' : 'rgba(255,255,255,0.3)'}
                   strokeWidth={isSelected ? 2 : 1}
-                  onPress={() => onDomainSelected(slice.domain)}
                 />
               </G>
             );
@@ -239,10 +237,10 @@ const DomainWheel = ({ domains, onDomainSelected, selectedDomain, onCenterButton
             const iconY = centerY + slice.iconY - ICON_SIZE / 2;
             
             return (
-              <TouchableOpacity
+              <View
                 key={`icon-${index}`}
                 style={[
-                  styles.iconButton,
+                  styles.iconView,
                   {
                     left: iconX,
                     top: iconY,
@@ -251,46 +249,104 @@ const DomainWheel = ({ domains, onDomainSelected, selectedDomain, onCenterButton
                     zIndex: 10
                   }
                 ]}
-                onPress={() => onDomainSelected(slice.domain)}
-                activeOpacity={0.7}
               >
                 <Ionicons 
                   name={slice.domain.icon} 
                   size={ICON_SIZE} 
                   color="#FFFFFF" 
                 />
-              </TouchableOpacity>
+              </View>
             );
           })}
         </View>
         
-        {/* Add overlay circles that respond to touch */}
-        <View style={styles.touchOverlay}>
+        {/* Create individual TouchableOpacity overlays for each segment */}
+        <View style={styles.touchableOverlays}>
           {wheelSlices.map((slice, index) => {
-            // Calculate the absolute position based on the SVG viewBox and center
             const centerX = SVG_CONTAINER_SIZE / 2;
             const centerY = SVG_CONTAINER_SIZE / 2;
+            const outerRadius = WHEEL_SIZE / 2;
             
-            // Position and size for the touch area
-            const touchRadius = 32; // Bigger than the visible circle for easier touch
-            const touchX = centerX + slice.iconX - touchRadius / 2;
-            const touchY = centerY + slice.iconY - touchRadius / 2;
+            // Calculate the pie slice vertices
+            const startAngleRad = (slice.startAngle - 90) * Math.PI / 180;
+            const endAngleRad = (slice.endAngle - 90) * Math.PI / 180;
+            const midAngleRad = (slice.midAngle - 90) * Math.PI / 180;
             
-            return (
+            // Calculate inner point
+            const innerRadius = CENTER_RADIUS + 2; // Add small offset
+            const innerX = centerX + innerRadius * Math.cos(midAngleRad);
+            const innerY = centerY + innerRadius * Math.sin(midAngleRad);
+            
+            // Calculate two outer points
+            const outerX1 = centerX + outerRadius * Math.cos(startAngleRad);
+            const outerY1 = centerY + outerRadius * Math.sin(startAngleRad);
+            const outerX2 = centerX + outerRadius * Math.cos(endAngleRad);
+            const outerY2 = centerY + outerRadius * Math.sin(endAngleRad);
+            
+            // Calculate the bounding box of these three points
+            const minX = Math.min(innerX, outerX1, outerX2);
+            const minY = Math.min(innerY, outerY1, outerY2);
+            const maxX = Math.max(innerX, outerX1, outerX2);
+            const maxY = Math.max(innerY, outerY1, outerY2);
+            
+            // Create bounding box dimensions
+            const width = maxX - minX;
+            const height = maxY - minY;
+            
+            // Create multiple touchable slices to cover the segment area better
+            const segmentTouchables = [];
+            
+            // Add main touchable area
+            segmentTouchables.push(
               <TouchableOpacity
-                key={`touch-${index}`}
+                key={`segment-${index}`}
                 style={[
-                  styles.touchCircle,
+                  styles.segmentTouch,
                   {
-                    left: touchX,
-                    top: touchY,
-                    width: touchRadius,
-                    height: touchRadius,
+                    position: 'absolute',
+                    left: minX,
+                    top: minY,
+                    width: width,
+                    height: height,
+                    // Uncomment for debugging
+                    // backgroundColor: `rgba(255,0,0,0.2)`,
                   }
                 ]}
                 onPress={() => onDomainSelected(slice.domain)}
+                activeOpacity={0.7}
               />
             );
+            
+            // Add more targeted touchable over the outer arc
+            const arcCenterX = centerX + (outerRadius * 0.7) * Math.cos(midAngleRad);
+            const arcCenterY = centerY + (outerRadius * 0.7) * Math.sin(midAngleRad);
+            const arcWidth = outerRadius * 0.6;
+            const arcHeight = outerRadius * Math.sin(slice.angle * Math.PI / 360) * 2;
+            
+            segmentTouchables.push(
+              <TouchableOpacity
+                key={`segment-arc-${index}`}
+                style={[
+                  styles.segmentTouch,
+                  {
+                    position: 'absolute',
+                    left: arcCenterX - arcWidth / 2,
+                    top: arcCenterY - arcHeight / 2,
+                    width: arcWidth,
+                    height: arcHeight,
+                    transform: [
+                      { rotate: `${slice.midAngle}deg` }
+                    ],
+                    // Uncomment for debugging
+                    // backgroundColor: `rgba(0,255,0,0.2)`,
+                  }
+                ]}
+                onPress={() => onDomainSelected(slice.domain)}
+                activeOpacity={0.7}
+              />
+            );
+            
+            return segmentTouchables;
           })}
           
           {/* Center button touch area - larger for easier tapping */}
@@ -302,6 +358,9 @@ const DomainWheel = ({ domains, onDomainSelected, selectedDomain, onCenterButton
                 top: SVG_CONTAINER_SIZE / 2 - CENTER_RADIUS - 10,
                 width: CENTER_RADIUS * 2 + 20,
                 height: CENTER_RADIUS * 2 + 20,
+                borderRadius: CENTER_RADIUS + 10,
+                // Uncomment for debugging
+                // backgroundColor: 'rgba(0,0,255,0.2)',
               }
             ]}
             onPress={handleCenterPress}
@@ -332,28 +391,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconButton: {
+  iconView: {
     position: 'absolute',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'transparent',
   },
-  touchOverlay: {
+  touchableOverlays: {
     position: 'absolute',
     top: 0,
     left: 0,
     width: '100%',
     height: '100%',
+    // Uncomment to see all touchable areas
+    // backgroundColor: 'rgba(255,255,255,0.1)',
   },
-  touchCircle: {
-    position: 'absolute',
-    borderRadius: 32, // Make it circular
-    backgroundColor: 'transparent', // Invisible but touchable
+  segmentTouch: {
+    backgroundColor: 'transparent',
+    zIndex: 5,
   },
   centerButton: {
     position: 'absolute',
-    borderRadius: 50, // Make it circular
-    backgroundColor: 'transparent', // Invisible but touchable
+    backgroundColor: 'transparent',
     zIndex: 20,
   }
 });
