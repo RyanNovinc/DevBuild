@@ -1,6 +1,6 @@
 // src/screens/PersonalKnowledgeScreen/DocumentItem.js
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Switch, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { APP_CONTEXT_DOCUMENT_ID } from '../../services/AppSummaryService';
 
@@ -12,8 +12,10 @@ import { APP_CONTEXT_DOCUMENT_ID } from '../../services/AppSummaryService';
  * @param {Function} props.onView - View document callback
  * @param {Function} props.onDelete - Delete document callback
  * @param {Object} props.responsive - Responsive styling props
+ * @param {boolean} props.appContextEnabled - Whether app context is enabled
+ * @param {Function} props.onToggleAppContext - Callback for toggling app context
  */
-const DocumentItem = ({ item, theme, onView, onDelete, responsive }) => {
+const DocumentItem = ({ item, theme, onView, onDelete, responsive, appContextEnabled, onToggleAppContext }) => {
   // Check if this is the system document
   const isSystemDocument = item.isSystemDocument === true || item.id === APP_CONTEXT_DOCUMENT_ID;
   
@@ -326,6 +328,62 @@ const DocumentItem = ({ item, theme, onView, onDelete, responsive }) => {
               {statusIndicator.text}
             </Text>
           </View>
+          
+          {/* App Context Toggle for System Document */}
+          {isSystemDocument && (
+            <View style={[styles.appContextToggleContainer, { marginTop: spacing.xs || 8 }]}>
+              <View style={styles.toggleRow}>
+                <Text 
+                  style={[
+                    styles.toggleLabel,
+                    { 
+                      color: theme.text,
+                      fontSize: responsive?.fontSize?.xs || 12,
+                      fontWeight: '500',
+                      flex: 1,
+                    }
+                  ]}
+                >
+                  Use app context with AI
+                </Text>
+                
+                <TouchableOpacity
+                  style={[styles.infoButton, { marginLeft: spacing.xxs || 4, marginRight: spacing.xs || 8 }]}
+                  onPress={() => {
+                    Alert.alert(
+                      'App Context Information',
+                      'Turning this on will give the AI knowledge about your goals, projects, and tasks in this app. This helps the AI provide more personalized and relevant responses based on your current app data.\n\nWhen enabled, the AI can reference your:\n• Goals and their progress\n• Projects and tasks\n• Time blocks and schedules\n• App settings and preferences\n\nYou can toggle this off at any time to disable app context sharing.',
+                      [{ text: 'Got It', style: 'default' }]
+                    );
+                  }}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel="App context information"
+                  accessibilityHint="Shows information about using app context with AI"
+                >
+                  <Ionicons 
+                    name="information-circle-outline" 
+                    size={16} 
+                    color={theme.textSecondary} 
+                  />
+                </TouchableOpacity>
+                
+                <Switch
+                  trackColor={{ false: theme.border, true: theme.primaryLight }}
+                  thumbColor={appContextEnabled ? theme.primary : theme.textSecondary}
+                  ios_backgroundColor={theme.border}
+                  onValueChange={onToggleAppContext}
+                  value={appContextEnabled}
+                  style={[styles.toggle, { transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }]}
+                  accessible={true}
+                  accessibilityRole="switch"
+                  accessibilityLabel="Enable app context"
+                  accessibilityState={{ checked: appContextEnabled }}
+                  accessibilityHint="Turning this on will give the AI knowledge about your goals, projects, and tasks in this app"
+                />
+              </View>
+            </View>
+          )}
         </View>
         
         {/* Only show delete button for non-system documents */}
@@ -421,6 +479,25 @@ const styles = StyleSheet.create({
   spinningIcon: {
     transform: [{ rotate: '0deg' }],
     // Note: In a real app, you would use Animated API to animate this
+  },
+  appContextToggleContainer: {
+    marginTop: 8,
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  toggleLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    flex: 1,
+  },
+  infoButton: {
+    padding: 4,
+  },
+  toggle: {
+    transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }],
   }
 });
 

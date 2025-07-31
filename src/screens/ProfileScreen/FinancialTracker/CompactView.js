@@ -38,7 +38,7 @@ const CompactView = ({ theme, data, openDetailModal }) => {
         <View style={styles.compactTitleContainer}>
           <Ionicons name="wallet-outline" size={20} color={theme.primary} style={styles.compactIcon} />
           <Text style={[styles.compactTitle, { color: theme.text }]}>
-            Financial Freedom
+            Financial Tracker
           </Text>
         </View>
         {/* "Tap for details" text removed as requested */}

@@ -1,5 +1,6 @@
 // src/services/OnboardingService.js
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { log } from '../utils/LoggerUtility';
 
 /**
  * OnboardingService - A dedicated service for reliably creating onboarding data
@@ -45,6 +46,8 @@ class OnboardingService {
       
       // 2. Create the goal with a unique ID
       const goalId = this.generateUniqueId('goal');
+      log('Error', `🎯 [OnboardingService] Created goal ID: ${goalId}`);
+      
       const newGoal = {
         id: goalId,
         title: selectedGoal.name,
@@ -75,8 +78,6 @@ class OnboardingService {
           projectGoalLinkMap[projectId] = goalId;
           
           // Create the tasks for this project
-          const projectTasks = [];
-          
           if (Array.isArray(projectTemplate.tasks)) {
             projectTemplate.tasks.forEach((taskTemplate, taskIndex) => {
               const isTaskCompleted = taskTemplate.completed || false;
@@ -96,15 +97,14 @@ class OnboardingService {
                 updatedAt: new Date().toISOString()
               };
               
-              // Add to project's tasks array
-              projectTasks.push(newTask);
-              
-              // Also add to the global tasks array for separate storage
+              // Add to the global tasks array (single storage location)
               allTasksForStorage.push(newTask);
             });
           }
           
-          // Create the project object WITH tasks included
+          // Create the project object WITHOUT embedded tasks
+          log('Error', `🎯 [OnboardingService] Creating project "${projectTemplate.name}" with goalId: ${goalId}`);
+          
           const newProject = {
             id: projectId,
             goalId: goalId,
@@ -120,9 +120,10 @@ class OnboardingService {
             domainName: selectedDomain.name,
             color: selectedDomain.color,
             icon: selectedDomain.icon,
-            order: index, // Ensure consistent ordering
-            tasks: projectTasks // IMPORTANT: Include tasks directly in the project object
+            order: index // Ensure consistent ordering
           };
+          
+          log('Error', `🎯 [OnboardingService] Created project:`, { id: newProject.id, goalId: newProject.goalId, title: newProject.title });
           
           // Add to projects array
           newProjects.push(newProject);
@@ -342,18 +343,17 @@ class OnboardingService {
         }
       }
       
-      // Verify that projects have tasks
-      let hasTasksInProjects = false;
+      // Verify that tasks exist in separate storage for these projects
+      let hasCorrectTaskStructure = false;
       if (goalProjects.length > 0) {
-        const projectsWithTasks = goalProjects.filter(p => 
-          Array.isArray(p.tasks) && p.tasks.length > 0
-        );
+        const projectIds = goalProjects.map(p => p.id);
+        const associatedTasks = tasks.filter(t => projectIds.includes(t.projectId));
         
-        hasTasksInProjects = projectsWithTasks.length > 0;
-        console.log(`OnboardingService: ${projectsWithTasks.length}/${goalProjects.length} projects have embedded tasks`);
+        hasCorrectTaskStructure = associatedTasks.length > 0;
+        console.log(`OnboardingService: Found ${associatedTasks.length} tasks associated with ${goalProjects.length} projects in tasks array`);
         
-        if (!hasTasksInProjects) {
-          console.error("OnboardingService: No projects have tasks embedded - this may cause issues");
+        if (!hasCorrectTaskStructure) {
+          console.error("OnboardingService: No tasks found in tasks array for projects - this may cause issues");
         }
       }
       
@@ -382,14 +382,14 @@ class OnboardingService {
         console.error(`OnboardingService: Task verification failed - expected ${expectedTaskCount} tasks, found ${taskCount}`);
       }
       
-      // For simplicity, consider successful if we have the goal and at least one project with tasks
-      const minimalSuccess = goalExists && goalProjects.length > 0 && hasTasksInProjects;
+      // For simplicity, consider successful if we have the goal and at least one project with tasks in tasks array
+      const minimalSuccess = goalExists && goalProjects.length > 0 && hasCorrectTaskStructure;
       
       console.log(`OnboardingService: Verification ${minimalSuccess ? 'PASSED' : 'FAILED'}`);
       console.log(`- Goal exists: ${goalExists}`);
       console.log(`- Projects: ${goalProjects.length}/${expectedProjectCount}`);
-      console.log(`- Separate tasks: ${taskCount}/${expectedTaskCount}`);
-      console.log(`- Projects have embedded tasks: ${hasTasksInProjects}`);
+      console.log(`- Tasks in tasks array: ${taskCount}/${expectedTaskCount}`);
+      console.log(`- Tasks properly linked to projects: ${hasCorrectTaskStructure}`);
       
       return minimalSuccess;
     } catch (error) {

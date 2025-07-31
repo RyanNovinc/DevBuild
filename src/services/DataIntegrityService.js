@@ -101,15 +101,7 @@ class DataIntegrityService {
       const tasksLinkedByProjectId = tasks.filter(t => linkedProjectIds.includes(t.projectId));
       log(`Found ${tasksLinkedByProjectId.length} tasks linked by projectId`);
       
-      // Method 2: Tasks embedded in projects (from onboarding)
-      let embeddedTasksCount = 0;
-      allLinkedProjects.forEach(project => {
-        if (project.tasks && Array.isArray(project.tasks)) {
-          embeddedTasksCount += project.tasks.length;
-          log(`Project "${project.title}" has ${project.tasks.length} embedded tasks`);
-        }
-      });
-      log(`Found ${embeddedTasksCount} tasks embedded in projects`);
+      // Note: No longer handling embedded tasks since we've moved to single storage
       
       // Total tasks to be affected
       const totalTasksToDelete = tasksLinkedByProjectId.length;
@@ -136,7 +128,8 @@ class DataIntegrityService {
       if (allLinkedProjects.length > 0) {
         log('Projects to be deleted:');
         allLinkedProjects.forEach((p, i) => {
-          log(`  ${i+1}. "${p.title}" (ID: ${p.id}) - ${p.tasks?.length || 0} embedded tasks`);
+          const projectTaskCount = tasks.filter(t => t.projectId === p.id).length;
+          log(`  ${i+1}. "${p.title}" (ID: ${p.id}) - ${projectTaskCount} tasks`);
         });
       }
       
@@ -488,19 +481,18 @@ class DataIntegrityService {
    * Analyzes the structure of a project to determine if it was created during onboarding
    */
   static isOnboardingCreatedProject(project) {
-    // Onboarding-created projects typically have tasks embedded directly in the project object
-    if (project.tasks && Array.isArray(project.tasks) && project.tasks.length > 0) {
+    // Check for onboarding-specific ID patterns
+    if (project.id && project.id.includes('project_')) {
       return true;
     }
     
-    // Additional checks that might indicate an onboarding-created project:
-    // 1. Created with a specific pattern in the ID
-    if (project.id && project.id.includes('project_onboarding')) {
-      return true;
-    }
-    
-    // 2. Has specific metadata fields set during onboarding
+    // Check for specific metadata fields set during onboarding
     if (project.createdDuringOnboarding || project.onboardingProject) {
+      return true;
+    }
+    
+    // Check if created with domain metadata (typical of onboarding)
+    if (project.domain && project.domainName && project.color && project.icon) {
       return true;
     }
     
@@ -542,24 +534,8 @@ class DataIntegrityService {
         }
       });
       
-      // Check if these projects have tasks both embedded and in the tasks array
+      // Note: No longer checking for duplicate tasks since we've moved to single storage
       const projectsWithDuplicateTasks = [];
-      
-      onboardingProjects.forEach(project => {
-        if (project.tasks && Array.isArray(project.tasks) && project.tasks.length > 0) {
-          // Count tasks for this project in the main tasks array
-          const externalTasks = tasks.filter(t => t.projectId === project.id);
-          
-          if (externalTasks.length > 0) {
-            projectsWithDuplicateTasks.push({
-              project: project.title,
-              id: project.id,
-              embeddedTaskCount: project.tasks.length,
-              externalTaskCount: externalTasks.length
-            });
-          }
-        }
-      });
       
       // Check for goals created during onboarding (based on having onboarding projects)
       const likelyOnboardingGoals = [];

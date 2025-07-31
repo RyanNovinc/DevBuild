@@ -454,17 +454,13 @@ const GoalsTab = ({ theme, data, handlers, navigation }) => {
 
   return (
     <ScrollView 
-      style={[styles.tabContentContainer, { 
-        paddingHorizontal: safeSpacing.left,
-        paddingRight: safeSpacing.right
-      }]} 
+      style={[styles.tabContentContainer]} 
       contentInsetAdjustmentBehavior="automatic"
     >
       {/* Financial Goals */}
       <View style={[styles.goalsCard, { 
         backgroundColor: theme.card, 
-        borderColor: theme.border,
-        marginTop: safeSpacing.top
+        borderColor: theme.border
       }]}>
         {/* Redesigned header with more space */}
         <View style={styles.cardHeader}>
@@ -1415,11 +1411,12 @@ const GoalsTab = ({ theme, data, handlers, navigation }) => {
 const styles = StyleSheet.create({
   tabContentContainer: {
     padding: spacing.m,
+    paddingTop: 4,
   },
   // Goals Card
   goalsCard: {
     borderRadius: scaleWidth(16),
-    padding: spacing.l,
+    padding: spacing.xl,
     marginBottom: spacing.m,
     borderWidth: 1,
     shadowColor: '#000',
@@ -1427,6 +1424,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    minHeight: scaleHeight(200),
   },
   cardHeader: {
     marginBottom: spacing.m,
@@ -1476,11 +1474,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: spacing.m,
+    padding: spacing.l,
     borderRadius: scaleWidth(12),
     marginBottom: spacing.s,
     borderWidth: 1,
-    minHeight: scaleHeight(44), // Ensure minimum touch target height
+    minHeight: scaleHeight(70), // Increased height for better touch target
   },
   goalCheckbox: {
     flex: 1,
@@ -1549,7 +1547,7 @@ const styles = StyleSheet.create({
   // Assets & Liabilities Card
   assetsLiabilitiesCard: {
     borderRadius: scaleWidth(16),
-    padding: spacing.l,
+    padding: spacing.xl,
     marginBottom: spacing.m,
     borderWidth: 1,
     shadowColor: '#000',
@@ -1557,6 +1555,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    minHeight: scaleHeight(250),
   },
   assetsLiabilitiesTitle: {
     fontSize: fontSizes.l,
@@ -1590,11 +1589,11 @@ const styles = StyleSheet.create({
   assetItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: spacing.m,
+    padding: spacing.l,
     borderRadius: scaleWidth(12),
     marginBottom: spacing.s,
     borderWidth: 1,
-    minHeight: scaleHeight(44), // Ensure minimum touch target height
+    minHeight: scaleHeight(70), // Increased height for better touch target
   },
   debtItemLeft: {
     flex: 1,

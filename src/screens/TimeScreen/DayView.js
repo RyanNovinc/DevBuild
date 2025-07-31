@@ -109,12 +109,17 @@ const DayView = ({
   const renderTimeBlock = (block) => {
     const { height, top } = calculateTimeBlockStyle(block);
     
+    // Check if this is a calendar event
+    const isCalendarEvent = block.isCalendarEvent === true;
+    
     // Check if this is a repeating instance or repeating block
     const isRepeatingInstance = block.isRepeatingInstance === true;
     const isRepeatingBlock = block.isRepeating === true;
     
     // Get darker shade of domain color for border
-    const blockColor = block.isGeneralActivity ? block.customColor : block.domainColor;
+    const blockColor = isCalendarEvent 
+      ? block.color || '#2196F3' 
+      : (block.isGeneralActivity ? block.customColor : block.domainColor);
     const borderColor = getDarkerShade(blockColor);
     
     // Calculate text color for optimal contrast against the background
@@ -132,11 +137,12 @@ const DayView = ({
     
     // Create accessibility label with all relevant information
     const accessibilityLabel = `${block.title} from ${formatTime(block.startTime)} to ${formatTime(block.endTime)}` + 
-      `${block.isGeneralActivity ? `, Category: ${block.category}` : `, Domain: ${block.domain}`}` +
-      `${hasProject ? `, Project: ${block.projectTitle}` : ''}` +
-      `${hasTask ? `, Task: ${block.taskTitle}` : ''}` +
+      `${isCalendarEvent ? `, Calendar Event from ${block.source}` : 
+        (block.isGeneralActivity ? `, Category: ${block.category}` : `, Domain: ${block.domain}`)}` +
+      `${!isCalendarEvent && hasProject ? `, Project: ${block.projectTitle}` : ''}` +
+      `${!isCalendarEvent && hasTask ? `, Task: ${block.taskTitle}` : ''}` +
       `${block.location ? `, Location: ${block.location}` : ''}` +
-      `${isRepeatingBlock || isRepeatingInstance ? ', Repeating' : ''}`;
+      `${!isCalendarEvent && (isRepeatingBlock || isRepeatingInstance) ? ', Repeating' : ''}`;
     
     return (
       <TouchableOpacity
@@ -151,14 +157,23 @@ const DayView = ({
             borderColor: borderColor,
           },
           // Add dashed border for repeating instances
-          (isRepeatingInstance || isRepeatingBlock) && styles.repeatingTimeBlock
+          (isRepeatingInstance || isRepeatingBlock) && styles.repeatingTimeBlock,
+          // Add distinct styling for calendar events
+          isCalendarEvent && {
+            borderStyle: 'dotted',
+            borderWidth: 2,
+            borderRightWidth: 2,
+            borderTopWidth: 2,
+            borderBottomWidth: 2,
+            opacity: 0.9
+          }
         ]}
         onPress={() => handleTimeBlockPress(block)}
         activeOpacity={0.7}
         accessible={true}
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
-        accessibilityHint="Opens details to edit this time block"
+        accessibilityHint={isCalendarEvent ? "Shows details of this calendar event" : "Opens details to edit this time block"}
       >
         <View style={styles.timeBlockHeader}>
           <Text 
@@ -171,8 +186,28 @@ const DayView = ({
             {formatTime(block.startTime)} - {formatTime(block.endTime)}
           </Text>
           
+          {/* Show calendar indicator for calendar events */}
+          {isCalendarEvent && (
+            <View style={styles.repeatingIndicator}>
+              <Ionicons 
+                name="calendar" 
+                size={scaleWidth(14)} 
+                color={textColor} 
+              />
+              <Text 
+                style={[
+                  styles.repeatingText, 
+                  { color: textColor }
+                ]}
+                maxFontSizeMultiplier={1.3}
+              >
+                {block.source === 'device_calendar' ? 'Cal' : 'Sync'}
+              </Text>
+            </View>
+          )}
+          
           {/* Show repeat indicator with frequency text */}
-          {(isRepeatingBlock || isRepeatingInstance) && (
+          {!isCalendarEvent && (isRepeatingBlock || isRepeatingInstance) && (
             <View style={styles.repeatingIndicator}>
               <Ionicons 
                 name="repeat" 
@@ -266,7 +301,10 @@ const DayView = ({
                 ]}
                 maxFontSizeMultiplier={1.3}
               >
-                {block.isGeneralActivity ? block.category : block.domain}
+                {isCalendarEvent 
+                  ? (block.source === 'device_calendar' ? 'Calendar' : block.source)
+                  : (block.isGeneralActivity ? block.category : block.domain)
+                }
               </Text>
             </View>
             

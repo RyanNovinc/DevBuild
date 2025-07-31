@@ -11,10 +11,15 @@ import {
   Easing,
   Alert
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppContext } from '../../context/AppContext';
 import { useNotification } from '../../context/NotificationContext'; // Added import for notifications
 import FeatureExplorerTracker from '../../services/FeatureExplorerTracker'; // Import the tracker
+import { log } from '../../utils/LoggerUtility'; // Import logger utility
+import { FeatureLimitBanner } from '../../components/subscription/SubscriptionUI'; // Import the Pro modal
+import { useAchievements } from '../../context/AchievementContext'; // Import achievements context
+import LevelService from '../../services/LevelService'; // Import level service
 import {
   useSafeSpacing,
   meetsContrastRequirements,
@@ -39,12 +44,16 @@ const THEME_COLORS = [
   '#0c4a6e', // Dark Teal
 ];
 
-// Free version colors - limited to Blue, Charcoal, Green
-const FREE_COLORS = [
-  '#1e3a8a', // Deep Navy Blue
-  '#1f2937', // Charcoal
-  '#059669', // Forest Green
-];
+// Level-based color unlocking system
+// Level 1 (default): Deep Navy Blue (always available)
+// Level 3: Unlocks Charcoal 
+// Level 5: Unlocks Forest Green
+// Pro: Unlocks all remaining colors
+const LEVEL_COLOR_UNLOCKS = {
+  1: ['#1e3a8a'], // Deep Navy Blue - always free
+  3: ['#1e3a8a', '#1f2937'], // + Charcoal
+  5: ['#1e3a8a', '#1f2937', '#059669'], // + Forest Green
+};
 
 // Simple color names for reference
 const COLOR_NAMES = [
@@ -79,6 +88,42 @@ const ThemeColorPickerModal = ({
   const isPro = appContext?.userSubscriptionStatus === 'pro' || 
                 appContext?.userSubscriptionStatus === 'unlimited';
   
+  // Get achievements context to check user level
+  const { getTotalPoints, refreshTrigger, unlockedAchievements } = useAchievements();
+  
+  // Calculate current user level (check for test level first)
+  const [calculatedLevel, setCalculatedLevel] = useState(1);
+  
+  // Load level (including test level if it exists)
+  useEffect(() => {
+    const loadUserLevel = async () => {
+      try {
+        // Check if we have a persisted test level
+        const storedTestMode = await AsyncStorage.getItem('testMode');
+        const storedTestLevel = await AsyncStorage.getItem('testLevel');
+        
+        if (storedTestMode === 'true' && storedTestLevel) {
+          const testLevel = parseInt(storedTestLevel);
+          console.log(`Theme picker using test level: ${testLevel}`);
+          setCalculatedLevel(testLevel);
+        } else {
+          // Use real level from achievements
+          const realLevel = LevelService.calculateLevel(getTotalPoints());
+          console.log(`Theme picker using real level: ${realLevel}`);
+          setCalculatedLevel(realLevel);
+        }
+      } catch (error) {
+        console.error('Error loading user level in theme picker:', error);
+        // Fallback to real level
+        setCalculatedLevel(LevelService.calculateLevel(getTotalPoints()));
+      }
+    };
+    
+    loadUserLevel();
+  }, [getTotalPoints]);
+  
+  const userLevel = calculatedLevel;
+  
   // Get safe area spacing
   const safeSpacing = useSafeSpacing();
   const { height: screenHeight } = useScreenDimensions();
@@ -98,8 +143,61 @@ const ThemeColorPickerModal = ({
   
   // Create shake animations for each color
   const shakeAnims = useRef(
-    THEME_COLORS.map(() => new Animated.Value(0))
+    THEME_COLORS.map((color, index) => {
+      log('UI', 'THEME INIT: Creating shake animation for color', index, color);
+      return new Animated.Value(0);
+    })
   ).current;
+  
+  // Log initialization info and refresh when modal opens
+  React.useEffect(() => {
+    if (visible) {
+      log('UI', 'THEME INIT: ThemeColorPickerModal opened/refreshed');
+      log('UI', 'THEME INIT: isPro:', isPro);
+      log('UI', 'THEME INIT: userSubscriptionStatus:', appContext?.userSubscriptionStatus);
+      log('UI', 'THEME INIT: User Level:', userLevel);
+      log('UI', 'THEME INIT: Available colors:', availableColors);
+      log('UI', 'THEME INIT: Total theme colors:', THEME_COLORS.length);
+      log('UI', 'THEME INIT: Shake animations created:', shakeAnims.length);
+      log('UI', 'THEME INIT: Refresh trigger:', refreshTrigger);
+    }
+  }, [visible, isPro, appContext?.userSubscriptionStatus, availableColors, userLevel, refreshTrigger]);
+  
+  // Force component update when achievements change
+  React.useEffect(() => {
+    log('UI', 'THEME ACHIEVEMENTS: Achievement data changed, refreshing colors');
+  }, [unlockedAchievements, refreshTrigger]);
+  
+  // Check color unlock states when level changes
+  useEffect(() => {
+    const checkColorUnlockStates = async () => {
+      // Check Charcoal unlock (level 3)
+      if (userLevel >= 3) {
+        const hasSeenCharcoalCongrats = await AsyncStorage.getItem('charcoalColorCongratsShown');
+        if (!hasSeenCharcoalCongrats) {
+          setCharcoalUnlockState('unlocked'); // Just unlocked, show "Unlock" state
+        } else {
+          setCharcoalUnlockState('seen'); // Already seen congratulations
+        }
+      } else {
+        setCharcoalUnlockState('locked'); // Still locked
+      }
+      
+      // Check Forest Green unlock (level 5)
+      if (userLevel >= 5) {
+        const hasSeenForestGreenCongrats = await AsyncStorage.getItem('forestGreenColorCongratsShown');
+        if (!hasSeenForestGreenCongrats) {
+          setForestGreenUnlockState('unlocked'); // Just unlocked, show "Unlock" state
+        } else {
+          setForestGreenUnlockState('seen'); // Already seen congratulations
+        }
+      } else {
+        setForestGreenUnlockState('locked'); // Still locked
+      }
+    };
+    
+    checkColorUnlockStates();
+  }, [userLevel]);
   
   // Track actual modal visibility state for closing animations
   const [modalVisible, setModalVisible] = useState(visible);
@@ -107,13 +205,51 @@ const ThemeColorPickerModal = ({
   // Track whether animation system has been pre-warmed
   const hasPreWarmed = useRef(false);
   
-  // Determine which colors to show based on membership status
-  const availableColors = useMemo(() => {
-    return isPro ? THEME_COLORS : FREE_COLORS;
-  }, [isPro]);
+  // Function to get available colors based on user level and Pro status
+  const getAvailableColors = useMemo(() => {
+    log('UI', 'THEME AVAILABILITY: Recalculating available colors');
+    log('UI', 'THEME AVAILABILITY: isPro:', isPro, 'userLevel:', userLevel);
+    
+    // Pro users get all colors
+    if (isPro) {
+      log('UI', 'THEME AVAILABILITY: Pro user - all colors available');
+      return THEME_COLORS;
+    }
+    
+    // For free users, determine colors based on level
+    let availableColors = LEVEL_COLOR_UNLOCKS[1]; // Default level 1 colors
+    
+    // Check each level threshold and unlock colors
+    Object.keys(LEVEL_COLOR_UNLOCKS).forEach(level => {
+      const requiredLevel = parseInt(level);
+      if (userLevel >= requiredLevel) {
+        availableColors = LEVEL_COLOR_UNLOCKS[level];
+        log('UI', 'THEME AVAILABILITY: Unlocked level', requiredLevel, 'colors:', availableColors);
+      }
+    });
+    
+    log('UI', 'THEME AVAILABILITY: Final available colors:', availableColors);
+    return availableColors;
+  }, [isPro, userLevel, refreshTrigger, unlockedAchievements]);
+  
+  // Determine which colors to show based on level/membership status
+  const availableColors = getAvailableColors;
   
   // Add counter for locked color clicks
   const [lockedColorClicks, setLockedColorClicks] = useState(0);
+  
+  // Add state for showing the Pro upgrade modal
+  const [showProModal, setShowProModal] = useState(false);
+  
+  // Color unlock congratulations states
+  const [showCharcoalCongrats, setShowCharcoalCongrats] = useState(false);
+  const [showForestGreenCongrats, setShowForestGreenCongrats] = useState(false);
+  const [charcoalUnlockState, setCharcoalUnlockState] = useState('locked'); // 'locked', 'unlocked', 'seen'
+  const [forestGreenUnlockState, setForestGreenUnlockState] = useState('locked'); // 'locked', 'unlocked', 'seen'
+  
+  // Falling animation states
+  const [fallingCharcoalAnimations, setFallingCharcoalAnimations] = useState([]);
+  const [fallingForestAnimations, setFallingForestAnimations] = useState([]);
   
   // Pre-warm animation system to prevent first-render glitch
   useEffect(() => {
@@ -191,10 +327,70 @@ const ThemeColorPickerModal = ({
     }
   }, [visible, modalVisible, fadeAnim, slideAnim, screenHeight]);
 
+  // Create falling palette/color animations
+  const createFallingColorAnimations = (colorType) => {
+    const numberOfIcons = 6;
+    const animations = [];
+    const iconName = colorType === 'charcoal' ? 'color-palette' : 'leaf'; // Charcoal gets palette, Forest Green gets leaf
+    
+    for (let i = 0; i < numberOfIcons; i++) {
+      const animatedValue = new Animated.Value(-50); // Start above screen
+      const horizontalPosition = Math.random() * (width - 40); // Random horizontal position
+      const delay = Math.random() * 2000; // Random delay up to 2 seconds
+      const duration = 3000 + Math.random() * 2000; // Duration between 3-5 seconds
+      
+      animations.push({
+        id: i,
+        animatedValue,
+        horizontalPosition,
+        delay,
+        duration,
+        rotation: new Animated.Value(0),
+        iconName,
+      });
+    }
+    
+    if (colorType === 'charcoal') {
+      setFallingCharcoalAnimations(animations);
+    } else {
+      setFallingForestAnimations(animations);
+    }
+    
+    // Start animations
+    animations.forEach((icon) => {
+      // Falling animation
+      Animated.timing(icon.animatedValue, {
+        toValue: height + 50, // Fall past bottom of screen
+        duration: icon.duration,
+        delay: icon.delay,
+        useNativeDriver: true,
+      }).start();
+      
+      // Rotation animation
+      Animated.loop(
+        Animated.timing(icon.rotation, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: true,
+        })
+      ).start();
+    });
+  };
+
   // Function to shake a color
   const shakeColor = (index) => {
+    log('UI', 'THEME SHAKE: shakeColor called with index:', index);
+    log('UI', 'THEME SHAKE: shakeAnims array length:', shakeAnims.length);
+    log('UI', 'THEME SHAKE: shakeAnims[index] exists:', !!shakeAnims[index]);
+    
+    if (!shakeAnims[index]) {
+      log('Error', 'THEME SHAKE: Shake animation not found for index:', index);
+      return;
+    }
+    
     // Reset the animation value
     shakeAnims[index].setValue(0);
+    log('UI', 'THEME SHAKE: Starting shake animation for index:', index);
     
     // Create a shake sequence
     Animated.sequence([
@@ -233,21 +429,57 @@ const ThemeColorPickerModal = ({
         duration: 50,
         useNativeDriver: true,
       })
-    ]).start();
+    ]).start((finished) => {
+      log('UI', 'THEME SHAKE: Shake animation finished for index:', index, 'finished:', finished);
+    });
   };
 
   // Handle close request with animation
   const handleClose = () => {
     // Only trigger onClose if we're not already closing
     if (modalVisible && visible) {
-      // Reset locked color clicks counter when closing
+      // Reset locked color clicks counter and close Pro modal when closing
       setLockedColorClicks(0);
+      setShowProModal(false);
       onClose();
     }
   };
   
-  // Enhanced color selection handler with achievement tracking
+  // Enhanced color selection handler with achievement tracking and congratulations
   const handleColorSelect = async (color) => {
+    // Check if this is a newly unlocked color
+    const isCharcoal = color === '#1f2937';
+    const isForestGreen = color === '#059669';
+    
+    // Check for congratulations before selecting
+    if (isCharcoal && charcoalUnlockState === 'unlocked') {
+      const hasSeenCongrats = await AsyncStorage.getItem('charcoalColorCongratsShown');
+      if (!hasSeenCongrats) {
+        // Show congratulations popup
+        setShowCharcoalCongrats(true);
+        createFallingColorAnimations('charcoal');
+        await AsyncStorage.setItem('charcoalColorCongratsShown', 'true');
+        setCharcoalUnlockState('seen');
+        // Don't close the modal yet, let the congratulations show
+        onSelectColor(color);
+        return;
+      }
+    }
+    
+    if (isForestGreen && forestGreenUnlockState === 'unlocked') {
+      const hasSeenCongrats = await AsyncStorage.getItem('forestGreenColorCongratsShown');
+      if (!hasSeenCongrats) {
+        // Show congratulations popup
+        setShowForestGreenCongrats(true);
+        createFallingColorAnimations('forest');
+        await AsyncStorage.setItem('forestGreenColorCongratsShown', 'true');
+        setForestGreenUnlockState('seen');
+        // Don't close the modal yet, let the congratulations show
+        onSelectColor(color);
+        return;
+      }
+    }
+    
     // Call the original onSelectColor prop function
     onSelectColor(color);
     
@@ -259,40 +491,55 @@ const ThemeColorPickerModal = ({
     }
   };
   
+  // Function to get unlock requirement message for a color
+  const getColorUnlockMessage = (color) => {
+    // Find what level unlocks this color
+    for (const [level, colors] of Object.entries(LEVEL_COLOR_UNLOCKS)) {
+      if (colors.includes(color) && parseInt(level) > userLevel) {
+        return `Unlocks at Level ${level}`;
+      }
+    }
+    // If not in level unlocks, it requires Pro
+    return 'Requires Pro';
+  };
+
+  // Function to get the unlock requirement for a color (level number or 'pro')
+  const getColorUnlockRequirement = (color) => {
+    // Find what level unlocks this color
+    for (const [level, colors] of Object.entries(LEVEL_COLOR_UNLOCKS)) {
+      if (colors.includes(color) && parseInt(level) > userLevel) {
+        return parseInt(level);
+      }
+    }
+    // If not in level unlocks, it requires Pro
+    return 'pro';
+  };
+
   // Handle locked color click
   const handleLockedColorClick = (index) => {
-    console.log('Locked color clicked at index:', index);
+    const color = THEME_COLORS[index];
+    const unlockMessage = getColorUnlockMessage(color);
+    
+    log('UI', 'THEME LOCKED: Locked color clicked at index:', index);
+    log('UI', 'THEME LOCKED: Color:', color);
+    log('UI', 'THEME LOCKED: Unlock message:', unlockMessage);
+    log('UI', 'THEME LOCKED: User Level:', userLevel);
     
     // Shake the color
+    log('UI', 'THEME LOCKED: Triggering shake for index:', index);
     shakeColor(index);
     
     // Increment the counter
     const newCount = lockedColorClicks + 1;
     setLockedColorClicks(newCount);
-    console.log('Locked color clicks:', newCount);
+    log('UI', 'THEME LOCKED: Locked color clicks:', newCount);
     
     // Show upgrade modal after 3 clicks
     if (newCount >= 3) {
-      console.log('Showing upgrade alert after 3 clicks');
-      Alert.alert(
-        'Premium Feature',
-        'Upgrade to Pro to unlock all theme colors and customize your experience.',
-        [
-          {
-            text: 'Upgrade to Pro',
-            onPress: () => {
-              handleClose();
-              navigation.navigate('PricingScreen');
-            }
-          },
-          {
-            text: 'Maybe Later',
-            style: 'cancel'
-          }
-        ]
-      );
+      log('UI', 'THEME LOCKED: Showing upgrade modal after 3 clicks');
+      setShowProModal(true);
       
-      // Reset the counter after showing the alert
+      // Reset the counter after showing the modal
       setLockedColorClicks(0);
     }
   };
@@ -422,6 +669,14 @@ const ThemeColorPickerModal = ({
                 {THEME_COLORS.map((color, index) => {
                   const isAvailable = availableColors.includes(color);
                   
+                  // Debug logging for Forest Green specifically
+                  if (color === '#059669') {
+                    log('UI', 'THEME DEBUG: Forest Green (#059669) - isAvailable:', isAvailable);
+                    log('UI', 'THEME DEBUG: Available colors array:', availableColors);
+                    log('UI', 'THEME DEBUG: User level:', userLevel);
+                    log('UI', 'THEME DEBUG: Forest Green unlock state:', forestGreenUnlockState);
+                  }
+                  
                   return (
                     <Animated.View
                       key={index}
@@ -457,9 +712,22 @@ const ThemeColorPickerModal = ({
                           }
                         ]}
                         onPress={() => {
-                          if (isAvailable) {
+                          const isCharcoal = color === '#1f2937';
+                          const isForestGreen = color === '#059669';
+                          const showUnlockOverlay = (isCharcoal && charcoalUnlockState === 'unlocked') || 
+                                                   (isForestGreen && forestGreenUnlockState === 'unlocked');
+                          
+                          // ALWAYS log this first to see if ANY touch events are coming through
+                          log('UI', 'THEME MAIN: TouchableOpacity pressed - Index:', index, 'isAvailable:', isAvailable, 'showUnlockOverlay:', showUnlockOverlay);
+                          
+                          if (isAvailable && !showUnlockOverlay) {
+                            log('UI', 'THEME COLOR: Color is available and not in unlock state, selecting...');
+                            handleColorSelect(color);
+                          } else if (showUnlockOverlay) {
+                            log('UI', 'THEME COLOR: Color is in unlock state, showing congratulations...');
                             handleColorSelect(color);
                           } else {
+                            log('UI', 'THEME COLOR: Color is locked, triggering shake...');
                             handleLockedColorClick(index);
                           }
                         }}
@@ -481,23 +749,81 @@ const ThemeColorPickerModal = ({
                             size={24} 
                             color={getContrastColor(color)} 
                           />
-                        ) : !isAvailable ? (
-                          <View style={{
-                            position: 'absolute',
-                            width: '100%',
-                            height: '100%',
-                            borderRadius: 16,
-                            backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                            justifyContent: 'center',
-                            alignItems: 'center'
-                          }}>
-                            <Ionicons 
-                              name="lock-closed" 
-                              size={16} 
-                              color="#FFFFFF" 
-                            />
-                          </View>
-                        ) : null}
+                        ) : (() => {
+                          const isCharcoal = color === '#1f2937';
+                          const isForestGreen = color === '#059669';
+                          const showUnlockOverlay = (isCharcoal && charcoalUnlockState === 'unlocked') || 
+                                                   (isForestGreen && forestGreenUnlockState === 'unlocked');
+                          
+                          return (!isAvailable || showUnlockOverlay) ? (
+                          <>
+                            <View 
+                              style={{
+                                position: 'absolute',
+                                width: '100%',
+                                height: '100%',
+                                borderRadius: 16,
+                                backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                                justifyContent: 'center',
+                                alignItems: 'center'
+                              }}
+                              pointerEvents="none"
+                            >
+                              {(() => {
+                                const requirement = getColorUnlockRequirement(color);
+                                
+                                // Show unlock icon for newly unlocked colors (this takes priority)
+                                if (showUnlockOverlay) {
+                                  return (
+                                    <Ionicons 
+                                      name="lock-open" 
+                                      size={16} 
+                                      color="#FFD700" 
+                                    />
+                                  );
+                                } else if (requirement === 'pro') {
+                                  return (
+                                    <Ionicons 
+                                      name="lock-closed" 
+                                      size={16} 
+                                      color="#FFFFFF" 
+                                    />
+                                  );
+                                } else {
+                                  return (
+                                    <Text 
+                                      style={{
+                                        color: '#FFFFFF',
+                                        fontSize: 10,
+                                        fontWeight: 'bold',
+                                        textAlign: 'center'
+                                      }}
+                                    >
+                                      LVL {requirement}
+                                    </Text>
+                                  );
+                                }
+                              })()}
+                            </View>
+                            {/* Debug: Add an invisible overlay that captures touches - only for truly locked colors */}
+                            {!showUnlockOverlay && (
+                              <TouchableOpacity
+                                style={{
+                                  position: 'absolute',
+                                  width: '100%',
+                                  height: '100%',
+                                  backgroundColor: 'transparent'
+                                }}
+                                onPress={() => {
+                                  log('UI', 'THEME OVERLAY: Invisible overlay pressed for locked color at index:', index);
+                                  handleLockedColorClick(index);
+                                }}
+                                activeOpacity={1}
+                              />
+                            )}
+                          </>
+                          ) : null;
+                        })()}
                       </TouchableOpacity>
                     </Animated.View>
                   );
@@ -516,6 +842,20 @@ const ThemeColorPickerModal = ({
                   Selected: {COLOR_NAMES[THEME_COLORS.indexOf(themeColor)] || 'Custom Color'}
                 </Text>
               )}
+              
+              {/* Show unlock text for newly unlocked colors */}
+              <View style={styles.unlockMessagesContainer}>
+                {charcoalUnlockState === 'unlocked' && (
+                  <Text style={[styles.unlockMessage, { color: '#4CAF50' }]}>
+                    🎨 Charcoal - Unlock
+                  </Text>
+                )}
+                {forestGreenUnlockState === 'unlocked' && (
+                  <Text style={[styles.unlockMessage, { color: '#4CAF50' }]}>
+                    🌱 Forest Green - Unlock
+                  </Text>
+                )}
+              </View>
             </View>
             
             {/* "Request a Color" button - different versions for Pro vs Free users */}
@@ -562,6 +902,93 @@ const ThemeColorPickerModal = ({
               />
             </TouchableOpacity>
             
+            
+            {/* Debug Buttons - Dev Only */}
+            {__DEV__ && (
+              <View style={styles.debugSection}>
+                <Text style={[styles.debugSectionTitle, { color: secondaryTextColor }]}>
+                  Debug Controls (Dev Only)
+                </Text>
+                
+                <TouchableOpacity
+                  style={[styles.debugButton, { backgroundColor: 'rgba(255,0,0,0.1)', borderColor: '#FF0000' }]}
+                  onPress={async () => {
+                    await AsyncStorage.removeItem('charcoalColorCongratsShown');
+                    if (userLevel >= 3) {
+                      setCharcoalUnlockState('unlocked');
+                    }
+                    setFallingCharcoalAnimations([]);
+                    Alert.alert('Debug', 'Charcoal color congratulations reset! Color should now show unlock state.');
+                  }}
+                >
+                  <Ionicons name="refresh" size={16} color="#FF0000" />
+                  <Text style={[styles.debugButtonText, { color: '#FF0000' }]}>
+                    Reset Charcoal Congrats
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[styles.debugButton, { backgroundColor: 'rgba(0,150,0,0.1)', borderColor: '#059669' }]}
+                  onPress={async () => {
+                    await AsyncStorage.removeItem('forestGreenColorCongratsShown');
+                    if (userLevel >= 5) {
+                      setForestGreenUnlockState('unlocked');
+                    }
+                    setFallingForestAnimations([]);
+                    Alert.alert('Debug', 'Forest Green color congratulations reset! Color should now show unlock state.');
+                  }}
+                >
+                  <Ionicons name="refresh" size={16} color="#059669" />
+                  <Text style={[styles.debugButtonText, { color: '#059669' }]}>
+                    Reset Forest Green Congrats
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[styles.debugButton, { backgroundColor: 'rgba(255,165,0,0.1)', borderColor: '#FFA500' }]}
+                  onPress={async () => {
+                    await AsyncStorage.multiRemove([
+                      'charcoalColorCongratsShown',
+                      'forestGreenColorCongratsShown'
+                    ]);
+                    if (userLevel >= 3) {
+                      setCharcoalUnlockState('unlocked');
+                    }
+                    if (userLevel >= 5) {
+                      setForestGreenUnlockState('unlocked');
+                    }
+                    setFallingCharcoalAnimations([]);
+                    setFallingForestAnimations([]);
+                    Alert.alert('Debug', 'All color congratulations reset!');
+                  }}
+                >
+                  <Ionicons name="color-palette" size={16} color="#FFA500" />
+                  <Text style={[styles.debugButtonText, { color: '#FFA500' }]}>
+                    Reset All Color Congrats
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[styles.debugButton, { backgroundColor: 'rgba(0,0,255,0.1)', borderColor: '#0000FF' }]}
+                  onPress={() => {
+                    Alert.alert('Debug Info', 
+                      `User Level: ${userLevel}\n` +
+                      `Available Colors: ${availableColors.length}\n` +
+                      `Charcoal State: ${charcoalUnlockState}\n` +
+                      `Forest Green State: ${forestGreenUnlockState}\n` +
+                      `Forest Green Available: ${availableColors.includes('#059669')}\n` +
+                      `Charcoal Available: ${availableColors.includes('#1f2937')}`
+                    );
+                  }}
+                >
+                  <Ionicons name="information-circle" size={16} color="#0000FF" />
+                  <Text style={[styles.debugButtonText, { color: '#0000FF' }]}>
+                    Show Debug Info
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
             <TouchableOpacity
               style={[styles.applyButton, { 
                 backgroundColor: themeColor || theme.primary,
@@ -593,6 +1020,183 @@ const ThemeColorPickerModal = ({
           </View>
         </Animated.View>
       </View>
+      
+      {/* Pro Upgrade Modal - Same style as GoalScreen */}
+      <FeatureLimitBanner
+        theme={theme}
+        title="Premium Colors"
+        message="Upgrade to Pro to unlock all theme colors."
+        useModal={true}
+        isVisible={showProModal}
+        onUpgrade={() => {
+          setShowProModal(false);
+          handleClose();
+          navigation.navigate('PricingScreen');
+        }}
+        onClose={() => setShowProModal(false)}
+      />
+      
+      {/* Charcoal Color Congratulations Modal */}
+      <Modal
+        visible={showCharcoalCongrats}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowCharcoalCongrats(false)}
+      >
+        <View style={styles.modalOverlay}>
+          {/* Falling Color Palette Icons */}
+          {fallingCharcoalAnimations.map((icon) => (
+            <Animated.View
+              key={icon.id}
+              style={[
+                styles.fallingIcon,
+                {
+                  left: icon.horizontalPosition,
+                  transform: [
+                    {
+                      translateY: icon.animatedValue
+                    },
+                    {
+                      rotate: icon.rotation.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ['0deg', '360deg']
+                      })
+                    }
+                  ]
+                }
+              ]}
+              pointerEvents="none"
+            >
+              <Ionicons 
+                name={icon.iconName} 
+                size={24} 
+                color='#1f2937'
+                style={styles.fallingIconStyle}
+              />
+            </Animated.View>
+          ))}
+          
+          <View style={[
+            styles.congratsModalContent,
+            {
+              backgroundColor: isDarkMode ? '#121214' : '#F5F5F7',
+              borderColor: theme.border,
+            }
+          ]}>
+            {/* Celebration Icon */}
+            <View style={[
+              styles.congratsIconContainer,
+              {
+                backgroundColor: '#1f2937',
+              }
+            ]}>
+              <Ionicons name="color-palette" size={40} color="#FFFFFF" />
+            </View>
+            
+            <Text style={[styles.congratsTitle, { color: textColor }]}>
+              🎉 Congratulations!
+            </Text>
+            
+            <Text style={[styles.congratsSubtitle, { color: '#1f2937' }]}>
+              Charcoal Color Unlocked!
+            </Text>
+            
+            <Text style={[styles.congratsDescription, { color: textColor }]}>
+              You've reached Level 3 and unlocked the sophisticated Charcoal theme color! This premium dark shade enhances focus and provides a professional, sleek appearance.
+            </Text>
+            
+            <TouchableOpacity
+              style={[styles.congratsButton, { backgroundColor: '#1f2937' }]}
+              onPress={() => setShowCharcoalCongrats(false)}
+            >
+              <Text style={[styles.congratsButtonText, { color: '#FFFFFF' }]}>
+                Try It Now! 🎨
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      
+      {/* Forest Green Color Congratulations Modal */}
+      <Modal
+        visible={showForestGreenCongrats}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowForestGreenCongrats(false)}
+      >
+        <View style={styles.modalOverlay}>
+          {/* Falling Leaf Icons */}
+          {fallingForestAnimations.map((icon) => (
+            <Animated.View
+              key={icon.id}
+              style={[
+                styles.fallingIcon,
+                {
+                  left: icon.horizontalPosition,
+                  transform: [
+                    {
+                      translateY: icon.animatedValue
+                    },
+                    {
+                      rotate: icon.rotation.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ['0deg', '360deg']
+                      })
+                    }
+                  ]
+                }
+              ]}
+              pointerEvents="none"
+            >
+              <Ionicons 
+                name={icon.iconName} 
+                size={24} 
+                color='#059669'
+                style={styles.fallingIconStyle}
+              />
+            </Animated.View>
+          ))}
+          
+          <View style={[
+            styles.congratsModalContent,
+            {
+              backgroundColor: isDarkMode ? '#121214' : '#F5F5F7',
+              borderColor: theme.border,
+            }
+          ]}>
+            {/* Celebration Icon */}
+            <View style={[
+              styles.congratsIconContainer,
+              {
+                backgroundColor: '#059669',
+              }
+            ]}>
+              <Ionicons name="leaf" size={40} color="#FFFFFF" />
+            </View>
+            
+            <Text style={[styles.congratsTitle, { color: textColor }]}>
+              🎉 Congratulations!
+            </Text>
+            
+            <Text style={[styles.congratsSubtitle, { color: '#059669' }]}>
+              Forest Green Unlocked!
+            </Text>
+            
+            <Text style={[styles.congratsDescription, { color: textColor }]}>
+              You've reached Level 5 and unlocked the natural Forest Green theme color! This color promotes balance, growth, and sustainable productivity while reducing eye strain.
+            </Text>
+            
+            <TouchableOpacity
+              style={[styles.congratsButton, { backgroundColor: '#059669' }]}
+              onPress={() => setShowForestGreenCongrats(false)}
+            >
+              <Text style={[styles.congratsButtonText, { color: '#FFFFFF' }]}>
+                Try It Now! 🌱
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </Modal>
   );
 };
@@ -688,6 +1292,18 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   
+  // Unlock messages styles
+  unlockMessagesContainer: {
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  unlockMessage: {
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  
   // Request a color button
   requestButton: {
     flexDirection: 'row',
@@ -727,7 +1343,116 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
     opacity: 0.8,
-  }
+  },
+  
+  // Congratulations modal styles
+  congratsModalContent: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -200 }, { translateY: -200 }],
+    width: 400,
+    maxWidth: '90%',
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  congratsIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  congratsTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  congratsSubtitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  congratsDescription: {
+    fontSize: 16,
+    lineHeight: 22,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  congratsButton: {
+    width: '100%',
+    paddingVertical: 14,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  congratsButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  
+  // Falling animation styles
+  fallingIcon: {
+    position: 'absolute',
+    top: 0,
+    zIndex: 1,
+  },
+  fallingIconStyle: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  
+  // Debug button styles
+  debugSection: {
+    marginBottom: 20,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  debugSectionTitle: {
+    fontSize: 12,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginBottom: 12,
+    opacity: 0.7,
+  },
+  debugButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginBottom: 8,
+  },
+  debugButtonText: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginLeft: 6,
+  },
 });
 
 export default ThemeColorPickerModal;

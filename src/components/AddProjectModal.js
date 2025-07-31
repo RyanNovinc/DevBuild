@@ -9,18 +9,21 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  TouchableWithoutFeedback,
   Keyboard,
   ScrollView,
   Alert,
   Animated,
-  Switch
+  Switch,
+  Dimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useAppContext } from '../context/AppContext';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { scaleWidth, scaleHeight, isSmallDevice, isTablet, fontSizes, spacing } from '../utils/responsive';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
+import { NavigationContainer } from '@react-navigation/native';
+import { scaleWidth, scaleHeight, fontSizes, spacing, accessibility } from '../utils/responsive';
 
 const AddProjectModal = ({ 
   visible, 
@@ -31,6 +34,13 @@ const AddProjectModal = ({
 }) => {
   const { theme } = useTheme();
   const appContext = useAppContext();
+  const insets = useSafeAreaInsets();
+  
+  // Create tab navigator
+  const Tab = createMaterialTopTabNavigator();
+  
+  // Get screen dimensions
+  const { width } = Dimensions.get('window');
   
   // Project state
   const [title, setTitle] = useState('');
@@ -40,6 +50,10 @@ const AddProjectModal = ({
   const [hasDueDate, setHasDueDate] = useState(false);
   const [dueDate, setDueDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  
+  // Edit mode state
+  const [editMode, setEditMode] = useState(false);
+  const [editingTaskId, setEditingTaskId] = useState(null);
   
   // Selected goal and UI state
   const [selectedGoalId, setSelectedGoalId] = useState(null);
@@ -59,18 +73,22 @@ const AddProjectModal = ({
   // Direct access to goals from AppContext
   const goals = appContext?.goals || [];
   
-  // Log goals for debugging
-  useEffect(() => {
-    console.log(`AddProjectModal: ${goals.length} goals found in AppContext`);
-  }, [visible, goals]);
+  // Handle modal close with proper cleanup
+  const handleClose = () => {
+    Keyboard.dismiss();
+    setShowGoalList(false);
+    onClose();
+  };
+  
+  // Calculate minimum touch target size
+  const minTouchSize = Math.max(scaleWidth(44), accessibility.minTouchTarget);
   
   // Animate dropdown opening/closing
   useEffect(() => {
     if (showGoalList) {
-      // Open dropdown with animation
       Animated.parallel([
         Animated.timing(dropdownHeight, {
-          toValue: 200, // Max height for dropdown
+          toValue: 200,
           duration: 300,
           useNativeDriver: false
         }),
@@ -81,7 +99,6 @@ const AddProjectModal = ({
         })
       ]).start();
     } else {
-      // Close dropdown with animation
       Animated.parallel([
         Animated.timing(dropdownHeight, {
           toValue: 0,
@@ -97,29 +114,6 @@ const AddProjectModal = ({
     }
   }, [showGoalList]);
   
-  // Debugging: Log projectData when it changes
-  useEffect(() => {
-    if (projectData) {
-      console.log('ProjectData received in modal:', projectData);
-      
-      // Set selected goal from projectData when it's provided
-      if (projectData.goalId) {
-        console.log('Setting selected goal from projectData:', projectData.goalId, projectData.goalTitle);
-        setSelectedGoalId(projectData.goalId);
-        setSelectedGoalTitle(projectData.goalTitle || '');
-        
-        // Find the goal in the goals array to get its color
-        const selectedGoal = goals.find(g => g.id === projectData.goalId);
-        if (selectedGoal) {
-          setSelectedGoalColor(selectedGoal.color);
-        }
-        
-        // Clear validation error if goal is set
-        setValidationErrors(prev => ({...prev, goalRequired: false}));
-      }
-    }
-  }, [projectData, goals]);
-  
   // Update form when editing an existing project
   useEffect(() => {
     if (visible && projectData) {
@@ -127,29 +121,23 @@ const AddProjectModal = ({
       setDescription(projectData.description || '');
       setTasks(projectData.tasks ? [...projectData.tasks] : []);
       
-      // Set selected goal from projectData
       if (projectData.goalId) {
         setSelectedGoalId(projectData.goalId);
         setSelectedGoalTitle(projectData.goalTitle || '');
         
-        // Find the goal in the goals array to get its color
         const selectedGoal = goals.find(g => g.id === projectData.goalId);
         if (selectedGoal) {
           setSelectedGoalColor(selectedGoal.color);
         }
         
-        // Clear validation error if goal is set
         setValidationErrors(prev => ({...prev, goalRequired: false}));
       }
       
-      // Always set hasDueDate to false regardless of projectData
       setHasDueDate(false);
       
-      // Still initialize the dueDate for when/if user toggles it on
       if (projectData.dueDate) {
         setDueDate(new Date(projectData.dueDate));
       } else {
-        // Set default due date to 1 month from now
         const defaultDate = new Date();
         defaultDate.setMonth(defaultDate.getMonth() + 1);
         setDueDate(defaultDate);
@@ -163,23 +151,22 @@ const AddProjectModal = ({
       setShowGoalList(false);
       setValidationErrors({goalRequired: false});
       setHasDueDate(false);
+      setEditMode(false);
+      setEditingTaskId(null);
       const defaultDate = new Date();
       defaultDate.setMonth(defaultDate.getMonth() + 1);
       setDueDate(defaultDate);
-      // Don't reset goal selection here to preserve it between sessions
     }
   }, [projectData, visible, goals]);
   
   // Handle add project
   const handleAddProject = () => {
-    // Validate form
     const errors = {
       goalRequired: !selectedGoalId
     };
     
     setValidationErrors(errors);
     
-    // Check if there are any validation errors
     if (errors.goalRequired) {
       Alert.alert(
         "Goal Required", 
@@ -198,7 +185,6 @@ const AddProjectModal = ({
       return;
     }
     
-    // Create the updated project data with the selected goal
     const updatedProjectData = {
       ...projectData,
       title: title.trim(),
@@ -206,14 +192,10 @@ const AddProjectModal = ({
       tasks: tasks,
       goalId: selectedGoalId,
       goalTitle: selectedGoalTitle,
-      color: selectedGoalColor, // Add the goal's color to the project data
+      color: selectedGoalColor,
       dueDate: hasDueDate ? dueDate.toISOString() : null,
     };
     
-    // Log the project data being sent back to verify goal association
-    console.log('Creating project with data:', updatedProjectData);
-    
-    // Call parent handler (passing back the updated project data)
     onAdd(updatedProjectData);
     
     // Reset form
@@ -222,18 +204,16 @@ const AddProjectModal = ({
     setTasks([]);
     setNewTaskTitle('');
     setHasDueDate(false);
-    // Don't reset goal selection
+    setEditMode(false);
+    setEditingTaskId(null);
   };
   
   // Handle selecting a goal directly
   const handleSelectGoal = (goal) => {
-    console.log('Goal selected:', goal.id, goal.title);
     setSelectedGoalId(goal.id);
     setSelectedGoalTitle(goal.title);
-    setSelectedGoalColor(goal.color); // Store the goal's color
+    setSelectedGoalColor(goal.color);
     setShowGoalList(false);
-    
-    // Clear validation error when goal is selected
     setValidationErrors(prev => ({...prev, goalRequired: false}));
   };
   
@@ -272,99 +252,159 @@ const AddProjectModal = ({
   const handleRemoveTask = (id) => {
     setTasks(tasks.filter(task => task.id !== id));
   };
-  
-  // Dismiss keyboard when clicking outside inputs
-  const dismissKeyboard = () => {
-    Keyboard.dismiss();
-    setShowGoalList(false);
-  };
-  
-  // Get theme-aware button color, prioritizing the selected goal's color
+
+  // Get theme-aware button color
   const buttonColor = selectedGoalColor || color || theme.primary;
-  
-  // Render a task item
-  const renderTaskItem = (item, index) => (
-    <View 
-      key={item.id || index} 
-      style={[
-        styles.taskItem, 
-        { marginBottom: spacing.s }
-      ]}
-      accessible={true}
-      accessibilityLabel={`Task ${index + 1}: ${item.title}`}
-    >
-      <View style={styles.taskCheckbox}>
-        <Ionicons 
-          name="checkmark-circle-outline" 
-          size={scaleWidth(22)} 
-          color={buttonColor} 
-          accessibilityElementsHidden={true}
-          importantForAccessibility="no"
-        />
-      </View>
-      <TextInput
+
+  // Render a task item with edit mode support
+  const renderTaskItem = (item, index) => {
+    const isEditing = editMode && editingTaskId === item.id;
+    
+    return (
+      <View 
+        key={item.id || index} 
         style={[
-          styles.taskInput, 
+          styles.taskItem, 
           { 
-            backgroundColor: theme.inputBackground,
-            color: theme.text,
-            borderColor: theme.border,
-            fontSize: fontSizes.m,
-            padding: spacing.s,
+            marginBottom: spacing.s,
+            backgroundColor: isEditing ? theme.primary + '10' : 'transparent',
             borderRadius: 8,
-            flex: 1,
+            padding: isEditing ? spacing.xs : 0,
           }
         ]}
-        value={item.title}
-        onChangeText={(text) => handleUpdateTask(item.id, text)}
-        placeholder="Task title"
-        placeholderTextColor={theme.textSecondary}
-        maxFontSizeMultiplier={1.3}
-        accessible={true}
-        accessibilityLabel={`Task ${index + 1} title`}
-        accessibilityHint="Edit task title"
-      />
-      <TouchableOpacity 
-        style={[
-          styles.removeButton,
-          { 
-            padding: spacing.xs,
-            minWidth: 44,
-            minHeight: 44,
-            alignItems: 'center',
-            justifyContent: 'center'
-          }
-        ]}
-        onPress={() => handleRemoveTask(item.id)}
-        accessible={true}
-        accessibilityRole="button"
-        accessibilityLabel={`Remove task ${item.title}`}
-        accessibilityHint="Removes this task from the project"
       >
-        <Ionicons name="close-circle" size={scaleWidth(22)} color={theme.error || 'red'} />
-      </TouchableOpacity>
-    </View>
-  );
-  
-  // Render goal dropdown list with direct rendering (no FlatList)
+        <View style={styles.taskCheckbox}>
+          <Ionicons 
+            name="checkmark-circle-outline" 
+            size={scaleWidth(22)} 
+            color={buttonColor} 
+          />
+        </View>
+        
+        {isEditing ? (
+          <TextInput
+            style={[
+              styles.taskInput, 
+              { 
+                backgroundColor: theme.inputBackground,
+                color: theme.text,
+                borderColor: theme.border,
+                fontSize: fontSizes.m,
+                padding: spacing.s,
+                borderRadius: 8,
+                flex: 1,
+                borderWidth: 1,
+              }
+            ]}
+            value={item.title}
+            onChangeText={(text) => handleUpdateTask(item.id, text)}
+            placeholder="Task title"
+            placeholderTextColor={theme.textSecondary}
+            autoFocus={true}
+            onBlur={() => {
+              setEditingTaskId(null);
+              // Don't exit edit mode automatically - only when Done is pressed
+            }}
+            onSubmitEditing={() => {
+              setEditingTaskId(null);
+              // Don't exit edit mode automatically - only when Done is pressed
+            }}
+          />
+        ) : editMode ? (
+          <TouchableOpacity 
+            style={[
+              styles.taskTextContainer,
+              { 
+                flex: 1,
+                paddingHorizontal: spacing.s,
+                paddingVertical: spacing.s,
+                minHeight: scaleHeight(40), // Minimum height for single line
+                justifyContent: 'center',
+                backgroundColor: 'rgba(76, 175, 80, 0.1)', // Light green tint to show it's clickable
+                borderRadius: 6,
+              }
+            ]}
+            onPress={() => {
+              setEditingTaskId(item.id);
+            }}
+          >
+            <Text 
+              style={[
+                styles.taskText,
+                {
+                  color: theme.text,
+                  fontSize: fontSizes.m,
+                  flexWrap: 'wrap',
+                  lineHeight: fontSizes.m * 1.3, // Better line spacing
+                }
+              ]}
+              // Remove numberOfLines to allow dynamic expansion
+            >
+              {item.title || 'Untitled task'}
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <View 
+            style={[
+              styles.taskTextContainer,
+              { 
+                flex: 1,
+                paddingHorizontal: spacing.s,
+                paddingVertical: spacing.s,
+                minHeight: scaleHeight(40), // Minimum height for single line
+                justifyContent: 'center',
+              }
+            ]}
+          >
+            <Text 
+              style={[
+                styles.taskText,
+                {
+                  color: theme.text,
+                  fontSize: fontSizes.m,
+                  flexWrap: 'wrap',
+                  lineHeight: fontSizes.m * 1.3, // Better line spacing
+                }
+              ]}
+              // Remove numberOfLines to allow dynamic expansion
+            >
+              {item.title || 'Untitled task'}
+            </Text>
+          </View>
+        )}
+        
+        {editMode && (
+          <TouchableOpacity 
+            style={[
+              styles.removeButton,
+              { 
+                padding: spacing.xs,
+                minWidth: 44,
+                minHeight: 44,
+                alignItems: 'center',
+                justifyContent: 'center'
+              }
+            ]}
+            onPress={() => handleRemoveTask(item.id)}
+          >
+            <Ionicons name="close-circle" size={scaleWidth(22)} color={theme.error || 'red'} />
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  };
+
+  // Render goal dropdown list
   const renderGoalsList = () => {
     if (goals.length === 0) {
       return (
-        <View style={[
-          styles.noGoalsContainer,
-          { padding: spacing.l }
-        ]}>
+        <View style={{ padding: spacing.l }}>
           <Text 
-            style={[
-              styles.noGoalsText, 
-              { 
-                color: theme.textSecondary,
-                fontSize: fontSizes.m,
-                textAlign: 'center',
-              }
-            ]}
-            maxFontSizeMultiplier={1.3}
-            accessible={true}
+            style={{ 
+              color: theme.textSecondary,
+              fontSize: fontSizes.m,
+              textAlign: 'center',
+            }}
           >
             No goals available. Create a goal first.
           </Text>
@@ -373,7 +413,7 @@ const AddProjectModal = ({
     }
     
     return (
-      <View style={styles.goalItemsContainer}>
+      <View style={{ padding: spacing.s }}>
         {goals.map((item, index) => {
           if (!item || !item.id) return null;
           
@@ -381,59 +421,40 @@ const AddProjectModal = ({
             <React.Fragment key={item.id}>
               {index > 0 && (
                 <View 
-                  style={[
-                    styles.goalItemSeparator, 
-                    { 
-                      backgroundColor: theme.border,
-                      height: 1,
-                      marginVertical: spacing.xs,
-                    }
-                  ]} 
+                  style={{ 
+                    backgroundColor: theme.border,
+                    height: 1,
+                    marginVertical: spacing.xs,
+                  }} 
                 />
               )}
               <TouchableOpacity 
-                style={[
-                  styles.goalItem, 
-                  { 
-                    backgroundColor: item.id === selectedGoalId ? theme.primary + '33' : theme.cardElevated,
-                    borderLeftColor: item.color || buttonColor,
-                    borderLeftWidth: 4,
-                    padding: spacing.m,
-                    borderRadius: 6,
-                    marginVertical: spacing.xxs,
-                  }
-                ]}
+                style={{
+                  backgroundColor: item.id === selectedGoalId ? theme.primary + '33' : theme.cardElevated,
+                  borderLeftColor: item.color || buttonColor,
+                  borderLeftWidth: 4,
+                  padding: spacing.m,
+                  borderRadius: 6,
+                  marginVertical: spacing.xxs,
+                }}
                 onPress={() => handleSelectGoal(item)}
-                accessible={true}
-                accessibilityRole="radio"
-                accessibilityLabel={`Goal: ${item.title || 'Untitled Goal'}${item.domain ? `, Domain: ${item.domain}` : ''}`}
-                accessibilityState={{ checked: item.id === selectedGoalId }}
-                accessibilityHint="Select this goal for your project"
               >
                 <Text 
-                  style={[
-                    styles.goalItemTitle, 
-                    { 
-                      color: item.id === selectedGoalId ? theme.primary : theme.text,
-                      fontWeight: item.id === selectedGoalId ? 'bold' : 'normal',
-                      fontSize: fontSizes.m,
-                      marginBottom: item.domain ? spacing.xxs : 0,
-                    }
-                  ]}
-                  maxFontSizeMultiplier={1.3}
+                  style={{ 
+                    color: item.id === selectedGoalId ? theme.primary : theme.text,
+                    fontWeight: item.id === selectedGoalId ? 'bold' : 'normal',
+                    fontSize: fontSizes.m,
+                    marginBottom: item.domain ? spacing.xxs : 0,
+                  }}
                 >
                   {item.title || 'Untitled Goal'}
                 </Text>
                 {item.domain && (
                   <Text 
-                    style={[
-                      styles.goalItemDomain, 
-                      { 
-                        color: theme.textSecondary,
-                        fontSize: fontSizes.s,
-                      }
-                    ]}
-                    maxFontSizeMultiplier={1.3}
+                    style={{ 
+                      color: theme.textSecondary,
+                      fontSize: fontSizes.s,
+                    }}
                   >
                     {item.domain}
                   </Text>
@@ -445,650 +466,663 @@ const AddProjectModal = ({
       </View>
     );
   };
+
+  // Render Details Tab Content
+  const renderDetailsTab = () => {
+    return (
+      <ScrollView 
+        style={{ flex: 1, backgroundColor: theme.background || '#000000' }}
+        contentContainerStyle={{ 
+          paddingHorizontal: spacing.m,
+          paddingTop: spacing.s,
+          paddingBottom: spacing.l
+        }}
+        showsVerticalScrollIndicator={true}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="none"
+        scrollEnabled={true}
+        bounces={true}
+      >
+        {/* Goal Selection Section */}
+        <Text 
+          style={[
+            styles.label, 
+            { 
+              color: theme.textSecondary,
+              fontSize: fontSizes.m,
+              marginBottom: spacing.xs,
+            }
+          ]}
+        >
+          Associated Goal *
+        </Text>
+        
+        {/* Goal Selector Button */}
+        <TouchableOpacity
+          style={[
+            styles.goalSelector,
+            { 
+              backgroundColor: theme.inputBackground,
+              borderColor: validationErrors.goalRequired ? (theme.error || 'red') : theme.border,
+              borderBottomLeftRadius: showGoalList ? 0 : 8,
+              borderBottomRightRadius: showGoalList ? 0 : 8,
+              borderWidth: 1,
+              padding: spacing.m,
+              minHeight: 48,
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }
+          ]}
+          onPress={() => {
+            if (goals.length === 0) {
+              Alert.alert(
+                "No Goals Available", 
+                "You need to create at least one goal before creating a project.",
+                [{ text: "OK" }]
+              );
+            } else {
+              setShowGoalList(!showGoalList);
+            }
+          }}
+        >
+          {selectedGoalId ? (
+            <View style={{ flex: 1 }}>
+              <Text 
+                style={{ 
+                  color: theme.text,
+                  fontSize: fontSizes.m,
+                }}
+              >
+                {selectedGoalTitle}
+              </Text>
+            </View>
+          ) : (
+            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+              <Ionicons 
+                name="flag-outline" 
+                size={scaleWidth(20)} 
+                color={theme.textSecondary} 
+                style={{ marginRight: spacing.xs }}
+              />
+              <Text 
+                style={{ 
+                  color: validationErrors.goalRequired ? (theme.error || 'red') : theme.textSecondary,
+                  fontSize: fontSizes.m,
+                }}
+              >
+                {goals.length > 0 
+                  ? "Select a goal for this project (required)" 
+                  : "No goals available - create a goal first"}
+              </Text>
+            </View>
+          )}
+          <Ionicons 
+            name={showGoalList ? "chevron-up" : "chevron-down"} 
+            size={scaleWidth(20)} 
+            color={theme.textSecondary} 
+          />
+        </TouchableOpacity>
+        
+        {/* Animated Goal List Dropdown */}
+        <Animated.View 
+          style={[
+            styles.inlineGoalList, 
+            { 
+              backgroundColor: theme.cardElevated,
+              borderColor: theme.border,
+              maxHeight: dropdownHeight,
+              opacity: dropdownOpacity,
+              overflow: 'hidden',
+              borderWidth: 1,
+              borderTopWidth: 0,
+              borderBottomLeftRadius: 8,
+              borderBottomRightRadius: 8,
+              marginBottom: spacing.m,
+            }
+          ]}
+        >
+          <View style={{ maxHeight: scaleHeight(180) }}>
+            {renderGoalsList()}
+          </View>
+        </Animated.View>
+        
+        {validationErrors.goalRequired && (
+          <Text 
+            style={{ 
+              color: theme.error || 'red',
+              fontSize: fontSizes.s,
+              marginBottom: spacing.m,
+            }}
+          >
+            Goal selection is required
+          </Text>
+        )}
+        
+        <Text 
+          style={[
+            styles.label, 
+            { 
+              color: theme.textSecondary,
+              fontSize: fontSizes.m,
+              marginBottom: spacing.xs,
+            }
+          ]}
+        >
+          Project Title *
+        </Text>
+        <TextInput
+          style={[
+            styles.input,
+            { 
+              backgroundColor: theme.inputBackground,
+              color: theme.text,
+              borderColor: theme.border,
+              borderWidth: 1,
+              borderRadius: 8,
+              paddingHorizontal: spacing.m,
+              paddingVertical: spacing.s,
+              fontSize: fontSizes.m,
+              marginBottom: spacing.m,
+            }
+          ]}
+          value={title}
+          onChangeText={setTitle}
+          placeholder="Enter project title"
+          placeholderTextColor={theme.textSecondary}
+          autoFocus={false}
+        />
+        
+        <Text 
+          style={[
+            styles.label, 
+            { 
+              color: theme.textSecondary,
+              fontSize: fontSizes.m,
+              marginBottom: spacing.xs,
+            }
+          ]}
+        >
+          Description (Optional)
+        </Text>
+        <TextInput
+          style={[
+            styles.input,
+            styles.textArea,
+            { 
+              backgroundColor: theme.inputBackground,
+              color: theme.text,
+              borderColor: theme.border,
+              borderWidth: 1,
+              borderRadius: 8,
+              paddingHorizontal: spacing.m,
+              paddingVertical: spacing.s,
+              fontSize: fontSizes.m,
+              marginBottom: spacing.m,
+              minHeight: scaleHeight(100),
+              textAlignVertical: "top",
+            }
+          ]}
+          value={description}
+          onChangeText={setDescription}
+          placeholder="Enter project description"
+          placeholderTextColor={theme.textSecondary}
+          multiline
+          numberOfLines={4}
+          textAlignVertical="top"
+        />
+        
+        {/* Due Date Toggle */}
+        <View 
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: spacing.m,
+            paddingVertical: spacing.s,
+          }}
+        >
+          <Text 
+            style={[
+              styles.label, 
+              { 
+                color: theme.textSecondary,
+                fontSize: fontSizes.m,
+                marginBottom: 0,
+              }
+            ]}
+          >
+            Set Due Date
+          </Text>
+          <Switch
+            value={hasDueDate}
+            onValueChange={setHasDueDate}
+            trackColor={{ false: theme.border, true: buttonColor + '80' }}
+            thumbColor={hasDueDate ? buttonColor : '#f4f3f4'}
+          />
+        </View>
+        
+        {/* Date Picker Section */}
+        {hasDueDate && (
+          <View style={{ marginBottom: spacing.m }}>
+            <TouchableOpacity
+              style={{
+                backgroundColor: theme.inputBackground,
+                borderColor: theme.border,
+                borderWidth: 1,
+                borderRadius: 8,
+                paddingHorizontal: spacing.m,
+                paddingVertical: spacing.s,
+                minHeight: scaleHeight(40), // Minimum height for single line
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: spacing.s,
+              }}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Ionicons name="calendar-outline" size={scaleWidth(20)} color={theme.textSecondary} />
+              <Text 
+                style={{ 
+                  color: theme.text,
+                  fontSize: fontSizes.m,
+                  flex: 1,
+                }}
+              >
+                {dueDate.toLocaleDateString()}
+              </Text>
+            </TouchableOpacity>
+            
+            {showDatePicker && (
+              <DateTimePicker
+                value={dueDate}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={handleDateChange}
+                minimumDate={new Date()}
+                themeVariant={theme.background === '#000000' ? 'dark' : 'light'}
+              />
+            )}
+          </View>
+        )}
+      </ScrollView>
+    );
+  };
+
+  // Render Tasks Tab Content
+  const renderTasksTab = () => {
+    return (
+      <ScrollView 
+        style={{ flex: 1, backgroundColor: theme.background || '#000000' }}
+        contentContainerStyle={{ 
+          paddingHorizontal: spacing.m,
+          paddingTop: spacing.s,
+          paddingBottom: spacing.l
+        }}
+        showsVerticalScrollIndicator={true}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="none"
+        scrollEnabled={true}
+        bounces={true}
+      >
+        <View style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: spacing.m,
+        }}>
+          <Text 
+            style={[
+              styles.sectionTitle, 
+              { 
+                color: theme.text,
+                fontSize: fontSizes.xl,
+                fontWeight: '600',
+                flex: 1,
+              }
+            ]}
+          >
+            Project Tasks
+          </Text>
+          
+          {tasks.length > 0 && (
+            <TouchableOpacity
+              style={{
+                backgroundColor: editMode ? theme.primary : theme.backgroundSecondary,
+                paddingHorizontal: spacing.m,
+                paddingVertical: spacing.s,
+                minHeight: scaleHeight(40), // Minimum height for single line
+                borderRadius: scaleWidth(20),
+                minHeight: 36,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              onPress={() => {
+                setEditMode(!editMode);
+                setEditingTaskId(null);
+              }}
+            >
+              <Text
+                style={{
+                  color: editMode ? '#FFFFFF' : theme.text,
+                  fontSize: fontSizes.s,
+                  fontWeight: '600',
+                }}
+              >
+                {editMode ? 'Done' : 'Edit'}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+        
+        {tasks.length === 0 && (
+          <View style={{
+            padding: spacing.l,
+            alignItems: 'center',
+            backgroundColor: theme.backgroundSecondary,
+            borderRadius: scaleWidth(8),
+            marginBottom: spacing.m,
+          }}>
+            <Ionicons 
+              name="checkbox-outline" 
+              size={scaleWidth(48)} 
+              color={theme.textSecondary} 
+              style={{ marginBottom: spacing.s }}
+            />
+            <Text style={{
+              color: theme.textSecondary,
+              fontSize: fontSizes.m,
+              textAlign: 'center',
+            }}>
+              No tasks yet. Add your first task below.
+            </Text>
+          </View>
+        )}
+        
+        {/* Task list */}
+        <View style={styles.taskList}>
+          {tasks.map((item, index) => renderTaskItem(item, index))}
+        </View>
+        
+        {/* Add new task input */}
+        <View 
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginTop: spacing.m,
+            marginBottom: spacing.m,
+          }}
+        >
+          <View style={styles.taskCheckbox}>
+            <Ionicons 
+              name="add-circle-outline" 
+              size={scaleWidth(22)} 
+              color={buttonColor} 
+            />
+          </View>
+          <TextInput
+            style={[
+              styles.taskInput, 
+              { 
+                backgroundColor: theme.inputBackground,
+                color: theme.text,
+                borderColor: theme.border,
+                fontSize: fontSizes.m,
+                padding: spacing.s,
+                borderRadius: scaleWidth(8),
+                flex: 1,
+                borderWidth: 1,
+              }
+            ]}
+            value={newTaskTitle}
+            onChangeText={setNewTaskTitle}
+            placeholder="Add a new task"
+            placeholderTextColor={theme.textSecondary}
+            onSubmitEditing={handleAddTask}
+            returnKeyType="done"
+            autoFocus={false}
+            onFocus={() => {
+              // Prevent auto-focus during tab switches
+            }}
+          />
+        </View>
+      </ScrollView>
+    );
+  };
   
   return (
     <Modal
       visible={visible}
       transparent={true}
       animationType="slide"
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
       accessible={true}
       accessibilityViewIsModal={true}
       accessibilityLabel="Create project modal"
     >
-      <TouchableWithoutFeedback onPress={dismissKeyboard}>
-        <KeyboardAvoidingView 
-          style={styles.container} 
-          behavior={Platform.OS === 'ios' ? 'padding' : null}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
-        >
-          <View style={[
-            styles.modalContent, 
-            { 
-              backgroundColor: theme.card,
-              borderTopLeftRadius: 16,
-              borderTopRightRadius: 16,
-              padding: spacing.m,
-              paddingBottom: Platform.OS === 'ios' ? spacing.xxl : spacing.m,
-            }
-          ]}>
-            <View style={styles.modalHeader}>
-              <Text 
-                style={[
-                  styles.modalTitle, 
-                  { 
-                    color: theme.text,
-                    fontSize: fontSizes.l,
-                    fontWeight: 'bold',
-                  }
-                ]}
-                maxFontSizeMultiplier={1.3}
-                accessible={true}
-                accessibilityRole="header"
-              >
-                Create Project
-              </Text>
-              <TouchableOpacity 
-                style={[
-                  styles.closeButton,
-                  {
-                    padding: spacing.s,
-                    minWidth: 44,
-                    minHeight: 44,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }
-                ]} 
-                onPress={onClose}
-                accessible={true}
-                accessibilityRole="button"
-                accessibilityLabel="Close modal"
-                accessibilityHint="Discards project and closes this screen"
-              >
-                <Ionicons name="close" size={scaleWidth(24)} color={theme.textSecondary} />
-              </TouchableOpacity>
-            </View>
-            
-            <ScrollView 
-              style={styles.formContainer}
-              showsVerticalScrollIndicator={true}
-              keyboardShouldPersistTaps="handled"
+      <KeyboardAvoidingView 
+        style={styles.container} 
+        behavior={Platform.OS === 'ios' ? 'padding' : null}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+      >
+        <View style={[
+          styles.modalContent, 
+          { 
+            backgroundColor: theme.card,
+            borderTopLeftRadius: scaleWidth(16),
+            borderTopRightRadius: scaleWidth(16),
+            padding: spacing.m,
+            paddingBottom: Math.max(insets.bottom, spacing.m),
+            maxHeight: '95%', // Increased by half (0.5x)
+            minHeight: scaleHeight(625), // Increased minimum by half
+          }
+        ]}>
+          <View style={[styles.modalHeader, { marginBottom: spacing.xs }]}>
+            <Text 
+              style={[
+                styles.modalTitle, 
+                { 
+                  color: theme.text,
+                  fontSize: fontSizes.xl,
+                  fontWeight: 'bold',
+                }
+              ]}
+              maxFontSizeMultiplier={1.5}
+              accessible={true}
+              accessibilityRole="header"
             >
-              {/* Goal Selection Section - ANIMATED */}
-              <Text 
-                style={[
-                  styles.label, 
-                  { 
-                    color: theme.textSecondary,
-                    fontSize: fontSizes.m,
-                    marginBottom: spacing.xs,
-                  }
-                ]}
-                maxFontSizeMultiplier={1.3}
-              >
-                Associated Goal *
-              </Text>
-              
-              {/* Goal Selector Button */}
-              <TouchableOpacity
-                style={[
-                  styles.goalSelector,
-                  { 
-                    backgroundColor: theme.inputBackground,
-                    borderColor: validationErrors.goalRequired ? (theme.error || 'red') : theme.border,
-                    borderBottomLeftRadius: showGoalList ? 0 : 8,
-                    borderBottomRightRadius: showGoalList ? 0 : 8,
-                    borderWidth: 1,
-                    padding: spacing.m,
-                    minHeight: 48,
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }
-                ]}
-                onPress={() => {
-                  console.log('Goal selector pressed, toggling dropdown');
-                  
-                  if (goals.length === 0) {
-                    Alert.alert(
-                      "No Goals Available", 
-                      "You need to create at least one goal before creating a project.",
-                      [
-                        { text: "OK" },
-                        { 
-                          text: "Create Goal", 
-                          onPress: () => {
-                            onClose();
-                            setTimeout(() => {
-                              try {
-                                const navigation = global.navigation || window.navigation;
-                                if (navigation && typeof navigation.navigate === 'function') {
-                                  navigation.navigate('GoalDetails', { mode: 'create' });
-                                } else {
-                                  Alert.alert(
-                                    "Create a Goal", 
-                                    "Please create a goal first from the Goals tab.",
-                                    [{ text: "OK" }]
-                                  );
-                                }
-                              } catch (error) {
-                                console.error('Navigation error:', error);
-                                Alert.alert(
-                                  "Create a Goal", 
-                                  "Please create a goal first from the Goals tab.",
-                                  [{ text: "OK" }]
-                                );
-                              }
-                            }, 300);
-                          }
-                        }
-                      ]
-                    );
-                  } else {
-                    setShowGoalList(!showGoalList);
-                  }
-                }}
-                activeOpacity={0.7}
-                accessible={true}
-                accessibilityRole="button"
-                accessibilityLabel={selectedGoalId ? `Selected goal: ${selectedGoalTitle}` : "Select a goal"}
-                accessibilityHint="Opens list of available goals"
-                accessibilityState={{ expanded: showGoalList }}
-              >
-                {selectedGoalId ? (
-                  <View style={styles.selectedGoalContainer}>
-                    <Text 
-                      style={[
-                        styles.selectedGoalText, 
-                        { 
-                          color: theme.text,
-                          fontSize: fontSizes.m,
-                        }
-                      ]}
-                      maxFontSizeMultiplier={1.3}
-                    >
-                      {selectedGoalTitle}
-                    </Text>
-                  </View>
-                ) : (
-                  <View style={styles.selectGoalPrompt}>
-                    <Ionicons 
-                      name="flag-outline" 
-                      size={scaleWidth(20)} 
-                      color={theme.textSecondary} 
-                      style={{ marginRight: spacing.xs }}
-                    />
-                    <Text 
-                      style={[
-                        styles.selectGoalText, 
-                        { 
-                          color: validationErrors.goalRequired ? (theme.error || 'red') : theme.textSecondary,
-                          fontSize: fontSizes.m,
-                        }
-                      ]}
-                      maxFontSizeMultiplier={1.3}
-                    >
-                      {goals.length > 0 
-                        ? "Select a goal for this project (required)" 
-                        : "No goals available - create a goal first"}
-                    </Text>
-                  </View>
-                )}
-                <Ionicons 
-                  name={showGoalList ? "chevron-up" : "chevron-down"} 
-                  size={scaleWidth(20)} 
-                  color={theme.textSecondary} 
-                  style={styles.goalSelectorIcon}
-                />
-              </TouchableOpacity>
-              
-              {/* ANIMATED: Inline Goal List Dropdown */}
-              <Animated.View 
-                style={[
-                  styles.inlineGoalList, 
-                  { 
-                    backgroundColor: theme.cardElevated,
-                    borderColor: theme.border,
-                    maxHeight: dropdownHeight,
-                    opacity: dropdownOpacity,
-                    overflow: 'hidden',
-                    borderWidth: 1,
-                    borderTopWidth: 0,
-                    borderBottomLeftRadius: 8,
-                    borderBottomRightRadius: 8,
-                    marginBottom: spacing.m,
-                  }
-                ]}
-                accessible={showGoalList}
-                accessibilityLabel="Goal options"
-                accessibilityRole="radiogroup"
-              >
-                {renderGoalsList()}
-              </Animated.View>
-              
-              {validationErrors.goalRequired && (
-                <Text 
-                  style={[
-                    styles.errorText, 
-                    { 
-                      color: theme.error || 'red',
-                      fontSize: fontSizes.s,
-                      marginBottom: spacing.m,
-                    }
-                  ]}
-                  maxFontSizeMultiplier={1.3}
-                  accessible={true}
-                  accessibilityRole="alert"
-                >
-                  Goal selection is required
-                </Text>
-              )}
-              
-              <Text 
-                style={[
-                  styles.label, 
-                  { 
-                    color: theme.textSecondary,
-                    fontSize: fontSizes.m,
-                    marginBottom: spacing.xs,
-                  }
-                ]}
-                maxFontSizeMultiplier={1.3}
-              >
-                Project Title *
-              </Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  { 
-                    backgroundColor: theme.inputBackground,
-                    color: theme.text,
-                    borderColor: theme.border,
-                    borderWidth: 1,
-                    borderRadius: 8,
-                    paddingHorizontal: spacing.m,
-                    paddingVertical: spacing.s,
-                    fontSize: fontSizes.m,
-                    marginBottom: spacing.m,
-                  }
-                ]}
-                value={title}
-                onChangeText={setTitle}
-                placeholder="Enter project title"
-                placeholderTextColor={theme.textSecondary}
-                autoFocus={false}
-                maxFontSizeMultiplier={1.3}
-                accessible={true}
-                accessibilityLabel="Project title"
-                accessibilityHint="Enter a title for your project"
-              />
-              
-              <Text 
-                style={[
-                  styles.label, 
-                  { 
-                    color: theme.textSecondary,
-                    fontSize: fontSizes.m,
-                    marginBottom: spacing.xs,
-                  }
-                ]}
-                maxFontSizeMultiplier={1.3}
-              >
-                Description (Optional)
-              </Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  styles.textArea,
-                  { 
-                    backgroundColor: theme.inputBackground,
-                    color: theme.text,
-                    borderColor: theme.border,
-                    borderWidth: 1,
-                    borderRadius: 8,
-                    paddingHorizontal: spacing.m,
-                    paddingVertical: spacing.s,
-                    fontSize: fontSizes.m,
-                    marginBottom: spacing.m,
-                    minHeight: scaleHeight(100),
-                    textAlignVertical: "top",
-                  }
-                ]}
-                value={description}
-                onChangeText={setDescription}
-                placeholder="Enter project description"
-                placeholderTextColor={theme.textSecondary}
-                multiline
-                numberOfLines={4}
-                textAlignVertical="top"
-                maxFontSizeMultiplier={1.3}
-                accessible={true}
-                accessibilityLabel="Project description"
-                accessibilityHint="Enter an optional description for your project"
-              />
-              
-              {/* Due Date Toggle */}
-              <View 
-                style={[
-                  styles.toggleRow,
-                  {
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: spacing.m,
-                    paddingVertical: spacing.s,
-                  }
-                ]}
-              >
-                <Text 
-                  style={[
-                    styles.label, 
-                    { 
-                      color: theme.textSecondary,
-                      fontSize: fontSizes.m,
-                      marginBottom: 0,
-                    }
-                  ]}
-                  maxFontSizeMultiplier={1.3}
-                >
-                  Set Due Date
-                </Text>
-                <Switch
-                  value={hasDueDate}
-                  onValueChange={setHasDueDate}
-                  trackColor={{ false: theme.border, true: buttonColor + '80' }}
-                  thumbColor={hasDueDate ? buttonColor : '#f4f3f4'}
-                  accessible={true}
-                  accessibilityRole="switch"
-                  accessibilityLabel="Set due date"
-                  accessibilityState={{ checked: hasDueDate }}
-                  accessibilityHint={hasDueDate ? "Disable due date" : "Enable due date"}
-                />
-              </View>
-              
-              {/* Date Picker Section */}
-              {hasDueDate && (
-                <View 
-                  style={[
-                    styles.dateSection,
-                    { marginBottom: spacing.m }
-                  ]}
-                  accessible={true}
-                  accessibilityLabel="Due date selection"
-                >
-                  <TouchableOpacity
-                    style={[
-                      styles.dateButton,
-                      { 
-                        backgroundColor: theme.inputBackground,
-                        borderColor: theme.border,
-                        borderWidth: 1,
-                        borderRadius: 8,
-                        paddingHorizontal: spacing.m,
-                        paddingVertical: spacing.s,
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: spacing.s,
-                      }
-                    ]}
-                    onPress={() => setShowDatePicker(true)}
-                    accessible={true}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Due date: ${dueDate.toLocaleDateString()}`}
-                    accessibilityHint="Opens date picker to select due date"
-                  >
-                    <Ionicons name="calendar-outline" size={scaleWidth(20)} color={theme.textSecondary} />
-                    <Text 
-                      style={[
-                        styles.dateButtonText, 
-                        { 
-                          color: theme.text,
-                          fontSize: fontSizes.m,
-                          flex: 1,
-                        }
-                      ]}
-                      maxFontSizeMultiplier={1.3}
-                    >
-                      {dueDate.toLocaleDateString()}
-                    </Text>
-                  </TouchableOpacity>
-                  
-                  {showDatePicker && (
-                    <DateTimePicker
-                      value={dueDate}
-                      mode="date"
-                      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                      onChange={handleDateChange}
-                      minimumDate={new Date()}
-                      themeVariant={theme.background === '#000000' ? 'dark' : 'light'}
-                    />
-                  )}
-                </View>
-              )}
-              
-              {/* Project info section for other data */}
-              {projectData && projectData.domain && (
-                <View 
-                  style={[
-                    styles.infoItem,
-                    { marginBottom: spacing.m }
-                  ]}
-                  accessible={true}
-                  accessibilityLabel={`Domain: ${projectData.domain}`}
-                >
-                  <Text 
-                    style={[
-                      styles.infoLabel, 
-                      { 
-                        color: theme.textSecondary,
-                        fontSize: fontSizes.m,
-                        marginBottom: spacing.xxs,
-                      }
-                    ]}
-                    maxFontSizeMultiplier={1.3}
-                  >
-                    Domain
-                  </Text>
-                  <Text 
-                    style={[
-                      styles.infoValue, 
-                      { 
-                        color: theme.text,
-                        fontSize: fontSizes.m,
-                        fontWeight: '500',
-                      }
-                    ]}
-                    maxFontSizeMultiplier={1.3}
-                  >
-                    {projectData.domain}
-                  </Text>
-                </View>
-              )}
-              
-              {/* Tasks section */}
-              <View 
-                style={[
-                  styles.taskSection,
-                  {
-                    marginTop: spacing.s,
-                    marginBottom: spacing.m,
-                  }
-                ]}
-              >
-                <Text 
-                  style={[
-                    styles.sectionTitle, 
-                    { 
-                      color: theme.text,
-                      fontSize: fontSizes.l,
-                      fontWeight: '600',
-                      marginBottom: spacing.m,
-                    }
-                  ]}
-                  maxFontSizeMultiplier={1.3}
-                  accessible={true}
-                  accessibilityRole="header"
-                >
-                  Tasks ({tasks.length})
-                </Text>
-                
-                {/* Fix: Manually render tasks instead of using FlatList */}
-                <View style={styles.taskList}>
-                  {tasks.map((item, index) => renderTaskItem(item, index))}
-                </View>
-                
-                {/* Add new task input */}
-                <View 
-                  style={[
-                    styles.addTaskContainer,
-                    {
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      marginBottom: spacing.m,
-                    }
-                  ]}
-                >
-                  <View style={styles.taskCheckbox}>
-                    <Ionicons 
-                      name="add-circle-outline" 
-                      size={scaleWidth(22)} 
-                      color={buttonColor} 
-                    />
-                  </View>
-                  <TextInput
-                    style={[
-                      styles.taskInput, 
-                      { 
-                        backgroundColor: theme.inputBackground,
-                        color: theme.text,
-                        borderColor: theme.border,
-                        fontSize: fontSizes.m,
-                        padding: spacing.s,
-                        borderRadius: 8,
-                        flex: 1,
-                        borderWidth: 1,
-                      }
-                    ]}
-                    value={newTaskTitle}
-                    onChangeText={setNewTaskTitle}
-                    placeholder="Add a new task"
-                    placeholderTextColor={theme.textSecondary}
-                    onSubmitEditing={handleAddTask}
-                    returnKeyType="done"
-                    maxFontSizeMultiplier={1.3}
-                    accessible={true}
-                    accessibilityLabel="New task title"
-                    accessibilityHint="Enter title and press enter to add a new task"
-                  />
-                </View>
-              </View>
-              
-              <TouchableOpacity 
-                style={[
-                  styles.addButton, 
-                  { 
-                    backgroundColor: goals.length === 0 ? theme.textSecondary : buttonColor,
-                    opacity: goals.length === 0 ? 0.7 : 1,
-                    borderRadius: 8,
-                    paddingVertical: spacing.m,
-                    alignItems: 'center',
-                    marginTop: spacing.s,
-                    marginBottom: spacing.m,
-                  }
-                ]}
-                onPress={handleAddProject}
-                disabled={goals.length === 0}
-                accessible={true}
-                accessibilityRole="button"
-                accessibilityLabel="Create project"
-                accessibilityHint="Creates the project with current information"
-                accessibilityState={{ disabled: goals.length === 0 }}
-              >
-                <Text 
-                  style={[
-                    styles.addButtonText,
-                    {
-                      color: '#fff',
-                      fontSize: fontSizes.m,
-                      fontWeight: '600',
-                    }
-                  ]}
-                  maxFontSizeMultiplier={1.3}
-                >
-                  {goals.length === 0 ? 'Create a Goal First' : 'Create Project'}
-                </Text>
-              </TouchableOpacity>
-
-              {goals.length === 0 && (
-                <TouchableOpacity 
-                  style={[
-                    styles.createGoalButton, 
-                    { 
-                      backgroundColor: theme.primary,
-                      paddingVertical: spacing.m,
-                      borderRadius: 8,
-                      alignItems: 'center',
-                      marginBottom: spacing.m,
-                    }
-                  ]}
-                  onPress={() => {
-                    // Close this modal
-                    onClose();
-                    // Use setTimeout to ensure modals are closed before navigation
-                    setTimeout(() => {
-                      try {
-                        // Try different navigation options
-                        if (appContext.navigation && typeof appContext.navigation.navigate === 'function') {
-                          appContext.navigation.navigate('GoalDetails', { mode: 'create' });
-                        } else {
-                          // Try global navigation
-                          const globalNav = global.navigation || window.navigation;
-                          if (globalNav && typeof globalNav.navigate === 'function') {
-                            globalNav.navigate('GoalDetails', { mode: 'create' });
-                          } else if (global.ReactNativeNavigation) {
-                            global.ReactNativeNavigation.push('GoalDetails', { mode: 'create' });
-                          } else {
-                            Alert.alert(
-                              "Create a Goal", 
-                              "Please create a goal first from the Goals tab.",
-                              [{ text: "OK" }]
-                            );
-                          }
-                        }
-                      } catch (error) {
-                        console.error('Navigation error:', error);
-                        Alert.alert(
-                          "Create a Goal", 
-                          "Please create a goal first from the Goals tab.",
-                          [{ text: "OK" }]
-                        );
-                      }
-                    }, 300);
-                  }}
-                  accessible={true}
-                  accessibilityRole="button"
-                  accessibilityLabel="Go to create goal"
-                  accessibilityHint="Navigates to the goal creation screen"
-                >
-                  <Text 
-                    style={[
-                      styles.createGoalButtonText,
-                      {
-                        color: '#fff',
-                        fontSize: fontSizes.m,
-                        fontWeight: '600',
-                      }
-                    ]}
-                    maxFontSizeMultiplier={1.3}
-                  >
-                    Go to Create Goal
-                  </Text>
-                </TouchableOpacity>
-              )}
-            </ScrollView>
+              Create Project
+            </Text>
+            <TouchableOpacity 
+              style={[
+                styles.closeButton,
+                {
+                  padding: spacing.s,
+                  minWidth: minTouchSize,
+                  minHeight: minTouchSize,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }
+              ]} 
+              onPress={handleClose}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Close modal"
+              accessibilityHint="Discards project and closes this screen"
+            >
+              <Ionicons name="close" size={scaleWidth(24)} color={theme.textSecondary} />
+            </TouchableOpacity>
           </View>
-        </KeyboardAvoidingView>
-      </TouchableWithoutFeedback>
+          
+          {/* React Navigation Tab Navigator for swipeable tabs */}
+          <View style={{
+            height: scaleHeight(475), // Increased tab container by half
+            marginBottom: spacing.s,
+          }}>
+            <NavigationContainer 
+              independent={true}
+              theme={{
+                dark: theme.background === '#000000',
+                colors: {
+                  primary: theme.primary || '#4CAF50',
+                  background: theme.background || '#000000',
+                  card: theme.card || '#1F1F1F',
+                  text: theme.text || '#FFFFFF',
+                  border: theme.border || '#333333',
+                  notification: theme.primary || '#4CAF50',
+                },
+              }}
+            >
+              <Tab.Navigator
+                screenOptions={{
+                  tabBarActiveTintColor: '#FFFFFF',
+                  tabBarInactiveTintColor: theme.textSecondary || '#888888',
+                  tabBarStyle: { 
+                    backgroundColor: theme.backgroundSecondary || theme.cardElevated || '#1F1F1F',
+                    borderRadius: scaleWidth(8),
+                    marginHorizontal: 0,
+                    marginVertical: 0,
+                    height: scaleHeight(44),
+                    elevation: 0,
+                    shadowOpacity: 0,
+                    borderBottomWidth: 0,
+                  },
+                  tabBarLabelStyle: {
+                    fontSize: fontSizes.m,
+                    fontWeight: '600',
+                    textTransform: 'none',
+                    marginTop: 0,
+                  },
+                  tabBarIndicatorStyle: { 
+                    backgroundColor: theme.primary || '#4CAF50',
+                    height: scaleHeight(36),
+                    borderRadius: scaleWidth(6),
+                    marginBottom: 4,
+                    marginTop: 4,
+                    zIndex: 1,
+                  },
+                  tabBarItemStyle: {
+                    flex: 1,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    paddingVertical: 0,
+                    margin: 0,
+                  },
+                  tabBarContentContainerStyle: {
+                    backgroundColor: 'transparent',
+                  },
+                  swipeEnabled: true,
+                  lazy: true, // Prevent premature rendering that can cause keyboard issues
+                }}
+              >
+                <Tab.Screen 
+                  name="ProjectDetails" 
+                  options={{
+                    tabBarLabel: 'Details',
+                  }}
+                >
+                  {() => renderDetailsTab()}
+                </Tab.Screen>
+                
+                <Tab.Screen 
+                  name="ProjectTasks" 
+                  options={{
+                    tabBarLabel: `Tasks (${tasks.length})`,
+                  }}
+                >
+                  {() => renderTasksTab()}
+                </Tab.Screen>
+              </Tab.Navigator>
+            </NavigationContainer>
+          </View>
+          
+          {/* Create Project Button - Always visible outside tabs */}
+          <TouchableOpacity 
+            style={[
+              styles.addButton, 
+              { 
+                backgroundColor: goals.length === 0 ? theme.textSecondary : buttonColor,
+                opacity: goals.length === 0 ? 0.7 : 1,
+                borderRadius: scaleWidth(12),
+                paddingVertical: spacing.m,
+                alignItems: 'center',
+                marginTop: spacing.s,
+                marginBottom: spacing.xs,
+                minHeight: minTouchSize,
+                elevation: 3,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.2,
+                shadowRadius: 4,
+              }
+            ]}
+            onPress={handleAddProject}
+            disabled={goals.length === 0}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Create project"
+            accessibilityHint="Creates the project with current information"
+            accessibilityState={{ disabled: goals.length === 0 }}
+          >
+            <Text 
+              style={[
+                styles.addButtonText,
+                {
+                  color: '#fff',
+                  fontSize: fontSizes.m,
+                  fontWeight: '600',
+                }
+              ]}
+              maxFontSizeMultiplier={1.5}
+            >
+              {goals.length === 0 ? 'Create a Goal First' : 'Create Project'}
+            </Text>
+          </TouchableOpacity>
+
+          {goals.length === 0 && (
+            <TouchableOpacity 
+              style={[
+                styles.createGoalButton, 
+                { 
+                  backgroundColor: theme.primary,
+                  paddingVertical: spacing.m,
+                  borderRadius: scaleWidth(8),
+                  alignItems: 'center',
+                  marginBottom: spacing.m,
+                  minHeight: minTouchSize,
+                }
+              ]}
+              onPress={() => {
+                handleClose();
+                setTimeout(() => {
+                  Alert.alert(
+                    "Create a Goal", 
+                    "Please create a goal first from the Goals tab.",
+                    [{ text: "OK" }]
+                  );
+                }, 300);
+              }}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Go to create goal"
+              accessibilityHint="Navigates to the goal creation screen"
+            >
+              <Text 
+                style={[
+                  styles.createGoalButtonText,
+                  {
+                    color: '#fff',
+                    fontSize: fontSizes.m,
+                    fontWeight: '600',
+                  }
+                ]}
+                maxFontSizeMultiplier={1.5}
+              >
+                Go to Create Goal
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
@@ -1099,15 +1133,43 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     backgroundColor: 'rgba(0,0,0,0.5)'
   },
+  modalContent: {
+    // height defined inline for proper visibility
+  },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: spacing.m
   },
-  formContainer: {
-    marginBottom: Platform.OS === 'ios' ? 0 : spacing.m
+  modalTitle: {
+    fontWeight: 'bold'
   },
+  closeButton: {
+    padding: spacing.xxs
+  },
+  
+  // Form Elements
+  label: {
+    marginBottom: spacing.s
+  },
+  input: {
+    borderWidth: 1,
+    marginBottom: spacing.m
+  },
+  textArea: {
+    paddingTop: spacing.s
+  },
+  
+  // Goal Selection
+  goalSelector: {
+    // Styles defined inline for better theme integration
+  },
+  inlineGoalList: {
+    // Styles defined inline for better theme integration
+  },
+  
+  // Task Section
   taskItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1117,17 +1179,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center'
   },
-  selectGoalPrompt: {
-    flexDirection: 'row',
+  taskInput: {
+    // Styles defined inline for better theme integration
+  },
+  taskList: {
+    // Container for task items
+  },
+  taskTextContainer: {
+    // Styles defined inline for better theme integration
+  },
+  taskText: {
+    // Styles defined inline for better theme integration
+  },
+  removeButton: {
+    // Styles defined inline for better theme integration
+  },
+  
+  // Buttons
+  addButton: {
     alignItems: 'center',
-    flex: 1
   },
-  selectedGoalContainer: {
-    flex: 1
+  addButtonText: {
+    fontWeight: '600'
   },
-  goalItemsContainer: {
-    padding: spacing.s,
-    maxHeight: scaleHeight(200),
+  createGoalButton: {
+    alignItems: 'center',
+  },
+  createGoalButtonText: {
+    fontWeight: '600'
+  },
+  
+  // Other
+  sectionTitle: {
+    // Styles defined inline
   },
 });
 

@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 // Import constants from the new file instead of re-defining them
 import { PREMIUM_FEATURES, FREE_PLAN_LIMITS } from './SubscriptionConstants';
+import ReferralTracker from './ReferralTracker';
+import * as FeatureExplorerTracker from './FeatureExplorerTracker';
 
 // Export the constants for convenience
 export { PREMIUM_FEATURES, FREE_PLAN_LIMITS };
@@ -379,6 +381,125 @@ export const canAddMoreProjectsToGoal = async (goalId, projects = []) => {
   }
 };
 
+/**
+ * Upgrade user subscription and process any pending referrals
+ * @param {string} subscriptionType - The new subscription type ('pro', 'unlimited', etc.)
+ * @param {string} userId - The user ID (optional, for referral tracking)
+ */
+export const upgradeSubscription = async (subscriptionType, userId = null) => {
+  try {
+    // Store the new subscription status
+    await AsyncStorage.setItem('subscriptionStatus', subscriptionType);
+    
+    // Process any pending referrals
+    if (userId) {
+      const processedReferral = await ReferralTracker.processPendingReferral(userId, subscriptionType);
+      
+      if (processedReferral) {
+        console.log('Processed referral on subscription upgrade:', processedReferral);
+        
+        // Here you would typically:
+        // 1. Send this data to your backend
+        // 2. Credit the referrer's account
+        // 3. Update referral statistics
+        
+        // For now, we'll just log and store locally
+        await notifyReferralSuccess(processedReferral);
+        
+        // Track achievement for referral conversion
+        try {
+          await FeatureExplorerTracker.trackReferralConversion();
+        } catch (achievementError) {
+          console.error('Error tracking referral conversion achievement:', achievementError);
+          // Don't fail the whole function if achievement tracking fails
+        }
+      }
+      
+      // Track Insider Status achievement for Pro upgrades
+      try {
+        await FeatureExplorerTracker.trackInsiderStatus();
+      } catch (achievementError) {
+        console.error('Error tracking Insider Status achievement:', achievementError);
+        // Don't fail the whole function if achievement tracking fails
+      }
+    }
+    
+    return {
+      success: true,
+      subscriptionType,
+      processedReferral: !!processedReferral
+    };
+  } catch (error) {
+    console.error('Error upgrading subscription:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+};
+
+/**
+ * Notify that a referral was successful (for the referrer)
+ * This would typically send a push notification or update their account
+ */
+const notifyReferralSuccess = async (referralData) => {
+  try {
+    // Store notification for referrer (in a real app, this would be server-side)
+    const notification = {
+      id: `ref_${Date.now()}`,
+      type: 'referral_success',
+      message: `Great news! Someone used your referral code and upgraded to ${referralData.subscriptionType}!`,
+      referralCode: referralData.referralCode,
+      reward: '$10.00', // Example reward
+      timestamp: new Date().toISOString(),
+      read: false
+    };
+    
+    // Store locally for now (in production, this would be sent to your backend)
+    const existingNotifications = await AsyncStorage.getItem('referralNotifications');
+    const notifications = existingNotifications ? JSON.parse(existingNotifications) : [];
+    notifications.push(notification);
+    await AsyncStorage.setItem('referralNotifications', JSON.stringify(notifications));
+    
+    console.log('Referral success notification stored:', notification);
+    return notification;
+  } catch (error) {
+    console.error('Error storing referral notification:', error);
+    return null;
+  }
+};
+
+/**
+ * Get pending referral notifications for the current user
+ */
+export const getReferralNotifications = async () => {
+  try {
+    const notificationsStr = await AsyncStorage.getItem('referralNotifications');
+    return notificationsStr ? JSON.parse(notificationsStr) : [];
+  } catch (error) {
+    console.error('Error getting referral notifications:', error);
+    return [];
+  }
+};
+
+/**
+ * Mark referral notifications as read
+ */
+export const markReferralNotificationsRead = async () => {
+  try {
+    const notificationsStr = await AsyncStorage.getItem('referralNotifications');
+    if (notificationsStr) {
+      const notifications = JSON.parse(notificationsStr);
+      const updatedNotifications = notifications.map(n => ({ ...n, read: true }));
+      await AsyncStorage.setItem('referralNotifications', JSON.stringify(updatedNotifications));
+    }
+    return true;
+  } catch (error) {
+    console.error('Error marking referral notifications as read:', error);
+    return false;
+  }
+};
+
 export default {
   PREMIUM_FEATURES,
   FREE_PLAN_LIMITS,
@@ -388,5 +509,8 @@ export default {
   checkCurrentAIUsage,
   canAddMoreItems,
   checkProjectsPerGoalLimit,
-  canAddMoreProjectsToGoal
+  canAddMoreProjectsToGoal,
+  upgradeSubscription,
+  getReferralNotifications,
+  markReferralNotificationsRead
 };

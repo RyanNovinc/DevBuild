@@ -31,6 +31,7 @@ import * as Haptics from 'expo-haptics';
 import { runStartupDataCheck } from './src/utils/StartupDataCheck';
 import * as FeatureExplorerTracker from './src/services/FeatureExplorerTracker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import ReferralTracker from './src/services/ReferralTracker';
 
 // Import responsive utilities
 import {
@@ -161,9 +162,9 @@ if (Platform && Platform.OS === 'ios') {
             KeyboardManager.setPredictiveText(false);
           }
           
-          // Additional settings that help with keyboard handling
+          // DISABLE auto-resign to prevent keyboard dismissal issues  
           if (typeof KeyboardManager.setShouldResignOnTouchOutside === 'function') {
-            KeyboardManager.setShouldResignOnTouchOutside(true);
+            KeyboardManager.setShouldResignOnTouchOutside(false);
           }
         }
       }, 300);
@@ -191,7 +192,6 @@ import AIAssistantScreen from './src/screens/AIAssistantScreen';
 import ConversationsScreen from './src/screens/ConversationsScreen';
 import AIContextScreen from './src/screens/PersonalKnowledgeScreen';
 import OnboardingScreen from './src/screens/Onboarding';
-import StreamlinedOnboardingScreen from './src/screens/Onboarding/StreamlinedOnboardingScreen';
 import EnhancedOnboardingScreen from './src/screens/Onboarding/EnhancedOnboardingScreen';
 import PricingScreen from './src/screens/PricingScreen/index';
 import GoalProgressScreen from './src/screens/GoalProgressScreen';
@@ -228,7 +228,6 @@ const Stack = createStackNavigator();
 const LOADING_DURATION = 2000;  // 2 seconds for loading
 
 // Feature flags for onboarding
-const USE_STREAMLINED_ONBOARDING = false; // Set to false to use the original onboarding
 const USE_ENHANCED_ONBOARDING = true; // Set to true to use the new enhanced onboarding
 
 // Deferred styles - only created when needed
@@ -546,7 +545,17 @@ function MainTabNavigator({ route }) {
     const handleFullScreenChange = (event) => {
       if (event && event.detail) {
         const isFullScreen = event.detail.fullScreen || false;
+        console.log('App.js: Received full-screen event:', isFullScreen);
         setIsAnyScreenFullScreen(isFullScreen);
+      }
+    };
+    
+    // Check global state periodically as a fallback for React Native
+    const checkGlobalState = () => {
+      if (typeof global !== 'undefined' && typeof global.kanbanFullScreen === 'boolean') {
+        const globalFullScreen = global.kanbanFullScreen;
+        setIsAnyScreenFullScreen(globalFullScreen);
+        console.log('App.js: Checked global.kanbanFullScreen =', globalFullScreen);
       }
     };
     
@@ -555,10 +564,14 @@ function MainTabNavigator({ route }) {
       document.addEventListener('app-fullscreen-changed', handleFullScreenChange);
     }
     
+    // Set up periodic check for React Native
+    const interval = setInterval(checkGlobalState, 100);
+    
     return () => {
       if (typeof document !== 'undefined') {
         document.removeEventListener('app-fullscreen-changed', handleFullScreenChange);
       }
+      clearInterval(interval);
     };
   }, []);
 
@@ -878,7 +891,7 @@ function AppContent({ navigationRef }) {
               component={
                 USE_ENHANCED_ONBOARDING 
                   ? EnhancedOnboardingScreen 
-                  : (USE_STREAMLINED_ONBOARDING ? StreamlinedOnboardingScreen : OnboardingScreen)
+                  : OnboardingScreen
               }
               options={{
                 gestureEnabled: false,
@@ -960,7 +973,7 @@ const App = () => {
   setupGlobalLogFilter();
   const navigationRef = useRef();
   
-  // Initialize haptic feedback on app start
+  // Initialize haptic feedback and referral tracking on app start
   useEffect(() => {
     // Initialize haptic feedback
     if (Platform.OS === 'ios') {
@@ -971,6 +984,18 @@ const App = () => {
         console.log('Haptic feedback initialization error:', e);
       }
     }
+
+    // Initialize referral tracking
+    const initializeReferralTracking = async () => {
+      try {
+        await ReferralTracker.initialize();
+        console.log('Referral tracking initialized');
+      } catch (error) {
+        console.error('Error initializing referral tracking:', error);
+      }
+    };
+
+    initializeReferralTracking();
   }, []);
 
   // Add error boundary

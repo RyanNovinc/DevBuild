@@ -1,5 +1,6 @@
 // src/screens/Referral/ReferralService.js
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as FeatureExplorerTracker from '../../services/FeatureExplorerTracker';
 
 // Storage keys
 const KEYS = {
@@ -64,6 +65,12 @@ const ReferralService = {
   getReferralLink(code) {
     return `https://lifecompass.app/r/${code}`;
   },
+
+  // Get App Store referral link (for sharing)
+  getAppStoreReferralLink(code) {
+    // This link should redirect to the App Store but first store the referral code
+    return `https://lifecompass.app/r/${code}`;
+  },
   
   // Get number of referrals remaining
   async getReferralsRemaining() {
@@ -72,7 +79,7 @@ const ReferralService = {
   },
   
   // Record a referral share
-  async trackReferralShare() {
+  async trackReferralShare(showSuccess = null) {
     try {
       // Check referrals remaining
       const remaining = await this.getReferralsRemaining();
@@ -98,6 +105,14 @@ const ReferralService = {
       sentReferrals.push(newReferral);
       await AsyncStorage.setItem(KEYS.REFERRALS_SENT, JSON.stringify(sentReferrals));
       
+      // Track achievement for first referral sent
+      try {
+        await FeatureExplorerTracker.trackFirstReferralSent(showSuccess);
+      } catch (achievementError) {
+        console.error('Error tracking referral achievement:', achievementError);
+        // Don't fail the whole function if achievement tracking fails
+      }
+      
       return newReferral;
     } catch (error) {
       console.error('Error tracking referral share:', error);
@@ -118,7 +133,7 @@ const ReferralService = {
   },
   
   // Mock a referral conversion (for testing)
-  async mockReferralConversion(referralId) {
+  async mockReferralConversion(referralId, showSuccess = null) {
     try {
       // Update this specific referral
       const sentReferralsStr = await AsyncStorage.getItem(KEYS.REFERRALS_SENT);
@@ -154,6 +169,14 @@ const ReferralService = {
       const remaining = await this.getReferralsRemaining();
       if (remaining > 0) {
         await AsyncStorage.setItem(KEYS.REFERRALS_REMAINING, (remaining - 1).toString());
+      }
+      
+      // Track achievement for referral conversion
+      try {
+        await FeatureExplorerTracker.trackReferralConversion(showSuccess);
+      } catch (achievementError) {
+        console.error('Error tracking referral conversion achievement:', achievementError);
+        // Don't fail the whole function if achievement tracking fails
       }
       
       return true;

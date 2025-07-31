@@ -19,7 +19,7 @@ import {
 } from '../../utils/responsive';
 import FeatureExplorerTracker from '../../services/FeatureExplorerTracker';
 // Import the shared avatar components
-import { DefaultAvatar, COLOR_PALETTE } from '../../components/AvatarComponents';
+import { DefaultAvatar, COLOR_PALETTE, LevelAvatar } from '../../components/AvatarComponents';
 
 // Main header component - completely removed
 const ProfileHeader = ({ theme, toggleSettings }) => {
@@ -31,6 +31,16 @@ const ProfileHeader = ({ theme, toggleSettings }) => {
 ProfileHeader.Banner = ({ theme, isDarkMode, profile, user, navigation, onThemePickerOpen, toggleSettings }) => {
   // Get safe area insets to properly position elements
   const insets = useSafeAreaInsets();
+  
+  // Debug profile changes
+  useEffect(() => {
+    console.log('ProfileHeader.Banner: Profile changed:', {
+      profileImage: profile?.profileImage,
+      levelProfilePicture: profile?.levelProfilePicture,
+      defaultAvatar: profile?.defaultAvatar,
+      name: profile?.name
+    });
+  }, [profile]);
   
   // State for streak data
   const [streakData, setStreakData] = useState({
@@ -113,10 +123,16 @@ ProfileHeader.Banner = ({ theme, isDarkMode, profile, user, navigation, onThemeP
     return '🔥'; // Flame (1-6 days)
   };
 
-  // Render the default avatar if one is selected and no profile image is set
+  // Render the profile image based on priority: custom photo > level picture > legacy avatar > initials
   const renderProfileImage = () => {
+    console.log('ProfileHeader: Rendering profile image with data:', {
+      profileImage: profile.profileImage,
+      levelProfilePicture: profile.levelProfilePicture,
+      defaultAvatar: profile.defaultAvatar
+    });
+
     if (profile.profileImage) {
-      // Render actual profile image
+      // Priority 1: Render actual profile image (custom photo)
       return (
         <View style={styles.profileImageContainer}>
           <Image 
@@ -148,8 +164,42 @@ ProfileHeader.Banner = ({ theme, isDarkMode, profile, user, navigation, onThemeP
           )}
         </View>
       );
+    } else if (profile.levelProfilePicture) {
+      // Priority 2: Render level-based profile picture
+      return (
+        <View style={styles.profileImageContainer}>
+          <View style={[
+            styles.defaultAvatarContainer,
+            { 
+              width: profileImageSize,
+              height: profileImageSize,
+              borderRadius: borderRadius,
+              borderColor: isDarkMode ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.8)',
+              borderWidth: 2,
+              overflow: 'hidden'
+            }
+          ]}>
+            <LevelAvatar
+              size={profileImageSize - 4} // Account for border
+              pictureData={profile.levelProfilePicture}
+            />
+          </View>
+          
+          {/* Streak Badge - only show if streak > 0 */}
+          {streakData.currentStreak > 0 && (
+            <View style={styles.streakBadge}>
+              <Text style={styles.streakEmoji}>
+                {getStreakEmoji(streakData.currentStreak)}
+              </Text>
+              <Text style={styles.streakCount}>
+                {streakData.currentStreak}
+              </Text>
+            </View>
+          )}
+        </View>
+      );
     } else if (profile.defaultAvatar) {
-      // Render default avatar with the shared component
+      // Priority 3: Render legacy default avatar
       return (
         <View style={styles.profileImageContainer}>
           <View style={[
@@ -185,7 +235,7 @@ ProfileHeader.Banner = ({ theme, isDarkMode, profile, user, navigation, onThemeP
         </View>
       );
     } else {
-      // Default placeholder with initials
+      // Priority 4: Default placeholder with initials
       return (
         <View style={styles.profileImageContainer}>
           <View style={[

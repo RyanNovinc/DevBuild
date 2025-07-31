@@ -40,6 +40,15 @@ const TRACKING_KEYS = {
   AI_GENERATED_GOAL: 'achievement_tracker_ai_generated_goal',
   AI_RECOMMENDED_TIMEBLOCK: 'achievement_tracker_ai_recommended_timeblock',
   AI_POWER_USER: 'achievement_tracker_ai_power_user',
+  // Referral tracking keys
+  FIRST_REFERRAL_SENT: 'achievement_tracker_first_referral_sent',
+  REFERRALS_CONVERTED_COUNT: 'achievement_tracker_referrals_converted_count',
+  // Founder tracking keys
+  EARLY_ADOPTER: 'achievement_tracker_early_adopter',
+  // Feature Influencer tracking key
+  FEATURE_INFLUENCER: 'achievement_tracker_feature_influencer',
+  // Insider Status tracking key
+  INSIDER_STATUS: 'achievement_tracker_insider_status',
 };
 
 // Debug flag
@@ -1174,6 +1183,165 @@ export const resetAchievementTracking = async (trackingKey = null) => {
   }
 };
 
+/**
+ * Track when a user sends their first referral
+ * @param {Function} showSuccess - Optional success notification function
+ */
+export const trackFirstReferralSent = async (showSuccess = null) => {
+  try {
+    logDebug('Tracking first referral sent');
+    
+    // Check if we've already tracked this achievement
+    const hasTrackedFirstReferral = await AsyncStorage.getItem(TRACKING_KEYS.FIRST_REFERRAL_SENT);
+    
+    if (hasTrackedFirstReferral !== 'true') {
+      // This is the first referral sent
+      logDebug('First referral sent, unlocking Referral Guide achievement');
+      
+      // Set tracking flag
+      await AsyncStorage.setItem(TRACKING_KEYS.FIRST_REFERRAL_SENT, 'true');
+      
+      // Unlock the Referral Guide achievement
+      await AchievementService.unlockAchievement('referral-guide', showSuccess);
+    }
+  } catch (error) {
+    console.error('Error tracking first referral sent:', error);
+  }
+};
+
+/**
+ * Track when a referral converts (someone subscribes using referral code)
+ * @param {Function} showSuccess - Optional success notification function
+ */
+export const trackReferralConversion = async (showSuccess = null) => {
+  try {
+    logDebug('Tracking referral conversion');
+    
+    // Get current conversion count
+    const currentCountStr = await AsyncStorage.getItem(TRACKING_KEYS.REFERRALS_CONVERTED_COUNT);
+    const currentCount = currentCountStr ? parseInt(currentCountStr, 10) : 0;
+    const newCount = currentCount + 1;
+    
+    // Update the count
+    await AsyncStorage.setItem(TRACKING_KEYS.REFERRALS_CONVERTED_COUNT, newCount.toString());
+    
+    logDebug(`Referral conversion count updated to: ${newCount}`);
+    
+    // Check if we've reached 3 conversions for Community Builder achievement
+    if (newCount >= 3) {
+      // Check if we've already unlocked Community Builder
+      const achievements = await AchievementService.getUnlockedAchievements();
+      const hasCommunityBuilder = achievements.some(a => a.id === 'community-builder');
+      
+      if (!hasCommunityBuilder) {
+        logDebug('Reached 3 referral conversions, unlocking Community Builder achievement');
+        await AchievementService.unlockAchievement('community-builder', showSuccess);
+      }
+    }
+  } catch (error) {
+    console.error('Error tracking referral conversion:', error);
+  }
+};
+
+/**
+ * Track Early Adopter achievement when user becomes a founder
+ * @param {Function} showSuccess - Optional success notification function
+ */
+export const trackEarlyAdopter = async (showSuccess = null) => {
+  try {
+    logDebug('Tracking Early Adopter achievement');
+    
+    // Check if we've already tracked this achievement
+    const hasTrackedEarlyAdopter = await AsyncStorage.getItem(TRACKING_KEYS.EARLY_ADOPTER);
+    
+    if (hasTrackedEarlyAdopter !== 'true') {
+      // Import founderCodeService to check founder status
+      const founderCodeService = require('./founderCodeService').default;
+      const isFounder = await founderCodeService.isFounder();
+      
+      if (isFounder) {
+        logDebug('User is a founder, unlocking Early Adopter achievement');
+        
+        // Set tracking flag
+        await AsyncStorage.setItem(TRACKING_KEYS.EARLY_ADOPTER, 'true');
+        
+        // Unlock the Early Adopter achievement
+        await AchievementService.unlockAchievement('early-adopter', showSuccess);
+      } else {
+        logDebug('User is not a founder, cannot unlock Early Adopter achievement');
+      }
+    }
+  } catch (error) {
+    console.error('Error tracking Early Adopter achievement:', error);
+  }
+};
+
+/**
+ * Track Feature Influencer achievement when Pro member submits feedback
+ * @param {Function} showSuccess - Optional success notification function
+ */
+export const trackFeatureInfluencer = async (showSuccess = null) => {
+  try {
+    logDebug('Tracking Feature Influencer achievement');
+    
+    // Check if we've already tracked this achievement
+    const hasTrackedFeatureInfluencer = await AsyncStorage.getItem(TRACKING_KEYS.FEATURE_INFLUENCER);
+    
+    if (hasTrackedFeatureInfluencer !== 'true') {
+      // Check if user is Pro member
+      const subscriptionStatus = await AsyncStorage.getItem('subscriptionStatus');
+      const isProMember = subscriptionStatus === 'pro' || subscriptionStatus === 'unlimited';
+      
+      if (isProMember) {
+        logDebug('Pro member submitted feedback, unlocking Feature Influencer achievement');
+        
+        // Set tracking flag
+        await AsyncStorage.setItem(TRACKING_KEYS.FEATURE_INFLUENCER, 'true');
+        
+        // Unlock the Feature Influencer achievement
+        await AchievementService.unlockAchievement('feature-influencer', showSuccess);
+      } else {
+        logDebug('User is not Pro member, cannot unlock Feature Influencer achievement');
+      }
+    }
+  } catch (error) {
+    console.error('Error tracking Feature Influencer achievement:', error);
+  }
+};
+
+/**
+ * Track Insider Status achievement when user becomes Pro member
+ * @param {Function} showSuccess - Optional success notification function
+ */
+export const trackInsiderStatus = async (showSuccess = null) => {
+  try {
+    logDebug('Tracking Insider Status achievement');
+    
+    // Check if we've already tracked this achievement
+    const hasTrackedInsiderStatus = await AsyncStorage.getItem(TRACKING_KEYS.INSIDER_STATUS);
+    
+    if (hasTrackedInsiderStatus !== 'true') {
+      // Check if user is Pro member (has paid AI subscription)
+      const subscriptionStatus = await AsyncStorage.getItem('subscriptionStatus');
+      const isProMember = subscriptionStatus === 'pro' || subscriptionStatus === 'unlimited';
+      
+      if (isProMember) {
+        logDebug('User upgraded to paid AI subscription, unlocking Insider Status achievement');
+        
+        // Set tracking flag
+        await AsyncStorage.setItem(TRACKING_KEYS.INSIDER_STATUS, 'true');
+        
+        // Unlock the Insider Status achievement
+        await AchievementService.unlockAchievement('insider-status', showSuccess);
+      } else {
+        logDebug('User is not Pro member, cannot unlock Insider Status achievement');
+      }
+    }
+  } catch (error) {
+    console.error('Error tracking Insider Status achievement:', error);
+  }
+};
+
 export default {
   trackProfilePictureUpdate,
   trackThemeColorChange,
@@ -1207,5 +1375,14 @@ export default {
   getAIConversationCount,
   refreshAchievementContext,
   resetAchievementTracking,
+  // Referral tracking functions
+  trackFirstReferralSent,
+  trackReferralConversion,
+  // Founder tracking functions
+  trackEarlyAdopter,
+  // Feature Influencer tracking function
+  trackFeatureInfluencer,
+  // Insider Status tracking function
+  trackInsiderStatus,
   TRACKING_KEYS
 };

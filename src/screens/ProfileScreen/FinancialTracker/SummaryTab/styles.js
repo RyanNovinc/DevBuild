@@ -14,7 +14,8 @@ import {
 
 export default StyleSheet.create({
   tabContentContainer: {
-    padding: spacing.m,
+    padding: spacing.s,
+    paddingTop: -4,
   },
   
   // Card Headers
@@ -35,7 +36,7 @@ export default StyleSheet.create({
   // Summary Card
   summaryCard: {
     borderRadius: scaleWidth(16),
-    padding: isSmallDevice ? spacing.m : spacing.l,
+    padding: isSmallDevice ? spacing.l : spacing.xl,
     marginBottom: spacing.m,
     borderWidth: 1,
     shadowColor: '#000',
@@ -43,6 +44,7 @@ export default StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    minHeight: scaleHeight(180),
   },
   summaryTitle: {
     fontSize: fontSizes.l,
@@ -111,7 +113,7 @@ export default StyleSheet.create({
   // Bar Chart Card
   barChartCard: {
     borderRadius: scaleWidth(16),
-    padding: isSmallDevice ? spacing.m : spacing.l,
+    padding: isSmallDevice ? spacing.l : spacing.xl,
     marginBottom: spacing.m,
     borderWidth: 1,
     shadowColor: '#000',
@@ -119,6 +121,7 @@ export default StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    minHeight: scaleHeight(220),
   },
   barChartTitle: {
     fontSize: fontSizes.l,
@@ -197,7 +200,7 @@ export default StyleSheet.create({
   // Assets Card
   assetsCard: {
     borderRadius: scaleWidth(16),
-    padding: isSmallDevice ? spacing.m : spacing.l,
+    padding: isSmallDevice ? spacing.l : spacing.xl,
     marginBottom: spacing.m,
     borderWidth: 1,
     shadowColor: '#000',
@@ -205,6 +208,7 @@ export default StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    minHeight: scaleHeight(180),
   },
   assetsTitle: {
     fontSize: fontSizes.l,

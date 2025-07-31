@@ -18,6 +18,8 @@
           "remote-notification"
         ],
         "NSUserNotificationsUsageDescription": "Allow notifications to be reminded of your scheduled time blocks.",
+        "NSCalendarsUsageDescription": "LifeCompass needs calendar access to sync your time blocks with your device calendar.",
+        "NSRemindersUsageDescription": "LifeCompass can sync reminders with your time blocks for better organization.",
         "SKAdNetworkItems": [
           {
             "SKAdNetworkIdentifier": "cstr6suwn9.skadnetwork"
@@ -39,18 +41,29 @@
       },
       "permissions": [
         "RECEIVE_BOOT_COMPLETED",
-        "VIBRATE"
+        "VIBRATE",
+        "READ_CALENDAR",
+        "WRITE_CALENDAR"
       ],
       "package": "com.lifecompass.app",
       "jsEngine": "jsc"
     },
     "web": {},
+    "scheme": "lifecompass",
+    "associatedDomains": ["applinks:lifecompass.app"],
     "plugins": [
       [
         "expo-notifications",
         {
           "color": "#4CAF50",
           "mode": "production"
+        }
+      ],
+      [
+        "expo-calendar",
+        {
+          "calendarPermission": "LifeCompass needs calendar access to sync your time blocks with your device calendar.",
+          "remindersPermission": "LifeCompass can sync reminders with your time blocks for better organization."
         }
       ]
     ],

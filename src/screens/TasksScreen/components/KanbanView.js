@@ -72,12 +72,20 @@ const KanbanView = ({ taskScreenProps }) => {
     }
     
     // Dispatch event to notify app about full-screen state
-    if (typeof document !== 'undefined') {
+    // For React Native, we'll use a more reliable approach
+    if (typeof global !== 'undefined') {
       try {
-        const event = new CustomEvent('app-fullscreen-changed', { 
-          detail: { fullScreen: kanbanFullScreen } 
-        });
-        document.dispatchEvent(event);
+        // Store the full-screen state globally for React Native
+        global.kanbanFullScreen = kanbanFullScreen;
+        console.log('KanbanView: Set global.kanbanFullScreen =', kanbanFullScreen);
+        
+        // Also try the document approach for web environments
+        if (typeof document !== 'undefined') {
+          const event = new CustomEvent('app-fullscreen-changed', { 
+            detail: { fullScreen: kanbanFullScreen } 
+          });
+          document.dispatchEvent(event);
+        }
       } catch (error) {
         console.log('Error dispatching full-screen event:', error);
       }
@@ -99,12 +107,18 @@ const KanbanView = ({ taskScreenProps }) => {
       }
       
       // Reset app-wide full-screen state
-      if (typeof document !== 'undefined') {
+      if (typeof global !== 'undefined') {
         try {
-          const event = new CustomEvent('app-fullscreen-changed', { 
-            detail: { fullScreen: false } 
-          });
-          document.dispatchEvent(event);
+          global.kanbanFullScreen = false;
+          console.log('KanbanView cleanup: Set global.kanbanFullScreen = false');
+          
+          // Also try the document approach for web environments
+          if (typeof document !== 'undefined') {
+            const event = new CustomEvent('app-fullscreen-changed', { 
+              detail: { fullScreen: false } 
+            });
+            document.dispatchEvent(event);
+          }
         } catch (error) {
           // Ignore errors on cleanup
         }
@@ -472,19 +486,18 @@ const KanbanView = ({ taskScreenProps }) => {
             <View style={[
               styles.kanbanEmptyContainer, 
               { 
-                backgroundColor: '#000000',
-                paddingTop: insets.top
+                backgroundColor: '#000000'
               }
             ]}>
               <CustomEmptyState
                 title={viewMode === 'projects' ? "No Projects Found" : "No Tasks Found"}
                 message={getEmptyStateMessage()}
-                icon={viewMode === 'projects' ? "grid" : "checkbox"}
+                icon={viewMode === 'projects' ? "folder-open" : "list-outline"}
                 iconColor={theme.primary}
                 buttonText={buttonConfig.text}
                 onButtonPress={buttonConfig.handler}
                 theme={theme}
-                illustration={<EmptyTasksIllustration theme={theme} />}
+                illustration={<EmptyTasksIllustration theme={theme} viewMode={taskScreenProps.viewMode} />}
                 isDarkMode={true}
               />
             </View>
@@ -591,12 +604,12 @@ const KanbanView = ({ taskScreenProps }) => {
           <CustomEmptyState
             title={viewMode === 'projects' ? "No Projects Found" : "No Tasks Found"}
             message={getEmptyStateMessage()}
-            icon={viewMode === 'projects' ? "grid" : "checkbox"}
+            icon={viewMode === 'projects' ? "folder-open" : "list-outline"}
             iconColor={theme.primary}
             buttonText={buttonConfig.text}
             onButtonPress={buttonConfig.handler}
             theme={theme}
-            illustration={<EmptyTasksIllustration theme={theme} />}
+            illustration={<EmptyTasksIllustration theme={theme} viewMode={taskScreenProps.viewMode} />}
             isDarkMode={isDarkMode}
           />
           

@@ -309,15 +309,28 @@ const TodoButtonOverlay = React.memo(({
     
     const currentTodos = getCurrentTodos();
     
-    // Get all groups
-    const groups = currentTodos.filter(item => item && item.isGroup);
+    // Get all completed groups
+    const completedGroups = currentTodos.filter(item => item && item.isGroup && item.completed);
+    const completedGroupIds = completedGroups.map(group => group.id);
     
-    // For each completed group, we'll remove it and its children
-    const completedGroupIds = groups
-      .filter(group => group.completed)
-      .map(group => group.id);
+    // Get all completed individual items (not groups)
+    const completedIndividualItems = currentTodos.filter(item => 
+      item && !item.isGroup && item.completed
+    );
     
-    // Filter out completed todos and groups
+    // Get all items that belong to completed groups (these will also be removed)
+    const itemsInCompletedGroups = currentTodos.filter(item => 
+      item && !item.isGroup && item.groupId && completedGroupIds.includes(item.groupId)
+    );
+    
+    const totalItemsToRemove = completedGroups.length + completedIndividualItems.length + itemsInCompletedGroups.length;
+    
+    if (totalItemsToRemove === 0) {
+      showSuccess('No completed items to clear', { type: 'warning' });
+      return;
+    }
+    
+    // Filter out completed items - keep only incomplete items
     const remainingTodos = currentTodos.filter(todo => {
       // Skip null items
       if (!todo) return false;
@@ -325,17 +338,18 @@ const TodoButtonOverlay = React.memo(({
       // Remove completed groups
       if (todo.isGroup && todo.completed) return false;
       
-      // Remove items in completed groups
+      // Remove items that belong to completed groups
       if (todo.groupId && completedGroupIds.includes(todo.groupId)) return false;
       
-      // Remove individual completed items
-      if (todo.completed && !todo.isGroup) return false;
+      // Remove completed individual items
+      if (!todo.isGroup && todo.completed) return false;
       
+      // Keep everything else (incomplete groups and incomplete individual items)
       return true;
     });
     
     setCurrentTodos(remainingTodos);
-    showSuccess('Completed to-dos cleared');
+    showSuccess(`${totalItemsToRemove} completed item${totalItemsToRemove !== 1 ? 's' : ''} cleared`);
   }, [cleanupTodos, getCurrentTodos, setCurrentTodos, showSuccess]);
   
   // Share todos from the current tab
@@ -395,7 +409,7 @@ const TodoButtonOverlay = React.memo(({
     }
     
     // Calculate if this would exceed the today limit for free users
-    if (canAddMoreTodos) {
+    if (canAddMoreTodos && !canAddMoreTodos('today', false)) {
       // Get weighted counts
       const currentTodayCount = todos.length;
       const tomorrowCount = tomorrowTodos.length;
@@ -412,7 +426,11 @@ const TodoButtonOverlay = React.memo(({
       }
     }
     
-    moveTomorrowTodosToToday();
+    if (moveTomorrowTodosToToday) {
+      moveTomorrowTodosToToday();
+    } else {
+      showSuccess('Move function not available', { type: 'error' });
+    }
   }, [
     tomorrowTodos, 
     todos, 
@@ -431,7 +449,7 @@ const TodoButtonOverlay = React.memo(({
     }
     
     // Calculate if this would exceed the tomorrow limit for free users
-    if (canAddMoreTodos) {
+    if (canAddMoreTodos && !canAddMoreTodos('tomorrow', false)) {
       // Get counts
       const currentTomorrowCount = tomorrowTodos.length;
       const incompleteCount = incompleteTodos.length;
@@ -448,7 +466,11 @@ const TodoButtonOverlay = React.memo(({
       }
     }
     
-    moveIncompleteTodosToTomorrow();
+    if (moveIncompleteTodosToTomorrow) {
+      moveIncompleteTodosToTomorrow();
+    } else {
+      showSuccess('Move function not available', { type: 'error' });
+    }
   }, [
     todos, 
     tomorrowTodos, 
@@ -465,7 +487,7 @@ const TodoButtonOverlay = React.memo(({
     }
     
     // Calculate if this would exceed the tomorrow limit for free users
-    if (canAddMoreTodos) {
+    if (canAddMoreTodos && !canAddMoreTodos('tomorrow', false)) {
       // Get counts
       const currentTomorrowCount = tomorrowTodos.length;
       const laterCount = laterTodos.length;
@@ -482,7 +504,11 @@ const TodoButtonOverlay = React.memo(({
       }
     }
     
-    moveLaterItemsToTomorrow();
+    if (moveLaterItemsToTomorrow) {
+      moveLaterItemsToTomorrow();
+    } else {
+      showSuccess('Move function not available', { type: 'error' });
+    }
   }, [
     laterTodos, 
     tomorrowTodos, 

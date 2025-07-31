@@ -102,7 +102,9 @@ const GlobalAchievementToast = () => {
     // Short delay to allow animation to start before navigation
     setTimeout(() => {
       navigation.navigate('AchievementsScreen', { 
-        activeTab: 'achievements' // Parameter to indicate which tab to show
+        activeTab: 'achievements', // Parameter to indicate which tab to show
+        highlightAchievement: currentAchievement?.id, // Pass the specific achievement ID
+        focusCategory: currentAchievement?.category // Also pass the category to expand
       });
     }, 100);
   };

@@ -19,12 +19,16 @@ import ResponsiveText from '../components/ResponsiveText';
 import TypingAnimation from '../components/TypingAnimation';
 import NavigationHeader from '../components/NavigationHeader';
 import { getRelevantStats } from '../utils/getLanguageStats';
+import { getAustralianRelevantStats } from '../data/australianGoalStats';
+import { getUKRelevantStats } from '../data/ukGoalStats';
+import { getUSARelevantStats } from '../data/usaGoalStats';
+import { getCanadaRelevantStats } from '../data/canadaGoalStats';
 // Import useI18n hook
 import { useI18n } from '../context/I18nContext';
 
 const { width, height } = Dimensions.get('window');
 
-const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal }) => {
+const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, country = 'australia' }) => {
   // Get translation function from I18n context
   const { t, currentLanguage } = useI18n();
   
@@ -106,11 +110,24 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal }) => {
       setStatsList([]);
       setCurrentStatIndex(0);
       
-      // Get fresh stats based on current domain and goal
-      const { all } = getRelevantStats(domainName, goalName, currentLanguage);
+      let statsResult;
       
-      if (all && all.length > 0) {
-        setStatsList(all);
+      // Use country-specific statistics if available
+      if (country === 'australia') {
+        statsResult = getAustralianRelevantStats(domainName, goalName);
+      } else if (country === 'uk') {
+        statsResult = getUKRelevantStats(domainName, goalName);
+      } else if (country === 'usa') {
+        statsResult = getUSARelevantStats(domainName, goalName);
+      } else if (country === 'canada') {
+        statsResult = getCanadaRelevantStats(domainName, goalName);
+      } else {
+        // Fall back to general stats for other countries
+        statsResult = getRelevantStats(domainName, goalName, currentLanguage);
+      }
+      
+      if (statsResult?.all && statsResult.all.length > 0) {
+        setStatsList(statsResult.all);
       } else {
         // Fallback statistic if none are found
         setStatsList([{
@@ -148,7 +165,7 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal }) => {
         }
       }]);
     }
-  }, [domain, goal, currentLanguage]); // Make sure this effect reruns when domain or goal changes
+  }, [domain, goal, country, currentLanguage]); // Make sure this effect reruns when domain, goal, or country changes
   
   // Show tap prompt after message completes
   useEffect(() => {

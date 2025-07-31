@@ -816,7 +816,7 @@ const DomainBalanceWheel = ({ theme, navigation }) => {
                         origin={`${labelX},${labelY}`}
                         opacity={shouldDarken ? 0.2 : 1}
                       >
-                        {slice.domain.name.split(' ')[0]}
+                        {slice.domain.name === 'Personal Growth' ? 'Growth' : slice.domain.name.split(' ')[0]}
                       </SvgText>
                     </G>
                     

@@ -1,9 +1,12 @@
 // src/components/AvatarComponents.js
 import React from 'react';
-import { View } from 'react-native';
+import { View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-// Shared color palette for consistency across screens
+// Import level-based profile picture system
+import { LEVEL_COLOR_SCHEMES } from '../data/LevelProfilePictures';
+
+// Legacy color palette for backwards compatibility
 export const COLOR_PALETTE = [
   // Modern UI colors
   { primary: '#3498db', secondary: '#2980b9', name: 'Blue' },
@@ -25,7 +28,7 @@ export const COLOR_PALETTE = [
   { primary: '#FF6348', secondary: '#FF7F50', name: 'Tomato' }
 ];
 
-// Shared avatar component for consistent rendering across screens
+// Legacy avatar component for backwards compatibility
 export const DefaultAvatar = ({ size, colors, iconName, initials, selected, colorIndex }) => {
   const borderWidth = selected ? 3 : 0;
   
@@ -67,6 +70,178 @@ export const DefaultAvatar = ({ size, colors, iconName, initials, selected, colo
         size={size * 0.6} 
         color={safeColors.secondary} 
       />
+    </View>
+  );
+};
+
+// New level-based avatar component
+export const LevelAvatar = ({ 
+  size, 
+  pictureData, 
+  selected = false, 
+  isLocked = false,
+  requiredLevel = null,
+  style = {}
+}) => {
+  const borderWidth = selected ? 3 : 0;
+  const shadowOpacity = isLocked ? 0.1 : 0.3;
+  
+  // Get colors from picture data or use default
+  const colors = pictureData?.colorScheme || {
+    primary: '#3498db',
+    secondary: '#2980b9',
+    accent: '#2E6BA8'
+  };
+  
+  // If locked, show question mark
+  if (isLocked) {
+    return (
+      <View 
+        style={[{
+          width: size, 
+          height: size, 
+          borderRadius: size / 2, 
+          backgroundColor: '#666666',
+          opacity: 0.6,
+          borderWidth,
+          borderColor: '#ffffff',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity,
+          shadowRadius: 4,
+          elevation: 2,
+          justifyContent: 'center',
+          alignItems: 'center'
+        }, style]}
+      >
+        <Ionicons 
+          name="help-outline" 
+          size={size * 0.5} 
+          color="#999999" 
+        />
+        {requiredLevel && (
+          <View style={{
+            position: 'absolute',
+            bottom: -2,
+            right: -2,
+            backgroundColor: '#FF6B6B',
+            borderRadius: 10,
+            width: 20,
+            height: 20,
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}>
+            <Text style={{
+              color: 'white',
+              fontSize: 10,
+              fontWeight: 'bold'
+            }}>
+              {requiredLevel}
+            </Text>
+          </View>
+        )}
+      </View>
+    );
+  }
+  
+  // Render epic level avatar
+  return (
+    <View 
+      style={[{
+        width: size, 
+        height: size, 
+        borderRadius: size / 2, 
+        backgroundColor: colors.primary,
+        borderWidth,
+        borderColor: selected ? colors.accent : '#ffffff',
+        shadowColor: colors.accent,
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity,
+        shadowRadius: 6,
+        elevation: 6,
+        justifyContent: 'center',
+        alignItems: 'center',
+        // Add epic glow effect
+        position: 'relative'
+      }, style]}
+    >
+      {/* Epic background gradient effect */}
+      <View style={{
+        width: size * 0.8,
+        height: size * 0.8,
+        borderRadius: (size * 0.8) / 2,
+        backgroundColor: colors.secondary,
+        position: 'absolute',
+        opacity: 0.7
+      }} />
+      
+      {/* Icon */}
+      <Ionicons 
+        name={pictureData?.icon || 'star-outline'} 
+        size={size * 0.55} 
+        color={colors.accent}
+        style={{ zIndex: 1 }}
+      />
+      
+      {/* Epic shimmer effect for higher levels */}
+      {pictureData?.requiredLevel >= 10 && (
+        <View style={{
+          position: 'absolute',
+          top: size * 0.1,
+          left: size * 0.1,
+          width: size * 0.3,
+          height: size * 0.3,
+          borderRadius: (size * 0.3) / 2,
+          backgroundColor: '#FFFFFF',
+          opacity: 0.3
+        }} />
+      )}
+    </View>
+  );
+};
+
+// Component for custom photo option (level 8+)
+export const CustomPhotoAvatar = ({ 
+  size, 
+  selected = false, 
+  isEnabled = true,
+  style = {}
+}) => {
+  const borderWidth = selected ? 3 : 0;
+  const colors = LEVEL_COLOR_SCHEMES[8]; // Legend level colors
+  
+  return (
+    <View 
+      style={[{
+        width: size, 
+        height: size, 
+        borderRadius: size / 2, 
+        backgroundColor: isEnabled ? colors.primary : '#CCCCCC',
+        borderWidth,
+        borderColor: selected ? colors.accent : '#ffffff',
+        shadowColor: colors.accent,
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: isEnabled ? 0.3 : 0.1,
+        shadowRadius: 6,
+        elevation: isEnabled ? 6 : 2,
+        justifyContent: 'center',
+        alignItems: 'center'
+      }, style]}
+    >
+      <Ionicons 
+        name="camera-outline" 
+        size={size * 0.5} 
+        color={isEnabled ? colors.accent : '#999999'}
+      />
+      <Text style={{
+        position: 'absolute',
+        bottom: size * 0.1,
+        fontSize: size * 0.12,
+        color: isEnabled ? colors.accent : '#999999',
+        fontWeight: 'bold'
+      }}>
+        CUSTOM
+      </Text>
     </View>
   );
 };

@@ -289,17 +289,13 @@ const IncomeTab = ({ theme, data, handlers }) => {
 
   return (
     <ScrollView 
-      style={[styles.tabContentContainer, { 
-        paddingHorizontal: safeSpacing.left,
-        paddingRight: safeSpacing.right
-      }]} 
+      style={[styles.tabContentContainer]} 
       contentInsetAdjustmentBehavior="automatic"
     >
       {/* Income Summary */}
       <View style={[styles.incomeSummaryCard, { 
         backgroundColor: theme.card, 
-        borderColor: theme.border,
-        marginTop: safeSpacing.top
+        borderColor: theme.border
       }]}>
         <View style={styles.cardHeader}>
           <View style={styles.cardTitleContainer}>
@@ -1498,11 +1494,12 @@ const IncomeTab = ({ theme, data, handlers }) => {
 const styles = StyleSheet.create({
   tabContentContainer: {
     padding: spacing.m,
+    paddingTop: 4,
   },
   // Income Summary
   incomeSummaryCard: {
     borderRadius: scaleWidth(16),
-    padding: spacing.l,
+    padding: spacing.xl,
     marginBottom: spacing.m,
     borderWidth: 1,
     shadowColor: '#000',
@@ -1510,6 +1507,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    minHeight: scaleHeight(180),
   },
   cardHeader: {
     flexDirection: 'row',
@@ -1624,8 +1622,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 1,
-    padding: spacing.m,
-    minHeight: scaleHeight(44), // Ensure minimum touch target height
+    padding: spacing.l,
+    minHeight: scaleHeight(70), // Increased height for better touch target
   },
   incomeItemContent: {
     flexDirection: 'row',
@@ -1645,7 +1643,7 @@ const styles = StyleSheet.create({
   // Add Form
   addForm: {
     borderRadius: scaleWidth(16),
-    padding: spacing.l,
+    padding: spacing.xl,
     marginBottom: spacing.m,
     borderWidth: 1,
     shadowColor: '#000',
@@ -1654,6 +1652,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
     overflow: 'hidden',
+    minHeight: scaleHeight(200),
   },
   addFormTitle: {
     fontSize: fontSizes.m,

@@ -19,6 +19,9 @@ import IncomeTab from './IncomeTab';
 import ExpensesTab from './ExpensesTab.js';
 import GoalsTab from './GoalsTab';
 
+// Import React Navigation for swipe tabs
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
+
 // Import currency components
 import CurrencyModal from './SummaryTab/components/CurrencyModal';
 import CurrencyInfoModal from './SummaryTab/components/CurrencyInfoModal';
@@ -27,8 +30,10 @@ import CurrencyService from './CurrencyService';
 // Get screen dimensions for responsive layout
 const { width } = Dimensions.get('window');
 
+// Create tab navigator for swipe navigation
+const Tab = createMaterialTopTabNavigator();
+
 const DetailModal = ({ visible, theme, data, handlers, onClose }) => {
-  const [activeTab, setActiveTab] = useState(0);
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
   const [showCurrencyInfoModal, setShowCurrencyInfoModal] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -70,36 +75,6 @@ const DetailModal = ({ visible, theme, data, handlers, onClose }) => {
     }
   };
   
-  // Handle tab selection by pressing tab buttons
-  const handleTabPress = (tabIndex) => {
-    if (tabIndex === activeTab) return;
-    setActiveTab(tabIndex);
-  };
-  
-  // Render the active tab content
-  const renderTabContent = () => {
-    switch(activeTab) {
-      case 0: // 'summary'
-        return <SummaryTab theme={theme} data={data} handlers={handlers} />;
-      case 1: // 'income'
-        return <IncomeTab theme={theme} data={data} handlers={handlers} />;
-      case 2: // 'expenses'
-        return <ExpensesTab theme={theme} data={data} handlers={handlers} />;
-      case 3: // 'goals'
-        return <GoalsTab theme={theme} data={data} handlers={handlers} />;
-      default:
-        return <SummaryTab theme={theme} data={data} handlers={handlers} />;
-    }
-  };
-  
-  // Calculate tab indicator position with precision handling
-  const getTabIndicatorPosition = () => {
-    // Calculate tab width (with precision handling)
-    const tabWidth = Math.round(width / 4);
-    // Calculate position (with precision handling)
-    const position = Math.round(tabWidth * activeTab);
-    return position;
-  };
 
   return (
     <Modal
@@ -120,7 +95,7 @@ const DetailModal = ({ visible, theme, data, handlers, onClose }) => {
           </TouchableOpacity>
           
           <Text style={[styles.detailTitle, { color: theme.text }]}>
-            Financial Freedom Tracker
+            Financial Tracker
           </Text>
           
           {/* Currency selector in header */}
@@ -144,112 +119,160 @@ const DetailModal = ({ visible, theme, data, handlers, onClose }) => {
           </View>
         </View>
         
-        {/* Tab Navigation */}
-        <View style={[styles.tabNavigation, { borderBottomColor: theme.border }]}>
-          {/* Tab Indicator - FIXED to use the rounded position calculation */}
-          <View 
-            style={[
-              styles.tabIndicator, 
-              { 
-                backgroundColor: theme.primary,
-                left: getTabIndicatorPosition(),
-              }
-            ]} 
-          />
-          
-          <TouchableOpacity
-            style={[
-              styles.tabButton,
-              activeTab === 0 && [styles.activeTab]
-            ]}
-            onPress={() => handleTabPress(0)}
+        {/* Tab Navigation with Swipe Support */}
+        <Tab.Navigator
+          screenOptions={{
+            tabBarActiveTintColor: '#FFFFFF',
+            tabBarInactiveTintColor: theme.textSecondary,
+            tabBarStyle: { 
+              backgroundColor: theme.cardElevated || '#1F1F1F',
+              borderRadius: 25,
+              marginHorizontal: 16,
+              marginVertical: 8,
+              height: 44,
+            },
+            tabBarLabelStyle: {
+              fontSize: 13,
+              fontWeight: '600',
+              marginTop: -4, // Move text higher
+            },
+            tabBarIconStyle: {
+              marginRight: 2, // Reduce spacing between icon and text
+              marginTop: 3, // Move icon down
+            },
+            tabBarIndicatorStyle: { 
+              backgroundColor: theme.primary,
+              height: 38,
+              borderRadius: 20,
+              marginBottom: 3,
+              marginLeft: 3,
+              width: Math.floor((width - 38) / 4) - 6,
+              zIndex: 1,
+            },
+            tabBarItemStyle: {
+              flexDirection: 'row',
+              justifyContent: 'center',
+              alignItems: 'center',
+            },
+            swipeEnabled: true,
+          }}
+        >
+          <Tab.Screen 
+            name="Summary" 
+            options={{
+              tabBarLabel: ({ focused }) => (
+                <Text style={{ 
+                  color: focused ? '#FFFFFF' : theme.textSecondary,
+                  fontSize: 13,
+                  fontWeight: '600',
+                  marginTop: -4
+                }}>
+                  Summary
+                </Text>
+              ),
+              tabBarIcon: ({ focused }) => (
+                <Ionicons 
+                  name={focused ? 'stats-chart' : 'stats-chart-outline'} 
+                  size={16} 
+                  color={focused ? '#FFFFFF' : theme.textSecondary} 
+                />
+              )
+            }}
           >
-            <Ionicons 
-              name={activeTab === 0 ? "stats-chart" : "stats-chart-outline"} 
-              size={18} 
-              color={activeTab === 0 ? theme.primary : theme.textSecondary} 
-              style={styles.tabIcon}
-            />
-            <Text style={[
-              styles.tabButtonText,
-              { color: theme.textSecondary },
-              activeTab === 0 && { color: theme.primary, fontWeight: '600' }
-            ]}>
-              Summary
-            </Text>
-          </TouchableOpacity>
+            {() => (
+              <View style={[styles.tabContent, { backgroundColor: theme.background }]}>
+                <SummaryTab theme={theme} data={data} handlers={handlers} />
+              </View>
+            )}
+          </Tab.Screen>
           
-          <TouchableOpacity
-            style={[
-              styles.tabButton,
-              activeTab === 1 && [styles.activeTab]
-            ]}
-            onPress={() => handleTabPress(1)}
+          <Tab.Screen 
+            name="Income" 
+            options={{
+              tabBarLabel: ({ focused }) => (
+                <Text style={{ 
+                  color: focused ? '#FFFFFF' : theme.textSecondary,
+                  fontSize: 13,
+                  fontWeight: '600',
+                  marginTop: -4
+                }}>
+                  Income
+                </Text>
+              ),
+              tabBarIcon: ({ focused }) => (
+                <Ionicons 
+                  name={focused ? 'cash' : 'cash-outline'} 
+                  size={16} 
+                  color={focused ? '#FFFFFF' : theme.textSecondary} 
+                />
+              )
+            }}
           >
-            <Ionicons 
-              name={activeTab === 1 ? "cash" : "cash-outline"} 
-              size={18} 
-              color={activeTab === 1 ? theme.primary : theme.textSecondary} 
-              style={styles.tabIcon}
-            />
-            <Text style={[
-              styles.tabButtonText,
-              { color: theme.textSecondary },
-              activeTab === 1 && { color: theme.primary, fontWeight: '600' }
-            ]}>
-              Income
-            </Text>
-          </TouchableOpacity>
+            {() => (
+              <View style={[styles.tabContent, { backgroundColor: theme.background }]}>
+                <IncomeTab theme={theme} data={data} handlers={handlers} />
+              </View>
+            )}
+          </Tab.Screen>
           
-          <TouchableOpacity
-            style={[
-              styles.tabButton,
-              activeTab === 2 && [styles.activeTab]
-            ]}
-            onPress={() => handleTabPress(2)}
+          <Tab.Screen 
+            name="Expenses" 
+            options={{
+              tabBarLabel: ({ focused }) => (
+                <Text style={{ 
+                  color: focused ? '#FFFFFF' : theme.textSecondary,
+                  fontSize: 13,
+                  fontWeight: '600',
+                  marginTop: -4
+                }}>
+                  Expenses
+                </Text>
+              ),
+              tabBarIcon: ({ focused }) => (
+                <Ionicons 
+                  name={focused ? 'cart' : 'cart-outline'} 
+                  size={16} 
+                  color={focused ? '#FFFFFF' : theme.textSecondary} 
+                />
+              )
+            }}
           >
-            <Ionicons 
-              name={activeTab === 2 ? "cart" : "cart-outline"} 
-              size={18} 
-              color={activeTab === 2 ? theme.primary : theme.textSecondary} 
-              style={styles.tabIcon}
-            />
-            <Text style={[
-              styles.tabButtonText,
-              { color: theme.textSecondary },
-              activeTab === 2 && { color: theme.primary, fontWeight: '600' }
-            ]}>
-              Expenses
-            </Text>
-          </TouchableOpacity>
+            {() => (
+              <View style={[styles.tabContent, { backgroundColor: theme.background }]}>
+                <ExpensesTab theme={theme} data={data} handlers={handlers} />
+              </View>
+            )}
+          </Tab.Screen>
           
-          <TouchableOpacity
-            style={[
-              styles.tabButton,
-              activeTab === 3 && [styles.activeTab]
-            ]}
-            onPress={() => handleTabPress(3)}
+          <Tab.Screen 
+            name="Goals" 
+            options={{
+              tabBarLabel: ({ focused }) => (
+                <Text style={{ 
+                  color: focused ? '#FFFFFF' : theme.textSecondary,
+                  fontSize: 13,
+                  fontWeight: '600',
+                  marginTop: -4
+                }}>
+                  Goals
+                </Text>
+              ),
+              tabBarIcon: ({ focused }) => (
+                <Ionicons 
+                  name={focused ? 'flag' : 'flag-outline'} 
+                  size={16} 
+                  color={focused ? '#FFFFFF' : theme.textSecondary} 
+                />
+              )
+            }}
           >
-            <Ionicons 
-              name={activeTab === 3 ? "flag" : "flag-outline"} 
-              size={18} 
-              color={activeTab === 3 ? theme.primary : theme.textSecondary} 
-              style={styles.tabIcon}
-            />
-            <Text style={[
-              styles.tabButtonText,
-              { color: theme.textSecondary },
-              activeTab === 3 && { color: theme.primary, fontWeight: '600' }
-            ]}>
-              Goals
-            </Text>
-          </TouchableOpacity>
-        </View>
-        
-        {/* Tab Content - Simple View instead of PagerView */}
-        <View style={styles.tabContent}>
-          {renderTabContent()}
-        </View>
+            {() => (
+              <View style={[styles.tabContent, { backgroundColor: theme.background }]}>
+                <GoalsTab theme={theme} data={data} handlers={handlers} />
+              </View>
+            )}
+          </Tab.Screen>
+        </Tab.Navigator>
         
         {/* Currency Selection Modal */}
         <CurrencyModal 
@@ -315,37 +338,9 @@ const styles = StyleSheet.create({
   infoButton: {
     padding: 4,
   },
-  tabNavigation: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    position: 'relative',
-  },
-  tabIndicator: {
-    position: 'absolute',
-    bottom: 0,
-    width: Math.round(width / 4), // Ensure width is rounded
-    height: 2,
-    borderRadius: 1,
-    // Using simple positioning with rounding instead of transform
-  },
-  tabButton: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  tabIcon: {
-    marginRight: 6,
-  },
-  activeTab: {
-    // Style is now handled by the tab indicator
-  },
-  tabButtonText: {
-    fontSize: 14,
-  },
   tabContent: {
     flex: 1,
+    paddingTop: 4,
   },
 });
 

@@ -21,7 +21,8 @@ export const ProfileProvider = ({ children }) => {
     email: auth?.user?.email || '',
     bio: '',
     profileImage: null,
-    defaultAvatar: null
+    defaultAvatar: null,
+    levelProfilePicture: null
   });
 
   // Load profile on mount and when auth changes
@@ -45,7 +46,8 @@ export const ProfileProvider = ({ children }) => {
           email: storedProfile.email || auth?.user?.email || '',
           bio: storedProfile.bio || '',
           profileImage: storedProfile.profileImage,
-          defaultAvatar: storedProfile.defaultAvatar
+          defaultAvatar: storedProfile.defaultAvatar,
+          levelProfilePicture: storedProfile.levelProfilePicture
         });
       } else if (auth?.user) {
         // If no stored profile but we have auth, use auth data
@@ -54,7 +56,8 @@ export const ProfileProvider = ({ children }) => {
           email: auth.user.email || '',
           bio: '',
           profileImage: null,
-          defaultAvatar: null
+          defaultAvatar: null,
+          levelProfilePicture: null
         });
       }
     } catch (error) {
@@ -67,13 +70,28 @@ export const ProfileProvider = ({ children }) => {
   const updateProfile = async (updatedProfile) => {
     try {
       console.log('ProfileContext: Updating profile:', updatedProfile);
+      console.log('ProfileContext: Level profile picture:', updatedProfile.levelProfilePicture);
+      console.log('ProfileContext: Profile image:', updatedProfile.profileImage);
+      console.log('ProfileContext: Default avatar:', updatedProfile.defaultAvatar);
+      
+      // Ensure we preserve existing profile structure while updating
+      const newProfile = {
+        ...profile, // Keep existing profile data
+        ...updatedProfile, // Override with new data
+      };
+      
+      console.log('ProfileContext: Final merged profile:', newProfile);
       
       // Update state
-      setProfile(updatedProfile);
+      setProfile(newProfile);
       
       // Save to AsyncStorage
-      await AsyncStorage.setItem('userProfile', JSON.stringify(updatedProfile));
+      await AsyncStorage.setItem('userProfile', JSON.stringify(newProfile));
       console.log('ProfileContext: Profile saved to AsyncStorage');
+      
+      // Verify what was saved
+      const savedProfile = await AsyncStorage.getItem('userProfile');
+      console.log('ProfileContext: Verified saved profile:', JSON.parse(savedProfile));
       
       // If successful, show success message
       showSuccess('Profile updated successfully');
@@ -86,11 +104,17 @@ export const ProfileProvider = ({ children }) => {
     }
   };
 
+  // Force refresh profile (useful for debugging)
+  const refreshProfile = async () => {
+    await loadProfile();
+  };
+
   // Context value
   const value = {
     profile,
     updateProfile,
-    loadProfile
+    loadProfile,
+    refreshProfile
   };
 
   return (

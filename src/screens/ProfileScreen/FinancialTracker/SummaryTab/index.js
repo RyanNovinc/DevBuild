@@ -185,7 +185,7 @@ const SummaryTab = ({ theme, data, handlers }) => {
         styles.tabContentContainer, 
         { 
           padding: isSmallDevice ? spacing.s : spacing.m,
-          paddingTop: safeSpacing.top
+          paddingTop: 4
         }
       ]}
       contentContainerStyle={{

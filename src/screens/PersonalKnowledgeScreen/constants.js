@@ -3,6 +3,7 @@
 // Storage keys
 export const USER_KNOWLEDGE_KEY = 'userKnowledgeFiles';
 export const USER_KNOWLEDGE_ENABLED_KEY = 'userKnowledgeEnabled';
+export const APP_CONTEXT_ENABLED_KEY = 'appContextEnabled';
 export const SUBSCRIPTION_STATUS_KEY = 'subscriptionStatus';
 export const AI_PLAN_KEY = 'aiPlan';
 
@@ -10,11 +11,11 @@ export const AI_PLAN_KEY = 'aiPlan';
 export const MAX_FILE_SIZE_MB = 5;
 
 // STORAGE QUOTA SETTINGS
-// Single source of truth for storage quota - 30KB
-export const STORAGE_QUOTA_KB = 30;
+// Single source of truth for storage quota - 100KB
+export const STORAGE_QUOTA_KB = 100;
 export const STORAGE_QUOTA_BYTES = STORAGE_QUOTA_KB * 1024;
 
-// Storage quotas in KB for all tiers (all use the same 30KB limit)
+// Storage quotas in KB for all tiers (all use the same 100KB limit)
 export const STORAGE_QUOTAS = {
   'free': STORAGE_QUOTA_KB,
   'starter': STORAGE_QUOTA_KB,

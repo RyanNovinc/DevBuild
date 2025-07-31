@@ -1,4 +1,4 @@
 // src/screens/Onboarding/index.js
-import StreamlinedOnboardingScreen from './StreamlinedOnboardingScreen';
+import EnhancedOnboardingScreen from './EnhancedOnboardingScreen';
 
-export default StreamlinedOnboardingScreen;
+export default EnhancedOnboardingScreen;

@@ -73,10 +73,10 @@ export const ACHIEVEMENTS = {
   'milestone-marker': {
     id: 'milestone-marker',
     title: 'Milestone Marker',
-    description: 'Set a milestone date on a project',
+    description: 'Set a completion date on a goal',
     icon: 'calendar',
     category: 'strategic',
-    criteria: 'Add a milestone date to any project.',
+    criteria: 'Add a completion date to any goal.',
     points: 5
   },
   'progress-tracker': {
@@ -312,10 +312,10 @@ export const ACHIEVEMENTS = {
   'insider-status': {
     id: 'insider-status',
     title: 'Insider Status',
-    description: 'Upgrade to a paid subscription',
+    description: 'Upgrade to a paid AI subscription',
     icon: 'diamond',
     category: 'premium',
-    criteria: 'Purchase any paid subscription.',
+    criteria: 'Purchase any paid AI subscription.',
     points: 50,
     premium: true
   },
@@ -353,10 +353,10 @@ export const ACHIEVEMENTS = {
   'feature-influencer': {
     id: 'feature-influencer',
     title: 'Feature Influencer',
-    description: 'Submit app feedback that gets implemented',
+    description: 'Submit app feedback as a Pro member',
     icon: 'git-merge',
     category: 'premium',
-    criteria: 'Submit feedback or a feature request that gets implemented in the app.',
+    criteria: 'Submit feedback or a feature request as a Pro member.',
     points: 50,
     premium: true
   }

@@ -2,6 +2,10 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNotification } from './NotificationContext';
+import { log } from '../utils/LoggerUtility';
+
+// Create deletion-specific logger
+const deletionLog = (...args) => log('Deletion', ...args);
 import { STANDARD_DOMAINS, getDomainByName, getDomainByIcon } from '../constants/domains';
 import { calculateDomainDistribution } from '../utils/domainUtils';
 import OnboardingService from '../services/OnboardingService';
@@ -13,6 +17,9 @@ import SubscriptionService, {
   PREMIUM_FEATURES,
   useFeatureLimit
 } from '../services/SubscriptionService';
+
+// Import calendar service
+import CalendarService from '../services/CalendarService';
 
 const AppContext = createContext();
 
@@ -32,7 +39,10 @@ const STORAGE_KEYS = {
   // Add todo storage keys
   TODOS: 'todos',
   TOMORROW_TODOS: 'tomorrowTodos',
-  LATER_TODOS: 'laterTodos'
+  LATER_TODOS: 'laterTodos',
+  // Add calendar storage keys
+  CALENDAR_SETTINGS: 'calendarSettings',
+  CALENDAR_EVENTS: 'calendarEvents'
 };
 
 // Default app settings
@@ -55,8 +65,11 @@ const DEFAULT_SETTINGS = {
 export const AppProvider = ({ children }) => {
   // State
   const [goals, setGoals] = useState([]);
-  const [projects, setProjects] = useState([]);
+  const [projects, setProjectsInternal] = useState([]);
   const [timeBlocks, setTimeBlocks] = useState([]);
+  
+  // Clean setProjects function
+  const setProjects = setProjectsInternal;
   const [domains, setDomains] = useState([]);
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [tags, setTags] = useState([]);
@@ -73,6 +86,16 @@ export const AppProvider = ({ children }) => {
   const [todos, setTodos] = useState([]);
   const [tomorrowTodos, setTomorrowTodos] = useState([]);
   const [laterTodos, setLaterTodos] = useState([]);
+  
+  // Add calendar states
+  const [calendarSettings, setCalendarSettings] = useState({
+    syncEnabled: false,
+    selectedCalendarId: null,
+    autoSyncTimeBlocks: true,
+    showCalendarEvents: true
+  });
+  const [calendarEvents, setCalendarEvents] = useState([]);
+  const [calendarPermissionStatus, setCalendarPermissionStatus] = useState('undetermined');
   
   // Add refresh counter to trigger UI updates
   const [refreshCounter, setRefreshCounter] = useState(0);
@@ -207,6 +230,18 @@ export const AppProvider = ({ children }) => {
           setLaterTodos(JSON.parse(storedLaterTodos));
         }
         
+        // Load calendar settings
+        const storedCalendarSettings = await AsyncStorage.getItem(STORAGE_KEYS.CALENDAR_SETTINGS);
+        if (storedCalendarSettings) {
+          setCalendarSettings(JSON.parse(storedCalendarSettings));
+        }
+        
+        // Load cached calendar events
+        const storedCalendarEvents = await AsyncStorage.getItem(STORAGE_KEYS.CALENDAR_EVENTS);
+        if (storedCalendarEvents) {
+          setCalendarEvents(JSON.parse(storedCalendarEvents));
+        }
+        
         // Load purchase status (using the original key name for compatibility)
         const storedSubscriptionStatus = await AsyncStorage.getItem('subscriptionStatus');
         if (storedSubscriptionStatus) {
@@ -317,32 +352,85 @@ export const AppProvider = ({ children }) => {
   
   // Get all projects for a goal - IMPROVED to check both goalId and projectGoalLinkMap
   const getProjectsForGoal = (goalId) => {
-    if (!goalId || !Array.isArray(projects)) {
+    // Use current ref to get the latest state including recent completions
+    const currentProjects = projectsRef.current;
+    if (!goalId || !Array.isArray(currentProjects)) {
+      deletionLog(`getProjectsForGoal: Invalid input - goalId: ${goalId}, projects array: ${Array.isArray(currentProjects)}`);
       return [];
     }
     
+    // Force log to appear
+    log('Error', `🔍 getProjectsForGoal CALLED: Looking for projects linked to goal ${goalId}`);
+    log('Error', `🔍 getProjectsForGoal: Total projects in memory: ${currentProjects.length}`);
+    
+    deletionLog(`getProjectsForGoal: Looking for projects linked to goal ${goalId}`);
+    deletionLog(`getProjectsForGoal: Total projects in memory: ${currentProjects.length}`);
+    deletionLog(`getProjectsForGoal: Deleted project IDs: [${Array.from(deletedProjectIds.current).join(', ')}]`);
+    deletionLog(`getProjectsForGoal: Projects in deletion progress: [${Array.from(operationsInProgress.current.deletingProjects).join(', ')}]`);
+    
     // Get projects linked by goalId property
-    const projectsByProperty = projects.filter(project => 
-      project.goalId === goalId && 
-      !deletedProjectIds.current.has(project.id) &&
-      !operationsInProgress.current.deletingProjects.has(project.id)
-    );
+    const projectsByProperty = currentProjects.filter(project => {
+      const hasGoalId = project.goalId === goalId;
+      const notDeleted = !deletedProjectIds.current.has(project.id);
+      const notInProgress = !operationsInProgress.current.deletingProjects.has(project.id);
+      
+      // Log EVERY project to see what's going on
+      log('Error', `🔍 PROJECT CHECK: "${project.title}" (${project.id})`);
+      log('Error', `  - goalId: "${project.goalId}" (target: "${goalId}")`);
+      log('Error', `  - hasGoalId: ${hasGoalId}, notDeleted: ${notDeleted}, notInProgress: ${notInProgress}`);
+      
+      if (hasGoalId) {
+        deletionLog(`getProjectsForGoal: Project "${project.title}" (${project.id}) - goalId match: ${hasGoalId}, not deleted: ${notDeleted}, not in progress: ${notInProgress}`);
+        log('Error', `✅ MATCH: "${project.title}" (${project.id}) goalId: ${project.goalId} === ${goalId}`);
+      }
+      
+      // Also log projects that have goalIds but don't match
+      if (project.goalId && project.goalId !== goalId) {
+        log('Error', `❌ NO MATCH: "${project.title}" (${project.id}) goalId: ${project.goalId} !== ${goalId}`);
+      }
+      
+      return hasGoalId && notDeleted && notInProgress;
+    });
+    
+    deletionLog(`getProjectsForGoal: Found ${projectsByProperty.length} projects by goalId property`);
     
     // Get project IDs from the link map
     const projectIdsByMap = Object.entries(projectGoalLinkMap)
       .filter(([_, linkedGoalId]) => linkedGoalId === goalId)
       .map(([projectId]) => projectId);
     
+    log('Error', `🗺️ LINK MAP CHECK: Found ${projectIdsByMap.length} project IDs in link map: [${projectIdsByMap.join(', ')}]`);
+    log('Error', `🗺️ FULL LINK MAP:`, projectGoalLinkMap);
+    
+    deletionLog(`getProjectsForGoal: Found ${projectIdsByMap.length} project IDs in link map: [${projectIdsByMap.join(', ')}]`);
+    
     // Get projects by IDs from linkMap (that aren't already found by property)
-    const projectsByMap = projects.filter(project => 
-      projectIdsByMap.includes(project.id) && 
-      !projectsByProperty.some(p => p.id === project.id) &&
-      !deletedProjectIds.current.has(project.id) &&
-      !operationsInProgress.current.deletingProjects.has(project.id)
-    );
+    const projectsByMap = currentProjects.filter(project => {
+      const inLinkMap = projectIdsByMap.includes(project.id);
+      const notAlreadyFound = !projectsByProperty.some(p => p.id === project.id);
+      const notDeleted = !deletedProjectIds.current.has(project.id);
+      const notInProgress = !operationsInProgress.current.deletingProjects.has(project.id);
+      
+      if (inLinkMap) {
+        deletionLog(`getProjectsForGoal: Project "${project.title}" (${project.id}) from link map - not already found: ${notAlreadyFound}, not deleted: ${notDeleted}, not in progress: ${notInProgress}`);
+      }
+      
+      return inLinkMap && notAlreadyFound && notDeleted && notInProgress;
+    });
+    
+    deletionLog(`getProjectsForGoal: Found ${projectsByMap.length} additional projects from link map`);
     
     // Combine both lists
-    return [...projectsByProperty, ...projectsByMap];
+    const allProjects = [...projectsByProperty, ...projectsByMap];
+    
+    // Force log the result
+    log('Error', `🎯 getProjectsForGoal RESULT: Returning ${allProjects.length} total projects for goal ${goalId}`);
+    allProjects.forEach(p => log('Error', `  - "${p.title}" (${p.id})`));
+    
+    deletionLog(`getProjectsForGoal: Returning ${allProjects.length} total projects for goal ${goalId}`);
+    allProjects.forEach(p => deletionLog(`  - "${p.title}" (${p.id})`));
+    
+    return allProjects;
   };
   
   // Get all independent projects
@@ -1006,9 +1094,10 @@ export const AppProvider = ({ children }) => {
       // Apply domain normalization
       const normalizedGoal = normalizeDomain(updatedGoal);
       
-      // Recalculate progress from projects
+      // Recalculate progress from projects, but preserve manual completion
       const calculatedProgress = calculateGoalProgress(normalizedGoal.id);
-      normalizedGoal.progress = calculatedProgress;
+      // If goal is manually marked as completed, keep it at 100%, otherwise use calculated progress
+      normalizedGoal.progress = normalizedGoal.completed ? 100 : calculatedProgress;
       
       // Update the goals state
       setGoals(prevGoals => 
@@ -1043,14 +1132,21 @@ export const AppProvider = ({ children }) => {
     const linkedProjects = getProjectsForGoal(updatedGoal.id);
     
     if (linkedProjects.length > 0) {
-      const updatedProjects = projects.map(project => {
+      // Use current ref to get the latest state including recent completions
+      const currentProjects = projectsRef.current;
+      const updatedProjects = currentProjects.map(project => {
         if (project.goalId === updatedGoal.id) {
           // Update the goalTitle and inherit domain/color
+          // CRITICAL: Preserve all existing project properties, especially status, completed, and progress
           return {
             ...project,
             goalTitle: updatedGoal.title,
             domain: updatedGoal.domain || project.domain,
-            color: updatedGoal.color || project.color
+            color: updatedGoal.color || project.color,
+            // Explicitly preserve completion status
+            status: project.status,
+            completed: project.completed,
+            progress: project.progress
           };
         }
         return project;
@@ -1065,7 +1161,7 @@ export const AppProvider = ({ children }) => {
     }
   };
   
-  // Delete a goal - IMPROVED to handle both goalId and projectGoalLinkMap
+  // Delete a goal - COMPREHENSIVE DELETION using LegacyDataCleanupService approach
   const deleteGoal = async (goalId) => {
     try {
       // Check if already in progress
@@ -1077,164 +1173,116 @@ export const AppProvider = ({ children }) => {
       // Mark as in progress
       operationsInProgress.current.deletingGoals.add(goalId);
       
-      // Check if goal exists
-      const goalExists = isGoalActive(goalId);
-      if (!goalExists) {
-        console.warn(`Goal with ID ${goalId} not found, it may have already been deleted`);
-        return false;
-      }
-      
       // Get the goal for logging
       const goalToDelete = goalsRef.current.find(goal => goal.id === goalId);
       const goalTitle = goalToDelete?.title || 'Unknown goal';
       
-      console.log(`Deleting goal: "${goalTitle}" (ID: ${goalId})`);
-      
-      // APPROACH 1: Use DataIntegrityService for thorough deletion
-      try {
-        console.log(`Attempting to delete goal ${goalId} using DataIntegrityService...`);
-        const result = await DataIntegrityService.deleteGoalCompletely(goalId);
-        
-        if (result.success) {
-          console.log(`Goal "${goalTitle}" and all related data deleted successfully by DataIntegrityService`);
-          
-          // Refresh all in-memory data from storage to ensure consistency
-          await refreshData();
-          
-          // Show success message
-          showSuccess('Goal and all associated projects deleted successfully');
-          return true;
-        } else {
-          console.error(`DataIntegrityService failed to delete goal ${goalId}:`, result.error || 'Unknown error');
-          console.log('Falling back to traditional deletion method...');
-        }
-      } catch (serviceError) {
-        console.error("Error using DataIntegrityService for deletion:", serviceError);
-        console.log('Falling back to traditional deletion method...');
+      if (!goalToDelete) {
+        console.warn(`Goal with ID ${goalId} not found, it may have already been deleted`);
+        return false;
       }
       
-      // APPROACH 2: Try using OnboardingService as fallback
-      try {
-        const success = await OnboardingService.deleteGoalCompletely(goalId);
+      log('Error', `🔥 COMPREHENSIVE DELETION STARTED: Goal "${goalTitle}" (ID: ${goalId})`);
+      
+      // STEP 1: Get current state from refs (not storage)
+      const currentGoals = [...goalsRef.current];
+      const currentProjects = [...projectsRef.current]; 
+      const currentTasks = [...tasksRef.current];
+      const currentLinkMap = { ...projectGoalLinkMap };
+      
+      log('Error', `📊 BEFORE DELETION: Goals: ${currentGoals.length}, Projects: ${currentProjects.length}, Tasks: ${currentTasks.length}`);
+      
+      // STEP 2: Remove the goal
+      const updatedGoals = currentGoals.filter(goal => goal.id !== goalId);
+      
+      // STEP 3: Create valid goals set for comprehensive cleanup (like LegacyDataCleanupService)
+      const validGoalIds = new Set(updatedGoals.map(g => g.id));
+      log('Error', `🎯 VALID GOALS AFTER DELETION: [${Array.from(validGoalIds).join(', ')}]`);
         
-        if (success) {
-          console.log(`Goal "${goalTitle}" and all related data deleted successfully by OnboardingService`);
-          
-          // Refresh all in-memory data from storage to ensure consistency
-          await refreshData();
-          
-          // Show success message
-          showSuccess('Goal and all associated projects deleted successfully');
-          return true;
+      // STEP 4: Remove ALL orphaned projects (projects without valid goals) - COMPREHENSIVE APPROACH
+      const validProjects = currentProjects.filter(project => {
+        const hasValidGoal = project.goalId && validGoalIds.has(project.goalId);
+        if (!hasValidGoal) {
+          log('Error', `🗑️ REMOVING ORPHANED PROJECT: "${project.title}" (goalId: ${project.goalId})`);
         } else {
-          console.error(`OnboardingService failed to delete goal ${goalId}, falling back to regular deletion`);
+          log('Error', `✅ KEEPING VALID PROJECT: "${project.title}" (goalId: ${project.goalId})`);
         }
-      } catch (serviceError) {
-        console.error("Error using OnboardingService for deletion:", serviceError);
-        // Don't block the flow if achievement tracking fails
-      }
-      
-      // IMPROVED FALLBACK IMPLEMENTATION
-      
-      // Get all linked projects - using our improved getProjectsForGoal function
-      const linkedProjects = getProjectsForGoal(goalId);
-      const linkedProjectIds = linkedProjects.map(project => project.id);
-      
-      console.log(`Found ${linkedProjects.length} projects linked to goal ${goalId}`);
-      
-      // Add these projects to the deleted set to prevent race conditions
-      linkedProjectIds.forEach(id => {
-        deletedProjectIds.current.add(id);
-        operationsInProgress.current.deletingProjects.add(id);
+        return hasValidGoal;
       });
       
-      // Create a local variable for the updated goals - use the ref for latest data
-      const updatedGoals = goalsRef.current.filter(goal => goal.id !== goalId);
+      // STEP 5: Remove ALL orphaned tasks (tasks without valid projects) - COMPREHENSIVE APPROACH  
+      const validProjectIds = new Set(validProjects.map(p => p.id));
+      log('Error', `🎯 VALID PROJECTS AFTER CLEANUP: [${Array.from(validProjectIds).join(', ')}]`);
       
-      // First delete the goal from state
+      const validTasks = currentTasks.filter(task => {
+        const hasValidProject = task.projectId && validProjectIds.has(task.projectId);
+        if (!hasValidProject) {
+          log('Error', `🗑️ REMOVING ORPHANED TASK: "${task.name || task.title}" (projectId: ${task.projectId})`);
+        }
+        return hasValidProject;
+      });
+      
+      // STEP 6: Clean up link map - remove all invalid entries
+      const cleanedLinkMap = {};
+      Object.entries(currentLinkMap).forEach(([projectId, linkedGoalId]) => {
+        const projectExists = validProjectIds.has(projectId);
+        const goalExists = validGoalIds.has(linkedGoalId);
+        
+        if (projectExists && goalExists) {
+          cleanedLinkMap[projectId] = linkedGoalId;
+        } else {
+          log('Error', `🗑️ REMOVING INVALID LINK: ${projectId} -> ${linkedGoalId}`);
+        }
+      });
+      
+      // STEP 7: Calculate cleanup summary
+      const projectsRemoved = currentProjects.length - validProjects.length;
+      const tasksRemoved = currentTasks.length - validTasks.length;
+      const linkMapEntriesRemoved = Object.keys(currentLinkMap).length - Object.keys(cleanedLinkMap).length;
+      
+      log('Error', `📈 CLEANUP SUMMARY:`);
+      log('Error', `  - Removed 1 goal: "${goalTitle}"`);
+      log('Error', `  - Removed ${projectsRemoved} orphaned projects`);
+      log('Error', `  - Removed ${tasksRemoved} orphaned tasks`);
+      log('Error', `  - Removed ${linkMapEntriesRemoved} invalid link map entries`);
+      
+      // STEP 8: Update all state and storage atomically
       setGoals(updatedGoals);
+      setProjects(validProjects);
+      setTasks(validTasks);
+      setProjectGoalLinkMap(cleanedLinkMap);
       
-      // Then save to AsyncStorage - use the same variable
-      await saveData(STORAGE_KEYS.GOALS, updatedGoals);
-      console.log(`Goal "${goalTitle}" deleted and saved to storage. Before: ${goalsRef.current.length}, After: ${updatedGoals.length}`);
+      // STEP 9: Save all cleaned data to storage in parallel
+      await Promise.all([
+        saveData(STORAGE_KEYS.GOALS, updatedGoals),
+        saveData(STORAGE_KEYS.PROJECTS, validProjects),  
+        saveData(STORAGE_KEYS.TASKS, validTasks),
+        saveData('projectGoalLinkMap', cleanedLinkMap)
+      ]);
       
-      // Now delete all linked projects
-      if (linkedProjects.length > 0) {
-        // Remove projects from state
-        setProjects(prevProjects => 
-          prevProjects.filter(project => 
-            !linkedProjectIds.includes(project.id)
-          )
-        );
-        
-        // Save updated projects to AsyncStorage
-        const updatedProjects = projectsRef.current.filter(project => 
-          !linkedProjectIds.includes(project.id)
-        );
-        await saveData(STORAGE_KEYS.PROJECTS, updatedProjects);
-        console.log(`Deleted ${linkedProjects.length} projects linked to goal ${goalId}`);
-        
-        // Delete all tasks associated with these projects
-        try {
-          if (Array.isArray(tasksRef.current) && tasksRef.current.length > 0) {
-            const tasksToDelete = tasksRef.current.filter(task => linkedProjectIds.includes(task.projectId));
-            
-            if (tasksToDelete.length > 0) {
-              // Remove tasks from state
-              const updatedTasks = tasksRef.current.filter(task => !linkedProjectIds.includes(task.projectId));
-              setTasks(updatedTasks);
-              
-              // Save updated tasks to AsyncStorage
-              await saveData(STORAGE_KEYS.TASKS, updatedTasks);
-              console.log(`Deleted ${tasksToDelete.length} tasks from projects linked to goal ${goalId}`);
-            }
-          }
-        } catch (error) {
-          console.error("Error processing tasks:", error);
-        }
-        
-        // Update the project-goal link map
-        if (Object.keys(projectGoalLinkMap).length > 0) {
-          const updatedLinkMap = { ...projectGoalLinkMap };
-          
-          linkedProjectIds.forEach(projectId => {
-            if (updatedLinkMap[projectId]) {
-              delete updatedLinkMap[projectId];
-            }
-          });
-          
-          setProjectGoalLinkMap(updatedLinkMap);
-          
-          // Save link map to AsyncStorage
-          await saveData('projectGoalLinkMap', updatedLinkMap);
-        }
-      }
+      log('Error', `💾 ALL DATA SAVED TO STORAGE`);
       
-      // Perform thorough AsyncStorage cleanup
-      await cleanupAsyncStorageAfterGoalDeletion(goalId, linkedProjectIds);
-      
-      // Refresh data one more time to ensure UI consistency
+      // STEP 10: Force refresh to ensure UI consistency
       await refreshData();
       
-      // Increment the refresh counter to trigger UI updates
+      // Final verification
+      log('Error', `🏁 COMPREHENSIVE DELETION COMPLETED`);
+      log('Error', `📊 AFTER DELETION: Goals: ${updatedGoals.length}, Projects: ${validProjects.length}, Tasks: ${validTasks.length}`);
+      
+      // Increment refresh counter to trigger UI updates
       setRefreshCounter(prev => prev + 1);
       
-      showSuccess('Goal and all associated projects deleted successfully');
+      showSuccess(`Goal "${goalTitle}" and all orphaned data deleted successfully`);
       return true;
+      
     } catch (error) {
-      console.error('Error deleting goal:', error);
+      console.error('Error in comprehensive goal deletion:', error);
       showError('Failed to delete goal');
       return false;
     } finally {
-      // Clear operation tracking after a delay
+      // Clear operation tracking
       setTimeout(() => {
         operationsInProgress.current.deletingGoals.delete(goalId);
-        
-        const linkedProjectIds = getProjectsForGoal(goalId).map(p => p.id);
-        linkedProjectIds.forEach(id => {
-          deletedProjectIds.current.delete(id);
-          operationsInProgress.current.deletingProjects.delete(id);
-        });
       }, 1000);
     }
   };
@@ -1465,6 +1513,23 @@ export const AppProvider = ({ children }) => {
       
       const calculatedProgress = calculateGoalProgress(goalId, projectsRef.current);
       
+      // Don't override manually completed goals
+      if (goal.completed) {
+        console.log(`[AppContext] Goal "${goal.title}" is manually completed, preserving 100% progress`);
+        return;
+      }
+      
+      // Don't update goals that were manually updated recently
+      if (goal.updatedAt) {
+        const lastUpdate = new Date(goal.updatedAt).getTime();
+        const now = Date.now();
+        // If goal was manually updated in the last 2 seconds, don't override it
+        if (now - lastUpdate < 2000) {
+          console.log(`[AppContext] Goal "${goal.title}" was manually updated recently, skipping auto-update`);
+          return;
+        }
+      }
+      
       if (goal.progress !== calculatedProgress) {
         console.log(`[AppContext] Updating goal "${goal.title}" progress from ${goal.progress}% to ${calculatedProgress}%`);
         
@@ -1537,7 +1602,7 @@ export const AppProvider = ({ children }) => {
       if (goalId) {
         setTimeout(() => {
           updateGoalProgressFromProjects(goalId);
-        }, 100);
+        }, 500);
       }
       
       return true;
@@ -1626,7 +1691,7 @@ export const AppProvider = ({ children }) => {
         if (project.goalId) {
           setTimeout(() => {
             updateGoalProgressFromProjects(project.goalId);
-          }, 100);
+          }, 500);
         }
       }
       
@@ -1720,7 +1785,7 @@ export const AppProvider = ({ children }) => {
         if (project.goalId) {
           setTimeout(() => {
             updateGoalProgressFromProjects(project.goalId);
-          }, 100);
+          }, 500);
         }
       }
       
@@ -1814,7 +1879,7 @@ export const AppProvider = ({ children }) => {
         if (project.goalId) {
           setTimeout(() => {
             updateGoalProgressFromProjects(project.goalId);
-          }, 100);
+          }, 500);
         }
       }
       
@@ -1830,10 +1895,33 @@ export const AppProvider = ({ children }) => {
   // Function to update project progress from its tasks
   const updateProjectProgressFromTasks = async (projectId, currentTasks = null) => {
     try {
+      console.log(`🔴 [DEBUG] updateProjectProgressFromTasks called - Project: ${projectId}`);
       if (!projectId) return;
       
       const project = projectsRef.current.find(p => p.id === projectId);
       if (!project) return;
+      
+      console.log(`🔴 [DEBUG] Project found:`, {
+        id: projectId,
+        title: project.title,
+        status: project.status,
+        progress: project.progress,
+        completed: project.completed,
+        updatedAt: project.updatedAt
+      });
+      
+      // IMPORTANT: Don't update projects that were manually completed recently
+      if ((project.status === 'done' || project.completed) && project.updatedAt) {
+        const lastUpdate = new Date(project.updatedAt).getTime();
+        const now = Date.now();
+        const timeDiff = now - lastUpdate;
+        console.log(`🔴 [DEBUG] Manual completion check - Time since update: ${timeDiff}ms`);
+        // If project was manually completed in the last 2 seconds, don't override it
+        if (timeDiff < 2000) {
+          console.log(`🔴 [DEBUG] Project "${project.title}" was manually completed recently, skipping auto-update`);
+          return;
+        }
+      }
       
       // IMPORTANT: Don't change project status based on task completion
       // Only recalculate progress percentage while preserving status
@@ -1884,7 +1972,7 @@ export const AppProvider = ({ children }) => {
       if (project.goalId) {
         setTimeout(() => {
           updateGoalProgressFromProjects(project.goalId);
-        }, 100);
+        }, 500);
       }
     } catch (error) {
       console.error('Error updating project progress from tasks:', error);
@@ -2490,7 +2578,7 @@ export const AppProvider = ({ children }) => {
   // Update project progress with atomic update to ensure goal progress is updated
   const updateProjectProgress = async (projectId, newProgress) => {
     try {
-      console.log(`[AppContext] Updating project ${projectId} status indicator to ${newProgress}`);
+      console.log(`🔵 [DEBUG] updateProjectProgress called - Project: ${projectId}, Progress: ${newProgress}`);
       
       // Use current refs to avoid stale closure
       const currentProjects = projectsRef.current;
@@ -2538,11 +2626,21 @@ export const AppProvider = ({ children }) => {
         ...project,
         status: newStatus, // Set explicit status property
         statusProgress: newProgress, // Store status indicator value
-        // Don't directly set progress - let AppContext handle task-based calculation
-        progress: taskBasedProgress,
+        // Use status-based progress when manually set to done, otherwise use task-based
+        progress: newStatus === 'done' ? 100 : taskBasedProgress,
         completed: newStatus === 'done', // Only mark as completed if 100%
         updatedAt: new Date().toISOString()
       };
+      
+      console.log(`🟢 [DEBUG] Project update created:`, {
+        id: projectId,
+        title: project.title,
+        oldStatus: project.status,
+        newStatus: newStatus,
+        oldProgress: project.progress,
+        newProgress: updatedProject.progress,
+        completed: updatedProject.completed
+      });
       
       // First update the project in state and storage
       const updatedProjects = currentProjects.map(p => 
@@ -2551,9 +2649,11 @@ export const AppProvider = ({ children }) => {
       
       // Update state
       setProjects(updatedProjects);
+      console.log(`🟡 [DEBUG] Project state updated in memory`);
       
       // Update storage
       await saveData(STORAGE_KEYS.PROJECTS, updatedProjects);
+      console.log(`🟡 [DEBUG] Project state saved to storage`);
       
       // Next, check if this project is linked to a goal
       if (project.goalId) {
@@ -2586,11 +2686,8 @@ export const AppProvider = ({ children }) => {
         showSuccess(`Project moved to ${newStatus === 'todo' ? 'To Do' : newStatus === 'in_progress' ? 'In Progress' : 'Done'}`);
       }
       
-      // Force a refresh of goal data to ensure all screens update
-      if (typeof refreshData === 'function') {
-        console.log('Forcing data refresh after project progress update');
-        setTimeout(() => refreshData(), 100);
-      }
+      // Note: Removed automatic refreshData call to prevent interference with manual completion
+      // The state updates above should be sufficient for UI consistency
       
       return true;
     } catch (error) {
@@ -2603,6 +2700,173 @@ export const AppProvider = ({ children }) => {
       
       return false;
     }
+  };
+  
+  // ========================
+  // Calendar Functions
+  // ========================
+  
+  // Calendar permission management
+  const requestCalendarPermissions = async () => {
+    try {
+      const result = await CalendarService.requestCalendarPermissions();
+      setCalendarPermissionStatus(result.status);
+      return result;
+    } catch (error) {
+      console.error('Error requesting calendar permissions:', error);
+      return { status: 'denied', error: error.message };
+    }
+  };
+  
+  const getCalendarPermissionStatus = async () => {
+    try {
+      const result = await CalendarService.getCalendarPermissionStatus();
+      setCalendarPermissionStatus(result.status);
+      return result;
+    } catch (error) {
+      console.error('Error getting calendar permission status:', error);
+      return { status: 'undetermined', error: error.message };
+    }
+  };
+  
+  // Calendar settings management
+  const updateCalendarSettings = async (newSettings) => {
+    try {
+      const updatedSettings = { ...calendarSettings, ...newSettings };
+      setCalendarSettings(updatedSettings);
+      await AsyncStorage.setItem(STORAGE_KEYS.CALENDAR_SETTINGS, JSON.stringify(updatedSettings));
+      
+      // Update CalendarService settings
+      if (newSettings.syncEnabled !== undefined) {
+        await CalendarService.enableCalendarSync(newSettings.syncEnabled);
+      }
+      
+      if (newSettings.selectedCalendarId) {
+        await CalendarService.setSelectedCalendar(newSettings.selectedCalendarId);
+      }
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error updating calendar settings:', error);
+      if (showError) showError('Failed to update calendar settings');
+      return { success: false, error: error.message };
+    }
+  };
+  
+  // Calendar events management
+  const loadCalendarEvents = async (dateRange = null) => {
+    try {
+      let events;
+      
+      if (dateRange) {
+        events = await CalendarService.getEventsForDateRange(dateRange.start, dateRange.end);
+      } else {
+        // Load events for current week by default
+        const today = new Date();
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
+        
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        endOfWeek.setHours(23, 59, 59, 999);
+        
+        events = await CalendarService.getEventsForDateRange(startOfWeek, endOfWeek);
+      }
+      
+      setCalendarEvents(events);
+      
+      // Cache events
+      await AsyncStorage.setItem(STORAGE_KEYS.CALENDAR_EVENTS, JSON.stringify(events));
+      
+      return { success: true, events };
+    } catch (error) {
+      console.error('Error loading calendar events:', error);
+      return { success: false, error: error.message };
+    }
+  };
+  
+  const getCalendarEventsForDate = async (date) => {
+    try {
+      const events = await CalendarService.getEventsForDate(date);
+      return events;
+    } catch (error) {
+      console.error('Error getting calendar events for date:', error);
+      return [];
+    }
+  };
+  
+  // Time block calendar integration
+  const syncTimeBlockToCalendar = async (timeBlock) => {
+    if (!calendarSettings.syncEnabled || !calendarSettings.autoSyncTimeBlocks) {
+      return { success: false, reason: 'Calendar sync disabled' };
+    }
+    
+    try {
+      const result = await CalendarService.syncTimeBlockToCalendar(timeBlock);
+      
+      if (result.success) {
+        // Update time block with calendar event ID
+        const updatedTimeBlocks = timeBlocks.map(tb => 
+          tb.id === timeBlock.id 
+            ? { ...tb, calendarEventId: result.calendarEventId }
+            : tb
+        );
+        
+        setTimeBlocks(updatedTimeBlocks);
+        await AsyncStorage.setItem(STORAGE_KEYS.TIME_BLOCKS, JSON.stringify(updatedTimeBlocks));
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Error syncing time block to calendar:', error);
+      return { success: false, error: error.message };
+    }
+  };
+  
+  const updateTimeBlockInCalendar = async (timeBlock) => {
+    if (!calendarSettings.syncEnabled || !timeBlock.calendarEventId) {
+      return { success: false, reason: 'Calendar sync disabled or no calendar event' };
+    }
+    
+    try {
+      return await CalendarService.updateTimeBlockInCalendar(timeBlock, timeBlock.calendarEventId);
+    } catch (error) {
+      console.error('Error updating time block in calendar:', error);
+      return { success: false, error: error.message };
+    }
+  };
+  
+  const deleteTimeBlockFromCalendar = async (timeBlock) => {
+    if (!calendarSettings.syncEnabled || !timeBlock.calendarEventId) {
+      return { success: false, reason: 'Calendar sync disabled or no calendar event' };
+    }
+    
+    try {
+      return await CalendarService.deleteTimeBlockFromCalendar(timeBlock.calendarEventId);
+    } catch (error) {
+      console.error('Error deleting time block from calendar:', error);
+      return { success: false, error: error.message };
+    }
+  };
+  
+  // Get available calendars
+  const getAvailableCalendars = async () => {
+    try {
+      return await CalendarService.getAvailableCalendars();
+    } catch (error) {
+      console.error('Error getting available calendars:', error);
+      return [];
+    }
+  };
+  
+  // Get calendar integration status
+  const getCalendarIntegrationStatus = () => {
+    return {
+      ...CalendarService.getIntegrationStatus(),
+      permissionStatus: calendarPermissionStatus,
+      settings: calendarSettings
+    };
   };
   
   // Function to update purchase status (lifetime or free)
@@ -2649,6 +2913,11 @@ export const AppProvider = ({ children }) => {
     todos,
     tomorrowTodos,
     laterTodos,
+    
+    // Calendar states
+    calendarSettings,
+    calendarEvents,
+    calendarPermissionStatus,
     
     // User purchase status
     userSubscriptionStatus,
@@ -2702,6 +2971,18 @@ export const AppProvider = ({ children }) => {
     updateTodos,
     deleteTodo,
     toggleTodo,
+    
+    // Calendar functions
+    requestCalendarPermissions,
+    getCalendarPermissionStatus,
+    updateCalendarSettings,
+    loadCalendarEvents,
+    getCalendarEventsForDate,
+    syncTimeBlockToCalendar,
+    updateTimeBlockInCalendar,
+    deleteTimeBlockFromCalendar,
+    getAvailableCalendars,
+    getCalendarIntegrationStatus,
     
     // Domain functions
     updateDomain,

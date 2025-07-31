@@ -183,6 +183,8 @@ const AchievementsScreen = ({ navigation, route }) => {
   const [previousLevel, setPreviousLevel] = useState(1);
   const [isLevelingUp, setIsLevelingUp] = useState(false);
   const [levelAnimationComplete, setLevelAnimationComplete] = useState(true);
+  const [testMode, setTestMode] = useState(false);
+  const [testStats, setTestStats] = useState(null);
   
   // Animation
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -358,6 +360,31 @@ const AchievementsScreen = ({ navigation, route }) => {
         handleTabChange('achievements');
       }, 50);
     }
+    
+    // Handle highlighting a specific achievement
+    if (route?.params?.highlightAchievement && route?.params?.focusCategory) {
+      // Expand the category containing the achievement
+      setExpandedCategories({
+        [route.params.focusCategory]: true
+      });
+      
+      // Switch to achievements tab if not already there
+      if (route?.params?.activeTab === 'achievements') {
+        setTimeout(() => {
+          handleTabChange('achievements');
+        }, 50);
+      }
+      
+      // Clear the highlight after animation completes (about 3 seconds)
+      setTimeout(() => {
+        if (navigation.setParams) {
+          navigation.setParams({ 
+            highlightAchievement: null,
+            focusCategory: route.params.focusCategory // Keep category expanded
+          });
+        }
+      }, 3000);
+    }
   }, [route?.params]); // This includes both focusCategory and the new activeTab param
   
   // Listen for new achievement events
@@ -437,8 +464,36 @@ const AchievementsScreen = ({ navigation, route }) => {
               applyDomainFilter(route.params.filterDomain);
             } else {
               // Process achievements without filtering
-              // Removed call to processGoals() as it's not defined
-              calculateStats();
+              // Check if we're in test mode before recalculating stats
+              const storedTestMode = await AsyncStorage.getItem('testMode');
+              const storedTestLevel = await AsyncStorage.getItem('testLevel');
+              
+              if (storedTestMode === 'true' && storedTestLevel && !testMode) {
+                // Restore test mode if it was persisted but not in current state
+                const testLevel = parseInt(storedTestLevel);
+                console.log(`Restoring test level ${testLevel} on focus`);
+                
+                const testLevelPoints = LevelService.getLevelThreshold(testLevel);
+                const newTestStats = {
+                  totalUnlocked: stats.totalUnlocked || 0,
+                  percentComplete: stats.percentComplete || 0,
+                  totalPoints: testLevelPoints,
+                  level: testLevel,
+                  levelTitle: LevelService.getLevelTitle(testLevel),
+                  currentLevelThreshold: LevelService.getLevelThreshold(testLevel),
+                  nextLevelThreshold: LevelService.getLevelThreshold(testLevel + 1),
+                  pointsForNextLevel: LevelService.getLevelThreshold(testLevel + 1) - testLevelPoints,
+                  progressPercent: 0
+                };
+                
+                setTestMode(true);
+                setTestStats(newTestStats);
+                setStats(newTestStats);
+              } else if (storedTestMode !== 'true') {
+                // Only calculate real stats if not in test mode
+                calculateStats();
+              }
+              
               calculatePremiumStats();
             }
             
@@ -499,7 +554,7 @@ const AchievementsScreen = ({ navigation, route }) => {
   };
   
   // Function to handle level up for testing
-  const handleLevelUp = (newLevel) => {
+  const handleLevelUp = async (newLevel) => {
     // Make sure animations are completed and new level is valid
     if (!levelAnimationComplete) return;
     
@@ -510,25 +565,82 @@ const AchievementsScreen = ({ navigation, route }) => {
     const nextLevel = Math.min(Math.max(1, newLevel), 12);
     
     if (nextLevel > currentLevel) {
-      // Set the previous level for the animation
-      setPreviousLevel(currentLevel);
-      
       // Calculate the points needed for this level
       const nextLevelPoints = LevelService.getLevelThreshold(nextLevel);
+      const currentPoints = getTotalPoints();
+      const pointsNeeded = nextLevelPoints - currentPoints;
       
-      // Update stats
-      setStats(prevStats => ({
-        ...prevStats,
+      console.log(`Level up: Need ${pointsNeeded} more points to reach level ${nextLevel}`);
+      
+      // Create fake test achievements to reach the required points
+      if (pointsNeeded > 0) {
+        // Get some achievement IDs that we can use for testing
+        const testAchievementIds = [
+          'test-achievement-1',
+          'test-achievement-2', 
+          'test-achievement-3',
+          'test-achievement-4',
+          'test-achievement-5'
+        ];
+        
+        // Load current achievements
+        const currentAchievements = await AsyncStorage.getItem('unlockedAchievements');
+        const parsedAchievements = currentAchievements ? JSON.parse(currentAchievements) : {};
+        
+        // Add fake achievements with enough points
+        let remainingPoints = pointsNeeded;
+        let achievementIndex = 0;
+        
+        while (remainingPoints > 0 && achievementIndex < testAchievementIds.length) {
+          const achievementId = testAchievementIds[achievementIndex];
+          const pointsToAdd = Math.min(remainingPoints, 50); // Add up to 50 points per achievement
+          
+          parsedAchievements[achievementId] = {
+            unlocked: true,
+            date: new Date().toISOString(),
+            seen: false,
+            points: pointsToAdd
+          };
+          
+          remainingPoints -= pointsToAdd;
+          achievementIndex++;
+        }
+        
+        // Save to AsyncStorage
+        await AsyncStorage.setItem('unlockedAchievements', JSON.stringify(parsedAchievements));
+        
+        // Refresh achievement context
+        refreshAchievements();
+        
+        console.log(`Added ${achievementIndex} test achievements with ${pointsNeeded} total points`);
+      }
+      
+      // Create new test stats
+      const newTestStats = {
+        totalUnlocked: stats.totalUnlocked || 0,
+        percentComplete: stats.percentComplete || 0,
+        totalPoints: nextLevelPoints,
         level: nextLevel,
         levelTitle: LevelService.getLevelTitle(nextLevel),
-        totalPoints: nextLevelPoints,
         currentLevelThreshold: LevelService.getLevelThreshold(nextLevel),
         nextLevelThreshold: LevelService.getLevelThreshold(nextLevel + 1),
         pointsForNextLevel: LevelService.getLevelThreshold(nextLevel + 1) - nextLevelPoints,
         progressPercent: 0 // Reset progress percentage
-      }));
+      };
       
-      // Start animation
+      // Save test level to AsyncStorage so it persists
+      await AsyncStorage.setItem('testLevel', nextLevel.toString());
+      await AsyncStorage.setItem('testMode', 'true');
+      
+      // Set everything in one batch to prevent visual flicker
+      // Set the previous level for the animation
+      setPreviousLevel(currentLevel);
+      // Enable test mode and store test stats (this prevents calculateStats from overwriting)
+      setTestMode(true);
+      setTestStats(newTestStats);
+      // Update stats immediately now that we're protected from overwrites
+      setStats(newTestStats);
+      // Start animation states
       setLevelAnimationComplete(false);
       setIsLevelingUp(true);
     }
@@ -538,6 +650,34 @@ const AchievementsScreen = ({ navigation, route }) => {
   useEffect(() => {
     const loadAchievementsData = async () => {
       try {
+        // Check if we have a persisted test level
+        const storedTestMode = await AsyncStorage.getItem('testMode');
+        const storedTestLevel = await AsyncStorage.getItem('testLevel');
+        
+        if (storedTestMode === 'true' && storedTestLevel) {
+          const testLevel = parseInt(storedTestLevel);
+          console.log(`Loading persisted test level: ${testLevel}`);
+          
+          // Create test stats for the persisted level
+          const testLevelPoints = LevelService.getLevelThreshold(testLevel);
+          const newTestStats = {
+            totalUnlocked: 0, // Will be calculated later
+            percentComplete: 0, // Will be calculated later
+            totalPoints: testLevelPoints,
+            level: testLevel,
+            levelTitle: LevelService.getLevelTitle(testLevel),
+            currentLevelThreshold: LevelService.getLevelThreshold(testLevel),
+            nextLevelThreshold: LevelService.getLevelThreshold(testLevel + 1),
+            pointsForNextLevel: LevelService.getLevelThreshold(testLevel + 1) - testLevelPoints,
+            progressPercent: 0
+          };
+          
+          setTestMode(true);
+          setTestStats(newTestStats);
+          setStats(newTestStats);
+          setPreviousLevel(testLevel);
+        }
+        
         // First, directly check if goal-pioneer is unlocked
         const isGoalPioneerUnlocked = isAchievementUnlocked('goal-pioneer');
         console.log(`Goal Pioneer achievement initially: ${isGoalPioneerUnlocked ? 'Unlocked' : 'Locked'}`);
@@ -553,8 +693,10 @@ const AchievementsScreen = ({ navigation, route }) => {
           setIsNewAchievementsModalVisible(true);
         }
         
-        // Calculate stats
-        calculateStats();
+        // Calculate stats (only if not in test mode)
+        if (!testMode && storedTestMode !== 'true') {
+          calculateStats();
+        }
         
         // Calculate premium achievement stats
         calculatePremiumStats();
@@ -583,6 +725,12 @@ const AchievementsScreen = ({ navigation, route }) => {
   // Calculate stats based on unlocked achievements
   const calculateStats = () => {
     try {
+      // If we're in test mode, don't recalculate stats - just exit early
+      if (testMode && testStats) {
+        console.log('Skipping stats calculation - in test mode');
+        return;
+      }
+      
       const totalAchievements = Object.keys(ACHIEVEMENTS).length;
       
       // Count unlocked achievements
@@ -617,7 +765,8 @@ const AchievementsScreen = ({ navigation, route }) => {
       // Update previous level state
       setPreviousLevel(currentLevel);
       
-      setStats({
+      // Set the calculated stats
+      const statsToSet = {
         totalUnlocked,
         percentComplete,
         totalPoints,
@@ -627,7 +776,9 @@ const AchievementsScreen = ({ navigation, route }) => {
         nextLevelThreshold: levelInfo.nextLevelThreshold,
         progressPercent: levelInfo.progressPercent,
         pointsForNextLevel: levelInfo.pointsForNextLevel
-      });
+      };
+      
+      setStats(statsToSet);
     } catch (error) {
       console.error('Error calculating stats:', error);
     }
@@ -701,9 +852,11 @@ const AchievementsScreen = ({ navigation, route }) => {
       // This is specific to how your app handles filtered achievements
       // You may need to adjust this based on your actual implementation
       
-      // Calculate stats
-      calculateStats();
-      calculatePremiumStats();
+      // Calculate stats (only if not in test mode)
+      if (!testMode) {
+        calculateStats();
+        calculatePremiumStats();
+      }
     } catch (error) {
       console.error('Error applying domain filter:', error);
     }
@@ -862,8 +1015,10 @@ const AchievementsScreen = ({ navigation, route }) => {
             refreshAchievements();
           }
           
-          // Force recalculation of stats
-          calculateStats();
+          // Force recalculation of stats (only if not in test mode)
+          if (!testMode) {
+            calculateStats();
+          }
           calculatePremiumStats();
           
           // Animate the list fade-in again
@@ -1004,24 +1159,86 @@ const AchievementsScreen = ({ navigation, route }) => {
           
           {/* Developer Mode - Level Testing Buttons */}
           {__DEV__ && (
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginBottom: 16 }}>
+            <View style={{ flexDirection: 'column', width: '100%', marginBottom: 16 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginBottom: 8 }}>
+                <TouchableOpacity
+                  style={[
+                    styles.devButton,
+                    { 
+                      backgroundColor: 'rgba(0,255,0,0.15)', 
+                      flex: 1, 
+                      marginRight: 8, 
+                      justifyContent: 'center', 
+                      alignItems: 'center',
+                      opacity: levelAnimationComplete ? 1 : 0.5 
+                    }
+                  ]}
+                  onPress={() => handleLevelUp(stats.level + 1)}
+                  disabled={!levelAnimationComplete}
+                >
+                  <Text style={[styles.devButtonText, { color: '#00CC00' }]}>
+                    Level Up +1
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[
+                    styles.devButton,
+                    { 
+                      backgroundColor: 'rgba(255,165,0,0.15)', 
+                      flex: 1, 
+                      justifyContent: 'center', 
+                      alignItems: 'center',
+                      opacity: levelAnimationComplete ? 1 : 0.5 
+                    }
+                  ]}
+                  onPress={() => {
+                    // Only trigger animation if not already animating
+                    if (levelAnimationComplete) {
+                      setLevelAnimationComplete(false);
+                      setIsLevelingUp(true);
+                    }
+                  }}
+                  disabled={!levelAnimationComplete}
+                >
+                  <Text style={[styles.devButtonText, { color: '#FF8C00' }]}>
+                    Test Animation
+                </Text>
+              </TouchableOpacity>
+            </View>
+            
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%' }}>
               <TouchableOpacity
                 style={[
                   styles.devButton,
                   { 
-                    backgroundColor: 'rgba(0,255,0,0.15)', 
+                    backgroundColor: 'rgba(255,0,0,0.15)', 
                     flex: 1, 
-                    marginRight: 8, 
+                    marginRight: 8,
                     justifyContent: 'center', 
-                    alignItems: 'center',
-                    opacity: levelAnimationComplete ? 1 : 0.5 
+                    alignItems: 'center'
                   }
                 ]}
-                onPress={() => handleLevelUp(stats.level + 1)}
-                disabled={!levelAnimationComplete}
+                onPress={async () => {
+                  // Reset animation state and test mode
+                  setLevelAnimationComplete(true);
+                  setIsLevelingUp(false);
+                  setTestMode(false);
+                  setTestStats(null);
+                  
+                  // Clear persisted test data
+                  await AsyncStorage.removeItem('testLevel');
+                  await AsyncStorage.removeItem('testMode');
+                  
+                  // Trigger stats recalculation to restore real stats
+                  setTimeout(() => {
+                    calculateStats();
+                    calculatePremiumStats();
+                  }, 100);
+                }}
               >
-                <Text style={[styles.devButtonText, { color: '#00CC00' }]}>
-                  Level Up +1
+                <Text style={[styles.devButtonText, { color: '#FF0000' }]}>
+                  Reset Animation
                 </Text>
               </TouchableOpacity>
               
@@ -1029,27 +1246,23 @@ const AchievementsScreen = ({ navigation, route }) => {
                 style={[
                   styles.devButton,
                   { 
-                    backgroundColor: 'rgba(255,165,0,0.15)', 
-                    flex: 1, 
+                    backgroundColor: 'rgba(128,0,128,0.15)', 
+                    flex: 1,
                     justifyContent: 'center', 
-                    alignItems: 'center',
-                    opacity: levelAnimationComplete ? 1 : 0.5 
+                    alignItems: 'center'
                   }
                 ]}
                 onPress={() => {
-                  // Only trigger animation if not already animating
-                  if (levelAnimationComplete) {
-                    setLevelAnimationComplete(false);
-                    setIsLevelingUp(true);
-                  }
+                  // Show debug info
+                  alert(`Animation Complete: ${levelAnimationComplete}\nIs Leveling Up: ${isLevelingUp}\nCurrent Level: ${stats.level}\nTest Mode: ${testMode}\nLevel Title: ${stats.levelTitle}`);
                 }}
-                disabled={!levelAnimationComplete}
               >
-                <Text style={[styles.devButtonText, { color: '#FF8C00' }]}>
-                  Test Animation
+                <Text style={[styles.devButtonText, { color: '#800080' }]}>
+                  Debug Info
                 </Text>
               </TouchableOpacity>
             </View>
+          </View>
           )}
           
           {/* Developer Mode - Reset Achievements Button */}
@@ -1362,6 +1575,7 @@ const AchievementsScreen = ({ navigation, route }) => {
                 defaultExpanded={expandedCategories[category.id] === true}
                 onToggleExpand={() => toggleCategoryExpansion(category.id)}
                 userSubscriptionStatus={userSubscriptionStatus}
+                highlightAchievement={route?.params?.highlightAchievement}
               />
             );
           })}

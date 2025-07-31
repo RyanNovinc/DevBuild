@@ -22,10 +22,8 @@ const InfoModal = ({ visible, theme, onClose, storageLimit = `${STORAGE_QUOTA_KB
       animationType="fade"
       onRequestClose={onClose}
     >
-      <TouchableOpacity 
+      <View 
         style={styles.modalOverlay}
-        activeOpacity={1}
-        onPress={onClose}
       >
         <View style={[styles.infoModalContent, { 
           backgroundColor: theme.cardElevated || theme.card,
@@ -144,7 +142,7 @@ const InfoModal = ({ visible, theme, onClose, storageLimit = `${STORAGE_QUOTA_KB
             <Text style={styles.infoModalButtonText}>Got It</Text>
           </TouchableOpacity>
         </View>
-      </TouchableOpacity>
+      </View>
     </Modal>
   );
 };

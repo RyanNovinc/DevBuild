@@ -296,6 +296,7 @@ const styles = {
 export const FeatureLimitBanner = ({ 
   theme, 
   message = "Upgrade to Pro for unlimited access", 
+  title = "Limit Reached",
   onUpgrade,
   onClose,
   style,
@@ -431,7 +432,7 @@ export const FeatureLimitBanner = ({
                   ]}
                   maxFontSizeMultiplier={1.3}
                 >
-                  Limit Reached
+{title}
                 </Text>
               </View>
               

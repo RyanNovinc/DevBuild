@@ -53,7 +53,8 @@ import * as FileSystem from 'expo-file-system';
 // Import constants - Single source of truth
 import { 
   USER_KNOWLEDGE_KEY, 
-  USER_KNOWLEDGE_ENABLED_KEY, 
+  USER_KNOWLEDGE_ENABLED_KEY,
+  APP_CONTEXT_ENABLED_KEY,
   STORAGE_QUOTA_BYTES,
   STORAGE_QUOTA_KB,
   MAX_FILE_SIZE_MB,
@@ -77,6 +78,7 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
   // State
   const [documents, setDocuments] = useState([]);
   const [isEnabled, setIsEnabled] = useState(true);
+  const [appContextEnabled, setAppContextEnabled] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [storageUsedBytes, setStorageUsedBytes] = useState(0);
   const [infoModalVisible, setInfoModalVisible] = useState(false);
@@ -104,6 +106,20 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
   useEffect(() => {
     calculateStorageUsage();
   }, [documents]);
+  
+  // Recalculate storage when app context enabled state changes
+  useEffect(() => {
+    // This will trigger a re-render when appContextEnabled changes
+    // which will recalculate the storage percentage
+    console.log(`App context enabled changed to: ${appContextEnabled}`);
+  }, [appContextEnabled]);
+  
+  // Recalculate storage when main Personal Knowledge toggle changes
+  useEffect(() => {
+    // This will trigger a re-render when isEnabled changes
+    // which will recalculate the storage percentage
+    console.log(`Personal Knowledge enabled changed to: ${isEnabled}`);
+  }, [isEnabled]);
   
   // Load documents and settings
   const loadData = async () => {
@@ -166,6 +182,14 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
         const isEnabledValue = enabledSetting === 'true';
         console.log(`Loaded enabled setting: ${isEnabledValue}`);
         setIsEnabled(isEnabledValue);
+      }
+      
+      // Load app context enabled setting
+      const appContextSetting = await AsyncStorage.getItem(APP_CONTEXT_ENABLED_KEY);
+      if (appContextSetting !== null) {
+        const isAppContextEnabled = appContextSetting === 'true';
+        console.log(`Loaded app context enabled setting: ${isAppContextEnabled}`);
+        setAppContextEnabled(isAppContextEnabled);
       }
       
       // Calculate storage usage after loading documents
@@ -247,6 +271,12 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
   
   // Calculate storage percentage
   const calculateStoragePercentage = () => {
+    // If Personal Knowledge is completely disabled, show 0% storage usage
+    if (!isEnabled) {
+      console.log('Personal Knowledge disabled: showing 0% storage usage');
+      return 0;
+    }
+    
     // Use DocumentService's method to get the storage quota
     const storageQuotaBytes = DocumentService.getStorageQuotaBytes();
     
@@ -259,12 +289,22 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
       return 0;
     }
     
-    // Calculate percentage based on actual storage used
-    const actualBytes = Math.max(0, storageUsedBytes);
+    // Calculate storage used, excluding app context document if it's disabled
+    let actualBytes = Math.max(0, storageUsedBytes);
+    
+    // If app context is disabled, subtract the app context document size from storage calculation
+    if (!appContextEnabled) {
+      const appContextDoc = documents.find(doc => doc.id === APP_CONTEXT_DOCUMENT_ID);
+      if (appContextDoc && appContextDoc.processedSize) {
+        actualBytes = Math.max(0, actualBytes - appContextDoc.processedSize);
+        console.log(`App context disabled: excluding ${appContextDoc.processedSize} bytes from storage calculation`);
+      }
+    }
+    
     const percentage = (actualBytes / storageQuotaBytes) * 100;
     
     // Log detailed information for debugging
-    console.log(`Storage percentage calculation: ${actualBytes} / ${storageQuotaBytes} = ${percentage.toFixed(2)}%`);
+    console.log(`Storage percentage calculation: ${actualBytes} / ${storageQuotaBytes} = ${percentage.toFixed(2)}% (Personal Knowledge enabled: ${isEnabled}, App context enabled: ${appContextEnabled})`);
     
     // Ensure percentage is between 0-100
     return Math.min(100, Math.max(0, percentage));
@@ -289,9 +329,29 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
     }
   };
   
+  // Save app context enabled setting
+  const saveAppContextEnabledSetting = async (value) => {
+    try {
+      await AsyncStorage.setItem(APP_CONTEXT_ENABLED_KEY, value.toString());
+      setAppContextEnabled(value);
+      console.log(`Saved app context enabled setting: ${value}`);
+      
+      // Recalculate storage usage after toggling app context to update the percentage
+      await calculateStorageUsage();
+    } catch (error) {
+      console.error('Error saving app context enabled setting:', error);
+      Alert.alert('Error', 'Failed to save your app context settings. Please try again.');
+    }
+  };
+
   // Handle toggle switches
   const toggleSwitch = () => {
     saveEnabledSetting(!isEnabled);
+  };
+  
+  // Handle app context toggle
+  const toggleAppContext = () => {
+    saveAppContextEnabledSetting(!appContextEnabled);
   };
   
   // Document picker
@@ -972,6 +1032,8 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
                     theme={theme}
                     onView={() => viewDocument(item)}
                     onDelete={() => deleteDocument(item.id)}
+                    appContextEnabled={appContextEnabled}
+                    onToggleAppContext={toggleAppContext}
                     // Pass responsive props to DocumentItem
                     responsive={{
                       fontSize: fontSizes,

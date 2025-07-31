@@ -1802,7 +1802,8 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
         left: 0,
         right: 0,
         alignItems: 'center',
-        zIndex: 9999, // Ultra-high zIndex to ensure it's on top
+        zIndex: 50, // Very low zIndex so system popups appear above everything
+        elevation: 50, // Android elevation to match zIndex
       }}>
         <AIStatusIndicators.CreditsIndicator
           credits={{

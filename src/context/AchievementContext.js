@@ -1,6 +1,7 @@
 // src/context/AchievementContext.js
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ACHIEVEMENTS } from '../screens/AchievementsScreen/data/achievementsData';
 
 // Create context
 const AchievementContext = createContext();
@@ -115,13 +116,18 @@ export const AchievementProvider = ({ children }) => {
       
       console.log(`Unlocking achievement: ${achievementId}`);
       
+      // Get achievement data to include points
+      const achievementData = ACHIEVEMENTS[achievementId];
+      const points = achievementData?.points || 0;
+      
       // Create new achievements object
       const newUnlockedAchievements = {
         ...currentAchievements,
         [achievementId]: { 
           unlocked: true, 
           date: new Date().toISOString(),
-          seen: false
+          seen: false,
+          points: points
         }
       };
       
@@ -201,9 +207,15 @@ export const AchievementProvider = ({ children }) => {
   const getTotalPoints = () => {
     let total = 0;
     
-    // If we had achievements data, we would calculate points here
-    // For now, just count the number of unlocked achievements
-    total = Object.keys(unlockedAchievements).length;
+    // Sum up actual point values from unlocked achievements
+    Object.keys(unlockedAchievements).forEach(achievementId => {
+      if (unlockedAchievements[achievementId]?.unlocked) {
+        const achievementData = ACHIEVEMENTS[achievementId];
+        if (achievementData && achievementData.points) {
+          total += achievementData.points;
+        }
+      }
+    });
     
     return total;
   };

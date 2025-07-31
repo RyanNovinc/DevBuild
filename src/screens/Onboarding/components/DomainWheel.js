@@ -131,9 +131,13 @@ const DomainWheel = ({ domains, onDomainSelected, selectedDomain, onCenterButton
             const translatedDomainName = getTranslatedDomainName(slice.domain.name, currentLanguage);
             
             // Get first word for the label - handle Japanese labels differently
-            const labelText = currentLanguage === 'ja' 
-              ? translatedDomainName.slice(0, 2) // Take first two characters for Japanese 
-              : translatedDomainName.split(' ')[0]; // First word for English
+            let labelText;
+            if (currentLanguage === 'ja') {
+              labelText = translatedDomainName.slice(0, 2); // Take first two characters for Japanese
+            } else {
+              // For English, use "Growth" for Personal Growth, otherwise first word
+              labelText = slice.domain.name === 'Personal Growth' ? 'Growth' : translatedDomainName.split(' ')[0];
+            }
             
             return (
               <G key={`slice-${index}`}>

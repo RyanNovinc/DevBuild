@@ -89,6 +89,7 @@ const ProfileScreen = ({ navigation, route }) => {
     settings = {},
     updateDomain,
     refreshDomains, // Use this function if available
+    refreshData, // Main refresh function from AppContext
     updatePurchaseStatus, // New function to update purchase status
   } = appContext;
   
@@ -126,8 +127,6 @@ const ProfileScreen = ({ navigation, route }) => {
     referralCode: '',
     referralsLeft: 3,
     showTestModeToggles: __DEV__,
-    // Add debug state flag
-    showDebugTools: __DEV__,
   });
   
   // Add the debug function
@@ -215,6 +214,158 @@ const ProfileScreen = ({ navigation, route }) => {
         'Storage Debug',
         `Goals: ${goals.length}\nProjects: ${projects.length}\nTasks: ${tasks.length}\n\nOrphaned Projects: ${orphanedProjects.length}\nOrphaned Tasks: ${orphanedTasks.length}\nBad Link Map Entries: ${linkMapOrphans.length}\n\nProjects with embedded tasks: ${projectsWithEmbeddedTasks.length}\nDuplicate tasks: ${duplicateTaskCount}`,
         [
+          {
+            text: 'Compare Memory vs Storage',
+            onPress: async () => {
+              try {
+                // Read directly from AsyncStorage 
+                const [storageGoals, storageProjects, storageTasks] = await Promise.all([
+                  AsyncStorage.getItem('goals'),
+                  AsyncStorage.getItem('projects'), 
+                  AsyncStorage.getItem('tasks')
+                ]);
+
+                const goalsFromStorage = storageGoals ? JSON.parse(storageGoals) : [];
+                const projectsFromStorage = storageProjects ? JSON.parse(storageProjects) : [];
+                const tasksFromStorage = storageTasks ? JSON.parse(storageTasks) : [];
+
+                Alert.alert(
+                  'Memory vs Storage Comparison',
+                  `MEMORY (AppContext):\n- Goals: ${goals.length}\n- Projects: ${projects.length}\n- Tasks: ${tasks.length}\n\nSTORAGE (AsyncStorage):\n- Goals: ${goalsFromStorage.length}\n- Projects: ${projectsFromStorage.length}\n- Tasks: ${tasksFromStorage.length}\n\nThis shows where the discrepancy is coming from.`,
+                  [
+                    { text: 'OK' },
+                    {
+                      text: 'Force Sync Storage → Memory',
+                      onPress: async () => {
+                        if (typeof refreshData === 'function') {
+                          await refreshData();
+                          await refreshData(); // Double refresh
+                          showSuccess('Forced sync from storage to memory');
+                        } else {
+                          showError('RefreshData function not available');
+                        }
+                      }
+                    }
+                  ]
+                );
+              } catch (error) {
+                Alert.alert('Error', 'Failed to compare data: ' + error.message);
+              }
+            }
+          },
+          { 
+            text: 'Nuclear Cleanup (If 0 Goals)', 
+            onPress: async () => {
+              try {
+                // First preview what would be cleaned
+                const SimpleCleanupService = require('../../services/SimpleCleanupService').default;
+                const preview = await SimpleCleanupService.previewCleanup();
+                
+                if (preview.error) {
+                  Alert.alert('Error', preview.error);
+                  return;
+                }
+
+                if (!preview.needsCleanup) {
+                  Alert.alert('No Cleanup Needed', `Current data looks correct:\n- Goals: ${preview.current.goals}\n- Projects: ${preview.current.projects}\n- Tasks: ${preview.current.tasks}`);
+                  return;
+                }
+
+                // Show confirmation
+                Alert.alert(
+                  'Confirm Nuclear Cleanup',
+                  `This will remove ALL orphaned data:\n\n- ${preview.wouldRemove.projects} projects\n- ${preview.wouldRemove.tasks} tasks\n- ${preview.wouldRemove.linkMapEntries} link map entries\n\nThis action cannot be undone.`,
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                      text: 'Clean Up',
+                      style: 'destructive',
+                      onPress: async () => {
+                        const result = await SimpleCleanupService.clearAllDataIfNoGoals();
+                        
+                        if (result.success) {
+                          Alert.alert(
+                            'Cleanup Complete',
+                            `Removed:\n- ${result.removed.projects} projects\n- ${result.removed.tasks} tasks\n- ${result.removed.linkMapEntries} link entries\n\nAll data is now clean!`,
+                            [
+                              {
+                                text: 'Refresh App Data',
+                                onPress: async () => {
+                                  try {
+                                    if (typeof refreshData === 'function') {
+                                      // Force double refresh to ensure cleanup is reflected
+                                      await refreshData();
+                                      await new Promise(resolve => setTimeout(resolve, 100));
+                                      await refreshData();
+                                      showSuccess('App data refreshed successfully');
+                                    } else {
+                                      console.log('refreshData function not available');
+                                      showError('Refresh function not available');
+                                    }
+                                  } catch (error) {
+                                    console.error('Error refreshing data:', error);
+                                    showError('Failed to refresh data');
+                                  }
+                                }
+                              }
+                            ]
+                          );
+                        } else {
+                          Alert.alert('Cleanup Failed', result.error);
+                        }
+                      }
+                    }
+                  ]
+                );
+              } catch (error) {
+                Alert.alert('Error', 'Failed to run cleanup: ' + error.message);
+              }
+            }
+          },
+          { 
+            text: 'Clean Up Legacy Data', 
+            onPress: async () => {
+              Alert.alert('Cleaning up orphaned data...');
+              try {
+                // Import and run the cleanup service
+                const LegacyDataCleanupService = require('../../services/LegacyDataCleanupService').default;
+                const result = await LegacyDataCleanupService.cleanupAllOrphanedData();
+                
+                if (result.success) {
+                  const { cleanup, finalCounts } = result;
+                  Alert.alert(
+                    'Cleanup Complete', 
+                    `Removed:\n- ${cleanup.projectsWithEmbeddedTasksRemoved} projects with embedded tasks\n- ${cleanup.orphanedProjectsRemoved} orphaned projects\n- ${cleanup.orphanedTasksRemoved} orphaned tasks\n- ${cleanup.linkMapEntriesRemoved} invalid links\n\nFinal counts:\n- Goals: ${finalCounts.goals}\n- Projects: ${finalCounts.projects}\n- Tasks: ${finalCounts.tasks}`,
+                    [
+                      {
+                        text: 'Refresh App Data',
+                        onPress: async () => {
+                          try {
+                            if (typeof refreshData === 'function') {
+                              // Force double refresh to ensure cleanup is reflected
+                              await refreshData();
+                              await new Promise(resolve => setTimeout(resolve, 100));
+                              await refreshData();
+                              showSuccess('App data refreshed successfully');
+                            } else {
+                              showError('Refresh function not available');
+                            }
+                          } catch (error) {
+                            console.error('Error refreshing data:', error);
+                            showError('Failed to refresh data');
+                          }
+                        }
+                      }
+                    ]
+                  );
+                } else {
+                  Alert.alert('Cleanup Failed', result.error);
+                }
+              } catch (error) {
+                Alert.alert('Error', 'Failed to run cleanup: ' + error.message);
+              }
+            }
+          },
           { 
             text: 'Run Data Integrity Service', 
             onPress: async () => {
@@ -1131,7 +1282,7 @@ const ProfileScreen = ({ navigation, route }) => {
         <ProfileHeader.Banner 
           theme={theme}
           isDarkMode={isDarkMode}
-          profile={screenState.profile}
+          profile={contextProfile || screenState.profile}
           user={user}
           navigation={navigation}
           onThemePickerOpen={() => setScreenState(prev => ({ ...prev, showThemeColorPicker: true }))}
@@ -1148,20 +1299,6 @@ const ProfileScreen = ({ navigation, route }) => {
           navigation={navigation}
         />
         
-        {/* Debug Button - Only visible in development mode */}
-        {screenState.showDebugTools && (
-          <View style={styles.debugButtonContainer}>
-            <TouchableOpacity
-              style={[styles.debugButton, { backgroundColor: theme.primary }]}
-              onPress={debugStorageContents}
-              accessibilityLabel="Debug Storage Contents"
-              accessibilityRole="button"
-            >
-              <Ionicons name="bug-outline" size={20} color="#FFFFFF" />
-              <Text style={styles.debugButtonText}>Debug Storage</Text>
-            </TouchableOpacity>
-          </View>
-        )}
         
         {/* Domain Balance Wheel - replacing Life Direction section */}
         <View style={[styles.sectionContainer, { marginTop: 16 }]}>
@@ -1252,28 +1389,6 @@ const styles = StyleSheet.create({
   sectionContainer: {
     marginTop: 24,
     paddingHorizontal: 16,
-  },
-  // Debug button styles
-  debugButtonContainer: {
-    paddingHorizontal: 16,
-    marginTop: 16,
-    marginBottom: 8,
-    alignItems: 'center',
-  },
-  debugButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    backgroundColor: '#3b82f6',
-  },
-  debugButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-    marginLeft: 8,
-    fontSize: 14,
   },
 });
 
