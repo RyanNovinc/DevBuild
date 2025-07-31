@@ -226,13 +226,11 @@ const MainGoalCard = ({ goal, onPress, onProgressUpdate, onComplete, showComplet
   // Extract goal properties safely
   const completed = goal.completed || false;
   
-  // Progress color based on value and completion status
+  // Progress color based on goal domain color
   const getProgressColor = (progressValue) => {
     if (completed) return theme.success || '#43A047';
-    if (progressValue < 25) return theme.error || '#E53935';
-    if (progressValue < 50) return theme.warning || '#FB8C00';
-    if (progressValue < 75) return '#039BE5';
-    return theme.success || '#43A047';
+    // Use the goal's domain color for all progress states
+    return goal.color || theme.primary;
   };
   
   // Progress text based on value and completion status

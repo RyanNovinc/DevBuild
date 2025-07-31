@@ -17,80 +17,71 @@ import * as Haptics from 'expo-haptics';
 const { width, height } = Dimensions.get('window');
 
 // Confetti piece component
-const ConfettiPiece = ({ startPosition, color, size, delay = 0 }) => {
-  const position = useRef(new Animated.ValueXY({ x: startPosition, y: -50 })).current;
+const ConfettiPiece = ({ centerX, color, size, delay = 0 }) => {
+  // Debug: Log the centerX value
+  console.log('ConfettiPiece centerX:', centerX, 'Screen width:', width);
+  
+  // Start from actual center-top with no spread initially
+  const startX = 0; // Start at absolute center
+  const startY = -50;
+  
+  // End position spreads out from center
+  const endX = (Math.random() * 200 - 100); // -100 to +100 from center
+  const endY = height * 0.8 + Math.random() * 100;
+  
+  const translateX = useRef(new Animated.Value(startX)).current;
+  const translateY = useRef(new Animated.Value(startY)).current;
   const rotation = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0)).current;
   const opacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    // Animation controls
-    let animationController = null;
-    
-    // Random values for animation
-    const endX = startPosition + (Math.random() * 300 - 150);
-    const endY = height * 0.5 + Math.random() * 200;
-    const rotationValue = Math.random() * 10 - 5;
-    const duration = 2000 + Math.random() * 2000;
+    const duration = 2500 + Math.random() * 1500;
+    const rotationEnd = Math.random() * 720 - 360; // Random rotation
 
-    // Animation sequence
-    animationController = Animated.sequence([
-      // Delay start based on piece
+    Animated.sequence([
       Animated.delay(delay),
-      // Start animation
       Animated.parallel([
-        // Scale up quickly
+        // Scale in
         Animated.timing(scale, {
           toValue: 1,
-          duration: 200,
+          duration: 300,
           useNativeDriver: true,
-          easing: Easing.out(Easing.ease)
         }),
-        // Move down in an arc
-        Animated.timing(position, {
-          toValue: { x: endX, y: endY },
+        // Fall down
+        Animated.timing(translateY, {
+          toValue: endY,
           duration: duration,
           useNativeDriver: true,
-          easing: Easing.out(Easing.ease)
+          easing: Easing.bezier(0.25, 0.46, 0.45, 0.94),
         }),
-        // Rotate while moving
+        // Spread horizontally
+        Animated.timing(translateX, {
+          toValue: endX,
+          duration: duration,
+          useNativeDriver: true,
+          easing: Easing.out(Easing.quad),
+        }),
+        // Rotate
         Animated.timing(rotation, {
-          toValue: rotationValue,
+          toValue: rotationEnd,
           duration: duration,
           useNativeDriver: true,
-          easing: Easing.inOut(Easing.ease)
         }),
-        // Fade out near the end
+        // Fade out
         Animated.timing(opacity, {
           toValue: 0,
-          duration: duration * 0.8,
-          delay: duration * 0.2,
+          duration: duration * 0.6,
+          delay: duration * 0.4,
           useNativeDriver: true,
-          easing: Easing.in(Easing.ease)
-        })
+        }),
       ])
-    ]);
-    
-    animationController.start();
-    
-    return () => {
-      // Stop animation when component unmounts
-      if (animationController) {
-        animationController.stop();
-      }
-    };
+    ]).start();
   }, []);
-
-  // Calculate rotation degrees
-  const spin = rotation.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg']
-  });
 
   // Shapes for confetti pieces
   const shapeType = useRef(Math.floor(Math.random() * 4)).current;
   
-  // Render shape based on type
   const renderShape = () => {
     switch(shapeType) {
       case 0:
@@ -111,13 +102,18 @@ const ConfettiPiece = ({ startPosition, color, size, delay = 0 }) => {
       style={[
         styles.confettiPiece,
         {
+          left: width / 2, // Position at screen center horizontally
+          top: 0, // Position at top of screen vertically
           transform: [
-            { translateX: position.x },
-            { translateY: position.y },
-            { rotate: spin },
-            { scale: scale }
+            { translateX },
+            { translateY },
+            { rotate: rotation.interpolate({
+              inputRange: [0, 360],
+              outputRange: ['0deg', '360deg']
+            })},
+            { scale }
           ],
-          opacity: opacity
+          opacity
         }
       ]}
     >
@@ -143,6 +139,10 @@ const LevelUpCelebration = ({ visible, level, previousLevel, onAnimationComplete
     const cleanup = () => {
       if (animationController.current) {
         animationController.current.stop();
+        // Clear safety timeout if it exists
+        if (animationController.current.safetyTimeout) {
+          clearTimeout(animationController.current.safetyTimeout);
+        }
         animationController.current = null;
       }
     };
@@ -162,11 +162,12 @@ const LevelUpCelebration = ({ visible, level, previousLevel, onAnimationComplete
       const confettiCount = Math.min(50 + (level * 5), 100); // More confetti for higher levels, max 100
       const pieces = [];
       const colors = ['#FF5252', '#FFD740', '#64FFDA', '#448AFF', '#B388FF', '#FF4081'];
+      const centerX = width / 2; // Calculate center once
 
       for (let i = 0; i < confettiCount; i++) {
         pieces.push({
           id: i,
-          startPosition: Math.random() * width,
+          centerX: centerX, // Pass center X position
           color: colors[Math.floor(Math.random() * colors.length)],
           size: 6 + Math.random() * 10,
           delay: Math.random() * 500
@@ -224,6 +225,16 @@ const LevelUpCelebration = ({ visible, level, previousLevel, onAnimationComplete
           onAnimationComplete();
         }
       });
+      
+      // Safety timeout to ensure completion callback is called even if animation fails
+      const safetyTimeout = setTimeout(() => {
+        if (onAnimationComplete) {
+          onAnimationComplete();
+        }
+      }, 6000); // 6 seconds safety timeout
+      
+      // Store timeout for cleanup
+      animationController.current.safetyTimeout = safetyTimeout;
     } else {
       // Reset values when not visible
       cleanup();
@@ -288,7 +299,7 @@ const LevelUpCelebration = ({ visible, level, previousLevel, onAnimationComplete
       {confetti.map((piece) => (
         <ConfettiPiece
           key={piece.id}
-          startPosition={piece.startPosition}
+          centerX={piece.centerX}
           color={piece.color}
           size={piece.size}
           delay={piece.delay}

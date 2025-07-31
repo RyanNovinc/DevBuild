@@ -658,19 +658,19 @@ const ProjectsList = ({ taskScreenProps }) => {
       stickySectionHeadersEnabled={true}
       contentContainerStyle={[
         styles.projectsList,
-        { paddingBottom: scaleHeight(100) } // Add bottom padding for floating button
+        sectionData.length === 0 ? { flex: 1 } : { paddingBottom: scaleHeight(100) }
       ]}
       ListEmptyComponent={
-        <View style={[styles.emptyContainer, { marginTop: scaleHeight(20) }]}>
+        <View style={[styles.emptyContainer]}>
           <CustomEmptyState
             title={viewMode === 'projects' ? "No Projects Yet" : "No Tasks Yet"}
             message={getEmptyStateMessage()}
-            icon={viewMode === 'projects' ? "folder-open" : "checkbox"}
+            icon={viewMode === 'projects' ? "folder-open" : "list-outline"}
             iconColor={theme.primary}
             buttonText={buttonConfig.text}
             onButtonPress={buttonConfig.handler}
             theme={theme}
-            illustration={<EmptyTasksIllustration theme={theme} />}
+            illustration={<EmptyTasksIllustration theme={theme} viewMode={viewMode} />}
             isDarkMode={isDarkMode}
             accessibilityLabel={getEmptyStateAccessibilityLabel()}
           />

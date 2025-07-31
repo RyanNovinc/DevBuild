@@ -131,7 +131,7 @@ const TomorrowTab = ({
         addCustomGroup('tomorrow', currentGroupName);
       }
     }
-    Keyboard.dismiss();
+    // Keep keyboard open for continuous adding
   };
   
   // Custom function to add a group with a specific name
@@ -409,10 +409,9 @@ const TomorrowTab = ({
 
   return (
     <View style={localStyles.container}>
-      {/* Top Input Section */}
-      <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-        <View>
-          {/* Combined Input for Todo/Group */}
+      {/* Top Input Section - No TouchableWithoutFeedback to prevent keyboard dismissal */}
+      <View>
+        {/* Combined Input for Todo/Group */}
           <View style={[
             styles.inputContainer, 
             { 
@@ -485,7 +484,7 @@ const TomorrowTab = ({
                     // Add the todo
                     addTodo('tomorrow', null, text);
                   }
-                  Keyboard.dismiss();
+                  // Keep keyboard open for continuous adding
                 }}
                 returnKeyType="done"
                 autoCorrect={false} // Disable autocorrect
@@ -532,7 +531,7 @@ const TomorrowTab = ({
                     // Add the group
                     addCustomGroup('tomorrow', name);
                   }
-                  Keyboard.dismiss();
+                  // Keep keyboard open for continuous adding
                 }}
                 returnKeyType="done"
                 autoCorrect={false} // Disable autocorrect
@@ -585,7 +584,6 @@ const TomorrowTab = ({
             </Text>
           </View>
         </View>
-      </TouchableWithoutFeedback>
       
       {/* Todo List - ALWAYS USE SCROLLVIEW FOR CONSISTENT LAYOUT */}
       <ScrollView 

@@ -11,7 +11,8 @@ import {
   Dimensions,
   SafeAreaView,
   Alert,
-  Easing
+  Easing,
+  InteractionManager
 } from 'react-native';
 import { useAppContext } from '../../context/AppContext';
 import OnboardingService from '../../services/OnboardingService';
@@ -21,15 +22,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Import our screens
 import WelcomePage from './screens/WelcomePage';
-import LanguageSelectionPage from './screens/LanguageSelectionPage';
+import CountrySelectionPage from './screens/CountrySelectionPage';
 import DomainSelectionPage from './screens/DomainSelectionPage';
 import GoalSelectionPage from './screens/GoalSelectionPage';
 import ProjectsBreakdownPage from './screens/ProjectsBreakdownPage';
 import CompletionPage from './screens/CompletionPage';
 
-// Import data - updated to support multiple languages
-import { DOMAIN_DEFINITIONS as EnglishDomains } from './data/onboardingData';
-import { DOMAIN_DEFINITIONS as JapaneseDomains } from './data/onboardingData.ja';
+// Import country data loader
+import { getCountryData } from './data/countryDataLoader';
+import { safeAnimatedCall, createSafeAnimatedValue } from '../../hooks/useSafeAnimation';
+
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -51,19 +53,19 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
   const [isNavigating, setIsNavigating] = useState(false);
   
   // User selections
-  const [selectedLanguage, setSelectedLanguage] = useState('en'); // Default language
+  const [selectedCountry, setSelectedCountry] = useState('australia'); // Default country
   const [selectedDomain, setSelectedDomain] = useState(null);
   const [selectedGoal, setSelectedGoal] = useState(null);
   const [previewDomain, setPreviewDomain] = useState(null);
   
-  // Animation values
-  const fadeAnim = useRef(new Animated.Value(1)).current;
-  const slideAnim = useRef(new Animated.Value(0)).current;
-  const progressAnim = useRef(new Animated.Value(0)).current; // Animation for progress bar
-  const progressTextOpacity = useRef(new Animated.Value(0)).current; // Animation for progress text
-  const progressTextScale = useRef(new Animated.Value(0.8)).current; // Scale animation for progress text
+  // Animation values with safe creation
+  const fadeAnim = useRef(createSafeAnimatedValue(1)).current;
+  const slideAnim = useRef(createSafeAnimatedValue(0)).current;
+  const progressAnim = useRef(createSafeAnimatedValue(0)).current; // Animation for progress bar
+  const progressTextOpacity = useRef(createSafeAnimatedValue(0)).current; // Animation for progress text
+  const progressTextScale = useRef(createSafeAnimatedValue(0.8)).current; // Scale animation for progress text
   
-  // Built-in domain reference for color consistency
+  // Built-in domain reference for color consistency - matches Profile Screen order
   const STANDARD_DOMAINS = [
     { name: "Career & Work", icon: "briefcase", color: "#4f46e5" },
     { name: "Health & Wellness", icon: "fitness", color: "#06b6d4" },
@@ -75,61 +77,85 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
     { name: "Environment & Organization", icon: "home", color: "#6366f1" },
     { name: "Other", icon: "star", color: "#14b8a6" }
   ];
+
+  // Function to standardize domain order regardless of country data
+  const standardizeDomainOrder = (countryDomains) => {
+    const orderedDomains = [];
+    
+    // First, add domains in our standard order if they exist in country data
+    STANDARD_DOMAINS.forEach(standardDomain => {
+      const matchingDomain = countryDomains.find(d => d.name === standardDomain.name);
+      if (matchingDomain) {
+        orderedDomains.push(matchingDomain);
+      }
+    });
+    
+    // Then add any remaining domains from country data that aren't in our standard list
+    countryDomains.forEach(countryDomain => {
+      if (!orderedDomains.find(d => d.name === countryDomain.name)) {
+        orderedDomains.push(countryDomain);
+      }
+    });
+    
+    return orderedDomains;
+  };
   
-  // Function to get domain definitions based on selected language
+  // Function to get domain definitions based on selected country
   const getDomainDefinitions = () => {
-    return selectedLanguage === 'ja' ? JapaneseDomains : EnglishDomains;
+    const countryDomains = getCountryData(selectedCountry);
+    return standardizeDomainOrder(countryDomains);
   };
 
-  // Update domains when language changes
+  // Update domains when country changes
   useEffect(() => {
-    console.log("Language updated to:", selectedLanguage);
+    console.log("Country updated to:", selectedCountry);
     
-    // Refresh domain and goal with new language data if they exist
+    // Refresh domain and goal with new country data if they exist
     if (selectedDomain) {
       const domains = getDomainDefinitions();
-      console.log("Looking for domain match in new language...");
+      console.log("Looking for domain match in new country data...");
       
-      // Find the equivalent domain in the new language
-      const refreshedDomain = domains.find(d => {
-        // Match by name or by index position as fallback
-        const domainIndex = EnglishDomains.findIndex(ed => ed.name === selectedDomain.name);
-        return domainIndex >= 0 && domains[domainIndex] ? true : false;
-      });
+      // Find the equivalent domain in the new country data (domains should have same names)
+      const refreshedDomain = domains.find(d => d.name === selectedDomain.name);
       
       if (refreshedDomain) {
-        console.log("Found matching domain in new language:", refreshedDomain.name);
+        console.log("Found matching domain in new country data:", refreshedDomain.name);
         setSelectedDomain(refreshedDomain);
         
         // Also refresh the goal if it exists
         if (selectedGoal && refreshedDomain.goals) {
-          const goalIndex = selectedDomain.goals.findIndex(g => g.name === selectedGoal.name);
+          const refreshedGoal = refreshedDomain.goals.find(g => g.name === selectedGoal.name);
           
-          // Use the goal at the same index position in the refreshed domain
-          if (goalIndex >= 0 && refreshedDomain.goals[goalIndex]) {
-            const refreshedGoal = refreshedDomain.goals[goalIndex];
-            console.log("Found matching goal in new language:", refreshedGoal.name);
+          if (refreshedGoal) {
+            console.log("Found matching goal in new country data:", refreshedGoal.name);
             setSelectedGoal(refreshedGoal);
+          } else {
+            console.log("Could not find matching goal, clearing selection");
+            setSelectedGoal(null);
           }
         }
+      } else {
+        console.log("Could not find matching domain, clearing selections");
+        setSelectedDomain(null);
+        setSelectedGoal(null);
       }
     }
-  }, [selectedLanguage]);
+  }, [selectedCountry]);
   
-  // Load saved language on mount
+  // Load saved country on mount
   useEffect(() => {
-    const loadSavedLanguage = async () => {
+    const loadSavedCountry = async () => {
       try {
-        const savedLanguage = await AsyncStorage.getItem('userLanguage');
-        if (savedLanguage) {
-          setSelectedLanguage(savedLanguage);
+        const savedCountry = await AsyncStorage.getItem('userCountry');
+        if (savedCountry) {
+          setSelectedCountry(savedCountry);
         }
       } catch (error) {
-        console.log('Error loading saved language:', error);
+        console.log('Error loading saved country:', error);
       }
     };
     
-    loadSavedLanguage();
+    loadSavedCountry();
   }, []);
   
   // Handle back button - IMPROVED VERSION
@@ -149,31 +175,35 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
   
   // Animation between screens
   useEffect(() => {
-    // Animate screen transition
-    Animated.sequence([
-      // Fade out
-      Animated.timing(fadeAnim, {
-        toValue: 0.7,
-        duration: 150,
-        useNativeDriver: true
-      }),
-      // Slide in
-      Animated.parallel([
+    // Animate screen transition with error handling
+    try {
+      Animated.sequence([
+        // Fade out
         Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 250,
+          toValue: 0.7,
+          duration: 150,
           useNativeDriver: true
         }),
-        Animated.timing(slideAnim, {
-          toValue: 0,
-          duration: 250,
-          useNativeDriver: true
-        })
-      ])
-    ]).start();
+        // Slide in
+        Animated.parallel([
+          Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 250,
+            useNativeDriver: true
+          }),
+          Animated.timing(slideAnim, {
+            toValue: 0,
+            duration: 250,
+            useNativeDriver: true
+          })
+        ])
+      ]).start();
+    } catch (error) {
+      console.warn('Screen transition animation failed:', error.message);
+    }
     
     // Reset slide position for next animation
-    slideAnim.setValue(20);
+    safeAnimatedCall(slideAnim, 'setValue', 20);
     
     // Animate progress bar if we're past the welcome screen
     if (currentScreen > 0) {
@@ -190,8 +220,8 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
       }).start();
       
       // Animate the percentage text with a slight delay
-      progressTextOpacity.setValue(0);
-      progressTextScale.setValue(0.8);
+      safeAnimatedCall(progressTextOpacity, 'setValue', 0);
+      safeAnimatedCall(progressTextScale, 'setValue', 0.8);
       Animated.sequence([
         Animated.delay(300),
         Animated.parallel([
@@ -258,18 +288,19 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
         throw new Error("Missing domain or goal selection");
       }
       
-      // Standardize domain properties
-      let finalDomain = { ...selectedDomain };
+      // Standardize domain properties - create a completely new object to avoid property assignment errors
       const standardDomain = getStandardDomain(selectedDomain.name);
       
-      if (standardDomain) {
-        finalDomain = {
-          ...finalDomain,
+      const finalDomain = {
+        // Copy all existing properties first
+        ...selectedDomain,
+        // Then override with standard properties if available
+        ...(standardDomain && {
           name: standardDomain.name,
           color: standardDomain.color,
           icon: standardDomain.icon
-        };
-      }
+        })
+      };
       
       // SIMPLIFIED: Use OnboardingService for all data creation in one batch
       const result = await OnboardingService.createOnboardingData(finalDomain, selectedGoal);
@@ -281,27 +312,47 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
       
       console.log("Onboarding data created successfully:", result);
       
-      // Update app context settings if available
-      if (updateAppSetting) {
-        await updateAppSetting('onboardingCompleted', true);
-        await updateAppSetting('themeColor', '#1e3a8a');
-        await updateAppSetting('selectedDomain', finalDomain.name);
-        await updateAppSetting('selectedLanguage', selectedLanguage); // Save selected language
-        await updateAppSetting('selectedGoal', {
-          domain: finalDomain.name,
-          goalName: selectedGoal.name,
-          projects: selectedGoal.projects
-        });
+      // Update app context settings if available - wrap in try-catch to prevent crashes
+      if (updateAppSetting && typeof updateAppSetting === 'function') {
+        try {
+          await updateAppSetting('onboardingCompleted', true);
+          await updateAppSetting('themeColor', '#1e3a8a');
+          await updateAppSetting('selectedDomain', finalDomain.name);
+          await updateAppSetting('selectedCountry', selectedCountry); // Save selected country
+          await updateAppSetting('selectedGoal', {
+            domain: finalDomain.name,
+            goalName: selectedGoal.name,
+            projects: selectedGoal.projects || []
+          });
+          console.log("✅ App settings updated successfully");
+        } catch (settingsError) {
+          console.warn("⚠️ Failed to update some app settings:", settingsError);
+          // Continue anyway - this shouldn't break the onboarding
+        }
       }
       
-      // Force refresh of app context data
+      // Force refresh of app context data with better error handling
       if (typeof refreshData === 'function') {
-        console.log("Refreshing app context data...");
-        await refreshData();
-        
-        // Wait to ensure state is updated and do a second refresh
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        await refreshData();
+        try {
+          console.log("🔄 Refreshing app context data...");
+          await refreshData().catch(err => console.warn('First refresh failed:', err));
+          
+          // Wait to ensure state is updated and do a second refresh
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          await refreshData().catch(err => console.warn('Second refresh failed:', err));
+          console.log("✅ App context data refreshed");
+        } catch (refreshError) {
+          console.warn("⚠️ Data refresh encountered errors:", refreshError);
+          // Continue anyway - app should still work with existing data
+        }
+      }
+      
+      // Set flag to indicate we're coming directly from onboarding
+      try {
+        await AsyncStorage.setItem('directFromOnboarding', 'true');
+        console.log("✅ Direct from onboarding flag set");
+      } catch (error) {
+        console.warn('⚠️ Failed to set directFromOnboarding flag:', error);
       }
       
       // Show success message
@@ -309,18 +360,26 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
         showSuccess('Your goal has been created successfully!');
       }
       
-      // Wait before navigation to ensure all data is processed
-      console.log("Onboarding completed, waiting before navigation...");
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Wait before navigation to ensure all data is processed and state is stable
+      console.log("⏳ Onboarding completed, preparing for navigation...");
+      await new Promise(resolve => setTimeout(resolve, 3000)); // Extended delay to ensure settings update propagates
       
-      // Navigate to the main screen
-      navigation.reset({
-        index: 0,
-        routes: [{ 
-          name: 'Main',
-          params: { initialTab: 'GoalsTab' }
-        }],
-      });
+      // Navigate to the main screen - try automatic navigation first, then fallback
+      try {
+        console.log("🏠 Onboarding complete - attempting navigation...");
+        
+        // Clean up any potential memory leaks before navigation
+        setIsNavigating(false);
+        
+        // The app should automatically navigate when onboardingCompleted becomes true
+        // This is handled by the conditional rendering in App.js
+        console.log("🏠 Waiting for app to automatically navigate based on onboardingCompleted state...");
+        
+        console.log("✅ Onboarding completion process finished");
+      } catch (navError) {
+        console.error('❌ Error during onboarding completion:', navError);
+        // If there's still an issue, the app will stay on onboarding and user can try again
+      }
     } catch (error) {
       console.error('Error completing onboarding:', error);
       
@@ -336,7 +395,7 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
   // The actual language change is managed by LanguageSelectionPage component
   const handleLanguageSelected = (language) => {
     console.log("Language selected in parent:", language);
-    setSelectedLanguage(language);
+    // Note: Language selection is handled by the I18nContext, no local state needed
   };
   
   // Handle domain selection
@@ -361,16 +420,17 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
     goToNextScreen();
   };
   
-  // Handle skipping onboarding completely
+  // Handle skipping onboarding completely  
   const handleSkipOnboarding = async () => {
     try {
+      console.error('🚀 SKIP ONBOARDING STARTED');
       setIsNavigating(true);
       
       // Set default values for a quick start
       const defaultDomain = getDomainDefinitions()[3]; // Personal Growth
       const defaultGoal = defaultDomain.goals[0]; // Learning New Skills
       
-      // Create a standardized domain
+      // Create a standardized domain - avoid property assignment errors
       const standardDomain = getStandardDomain(defaultDomain.name) || {
         name: "Personal Growth",
         icon: "school",
@@ -378,37 +438,53 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
       };
       
       const finalDomain = {
+        // Copy all existing properties first
         ...defaultDomain,
+        // Then override with standard properties
         name: standardDomain.name,
         color: standardDomain.color,
         icon: standardDomain.icon
       };
       
       // Use service to create data
+      console.error('🚀 CALLING OnboardingService.createOnboardingData');
       const result = await OnboardingService.createOnboardingData(finalDomain, defaultGoal);
+      console.error('🚀 OnboardingService result:', result);
       
       if (!result.success) {
         throw new Error(result.message || "Failed to create default onboarding data");
       }
       
-      // Update app settings
-      if (updateAppSetting) {
-        await updateAppSetting('onboardingCompleted', true);
-        await updateAppSetting('themeColor', '#1e3a8a');
-        await updateAppSetting('selectedDomain', finalDomain.name);
-        await updateAppSetting('selectedLanguage', selectedLanguage); // Save selected language
-        await updateAppSetting('selectedGoal', {
-          domain: finalDomain.name,
-          goalName: defaultGoal.name,
-          projects: defaultGoal.projects
-        });
+      // Update app settings - wrap in try-catch to prevent crashes
+      if (updateAppSetting && typeof updateAppSetting === 'function') {
+        try {
+          await updateAppSetting('onboardingCompleted', true);
+          await updateAppSetting('themeColor', '#1e3a8a');
+          await updateAppSetting('selectedDomain', finalDomain.name);
+          await updateAppSetting('selectedCountry', selectedCountry); // Save selected country
+          await updateAppSetting('selectedGoal', {
+            domain: finalDomain.name,
+            goalName: defaultGoal.name,
+            projects: defaultGoal.projects || []
+          });
+          console.log("✅ Skip onboarding: App settings updated successfully");
+        } catch (settingsError) {
+          console.warn("⚠️ Skip onboarding: Failed to update some app settings:", settingsError);
+          // Continue anyway - this shouldn't break the onboarding
+        }
       }
       
-      // Refresh data
+      // Refresh data - wrap in try-catch to prevent crashes
       if (typeof refreshData === 'function') {
-        await refreshData();
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        await refreshData();
+        try {
+          await refreshData().catch(err => console.warn('Skip onboarding: First refresh failed:', err));
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          await refreshData().catch(err => console.warn('Skip onboarding: Second refresh failed:', err));
+          console.log("✅ Skip onboarding: Data refresh completed");
+        } catch (refreshError) {
+          console.warn("⚠️ Skip onboarding: Data refresh encountered errors:", refreshError);
+          // Continue anyway - app should still work
+        }
       }
       
       // Show success
@@ -416,16 +492,10 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
         showSuccess('Welcome to LifeCompass! We\'ve set up a default goal to get you started.');
       }
       
-      // Navigate to main screen
-      navigation.reset({
-        index: 0,
-        routes: [{ 
-          name: 'Main',
-          params: { initialTab: 'GoalsTab' }
-        }],
-      });
+      // App will automatically navigate to main screen since onboardingCompleted is now true
+      console.log("✅ Skip onboarding complete - app should navigate automatically");
     } catch (error) {
-      console.error('Error skipping onboarding:', error);
+      console.error('🚀 ERROR SKIPPING ONBOARDING:', error);
       
       if (typeof showError === 'function') {
         showError('There was an error skipping onboarding. Please try again.');
@@ -463,25 +533,17 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
               />
             )}
             
-            {/* Language Selection Page - FIXED: changed onLanguageSelected to onContinue */}
+            {/* Country Selection Page */}
             {currentScreen === 1 && (
-              <LanguageSelectionPage
-                onContinue={() => {
-                  // The language is set by the component via AsyncStorage and I18n context
+              <CountrySelectionPage
+                onContinue={(country) => {
+                  // The country is passed back from the component
                   // We just need to synchronize our state and go to the next screen
-                  AsyncStorage.getItem('userLanguage')
-                    .then(lang => {
-                      if (lang) {
-                        setSelectedLanguage(lang);
-                      }
-                      // Navigate to next screen
-                      goToNextScreen();
-                    })
-                    .catch(err => {
-                      console.error("Error reading language:", err);
-                      // Still navigate even if there's an error
-                      goToNextScreen();
-                    });
+                  if (country) {
+                    setSelectedCountry(country);
+                  }
+                  // Navigate to next screen
+                  goToNextScreen();
                 }}
                 onBack={goToPreviousScreen}
                 isNavigating={isNavigating}
@@ -526,6 +588,7 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
               <CompletionPage
                 domain={selectedDomain}
                 goal={selectedGoal}
+                country={selectedCountry}
                 onComplete={completeOnboarding}
                 onBack={goToPreviousScreen}
                 isNavigating={isNavigating}
@@ -541,7 +604,7 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
                   style={[
                     styles.progressBarFill,
                     { 
-                      width: progressAnim.interpolate({
+                      width: safeAnimatedCall(progressAnim, 'interpolate', {
                         inputRange: [0, 1],
                         outputRange: ['0%', '100%']
                       }),

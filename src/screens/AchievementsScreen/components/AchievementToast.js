@@ -74,8 +74,12 @@ const AchievementToast = ({
   
   const handlePress = () => {
     handleHide();
-    // Navigate to achievements screen
-    navigation.navigate('AchievementsScreen');
+    // Navigate to achievements screen with specific achievement highlighted
+    navigation.navigate('AchievementsScreen', {
+      activeTab: 'achievements',
+      highlightAchievement: achievement?.id,
+      focusCategory: achievement?.category
+    });
   };
   
   if (!visible || !achievement) return null;

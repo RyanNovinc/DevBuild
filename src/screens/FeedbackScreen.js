@@ -22,6 +22,7 @@ import { submitFeedback } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useRoute } from '@react-navigation/native';
 import { useAppContext } from '../context/AppContext'; // Make sure this is imported
+import * as FeatureExplorerTracker from '../services/FeatureExplorerTracker';
 import {
   scaleWidth,
   scaleHeight,
@@ -136,6 +137,14 @@ const FeedbackScreen = ({ navigation }) => {
       
       // Show success message with modal
       setShowThanksModal(true);
+      
+      // Track Feature Influencer achievement for Pro members
+      try {
+        await FeatureExplorerTracker.trackFeatureInfluencer();
+      } catch (achievementError) {
+        console.error('Error tracking Feature Influencer achievement:', achievementError);
+        // Don't fail feedback submission if achievement tracking fails
+      }
       
       // Reset form
       setFeedbackText('');

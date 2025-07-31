@@ -79,7 +79,7 @@ const FloatingAIButton = ({ theme }) => {
     const checkButtonVisibility = async () => {
       try {
         const value = await AsyncStorage.getItem('showAIButton');
-        console.log('AI button visibility setting:', value);
+        // console.log('AI button visibility setting:', value);
         setShowAIButton(value === null ? true : value === 'true');
       } catch (error) {
         console.error('Error checking AI button visibility:', error);

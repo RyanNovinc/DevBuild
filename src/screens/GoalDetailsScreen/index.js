@@ -1173,7 +1173,6 @@ const toggleTargetDate = () => {
       >
         {/* Goal Preview */}
         <GoalPreview 
-          scrollY={scrollY} 
           title={goalState.title} 
           selectedIcon={goalState.selectedIcon} 
           selectedColor={goalState.selectedColor} 
@@ -1262,28 +1261,6 @@ const toggleTargetDate = () => {
           />
         )}
         
-        {/* Test Button for Achievement Unlocking (DEV ONLY) */}
-        {__DEV__ && (
-          <TouchableOpacity
-            style={{
-              padding: 10,
-              backgroundColor: 'purple',
-              borderRadius: 8,
-              marginVertical: 10,
-              marginHorizontal: 16,
-              alignItems: 'center',
-            }}
-            onPress={async () => {
-              try {
-                await GoalTracker.forceUnlockFirstGoalAchievement(showSuccess);
-              } catch (e) {
-                console.error('Error forcing achievement:', e);
-              }
-            }}
-          >
-            <Text style={{ color: 'white' }}>Test Achievement</Text>
-          </TouchableOpacity>
-        )}
       </ScrollView>
 
       {/* Notification Preferences Modal */}

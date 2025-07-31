@@ -1,12 +1,13 @@
 // src/screens/AchievementsScreen/components/GridAchievementItem.js
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   Platform,
-  Dimensions
+  Dimensions,
+  Animated
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -21,7 +22,8 @@ const GridAchievementItem = ({
   isUnlocked,
   onPress,
   onLongPress,
-  userSubscriptionStatus = 'free'
+  userSubscriptionStatus = 'free',
+  isHighlighted = false
 }) => {
   // Get category color or default to primary theme color
   const getCategoryColor = () => {
@@ -40,6 +42,59 @@ const GridAchievementItem = ({
   const isPremium = achievement.premium === true;
   const canUnlockPremium = userSubscriptionStatus === 'pro' || userSubscriptionStatus === 'unlimited';
   const isPremiumLocked = isPremium && !canUnlockPremium;
+  
+  // Animation for highlighting
+  const highlightAnim = useRef(new Animated.Value(0)).current;
+  
+  // Animate highlight when isHighlighted changes
+  useEffect(() => {
+    if (isHighlighted) {
+      // Start highlight animation
+      Animated.sequence([
+        Animated.timing(highlightAnim, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: false,
+        }),
+        Animated.timing(highlightAnim, {
+          toValue: 0,
+          duration: 600,
+          useNativeDriver: false,
+        }),
+        Animated.timing(highlightAnim, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: false,
+        }),
+        Animated.timing(highlightAnim, {
+          toValue: 0,
+          duration: 600,
+          useNativeDriver: false,
+        })
+      ]).start();
+    }
+  }, [isHighlighted]);
+  
+  // Interpolate highlight animation to create pulsing effect
+  const highlightBackgroundColor = highlightAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [
+      isUnlocked 
+        ? `${getCategoryColor()}15` 
+        : theme.dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+      isUnlocked 
+        ? `${getCategoryColor()}40` 
+        : theme.dark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)'
+    ]
+  });
+  
+  const highlightBorderColor = highlightAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [
+      isPremium ? 'rgba(255,215,0,0.5)' : 'transparent',
+      getCategoryColor()
+    ]
+  });
   
   // Handle press with haptic feedback
   const handlePress = () => {
@@ -62,27 +117,34 @@ const GridAchievementItem = ({
   };
   
   return (
-    <TouchableOpacity
+    <Animated.View
       style={[
         styles.container,
         { 
-          backgroundColor: isUnlocked 
-            ? `${getCategoryColor()}15` 
-            : theme.dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+          backgroundColor: isHighlighted ? highlightBackgroundColor : (
+            isUnlocked 
+              ? `${getCategoryColor()}15` 
+              : theme.dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'
+          ),
           width: ITEM_SIZE,
           height: ITEM_SIZE,
-          borderWidth: isPremium ? 1 : 0,
-          borderColor: isPremium ? 'rgba(255,215,0,0.5)' : 'transparent',
+          borderWidth: isHighlighted ? 2 : (isPremium ? 1 : 0),
+          borderColor: isHighlighted ? highlightBorderColor : (
+            isPremium ? 'rgba(255,215,0,0.5)' : 'transparent'
+          ),
         },
       ]}
-      activeOpacity={0.7}
-      onPress={handlePress}
-      onLongPress={onLongPress}
-      accessible={true}
-      accessibilityRole="button"
-      accessibilityLabel={`${achievement.title} achievement, ${isUnlocked ? 'unlocked' : 'locked'}${isPremium ? ', premium only' : ''}`}
-      accessibilityHint="Tap to view achievement details"
     >
+      <TouchableOpacity
+        style={styles.touchableContent}
+        activeOpacity={0.7}
+        onPress={handlePress}
+        onLongPress={onLongPress}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel={`${achievement.title} achievement, ${isUnlocked ? 'unlocked' : 'locked'}${isPremium ? ', premium only' : ''}${isHighlighted ? ', recently unlocked' : ''}`}
+        accessibilityHint="Tap to view achievement details"
+      >
       {/* Main Circle Background */}
       <View style={[
         styles.iconBackground,
@@ -133,7 +195,8 @@ const GridAchievementItem = ({
           <Ionicons name="star" size={9} color={isUnlocked ? '#000000' : '#888888'} />
         </View>
       )}
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </Animated.View>
   );
 };
 
@@ -141,8 +204,6 @@ const styles = StyleSheet.create({
   container: {
     borderRadius: 14,
     margin: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
     position: 'relative',
     overflow: 'hidden',
     flex: 1,
@@ -158,6 +219,13 @@ const styles = StyleSheet.create({
         elevation: 3,
       },
     }),
+  },
+  touchableContent: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
   },
   iconBackground: {
     width: '90%',

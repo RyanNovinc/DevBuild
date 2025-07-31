@@ -19,7 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MainGoalCard from '../components/MainGoalCard';
 import Confetti from '../components/Confetti';
 import { LinearGradient } from 'expo-linear-gradient';
-import PagerView from 'react-native-pager-view';
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import {
   scaleWidth,
   scaleHeight,
@@ -28,7 +28,8 @@ import {
   fontSizes,
   isSmallDevice,
   useScreenDimensions,
-  accessibility
+  accessibility,
+  useSafeSpacing
 } from '../utils/responsive';
 
 // Import achievement services for Goal Pioneer achievement tracking
@@ -70,8 +71,9 @@ const getTextColorForBackground = (bgColor) => {
 };
 
 const GoalsScreen = ({ navigation, route }) => {
-  // Get safe area insets
+  // Get safe area insets and safe spacing
   const insets = useSafeAreaInsets();
+  const safeSpacing = useSafeSpacing();
   
   // Get screen dimensions
   const { width, height } = useScreenDimensions();
@@ -90,12 +92,8 @@ const GoalsScreen = ({ navigation, route }) => {
   // Check if using dark mode
   const isDarkMode = theme.background.toLowerCase() === '#000000' || theme.background.toLowerCase() === '#121212';
   
-  // Tab state with animations
-  const [activeTab, setActiveTab] = useState(0); // Changed to numeric for PagerView
-  const tabIndicatorPosition = useRef(new Animated.Value(0)).current;
-  
-  // Add pager ref for swipe functionality
-  const pagerRef = useRef(null);
+  // Create tab navigator
+  const Tab = createMaterialTopTabNavigator();
   
   // Add processing flag to prevent race conditions
   const isProcessingGoals = useRef(false);
@@ -235,20 +233,6 @@ const GoalsScreen = ({ navigation, route }) => {
     };
   }, [isContextLoading, route?.params, refreshCounter]); // Added refreshCounter to dependencies
 
-  // Handle page change when PagerView page changes
-  const onPageSelected = (e) => {
-    const newIndex = e.nativeEvent.position;
-    setActiveTab(newIndex);
-  };
-  
-  // Handle real-time scrolling for tab indicator
-  const onPageScroll = (e) => {
-    const { position, offset } = e.nativeEvent;
-    // Calculate the exact position based on current page and offset
-    const exactPosition = position + offset;
-    // Update the tab indicator position in real-time
-    tabIndicatorPosition.setValue(exactPosition);
-  };
 
   // Verify goal progress is accurate
   const verifyGoalProgress = (goalsData, projectsData) => {
@@ -275,8 +259,8 @@ const GoalsScreen = ({ navigation, route }) => {
         calculatedProgress = Math.round((completedProjects / goalProjects.length) * 100);
       }
       
-      // If there's a mismatch, fix it
-      if (goal.progress !== calculatedProgress) {
+      // If there's a mismatch, fix it (but don't override manually completed goals)
+      if (goal.progress !== calculatedProgress && !goal.completed) {
         fixedGoals[i] = {
           ...goal,
           progress: calculatedProgress
@@ -752,6 +736,7 @@ const GoalsScreen = ({ navigation, route }) => {
       const updatedGoal = {
         ...item,
         completed: setCompleted,
+        progress: setCompleted ? 100 : item.progress, // Set progress to 100% when completed
         completedAt: setCompleted ? new Date().toISOString() : null
       };
       
@@ -841,10 +826,8 @@ const GoalsScreen = ({ navigation, route }) => {
       return getTextColorForBackground(goalColor);
     };
     
-    // Determine if this item would be beyond the free limit
-    const isBeyondFreeLimit = !isPro && 
-      (activeTab === 0 && index >= LOCAL_MAX_GOALS) || 
-      (activeTab === 1 && index >= LOCAL_MAX_GOALS);
+    // Note: activeTab is not available with React Navigation tabs, but we can determine limit differently
+    const isBeyondFreeLimit = !isPro && index >= LOCAL_MAX_GOALS;
     
     return (
       <Animated.View
@@ -904,95 +887,29 @@ const GoalsScreen = ({ navigation, route }) => {
     );
   };
   
-  // Animation for tab press
-  const animateTabPress = (tab) => {
-    Animated.sequence([
-      Animated.timing(tabPressAnim, {
-        toValue: 0.95,
-        duration: 100,
-        useNativeDriver: true
-      }),
-      Animated.timing(tabPressAnim, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: true
-      })
-    ]).start();
-    
-    handleTabChange(tab);
-  };
-  
-  // Switch between tabs with animation and PagerView
-  const handleTabChange = (tab) => {
-    const tabIndex = tab === 'active' ? 0 : 1;
-    if (tabIndex === activeTab) return;
-    
-    // Set the page using PagerView
-    if (pagerRef.current) {
-      pagerRef.current.setPage(tabIndex);
-    }
-    
-    // Update active tab state
-    setActiveTab(tabIndex);
-  };
 
-  // Create a custom tab bar label component that puts icon to the left of text
-  const renderTabBarLabel = ({ name, tabIndex }) => {
-    // Choose icon based on tab name
-    const iconName = name === 'active' ? 'flag' : 'trophy';
-    
-    // Determine if this tab is focused
-    const focused = activeTab === tabIndex;
-    
-    // Get color based on focused state
-    const color = focused ? '#FFFFFF' : theme.textSecondary;
+  // Tab Badge Component
+  const TabBadge = ({ count, maxCount, isPro }) => {
+    if (count === 0) return null;
     
     return (
-      <View style={{ 
-        flexDirection: 'row', 
-        alignItems: 'center', 
-        justifyContent: 'center',
+      <View style={{
+        backgroundColor: 'rgba(255,255,255,0.25)',
+        borderRadius: scaleWidth(10),
+        paddingHorizontal: spacing.xs,
+        paddingVertical: spacing.xxxs,
+        marginLeft: spacing.s,
+        minWidth: scaleWidth(20),
+        alignItems: 'center',
+        justifyContent: 'center'
       }}>
-        <Ionicons 
-          name={focused ? iconName : `${iconName}-outline`} 
-          size={20} 
-          color={color} 
-          style={{ marginRight: 6 }} 
-        />
-        <Text style={{ 
-          color, 
-          fontWeight: focused ? '600' : '500', 
-          fontSize: scaleFontSize(14)
+        <Text style={{
+          color: '#FFFFFF',
+          fontSize: fontSizes.xs,
+          fontWeight: '700'
         }}>
-          {name === 'active' ? 'Active Goals' : 'Completed Goals'}
+          {isPro ? count : `${count}/${maxCount}`}
         </Text>
-        {/* Badge showing count */}
-        {((name === 'active' && screenState.activeGoals.length > 0) || 
-         (name === 'completed' && screenState.completedGoals.length > 0)) && (
-          <View style={[
-            styles.tabBadge, 
-            { 
-              backgroundColor: focused ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.2)',
-              marginLeft: spacing.s
-            }
-          ]}>
-            <Text 
-              style={[
-                styles.tabBadgeText,
-                {
-                  color: '#FFFFFF',
-                  fontSize: fontSizes.xs
-                }
-              ]}
-              maxFontSizeMultiplier={1.3}
-            >
-              {name === 'active' 
-                ? isPro ? screenState.activeGoals.length : `${screenState.activeGoals.length}/${LOCAL_MAX_GOALS}`
-                : isPro ? screenState.completedGoals.length : `${screenState.completedGoals.length}/${LOCAL_MAX_GOALS}`
-              }
-            </Text>
-          </View>
-        )}
       </View>
     );
   };
@@ -1177,7 +1094,7 @@ const GoalsScreen = ({ navigation, route }) => {
   const isLoading = screenState.loading || isContextLoading;
   
   // Calculate button dimensions to ensure minimum touch target size
-  const addButtonSize = Math.max(scaleWidth(60), accessibility.minTouchTarget);
+  const addButtonSize = Math.max(scaleWidth(60), 44); // Consistent with accessibility standards
 
   // Calculate the tab indicator width based on screen width
   const tabIndicatorWidth = Math.floor((width - scaleWidth(40)) / 2);
@@ -1239,53 +1156,7 @@ const GoalsScreen = ({ navigation, route }) => {
         </View>
       )}
       
-      {/* Material-style Tab Bar - Matches TodoListScreen */}
-      <View style={styles.tabBarWrapper}>
-        <View style={[styles.tabBar, { backgroundColor: theme.cardElevated }]}>
-          {/* Tab container - ensures proper layout and spacing */}
-          <View style={{ 
-            flexDirection: 'row', 
-            width: '100%', 
-            height: '100%',
-            position: 'relative'
-          }}>
-            {/* Animated Tab Indicator */}
-            <Animated.View 
-              style={[
-                styles.tabIndicator, 
-                { 
-                  backgroundColor: theme.primary,
-                  width: tabIndicatorWidth - 6, // Subtract to add equal spacing on sides
-                  left: tabIndicatorPosition.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [3, tabIndicatorWidth + 3] // Add offset for consistent spacing
-                  })
-                }
-              ]} 
-            />
-            
-            {/* Active Tab */}
-            <TouchableOpacity 
-              style={[styles.tab, { width: tabIndicatorWidth }]} 
-              onPress={() => animateTabPress('active')}
-              activeOpacity={0.7}
-            >
-              {renderTabBarLabel({ name: 'active', tabIndex: 0 })}
-            </TouchableOpacity>
-            
-            {/* Completed Tab */}
-            <TouchableOpacity 
-              style={[styles.tab, { width: tabIndicatorWidth }]}
-              onPress={() => animateTabPress('completed')}
-              activeOpacity={0.7}
-            >
-              {renderTabBarLabel({ name: 'completed', tabIndex: 1 })}
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-      
-      {/* Swipeable Content */}
+      {/* React Navigation Tab Navigator */}
       {isLoading ? (
         renderLoadingPlaceholder()
       ) : (
@@ -1293,51 +1164,123 @@ const GoalsScreen = ({ navigation, route }) => {
           flex: 1,
           opacity: listFadeIn
         }}>
-          <PagerView
-            ref={pagerRef}
-            style={{ flex: 1 }}
-            initialPage={activeTab}
-            onPageSelected={onPageSelected}
-            onPageScroll={onPageScroll}
-            pageMargin={10}
-            accessible={true}
-            accessibilityLabel="Goals tabs"
-            accessibilityRole="tablist"
+          <Tab.Navigator
+            screenOptions={{
+              tabBarActiveTintColor: '#FFFFFF',
+              tabBarInactiveTintColor: theme.textSecondary,
+              tabBarStyle: { 
+                backgroundColor: theme.cardElevated || '#1F1F1F',
+                borderRadius: scaleWidth(25),
+                marginHorizontal: scaleWidth(20),
+                marginVertical: scaleHeight(10),
+                height: scaleHeight(44),
+              },
+              tabBarLabelStyle: {
+                fontSize: scaleFontSize(15),
+                fontWeight: '600',
+              },
+              tabBarIconStyle: {
+                marginRight: spacing.xs,
+                marginTop: 1,
+              },
+              tabBarIndicatorStyle: { 
+                backgroundColor: theme.primary,
+                height: scaleHeight(38),
+                borderRadius: scaleWidth(20),
+                marginBottom: 3,
+                marginLeft: 3,
+                width: Math.floor((width - scaleWidth(46)) / 2) - 6, // Better spacing like TimeScreen
+                zIndex: 1,
+              },
+              tabBarItemStyle: {
+                flexDirection: 'row',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }
+            }}
           >
-            {/* Active Goals Page */}
-            <View 
-              key="active" 
-              style={styles.tabContent}
-              accessible={true}
-              accessibilityLabel="Active goals tab"
-              accessibilityRole="tab"
+            <Tab.Screen 
+              name="ActiveGoals" 
+              options={{
+                tabBarLabel: ({ focused }) => (
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Text style={{ 
+                      color: focused ? '#FFFFFF' : theme.textSecondary,
+                      fontSize: scaleFontSize(15),
+                      fontWeight: '600' 
+                    }}>
+                      Active Goals
+                    </Text>
+                    <TabBadge 
+                      count={screenState.activeGoals.length} 
+                      maxCount={LOCAL_MAX_GOALS} 
+                      isPro={isPro} 
+                    />
+                  </View>
+                ),
+                tabBarIcon: ({ focused }) => (
+                  <Ionicons 
+                    name={focused ? 'flag' : 'flag-outline'} 
+                    size={20} 
+                    color={focused ? '#FFFFFF' : theme.textSecondary} 
+                  />
+                )
+              }}
             >
-              {renderActiveGoalsContent()}
-            </View>
+              {() => (
+                <View style={[styles.tabContent, { backgroundColor: theme.background }]}>
+                  {renderActiveGoalsContent()}
+                </View>
+              )}
+            </Tab.Screen>
             
-            {/* Completed Goals Page */}
-            <View 
-              key="completed" 
-              style={styles.tabContent}
-              accessible={true}
-              accessibilityLabel="Completed goals tab"
-              accessibilityRole="tab"
+            <Tab.Screen 
+              name="CompletedGoals" 
+              options={{
+                tabBarLabel: ({ focused }) => (
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Text style={{ 
+                      color: focused ? '#FFFFFF' : theme.textSecondary,
+                      fontSize: scaleFontSize(15),
+                      fontWeight: '600' 
+                    }}>
+                      Completed Goals
+                    </Text>
+                    <TabBadge 
+                      count={screenState.completedGoals.length} 
+                      maxCount={LOCAL_MAX_GOALS} 
+                      isPro={isPro} 
+                    />
+                  </View>
+                ),
+                tabBarIcon: ({ focused }) => (
+                  <Ionicons 
+                    name={focused ? 'trophy' : 'trophy-outline'} 
+                    size={20} 
+                    color={focused ? '#FFFFFF' : theme.textSecondary} 
+                  />
+                )
+              }}
             >
-              {renderCompletedGoalsContent()}
-            </View>
-          </PagerView>
+              {() => (
+                <View style={[styles.tabContent, { backgroundColor: theme.background }]}>
+                  {renderCompletedGoalsContent()}
+                </View>
+              )}
+            </Tab.Screen>
+          </Tab.Navigator>
         </Animated.View>
       )}
 
-      {/* Floating Add Button - only visible on the active tab */}
-      {activeTab === 0 && !isLoading && (
+      {/* Floating Add Button */}
+      {!isLoading && (
         <Animated.View 
           style={[
             styles.floatingAddButton,
             { 
               transform: [{ scale: addButtonScale }],
-              bottom: insets.bottom > 0 ? insets.bottom + scaleHeight(10) : scaleHeight(20),
-              left: spacing.m
+              bottom: insets.bottom - scaleHeight(20), // A bit higher
+              left: scaleWidth(20)
             }
           ]}
         >
@@ -1487,47 +1430,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   
-  // Tab Bar Styles - DIRECTLY COPIED from TodoListScreen
-  tabBarWrapper: {
-    paddingHorizontal: scaleWidth(20),
-    paddingVertical: scaleHeight(10),
-    zIndex: 2,
-  },
-  tabBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    height: scaleHeight(44),
-    borderRadius: scaleWidth(25),
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  tabIndicator: {
-    position: 'absolute',
-    bottom: 3,
-    top: 3,
-    height: scaleHeight(38),
-    borderRadius: scaleWidth(20),
-    zIndex: 1,
-  },
-  tab: {
-    height: '100%',
-    paddingVertical: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 2,
-  },
-  tabBadge: {
-    paddingHorizontal: spacing.xs,
-    paddingVertical: spacing.xxxs,
-    borderRadius: scaleWidth(10),
-    minWidth: scaleWidth(20),
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tabBadgeText: {
-    fontWeight: '700',
-  },
   
   // Tab Content
   tabContent: {
@@ -1582,6 +1484,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
     minHeight: accessibility.minTouchTarget,
+    overflow: 'hidden',
   },
   emptyButtonIcon: {
     marginRight: spacing.s,
@@ -1611,7 +1514,8 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: '50%',
+    bottom: 0,
+    borderRadius: scaleWidth(30),
   },
   
   // Pro badge container style

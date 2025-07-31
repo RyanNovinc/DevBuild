@@ -291,10 +291,7 @@ const ExpensesTab = ({ theme, data, handlers, navigation }) => {
 
   return (
     <ScrollView 
-      style={[styles.tabContentContainer, { 
-        paddingHorizontal: Math.round(safeSpacing.left), 
-        paddingRight: Math.round(safeSpacing.right) 
-      }]} 
+      style={[styles.tabContentContainer]} 
       nestedScrollEnabled={true}
       contentInsetAdjustmentBehavior="automatic"
     >
@@ -302,8 +299,7 @@ const ExpensesTab = ({ theme, data, handlers, navigation }) => {
       <TouchableOpacity
         style={[styles.expenseSummaryCard, { 
           backgroundColor: theme.card, 
-          borderColor: theme.border,
-          marginTop: Math.round(safeSpacing.top)
+          borderColor: theme.border
         }]}
         onPress={toggleAddForm}
         activeOpacity={0.7}
@@ -1962,11 +1958,12 @@ const ExpensesTab = ({ theme, data, handlers, navigation }) => {
 const styles = StyleSheet.create({
   tabContentContainer: {
     padding: spacing.m,
+    paddingTop: 4,
   },
   // Expenses Summary
   expenseSummaryCard: {
     borderRadius: scaleWidth(16),
-    padding: spacing.l,
+    padding: spacing.xl,
     marginBottom: spacing.m,
     borderWidth: 1,
     shadowColor: '#000',
@@ -1974,6 +1971,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    minHeight: scaleHeight(180),
   },
   cardHeader: {
     flexDirection: 'row',
@@ -2067,7 +2065,7 @@ const styles = StyleSheet.create({
   },
   expensesCard: {
     borderRadius: scaleWidth(16),
-    padding: spacing.l,
+    padding: spacing.xl,
     marginBottom: spacing.m,
     borderWidth: 1,
     shadowColor: '#000',
@@ -2075,6 +2073,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 3,
     elevation: 2,
+    minHeight: scaleHeight(200),
   },
   expensesCardTitle: {
     fontSize: fontSizes.l,
@@ -2115,12 +2114,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: spacing.s,
-    paddingHorizontal: spacing.m,
+    paddingVertical: spacing.m,
+    paddingHorizontal: spacing.l,
     marginVertical: spacing.xxs,
     backgroundColor: 'rgba(0,0,0,0.02)',
     borderRadius: scaleWidth(8),
-    minHeight: scaleHeight(44), // Ensure minimum touch target height
+    minHeight: scaleHeight(60), // Increased height for better touch target
   },
   expenseName: {
     fontSize: fontSizes.m,
@@ -2140,9 +2139,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: spacing.m,
+    paddingVertical: spacing.l,
     borderBottomWidth: 1,
-    minHeight: scaleHeight(44), // Ensure minimum touch target height
+    minHeight: scaleHeight(70), // Increased height for better touch target
   },
   oneOffItemLeft: {
     flexDirection: 'row',
@@ -2163,7 +2162,7 @@ const styles = StyleSheet.create({
   // Add Form
   addForm: {
     borderRadius: scaleWidth(16),
-    padding: spacing.l,
+    padding: spacing.xl,
     marginBottom: spacing.m,
     borderWidth: 1,
     shadowColor: '#000',
@@ -2172,6 +2171,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
     overflow: 'hidden',
+    minHeight: scaleHeight(200),
   },
   addFormTitle: {
     fontSize: fontSizes.m,

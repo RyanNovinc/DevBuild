@@ -36,6 +36,8 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
   const [selectedGoal, setSelectedGoal] = useState(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showInfoMessage, setShowInfoMessage] = useState(true);
+  const [showClarificationModal, setShowClarificationModal] = useState(false);
+  const [selectedClarification, setSelectedClarification] = useState(null);
   
   // Get 3 goals from the domain
   const goals = domain.goals.slice(0, 3);
@@ -63,6 +65,15 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
   const confirmationOpacity = useRef(new Animated.Value(0)).current;
   const confirmationY = useRef(new Animated.Value(50)).current;
   const infoMessageOpacity = useRef(new Animated.Value(1)).current;
+  
+  // Modal animations
+  const modalOpacity = useRef(new Animated.Value(0)).current;
+  const modalScale = useRef(new Animated.Value(0.9)).current;
+  const modalOptionsAnimations = useRef([
+    new Animated.Value(0),
+    new Animated.Value(0), 
+    new Animated.Value(0)
+  ]).current;
 
   // Icon animations - for the sparkle icon
   const iconPulse = useRef(new Animated.Value(1)).current;
@@ -340,6 +351,11 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
         console.log('Haptics not available:', error);
       }
       
+      // If clarification modal is open, close it
+      if (showClarificationModal) {
+        setShowClarificationModal(false);
+      }
+      
       // Animate checkmark disappearing
       Animated.timing(checkmarkScales[index], {
         toValue: 0,
@@ -373,6 +389,7 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
       // Clear the selection
       setSelectedCardIndex(null);
       setSelectedGoal(null);
+      setSelectedClarification(null);
       return;
     }
     
@@ -475,6 +492,13 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
     
     // Update selected goal
     setSelectedGoal(goal);
+    
+    // If this goal needs clarification, show modal after selection animation
+    if (goal.needsClarification && goal.clarificationOptions) {
+      setTimeout(() => {
+        openClarificationModal();
+      }, 400); // Wait for selection animation to complete
+    }
   };
   
   // Reset card animations
@@ -482,6 +506,61 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
     goals.forEach((_, i) => {
       cardScales[i].setValue(1);
       cardRotations[i].setValue(0);
+    });
+  };
+
+  // Show clarification modal
+  const openClarificationModal = () => {
+    setShowClarificationModal(true);
+    
+    // Reset modal option animations
+    modalOptionsAnimations.forEach(anim => anim.setValue(0));
+    
+    // Animate modal in
+    Animated.parallel([
+      Animated.timing(modalOpacity, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true
+      }),
+      Animated.spring(modalScale, {
+        toValue: 1,
+        friction: 8,
+        tension: 50,
+        useNativeDriver: true
+      })
+    ]).start(() => {
+      // Stagger animate option cards
+      Animated.stagger(
+        100,
+        modalOptionsAnimations.map(anim =>
+          Animated.spring(anim, {
+            toValue: 1,
+            friction: 6,
+            tension: 40,
+            useNativeDriver: true
+          })
+        )
+      ).start();
+    });
+  };
+
+  // Close clarification modal
+  const closeClarificationModal = () => {
+    Animated.parallel([
+      Animated.timing(modalOpacity, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true
+      }),
+      Animated.timing(modalScale, {
+        toValue: 0.9,
+        duration: 200,
+        useNativeDriver: true
+      })
+    ]).start(() => {
+      setShowClarificationModal(false);
+      setSelectedClarification(null);
     });
   };
   
@@ -495,9 +574,130 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
         console.log('Haptics not available:', error);
       }
       
-      onGoalSelected(selectedGoal);
+      // Check if goal needs clarification and no focus area is selected
+      if (selectedGoal.needsClarification && !selectedClarification) {
+        // Show clarification modal if not already shown
+        if (!showClarificationModal) {
+          openClarificationModal();
+        }
+        return;
+      }
+      
+      // If we have a clarification selected, include it in the goal data
+      const goalToPass = selectedClarification 
+        ? { ...selectedGoal, selectedClarification }
+        : selectedGoal;
+      
+      onGoalSelected(goalToPass);
     }
   };
+  
+  // Get highly specific and relevant icons for each focus area
+  const getIconForFocusArea = (focusAreaName) => {
+    const name = focusAreaName.toLowerCase();
+    
+    // Very specific technology/security focus areas
+    if (name.includes('cybersecurity') || name.includes('security') || name.includes('protection') || name.includes('privacy')) return 'shield-checkmark';
+    if (name.includes('software development') || name.includes('app development') || name.includes('programming')) return 'construct';
+    if (name.includes('digital marketing') || name.includes('analytics') || name.includes('data analysis')) return 'analytics';
+    if (name.includes('artificial intelligence') || name.includes('ai') || name.includes('machine learning')) return 'hardware-chip';
+    if (name.includes('web development') || name.includes('website') || name.includes('frontend')) return 'globe';
+    if (name.includes('database') || name.includes('data management') || name.includes('sql')) return 'server';
+    if (name.includes('cloud') || name.includes('aws') || name.includes('azure')) return 'cloud';
+    if (name.includes('mobile') || name.includes('ios') || name.includes('android')) return 'phone-portrait';
+    if (name.includes('blockchain') || name.includes('crypto') || name.includes('bitcoin')) return 'link';
+    if (name.includes('ui/ux') || name.includes('user experience') || name.includes('interface')) return 'desktop';
+    
+    // Career advancement with specific icons
+    if (name.includes('leadership') || name.includes('management') || name.includes('team lead')) return 'people';
+    if (name.includes('entrepreneurship') || name.includes('startup') || name.includes('business owner')) return 'rocket';
+    if (name.includes('sales') || name.includes('business development') || name.includes('client')) return 'trending-up';
+    if (name.includes('project management') || name.includes('scrum') || name.includes('agile')) return 'list';
+    if (name.includes('consulting') || name.includes('advisory') || name.includes('strategy')) return 'bulb';
+    if (name.includes('networking') || name.includes('professional network')) return 'people-circle';
+    if (name.includes('public speaking') || name.includes('presentation') || name.includes('conference')) return 'mic';
+    
+    // Exercise with specific activities
+    if (name.includes('weightlifting') || name.includes('strength training') || name.includes('powerlifting')) return 'barbell';
+    if (name.includes('running') || name.includes('marathon') || name.includes('cardio')) return 'bicycle';
+    if (name.includes('yoga') || name.includes('pilates') || name.includes('flexibility')) return 'leaf';
+    if (name.includes('swimming') || name.includes('pool') || name.includes('water')) return 'water';
+    if (name.includes('hiking') || name.includes('climbing') || name.includes('mountains')) return 'trail-sign';
+    if (name.includes('boxing') || name.includes('martial arts') || name.includes('fighting')) return 'fitness';
+    if (name.includes('cycling') || name.includes('biking') || name.includes('bike')) return 'bicycle';
+    if (name.includes('team sports') || name.includes('basketball') || name.includes('soccer')) return 'football';
+    
+    // Learning with specific subjects
+    if (name.includes('language learning') || name.includes('spanish') || name.includes('french') || name.includes('foreign language')) return 'chatbubble';
+    if (name.includes('music') || name.includes('guitar') || name.includes('piano') || name.includes('instrument')) return 'musical-note';
+    if (name.includes('photography') || name.includes('photo') || name.includes('camera')) return 'camera';
+    if (name.includes('cooking') || name.includes('culinary') || name.includes('chef') || name.includes('baking')) return 'restaurant';
+    if (name.includes('writing') || name.includes('creative writing') || name.includes('author')) return 'create';
+    if (name.includes('art') || name.includes('painting') || name.includes('drawing') || name.includes('creative')) return 'brush';
+    if (name.includes('dance') || name.includes('dancing') || name.includes('choreography')) return 'musical-notes';
+    if (name.includes('investing') || name.includes('stock market') || name.includes('trading')) return 'trending-up';
+    if (name.includes('real estate') || name.includes('property') || name.includes('housing')) return 'home';
+    
+    // Reading with specific genres
+    if (name.includes('fiction') || name.includes('novels') || name.includes('fantasy') || name.includes('sci-fi')) return 'library';
+    if (name.includes('biography') || name.includes('history') || name.includes('non-fiction')) return 'book';
+    if (name.includes('self-help') || name.includes('personal development') || name.includes('motivation')) return 'trending-up';
+    if (name.includes('business books') || name.includes('professional') || name.includes('industry')) return 'briefcase';
+    if (name.includes('technical') || name.includes('manual') || name.includes('documentation')) return 'document-text';
+    
+    // Health and wellness specific
+    if (name.includes('nutrition') || name.includes('diet') || name.includes('healthy eating')) return 'nutrition';
+    if (name.includes('mental health') || name.includes('therapy') || name.includes('counseling')) return 'heart';
+    if (name.includes('meditation') || name.includes('mindfulness') || name.includes('zen')) return 'leaf';
+    if (name.includes('sleep') || name.includes('rest') || name.includes('recovery')) return 'bed';
+    
+    // Financial specific
+    if (name.includes('budgeting') || name.includes('expense tracking') || name.includes('money management')) return 'calculator';
+    if (name.includes('saving') || name.includes('emergency fund') || name.includes('savings')) return 'wallet';
+    if (name.includes('debt') || name.includes('loans') || name.includes('credit')) return 'card';
+    if (name.includes('retirement') || name.includes('401k') || name.includes('pension')) return 'time';
+    
+    // Relationship specific
+    if (name.includes('dating') || name.includes('romantic') || name.includes('partner')) return 'heart';
+    if (name.includes('family') || name.includes('parenting') || name.includes('children')) return 'home';
+    if (name.includes('friendship') || name.includes('social') || name.includes('community')) return 'people';
+    
+    // Travel specific
+    if (name.includes('international') || name.includes('abroad') || name.includes('countries')) return 'airplane';
+    if (name.includes('adventure') || name.includes('backpacking') || name.includes('exploration')) return 'compass';
+    if (name.includes('road trip') || name.includes('driving') || name.includes('car travel')) return 'car';
+    
+    // Creative and hobbies
+    if (name.includes('gardening') || name.includes('plants') || name.includes('flowers')) return 'flower';
+    if (name.includes('woodworking') || name.includes('carpentry') || name.includes('building')) return 'hammer';
+    if (name.includes('knitting') || name.includes('sewing') || name.includes('crafts')) return 'cut';
+    if (name.includes('gaming') || name.includes('video games') || name.includes('esports')) return 'game-controller';
+    
+    // Generic fallbacks (broader categories)
+    if (name.includes('technology') || name.includes('tech') || name.includes('digital')) return 'laptop';
+    if (name.includes('health') || name.includes('wellness') || name.includes('medical')) return 'medical';
+    if (name.includes('work') || name.includes('job') || name.includes('office') || name.includes('career')) return 'briefcase';
+    if (name.includes('education') || name.includes('learning') || name.includes('study')) return 'school';
+    if (name.includes('communication') || name.includes('speaking') || name.includes('talking')) return 'chatbubble';
+    if (name.includes('creativity') || name.includes('artistic') || name.includes('creative')) return 'color-palette';
+    if (name.includes('productivity') || name.includes('organization') || name.includes('efficiency')) return 'checkmark-circle';
+    if (name.includes('spiritual') || name.includes('religion') || name.includes('faith')) return 'flower';
+    
+    // Default fallback
+    return 'star';
+  };
+
+  // Handle focus area selection
+  const handleFocusAreaSelect = (clarificationOption) => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (error) {
+      console.log('Haptics not available:', error);
+    }
+    
+    setSelectedClarification(clarificationOption);
+  };
+  
   
   // Get personalized confirmation message based on goal
   const getGoalConfirmationMessage = (goal, domainName) => {
@@ -817,8 +1017,9 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
         </Animated.View>
       )}
       
+      
       {/* Sticky Bottom Bar with Confirmation Message and CTA Button */}
-      {showConfirmation && selectedGoal && (
+      {showConfirmation && selectedGoal && !showClarificationModal && (
         <Animated.View 
           style={[
             styles.stickyBottomContainer,
@@ -853,10 +1054,160 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
             disabled={isNavigating}
           >
             <ResponsiveText style={styles.confirmButtonText}>
-              {t('continueWith', 'common', { item: t('goal', 'common') })}
+              {selectedGoal?.needsClarification 
+                ? 'Choose Focus Area' 
+                : t('continueWith', 'common', { item: t('goal', 'common') })
+              }
             </ResponsiveText>
             <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
           </TouchableOpacity>
+        </Animated.View>
+      )}
+      
+      {/* Enhanced Clarification Modal */}
+      {showClarificationModal && selectedGoal && selectedGoal.clarificationOptions && (
+        <Animated.View 
+          style={[
+            styles.clarificationModalContainer,
+            { opacity: modalOpacity }
+          ]}
+        >
+          <Animated.View 
+            style={[
+              styles.clarificationModal,
+              { 
+                transform: [{ scale: modalScale }],
+                borderColor: domain.color
+              }
+            ]}
+          >
+            {/* Modal Header */}
+            <View style={styles.clarificationHeader}>
+              <TouchableOpacity 
+                style={styles.backButton}
+                onPress={closeClarificationModal}
+              >
+                <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
+              </TouchableOpacity>
+              
+              <View style={styles.headerContent}>
+                <View style={[styles.modalIconContainer, { backgroundColor: domain.color }]}>
+                  <Ionicons 
+                    name={selectedGoal.icon || "flag-outline"} 
+                    size={20} 
+                    color="#FFFFFF" 
+                  />
+                </View>
+                <ResponsiveText style={styles.clarificationTitle}>
+                  {selectedGoal.name}
+                </ResponsiveText>
+              </View>
+            </View>
+            
+            {/* Subtitle */}
+            <ResponsiveText style={styles.clarificationSubtitle}>
+              {selectedGoal.name} can mean different things. Which area would you like to focus on?
+            </ResponsiveText>
+            
+            {/* Options */}
+            <ScrollView 
+              style={styles.clarificationScrollView}
+              showsVerticalScrollIndicator={false}
+            >
+              {selectedGoal.clarificationOptions.map((option, index) => (
+                <Animated.View
+                  key={option.id}
+                  style={[
+                    styles.optionWrapper,
+                    {
+                      opacity: modalOptionsAnimations[index],
+                      transform: [
+                        {
+                          translateY: modalOptionsAnimations[index].interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [20, 0]
+                          })
+                        }
+                      ]
+                    }
+                  ]}
+                >
+                  <TouchableOpacity
+                    style={[
+                      styles.clarificationOption,
+                      selectedClarification?.id === option.id && [
+                        styles.clarificationOptionSelected,
+                        { 
+                          borderColor: domain.color,
+                          backgroundColor: `${domain.color}15`
+                        }
+                      ]
+                    ]}
+                    onPress={() => handleFocusAreaSelect(option)}
+                    activeOpacity={0.8}
+                  >
+                    {/* Icon */}
+                    <View style={[
+                      styles.optionIconContainer,
+                      { 
+                        backgroundColor: selectedClarification?.id === option.id 
+                          ? domain.color 
+                          : 'rgba(255, 255, 255, 0.15)'
+                      }
+                    ]}>
+                      <Ionicons 
+                        name={getIconForFocusArea(option.name)} 
+                        size={20} 
+                        color={selectedClarification?.id === option.id ? "#FFFFFF" : "#CCCCCC"} 
+                      />
+                    </View>
+                    
+                    {/* Content */}
+                    <View style={styles.clarificationOptionContent}>
+                      <Text style={[
+                        styles.clarificationOptionName,
+                        selectedClarification?.id === option.id && { color: domain.color }
+                      ]}>
+                        {option.name}
+                      </Text>
+                      <Text style={styles.clarificationOptionDescription}>
+                        {option.description}
+                      </Text>
+                    </View>
+                    
+                    {/* Selected indicator */}
+                    {selectedClarification?.id === option.id && (
+                      <View style={styles.selectedIndicator}>
+                        <Ionicons name="checkmark-circle" size={24} color={domain.color} />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                </Animated.View>
+              ))}
+            </ScrollView>
+            
+            {/* Confirm Button */}
+            <TouchableOpacity
+              style={[
+                styles.clarificationConfirmButton,
+                { backgroundColor: domain.color },
+                !selectedClarification && { opacity: 0.5 }
+              ]}
+              onPress={() => {
+                if (selectedClarification) {
+                  closeClarificationModal();
+                  // Small delay to let modal close before proceeding
+                  setTimeout(() => handleConfirm(), 200);
+                }
+              }}
+              disabled={!selectedClarification || isNavigating}
+            >
+              <ResponsiveText style={styles.clarificationConfirmButtonText}>
+                Continue with Focus Area
+              </ResponsiveText>
+              <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+            </TouchableOpacity>
+          </Animated.View>
         </Animated.View>
       )}
     </View>
@@ -1046,7 +1397,249 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: 'rgba(255, 255, 255, 0.8)',
     flex: 1,
-  }
+  },
+  clarificationModalContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  clarificationModal: {
+    backgroundColor: '#0c1425',
+    borderRadius: 20,
+    margin: 20,
+    maxHeight: '80%',
+    width: '90%',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  clarificationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  backButton: {
+    marginRight: 15,
+    padding: 5,
+  },
+  clarificationTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    flex: 1,
+  },
+  clarificationSubtitle: {
+    fontSize: 16,
+    color: '#999999',
+    padding: 20,
+    paddingTop: 15,
+    paddingBottom: 15,
+    lineHeight: 22,
+  },
+  clarificationScrollView: {
+    maxHeight: 300,
+    paddingHorizontal: 20,
+  },
+  clarificationOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  clarificationOptionSelected: {
+    borderWidth: 2,
+  },
+  clarificationOptionContent: {
+    flex: 1,
+  },
+  clarificationOptionName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 6,
+  },
+  clarificationOptionDescription: {
+    fontSize: 14,
+    color: '#999999',
+    lineHeight: 20,
+  },
+  clarificationConfirmButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    margin: 20,
+    marginTop: 15,
+  },
+  clarificationConfirmButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginRight: 8,
+  },
+  // Enhanced Modal Styles
+  clarificationModalContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  clarificationModal: {
+    backgroundColor: '#0c1425',
+    borderRadius: 20,
+    margin: 20,
+    maxHeight: '90%',
+    minHeight: '70%',
+    width: '90%',
+    borderWidth: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 15,
+  },
+  clarificationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+  },
+  backButton: {
+    marginRight: 15,
+    padding: 5,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  headerContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  modalIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  clarificationTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    flex: 1,
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  clarificationSubtitle: {
+    fontSize: 16,
+    color: '#E5E5E5',
+    padding: 20,
+    paddingTop: 15,
+    paddingBottom: 15,
+    lineHeight: 22,
+    textAlign: 'center',
+  },
+  clarificationScrollView: {
+    maxHeight: 400,
+    paddingHorizontal: 20,
+    flex: 1,
+  },
+  optionWrapper: {
+    marginBottom: 12,
+  },
+  clarificationOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  clarificationOptionSelected: {
+    borderWidth: 2,
+    shadowOpacity: 0.2,
+    elevation: 4,
+  },
+  optionIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  clarificationOptionContent: {
+    flex: 1,
+  },
+  clarificationOptionName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 6,
+  },
+  clarificationOptionDescription: {
+    fontSize: 14,
+    color: '#BBBBBB',
+    lineHeight: 20,
+  },
+  selectedIndicator: {
+    marginLeft: 12,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  clarificationConfirmButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    margin: 20,
+    marginTop: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  clarificationConfirmButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginRight: 8,
+  },
 });
 
 export default GoalSelectionPage;

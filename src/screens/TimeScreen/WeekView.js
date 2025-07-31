@@ -3,6 +3,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import TimeBlock from '../../components/TimeBlock';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ensureAccessibleTouchTarget } from '../../utils/responsive';
 
 /**
  * Week view component that displays time blocks organized by days of the week
@@ -21,13 +22,27 @@ const WeekView = ({
   // Get safe area insets
   const insets = useSafeAreaInsets();
   
+  // Internal selection state to avoid parent re-renders
+  const [internalSelectedDay, setInternalSelectedDay] = React.useState(selectedWeekDay);
+  
+  // Update internal state when prop changes (but don't cause re-render if the same)
+  React.useEffect(() => {
+    setInternalSelectedDay(selectedWeekDay);
+  }, [selectedWeekDay]);
+  
+  // Internal handler that ONLY changes visual state - no parent calls
+  const handleInternalDaySelect = (index) => {
+    setInternalSelectedDay(index);
+    // DO NOT call parent handler to avoid any state changes that could cause scroll reset
+  };
+  
   // Safety check - weekDates should be an array with 7 days
   if (!Array.isArray(weekDates) || weekDates.length !== 7) return null;
   
   // Render day header
-  const renderDayHeader = (date, index) => {
+  const renderDayHeader = React.useCallback((date, index) => {
     const isTodayDate = isToday(date);
-    const isSelected = selectedWeekDay === index;
+    const isSelected = internalSelectedDay === index;
     
     // Create accessibility label for the day
     const blocksForDay = getTimeBlocksForDate(date);
@@ -38,9 +53,14 @@ const WeekView = ({
         key={`day-${index}`}
         style={[
           styles.weekDay,
+          { minWidth: 44, minHeight: 44 }, // Ensure accessible touch target without overriding flex
           isSelected && [
             styles.selectedWeekDay,
-            { backgroundColor: `${theme.primary}15` }
+            { 
+              backgroundColor: theme.background === '#000000' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)',
+              borderRadius: 10,
+              overflow: 'visible'
+            }
           ],
           // Highlight today's date - always show outline
           isTodayDate && [
@@ -48,12 +68,16 @@ const WeekView = ({
             { 
               borderWidth: 2,
               borderColor: theme.primary,
-              backgroundColor: isSelected ? `${theme.primary}15` : `${theme.primary}10`
+              borderRadius: 10,
+              backgroundColor: isSelected ? 
+                (theme.background === '#000000' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)') : 
+                (theme.background === '#000000' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)')
             }
           ]
         ]}
-        onPress={() => handleWeekDaySelect(index)}
+        onPress={() => handleInternalDaySelect(index)}
         activeOpacity={0.7}
+        hitSlop={{ top: 10, bottom: 10, left: 5, right: 5 }}
         accessible={true}
         accessibilityRole="tab"
         accessibilityLabel={dayAccessibilityLabel}
@@ -85,12 +109,12 @@ const WeekView = ({
         </Text>
       </TouchableOpacity>
     );
-  };
+  }, [internalSelectedDay, isToday, getDayName, getTimeBlocksForDate, handleInternalDaySelect, theme]);
   
   // Render day blocks
-  const renderDayBlocks = (date, index) => {
+  const renderDayBlocks = React.useCallback((date, index) => {
     const blocksForDay = getTimeBlocksForDate(date);
-    const isSelected = selectedWeekDay === index;
+    const isSelected = internalSelectedDay === index;
     const isTodayDate = isToday(date);
     
     // Create an accessibility label for screen readers
@@ -103,16 +127,21 @@ const WeekView = ({
     
     return (
       <TouchableOpacity 
-        key={`day-blocks-${index}`}
+        key={`day-blocks-${date.toDateString()}`} // Use date string for stable key
         style={[
           styles.weekDayBlocks,
           { 
-            backgroundColor: isSelected ? `${theme.primary}10` : 
-                           isTodayDate ? `${theme.primary}08` : theme.background,
+            backgroundColor: isSelected ? (theme.background === '#000000' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)') : theme.card,
           },
-          isTodayDate && { borderLeftWidth: 3, borderLeftColor: theme.primary }
+          isSelected && { 
+            borderLeftWidth: 4, 
+            borderLeftColor: theme.background === '#000000' ? '#FFFFFF' : '#000000',
+            borderRightWidth: 2,
+            borderRightColor: theme.background === '#000000' ? '#FFFFFF' : '#000000',
+          },
+          isTodayDate && !isSelected && { borderLeftWidth: 3, borderLeftColor: theme.primary }
         ]}
-        onPress={() => handleWeekDaySelect(index)}
+        onPress={() => handleInternalDaySelect(index)}
         activeOpacity={0.7}
         accessible={true}
         accessibilityRole="button"
@@ -123,12 +152,14 @@ const WeekView = ({
         <Text style={[
           styles.weekDayLabel, 
           { color: theme.textSecondary },
-          isTodayDate && { color: theme.primary, fontWeight: 'bold' }
+          isSelected && { color: theme.text, fontWeight: 'bold' },
+          isTodayDate && !isSelected && { color: theme.primary, fontWeight: 'bold' }
         ]}
         maxFontSizeMultiplier={1.3}
         >
           {getDayName(date.getDay(), false)}
           {isTodayDate && ' (Today)'}
+          {isSelected && !isTodayDate && ' (Selected)'}
         </Text>
         
         <View style={styles.weekDayBlocksContainer}>
@@ -146,7 +177,7 @@ const WeekView = ({
           ) : (
             <View style={[
               styles.emptyWeekDay,
-              { backgroundColor: 'rgba(0,0,0,0.03)' }
+              { backgroundColor: theme.background }
             ]}>
               <Text 
                 style={[
@@ -162,7 +193,7 @@ const WeekView = ({
         </View>
       </TouchableOpacity>
     );
-  };
+  }, [internalSelectedDay, isToday, getDayName, getTimeBlocksForDate, handleInternalDaySelect, handleTimeBlockPress, theme, styles]);
   
   return (
     <View style={[
@@ -179,12 +210,13 @@ const WeekView = ({
       <ScrollView 
         style={[
           styles.weekViewContent,
-          { backgroundColor: theme.card }
+          { backgroundColor: theme.background, flex: 1 }
         ]}
         contentContainerStyle={{
-          paddingBottom: 20 // Extra bottom padding for scrolling
+          paddingBottom: 100 // Extra bottom padding for scrolling
         }}
         showsVerticalScrollIndicator={true}
+        nestedScrollEnabled={true}
         // Accessibility properties for screen readers
         accessible={true}
         accessibilityRole="list"
@@ -196,4 +228,11 @@ const WeekView = ({
   );
 };
 
-export default WeekView;
+export default React.memo(WeekView, (prevProps, nextProps) => {
+  // Only re-render if weekDates, theme, or time blocks change - ignore selectedWeekDay changes
+  return (
+    prevProps.weekDates === nextProps.weekDates &&
+    prevProps.theme === nextProps.theme &&
+    prevProps.getTimeBlocksForDate === nextProps.getTimeBlocksForDate
+  );
+});

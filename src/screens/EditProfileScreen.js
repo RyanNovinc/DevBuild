@@ -22,6 +22,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useNotification } from '../context/NotificationContext';
 import { useAppContext } from '../context/AppContext';
 import { useProfile } from '../context/ProfileContext';
+import { useAchievements } from '../context/AchievementContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 // Import FeatureExplorerTracker for achievement tracking
 import FeatureExplorerTracker from '../services/FeatureExplorerTracker';
@@ -29,8 +30,20 @@ import FeatureExplorerTracker from '../services/FeatureExplorerTracker';
 // Import responsive utilities
 import responsive from '../utils/responsive';
 
-// Import shared avatar components - Make sure this file exists in your project
-import { DefaultAvatar, COLOR_PALETTE } from '../components/AvatarComponents';
+// Import avatar components
+import { DefaultAvatar, COLOR_PALETTE, LevelAvatar, CustomPhotoAvatar } from '../components/AvatarComponents';
+
+// Import level-based profile picture system
+import { 
+  getAvailableProfilePictures, 
+  getLockedProfilePictures, 
+  canUseCustomPhotos,
+  getNextUnlockInfo,
+  LEVEL_PROFILE_PICTURES 
+} from '../data/LevelProfilePictures';
+
+// Import level service
+import LevelService from '../services/LevelService';
 
 const {
   spacing,
@@ -240,6 +253,7 @@ const EditProfileScreen = ({ navigation, route }) => {
   const { user, updateUserProfile } = useAuth();
   const { showSuccess, showError } = useNotification();
   const { updateAppSetting, settings } = useAppContext();
+  const { getTotalPoints } = useAchievements();
   
   // Add the profile context
   const { profile: contextProfile, updateProfile } = useProfile();
@@ -257,10 +271,17 @@ const EditProfileScreen = ({ navigation, route }) => {
   const [profileImage, setProfileImage] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   
-  // Avatar customization state
+  // Legacy avatar customization state (for backwards compatibility)
   const [selectedIconCategory, setSelectedIconCategory] = useState('tech');
   const [selectedIcon, setSelectedIcon] = useState(null);
   const [selectedColorIndex, setSelectedColorIndex] = useState(0);
+  
+  // New level-based profile picture state
+  const [selectedLevelPicture, setSelectedLevelPicture] = useState(null);
+  const [userLevel, setUserLevel] = useState(1);
+  const [availablePictures, setAvailablePictures] = useState([]);
+  const [lockedPictures, setLockedPictures] = useState([]);
+  const [showLevelSystem, setShowLevelSystem] = useState(true); // Toggle between old and new system
   
   // Animation value for color picker
   const colorPickerAnimation = useRef(new Animated.Value(0)).current;
@@ -270,7 +291,8 @@ const EditProfileScreen = ({ navigation, route }) => {
     name: '',
     profileImage: null,
     icon: null,
-    colorIndex: 0
+    colorIndex: 0,
+    levelPicture: null
   });
   
   // Streak data state
@@ -298,23 +320,100 @@ const EditProfileScreen = ({ navigation, route }) => {
     loadStreakData();
   }, []);
   
+  // Load level-based profile picture data
+  useEffect(() => {
+    const loadLevelData = () => {
+      try {
+        const totalPoints = getTotalPoints();
+        const level = LevelService.calculateLevel(totalPoints);
+        
+        console.log('=== LEVEL CALCULATION DEBUG ===');
+        console.log('Total Points:', totalPoints);
+        console.log('Calculated Level:', level);
+        console.log('Level Title:', LevelService.getLevelTitle(level));
+        
+        // TEMPORARY: Force level 3 for testing
+        const testLevel = Math.max(level, 3);
+        console.log('Using test level:', testLevel);
+        console.log('Available Pictures Count:', getAvailableProfilePictures(testLevel).length);
+        
+        setUserLevel(testLevel);
+        setAvailablePictures(getAvailableProfilePictures(testLevel));
+        setLockedPictures(getLockedProfilePictures(testLevel));
+      } catch (error) {
+        console.error('Error loading level data:', error);
+        // Fallback to level 1
+        setUserLevel(1);
+        setAvailablePictures(getAvailableProfilePictures(1));
+        setLockedPictures(getLockedProfilePictures(1));
+      }
+    };
+    
+    loadLevelData();
+  }, [getTotalPoints]);
+  
+  // Also refresh when achievements change (for real-time updates)
+  const { unlockedAchievements } = useAchievements();
+  useEffect(() => {
+    const loadLevelData = () => {
+      try {
+        // Calculate points manually from achievements data
+        let calculatedPoints = 0;
+        Object.keys(unlockedAchievements).forEach(achievementId => {
+          if (unlockedAchievements[achievementId]?.unlocked) {
+            // Import achievements data to get points
+            const { ACHIEVEMENTS } = require('../screens/AchievementsScreen/data/achievementsData');
+            const achievementData = ACHIEVEMENTS?.[achievementId];
+            if (achievementData?.points) {
+              calculatedPoints += achievementData.points;
+            }
+          }
+        });
+        
+        const fallbackLevel = Math.max(1, Math.min(12, Math.floor(calculatedPoints / 50) + 1));
+        const totalPoints = getTotalPoints() || calculatedPoints;
+        const level = LevelService.calculateLevel(totalPoints) || fallbackLevel;
+        
+        // TEMPORARY: Force level 3 for testing
+        const testLevel = Math.max(level, 3);
+        
+        console.log('=== ACHIEVEMENTS UPDATE ===');
+        console.log('Unlocked Achievements:', Object.keys(unlockedAchievements).length);
+        console.log('Calculated Points:', calculatedPoints);
+        console.log('getTotalPoints():', getTotalPoints());
+        console.log('Base Level:', level);
+        console.log('Test Level:', testLevel);
+        
+        setUserLevel(testLevel);
+        setAvailablePictures(getAvailableProfilePictures(testLevel));
+        setLockedPictures(getLockedProfilePictures(testLevel));
+      } catch (error) {
+        console.error('Error in achievements update:', error);
+      }
+    };
+    
+    loadLevelData();
+  }, [unlockedAchievements, getTotalPoints]);
+  
   // Check if there are unsaved changes
   const hasChanges = useMemo(() => {
     const result = name !== originalValues.name || 
                    profileImage !== originalValues.profileImage ||
                    selectedIcon !== originalValues.icon ||
-                   selectedColorIndex !== originalValues.colorIndex;
+                   selectedColorIndex !== originalValues.colorIndex ||
+                   selectedLevelPicture?.id !== originalValues.levelPicture?.id;
     
     console.log('Change detection:', {
       nameChanged: name !== originalValues.name,
       imageChanged: profileImage !== originalValues.profileImage,
       iconChanged: selectedIcon !== originalValues.icon,
       colorChanged: selectedColorIndex !== originalValues.colorIndex,
+      levelPictureChanged: selectedLevelPicture?.id !== originalValues.levelPicture?.id,
       result
     });
     
     return result;
-  }, [name, profileImage, selectedIcon, selectedColorIndex, originalValues]);
+  }, [name, profileImage, selectedIcon, selectedColorIndex, selectedLevelPicture, originalValues]);
                      
   useEffect(() => {
     console.log('Profile state changed:', { 
@@ -385,7 +484,13 @@ const EditProfileScreen = ({ navigation, route }) => {
           setName(contextProfile.name || 'User');
           setProfileImage(contextProfile.profileImage || null);
           
-          // Load custom avatar data if available
+          // Load level-based profile picture if available
+          if (contextProfile.levelProfilePicture) {
+            setSelectedLevelPicture(contextProfile.levelProfilePicture);
+            console.log('Loaded level profile picture from context:', contextProfile.levelProfilePicture);
+          }
+          
+          // Load legacy custom avatar data if available
           if (contextProfile.defaultAvatar) {
             setSelectedIcon(contextProfile.defaultAvatar.iconName);
             // Ensure colorIndex is treated as a number
@@ -404,7 +509,8 @@ const EditProfileScreen = ({ navigation, route }) => {
             icon: contextProfile.defaultAvatar?.iconName || null,
             colorIndex: typeof contextProfile.defaultAvatar?.colorIndex === 'string'
               ? parseInt(contextProfile.defaultAvatar.colorIndex, 10)
-              : contextProfile.defaultAvatar?.colorIndex || 0
+              : contextProfile.defaultAvatar?.colorIndex || 0,
+            levelPicture: contextProfile.levelProfilePicture || null
           });
           
           console.log('Loaded profile from context:', contextProfile);
@@ -419,7 +525,13 @@ const EditProfileScreen = ({ navigation, route }) => {
           setName(storedProfile.name || 'User');
           setProfileImage(storedProfile.profileImage || null);
           
-          // Load custom avatar data if available
+          // Load level-based profile picture if available
+          if (storedProfile.levelProfilePicture) {
+            setSelectedLevelPicture(storedProfile.levelProfilePicture);
+            console.log('Loaded level profile picture from storage:', storedProfile.levelProfilePicture);
+          }
+          
+          // Load legacy custom avatar data if available
           if (storedProfile.defaultAvatar) {
             setSelectedIcon(storedProfile.defaultAvatar.iconName);
             // Ensure colorIndex is treated as a number
@@ -438,7 +550,8 @@ const EditProfileScreen = ({ navigation, route }) => {
             icon: storedProfile.defaultAvatar?.iconName || null,
             colorIndex: typeof storedProfile.defaultAvatar?.colorIndex === 'string'
               ? parseInt(storedProfile.defaultAvatar.colorIndex, 10)
-              : storedProfile.defaultAvatar?.colorIndex || 0
+              : storedProfile.defaultAvatar?.colorIndex || 0,
+            levelPicture: storedProfile.levelProfilePicture || null
           });
           
           console.log('Loaded profile from AsyncStorage:', storedProfile);
@@ -448,7 +561,13 @@ const EditProfileScreen = ({ navigation, route }) => {
           setName(settings.userProfile.name || 'User');
           setProfileImage(settings.userProfile.profileImage || null);
           
-          // Load custom avatar data if available
+          // Load level-based profile picture if available
+          if (settings.userProfile.levelProfilePicture) {
+            setSelectedLevelPicture(settings.userProfile.levelProfilePicture);
+            console.log('Loaded level profile picture from settings:', settings.userProfile.levelProfilePicture);
+          }
+          
+          // Load legacy custom avatar data if available
           if (settings.userProfile.defaultAvatar) {
             setSelectedIcon(settings.userProfile.defaultAvatar.iconName);
             // Ensure colorIndex is treated as a number
@@ -467,7 +586,8 @@ const EditProfileScreen = ({ navigation, route }) => {
             icon: settings.userProfile.defaultAvatar?.iconName || null,
             colorIndex: typeof settings.userProfile.defaultAvatar?.colorIndex === 'string'
               ? parseInt(settings.userProfile.defaultAvatar.colorIndex, 10)
-              : settings.userProfile.defaultAvatar?.colorIndex || 0
+              : settings.userProfile.defaultAvatar?.colorIndex || 0,
+            levelPicture: settings.userProfile.levelProfilePicture || null
           });
           
           console.log('Loaded profile from app settings:', settings.userProfile);
@@ -478,7 +598,8 @@ const EditProfileScreen = ({ navigation, route }) => {
             name: 'User',
             profileImage: null,
             icon: null,
-            colorIndex: 0
+            colorIndex: 0,
+            levelPicture: null
           });
         }
         
@@ -488,7 +609,13 @@ const EditProfileScreen = ({ navigation, route }) => {
           setName(profile.name || 'User');
           setProfileImage(profile.profileImage || null);
           
-          // Load custom avatar data if available
+          // Load level-based profile picture if available
+          if (profile.levelProfilePicture) {
+            setSelectedLevelPicture(profile.levelProfilePicture);
+            console.log('Loaded level profile picture from route params:', profile.levelProfilePicture);
+          }
+          
+          // Load legacy custom avatar data if available
           if (profile.defaultAvatar) {
             setSelectedIcon(profile.defaultAvatar.iconName);
             // Ensure colorIndex is treated as a number
@@ -507,7 +634,8 @@ const EditProfileScreen = ({ navigation, route }) => {
             icon: profile.defaultAvatar?.iconName || null,
             colorIndex: typeof profile.defaultAvatar?.colorIndex === 'string'
               ? parseInt(profile.defaultAvatar.colorIndex, 10)
-              : profile.defaultAvatar?.colorIndex || 0
+              : profile.defaultAvatar?.colorIndex || 0,
+            levelPicture: profile.levelProfilePicture || null
           });
           
           console.log('Loaded profile from route params:', profile);
@@ -575,6 +703,12 @@ const EditProfileScreen = ({ navigation, route }) => {
         console.log('Selected image URI:', result.assets[0].uri);
         setProfileImage(result.assets[0].uri);
         setSelectedIcon(null);
+        // Keep the custom photo level picture selected if one was chosen
+        if (selectedLevelPicture?.isCustom) {
+          console.log('Keeping custom level picture selection');
+        } else {
+          setSelectedLevelPicture(null);
+        }
       }
     } catch (error) {
       console.error('Error picking image:', error);
@@ -608,6 +742,12 @@ const EditProfileScreen = ({ navigation, route }) => {
         console.log('Camera image URI:', result.assets[0].uri);
         setProfileImage(result.assets[0].uri);
         setSelectedIcon(null);
+        // Keep the custom photo level picture selected if one was chosen
+        if (selectedLevelPicture?.isCustom) {
+          console.log('Keeping custom level picture selection');
+        } else {
+          setSelectedLevelPicture(null);
+        }
       }
     } catch (error) {
       console.error('Error taking photo:', error);
@@ -679,7 +819,11 @@ const EditProfileScreen = ({ navigation, route }) => {
     
     try {
       // Log the current state before saving
-      console.log('Saving profile with icon:', selectedIcon, 'and color index:', selectedColorIndex);
+      console.log('=== SAVE PROFILE DEBUG ===');
+      console.log('Profile Image:', profileImage);
+      console.log('Selected Level Picture:', selectedLevelPicture);
+      console.log('Selected Icon (legacy):', selectedIcon);
+      console.log('Selected Color Index (legacy):', selectedColorIndex);
       console.log('Color data being saved:', COLOR_PALETTE[selectedColorIndex]);
       
       // Create updated profile object with data structure compatible with ProfileContext
@@ -687,7 +831,16 @@ const EditProfileScreen = ({ navigation, route }) => {
         name: name || 'User', // Default to 'User' if empty
         email: user?.email || '',
         profileImage,
-        // Format the defaultAvatar data to match what ProfileContext expects
+        // Handle level-based profile pictures
+        levelProfilePicture: selectedLevelPicture ? {
+          id: selectedLevelPicture.id,
+          name: selectedLevelPicture.name,
+          icon: selectedLevelPicture.icon,
+          colorScheme: selectedLevelPicture.colorScheme,
+          requiredLevel: selectedLevelPicture.requiredLevel,
+          description: selectedLevelPicture.description
+        } : null,
+        // Legacy defaultAvatar data for backwards compatibility
         defaultAvatar: selectedIcon ? {
           iconName: selectedIcon,
           colorIndex: selectedColorIndex
@@ -696,6 +849,7 @@ const EditProfileScreen = ({ navigation, route }) => {
       
       console.log('Attempting to save profile:', updatedProfile);
       console.log('Profile image URI being saved:', profileImage);
+      console.log('Level picture being saved:', updatedProfile.levelProfilePicture);
       
       // First update the profile context
       const success = await updateProfile(updatedProfile);
@@ -759,12 +913,15 @@ const EditProfileScreen = ({ navigation, route }) => {
         name,
         profileImage,
         icon: selectedIcon,
-        colorIndex: selectedColorIndex
+        colorIndex: selectedColorIndex,
+        levelPicture: selectedLevelPicture
       });
       
       setIsSaving(false);
       showSuccess('Profile updated successfully');
-      console.log('✅ Profile save complete, navigating back');
+      console.log('✅ Profile save complete');
+      console.log('✅ Final saved profile:', updatedProfile);
+      console.log('✅ Navigating back');
       
       // Navigate back without params - the context will handle data
       navigation.goBack();
@@ -1007,6 +1164,22 @@ const EditProfileScreen = ({ navigation, route }) => {
                   accessibilityRole="image"
                   accessibilityLabel="Current profile picture"
                 />
+              ) : selectedLevelPicture ? (
+                <View style={[
+                  styles.defaultAvatarContainer,
+                  {
+                    width: profileImageSize,
+                    height: profileImageSize,
+                    borderRadius: profileImageRadius,
+                    borderWidth: 4,
+                    borderColor: isDarkMode ? '#555555' : '#FFFFFF'
+                  }
+                ]}>
+                  <LevelAvatar
+                    size={profileImageSize - 8}
+                    pictureData={selectedLevelPicture}
+                  />
+                </View>
               ) : selectedIcon ? (
                 <View style={[
                   styles.defaultAvatarContainer,
@@ -1125,157 +1298,426 @@ const EditProfileScreen = ({ navigation, route }) => {
           </View>
         </View>
         
-        {/* Custom Avatar Section */}
-        <View style={[
-          styles.customAvatarSection,
-          {
-            backgroundColor: theme.card,
-            borderRadius: spacing.m,
-            marginHorizontal: spacing.m,
-            marginTop: spacing.m,
-            marginBottom: spacing.l,
-            padding: spacing.m,
-            borderWidth: 1,
-            borderColor: theme.border
-          }
-        ]}>
-          <View style={[styles.sectionHeader, { marginBottom: spacing.s }]}>
-            <Text style={[
-              styles.sectionTitle,
-              {
-                color: theme.text,
-                fontSize: fontSizes.m,
-                fontWeight: '600'
-              }
-            ]}>
-              Customize Avatar
-            </Text>
-          </View>
-          
-          {/* Category Tabs */}
-          <CategoryTabs 
-            categories={AVATAR_ICON_CATEGORIES}
-            activeCategory={selectedIconCategory}
-            onSelectCategory={setSelectedIconCategory}
-            theme={theme}
-          />
-          
-          {/* Icons Grid */}
-          <FlatList
-            data={AVATAR_ICON_CATEGORIES[selectedIconCategory]}
-            keyExtractor={(item, index) => `${selectedIconCategory}-${index}`}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={[
-                  styles.iconItem,
-                  {
-                    margin: spacing.xs,
-                    padding: spacing.xs,
-                    borderRadius: spacing.s,
-                    backgroundColor: selectedIcon === item.name ? 
-                      (isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)') : 
-                      'transparent',
-                    borderWidth: selectedIcon === item.name ? 1 : 0,
-                    borderColor: theme.primary,
-                    alignItems: 'center'
-                  }
-                ]}
-                onPress={() => selectIcon(item.name)}
-                accessibilityLabel={`Select ${item.label} icon`}
-              >
-                <View style={{
-                  width: 50,
-                  height: 50,
-                  backgroundColor: COLOR_PALETTE[selectedColorIndex].primary,
-                  borderRadius: 25,
-                  justifyContent: 'center',
-                  alignItems: 'center'
-                }}>
-                  <Ionicons 
-                    name={item.name} 
-                    size={30} 
-                    color={COLOR_PALETTE[selectedColorIndex].secondary} 
-                  />
+        {/* Level-Based Profile Pictures Section */}
+        {showLevelSystem ? (
+          <View style={[
+            styles.levelAvatarSection,
+            {
+              backgroundColor: theme.card,
+              borderRadius: spacing.m,
+              marginHorizontal: spacing.m,
+              marginTop: spacing.m,
+              marginBottom: spacing.l,
+              padding: spacing.m,
+              borderWidth: 1,
+              borderColor: theme.border
+            }
+          ]}>
+            <View style={[styles.sectionHeader, { marginBottom: spacing.s }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Text style={[
+                    styles.sectionTitle,
+                    {
+                      color: theme.text,
+                      fontSize: fontSizes.m,
+                      fontWeight: '600'
+                    }
+                  ]}>
+                    Epic Profile Pictures
+                  </Text>
+                  <View style={{
+                    backgroundColor: theme.primary,
+                    borderRadius: 12,
+                    paddingHorizontal: spacing.xs,
+                    paddingVertical: 2,
+                    marginLeft: spacing.xs
+                  }}>
+                    <Text style={{
+                      color: 'white',
+                      fontSize: fontSizes.xs,
+                      fontWeight: 'bold'
+                    }}>
+                      LEVEL {userLevel}
+                    </Text>
+                  </View>
                 </View>
-                <Text style={{
-                  fontSize: fontSizes.xs,
-                  color: theme.text,
-                  marginTop: spacing.xxs,
-                  textAlign: 'center'
-                }}>
-                  {item.label}
-                </Text>
-              </TouchableOpacity>
-            )}
-            numColumns={4}
-            contentContainerStyle={{
-              paddingVertical: spacing.s,
-            }}
-            scrollEnabled={false}
-          />
-          
-          {/* Randomize Button */}
-          <RandomizeButton onPress={randomizeAvatar} theme={theme} />
-          
-          {/* Color Picker */}
-          <Animated.View style={{
-            height: colorPickerHeight,
-            overflow: 'hidden',
-            marginTop: spacing.s
-          }}>
+                
+                <TouchableOpacity
+                  onPress={() => setShowLevelSystem(false)}
+                  style={{
+                    paddingHorizontal: spacing.xs,
+                    paddingVertical: spacing.xxs
+                  }}
+                >
+                  <Text style={{
+                    color: theme.textSecondary,
+                    fontSize: fontSizes.xs
+                  }}>
+                    Classic
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            
+            {/* Current Level Info */}
             <View style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: spacing.xs
+              backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
+              borderRadius: spacing.s,
+              padding: spacing.s,
+              marginBottom: spacing.m
             }}>
               <Text style={{
-                fontSize: fontSizes.s,
                 color: theme.text,
-                fontWeight: '500'
+                fontSize: fontSizes.s,
+                fontWeight: '500',
+                marginBottom: spacing.xs
               }}>
-                Color Theme
+                {LevelService.getLevelTitle(userLevel)} • Level {userLevel}
               </Text>
               <Text style={{
-                fontSize: fontSizes.xs,
-                color: theme.textSecondary
+                color: theme.textSecondary,
+                fontSize: fontSizes.xs
               }}>
-                {COLOR_PALETTE[selectedColorIndex]?.name || 'Default'}
+                You've unlocked {availablePictures.length} epic profile picture{availablePictures.length !== 1 ? 's' : ''}
               </Text>
             </View>
-            <ColorPicker 
-              colors={COLOR_PALETTE} 
-              onSelectColor={(index) => {
-                console.log('Color selected:', index);
-                setSelectedColorIndex(index);
+            
+            {/* Available Pictures */}
+            <Text style={{
+              color: theme.text,
+              fontSize: fontSizes.s,
+              fontWeight: '500',
+              marginBottom: spacing.s
+            }}>
+              Available Pictures
+            </Text>
+            
+            <FlatList
+              data={availablePictures}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.levelPictureItem,
+                    {
+                      margin: spacing.xs,
+                      padding: spacing.s,
+                      borderRadius: spacing.s,
+                      backgroundColor: selectedLevelPicture?.id === item.id ? 
+                        (isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)') : 
+                        'transparent',
+                      borderWidth: selectedLevelPicture?.id === item.id ? 2 : 0,
+                      borderColor: theme.primary,
+                      alignItems: 'center'
+                    }
+                  ]}
+                  onPress={() => {
+                    if (item.isCustom) {
+                      showImageOptions();
+                      setSelectedLevelPicture(item); // Set the custom photo option as selected
+                    } else {
+                      setSelectedLevelPicture(item);
+                      setProfileImage(null); // Clear custom image
+                      setSelectedIcon(null); // Clear legacy icon
+                      console.log('Selected level picture:', item);
+                    }
+                  }}
+                  accessibilityLabel={`Select ${item.name} profile picture`}
+                >
+                  {item.isCustom ? (
+                    <CustomPhotoAvatar 
+                      size={60}
+                      selected={selectedLevelPicture?.id === item.id}
+                      isEnabled={true}
+                    />
+                  ) : (
+                    <LevelAvatar
+                      size={60}
+                      pictureData={item}
+                      selected={selectedLevelPicture?.id === item.id}
+                    />
+                  )}
+                  <Text style={{
+                    fontSize: fontSizes.xs,
+                    color: theme.text,
+                    marginTop: spacing.xs,
+                    textAlign: 'center',
+                    fontWeight: selectedLevelPicture?.id === item.id ? '600' : '400'
+                  }}>
+                    {item.name}
+                  </Text>
+                  {item.description && (
+                    <Text style={{
+                      fontSize: fontSizes.xs,
+                      color: theme.textSecondary,
+                      textAlign: 'center',
+                      marginTop: 2
+                    }}>
+                      {item.description}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              )}
+              numColumns={2}
+              contentContainerStyle={{
+                paddingVertical: spacing.s,
               }}
-              selectedColorIndex={selectedColorIndex}
+              scrollEnabled={false}
             />
-          </Animated.View>
-          
-          {/* Color Picker Toggle */}
-          {selectedIcon && (
-            <TouchableOpacity
-              style={{
-                alignSelf: 'center',
-                paddingVertical: spacing.xs,
-                flexDirection: 'row',
-                alignItems: 'center'
+            
+            {/* Next Level Preview */}
+            {(() => {
+              const nextUnlock = getNextUnlockInfo(userLevel);
+              if (nextUnlock) {
+                return (
+                  <>
+                    <Text style={{
+                      color: theme.textSecondary,
+                      fontSize: fontSizes.s,
+                      fontWeight: '500',
+                      marginTop: spacing.m,
+                      marginBottom: spacing.s
+                    }}>
+                      Next Level Preview
+                    </Text>
+                    
+                    {/* Single picture preview for next level */}
+                    <View style={{
+                      alignItems: 'center',
+                      paddingVertical: spacing.m
+                    }}>
+                      <LevelAvatar
+                        size={80}
+                        pictureData={{...nextUnlock.picture, requiredLevel: nextUnlock.level}}
+                        isLocked={true}
+                        requiredLevel={nextUnlock.level}
+                      />
+                      <Text style={{
+                        fontSize: fontSizes.s,
+                        color: theme.text,
+                        marginTop: spacing.s,
+                        textAlign: 'center',
+                        fontWeight: '500'
+                      }}>
+                        {nextUnlock.picture.name}
+                      </Text>
+                      <Text style={{
+                        fontSize: fontSizes.xs,
+                        color: theme.textSecondary,
+                        textAlign: 'center',
+                        marginTop: spacing.xxs
+                      }}>
+                        {nextUnlock.picture.description}
+                      </Text>
+                    </View>
+                    
+                    {/* Next Unlock Info */}
+                    <View style={{
+                      backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
+                      borderRadius: spacing.s,
+                      padding: spacing.s,
+                      marginTop: spacing.s,
+                      borderStyle: 'dashed',
+                      borderWidth: 1,
+                      borderColor: theme.border
+                    }}>
+                      <Text style={{
+                        color: theme.primary,
+                        fontSize: fontSizes.xs,
+                        fontWeight: '500',
+                        textAlign: 'center'
+                      }}>
+                        🏆 Next unlock: Level {nextUnlock.level} - {nextUnlock.title}
+                      </Text>
+                      <Text style={{
+                        color: theme.textSecondary,
+                        fontSize: fontSizes.xs,
+                        textAlign: 'center',
+                        marginTop: 2
+                      }}>
+                        Unlock this epic profile picture
+                      </Text>
+                    </View>
+                  </>
+                );
+              }
+              return null;
+            })()}
+          </View>
+        ) : (
+          /* Legacy Custom Avatar Section */
+          <View style={[
+            styles.customAvatarSection,
+            {
+              backgroundColor: theme.card,
+              borderRadius: spacing.m,
+              marginHorizontal: spacing.m,
+              marginTop: spacing.m,
+              marginBottom: spacing.l,
+              padding: spacing.m,
+              borderWidth: 1,
+              borderColor: theme.border
+            }
+          ]}>
+            <View style={[styles.sectionHeader, { marginBottom: spacing.s }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Text style={[
+                  styles.sectionTitle,
+                  {
+                    color: theme.text,
+                    fontSize: fontSizes.m,
+                    fontWeight: '600'
+                  }
+                ]}>
+                  Customize Avatar
+                </Text>
+                
+                <TouchableOpacity
+                  onPress={() => setShowLevelSystem(true)}
+                  style={{
+                    backgroundColor: theme.primary,
+                    borderRadius: 12,
+                    paddingHorizontal: spacing.s,
+                    paddingVertical: spacing.xs
+                  }}
+                >
+                  <Text style={{
+                    color: 'white',
+                    fontSize: fontSizes.xs,
+                    fontWeight: 'bold'
+                  }}>
+                    EPIC MODE
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            
+            {/* Category Tabs */}
+            <CategoryTabs 
+              categories={AVATAR_ICON_CATEGORIES}
+              activeCategory={selectedIconCategory}
+              onSelectCategory={setSelectedIconCategory}
+              theme={theme}
+            />
+            
+            {/* Icons Grid */}
+            <FlatList
+              data={AVATAR_ICON_CATEGORIES[selectedIconCategory]}
+              keyExtractor={(item, index) => `${selectedIconCategory}-${index}`}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.iconItem,
+                    {
+                      margin: spacing.xs,
+                      padding: spacing.xs,
+                      borderRadius: spacing.s,
+                      backgroundColor: selectedIcon === item.name ? 
+                        (isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)') : 
+                        'transparent',
+                      borderWidth: selectedIcon === item.name ? 1 : 0,
+                      borderColor: theme.primary,
+                      alignItems: 'center'
+                    }
+                  ]}
+                  onPress={() => selectIcon(item.name)}
+                  accessibilityLabel={`Select ${item.label} icon`}
+                >
+                  <View style={{
+                    width: 50,
+                    height: 50,
+                    backgroundColor: COLOR_PALETTE[selectedColorIndex].primary,
+                    borderRadius: 25,
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                  }}>
+                    <Ionicons 
+                      name={item.name} 
+                      size={30} 
+                      color={COLOR_PALETTE[selectedColorIndex].secondary} 
+                    />
+                  </View>
+                  <Text style={{
+                    fontSize: fontSizes.xs,
+                    color: theme.text,
+                    marginTop: spacing.xxs,
+                    textAlign: 'center'
+                  }}>
+                    {item.label}
+                  </Text>
+                </TouchableOpacity>
+              )}
+              numColumns={4}
+              contentContainerStyle={{
+                paddingVertical: spacing.s,
               }}
-              onPress={() => toggleColorPicker(colorPickerAnimation._value === 0)}
-            >
-              <Text style={{ color: theme.primary, fontSize: fontSizes.xs }}>
-                {colorPickerAnimation._value === 0 ? 'Show Color Options' : 'Hide Color Options'}
-              </Text>
-              <Ionicons 
-                name={colorPickerAnimation._value === 0 ? 'chevron-down' : 'chevron-up'} 
-                size={16} 
-                color={theme.primary} 
-                style={{ marginLeft: spacing.xxs }} 
+              scrollEnabled={false}
+            />
+            
+            {/* Randomize Button */}
+            <RandomizeButton onPress={randomizeAvatar} theme={theme} />
+            
+            {/* Color Picker */}
+            <Animated.View style={{
+              height: colorPickerHeight,
+              overflow: 'hidden',
+              marginTop: spacing.s
+            }}>
+              <View style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: spacing.xs
+              }}>
+                <Text style={{
+                  fontSize: fontSizes.s,
+                  color: theme.text,
+                  fontWeight: '500'
+                }}>
+                  Color Theme
+                </Text>
+                <Text style={{
+                  fontSize: fontSizes.xs,
+                  color: theme.textSecondary
+                }}>
+                  {COLOR_PALETTE[selectedColorIndex]?.name || 'Default'}
+                </Text>
+              </View>
+              <ColorPicker 
+                colors={COLOR_PALETTE} 
+                onSelectColor={(index) => {
+                  console.log('Color selected:', index);
+                  setSelectedColorIndex(index);
+                }}
+                selectedColorIndex={selectedColorIndex}
               />
-            </TouchableOpacity>
-          )}
-        </View>
+            </Animated.View>
+            
+            {/* Color Picker Toggle */}
+            {selectedIcon && (
+              <TouchableOpacity
+                style={{
+                  alignSelf: 'center',
+                  paddingVertical: spacing.xs,
+                  flexDirection: 'row',
+                  alignItems: 'center'
+                }}
+                onPress={() => toggleColorPicker(colorPickerAnimation._value === 0)}
+              >
+                <Text style={{ color: theme.primary, fontSize: fontSizes.xs }}>
+                  {colorPickerAnimation._value === 0 ? 'Show Color Options' : 'Hide Color Options'}
+                </Text>
+                <Ionicons 
+                  name={colorPickerAnimation._value === 0 ? 'chevron-down' : 'chevron-up'} 
+                  size={16} 
+                  color={theme.primary} 
+                  style={{ marginLeft: spacing.xxs }} 
+                />
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
         
         {/* Streak Info Section */}
         {streakData.currentStreak > 0 && (
@@ -1575,6 +2017,15 @@ const styles = StyleSheet.create({
   },
   streakLabel: {
     // Styling applied inline
+  },
+  // Level-based avatar section styles
+  levelAvatarSection: {
+    // Styling applied inline
+  },
+  levelPictureItem: {
+    // Styling applied inline
+    flex: 1,
+    maxWidth: '50%'
   }
 });
 

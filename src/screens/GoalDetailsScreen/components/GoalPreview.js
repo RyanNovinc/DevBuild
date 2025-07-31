@@ -1,6 +1,6 @@
 // src/screens/GoalDetailsScreen/components/GoalPreview.js
 import React from 'react';
-import { View, Text, TouchableOpacity, Animated, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getTextColorForBackground } from '../utils/colorUtils';
 import {
@@ -14,7 +14,6 @@ import {
 } from '../../../utils/responsive';
 
 const GoalPreview = ({ 
-  scrollY, 
   title, 
   selectedIcon, 
   selectedColor, 
@@ -27,12 +26,8 @@ const GoalPreview = ({
   const progress = getTotalProgress();
   const displayTitle = title.trim() || 'Give your goal a title';
   
-  // Animation for progress bar
-  const progressWidth = scrollY.interpolate({
-    inputRange: [-50, 0, 50],
-    outputRange: [progress + 5, progress, progress - 5 > 0 ? progress - 5 : 0],
-    extrapolate: 'clamp'
-  });
+  // Use actual progress percentage instead of scroll-based animation
+  const progressWidth = progress;
   
   // Get appropriate text color based on background
   const iconColor = selectedColor === '#FFFFFF' ? '#000000' : getTextColorForBackground(selectedColor);
@@ -42,19 +37,12 @@ const GoalPreview = ({
   
   return (
     <View style={styles.previewSection}>
-      <Animated.View 
+      <View 
         style={[
           styles.goalPreview, 
           { 
             backgroundColor: theme.backgroundSecondary || '#1A1A1A',
-            borderColor: theme.border || '#333333',
-            transform: [{
-              scale: scrollY.interpolate({
-                inputRange: [-100, 0, 100],
-                outputRange: [1.05, 1, 0.98],
-                extrapolate: 'clamp'
-              })
-            }]
+            borderColor: theme.border || '#333333'
           }
         ]}
         accessible={true}
@@ -110,7 +98,7 @@ const GoalPreview = ({
             styles.progressBar, 
             { backgroundColor: theme.backgroundTertiary || '#333333' }
           ]}>
-            <Animated.View 
+            <View 
               style={[
                 styles.progressFill, 
                 { 
@@ -174,7 +162,7 @@ const GoalPreview = ({
             )}
           </View>
         </TouchableOpacity>
-      </Animated.View>
+      </View>
     </View>
   );
 };

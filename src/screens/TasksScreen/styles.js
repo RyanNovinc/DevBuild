@@ -379,14 +379,11 @@ export const styles = {
   // Floating Add Button - updated to match GoalsScreen style
   floatingAddButton: {
     position: 'absolute',
-    bottom: 20,
-    left: 20,
     zIndex: 100,
+    // positioning set inline for consistency
   },
   floatingAddButtonInner: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    // size set inline for consistency with accessibility standards
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',

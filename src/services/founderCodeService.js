@@ -1,6 +1,7 @@
 // src/services/founderCodeService.js
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform, Dimensions } from 'react-native';
+import * as FeatureExplorerTracker from './FeatureExplorerTracker';
 
 // Storage keys
 const STORAGE_KEYS = {
@@ -188,6 +189,15 @@ const founderCodeService = {
       if (data.success) {
         // Store the founder code locally
         await AsyncStorage.setItem(STORAGE_KEYS.FOUNDER_CODE, data.code);
+        
+        // Track Early Adopter achievement
+        try {
+          await FeatureExplorerTracker.trackEarlyAdopter();
+        } catch (achievementError) {
+          console.error('Error tracking Early Adopter achievement:', achievementError);
+          // Don't fail the whole function if achievement tracking fails
+        }
+        
         return {
           success: true,
           code: data.code,
@@ -241,6 +251,13 @@ const founderCodeService = {
           if (!existingCode) {
             existingCode = `LC-${Math.floor(1000 + Math.random() * 9000)}`;
             await AsyncStorage.setItem(STORAGE_KEYS.FOUNDER_CODE, existingCode);
+            
+            // Track Early Adopter achievement for new mock code
+            try {
+              await FeatureExplorerTracker.trackEarlyAdopter();
+            } catch (achievementError) {
+              console.error('Error tracking Early Adopter achievement (mock):', achievementError);
+            }
           }
           
           return {
@@ -266,6 +283,14 @@ const founderCodeService = {
           // Generate a new random code
           const newCode = `LC-${Math.floor(1000 + Math.random() * 9000)}`;
           await AsyncStorage.setItem(STORAGE_KEYS.FOUNDER_CODE, newCode);
+          
+          // Track Early Adopter achievement for new mock code
+          try {
+            await FeatureExplorerTracker.trackEarlyAdopter();
+          } catch (achievementError) {
+            console.error('Error tracking Early Adopter achievement (mock success):', achievementError);
+          }
+          
           return {
             success: true,
             code: newCode,

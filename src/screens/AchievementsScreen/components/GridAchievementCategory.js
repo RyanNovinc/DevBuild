@@ -32,7 +32,8 @@ const GridAchievementCategory = ({
   isLastCategory = false,
   defaultExpanded = false,
   onToggleExpand, // New prop to handle accordion behavior
-  userSubscriptionStatus = 'free'
+  userSubscriptionStatus = 'free',
+  highlightAchievement = null // New prop for highlighting specific achievement
 }) => {
   // Initialize expansion state
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
@@ -95,6 +96,7 @@ const GridAchievementCategory = ({
       onPress={() => onAchievementPress(item)}
       onLongPress={onAchievementLongPress ? () => onAchievementLongPress(item.id) : undefined}
       userSubscriptionStatus={userSubscriptionStatus}
+      isHighlighted={highlightAchievement === item.id}
     />
   );
   

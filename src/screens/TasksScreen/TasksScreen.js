@@ -1,5 +1,5 @@
 // src/screens/TasksScreen/TasksScreen.js
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   View, 
   Text, 
@@ -21,6 +21,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import PagerView from 'react-native-pager-view';
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
+import { NavigationContainer } from '@react-navigation/native';
+import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
+
+const Tab = createMaterialTopTabNavigator();
 import GoalFilters from './components/GoalFilters';
 import ProjectsList from './components/ProjectsList';
 import KanbanView from './components/KanbanView';
@@ -29,10 +34,12 @@ import * as FeatureExplorerTracker from '../../services/FeatureExplorerTracker';
 import { 
   scaleWidth, 
   scaleHeight, 
+  scaleFontSize,
   isSmallDevice, 
   isTablet, 
   fontSizes, 
-  spacing 
+  spacing,
+  useSafeSpacing
 } from '../../utils/responsive';
 import { styles } from './styles';
 
@@ -53,8 +60,9 @@ import { FREE_PLAN_LIMITS, checkProjectsPerGoalLimit } from '../../services/Subs
 const { width, height } = Dimensions.get('window');
 
 const TasksScreen = ({ route, navigation }) => {
-  // Get safe area insets to prevent the UI from being cut off
+  // Get safe area insets and safe spacing to prevent the UI from being cut off
   const insets = useSafeAreaInsets();
+  const safeSpacing = useSafeSpacing();
   
   const { theme } = useTheme();
   const { 
@@ -89,6 +97,22 @@ const TasksScreen = ({ route, navigation }) => {
   const [selectedGoalId, setSelectedGoalId] = useState(filterGoalId || 'all');
   const [activeTab, setActiveTab] = useState(0); // 0 = list, 1 = kanban
   
+  // Create navigation state object for controlled navigation
+  const [navigationState, setNavigationState] = useState({
+    index: 0,
+    routes: [
+      { key: 'list', name: 'List' },
+      { key: 'kanban', name: 'Kanban' }
+    ]
+  });
+  
+  // Sync navigationState with activeTab
+  useEffect(() => {
+    if (navigationState.index !== activeTab) {
+      setNavigationState(prev => ({ ...prev, index: activeTab }));
+    }
+  }, [activeTab]);
+  
   // New state for task/project view mode toggle
   const [viewMode, setViewMode] = useState('projects'); // 'projects' or 'tasks'
   
@@ -108,14 +132,49 @@ const TasksScreen = ({ route, navigation }) => {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [upgradeMessage, setUpgradeMessage] = useState('');
   
-  // Ref for the PagerView component
-  const pagerRef = useRef(null);
-  
-  // Tab indicator animation
-  const tabIndicatorPosition = useRef(new Animated.Value(0)).current;
+  // Note: Removed PagerView refs since we're now using React Navigation
   
   // New state for kanban full-screen mode
   const [kanbanFullScreen, setKanbanFullScreen] = useState(false);
+  // State to preserve which tab was active when entering full-screen
+  const [tabBeforeFullScreen, setTabBeforeFullScreen] = useState(null);
+  
+  // Ref for the tab navigator to manually control navigation
+  const tabNavigatorRef = useRef(null);
+  
+  // Custom function to handle full-screen state changes with tab preservation
+  const handleKanbanFullScreenChange = (isFullScreen) => {
+    if (isFullScreen) {
+      // Entering full-screen - save current tab
+      console.log('Entering full-screen, saving activeTab:', activeTab);
+      setTabBeforeFullScreen(activeTab);
+      setKanbanFullScreen(true);
+    } else {
+      // Exiting full-screen
+      console.log('Exiting full-screen, restoring tab to:', tabBeforeFullScreen);
+      
+      // If we were on Kanban tab, set navigation state to Kanban BEFORE setting full-screen to false
+      if (tabBeforeFullScreen === 1) {
+        console.log('Setting navigation state to Kanban before exiting full-screen');
+        setNavigationState({
+          index: 1,
+          routes: [
+            { key: 'list', name: 'List' },
+            { key: 'kanban', name: 'Kanban' }
+          ]
+        });
+        setActiveTab(1);
+      }
+      
+      // Then set full-screen to false
+      setKanbanFullScreen(false);
+      
+      // Clear the saved state
+      setTimeout(() => {
+        setTabBeforeFullScreen(null);
+      }, 100);
+    }
+  };
   
   // Separate collapsed states for "all" view and specific goal views
   const [allViewCollapsedSections, setAllViewCollapsedSections] = useState({});
@@ -213,35 +272,26 @@ const TasksScreen = ({ route, navigation }) => {
       console.log(`- ${storedProjects.length - validProjects.length} independent or orphaned projects detected`);
       console.log(`- Memory contains ${Array.isArray(projects) ? projects.length : 0} projects`);
       
-      // If there's a discrepancy, fix it
+      // DISABLED AUTO-REPAIR: This was interfering with clean deletion process
+      // Log what we found but don't automatically "fix" it
       if (storedProjects.length !== validProjects.length ||
           (Array.isArray(projects) && projects.length !== validProjects.length)) {
         
-        // Fix the data in storage first
-        if (storedProjects.length !== validProjects.length) {
-          // Make a backup
-          await AsyncStorage.setItem('projects_backup', projectsJson);
-          
-          // Save the clean data
-          await AsyncStorage.setItem('projects', JSON.stringify(validProjects));
-          console.log('Fixed orphaned projects in storage');
-        }
+        console.log('DETECTED DATA DISCREPANCY (not auto-fixing):');
+        console.log(`- Storage projects: ${storedProjects.length}`);
+        console.log(`- Valid projects: ${validProjects.length}`);
+        console.log(`- Memory projects: ${Array.isArray(projects) ? projects.length : 0}`);
+        console.log('Auto-repair disabled to prevent interference with deletion process');
         
-        // Then fix in-memory state
-        if (typeof forceDataReset === 'function') {
-          console.log('Forcing data reset to fix in-memory state');
-          await forceDataReset();
-        } else if (typeof cleanupOrphanedProjects === 'function') {
-          console.log('Cleaning up orphaned projects');
-          await cleanupOrphanedProjects();
+        // Only show alert if discrepancy is large (more than normal deletion variance)
+        const discrepancy = Math.abs(storedProjects.length - validProjects.length);
+        if (discrepancy > 2) {
+          Alert.alert(
+            'Data Discrepancy Detected',
+            `Found ${discrepancy} orphaned projects. Use Profile > Debug Storage to clean up if needed.`,
+            [{ text: 'OK' }]
+          );
         }
-        
-        // Notify the user
-        Alert.alert(
-          'Data Fixed',
-          `Fixed project data inconsistency. ${validProjects.length} valid projects found.`,
-          [{ text: 'OK' }]
-        );
       } else {
         console.log('No project data inconsistencies detected');
       }
@@ -261,15 +311,15 @@ const TasksScreen = ({ route, navigation }) => {
     StatusBar.setBarStyle(isDarkMode ? 'light-content' : 'dark-content');
   }, [theme, kanbanFullScreen]);
   
-  // Run cleanup and verification on initial load
+  // Run verification on initial load (cleanup disabled to prevent interference)
   useEffect(() => {
     const initialSetup = async () => {
-      // First try to clean up orphaned projects if the function exists
-      if (typeof cleanupOrphanedProjects === 'function') {
-        await cleanupOrphanedProjects();
-      }
+      // DISABLED: Auto-cleanup was interfering with clean deletion process
+      // if (typeof cleanupOrphanedProjects === 'function') {
+      //   await cleanupOrphanedProjects();
+      // }
       
-      // Then verify data consistency
+      // Only verify data consistency (no auto-repair)
       await verifyProjectDataConsistency();
     };
     
@@ -353,34 +403,7 @@ const TasksScreen = ({ route, navigation }) => {
     }
   }, [selectedGoalId]);
   
-  // Handle tab change when PagerView page changes
-  const onPageSelected = (e) => {
-    const newIndex = e.nativeEvent.position;
-    setActiveTab(newIndex);
-  };
-  
-  // Handle real-time scrolling for tab indicator
-  const onPageScroll = (e) => {
-    const { position, offset } = e.nativeEvent;
-    // Calculate the exact position based on current page and offset
-    const exactPosition = position + offset;
-    // Update the tab indicator position in real-time
-    tabIndicatorPosition.setValue(exactPosition);
-  };
-  
-  // Switch tabs programmatically
-  const handleTabChange = (tabIndex) => {
-    if (tabIndex === activeTab) return;
-    
-    // Just set the page without animating the indicator
-    // (the animation will happen via onPageScroll)
-    if (pagerRef.current) {
-      pagerRef.current.setPage(tabIndex);
-    }
-    
-    // Update active tab state
-    setActiveTab(tabIndex);
-  };
+  // Note: Removed old PagerView event handlers since we're now using React Navigation
   
   // Show feature limit banner - MODIFIED to use modal instead
   const showFeatureLimitBanner = (message) => {
@@ -804,11 +827,9 @@ const TasksScreen = ({ route, navigation }) => {
             notification.showSuccess(`Project moved to ${newProgress === 0 ? 'To Do' : newProgress === 100 ? 'Done' : 'In Progress'}`);
           }
           
-          // Force a refresh of goal data to ensure all screens update
-          if (typeof refreshData === 'function') {
-            console.log('Forcing data refresh after project progress update');
-            setTimeout(() => refreshData(), 100);
-          }
+          // Note: Removed refreshData call to prevent overriding completion status
+          // The updateProjectProgress function already updates state and storage
+          console.log('Project progress update completed successfully');
         } else {
           // Show error notification
           if (notification && notification.showError) {
@@ -896,18 +917,20 @@ const TasksScreen = ({ route, navigation }) => {
       rootNavigation.setParams({ viewMode: newViewMode });
     }
     
-    // Reset to first page if in kanban view
-    if (activeTab === 1 && pagerRef.current) {
-      pagerRef.current.setPage(0);
-      setActiveTab(0);
-    }
+    // Note: No need to reset tabs since React Navigation handles this
   };
   
   // Handle project status change in list view
   const handleChangeProjectStatus = (projectId, newStatus) => {
+    console.log(`🎯 [UI DEBUG] handleChangeProjectStatus called - Project: ${projectId}, Status: ${newStatus}`);
     // Get the project to update
     const projectToUpdate = projects.find(p => p.id === projectId);
-    if (!projectToUpdate) return;
+    if (!projectToUpdate) {
+      console.log(`🎯 [UI DEBUG] Project not found: ${projectId}`);
+      return;
+    }
+    console.log(`🎯 [UI DEBUG] Found project to update: ${projectToUpdate.title} (current status: ${projectToUpdate.status})`);
+    
     
     // Convert status to status indicator value
     let statusIndicator;
@@ -1196,17 +1219,15 @@ const TasksScreen = ({ route, navigation }) => {
       
       // Update the task
       if (typeof updateTask === 'function') {
-        await updateTask(updatedTask);
+        await updateTask(taskToUpdate.projectId, taskToUpdate.id, updatedTask);
         
         // Show success notification
         if (notification && notification.showSuccess) {
           notification.showSuccess(`Task moved to ${newStatus === 'todo' ? 'To Do' : newStatus === 'in_progress' ? 'In Progress' : 'Done'}`);
         }
         
-        // Refresh data if needed
-        if (typeof refreshData === 'function') {
-          setTimeout(() => refreshData(), 100);
-        }
+        // Note: Removed refreshData call to prevent overriding completion status
+        // The updateTask function already updates state and triggers project progress updates
       } else {
         console.error("updateTask function not available");
         if (notification && notification.showError) {
@@ -1493,7 +1514,7 @@ const TasksScreen = ({ route, navigation }) => {
     contentTranslateY,
     // Props for enhanced kanban view
     kanbanFullScreen,
-    setKanbanFullScreen,
+    setKanbanFullScreen: handleKanbanFullScreenChange,
     // Subscription related props
     isPro,
     handleUpgradePress,
@@ -1504,152 +1525,13 @@ const TasksScreen = ({ route, navigation }) => {
     showFeatureLimitBanner,
   };
 
-  // UPDATED: Render the tab bar with animated pill-shaped indicator
-  const renderTabBar = () => {
-    // Calculate tab width and indicator width
-    const tabBarWidth = width - scaleWidth(40); // 20px padding on each side
-    const tabWidth = tabBarWidth / 2;
-    const indicatorWidth = tabWidth - scaleWidth(6); // Slightly smaller than tab width
-    
-    return (
-      <View style={[
-        styles.tabBarContainer, 
-        { 
-          backgroundColor: theme.background,
-          paddingHorizontal: scaleWidth(20),
-          paddingVertical: scaleHeight(10),
-        }
-      ]}>
-        <View style={[
-          styles.tabBar, 
-          { 
-            backgroundColor: theme.cardElevated || '#1F1F1F',
-            height: scaleHeight(44),
-            borderRadius: scaleWidth(25),
-            padding: 3, // Space for the indicator
-            position: 'relative',
-          }
-        ]}>
-          {/* Animated Tab Indicator */}
-          <Animated.View 
-            style={[
-              styles.tabIndicator, 
-              { 
-                width: indicatorWidth,
-                height: scaleHeight(38),
-                borderRadius: scaleWidth(20),
-                backgroundColor: theme.primary,
-                position: 'absolute',
-                top: 3,
-                left: tabIndicatorPosition.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [3, tabWidth + 3]
-                }),
-                zIndex: 1,
-              }
-            ]} 
-            accessibilityElementsHidden={true}
-            importantForAccessibility="no"
-          />
-          
-          {/* List Tab */}
-          <TouchableOpacity 
-            style={[
-              styles.tab, 
-              { 
-                width: tabWidth,
-                height: scaleHeight(38),
-                zIndex: 2,
-              }
-            ]} 
-            onPress={() => handleTabChange(0)}
-            activeOpacity={0.7}
-            accessible={true}
-            accessibilityRole="tab"
-            accessibilityLabel={`${viewMode === 'projects' ? 'Projects' : 'Tasks'} list view`}
-            accessibilityState={{ selected: activeTab === 0 }}
-            accessibilityHint={`Shows ${viewMode === 'projects' ? 'projects' : 'tasks'} in a list format`}
-          >
-            <View style={{
-              flexDirection: 'row', 
-              alignItems: 'center',
-              justifyContent: 'center',
-              minHeight: 44, // Minimum touch target size
-              minWidth: 44,
-            }}>
-              <Ionicons 
-                name="list" 
-                size={scaleWidth(18)} 
-                color={activeTab === 0 ? '#FFFFFF' : theme.textSecondary} 
-                style={{ marginRight: spacing.xs }}
-              />
-              <Text style={[
-                styles.tabText, 
-                { 
-                  color: activeTab === 0 ? '#FFFFFF' : theme.textSecondary,
-                  fontWeight: activeTab === 0 ? '700' : '500',
-                  fontSize: fontSizes.m,
-                }
-              ]}
-              maxFontSizeMultiplier={1.3}
-              >
-                List View
-              </Text>
-            </View>
-          </TouchableOpacity>
-          
-          {/* Kanban Tab */}
-          <TouchableOpacity 
-            style={[
-              styles.tab,
-              { 
-                width: tabWidth,
-                height: scaleHeight(38),
-                zIndex: 2,
-              }
-            ]}
-            onPress={() => handleTabChange(1)}
-            activeOpacity={0.7}
-            accessible={true}
-            accessibilityRole="tab"
-            accessibilityLabel={`${viewMode === 'projects' ? 'Projects' : 'Tasks'} kanban view`}
-            accessibilityState={{ selected: activeTab === 1 }}
-            accessibilityHint={`Shows ${viewMode === 'projects' ? 'projects' : 'tasks'} in a kanban board format`}
-          >
-            <View style={{
-              flexDirection: 'row', 
-              alignItems: 'center',
-              justifyContent: 'center',
-              minHeight: 44, // Minimum touch target size
-              minWidth: 44,
-            }}>
-              <Ionicons 
-                name="grid" 
-                size={scaleWidth(18)} 
-                color={activeTab === 1 ? '#FFFFFF' : theme.textSecondary} 
-                style={{ marginRight: spacing.xs }}
-              />
-              <Text style={[
-                styles.tabText, 
-                { 
-                  color: activeTab === 1 ? '#FFFFFF' : theme.textSecondary,
-                  fontWeight: activeTab === 1 ? '700' : '500',
-                  fontSize: fontSizes.m,
-                }
-              ]}
-              maxFontSizeMultiplier={1.3}
-              >
-                Kanban View
-              </Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  };
+
 
   // Check if we should show the kanban view as a full-screen overlay
-  if (activeTab === 1 && kanbanFullScreen) {
+  // Use tabBeforeFullScreen or activeTab to determine if we should show full-screen
+  const shouldShowFullScreen = kanbanFullScreen && (tabBeforeFullScreen === 1 || activeTab === 1);
+  
+  if (shouldShowFullScreen) {
     // When in full-screen mode, render only the KanbanView as an overlay
     return (
       <View style={{
@@ -1686,46 +1568,123 @@ const TasksScreen = ({ route, navigation }) => {
         onComplete={() => setShowConfetti(false)}
       />
       
-      {/* Tab Bar */}
-      {renderTabBar()}
-      
-      {/* Goal Filters - Pass onGoalSelect for animation */}
-      <GoalFilters 
-        selectedGoalId={selectedGoalId}
-        onGoalSelect={handleGoalSelect}
-        goalsToShow={goalsToShow}
-        theme={theme}
-        viewMode={viewMode}
+      {/* TabView with full control over navigation state */}
+      <TabView
+        navigationState={navigationState}
+        renderScene={SceneMap({
+          list: () => (
+            <Animated.View style={{
+              flex: 1,
+              backgroundColor: theme.background,
+              opacity: Animated.multiply(contentFadeOpacity, contentOpacity),
+              transform: [{ translateY: contentTranslate }]
+            }}>
+              <GoalFilters 
+                selectedGoalId={selectedGoalId}
+                onGoalSelect={handleGoalSelect}
+                goalsToShow={goalsToShow}
+                theme={theme}
+                viewMode={viewMode}
+              />
+              <View style={{ flex: 1, backgroundColor: theme.background }}>
+                <ProjectsList taskScreenProps={taskScreenProps} />
+              </View>
+            </Animated.View>
+          ),
+          kanban: () => (
+            <Animated.View style={{
+              flex: 1,
+              backgroundColor: theme.background,
+              opacity: Animated.multiply(contentFadeOpacity, contentOpacity),
+              transform: [{ translateY: contentTranslate }]
+            }}>
+              <GoalFilters 
+                selectedGoalId={selectedGoalId}
+                onGoalSelect={handleGoalSelect}
+                goalsToShow={goalsToShow}
+                theme={theme}
+                viewMode={viewMode}
+              />
+              <View style={{ flex: 1, backgroundColor: '#000000' }}>
+                <KanbanView taskScreenProps={taskScreenProps} />
+              </View>
+            </Animated.View>
+          ),
+        })}
+        onIndexChange={(index) => {
+          console.log('TabView index changed to:', index);
+          setActiveTab(index);
+          setNavigationState(prev => ({ ...prev, index }));
+        }}
+        initialLayout={{ width }}
+        renderTabBar={(props) => (
+          <TabBar
+            {...props}
+            style={{
+              backgroundColor: theme.cardElevated || '#1F1F1F',
+              elevation: 0,
+              shadowOpacity: 0,
+              borderRadius: scaleWidth(25),
+              marginHorizontal: scaleWidth(20),
+              marginVertical: scaleHeight(10),
+              height: scaleHeight(44),
+            }}
+            indicatorStyle={{
+              backgroundColor: theme.primary,
+              height: scaleHeight(38),
+              borderRadius: scaleWidth(20),
+              marginBottom: 3,
+              marginLeft: 3,
+              width: Math.floor((width - scaleWidth(46)) / 2) - 6,
+              zIndex: 1,
+            }}
+            activeColor="#FFFFFF"
+            inactiveColor={theme.textSecondary}
+            labelStyle={{
+              fontSize: scaleFontSize(16),
+              fontWeight: '600',
+              textTransform: 'none',
+              margin: 0,
+            }}
+            renderLabel={({ route, focused, color }) => {
+              const iconName = route.key === 'list' ? 'list-outline' : 'grid';
+              const label = route.key === 'list' ? 'List View' : 'Kanban View';
+              
+              return (
+                <View style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingVertical: 0,
+                  paddingHorizontal: scaleWidth(12),
+                  height: scaleHeight(38),
+                  marginTop: -scaleHeight(6), // Move content up even more
+                }}>
+                  <Ionicons
+                    name={iconName}
+                    size={scaleWidth(22)} // Slightly larger icon
+                    color={color}
+                    style={{ 
+                      marginRight: spacing.xs,
+                      marginTop: scaleHeight(1), // Fine-tune icon alignment
+                    }}
+                  />
+                  <Text style={{
+                    color: color,
+                    fontSize: scaleFontSize(16), // Larger text
+                    fontWeight: '600',
+                    textTransform: 'none',
+                    marginTop: scaleHeight(1), // Fine-tune text alignment
+                  }}>
+                    {label}
+                  </Text>
+                </View>
+              );
+            }}
+          />
+        )}
+        swipeEnabled={true}
       />
-      
-      {/* Swipeable Pager View */}
-      <Animated.View style={{
-        flex: 1,
-        opacity: Animated.multiply(contentFadeOpacity, contentOpacity),
-        transform: [
-          { translateY: contentTranslate }
-        ]
-      }}>
-        <PagerView
-          ref={pagerRef}
-          style={{ flex: 1 }}
-          initialPage={activeTab}
-          onPageSelected={onPageSelected}
-          onPageScroll={onPageScroll}
-          pageMargin={10}
-          accessibilityLabel="Project views"
-        >
-          {/* List View Page */}
-          <View key="list">
-            <ProjectsList taskScreenProps={taskScreenProps} />
-          </View>
-          
-          {/* Kanban View Page */}
-          <View key="kanban" style={{ backgroundColor: '#000000' }}>
-            <KanbanView taskScreenProps={taskScreenProps} />
-          </View>
-        </PagerView>
-      </Animated.View>
       
       {/* Overlay for drag and drop mode */}
       {isDragging && (
@@ -1774,21 +1733,20 @@ const TasksScreen = ({ route, navigation }) => {
       )}
 
       {/* Floating Toggle Button - Fixed positioning and hit area */}
-      <View style={{
-        position: 'absolute',
-        bottom: 20,
-        left: 20,
-        zIndex: 100,
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-        overflow: 'hidden',
-      }}>
+      <Animated.View style={[
+        {
+          position: 'absolute',
+          bottom: insets.bottom - scaleHeight(20), // A bit higher
+          left: scaleWidth(20),
+          zIndex: 100,
+          transform: [{ scale: addButtonScale }]
+        }
+      ]}>
         <TouchableOpacity
           style={{
-            width: 60,
-            height: 60,
-            borderRadius: 30,
+            width: Math.max(scaleWidth(60), 44), // Ensure minimum touch target
+            height: Math.max(scaleWidth(60), 44),
+            borderRadius: Math.max(scaleWidth(60), 44) / 2,
             backgroundColor: theme.primary,
             alignItems: 'center',
             justifyContent: 'center',
@@ -1847,7 +1805,7 @@ const TasksScreen = ({ route, navigation }) => {
             )}
           </Animated.View>
         </TouchableOpacity>
-      </View>
+      </Animated.View>
       
       {/* Upgrade Modal */}
       <Modal

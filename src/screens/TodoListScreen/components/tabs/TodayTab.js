@@ -249,25 +249,21 @@ const TodayTab = ({
     if (uiState.isTogglingMode) return;
     dispatch({ type: 'START_TOGGLING' });
     
-    // Dismiss keyboard
-    Keyboard.dismiss();
+    // DON'T dismiss keyboard - let it stay open
     
     // Swap the mode without causing flashes
     const newMode = uiState.inputMode === 'todo' ? 'group' : 'todo';
     
+    // Update the mode immediately
+    dispatch({ type: 'FINISH_TOGGLING', payload: newMode });
+    
+    // Focus the appropriate input immediately
     setTimeout(() => {
-      // Update the mode
-      dispatch({ type: 'FINISH_TOGGLING', payload: newMode });
-      
-      // Allow time for the mode to change before focusing
-      setTimeout(() => {
-        // Focus the appropriate input
-        const nextInputRef = newMode === 'todo' ? todoInputRef : groupInputRef;
-        if (nextInputRef.current) {
-          nextInputRef.current.focus();
-        }
-      }, 50);
-    }, 50);
+      const nextInputRef = newMode === 'todo' ? todoInputRef : groupInputRef;
+      if (nextInputRef.current) {
+        nextInputRef.current.focus();
+      }
+    }, 100);
   }, [uiState.inputMode, uiState.isTogglingMode]);
   
   // Add a todo or group with zero flash
@@ -740,11 +736,10 @@ const TodayTab = ({
 
   return (
     <View style={localStyles.container}>
-      {/* Top Input Section - Wrapped in TouchableWithoutFeedback */}
-      <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-        <View>
-          {/* Combined Input for Todo/Group */}
-          <View style={[styles.inputContainer, { backgroundColor: theme.card, borderColor: theme.border }]}>
+      {/* Top Input Section - No TouchableWithoutFeedback to prevent keyboard dismissal */}
+      <View>
+        {/* Combined Input for Todo/Group */}
+        <View style={[styles.inputContainer, { backgroundColor: theme.card, borderColor: theme.border }]}>
             {/* Toggle icon between todo and group mode */}
             <TouchableOpacity 
               style={styles.inputIcon} 
@@ -826,7 +821,6 @@ const TodayTab = ({
             </Text>
           </View>
         </View>
-      </TouchableWithoutFeedback>
       
       {/* Todo List with persistent keyboard and zero-flash animations */}
       <Animated.View 

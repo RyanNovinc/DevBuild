@@ -7,8 +7,8 @@ const config = {
   enableLogs: true,
   
   // Focus mode - only show specific logs and errors/warnings
-  // Added 'aws-auth' as a new focus mode
-  focusMode: 'aws-auth', // 'aws-auth', 'onboarding', 'ai', 'profile', or 'all'
+  // Added 'project-debug' as a new focus mode for debugging project completion
+  focusMode: 'project-debug', // 'project-debug', 'aws-auth', 'onboarding', 'ai', 'profile', or 'all'
   
   // Categories of logs to enable (only used when focusMode is 'all')
   enabledCategories: {
@@ -22,9 +22,10 @@ const config = {
     'Error': true,          // Error logs (keep enabled)
     'Warning': true,        // Warning logs (keep enabled)
     'Navigation': false,    // Navigation logs
-    'UI': false,            // UI-related logs
+    'UI': false,            // UI-related logs (disabled to reduce noise)
     'Notification': false,  // Notification-related logs
     'Data': false,          // Data loading/saving logs
+    'Deletion': true,       // Goal/Project/Task deletion logs
     'Performance': false,   // Performance monitoring logs
     'Tab': false,           // Tab navigation logs
     'TodoTab': false,       // Todo tab specific logs
@@ -110,6 +111,37 @@ const config = {
     'ExpiredCodeException',
     'LimitExceededException',
     'InvalidParameterException'
+  ],
+  
+  // Project debugging patterns for tracking completion issues
+  projectDebugPatterns: [
+    // UI debugging - very specific patterns
+    '🎯',
+    '🚀',
+    'TICK BUTTON CLICKED',
+    'STARTING PROJECT COMPLETION',
+    'handleStatusChangeWithTracking called',
+    'handleChangeProjectStatus called',
+    
+    // AppContext debugging - with emoji patterns (simplified)
+    '🔵',
+    '🟢', 
+    '🟡',
+    '🟠',
+    '🔴',
+    '\\[DEBUG\\]',
+    
+    // Only critical project status messages
+    'Project moved to Done',
+    'Project moved to In Progress', 
+    'Project moved to To Do',
+    'Moving project.*to done',
+    
+    // Only actual errors (not debug messages with "Error" in them)
+    '^ERROR:',
+    '^Error:',
+    'Error updating project',
+    'Error in updateProjectProgress'
   ],
   
   // AI-related patterns (keep but disable by default)
@@ -277,7 +309,31 @@ const config = {
     'PROFILE:',
     'STATS:',
     'COUNTING:',
-    'LOG:'
+    'LOG:',
+    
+    // Theme-related patterns
+    'THEME',
+    'theme',
+    'Theme',
+    'SHAKE',
+    'shake',
+    'Shake',
+    'COLOR',
+    'color',
+    'Color',
+    'LOCKED',
+    'locked',
+    'Locked',
+    'animation',
+    'Animation',
+    'ANIMATION',
+    'isPro',
+    'subscription',
+    'Subscription',
+    'SUBSCRIPTION',
+    'availableColors',
+    'THEME_COLORS',
+    'FREE_COLORS'
   ]
 };
 
@@ -378,6 +434,26 @@ const containsAIPattern = (message) => {
   }
   
   return config.aiPatterns.some(pattern => {
+    const regex = new RegExp(pattern, 'i');
+    return regex.test(message);
+  });
+};
+
+/**
+ * Checks if a log message contains any project debugging patterns
+ * @param {string} message - Log message to check
+ * @returns {boolean} - Whether the message contains any project debug patterns
+ */
+const containsProjectDebugPattern = (message) => {
+  if (typeof message !== 'string') {
+    try {
+      message = String(message);
+    } catch (e) {
+      return false;
+    }
+  }
+  
+  return config.projectDebugPatterns.some(pattern => {
     const regex = new RegExp(pattern, 'i');
     return regex.test(message);
   });
@@ -527,7 +603,13 @@ export const setupGlobalLogFilter = () => {
     }
     
     // Filter based on focus mode
-    if (config.focusMode === 'aws-auth') {
+    if (config.focusMode === 'project-debug') {
+      if (containsProjectDebugPattern(fullMessage)) {
+        originalLog.apply(console, args);
+      }
+      // Block all other logs in project-debug mode
+      return;
+    } else if (config.focusMode === 'aws-auth') {
       if (containsAWSAuthPattern(fullMessage)) {
         originalLog.apply(console, args);
       }
@@ -540,11 +622,7 @@ export const setupGlobalLogFilter = () => {
         originalLog.apply(console, args);
       }
     } else if (config.focusMode === 'ai') {
-      // Check if the message contains AI button visibility (always hide)
-      if (fullMessage.includes('AI button visibility')) {
-        return;
-      }
-      
+      // Removed AI button visibility filter to allow debugging
       if (containsAIPattern(fullMessage)) {
         originalLog.apply(console, args);
       }
@@ -574,7 +652,13 @@ export const setupGlobalLogFilter = () => {
       }
       
       // Apply focus mode filtering
-      if (config.focusMode === 'aws-auth') {
+      if (config.focusMode === 'project-debug') {
+        if (containsProjectDebugPattern(fullMessage)) {
+          originalWarn.apply(console, args);
+        }
+        // Block all other warnings in project-debug mode
+        return;
+      } else if (config.focusMode === 'aws-auth') {
         if (containsAWSAuthPattern(fullMessage)) {
           originalWarn.apply(console, args);
         }
@@ -608,8 +692,11 @@ export const setupGlobalLogFilter = () => {
         fullMessage = String(args[0] || '');
       }
       
-      // Always show AWS auth related errors in aws-auth mode
-      if (config.focusMode === 'aws-auth') {
+      // Always show project debug related errors in project-debug mode
+      if (config.focusMode === 'project-debug') {
+        // For project debugging, show all errors regardless of pattern to catch everything
+        originalError.apply(console, args);
+      } else if (config.focusMode === 'aws-auth') {
         // For aws-auth debugging, show all errors regardless of pattern to catch everything
         originalError.apply(console, args);
       } else if (config.focusMode === 'profile') {
@@ -677,8 +764,8 @@ export const restoreDefaultLogging = () => {
   }
 };
 
-// Initialize the logger to show all logs in AWS auth mode
-setFocusMode('aws-auth');
+// Initialize the logger to show all logs for deletion debugging
+setFocusMode('all');
 
 export default {
   log,

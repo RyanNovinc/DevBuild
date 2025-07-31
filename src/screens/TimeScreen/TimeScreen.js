@@ -43,7 +43,8 @@ import {
   isTablet,
   useScreenDimensions,
   useIsLandscape,
-  ensureAccessibleTouchTarget
+  ensureAccessibleTouchTarget,
+  useSafeSpacing
 } from '../../utils/responsive';
 
 // Import our views
@@ -64,6 +65,9 @@ import { generateAndSharePDF } from './PDFGenerator';
 // Import FreeTierLimitModal component
 import FreeTierLimitModal from './FreeTierLimitModal';
 
+// Import CalendarSettingsModal component
+import CalendarSettingsModal from '../../components/CalendarSettingsModal';
+
 const Tab = createMaterialTopTabNavigator();
 
 /**
@@ -74,6 +78,7 @@ const TimeScreen = ({ navigation }) => {
   const { theme } = useTheme();
   const isDarkMode = theme.background === '#000000';
   const insets = useSafeAreaInsets();
+  const safeSpacing = useSafeSpacing();
   const { width, height } = useScreenDimensions();
   const isLandscape = useIsLandscape();
   
@@ -87,6 +92,15 @@ const TimeScreen = ({ navigation }) => {
   const isPremium = userSubscriptionStatus === 'pro' || userSubscriptionStatus === 'unlimited';
   const { showSuccess } = useNotification();
   
+  // Calendar integration
+  const {
+    calendarSettings = { syncEnabled: false, showCalendarEvents: true },
+    calendarEvents = [],
+    getCalendarEventsForDate,
+    loadCalendarEvents,
+    getCalendarIntegrationStatus
+  } = appContext;
+  
   // State management
   const [currentDate, setCurrentDate] = useState(new Date());
   const [weekDates, setWeekDates] = useState([]);
@@ -98,6 +112,11 @@ const TimeScreen = ({ navigation }) => {
   const [tabNavigatorKey, setTabNavigatorKey] = useState(0); // Key to force remount
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [limitModalType, setLimitModalType] = useState('');
+  const isSelectingWithinWeekRef = useRef(false);
+  
+  // Calendar events state
+  const [currentDateCalendarEvents, setCurrentDateCalendarEvents] = useState([]);
+  const [showCalendarSettings, setShowCalendarSettings] = useState(false);
   
   // Reset to day view whenever screen comes into focus
   useFocusEffect(
@@ -264,12 +283,18 @@ const TimeScreen = ({ navigation }) => {
 
   // Update week and month dates when current date changes
   useEffect(() => {
-    const dates = getWeekDates(currentDate);
-    setWeekDates(dates);
-    
-    const day = currentDate.getDay();
-    const weekDayIndex = day === 0 ? 6 : day - 1;
-    setSelectedWeekDay(weekDayIndex);
+    // Don't recalculate week dates if we're just selecting within the current week
+    if (!isSelectingWithinWeekRef.current) {
+      const dates = getWeekDates(currentDate);
+      setWeekDates(dates);
+      
+      const day = currentDate.getDay();
+      const weekDayIndex = day === 0 ? 6 : day - 1;
+      setSelectedWeekDay(weekDayIndex);
+    } else {
+      // Reset the flag after handling the selection
+      isSelectingWithinWeekRef.current = false;
+    }
     
     const month = currentDate.getMonth();
     const year = currentDate.getFullYear();
@@ -277,6 +302,25 @@ const TimeScreen = ({ navigation }) => {
     setMonthDates(monthDates);
     setSelectedMonthDay(currentDate.getDate() - 1);
   }, [currentDate]);
+  
+  // Load calendar events when current date changes
+  useEffect(() => {
+    const loadCalendarEventsForDate = async () => {
+      if (calendarSettings.showCalendarEvents && getCalendarEventsForDate) {
+        try {
+          const events = await getCalendarEventsForDate(currentDate);
+          setCurrentDateCalendarEvents(events);
+        } catch (error) {
+          console.error('Error loading calendar events for date:', error);
+          setCurrentDateCalendarEvents([]);
+        }
+      } else {
+        setCurrentDateCalendarEvents([]);
+      }
+    };
+    
+    loadCalendarEventsForDate();
+  }, [currentDate, calendarSettings.showCalendarEvents, getCalendarEventsForDate]);
   
   // Format current date based on selected view and tab
   const getFormattedDate = (selectedView) => {
@@ -375,9 +419,8 @@ const TimeScreen = ({ navigation }) => {
     setCurrentDate(new Date());
   };
   
-  // Handle week day selection
+  // Handle week day selection (just updates the selected index, doesn't change current date)
   const handleWeekDaySelect = (index) => {
-    setSelectedWeekDay(index);
     const newDate = new Date(weekDates[index]);
     
     // Check for free tier planning horizon
@@ -387,7 +430,9 @@ const TimeScreen = ({ navigation }) => {
       return;
     }
     
-    setCurrentDate(newDate);
+    // Only update the selected week day index - no need to change currentDate
+    // This prevents any re-rendering and maintains scroll position
+    setSelectedWeekDay(index);
   };
   
   // Handle month day selection
@@ -421,13 +466,39 @@ const TimeScreen = ({ navigation }) => {
     // Combine original blocks with repeating instances
     const allBlocks = [...timeBlocks, ...repeatingInstances];
     
-    return allBlocks.filter(block => {
+    const timeBlocksForDate = allBlocks.filter(block => {
       // Safety check: ensure block and block.startTime exist
       if (!block || !block.startTime) return false;
       
       const blockDate = new Date(block.startTime).toDateString();
       return blockDate === dateString;
     });
+    
+    // Add calendar events if enabled and available
+    if (calendarSettings.showCalendarEvents) {
+      const calendarEventsForDate = date.toDateString() === currentDate.toDateString() 
+        ? currentDateCalendarEvents 
+        : [];
+      
+      // Convert calendar events to time block format for display
+      const calendarEventBlocks = calendarEventsForDate.map(event => ({
+        id: `calendar_${event.id}`,
+        title: event.title,
+        startTime: event.startDate,
+        endTime: event.endDate,
+        location: event.location || '',
+        description: event.notes || '',
+        color: '#2196F3', // Blue color for calendar events
+        isCalendarEvent: true,
+        isReadOnly: event.isReadOnly !== false, // Default to read-only unless explicitly false
+        source: event.source || 'device_calendar',
+        originalEvent: event
+      }));
+      
+      return [...timeBlocksForDate, ...calendarEventBlocks];
+    }
+    
+    return timeBlocksForDate;
   };
   
   // Check weekly time block limit for free users
@@ -487,6 +558,34 @@ const TimeScreen = ({ navigation }) => {
   
   // Function to view time block details
   const handleTimeBlockPress = (timeBlock) => {
+    // If this is a calendar event, show info alert
+    if (timeBlock.isCalendarEvent) {
+      const startTime = new Date(timeBlock.startTime).toLocaleTimeString([], { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+      const endTime = new Date(timeBlock.endTime).toLocaleTimeString([], { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+      
+      let message = `${startTime} - ${endTime}`;
+      if (timeBlock.location) {
+        message += `\n📍 ${timeBlock.location}`;
+      }
+      if (timeBlock.description) {
+        message += `\n\n${timeBlock.description}`;
+      }
+      message += `\n\n📅 From ${timeBlock.source === 'device_calendar' ? 'Device Calendar' : timeBlock.source}`;
+      
+      Alert.alert(
+        timeBlock.title,
+        message,
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+    
     // If this is a repeating instance, show options
     if (timeBlock.isRepeatingInstance) {
       Alert.alert(
@@ -746,6 +845,38 @@ else if (isPremium && tabName === 'Month') {
                     />
                   </TouchableOpacity>
 
+                  {/* Calendar Settings Button */}
+                  <TouchableOpacity 
+                    style={[
+                      styles.calendarButton, 
+                      ensureAccessibleTouchTarget(scaleWidth(40), scaleWidth(40)),
+                      { 
+                        backgroundColor: calendarSettings.syncEnabled || calendarSettings.showCalendarEvents 
+                          ? theme.primary + '20' 
+                          : theme.cardElevated,
+                        borderRadius: scaleWidth(20),
+                        borderWidth: calendarSettings.syncEnabled || calendarSettings.showCalendarEvents ? 1 : 0,
+                        borderColor: calendarSettings.syncEnabled || calendarSettings.showCalendarEvents 
+                          ? theme.primary 
+                          : 'transparent',
+                      }
+                    ]} 
+                    onPress={() => setShowCalendarSettings(true)}
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel="Calendar settings"
+                    accessibilityHint="Configure calendar integration settings"
+                  >
+                    <Ionicons 
+                      name="calendar" 
+                      size={scaleWidth(20)} 
+                      color={calendarSettings.syncEnabled || calendarSettings.showCalendarEvents 
+                        ? theme.primary 
+                        : theme.text
+                      } 
+                    />
+                  </TouchableOpacity>
+
                   {/* Share Button - To the right of navigation buttons */}
                   <TouchableOpacity 
                     style={[
@@ -798,14 +929,6 @@ else if (isPremium && tabName === 'Month') {
   const WeekTab = () => {
     return (
       <View style={{ flex: 1, backgroundColor: theme.background }}>
-        <ScrollView 
-          style={styles.content}
-          showsVerticalScrollIndicator={true}
-          contentContainerStyle={[
-            styles.scrollViewContent,
-            { paddingBottom: insets.bottom + scaleHeight(80) }
-          ]}
-        >
           {/* Navigation Controls are now moved here */}
           <View style={[
             styles.navigationContainer,
@@ -894,6 +1017,38 @@ else if (isPremium && tabName === 'Month') {
                 />
               </TouchableOpacity>
 
+              {/* Calendar Settings Button */}
+              <TouchableOpacity 
+                style={[
+                  styles.calendarButton, 
+                  ensureAccessibleTouchTarget(scaleWidth(40), scaleWidth(40)),
+                  { 
+                    backgroundColor: calendarSettings.syncEnabled || calendarSettings.showCalendarEvents 
+                      ? theme.primary + '20' 
+                      : theme.cardElevated,
+                    borderRadius: scaleWidth(20),
+                    borderWidth: calendarSettings.syncEnabled || calendarSettings.showCalendarEvents ? 1 : 0,
+                    borderColor: calendarSettings.syncEnabled || calendarSettings.showCalendarEvents 
+                      ? theme.primary 
+                      : 'transparent',
+                  }
+                ]} 
+                onPress={() => setShowCalendarSettings(true)}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Calendar settings"
+                accessibilityHint="Configure calendar integration settings"
+              >
+                <Ionicons 
+                  name="calendar" 
+                  size={scaleWidth(20)} 
+                  color={calendarSettings.syncEnabled || calendarSettings.showCalendarEvents 
+                    ? theme.primary 
+                    : theme.text
+                  } 
+                />
+              </TouchableOpacity>
+
               {/* Share Button - To the left of navigation buttons */}
               <TouchableOpacity 
                 style={[
@@ -932,7 +1087,6 @@ else if (isPremium && tabName === 'Month') {
             isPremium={isPremium}
             maxFreeBlocks={3} // Limit blocks shown in free version
           />
-        </ScrollView>
       </View>
     );
   };
@@ -1034,6 +1188,38 @@ else if (isPremium && tabName === 'Month') {
                   name="chevron-forward" 
                   size={scaleWidth(22)} 
                   color={theme.text} 
+                />
+              </TouchableOpacity>
+
+              {/* Calendar Settings Button */}
+              <TouchableOpacity 
+                style={[
+                  styles.calendarButton, 
+                  ensureAccessibleTouchTarget(scaleWidth(40), scaleWidth(40)),
+                  { 
+                    backgroundColor: calendarSettings.syncEnabled || calendarSettings.showCalendarEvents 
+                      ? theme.primary + '20' 
+                      : theme.cardElevated,
+                    borderRadius: scaleWidth(20),
+                    borderWidth: calendarSettings.syncEnabled || calendarSettings.showCalendarEvents ? 1 : 0,
+                    borderColor: calendarSettings.syncEnabled || calendarSettings.showCalendarEvents 
+                      ? theme.primary 
+                      : 'transparent',
+                  }
+                ]} 
+                onPress={() => setShowCalendarSettings(true)}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Calendar settings"
+                accessibilityHint="Configure calendar integration settings"
+              >
+                <Ionicons 
+                  name="calendar" 
+                  size={scaleWidth(20)} 
+                  color={calendarSettings.syncEnabled || calendarSettings.showCalendarEvents 
+                    ? theme.primary 
+                    : theme.text
+                  } 
                 />
               </TouchableOpacity>
 
@@ -1285,7 +1471,7 @@ else if (isPremium && tabName === 'Month') {
           styles.floatingAddButton, 
           {
             transform: [{ scale: buttonScale }],
-            bottom: insets.bottom + scaleHeight(20),
+            bottom: insets.bottom - scaleHeight(20), // A bit higher
             left: scaleWidth(20),
           }
         ]}
@@ -1293,10 +1479,11 @@ else if (isPremium && tabName === 'Month') {
         <TouchableOpacity
           style={[
             styles.floatingAddButtonInner,
-            ensureAccessibleTouchTarget(scaleWidth(60), scaleWidth(60)),
             {
               backgroundColor: theme.primary,
-              borderRadius: scaleWidth(30),
+              width: Math.max(scaleWidth(60), 44),
+              height: Math.max(scaleWidth(60), 44),
+              borderRadius: Math.max(scaleWidth(60), 44) / 2,
             }
           ]}
           onPress={handleAddTimeBlock}
@@ -1368,6 +1555,12 @@ else if (isPremium && tabName === 'Month') {
         }}
         isDarkMode={isDarkMode}
       />
+      
+      {/* Calendar Settings Modal */}
+      <CalendarSettingsModal
+        visible={showCalendarSettings}
+        onClose={() => setShowCalendarSettings(false)}
+      />
     </SafeAreaView>
   );
 };
@@ -1411,6 +1604,15 @@ const styles = StyleSheet.create({
   },
   todayButtonText: {
     // fontWeight, fontSize set in component
+  },
+  
+  // Calendar button style
+  calendarButton: {
+    // width, height, borderRadius set in component
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'absolute',
+    right: scaleWidth(50), // Position to the right of share button
   },
   
   // Share button style - Simplified to just an icon

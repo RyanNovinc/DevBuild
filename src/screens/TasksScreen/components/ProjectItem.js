@@ -25,6 +25,7 @@ const ProjectItem = ({
   
   // Wrapper function that also tracks goal progress updates
   const handleStatusChangeWithTracking = (projectId, newStatus) => {
+    console.log(`🎯 [UI DEBUG] handleStatusChangeWithTracking called - Project: ${projectId}, Status: ${newStatus}`);
     // First call the original handler
     handleChangeProjectStatus(projectId, newStatus);
     
@@ -287,7 +288,11 @@ const ProjectItem = ({
               {/* Checkmark to move from To Do to Done */}
               <TouchableOpacity 
                 style={[styles.actionButton, { minWidth: 44, minHeight: 44 }]}
-                onPress={() => handleStatusChangeWithTracking(item.id, 'done')}
+                onPress={() => {
+                  console.log(`🚀 TICK BUTTON CLICKED FOR PROJECT: ${item.title} (${item.id}) 🚀`);
+                  console.log(`🚀 STARTING PROJECT COMPLETION FLOW 🚀`);
+                  handleStatusChangeWithTracking(item.id, 'done');
+                }}
                 accessible={true}
                 accessibilityRole="button"
                 accessibilityLabel="Mark as Done"
@@ -323,7 +328,11 @@ const ProjectItem = ({
               {/* Checkmark to move from In Progress to Done */}
               <TouchableOpacity 
                 style={[styles.actionButton, { minWidth: 44, minHeight: 44 }]}
-                onPress={() => handleStatusChangeWithTracking(item.id, 'done')}
+                onPress={() => {
+                  console.log(`🚀 TICK BUTTON CLICKED FOR PROJECT: ${item.title} (${item.id}) 🚀`);
+                  console.log(`🚀 STARTING PROJECT COMPLETION FLOW 🚀`);
+                  handleStatusChangeWithTracking(item.id, 'done');
+                }}
                 accessible={true}
                 accessibilityRole="button"
                 accessibilityLabel="Mark as Done"
