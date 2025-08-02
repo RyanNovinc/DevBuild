@@ -62,8 +62,8 @@ const AddGoalModal = ({
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [selectedIcon, setSelectedIcon] = useState('star');
-  const [selectedColor, setSelectedColor] = useState(color || '#4CAF50');
-  const [domain, setDomain] = useState('');
+  const [selectedColor, setSelectedColor] = useState('#14b8a6');
+  const [domain, setDomain] = useState('Other');
   const [hasTargetDate, setHasTargetDate] = useState(false);
   const [targetDate, setTargetDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -185,6 +185,10 @@ const AddGoalModal = ({
   
   // Get the current selected domain based on icon
   const getSelectedDomain = () => {
+    // If no icon is selected, return null
+    if (!selectedIcon) {
+      return null;
+    }
     // Find domain by matching icon
     const domainName = getDomainByIcon(selectedIcon);
     return domainName;
@@ -270,9 +274,9 @@ const AddGoalModal = ({
         console.log(`Matched domain for "${normalizedGoal.title}" to "${matchedDomain.name}"`);
       } else {
         // No match found, use normalized values
-        setDomain(normalizedGoal.domain || '');
+        setDomain(normalizedGoal.domain || 'Other');
         setSelectedIcon(normalizedGoal.icon || 'star');
-        setSelectedColor(normalizedGoal.color || color || '#4CAF50');
+        setSelectedColor(normalizedGoal.color || '#14b8a6');
         console.log(`Using normalized domain info: ${normalizedGoal.domain}, icon: ${normalizedGoal.icon}`);
       }
       
@@ -293,8 +297,19 @@ const AddGoalModal = ({
       setTitle('');
       setDescription('');
       setSelectedIcon('star');
-      setSelectedColor(color || '#4CAF50');
-      setDomain('');
+      setSelectedColor('#14b8a6');
+      setDomain('Other');
+      setHasTargetDate(false);
+      const defaultDate = new Date();
+      defaultDate.setMonth(defaultDate.getMonth() + 3);
+      setTargetDate(defaultDate);
+    } else if (visible && !goalData) {
+      // Creating a new goal - start with Other domain
+      setTitle('');
+      setDescription('');
+      setSelectedIcon('star');
+      setSelectedColor('#14b8a6');
+      setDomain('Other');
       setHasTargetDate(false);
       const defaultDate = new Date();
       defaultDate.setMonth(defaultDate.getMonth() + 3);
@@ -338,8 +353,8 @@ const AddGoalModal = ({
     setTitle('');
     setDescription('');
     setSelectedIcon('star');
-    setSelectedColor(color || '#4CAF50');
-    setDomain('');
+    setSelectedColor('#14b8a6');
+    setDomain('Other');
     setHasTargetDate(false);
   };
   

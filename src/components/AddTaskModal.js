@@ -15,12 +15,14 @@ import {
   ScrollView,
   Animated,
   Easing,
-  Dimensions
+  Dimensions,
+  FlatList
 } from 'react-native';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useAppContext } from '../context/AppContext';
+import TaskInputModal from './TaskInputModal';
 
 // Import responsive utilities
 import {
@@ -48,9 +50,13 @@ const AddTaskModal = ({
   const appContext = useAppContext();
   const safeSpacing = useSafeSpacing();
   
+  // State for tabs
+  const [activeTab, setActiveTab] = useState('add'); // 'add' or 'list'
+  const [taskList, setTaskList] = useState([]);
+  
   // Task state
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [showTaskInputModal, setShowTaskInputModal] = useState(false);
   
   // Goal and project selection state
   const [selectedGoalId, setSelectedGoalId] = useState(null);
@@ -82,7 +88,7 @@ const AddTaskModal = ({
   // Filter projects based on selected goal - only show active projects
   const availableProjects = selectedGoalId 
     ? allProjects.filter(project => project.goalId === selectedGoalId) 
-    : allProjects;
+    : [];
   
   // Handle modal animation
   useEffect(() => {
@@ -110,46 +116,36 @@ const AddTaskModal = ({
     }
   }, [visible]);
   
-  // Update form when editing an existing task
+  // Reset form when modal opens
   useEffect(() => {
-    if (visible) {
-      if (isEditing && task) {
-        setTitle(task.title || '');
-        setDescription(task.description || '');
-        
-        // Set goal and project if available and still active
-        if (task.goalId) {
-          const goalStillActive = goals.some(goal => goal.id === task.goalId);
-          if (goalStillActive) {
-            setSelectedGoalId(task.goalId);
-            setSelectedGoalTitle(task.goalTitle || '');
-          } else {
-            setSelectedGoalId(null);
-            setSelectedGoalTitle('');
+    if (visible && !isEditing) {
+      setTitle('');
+      setTaskList([]);
+      setActiveTab('add');
+      // Don't reset goal and project selections
+    }
+  }, [visible, isEditing]);
+  
+  // Pre-populate data from task prop if provided
+  useEffect(() => {
+    if (visible && task && !isEditing) {
+      setTitle(task.title || '');
+      if (task.projectTitle) {
+        const project = allProjects.find(p => p.title === task.projectTitle);
+        if (project) {
+          setSelectedProjectId(project.id);
+          setSelectedProjectTitle(project.title);
+          if (project.goalId) {
+            const goal = goals.find(g => g.id === project.goalId);
+            if (goal) {
+              setSelectedGoalId(goal.id);
+              setSelectedGoalTitle(goal.title);
+            }
           }
         }
-        
-        if (task.projectId) {
-          const projectStillActive = allProjects.some(project => project.id === task.projectId);
-          if (projectStillActive) {
-            setSelectedProjectId(task.projectId);
-            setSelectedProjectTitle(task.projectTitle || '');
-          } else {
-            setSelectedProjectId(null);
-            setSelectedProjectTitle('');
-          }
-        }
-      } else {
-        // Reset for new task
-        setTitle('');
-        setDescription('');
-        setSelectedGoalId(null);
-        setSelectedGoalTitle('');
-        setSelectedProjectId(null);
-        setSelectedProjectTitle('');
       }
     }
-  }, [visible, isEditing, task]);
+  }, [visible, task, isEditing]);
   
   // Animate goal dropdown
   useEffect(() => {
@@ -180,7 +176,7 @@ const AddTaskModal = ({
         })
       ]).start();
     }
-  }, [showGoalList]);
+  }, [showGoalList, goals.length]);
   
   // Animate project dropdown
   useEffect(() => {
@@ -212,99 +208,139 @@ const AddTaskModal = ({
       ]).start();
     }
   }, [showProjectList, availableProjects.length]);
-
-  const dismissKeyboard = () => {
-    Keyboard.dismiss();
-  };
-
-  const handleClose = () => {
-    setShowGoalList(false);
-    setShowProjectList(false);
-    onClose();
-  };
-
+  
+  // Add task to list
   const handleAddTask = () => {
     if (!title.trim()) {
-      Alert.alert('Required Field', 'Please enter a task title.');
+      Alert.alert('Required Field', 'Please enter a task name');
       return;
     }
-
-    const taskData = {
+    
+    if (!selectedGoalId) {
+      Alert.alert('Required Field', 'Please select a goal');
+      return;
+    }
+    
+    if (!selectedProjectId) {
+      Alert.alert('Required Field', 'Please select a project');
+      return;
+    }
+    
+    const newTask = {
+      id: Date.now().toString(),
       title: title.trim(),
-      description: description.trim(),
       goalId: selectedGoalId,
       goalTitle: selectedGoalTitle,
       projectId: selectedProjectId,
       projectTitle: selectedProjectTitle,
+      status: 'todo',
       completed: false
     };
-
-    onAdd(taskData);
+    
+    setTaskList([...taskList, newTask]);
+    setTitle(''); // Reset only the title
+    setActiveTab('list'); // Switch to list tab
+  };
+  
+  // Remove task from list
+  const handleRemoveTask = (taskId) => {
+    setTaskList(taskList.filter(t => t.id !== taskId));
+  };
+  
+  // Save all tasks
+  const handleSaveAll = () => {
+    if (taskList.length === 0) {
+      Alert.alert('No Tasks', 'Please add at least one task before saving');
+      return;
+    }
+    
+    // Call onAdd for each task
+    taskList.forEach(task => {
+      onAdd({
+        title: task.title,
+        goalId: task.goalId,
+        goalTitle: task.goalTitle,
+        projectId: task.projectId,
+        projectTitle: task.projectTitle,
+        status: task.status
+      });
+    });
+    
     handleClose();
   };
-
+  
+  // Select goal
   const selectGoal = (goal) => {
     setSelectedGoalId(goal.id);
     setSelectedGoalTitle(goal.title);
     setShowGoalList(false);
     
-    // Clear project selection if it's not available for this goal
+    // Reset project if it doesn't belong to the new goal
     if (selectedProjectId) {
-      const projectStillAvailable = allProjects.some(
-        project => project.id === selectedProjectId && project.goalId === goal.id
-      );
-      if (!projectStillAvailable) {
+      const project = allProjects.find(p => p.id === selectedProjectId);
+      if (project && project.goalId !== goal.id) {
         setSelectedProjectId(null);
         setSelectedProjectTitle('');
       }
     }
   };
-
+  
+  // Select project
   const selectProject = (project) => {
     setSelectedProjectId(project.id);
     setSelectedProjectTitle(project.title);
     setShowProjectList(false);
   };
-
-  const clearGoalSelection = () => {
-    setSelectedGoalId(null);
-    setSelectedGoalTitle('');
-    setSelectedProjectId(null);
-    setSelectedProjectTitle('');
+  
+  // Dismiss keyboard
+  const dismissKeyboard = () => {
+    Keyboard.dismiss();
     setShowGoalList(false);
-  };
-
-  const clearProjectSelection = () => {
-    setSelectedProjectId(null);
-    setSelectedProjectTitle('');
     setShowProjectList(false);
   };
-
-  // Gesture handling for drag-to-dismiss
-  const onGestureEvent = Animated.event(
-    [{ nativeEvent: { translationY: translateY } }],
-    { useNativeDriver: true }
-  );
-
+  
+  // Handle close with animation
+  const handleClose = () => {
+    const screenHeight = Dimensions.get('window').height;
+    
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+        easing: Easing.in(Easing.ease)
+      }),
+      Animated.timing(slideAnim, {
+        toValue: screenHeight,
+        duration: 250,
+        useNativeDriver: true,
+        easing: Easing.in(Easing.ease)
+      })
+    ]).start(() => {
+      setTitle('');
+      setTaskList([]);
+      setActiveTab('add');
+      setSelectedGoalId(null);
+      setSelectedGoalTitle('');
+      setSelectedProjectId(null);
+      setSelectedProjectTitle('');
+      onClose();
+    });
+  };
+  
+  // Handle swipe gesture
   const handleGestureEnd = (event) => {
     const { translationY, velocityY } = event.nativeEvent;
+    const screenHeight = Dimensions.get('window').height;
+    const dismissThreshold = screenHeight * 0.2;
+    const fastSwipeVelocity = 1200;
     
-    if (translationY > 100 || velocityY > 1000) {
-      // User swiped down enough to dismiss
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: true
-        }),
-        Animated.timing(slideAnim, {
-          toValue: Dimensions.get('window').height,
-          duration: 200,
-          useNativeDriver: true
-        })
-      ]).start(handleClose);
+    const shouldDismiss = translationY > dismissThreshold || velocityY > fastSwipeVelocity;
+    
+    if (shouldDismiss) {
+      handleClose();
     } else {
-      // Snap back to original position
+      // Bounce back
       Animated.spring(translateY, {
         toValue: 0,
         useNativeDriver: true,
@@ -313,426 +349,27 @@ const AddTaskModal = ({
       }).start();
     }
   };
-
-  const buttonColor = color || theme.primary || '#007AFF';
-
-  // Simplified editing modal
-  const renderEditingModal = () => (
-    <View style={styles.editingContainer}>
-      <KeyboardAvoidingView 
-        style={styles.editingKeyboardContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
-      >
-        <TouchableWithoutFeedback onPress={dismissKeyboard}>
-          <View style={[
-            styles.editingModalContent, 
-            { 
-              backgroundColor: theme.card,
-              borderRadius: 12,
-              margin: spacing.l,
-              padding: spacing.l,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.25,
-              shadowRadius: 3.84,
-              elevation: 5,
-            }
-          ]}>
-            {/* Header */}
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: theme.text }]}>
-                Edit Task
-              </Text>
-              <TouchableOpacity 
-                style={styles.closeButton}
-                onPress={handleClose}
-                accessible={true}
-                accessibilityRole="button"
-                accessibilityLabel="Close modal"
-              >
-                <Ionicons name="close" size={24} color={theme.text} />
-              </TouchableOpacity>
-            </View>
-            
-            {/* Task Title Input */}
-            <TextInput
-              style={[
-                styles.input,
-                { 
-                  backgroundColor: theme.inputBackground,
-                  color: theme.text,
-                  borderColor: theme.border,
-                  borderWidth: 1,
-                  borderRadius: 8,
-                  paddingHorizontal: spacing.m,
-                  paddingVertical: spacing.s,
-                  fontSize: scaleFontSize(16),
-                  marginBottom: spacing.m,
-                  minHeight: accessibility.minTouchTarget,
-                }
-              ]}
-              value={title}
-              onChangeText={setTitle}
-              placeholder="Enter task title"
-              placeholderTextColor={theme.textSecondary}
-              autoFocus={true}
-              maxFontSizeMultiplier={1.3}
-              accessible={true}
-              accessibilityLabel="Task title"
-              accessibilityHint="Enter a title for your task"
-            />
-            
-            {/* Save Button */}
-            <TouchableOpacity 
-              style={[
-                styles.addButton, 
-                { 
-                  backgroundColor: buttonColor,
-                  borderRadius: 8,
-                  paddingVertical: spacing.m,
-                  alignItems: 'center',
-                  marginTop: spacing.xs,
-                  minHeight: accessibility.minTouchTarget,
-                }
-              ]}
-              onPress={handleAddTask}
-              accessible={true}
-              accessibilityRole="button"
-              accessibilityLabel="Save changes"
-              accessibilityHint="Save the edited task"
-            >
-              <Text style={[
-                styles.addButtonText,
-                {
-                  color: '#fff',
-                  fontSize: scaleFontSize(16),
-                  fontWeight: '600',
-                  maxFontSizeMultiplier: 1.3,
-                }
-              ]}>
-                Save Changes
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
+  
+  const onGestureEvent = Animated.event(
+    [{ nativeEvent: { translationY: translateY } }],
+    { useNativeDriver: true }
+  );
+  
+  // Render task item
+  const renderTaskItem = ({ item }) => (
+    <View style={[styles.taskItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
+      <View style={styles.taskItemContent}>
+        <Text style={[styles.taskItemTitle, { color: theme.text }]}>{item.title}</Text>
+        <Text style={[styles.taskItemSubtitle, { color: theme.textSecondary }]}>
+          {item.goalTitle} → {item.projectTitle}
+        </Text>
+      </View>
+      <TouchableOpacity onPress={() => handleRemoveTask(item.id)} style={styles.removeButton}>
+        <Ionicons name="close-circle" size={24} color={theme.error} />
+      </TouchableOpacity>
     </View>
   );
-
-  // Full creation modal
-  const renderCreationModal = () => (
-    <PanGestureHandler
-      onGestureEvent={onGestureEvent}
-      onHandlerStateChange={(event) => {
-        if (event.nativeEvent.state === State.END) {
-          handleGestureEnd(event);
-        }
-      }}
-    >
-      <Animated.View
-        style={[
-          styles.gestureContainer,
-          {
-            transform: [
-              { translateY: Animated.add(slideAnim, translateY) }
-            ]
-          }
-        ]}
-      >
-        <KeyboardAvoidingView 
-          style={styles.keyboardContainer}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? scaleHeight(100) : scaleHeight(50)}
-        >
-          <TouchableWithoutFeedback onPress={dismissKeyboard}>
-            <View style={[
-              styles.modalContent, 
-              { 
-                backgroundColor: theme.card,
-                padding: spacing.m,
-                paddingBottom: safeSpacing.bottom > spacing.m ? safeSpacing.bottom : spacing.xl,
-                borderTopLeftRadius: scaleWidth(16),
-                borderTopRightRadius: scaleWidth(16),
-                maxHeight: '90%',
-              }
-            ]}>
-              {/* Swipe indicator */}
-              <View style={[
-                styles.swipeIndicator,
-                { backgroundColor: theme.textSecondary + '40' }
-              ]} />
-              
-              <View style={[styles.modalHeader, { marginBottom: spacing.m }]}>
-                <Text style={[
-                  styles.modalTitle, 
-                  { 
-                    color: theme.text,
-                    fontSize: scaleFontSize(20),
-                    fontWeight: '600',
-                    textAlign: 'center',
-                    flex: 1,
-                  }
-                ]}>
-                  Add New Task
-                </Text>
-                <TouchableOpacity 
-                  style={styles.closeButton}
-                  onPress={handleClose}
-                  accessible={true}
-                  accessibilityRole="button"
-                  accessibilityLabel="Close modal"
-                >
-                  <Ionicons name="close" size={24} color={theme.text} />
-                </TouchableOpacity>
-              </View>
-
-              <ScrollView 
-                style={styles.scrollContent}
-                showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
-              >
-                {/* Task Title */}
-                <View style={styles.inputSection}>
-                  <Text style={[styles.inputLabel, { color: theme.text }]}>
-                    Task Title *
-                  </Text>
-                  <TextInput
-                    style={[
-                      styles.input,
-                      { 
-                        backgroundColor: theme.inputBackground,
-                        color: theme.text,
-                        borderColor: theme.border,
-                      }
-                    ]}
-                    value={title}
-                    onChangeText={setTitle}
-                    placeholder="Enter task title"
-                    placeholderTextColor={theme.textSecondary}
-                    autoFocus={false}
-                    maxFontSizeMultiplier={1.3}
-                    accessible={true}
-                    accessibilityLabel="Task title"
-                    accessibilityHint="Enter a title for your task"
-                  />
-                </View>
-
-                {/* Goal Selection */}
-                <View style={styles.inputSection}>
-                  <Text style={[styles.inputLabel, { color: theme.text }]}>
-                    Goal (Optional)
-                  </Text>
-                  <TouchableOpacity 
-                    style={[
-                      styles.dropdown, 
-                      { 
-                        backgroundColor: theme.inputBackground,
-                        borderColor: theme.border,
-                      }
-                    ]}
-                    onPress={() => setShowGoalList(!showGoalList)}
-                    accessible={true}
-                    accessibilityRole="button"
-                    accessibilityLabel="Select goal"
-                  >
-                    <Text style={[
-                      styles.dropdownText, 
-                      { color: selectedGoalTitle ? theme.text : theme.textSecondary }
-                    ]}>
-                      {selectedGoalTitle || 'Select a goal'}
-                    </Text>
-                    <View style={styles.dropdownActions}>
-                      {selectedGoalId && (
-                        <TouchableOpacity 
-                          onPress={clearGoalSelection}
-                          style={styles.clearButton}
-                          accessible={true}
-                          accessibilityRole="button"
-                          accessibilityLabel="Clear goal selection"
-                        >
-                          <Ionicons name="close-circle" size={20} color={theme.textSecondary} />
-                        </TouchableOpacity>
-                      )}
-                      <Ionicons 
-                        name={showGoalList ? "chevron-up" : "chevron-down"} 
-                        size={20} 
-                        color={theme.textSecondary} 
-                      />
-                    </View>
-                  </TouchableOpacity>
-
-                  {/* Goal List */}
-                  <Animated.View style={[
-                    styles.dropdownList,
-                    {
-                      height: goalDropdownHeight,
-                      opacity: goalDropdownOpacity,
-                      backgroundColor: theme.inputBackground,
-                      borderColor: theme.border,
-                    }
-                  ]}>
-                    <ScrollView showsVerticalScrollIndicator={false}>
-                      {goals.map(goal => (
-                        <TouchableOpacity
-                          key={goal.id}
-                          style={[
-                            styles.dropdownItem,
-                            { borderBottomColor: theme.border }
-                          ]}
-                          onPress={() => selectGoal(goal)}
-                          accessible={true}
-                          accessibilityRole="button"
-                          accessibilityLabel={`Select goal: ${goal.title}`}
-                        >
-                          <View style={[
-                            styles.goalColorIndicator,
-                            { backgroundColor: goal.color }
-                          ]} />
-                          <Text style={[styles.dropdownItemText, { color: theme.text }]}>
-                            {goal.title}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </ScrollView>
-                  </Animated.View>
-                </View>
-
-                {/* Project Selection */}
-                <View style={styles.inputSection}>
-                  <Text style={[styles.inputLabel, { color: theme.text }]}>
-                    Project (Optional)
-                  </Text>
-                  <TouchableOpacity 
-                    style={[
-                      styles.dropdown, 
-                      { 
-                        backgroundColor: theme.inputBackground,
-                        borderColor: theme.border,
-                        opacity: availableProjects.length === 0 ? 0.5 : 1
-                      }
-                    ]}
-                    onPress={() => availableProjects.length > 0 && setShowProjectList(!showProjectList)}
-                    disabled={availableProjects.length === 0}
-                    accessible={true}
-                    accessibilityRole="button"
-                    accessibilityLabel="Select project"
-                  >
-                    <Text style={[
-                      styles.dropdownText, 
-                      { color: selectedProjectTitle ? theme.text : theme.textSecondary }
-                    ]}>
-                      {selectedProjectTitle || (availableProjects.length === 0 ? 'No projects available' : 'Select a project')}
-                    </Text>
-                    <View style={styles.dropdownActions}>
-                      {selectedProjectId && (
-                        <TouchableOpacity 
-                          onPress={clearProjectSelection}
-                          style={styles.clearButton}
-                          accessible={true}
-                          accessibilityRole="button"
-                          accessibilityLabel="Clear project selection"
-                        >
-                          <Ionicons name="close-circle" size={20} color={theme.textSecondary} />
-                        </TouchableOpacity>
-                      )}
-                      {availableProjects.length > 0 && (
-                        <Ionicons 
-                          name={showProjectList ? "chevron-up" : "chevron-down"} 
-                          size={20} 
-                          color={theme.textSecondary} 
-                        />
-                      )}
-                    </View>
-                  </TouchableOpacity>
-
-                  {/* Project List */}
-                  <Animated.View style={[
-                    styles.dropdownList,
-                    {
-                      height: projectDropdownHeight,
-                      opacity: projectDropdownOpacity,
-                      backgroundColor: theme.inputBackground,
-                      borderColor: theme.border,
-                    }
-                  ]}>
-                    <ScrollView showsVerticalScrollIndicator={false}>
-                      {availableProjects.map(project => (
-                        <TouchableOpacity
-                          key={project.id}
-                          style={[
-                            styles.dropdownItem,
-                            { borderBottomColor: theme.border }
-                          ]}
-                          onPress={() => selectProject(project)}
-                          accessible={true}
-                          accessibilityRole="button"
-                          accessibilityLabel={`Select project: ${project.title}`}
-                        >
-                          <View style={[
-                            styles.goalColorIndicator,
-                            { backgroundColor: project.color }
-                          ]} />
-                          <Text style={[styles.dropdownItemText, { color: theme.text }]}>
-                            {project.title}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </ScrollView>
-                  </Animated.View>
-                </View>
-
-                {/* Description */}
-                <View style={styles.inputSection}>
-                  <Text style={[styles.inputLabel, { color: theme.text }]}>
-                    Description (Optional)
-                  </Text>
-                  <TextInput
-                    style={[
-                      styles.input,
-                      styles.textArea,
-                      { 
-                        backgroundColor: theme.inputBackground,
-                        color: theme.text,
-                        borderColor: theme.border,
-                      }
-                    ]}
-                    value={description}
-                    onChangeText={setDescription}
-                    placeholder="Enter task description"
-                    placeholderTextColor={theme.textSecondary}
-                    multiline
-                    numberOfLines={4}
-                    textAlignVertical="top"
-                    maxFontSizeMultiplier={1.3}
-                    accessible={true}
-                    accessibilityLabel="Task description"
-                    accessibilityHint="Enter an optional description for your task"
-                  />
-                </View>
-              </ScrollView>
-
-              {/* Add Button */}
-              <TouchableOpacity 
-                style={[
-                  styles.addButton, 
-                  { backgroundColor: buttonColor }
-                ]}
-                onPress={handleAddTask}
-                accessible={true}
-                accessibilityRole="button"
-                accessibilityLabel="Add task"
-                accessibilityHint="Create the new task"
-              >
-                <Text style={styles.addButtonText}>Add Task</Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableWithoutFeedback>
-        </KeyboardAvoidingView>
-      </Animated.View>
-    </PanGestureHandler>
-  );
-
+  
   return (
     <Modal
       visible={visible}
@@ -742,15 +379,365 @@ const AddTaskModal = ({
     >
       <Animated.View 
         style={[
-          styles.overlay, 
-          { 
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            opacity: fadeAnim 
+          styles.overlay,
+          {
+            opacity: fadeAnim,
+            backgroundColor: 'rgba(0,0,0,0.5)'
           }
         ]}
       >
-        {isEditing ? renderEditingModal() : renderCreationModal()}
+        <TouchableWithoutFeedback onPress={handleClose}>
+          <View style={styles.overlayTouchable} />
+        </TouchableWithoutFeedback>
+        
+        <Animated.View
+          style={[
+            styles.gestureContainer,
+            {
+              transform: [
+                { translateY: Animated.add(slideAnim, translateY) }
+              ]
+            }
+          ]}
+        >
+            <KeyboardAvoidingView
+              style={styles.keyboardContainer}
+              behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+              keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+            >
+              <TouchableWithoutFeedback onPress={dismissKeyboard}>
+                <View style={[
+                  styles.modalContent, 
+                  { 
+                    backgroundColor: theme.card,
+                    padding: spacing.m,
+                    paddingBottom: safeSpacing.bottom > spacing.m ? safeSpacing.bottom : spacing.xl,
+                    borderTopLeftRadius: scaleWidth(16),
+                    borderTopRightRadius: scaleWidth(16),
+                    height: '95%',
+                  }
+                ]}>
+                  {/* Swipe indicator - This is the grab handle */}
+                  <PanGestureHandler
+                    onGestureEvent={onGestureEvent}
+                    onHandlerStateChange={(event) => {
+                      if (event.nativeEvent.state === State.END) {
+                        handleGestureEnd(event);
+                      }
+                    }}
+                  >
+                    <Animated.View style={styles.swipeHandle}>
+                      <View style={[
+                        styles.swipeIndicator,
+                        { backgroundColor: theme.textSecondary + '40' }
+                      ]} />
+                    </Animated.View>
+                  </PanGestureHandler>
+                  
+                  <View style={[styles.modalHeader, { marginBottom: spacing.m }]}>
+                    <Text style={[
+                      styles.modalTitle, 
+                      { 
+                        color: theme.text,
+                        maxWidth: accessibility.maxTextWidth
+                      }
+                    ]}>
+                      Add Tasks
+                    </Text>
+                    <TouchableOpacity 
+                      style={styles.closeButton} 
+                      onPress={handleClose}
+                      accessible={true}
+                      accessibilityRole="button"
+                      accessibilityLabel="Close modal"
+                    >
+                      <Ionicons name="close" size={scaleWidth(24)} color={theme.textSecondary} />
+                    </TouchableOpacity>
+                  </View>
+                  
+                  {/* Tabs */}
+                  <View style={[styles.tabs, { borderBottomColor: theme.border }]}>
+                    <TouchableOpacity
+                      style={[
+                        styles.tab,
+                        activeTab === 'add' && { borderBottomColor: theme.primary }
+                      ]}
+                      onPress={() => setActiveTab('add')}
+                    >
+                      <Text style={[
+                        styles.tabText,
+                        { color: activeTab === 'add' ? theme.primary : theme.textSecondary }
+                      ]}>
+                        Add Task
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.tab,
+                        activeTab === 'list' && { borderBottomColor: theme.primary }
+                      ]}
+                      onPress={() => setActiveTab('list')}
+                    >
+                      <Text style={[
+                        styles.tabText,
+                        { color: activeTab === 'list' ? theme.primary : theme.textSecondary }
+                      ]}>
+                        Task List ({taskList.length})
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                  
+                  {activeTab === 'add' ? (
+                    <ScrollView 
+                      style={styles.scrollContent}
+                      showsVerticalScrollIndicator={false}
+                    >
+                      {/* Goal Selection - First */}
+                      <View style={[styles.inputSection, { zIndex: 3 }]}>
+                        <Text style={[styles.inputLabel, { color: theme.text }]}>
+                          Goal
+                        </Text>
+                        <TouchableOpacity
+                          style={[
+                            styles.dropdown,
+                            { 
+                              backgroundColor: theme.inputBackground,
+                              borderColor: theme.border
+                            }
+                          ]}
+                          onPress={() => {
+                            setShowGoalList(!showGoalList);
+                            setShowProjectList(false);
+                          }}
+                          accessible={true}
+                          accessibilityRole="button"
+                          accessibilityLabel={selectedGoalTitle || "Select a goal"}
+                          accessibilityHint="Tap to show goal options"
+                        >
+                          <Text style={[
+                            styles.dropdownText,
+                            { color: selectedGoalTitle ? theme.text : theme.textSecondary }
+                          ]}>
+                            {selectedGoalTitle || "Select a goal"}
+                          </Text>
+                          <Ionicons 
+                            name={showGoalList ? "chevron-up" : "chevron-down"} 
+                            size={scaleWidth(20)} 
+                            color={theme.textSecondary} 
+                          />
+                        </TouchableOpacity>
+                        
+                        <Animated.View style={[
+                          styles.dropdownList,
+                          {
+                            height: goalDropdownHeight,
+                            opacity: goalDropdownOpacity,
+                            backgroundColor: theme.card,
+                            borderColor: theme.border
+                          }
+                        ]}>
+                          <ScrollView nestedScrollEnabled={true}>
+                            {goals.map((goal) => (
+                              <TouchableOpacity
+                                key={goal.id}
+                                style={[styles.dropdownItem, { borderBottomColor: theme.border }]}
+                                onPress={() => selectGoal(goal)}
+                              >
+                                <View style={[styles.goalDot, { backgroundColor: goal.color }]} />
+                                <Text style={[styles.dropdownItemText, { color: theme.text }]}>
+                                  {goal.title}
+                                </Text>
+                              </TouchableOpacity>
+                            ))}
+                          </ScrollView>
+                        </Animated.View>
+                      </View>
+                      
+                      {/* Project Selection - Second */}
+                      <View style={[styles.inputSection, { zIndex: 2 }]}>
+                        <Text style={[styles.inputLabel, { color: theme.text }]}>
+                          Project
+                        </Text>
+                        <TouchableOpacity
+                          style={[
+                            styles.dropdown,
+                            { 
+                              backgroundColor: theme.inputBackground,
+                              borderColor: theme.border,
+                              opacity: selectedGoalId ? 1 : 0.5
+                            }
+                          ]}
+                          onPress={() => {
+                            if (selectedGoalId) {
+                              setShowProjectList(!showProjectList);
+                              setShowGoalList(false);
+                            } else {
+                              Alert.alert('Select Goal First', 'Please select a goal before choosing a project');
+                            }
+                          }}
+                          disabled={!selectedGoalId}
+                          accessible={true}
+                          accessibilityRole="button"
+                          accessibilityLabel={selectedProjectTitle || "Select a project"}
+                          accessibilityHint={selectedGoalId ? "Tap to show project options" : "Select a goal first"}
+                        >
+                          <Text style={[
+                            styles.dropdownText,
+                            { color: selectedProjectTitle ? theme.text : theme.textSecondary }
+                          ]}>
+                            {selectedProjectTitle || (selectedGoalId ? "Select a project" : "Select a goal first")}
+                          </Text>
+                          <Ionicons 
+                            name={showProjectList ? "chevron-up" : "chevron-down"} 
+                            size={scaleWidth(20)} 
+                            color={theme.textSecondary} 
+                          />
+                        </TouchableOpacity>
+                        
+                        <Animated.View style={[
+                          styles.dropdownList,
+                          {
+                            height: projectDropdownHeight,
+                            opacity: projectDropdownOpacity,
+                            backgroundColor: theme.card,
+                            borderColor: theme.border
+                          }
+                        ]}>
+                          <ScrollView nestedScrollEnabled={true}>
+                            {availableProjects.length > 0 ? (
+                              availableProjects.map((project) => (
+                                <TouchableOpacity
+                                  key={project.id}
+                                  style={[styles.dropdownItem, { borderBottomColor: theme.border }]}
+                                  onPress={() => selectProject(project)}
+                                >
+                                  <View style={[styles.projectDot, { backgroundColor: project.color || theme.primary }]} />
+                                  <Text style={[styles.dropdownItemText, { color: theme.text }]}>
+                                    {project.title}
+                                  </Text>
+                                </TouchableOpacity>
+                              ))
+                            ) : (
+                              <View style={styles.emptyDropdown}>
+                                <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
+                                  No projects for this goal
+                                </Text>
+                              </View>
+                            )}
+                          </ScrollView>
+                        </Animated.View>
+                      </View>
+                      
+                      {/* Task Title */}
+                      <View style={[styles.inputSection, { zIndex: 1 }]}>
+                        <Text style={[styles.inputLabel, { color: theme.text }]}>
+                          Task Name
+                        </Text>
+                        <TouchableOpacity
+                          style={[
+                            styles.input,
+                            { 
+                              backgroundColor: theme.inputBackground,
+                              borderColor: theme.border,
+                              justifyContent: 'center'
+                            }
+                          ]}
+                          onPress={() => setShowTaskInputModal(true)}
+                          accessible={true}
+                          accessibilityLabel="Task name input"
+                          accessibilityHint="Tap to enter the name for your task"
+                        >
+                          <Text style={[
+                            styles.inputText,
+                            { color: title ? theme.text : theme.textSecondary }
+                          ]}>
+                            {title || "Enter task name"}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                      
+                      {/* Add Task Button */}
+                      <TouchableOpacity
+                        style={[
+                          styles.addButton,
+                          { 
+                            backgroundColor: theme.primary,
+                            opacity: title.trim() && selectedGoalId && selectedProjectId ? 1 : 0.5
+                          }
+                        ]}
+                        onPress={handleAddTask}
+                        disabled={!title.trim() || !selectedGoalId || !selectedProjectId}
+                        accessible={true}
+                        accessibilityRole="button"
+                        accessibilityLabel="Add task to list"
+                        accessibilityHint="Adds the current task to your task list"
+                      >
+                        <Ionicons name="add" size={24} color="#FFFFFF" />
+                        <Text style={styles.addButtonText}>Add Task to List</Text>
+                      </TouchableOpacity>
+                    </ScrollView>
+                  ) : (
+                    <View style={styles.listContainer}>
+                      {taskList.length > 0 ? (
+                        <FlatList
+                          data={taskList}
+                          renderItem={renderTaskItem}
+                          keyExtractor={(item) => item.id}
+                          contentContainerStyle={styles.taskList}
+                          showsVerticalScrollIndicator={false}
+                        />
+                      ) : (
+                        <View style={styles.emptyList}>
+                          <Ionicons name="list-outline" size={48} color={theme.textSecondary} />
+                          <Text style={[styles.emptyListText, { color: theme.textSecondary }]}>
+                            No tasks added yet
+                          </Text>
+                          <TouchableOpacity
+                            style={styles.switchTabButton}
+                            onPress={() => setActiveTab('add')}
+                          >
+                            <Text style={[styles.switchTabText, { color: theme.primary }]}>
+                              Add a task
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      )}
+                      
+                      {/* Save All Button */}
+                      {taskList.length > 0 && (
+                        <TouchableOpacity
+                          style={[
+                            styles.saveAllButton,
+                            { backgroundColor: theme.primary }
+                          ]}
+                          onPress={handleSaveAll}
+                          accessible={true}
+                          accessibilityRole="button"
+                          accessibilityLabel="Save all tasks"
+                          accessibilityHint="Saves all tasks in the list"
+                        >
+                          <Ionicons name="checkmark-circle" size={24} color="#FFFFFF" />
+                          <Text style={styles.saveAllButtonText}>Save All Tasks</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  )}
+                </View>
+              </TouchableWithoutFeedback>
+            </KeyboardAvoidingView>
+          </Animated.View>
       </Animated.View>
+      
+      {/* Task Input Modal */}
+      <TaskInputModal
+        visible={showTaskInputModal}
+        onClose={() => setShowTaskInputModal(false)}
+        onConfirm={(taskName) => {
+          setTitle(taskName);
+          setShowTaskInputModal(false);
+        }}
+        initialValue={title}
+      />
     </Modal>
   );
 };
@@ -759,6 +746,9 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
+  },
+  overlayTouchable: {
+    flex: 1,
   },
   gestureContainer: {
     flex: 1,
@@ -769,14 +759,17 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    minHeight: scaleHeight(300),
+    minHeight: scaleHeight(600),
+  },
+  swipeHandle: {
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.s,
+    alignItems: 'center',
   },
   swipeIndicator: {
     width: scaleWidth(40),
     height: scaleHeight(4),
     borderRadius: scaleWidth(2),
-    alignSelf: 'center',
-    marginBottom: spacing.s,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -793,6 +786,22 @@ const styles = StyleSheet.create({
     minWidth: accessibility.minTouchTarget,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  tabs: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    marginBottom: spacing.m,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: spacing.s,
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  tabText: {
+    fontSize: scaleFontSize(16),
+    fontWeight: '500',
   },
   scrollContent: {
     flex: 1,
@@ -813,9 +822,8 @@ const styles = StyleSheet.create({
     fontSize: scaleFontSize(16),
     minHeight: accessibility.minTouchTarget,
   },
-  textArea: {
-    minHeight: scaleHeight(100),
-    paddingTop: spacing.s,
+  inputText: {
+    fontSize: scaleFontSize(16),
   },
   dropdown: {
     borderWidth: 1,
@@ -831,14 +839,6 @@ const styles = StyleSheet.create({
     fontSize: scaleFontSize(16),
     flex: 1,
   },
-  dropdownActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  clearButton: {
-    marginRight: spacing.xs,
-    padding: spacing.xxxs,
-  },
   dropdownList: {
     borderWidth: 1,
     borderRadius: scaleWidth(8),
@@ -846,48 +846,111 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   dropdownItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingHorizontal: spacing.m,
     paddingVertical: spacing.s,
-    borderBottomWidth: 1,
-    minHeight: scaleHeight(50),
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   dropdownItemText: {
-    fontSize: scaleFontSize(16),
+    fontSize: scaleFontSize(14),
     flex: 1,
   },
-  goalColorIndicator: {
+  goalDot: {
     width: scaleWidth(12),
     height: scaleWidth(12),
     borderRadius: scaleWidth(6),
     marginRight: spacing.s,
   },
+  projectDot: {
+    width: scaleWidth(8),
+    height: scaleWidth(8),
+    borderRadius: scaleWidth(4),
+    marginRight: spacing.s,
+  },
+  emptyDropdown: {
+    padding: spacing.m,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: scaleFontSize(14),
+  },
   addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: spacing.m,
     borderRadius: scaleWidth(8),
-    alignItems: 'center',
     marginTop: spacing.m,
-    minHeight: accessibility.minTouchTarget,
   },
   addButtonText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontSize: scaleFontSize(16),
     fontWeight: '600',
+    marginLeft: spacing.s,
   },
-  
-  // Editing modal styles
-  editingContainer: {
-    flex: 1,
-    justifyContent: 'flex-start',
-    paddingTop: scaleHeight(80),
-  },
-  editingKeyboardContainer: {
+  listContainer: {
     flex: 1,
   },
-  editingModalContent: {
-    maxHeight: scaleHeight(300),
-  }
+  taskList: {
+    paddingBottom: spacing.xl,
+  },
+  taskItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.m,
+    borderRadius: scaleWidth(8),
+    borderWidth: 1,
+    marginBottom: spacing.s,
+  },
+  taskItemContent: {
+    flex: 1,
+  },
+  taskItemTitle: {
+    fontSize: scaleFontSize(16),
+    fontWeight: '500',
+  },
+  taskItemSubtitle: {
+    fontSize: scaleFontSize(12),
+    marginTop: spacing.xxs,
+  },
+  removeButton: {
+    padding: spacing.xs,
+  },
+  emptyList: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.xxl,
+  },
+  emptyListText: {
+    fontSize: scaleFontSize(16),
+    marginTop: spacing.m,
+  },
+  switchTabButton: {
+    marginTop: spacing.m,
+  },
+  switchTabText: {
+    fontSize: scaleFontSize(16),
+    fontWeight: '500',
+  },
+  saveAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.m,
+    borderRadius: scaleWidth(8),
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  saveAllButtonText: {
+    color: '#FFFFFF',
+    fontSize: scaleFontSize(16),
+    fontWeight: '600',
+    marginLeft: spacing.s,
+  },
 });
 
 export default AddTaskModal;

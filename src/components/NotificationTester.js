@@ -365,7 +365,7 @@ const NotificationTester = ({ theme }) => {
         <View style={styles.warningBox}>
           <Ionicons name="warning" size={24} color="#FF9800" />
           <Text style={styles.warningText}>
-            Visual alerts are disabled. Please make sure "Allow Notifications" and "Show as Banners" are both enabled in your device settings: Settings → Notifications → LifeBalance Builder
+            Visual alerts are disabled. Please make sure "Allow Notifications" and "Show as Banners" are both enabled in your device settings: Settings → Notifications → LifeCompass
           </Text>
         </View>
       )}

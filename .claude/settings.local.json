@@ -1,9 +1,13 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
     "allow": [
-      "Bash(timeout 30 npx expo start --dev-client --port 8083)"
+      "Bash(timeout 30 npx expo start --dev-client --port 8083)",
+      "Bash(npm start)",
+      "Bash(npx expo start:*)",
+      "Bash(npx react-native start:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
-  },
-  "$schema": "https://json.schemastore.org/claude-code-settings.json"
+  }
 }

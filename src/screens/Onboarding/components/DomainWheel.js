@@ -9,6 +9,56 @@ import { getTranslatedDomainName } from '../data/domainTranslations';
 
 const { width } = Dimensions.get('window');
 
+// Simple pulsing icon component
+const PulsingIcon = ({ iconName, iconX, iconY, shouldPulse }) => {
+  const scale = useRef(new Animated.Value(1)).current;
+  const ICON_SIZE = 24;
+
+  useEffect(() => {
+    if (shouldPulse) {
+      // Reset and start pulse animation
+      scale.setValue(1);
+      Animated.sequence([
+        Animated.timing(scale, {
+          toValue: 1.3,
+          duration: 300,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(scale, {
+          toValue: 1,
+          duration: 300,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: true,
+        })
+      ]).start();
+    }
+  }, [shouldPulse]);
+
+  return (
+    <Animated.View
+      style={{
+        position: 'absolute',
+        left: iconX,
+        top: iconY,
+        width: ICON_SIZE,
+        height: ICON_SIZE,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'transparent',
+        zIndex: 5,
+        transform: [{ scale }]
+      }}
+    >
+      <Ionicons 
+        name={iconName} 
+        size={ICON_SIZE} 
+        color="#FFFFFF" 
+      />
+    </Animated.View>
+  );
+};
+
 const DomainWheel = ({ domains, onDomainSelected, selectedDomain, onCenterButtonPress }) => {
   // Get translation function and current language
   const { t, currentLanguage } = useI18n();
@@ -18,17 +68,8 @@ const DomainWheel = ({ domains, onDomainSelected, selectedDomain, onCenterButton
   const rippleScale = useRef(new Animated.Value(1)).current;
   const rippleOpacity = useRef(new Animated.Value(0)).current;
   
-  // Animation for domain pulsing
-  const domainPulseAnimations = useRef([]).current;
-  
-  // Initialize domain pulse animations
-  useEffect(() => {
-    if (domains && domainPulseAnimations.length === 0) {
-      for (let i = 0; i < domains.length; i++) {
-        domainPulseAnimations.push(new Animated.Value(1));
-      }
-    }
-  }, [domains]);
+  // Simple state for triggering pulse animation
+  const [shouldPulse, setShouldPulse] = useState(false);
   
   // Calculate wheel dimensions
   const WHEEL_SIZE = Math.min(width * 0.85, 340);
@@ -80,10 +121,10 @@ const DomainWheel = ({ domains, onDomainSelected, selectedDomain, onCenterButton
   useEffect(() => {
     let bounceTimeout;
     
-    // Ripple effect that triggers after bounce - balanced visibility
+    // Ripple effect that triggers after bounce - stronger visibility
     const createRipple = () => {
       rippleScale.setValue(1);
-      rippleOpacity.setValue(0.4);
+      rippleOpacity.setValue(0.7);
       
       Animated.parallel([
         Animated.timing(rippleScale, {
@@ -124,8 +165,8 @@ const DomainWheel = ({ domains, onDomainSelected, selectedDomain, onCenterButton
           useNativeDriver: true
         })
       ]).start(() => {
-        // Next bounce in 2-4 seconds
-        const nextDelay = 2000 + Math.random() * 2000;
+        // Next bounce in 1.5-2.5 seconds (more frequent)
+        const nextDelay = 1500 + Math.random() * 1000;
         bounceTimeout = setTimeout(createBounce, nextDelay);
       });
       
@@ -147,27 +188,10 @@ const DomainWheel = ({ domains, onDomainSelected, selectedDomain, onCenterButton
     };
   }, []);
 
-  // All domains pulse together like being hit by ripple
+  // All domains pulse once when hit by ripple
   const pulseAllDomains = () => {
-    // Animate all domains at once
-    const domainAnimations = domainPulseAnimations.map(anim => 
-      Animated.sequence([
-        Animated.timing(anim, {
-          toValue: 1.15,
-          duration: 300,
-          easing: Easing.ease,
-          useNativeDriver: true
-        }),
-        Animated.timing(anim, {
-          toValue: 1,
-          duration: 300,
-          easing: Easing.ease,
-          useNativeDriver: true
-        })
-      ])
-    );
-    
-    Animated.parallel(domainAnimations).start();
+    setShouldPulse(true);
+    setTimeout(() => setShouldPulse(false), 600); // Reset after animation
   };
 
   // Use useMemo to calculate wheel slices only when domains change
@@ -377,26 +401,13 @@ const DomainWheel = ({ domains, onDomainSelected, selectedDomain, onCenterButton
             const iconY = centerY + slice.iconY - ICON_SIZE / 2;
             
             return (
-              <Animated.View
+              <PulsingIcon
                 key={`icon-${index}`}
-                style={[
-                  styles.iconView,
-                  {
-                    left: iconX,
-                    top: iconY,
-                    width: ICON_SIZE,
-                    height: ICON_SIZE,
-                    zIndex: 5,
-                    transform: [{ scale: domainPulseAnimations[index] || 1 }]
-                  }
-                ]}
-              >
-                <Ionicons 
-                  name={slice.domain.icon} 
-                  size={ICON_SIZE} 
-                  color="#FFFFFF" 
-                />
-              </Animated.View>
+                iconName={slice.domain.icon}
+                iconX={iconX}
+                iconY={iconY}
+                shouldPulse={shouldPulse}
+              />
             );
           })}
         </View>
@@ -414,9 +425,9 @@ const DomainWheel = ({ domains, onDomainSelected, selectedDomain, onCenterButton
                 width: CENTER_RADIUS * 2,
                 height: CENTER_RADIUS * 2,
                 borderRadius: CENTER_RADIUS,
-                borderWidth: 1,
-                borderColor: 'rgba(59, 130, 246, 0.7)',
-                backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                borderWidth: 2,
+                borderColor: 'rgba(59, 130, 246, 0.9)',
+                backgroundColor: 'rgba(59, 130, 246, 0.15)',
                 zIndex: 19,
                 transform: [{ scale: rippleScale }],
                 opacity: rippleOpacity

@@ -9,19 +9,19 @@ if command -v convert &> /dev/null; then
     echo "ImageMagick is installed, creating placeholder images..."
     
     # Create a simple icon (512x512)
-    convert -size 512x512 xc:#4CAF50 -font Arial -pointsize 70 -fill white -gravity center -annotate 0 "LB" assets/icon.png
+    convert -size 512x512 xc:#4CAF50 -font Arial -pointsize 70 -fill white -gravity center -annotate 0 "LC" assets/icon.png
     
     # Create adaptive icon (foreground)
-    convert -size 512x512 xc:#4CAF50 -font Arial -pointsize 70 -fill white -gravity center -annotate 0 "LB" assets/adaptive-icon.png
+    convert -size 512x512 xc:#4CAF50 -font Arial -pointsize 70 -fill white -gravity center -annotate 0 "LC" assets/adaptive-icon.png
     
     # Create splash screen
-    convert -size 1242x2436 xc:#4CAF50 -font Arial -pointsize 100 -fill white -gravity center -annotate 0 "LifeBalance\nBuilder" assets/splash.png
+    convert -size 1242x2436 xc:#4CAF50 -font Arial -pointsize 100 -fill white -gravity center -annotate 0 "LifeCompass" assets/splash.png
     
     # Create favicon
-    convert -size 64x64 xc:#4CAF50 -font Arial -pointsize 18 -fill white -gravity center -annotate 0 "LB" assets/favicon.png
+    convert -size 64x64 xc:#4CAF50 -font Arial -pointsize 18 -fill white -gravity center -annotate 0 "LC" assets/favicon.png
     
     # Create notification icon
-    convert -size 96x96 xc:#FFFFFF -fill "#4CAF50" -draw "circle 48,48 48,10" -gravity center -font Arial -pointsize 30 -annotate 0 "LB" assets/notification-icon.png
+    convert -size 96x96 xc:#FFFFFF -fill "#4CAF50" -draw "circle 48,48 48,10" -gravity center -font Arial -pointsize 30 -annotate 0 "LC" assets/notification-icon.png
     
     # Create notification sound (empty file)
     touch assets/notification-sound.wav

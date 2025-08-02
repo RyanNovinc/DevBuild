@@ -123,7 +123,7 @@ export const generateShareableContent = (
   }
   
   // Add app branding
-  content += `\nShared from Life Balance app`;
+  content += `\nShared from LifeCompass app`;
   
   return content;
 };

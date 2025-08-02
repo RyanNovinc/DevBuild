@@ -90,7 +90,7 @@ const UpdateLifeDirectionModal = ({
     if (!lifeDirection.trim()) {
       Alert.alert(
         "Cannot Save Empty Direction",
-        "Please enter your life direction statement.",
+        "Please enter your strategic direction statement.",
         [{ text: "OK" }]
       );
       return;
@@ -224,7 +224,7 @@ const UpdateLifeDirectionModal = ({
                   ]} />
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: theme.text }]}>
-                Update Life Direction
+                Update Strategic Direction
               </Text>
               <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
                 <Ionicons name="close" size={24} color={theme.textSecondary} />
@@ -235,12 +235,12 @@ const UpdateLifeDirectionModal = ({
               <View style={styles.infoCard}>
                 <Ionicons name="compass" size={24} color={theme.primary} style={styles.infoIcon} />
                 <Text style={[styles.infoText, { color: theme.text }]}>
-                  Your life direction statement guides your goals and priorities. What's your purpose? What matters most to you?
+                  Your strategic direction statement guides your goals and priorities. What's your purpose? What matters most to you?
                 </Text>
               </View>
 
               <Text style={[styles.label, { color: theme.textSecondary }]}>
-                Your Life Direction Statement:
+                Your Strategic Direction Statement:
               </Text>
               <TextInput
                 style={[
@@ -266,35 +266,12 @@ const UpdateLifeDirectionModal = ({
                 {characterCount}/{MAX_CHARS} characters
               </Text>
 
-              {/* Examples */}
-              <Text style={[styles.examplesTitle, { color: theme.textSecondary }]}>
-                Examples:
-              </Text>
-              
-              <View style={[styles.exampleCard, { 
-                backgroundColor: `${theme.primary}20`,
-                borderColor: theme.border
-              }]}>
-                <Text style={[styles.exampleText, { color: theme.text }]}>
-                  "To live authentically and mindfully while creating a positive impact on others through my creativity and compassion."
-                </Text>
-              </View>
-              
-              <View style={[styles.exampleCard, { 
-                backgroundColor: `${theme.primary}20`,
-                borderColor: theme.border
-              }]}>
-                <Text style={[styles.exampleText, { color: theme.text }]}>
-                  "To grow into my fullest potential by pursuing meaningful work, nurturing close relationships, and maintaining balance in my physical and mental wellbeing."
-                </Text>
-              </View>
-
               <TouchableOpacity
                 style={[styles.saveButton, { backgroundColor: theme.primary }]}
                 onPress={handleSave}
               >
                 <Text style={styles.saveButtonText}>
-                  Save Life Direction
+                  Save Strategic Direction
                 </Text>
               </TouchableOpacity>
             </ScrollView>
@@ -336,7 +313,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 16,
     padding: 16,
     paddingBottom: Platform.OS === 'ios' ? 30 : 16,
-    maxHeight: '90%'
+    height: '78%'
   },
   modalHeader: {
     flexDirection: 'row',
@@ -352,7 +329,7 @@ const styles = StyleSheet.create({
     padding: 4
   },
   formContainer: {
-    marginBottom: Platform.OS === 'ios' ? 0 : 16
+    marginBottom: 0
   },
   infoCard: {
     flexDirection: 'row',
@@ -382,7 +359,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     fontSize: 16,
     marginBottom: 8,
-    minHeight: 120,
+    minHeight: 100,
     textAlignVertical: 'top'
   },
   characterCount: {
@@ -390,29 +367,12 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     marginBottom: 16
   },
-  examplesTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginTop: 16,
-    marginBottom: 8
-  },
-  exampleCard: {
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-    borderWidth: 1
-  },
-  exampleText: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontStyle: 'italic'
-  },
   saveButton: {
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 16
+    marginTop: 12,
+    marginBottom: 8
   },
   saveButtonText: {
     color: '#FFFFFF',

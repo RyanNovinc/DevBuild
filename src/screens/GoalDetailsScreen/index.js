@@ -104,7 +104,7 @@ const GoalDetailsScreen = ({ route, navigation }) => {
     title: '',
     description: '',
     selectedIcon: 'star',
-    selectedColor: '#4CAF50',
+    selectedColor: '#14b8a6',
     targetDate: new Date(),
     hasTargetDate: false,
     notifPrefs: {
@@ -179,7 +179,7 @@ const GoalDetailsScreen = ({ route, navigation }) => {
         const titleValue = initialGoal.title || '';
         const descriptionValue = initialGoal.description || '';
         const iconValue = initialGoal.icon || 'star';
-        const colorValue = initialGoal.color || '#4CAF50';
+        const colorValue = initialGoal.color || '#14b8a6';
         
         // Load notification preferences
         const prefs = {
@@ -259,11 +259,11 @@ const GoalDetailsScreen = ({ route, navigation }) => {
           ...prev,
           title: initialGoal.title || '',
           selectedIcon: 'star',
-          selectedColor: '#4CAF50'
+          selectedColor: '#14b8a6'
         }));
       }
     } else {
-      // Creating a new goal - set defaults
+      // Creating a new goal - set defaults to "Other" domain
       let iconValue = 'star';
       
       // If there's an initial domain passed, set corresponding values
@@ -279,7 +279,7 @@ const GoalDetailsScreen = ({ route, navigation }) => {
         title: '',
         description: '',
         selectedIcon: iconValue,
-        selectedColor: '#4CAF50',
+        selectedColor: '#14b8a6',
         targetDate: new Date(),
         hasTargetDate: false,
         notifPrefs: {
@@ -298,7 +298,7 @@ const GoalDetailsScreen = ({ route, navigation }) => {
         title: '',
         description: '',
         selectedIcon: iconValue,
-        selectedColor: '#4CAF50',
+        selectedColor: '#14b8a6',
         hasTargetDate: false,
         targetDate: new Date(),
         notifPrefs: {
@@ -1112,16 +1112,18 @@ const toggleTargetDate = () => {
         <TouchableOpacity 
           style={[
             styles.saveButton, 
-            { backgroundColor: goalState.selectedColor },
-            uiState.isLoading && { opacity: 0.6 }
+            { 
+              backgroundColor: goalState.selectedColor,
+              opacity: (!goalState.title.trim() || uiState.isLoading) ? 0.6 : 1.0
+            }
           ]}
           onPress={handleSave}
-          disabled={uiState.isLoading}
+          disabled={!goalState.title.trim() || uiState.isLoading}
           accessible={true}
           accessibilityRole="button"
           accessibilityLabel="Save goal"
           accessibilityHint="Saves your goal changes"
-          accessibilityState={{ disabled: uiState.isLoading }}
+          accessibilityState={{ disabled: !goalState.title.trim() || uiState.isLoading }}
         >
           <Ionicons name="save-outline" size={scaleWidth(18)} color="#000000" />
           <Text 
