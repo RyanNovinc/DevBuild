@@ -26,12 +26,8 @@ const ProjectPreview = ({
   const progress = calculateProgress();
   const displayTitle = title.trim() || 'Give your project a title';
   
-  // Animation for progress bar
-  const progressWidth = scrollY.interpolate({
-    inputRange: [-50, 0, 50],
-    outputRange: [progress + 5, progress, progress - 5 > 0 ? progress - 5 : 0],
-    extrapolate: 'clamp'
-  });
+  // Use actual progress percentage instead of scroll-based animation
+  const progressWidth = progress;
   
   // Get appropriate text color based on background
   const getIconColor = (bgColor) => {
@@ -114,7 +110,7 @@ const ProjectPreview = ({
         {/* Progress Bar */}
         <View style={styles.progressPreview}>
           <View style={[styles.progressBar, { backgroundColor: theme.backgroundTertiary || '#333333' }]}>
-            <Animated.View 
+            <View 
               style={[
                 styles.progressFill, 
                 { 

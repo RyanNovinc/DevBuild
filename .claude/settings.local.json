@@ -1,27 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(grep:*)",
-      "Bash(diff:*)",
-      "Bash(mkdir:*)",
-      "Bash(cp:*)",
-      "Bash(rsync:*)",
-      "Bash(npm start:*)",
-      "Bash(node:*)",
-      "WebFetch(domain:www.npmjs.com)",
-      "WebFetch(domain:npmtrends.com)",
-      "WebFetch(domain:medium.com)",
-      "Bash(npx expo install:*)",
-      "Bash(git add:*)",
-      "Bash(npm run lint:*)",
-      "Bash(npm run:*)",
-      "Bash(rm:*)",
-      "mcp__ide__getDiagnostics",
-      "Bash(mv:*)",
-      "Bash(awk:*)",
-      "Bash(python3:*)",
-      "Bash(find:*)",
-      "Bash(timeout 30 npm start)"
+      "Bash(timeout 30 npx expo start --dev-client --port 8083)"
     ],
     "deny": []
   },
