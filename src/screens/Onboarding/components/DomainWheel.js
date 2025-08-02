@@ -1,6 +1,6 @@
 // src/screens/Onboarding/components/DomainWheel.js
-import React, { useMemo } from 'react';
-import { View, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import React, { useMemo, useEffect, useRef, useState } from 'react';
+import { View, StyleSheet, Dimensions, TouchableOpacity, Animated, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Path, G, Circle, Text as SvgText } from 'react-native-svg';
 import ResponsiveText from './ResponsiveText';
@@ -12,6 +12,23 @@ const { width } = Dimensions.get('window');
 const DomainWheel = ({ domains, onDomainSelected, selectedDomain, onCenterButtonPress }) => {
   // Get translation function and current language
   const { t, currentLanguage } = useI18n();
+  
+  // Animations for center circle breathing and ripple effect
+  const centerScale = useRef(new Animated.Value(1)).current;
+  const rippleScale = useRef(new Animated.Value(1)).current;
+  const rippleOpacity = useRef(new Animated.Value(0)).current;
+  
+  // Animation for domain pulsing
+  const domainPulseAnimations = useRef([]).current;
+  
+  // Initialize domain pulse animations
+  useEffect(() => {
+    if (domains && domainPulseAnimations.length === 0) {
+      for (let i = 0; i < domains.length; i++) {
+        domainPulseAnimations.push(new Animated.Value(1));
+      }
+    }
+  }, [domains]);
   
   // Calculate wheel dimensions
   const WHEEL_SIZE = Math.min(width * 0.85, 340);
@@ -59,6 +76,100 @@ const DomainWheel = ({ domains, onDomainSelected, selectedDomain, onCenterButton
     return [x, y];
   };
   
+  // Subtle bounce animation that triggers ripple on completion
+  useEffect(() => {
+    let bounceTimeout;
+    
+    // Ripple effect that triggers after bounce - balanced visibility
+    const createRipple = () => {
+      rippleScale.setValue(1);
+      rippleOpacity.setValue(0.4);
+      
+      Animated.parallel([
+        Animated.timing(rippleScale, {
+          toValue: 2.2,
+          duration: 1500,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: true
+        }),
+        Animated.timing(rippleOpacity, {
+          toValue: 0,
+          duration: 1500,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: true
+        })
+      ]).start();
+      
+      // Trigger domain pulse when ripple reaches the domains (after ~800ms)
+      setTimeout(() => {
+        pulseAllDomains();
+      }, 800);
+    };
+
+    // Bounce animation that triggers ripple during bounce-back
+    const createBounce = () => {
+      Animated.sequence([
+        // Quick drop (like settling onto a soft surface)
+        Animated.timing(centerScale, {
+          toValue: 0.97,
+          duration: 100,
+          easing: Easing.ease,
+          useNativeDriver: true
+        }),
+        // Gentle bounce back with spring
+        Animated.spring(centerScale, {
+          toValue: 1.0,
+          friction: 6,
+          tension: 100,
+          useNativeDriver: true
+        })
+      ]).start(() => {
+        // Next bounce in 2-4 seconds
+        const nextDelay = 2000 + Math.random() * 2000;
+        bounceTimeout = setTimeout(createBounce, nextDelay);
+      });
+      
+      // Trigger ripple slightly earlier - during the bounce-back
+      setTimeout(() => {
+        createRipple();
+      }, 120); // Start ripple 120ms after bounce begins (20ms after drop completes)
+    };
+
+
+    // Start first bounce after 2 seconds
+    bounceTimeout = setTimeout(createBounce, 2000);
+
+    // Cleanup
+    return () => {
+      if (bounceTimeout) {
+        clearTimeout(bounceTimeout);
+      }
+    };
+  }, []);
+
+  // All domains pulse together like being hit by ripple
+  const pulseAllDomains = () => {
+    // Animate all domains at once
+    const domainAnimations = domainPulseAnimations.map(anim => 
+      Animated.sequence([
+        Animated.timing(anim, {
+          toValue: 1.15,
+          duration: 300,
+          easing: Easing.ease,
+          useNativeDriver: true
+        }),
+        Animated.timing(anim, {
+          toValue: 1,
+          duration: 300,
+          easing: Easing.ease,
+          useNativeDriver: true
+        })
+      ])
+    );
+    
+    Animated.parallel(domainAnimations).start();
+  };
+
   // Use useMemo to calculate wheel slices only when domains change
   const wheelSlices = useMemo(() => {
     if (!domains || domains.length === 0) return [];
@@ -141,13 +252,14 @@ const DomainWheel = ({ domains, onDomainSelected, selectedDomain, onCenterButton
             
             return (
               <G key={`slice-${index}`}>
-                {/* Main slice with solid color fill */}
+                {/* Main slice with solid color fill - now touchable */}
                 <Path
                   d={slice.path}
                   fill={slice.domain.color}
                   stroke="rgba(255,255,255,0.2)"
                   strokeWidth={0.5}
                   opacity={isSelected ? 1 : 0.7}
+                  onPress={() => onDomainSelected(slice.domain)}
                 />
                 
                 {/* Domain label outside wheel */}
@@ -175,7 +287,7 @@ const DomainWheel = ({ domains, onDomainSelected, selectedDomain, onCenterButton
                   </SvgText>
                 </G>
                 
-                {/* Circle background for icon */}
+                {/* Circle background for icon - also clickable */}
                 <Circle
                   cx={slice.iconX}
                   cy={slice.iconY}
@@ -183,49 +295,73 @@ const DomainWheel = ({ domains, onDomainSelected, selectedDomain, onCenterButton
                   fill={isSelected ? slice.domain.color : 'rgba(255,255,255,0.15)'}
                   stroke={isSelected ? '#FFFFFF' : 'rgba(255,255,255,0.3)'}
                   strokeWidth={isSelected ? 2 : 1}
+                  onPress={() => onDomainSelected(slice.domain)}
                 />
               </G>
             );
           })}
           
-          {/* Center circle - Now a touchable button */}
+          {/* Center circle placeholder - hidden, replaced by animated overlay */}
           <Circle
             cx="0"
             cy="0"
             r={CENTER_RADIUS}
-            fill="#1e3a8a"
-            stroke="rgba(255,255,255,0.2)"
-            strokeWidth={1}
-            onPress={handleCenterPress}
-            // Add pressed state visual feedback
-            opacity={0.9}
-            // Add shadow or glow effect
-            filter="url(#glow)"
+            fill="transparent"
+            stroke="none"
+            strokeWidth={0}
+            opacity={0}
           />
-          
-          {/* Center content */}
-          <SvgText
-            x="0"
-            y="-4"
-            textAnchor="middle"
-            fontSize="18"
-            fontWeight="bold"
-            fill="#FFFFFF"
-            onPress={handleCenterPress}
-          >
-            8
-          </SvgText>
-          <SvgText
-            x="0"
-            y="14"
-            textAnchor="middle"
-            fontSize="10"
-            fill="rgba(255,255,255,0.8)"
-            onPress={handleCenterPress}
-          >
-            {currentLanguage === 'ja' ? 'ドメイン' : 'Domains'}
-          </SvgText>
         </Svg>
+        
+        {/* Animated center circle overlay with float */}
+        <Animated.View
+          style={[
+            {
+              position: 'absolute',
+              left: SVG_CONTAINER_SIZE / 2 - CENTER_RADIUS,
+              top: SVG_CONTAINER_SIZE / 2 - CENTER_RADIUS,
+              width: CENTER_RADIUS * 2,
+              height: CENTER_RADIUS * 2,
+              borderRadius: CENTER_RADIUS,
+              backgroundColor: '#1e3a8a',
+              borderWidth: 2,
+              borderColor: '#3b82f6',
+              justifyContent: 'center',
+              alignItems: 'center',
+              zIndex: 21,
+              transform: [{ scale: centerScale }],
+              shadowColor: '#3b82f6',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.3,
+              shadowRadius: 4,
+              elevation: 4,
+            }
+          ]}
+          pointerEvents="none"
+        >
+          <ResponsiveText style={{
+            fontSize: 18,
+            fontWeight: 'bold',
+            color: '#FFFFFF',
+            marginTop: -2
+          }}>
+            8
+          </ResponsiveText>
+          <ResponsiveText style={{
+            fontSize: 10,
+            color: 'rgba(255,255,255,0.8)',
+            marginTop: -2
+          }}>
+            {currentLanguage === 'ja' ? 'ドメイン' : 'Domains'}
+          </ResponsiveText>
+          <ResponsiveText style={{
+            fontSize: 8,
+            color: 'rgba(255,255,255,0.6)',
+            marginTop: 2
+          }}>
+            {currentLanguage === 'ja' ? 'タップ' : 'TAP'}
+          </ResponsiveText>
+        </Animated.View>
         
         {/* Position icons using manual calculation */}
         <View style={styles.iconsOverlay} pointerEvents="none">
@@ -241,7 +377,7 @@ const DomainWheel = ({ domains, onDomainSelected, selectedDomain, onCenterButton
             const iconY = centerY + slice.iconY - ICON_SIZE / 2;
             
             return (
-              <View
+              <Animated.View
                 key={`icon-${index}`}
                 style={[
                   styles.iconView,
@@ -250,7 +386,8 @@ const DomainWheel = ({ domains, onDomainSelected, selectedDomain, onCenterButton
                     top: iconY,
                     width: ICON_SIZE,
                     height: ICON_SIZE,
-                    zIndex: 10
+                    zIndex: 5,
+                    transform: [{ scale: domainPulseAnimations[index] || 1 }]
                   }
                 ]}
               >
@@ -259,112 +396,47 @@ const DomainWheel = ({ domains, onDomainSelected, selectedDomain, onCenterButton
                   size={ICON_SIZE} 
                   color="#FFFFFF" 
                 />
-              </View>
+              </Animated.View>
             );
           })}
         </View>
         
-        {/* Create individual TouchableOpacity overlays for each segment */}
+        {/* Simplified approach - just center button touch area */}
         <View style={styles.touchableOverlays}>
-          {wheelSlices.map((slice, index) => {
-            const centerX = SVG_CONTAINER_SIZE / 2;
-            const centerY = SVG_CONTAINER_SIZE / 2;
-            const outerRadius = WHEEL_SIZE / 2;
-            
-            // Calculate the pie slice vertices
-            const startAngleRad = (slice.startAngle - 90) * Math.PI / 180;
-            const endAngleRad = (slice.endAngle - 90) * Math.PI / 180;
-            const midAngleRad = (slice.midAngle - 90) * Math.PI / 180;
-            
-            // Calculate inner point
-            const innerRadius = CENTER_RADIUS + 2; // Add small offset
-            const innerX = centerX + innerRadius * Math.cos(midAngleRad);
-            const innerY = centerY + innerRadius * Math.sin(midAngleRad);
-            
-            // Calculate two outer points
-            const outerX1 = centerX + outerRadius * Math.cos(startAngleRad);
-            const outerY1 = centerY + outerRadius * Math.sin(startAngleRad);
-            const outerX2 = centerX + outerRadius * Math.cos(endAngleRad);
-            const outerY2 = centerY + outerRadius * Math.sin(endAngleRad);
-            
-            // Calculate the bounding box of these three points
-            const minX = Math.min(innerX, outerX1, outerX2);
-            const minY = Math.min(innerY, outerY1, outerY2);
-            const maxX = Math.max(innerX, outerX1, outerX2);
-            const maxY = Math.max(innerY, outerY1, outerY2);
-            
-            // Create bounding box dimensions
-            const width = maxX - minX;
-            const height = maxY - minY;
-            
-            // Create multiple touchable slices to cover the segment area better
-            const segmentTouchables = [];
-            
-            // Add main touchable area
-            segmentTouchables.push(
-              <TouchableOpacity
-                key={`segment-${index}`}
-                style={[
-                  styles.segmentTouch,
-                  {
-                    position: 'absolute',
-                    left: minX,
-                    top: minY,
-                    width: width,
-                    height: height,
-                    // Uncomment for debugging
-                    // backgroundColor: `rgba(255,0,0,0.2)`,
-                  }
-                ]}
-                onPress={() => onDomainSelected(slice.domain)}
-                activeOpacity={0.7}
-              />
-            );
-            
-            // Add more targeted touchable over the outer arc
-            const arcCenterX = centerX + (outerRadius * 0.7) * Math.cos(midAngleRad);
-            const arcCenterY = centerY + (outerRadius * 0.7) * Math.sin(midAngleRad);
-            const arcWidth = outerRadius * 0.6;
-            const arcHeight = outerRadius * Math.sin(slice.angle * Math.PI / 360) * 2;
-            
-            segmentTouchables.push(
-              <TouchableOpacity
-                key={`segment-arc-${index}`}
-                style={[
-                  styles.segmentTouch,
-                  {
-                    position: 'absolute',
-                    left: arcCenterX - arcWidth / 2,
-                    top: arcCenterY - arcHeight / 2,
-                    width: arcWidth,
-                    height: arcHeight,
-                    transform: [
-                      { rotate: `${slice.midAngle}deg` }
-                    ],
-                    // Uncomment for debugging
-                    // backgroundColor: `rgba(0,255,0,0.2)`,
-                  }
-                ]}
-                onPress={() => onDomainSelected(slice.domain)}
-                activeOpacity={0.7}
-              />
-            );
-            
-            return segmentTouchables;
-          })}
           
-          {/* Center button touch area - larger for easier tapping */}
+          {/* Ripple effect for center button - starts from edge */}
+          <Animated.View
+            style={[
+              {
+                position: 'absolute',
+                left: SVG_CONTAINER_SIZE / 2 - CENTER_RADIUS,
+                top: SVG_CONTAINER_SIZE / 2 - CENTER_RADIUS,
+                width: CENTER_RADIUS * 2,
+                height: CENTER_RADIUS * 2,
+                borderRadius: CENTER_RADIUS,
+                borderWidth: 1,
+                borderColor: 'rgba(59, 130, 246, 0.7)',
+                backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                zIndex: 19,
+                transform: [{ scale: rippleScale }],
+                opacity: rippleOpacity
+              }
+            ]}
+            pointerEvents="none"
+          />
+          
+          {/* Center button touch area */}
           <TouchableOpacity
             style={[
               styles.centerButton,
               {
-                left: SVG_CONTAINER_SIZE / 2 - CENTER_RADIUS - 10,
-                top: SVG_CONTAINER_SIZE / 2 - CENTER_RADIUS - 10,
-                width: CENTER_RADIUS * 2 + 20,
-                height: CENTER_RADIUS * 2 + 20,
-                borderRadius: CENTER_RADIUS + 10,
-                // Uncomment for debugging
-                // backgroundColor: 'rgba(0,0,255,0.2)',
+                left: SVG_CONTAINER_SIZE / 2 - CENTER_RADIUS - 15,
+                top: SVG_CONTAINER_SIZE / 2 - CENTER_RADIUS - 15,
+                width: CENTER_RADIUS * 2 + 30,
+                height: CENTER_RADIUS * 2 + 30,
+                borderRadius: CENTER_RADIUS + 15,
+                backgroundColor: 'transparent',
+                zIndex: 20,
               }
             ]}
             onPress={handleCenterPress}
@@ -412,7 +484,7 @@ const styles = StyleSheet.create({
   },
   segmentTouch: {
     backgroundColor: 'transparent',
-    zIndex: 5,
+    zIndex: 15,
   },
   centerButton: {
     position: 'absolute',

@@ -102,6 +102,44 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
     return unsubscribe;
   }, [navigation, refreshKey]);
   
+  // Auto-update app summary when app context data changes
+  useEffect(() => {
+    const updateAppSummaryIfNeeded = async () => {
+      // Only update if app context is loaded and not currently loading
+      if (!appContext.isLoading && appContext.goals && appContext.projects && appContext.tasks) {
+        try {
+          console.log('App context data changed, auto-updating app summary');
+          
+          const appData = {
+            goals: appContext.goals || [],
+            projects: appContext.projects || [],
+            tasks: appContext.tasks || [],
+            settings: appContext.settings || {}
+          };
+          
+          // Generate summary
+          const summary = AppSummaryService.generateAppSummary(appData);
+          
+          // Update system document
+          await DocumentService.updateAppContextDocument(summary);
+          console.log('App summary auto-updated successfully');
+          
+          // Reload documents to reflect the change
+          const updatedDocuments = await DocumentService.getDocuments();
+          setDocuments(updatedDocuments);
+        } catch (error) {
+          console.error('Error auto-updating app summary:', error);
+          // Don't show error to user for automatic updates
+        }
+      }
+    };
+    
+    // Debounce the update to avoid too frequent updates
+    const timeoutId = setTimeout(updateAppSummaryIfNeeded, 1000);
+    
+    return () => clearTimeout(timeoutId);
+  }, [appContext.goals, appContext.projects, appContext.tasks, appContext.settings, appContext.isLoading]);
+  
   // Calculate storage based on documents
   useEffect(() => {
     calculateStorageUsage();
@@ -140,6 +178,33 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
       
       if (systemDoc) {
         console.log('System document found:', systemDoc.name);
+        
+        // Always update the system document with latest app data when loading
+        try {
+          if (!appContext.isLoading) {
+            console.log('Updating system document with latest app data');
+            
+            const appData = {
+              goals: appContext.goals || [],
+              projects: appContext.projects || [],
+              tasks: appContext.tasks || [],
+              settings: appContext.settings || {}
+            };
+            
+            // Generate fresh summary
+            const summary = AppSummaryService.generateAppSummary(appData);
+            
+            // Update system document
+            await DocumentService.updateAppContextDocument(summary);
+            console.log('Updated system document with latest data');
+            
+            // Reload documents after updating
+            const updatedDocuments = await DocumentService.getDocuments();
+            setDocuments(updatedDocuments);
+          }
+        } catch (err) {
+          console.error('Failed to update system document:', err);
+        }
       } else {
         console.log('System document not found in loaded documents');
         
@@ -932,12 +997,14 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
                 Documents {`(${documents.length})`}
               </Text>
               <View style={styles.buttonContainer}>
-                {/* Add a button to force update app summary */}
+                {/* Optional manual refresh button (now that auto-update is enabled) */}
                 <TouchableOpacity
                   style={[
                     styles.refreshButton,
                     {
-                      backgroundColor: theme.primaryLight,
+                      backgroundColor: 'transparent',
+                      borderWidth: 1,
+                      borderColor: theme.border,
                       marginRight: spacing.s,
                       paddingHorizontal: spacing.xs,
                       paddingVertical: spacing.xxs,
@@ -949,23 +1016,23 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
                   onPress={forceUpdateAppSummary}
                   accessible={true}
                   accessibilityRole="button"
-                  accessibilityLabel="Update app summary"
-                  accessibilityHint="Manually updates the app context summary document"
+                  accessibilityLabel="Refresh app summary"
+                  accessibilityHint="Manually refreshes the app context summary document"
                 >
                   <Ionicons 
                     name="refresh" 
-                    size={scaleFontSize(18)} 
-                    color={theme.primary} 
+                    size={scaleFontSize(16)} 
+                    color={theme.textSecondary} 
                   />
                   <Text
                     style={{
-                      color: theme.primary,
+                      color: theme.textSecondary,
                       fontSize: isSmallDevice ? fontSizes.xxs : fontSizes.xs,
                       marginLeft: spacing.xxs,
-                      fontWeight: '600',
+                      fontWeight: '500',
                     }}
                   >
-                    Update Summary
+                    Refresh
                   </Text>
                 </TouchableOpacity>
                 

@@ -717,7 +717,7 @@ const DomainBalanceWheel = ({ theme, navigation }) => {
     >
       {/* Section Header */}
       <SectionHeader
-        title={balanceView ? "Equal Domain Balance" : "Active Focus Areas"}
+        title={balanceView ? "Domain Overview" : "Current Focus"}
         icon="compass-outline"
         theme={theme}
       />

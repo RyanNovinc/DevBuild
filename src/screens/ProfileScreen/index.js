@@ -8,10 +8,12 @@ import {
   Text,
   StatusBar,
   Animated,
+  Easing,
   InteractionManager,
   RefreshControl,
-  Alert,
-  TouchableOpacity
+  Alert,  
+  TouchableOpacity,
+  Dimensions
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -33,6 +35,7 @@ import {
   ensureAccessibleTouchTarget
 } from '../../utils/responsive';
 import { Ionicons } from '@expo/vector-icons';
+import { PanGestureHandler, State } from 'react-native-gesture-handler';
 
 // Import profile screen components
 import ProfileHeader from './ProfileHeader';
@@ -44,6 +47,8 @@ import AIExplanationModal from './AIExplanationModal';
 import DomainColorPickerModal from './DomainColorPickerModal';
 import ThemeColorPickerModal from './ThemeColorPickerModal';
 import { STANDARD_DOMAINS } from './constants';
+
+const { width: screenWidth } = Dimensions.get('window');
 
 const ProfileScreen = ({ navigation, route }) => {
   // Add initialization guard to prevent multiple runs
@@ -1170,7 +1175,54 @@ const ProfileScreen = ({ navigation, route }) => {
   
   // State toggle handlers
   const toggleSettings = () => {
-    setScreenState(prev => ({ ...prev, showSettings: !prev.showSettings }));
+    console.log('=== TOGGLE SETTINGS CALLED ===');
+    console.log('Current showSettings:', screenState.showSettings);
+    
+    setScreenState(prev => {
+      const newState = { ...prev, showSettings: !prev.showSettings };
+      console.log('Setting new showSettings to:', newState.showSettings);
+      return newState;
+    });
+  };
+  
+  // Edge swipe with real-time finger tracking
+  const edgeSwipeX = useRef(new Animated.Value(0)).current;
+  const [isEdgeSwipeActive, setIsEdgeSwipeActive] = useState(false);
+
+  const edgeGestureEvent = Animated.event(
+    [{ nativeEvent: { translationX: edgeSwipeX } }],
+    { useNativeDriver: true }
+  );
+
+  const handleEdgeSwipeState = (event) => {
+    const { state, translationX, velocityX } = event.nativeEvent;
+
+    if (state === State.BEGAN) {
+      // Only start if modal isn't already open
+      if (!screenState.showSettings) {
+        edgeSwipeX.setValue(0); // Reset animation value
+        setIsEdgeSwipeActive(true);
+        setScreenState(prev => ({ ...prev, showSettings: true }));
+      }
+    } else if (state === State.ACTIVE && isEdgeSwipeActive) {
+      // Update the modal position in real-time as user drags
+      // The modal should handle this translationX value to position itself
+    } else if (state === State.END && isEdgeSwipeActive) {
+      const shouldStayOpen = Math.abs(translationX) > 80 || Math.abs(velocityX) > 800;
+      
+      if (shouldStayOpen) {
+        // Transition to normal modal state - let the modal handle the smooth transition
+        setIsEdgeSwipeActive(false);
+      } else {
+        // Close the modal
+        setScreenState(prev => ({ ...prev, showSettings: false }));
+        setIsEdgeSwipeActive(false);
+      }
+    } else if ((state === State.CANCELLED || state === State.FAILED) && isEdgeSwipeActive) {
+      // Cancel - close the modal
+      setScreenState(prev => ({ ...prev, showSettings: false }));
+      setIsEdgeSwipeActive(false);
+    }
   };
   
   const handleDomainPress = (domain) => {
@@ -1253,6 +1305,18 @@ const ProfileScreen = ({ navigation, route }) => {
         translucent={true}
       />
       
+      {/* Edge swipe detection */}
+      <PanGestureHandler
+        onGestureEvent={edgeGestureEvent}
+        onHandlerStateChange={handleEdgeSwipeState}
+        activeOffsetX={[-2, 1000]} // More sensitive - trigger after just 2px leftward movement
+        activeOffsetY={[-50, 50]} // Allow some vertical movement
+        shouldCancelWhenOutside={false}
+        avgTouches={false}
+      >
+        <View style={styles.edgeSwipeArea} />
+      </PanGestureHandler>
+      
       <ScrollView 
         ref={scrollViewRef}
         contentContainerStyle={[
@@ -1285,8 +1349,8 @@ const ProfileScreen = ({ navigation, route }) => {
           profile={contextProfile || screenState.profile}
           user={user}
           navigation={navigation}
-          onThemePickerOpen={() => setScreenState(prev => ({ ...prev, showThemeColorPicker: true }))}
-          toggleSettings={toggleSettings} // Pass the settings toggle handler to Banner
+          toggleSettings={toggleSettings}
+          onThemeColorPress={() => setScreenState(prev => ({ ...prev, showThemeColorPicker: true }))}
         />
         
         {/* Stats Cards */}
@@ -1332,6 +1396,8 @@ const ProfileScreen = ({ navigation, route }) => {
         navigation={navigation}
         onLogout={toggleSettings}
         updateAppSetting={updateAppSetting}
+        isEdgeSwipeActive={isEdgeSwipeActive}
+        edgeSwipeX={edgeSwipeX}
       />
       
       {/* AI Explanation Modal */}
@@ -1371,6 +1437,15 @@ const ProfileScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+  },
+  edgeSwipeArea: {
+    position: 'absolute',
+    top: 250,
+    right: 0,
+    width: 20,
+    height: 300,
+    zIndex: 1000,
+    backgroundColor: 'transparent',
   },
   loadingContainer: {
     flex: 1,

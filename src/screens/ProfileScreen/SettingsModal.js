@@ -14,6 +14,7 @@ import {
   Dimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { useAuth } from '../../context/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import responsive from '../../utils/responsive';
@@ -32,21 +33,21 @@ const SettingsModal = ({
   onShowAIExplanation,
   navigation,
   onLogout,
-  updateAppSetting // Added this prop to receive the function from parent
+  updateAppSetting, // Added this prop to receive the function from parent
+  isEdgeSwipeActive,
+  edgeSwipeX
 }) => {
   const { logout } = useAuth() || {};
   const insets = useSafeAreaInsets();
   
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(1000)).current;
+  const translateX = useRef(new Animated.Value(width)).current; // Start from right edge
   const shakeAnim = useRef(new Animated.Value(0)).current;
   
   // Track actual modal visibility state for closing animations
   const [modalVisible, setModalVisible] = useState(visible);
-  
-  // Track whether animation system has been pre-warmed
-  const hasPreWarmed = useRef(false);
+  const [isDismissing, setIsDismissing] = useState(false);
   
   // Function to trigger shake animation
   const triggerShake = () => {
@@ -63,81 +64,153 @@ const SettingsModal = ({
     ]).start();
   };
   
-  // Pre-warm animation system to prevent first-render glitch
-  useEffect(() => {
-    if (!hasPreWarmed.current) {
-      // Pre-warm animation system
-      const preWarm = () => {
-        // Immediately set to final values without animation
-        fadeAnim.setValue(0);
-        slideAnim.setValue(1000);
-        
-        // Use requestAnimationFrame to ensure native driver is initialized
-        requestAnimationFrame(() => {
-          fadeAnim.setValue(0);
-          slideAnim.setValue(1000);
-        });
-        
-        // Mark as pre-warmed
-        hasPreWarmed.current = true;
-      };
-      
-      preWarm();
+  // Native iOS-style gesture handler for swipe-to-dismiss
+  const handleGesture = Animated.event(
+    [{ nativeEvent: { translationX: translateX } }],
+    { 
+      useNativeDriver: true,
+      listener: (event) => {
+        const { translationX } = event.nativeEvent;
+        // Only allow rightward movement (dismissal)
+        if (translationX > 0) {
+          // More subtle background opacity change - like iOS
+          const progress = Math.min(translationX / width, 1);
+          const opacity = 1 - (progress * 0.3); // Only dim by 30% max
+          fadeAnim.setValue(opacity);
+        }
+      }
     }
-  }, [fadeAnim, slideAnim]);
-  
-  // Handle opening and closing animations
-  useEffect(() => {
-    if (visible) {
-      // Set modal visible immediately when opening
-      setModalVisible(true);
+  );
+
+  const handleGestureEnd = (event) => {
+    const { translationX, velocityX } = event.nativeEvent;
+    
+    // iOS-style dismissal logic: lower threshold + velocity consideration
+    const dismissThreshold = width * 0.35; // 35% instead of 50%
+    const fastSwipeVelocity = 1200; // Higher velocity threshold
+    
+    const shouldDismiss = translationX > dismissThreshold || velocityX > fastSwipeVelocity;
+    
+    if (shouldDismiss) {
+      // Set dismissing flag to prevent modal from reopening during animation
+      setIsDismissing(true);
       
-      // Reset animations to starting values
-      fadeAnim.setValue(0);
-      slideAnim.setValue(1000);
-      
-      // Run animations when modal opens
+      // Always use consistent slide-out animation regardless of current position or velocity
       Animated.parallel([
-        // Fade in the background overlay quickly
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 200, // Fast fade in
+        Animated.timing(translateX, {
+          toValue: width * 1.2, // Animate completely off-screen
+          duration: 350, // Fixed duration for consistent feel
           useNativeDriver: true,
-          easing: Easing.out(Easing.ease)
+          easing: Easing.out(Easing.ease) // Smoother easing
         }),
-        // Slide up the content
-        Animated.timing(slideAnim, {
-          toValue: 0,
-          duration: 250,
-          useNativeDriver: true,
-          easing: Easing.out(Easing.ease)
-        })
-      ]).start();
-    } else if (modalVisible) {
-      // Run animations when modal closes
-      Animated.parallel([
-        // Fade out the background
         Animated.timing(fadeAnim, {
           toValue: 0,
-          duration: 250,
+          duration: 350, // Match the slide duration
           useNativeDriver: true,
-          easing: Easing.in(Easing.ease)
-        }),
-        // Slide down the content PAST the bottom of the screen
-        Animated.timing(slideAnim, {
-          toValue: 1000,
-          duration: 280, // Slightly longer for smoother exit
-          useNativeDriver: true,
-          easing: Easing.in(Easing.ease)
+          easing: Easing.out(Easing.ease)
         })
       ]).start(({ finished }) => {
-        // Only hide the modal if the animation actually finished
         if (finished) {
           setModalVisible(false);
+          setIsDismissing(false);
+          onClose();
         }
       });
+    } else {
+      // Quick, bouncy snap back - like iOS
+      Animated.parallel([
+        Animated.spring(translateX, {
+          toValue: 0,
+          tension: 150, // iOS-like spring tension
+          friction: 8,
+          useNativeDriver: true
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+          easing: Easing.out(Easing.cubic)
+        })
+      ]).start();
     }
-  }, [visible, modalVisible, fadeAnim, slideAnim]);
+  };
+  
+  // Track if this is a transition from edge swipe to normal modal
+  const isTransitioningFromEdgeSwipe = useRef(false);
+
+  // Handle opening and closing animations
+  useEffect(() => {
+    if (visible && !isDismissing) {
+      setModalVisible(true);
+      
+      if (!isEdgeSwipeActive) {
+        // Check if we're transitioning from edge swipe
+        if (isTransitioningFromEdgeSwipe.current) {
+          // Get the current position from edge swipe and sync it with translateX
+          const currentEdgePosition = edgeSwipeX._value || 0;
+          const currentModalPosition = Math.max(width + currentEdgePosition, 0);
+          
+          // Set translateX to match the current visual position
+          translateX.setValue(currentModalPosition);
+          
+          // Then smoothly animate to fully open position
+          Animated.timing(translateX, {
+            toValue: 0,
+            duration: 200, // Shorter duration for smooth transition
+            useNativeDriver: true,
+            easing: Easing.out(Easing.ease)
+          }).start();
+          isTransitioningFromEdgeSwipe.current = false;
+        } else {
+          // Normal button opening - start from completely off-screen right
+          translateX.setValue(width * 1.2); // Further off-screen
+          fadeAnim.setValue(0);
+          
+          // Small delay to ensure values are set before animation
+          requestAnimationFrame(() => {
+            Animated.parallel([
+              Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 300,
+                useNativeDriver: true,
+                easing: Easing.out(Easing.ease)
+              }),
+              Animated.timing(translateX, {
+                toValue: 0,
+                duration: 300,
+                useNativeDriver: true,
+                easing: Easing.out(Easing.ease)
+              })
+            ]).start();
+          });
+        }
+      } else {
+        // Edge swipe - set background visible but let gesture control position
+        fadeAnim.setValue(1);
+        isTransitioningFromEdgeSwipe.current = true;
+      }
+    } else if (!visible && modalVisible && !isDismissing) {
+      // Only animate out if we're not already dismissing via gesture
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+          easing: Easing.in(Easing.ease)
+        }),
+        Animated.timing(translateX, {
+          toValue: width * 1.2,
+          duration: 300,
+          useNativeDriver: true,
+          easing: Easing.in(Easing.ease)
+        })
+      ]).start(() => {
+        setModalVisible(false);
+      });
+    }
+  }, [visible, isEdgeSwipeActive, modalVisible, isDismissing]);
+
+
 
   // Handle close request with animation
   const handleClose = (callback) => {
@@ -186,20 +259,33 @@ const SettingsModal = ({
           />
         </Animated.View>
         
-        {/* Modal Content - animated sliding up from bottom */}
-        <Animated.View 
-          style={[
-            styles.settingsPanel, 
-            { 
-              backgroundColor: theme.background,
-              borderTopWidth: 1,
-              borderColor: theme.border,
-              transform: [{ translateY: slideAnim }],
-              // Add padding for bottom safe area
-              paddingBottom: insets.bottom
-            }
-          ]}
+        {/* Modal Content - animated sliding in from right with pan gesture */}
+        <PanGestureHandler
+          onGestureEvent={handleGesture}
+          onHandlerStateChange={handleGestureEnd}
+          activeOffsetX={[-1000, 5]} // Allow leftward but start responding after 5px rightward
+          activeOffsetY={[-1000, 1000]} // Allow vertical scrolling
+          shouldCancelWhenOutside={false}
+          enableTrackpadTwoFingerGesture={false}
         >
+          <Animated.View 
+            style={[
+              styles.settingsPanel, 
+              { 
+                backgroundColor: theme.background,
+                borderLeftWidth: 1,
+                borderColor: theme.border,
+                transform: [{ 
+                  translateX: isEdgeSwipeActive && edgeSwipeX
+                    ? Animated.add(width, edgeSwipeX) // Follow finger from screen edge
+                    : translateX 
+                }],
+                // Add padding for safe areas
+                paddingTop: insets.top,
+                paddingBottom: insets.bottom
+              }
+            ]}
+          >
           {/* Removed the panel handle for cleaner look */}
           
           <View style={styles.settingsHeader}>
@@ -384,7 +470,7 @@ const SettingsModal = ({
                       maxFontSizeMultiplier={1.5}
                       numberOfLines={2} // Allow 2 lines for this longer description
                     >
-                      Share your code and both get 50% off AI subscriptions
+                      Share code for mutual 50% AI discounts
                     </Text>
                   </View>
                 </View>
@@ -436,7 +522,7 @@ const SettingsModal = ({
                         maxFontSizeMultiplier={1.5}
                         numberOfLines={2} // Allow 2 lines for this longer description
                       >
-                        Pro members can share codes for mutual discounts
+                        Share code for mutual 50% AI discounts
                       </Text>
                     </View>
                   </View>
@@ -482,7 +568,7 @@ const SettingsModal = ({
                     maxFontSizeMultiplier={1.5}
                     numberOfLines={1}
                   >
-                    See your goals, projects, tasks, and direction
+                    View your complete life plan
                   </Text>
                 </View>
               </View>
@@ -530,7 +616,7 @@ const SettingsModal = ({
                     maxFontSizeMultiplier={1.5}
                     numberOfLines={2} // Allow 2 lines for longer description
                   >
-                    Your personal life strategist that creates custom plans based on your unique goals and priorities
+                    AI strategist for personalized goal planning
                   </Text>
                 </View>
               </View>
@@ -618,7 +704,7 @@ const SettingsModal = ({
                     maxFontSizeMultiplier={1.5}
                     numberOfLines={1}
                   >
-                    Get your founder code and connect on Discord
+                    Founder code & Discord access
                   </Text>
                 </View>
               </View>
@@ -726,7 +812,7 @@ const SettingsModal = ({
                     maxFontSizeMultiplier={1.5}
                     numberOfLines={1}
                   >
-                    Go through the introduction again
+                    Redo app introduction
                   </Text>
                 </View>
               </View>
@@ -762,7 +848,7 @@ const SettingsModal = ({
                 style={[styles.warningText, { color: theme.text }]}
                 maxFontSizeMultiplier={1.5}
               >
-                Deleting this app will cause you to lose all of your data. Your information is saved locally on your device, so removing the app will reset all your progress and settings.
+                Deleting this app will permanently erase all your data. Everything is stored locally on your device.
               </Text>
             </View>
             
@@ -809,7 +895,7 @@ const SettingsModal = ({
                         maxFontSizeMultiplier={1.5}
                         numberOfLines={1}
                       >
-                        Simulate one-time purchase status
+                        Test Pro member status
                       </Text>
                     </View>
                   </View>
@@ -828,6 +914,7 @@ const SettingsModal = ({
             )}
           </ScrollView>
         </Animated.View>
+        </PanGestureHandler>
       </View>
     </Modal>
   );
@@ -836,7 +923,8 @@ const SettingsModal = ({
 const styles = StyleSheet.create({
   settingsModalOverlay: {
     flex: 1,
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
+    alignItems: 'flex-end',
   },
   backdrop: {
     position: 'absolute',
@@ -852,9 +940,10 @@ const styles = StyleSheet.create({
   },
   settingsPanel: {
     borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderBottomLeftRadius: 24,
     paddingBottom: 24,
-    maxHeight: '80%',
+    width: '85%', // Control width of the panel
+    height: '100%', // Full height
     zIndex: 1, // Ensure it's above the backdrop
   },
   settingsHeader: {
@@ -863,7 +952,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    marginTop: 10, // Added top margin since we removed the handle
     height: 60, // Fixed height for predictable layout
   },
   settingsTitle: {

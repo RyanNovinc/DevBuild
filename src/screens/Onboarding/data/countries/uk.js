@@ -20,10 +20,16 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Research salary benchmarks for your role in different companies and regions",
+                summary: "Research salary",
+                explanation: "UK salary variations can be significant between regions and companies. Research provides evidence for negotiations and identifies high-paying opportunities that justify job changes.",
+                timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Update CV and LinkedIn profile to highlight achievements and value created",
+                summary: "Update CV",
+                explanation: "Updated profiles highlighting quantifiable achievements attract recruiters and justify higher salary expectations. Professional presentation essential for 15-20% salary increase targets.",
+                timeframe: "2 weeks",
                 completed: false
               }
             ]
@@ -35,10 +41,16 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Apply for roles with 15-20% salary increases or prepare case for current employer",
+                summary: "Apply roles",
+                explanation: "Strategic applications targeting higher-paying roles provide negotiation leverage and alternative options. Market competition demonstrates your value and strengthens internal promotion discussions.",
+                timeframe: "2 months",
                 completed: false
               },
               {
                 name: "Practice salary negotiation and secure offer with target increase",
+                summary: "Negotiate salary",
+                explanation: "Negotiation skills directly impact lifetime earnings potential. Practice builds confidence to secure target increases and avoid leaving money on the table during job transitions.",
+                timeframe: "1 month",
                 completed: false
               }
             ]
@@ -58,10 +70,16 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Research your company's flexible working policy and successful case studies",
+                summary: "Research policy",
+                explanation: "Understanding existing policy and success stories provides foundation for compelling flexible work request. Research demonstrates professionalism and increases approval likelihood.",
+                timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Prepare and submit formal flexible working request with business case",
+                summary: "Submit request",
+                explanation: "Formal requests with business cases have higher approval rates under UK's Flexible Working Bill. Professional presentation shows serious commitment to making arrangement work for business.",
+                timeframe: "2 weeks",
                 completed: false
               }
             ]
@@ -73,10 +91,16 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Set up effective home workspace and establish boundaries for hybrid working",
+                summary: "Setup workspace",
+                explanation: "Professional home workspace ensures productivity and demonstrates commitment to flexible arrangement success. Clear boundaries prevent work-life blur that can undermine arrangement sustainability.",
+                timeframe: "2 weeks",
                 completed: false
               },
               {
                 name: "Track productivity metrics to demonstrate success of flexible arrangement",
+                summary: "Track metrics",
+                explanation: "Productivity tracking provides objective evidence that flexible working delivers results. Data supports arrangement continuation and helps other team members secure similar flexibility.",
+                timeframe: "Ongoing",
                 completed: false
               }
             ]
@@ -93,17 +117,149 @@ export const DOMAIN_DEFINITIONS = [
           {
             id: "ai-ml",
             name: "AI & Machine Learning Applications",
-            description: "Learn practical AI tools and machine learning fundamentals for business applications"
+            description: "Learn practical AI tools and machine learning fundamentals for business applications",
+            projects: [
+              {
+                name: "AI Tools Mastery",
+                description: "Learn practical AI applications for daily work productivity",
+                explanation: "AI skills command 21% salary premiums. 71% of organizations plan AI adoption but only 25% have skilled workers, creating massive opportunity.",
+                tasks: [
+                  {
+                    name: "Complete ChatGPT, Claude, and Midjourney fundamentals course for workplace applications",
+                    summary: "Learn AI tools",
+                    explanation: "AI tools mastery provides immediate productivity gains and 21% salary premiums. Early adoption creates competitive advantage as organizations scramble to implement AI capabilities.",
+                    timeframe: "2 months",
+                    completed: false
+                  },
+                  {
+                    name: "Implement AI tools in current role to automate 2-3 routine tasks and document results",
+                    summary: "Automate tasks",
+                    explanation: "Practical AI implementation demonstrates value creation and innovation to employers. Documented results provide evidence for promotion discussions and performance reviews.",
+                    timeframe: "1 month",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Machine Learning Foundations",
+                description: "Build technical ML skills for data-driven business insights",
+                explanation: "UK tech sector (£784bn) increasingly requires ML literacy. Entry-level ML roles start at £35,000+, with senior positions reaching £80,000+.",
+                tasks: [
+                  {
+                    name: "Complete Google Machine Learning Crash Course and earn professional certificate",
+                    summary: "ML certified",
+                    explanation: "Google ML certification provides industry-recognized credentials for technical roles starting at £35,000+. Structured learning provides solid foundation for ML career transition.",
+                    timeframe: "4 months",
+                    completed: false
+                  },
+                  {
+                    name: "Build portfolio project using real business data to demonstrate ML problem-solving",
+                    summary: "ML project",
+                    explanation: "Portfolio projects provide tangible evidence of ML capabilities that employers can evaluate. Real business applications showcase practical problem-solving rather than theoretical knowledge.",
+                    timeframe: "2 months",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           },
           {
             id: "data-analytics",
             name: "Data Analytics & Business Intelligence",
-            description: "Master data analysis, visualization, and business intelligence tools"
+            description: "Master data analysis, visualization, and business intelligence tools",
+            projects: [
+              {
+                name: "Data Analysis Certification",
+                description: "Master Excel, SQL, and data visualization for business intelligence",
+                explanation: "75% of employers struggle to find data skills. Business analysts earn £25,000-£60,000+ with strong progression opportunities.",
+                tasks: [
+                  {
+                    name: "Complete Microsoft Excel Advanced and SQL fundamentals certification",
+                    summary: "Data certified",
+                    explanation: "Excel and SQL skills are foundational for most business analyst roles earning £25,000-£60,000+. These technical skills provide immediate workplace value and career advancement opportunities.",
+                    timeframe: "3 months",
+                    completed: false
+                  },
+                  {
+                    name: "Master Tableau or Power BI for creating business dashboards and reports",
+                    summary: "Learn BI tools",
+                    explanation: "Visualization tools like Tableau and Power BI transform data into actionable insights that drive business decisions. These skills are highly valued across industries for strategic planning.",
+                    timeframe: "2 months",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Business Intelligence Portfolio",
+                description: "Create compelling data stories that drive business decisions",
+                explanation: "Data-driven decision making is critical for UK businesses. Analytics professionals consistently rank in top-demand roles.",
+                tasks: [
+                  {
+                    name: "Build 3 portfolio projects showing data analysis from raw data to business insights",
+                    summary: "Data portfolio",
+                    explanation: "Portfolio projects demonstrate end-to-end analytical capabilities from data collection to business recommendations. Real-world applications showcase practical problem-solving skills to potential employers.",
+                    timeframe: "3 months",
+                    completed: false
+                  },
+                  {
+                    name: "Present data analysis to stakeholders and demonstrate business impact",
+                    summary: "Present data",
+                    explanation: "Presentation skills separate good analysts from great ones. Communicating insights effectively to stakeholders demonstrates leadership potential and drives business value creation.",
+                    timeframe: "1 month",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           },
           {
             id: "cybersecurity",
             name: "Cybersecurity & Digital Protection",
-            description: "Develop cybersecurity skills for protecting digital assets and systems"
+            description: "Develop cybersecurity skills for protecting digital assets and systems",
+            projects: [
+              {
+                name: "Cybersecurity Fundamentals",
+                description: "Learn essential security practices and threat protection",
+                explanation: "Cybersecurity Analyst ranks #1 fastest-growing UK job (57% growth). Average salary £35,000-£65,000 with strong job security.",
+                tasks: [
+                  {
+                    name: "Complete CompTIA Security+ or similar entry-level cybersecurity certification",
+                    summary: "Security cert",
+                    explanation: "CompTIA Security+ certification opens doors to £35,000-£65,000 cybersecurity roles with 57% job growth. Industry-recognized credential provides foundation for security career transition.",
+                    timeframe: "4 months",
+                    completed: false
+                  },
+                  {
+                    name: "Set up personal security audit and implement advanced protection measures",
+                    summary: "Security audit",
+                    explanation: "Personal security audit provides hands-on experience with security tools and practices. Implementing advanced protection demonstrates practical security knowledge to potential employers.",
+                    timeframe: "1 month",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Security Expertise Development",
+                description: "Build specialized skills in threat analysis and system protection",
+                explanation: "UK faces 2.39 million cyber attacks daily. Organizations desperately need qualified security professionals to protect digital assets.",
+                tasks: [
+                  {
+                    name: "Learn penetration testing basics and practice on ethical hacking platforms",
+                    summary: "Learn hacking",
+                    explanation: "Penetration testing skills are highly valued in cybersecurity with specialist roles earning £40,000-£80,000+. Ethical hacking platforms provide safe environment to develop security expertise.",
+                    timeframe: "3 months",
+                    completed: false
+                  },
+                  {
+                    name: "Create security assessment report for local business or volunteer organization",
+                    summary: "Security report",
+                    explanation: "Real-world security assessments provide portfolio pieces and practical experience. Many small businesses need affordable security expertise, creating opportunities for skill development.",
+                    timeframe: "1 month",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           }
         ],
         projects: [
@@ -114,10 +270,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Research and enroll in certification program for chosen digital skill",
+                explanation: "Industry-recognized certifications provide credible evidence of technical skills to UK employers. Research helps identify which programs offer best ROI for career advancement and salary increases.",
                 completed: false
               },
               {
                 name: "Complete certification and add credential to professional profiles",
+                explanation: "Completed certifications increase visibility to recruiters and justify higher salary expectations. Adding credentials to LinkedIn and CV signals professional development and technical competency.",
                 completed: false
               }
             ]
@@ -129,10 +287,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Identify opportunities to apply new skills in current role or side projects",
+                explanation: "Practical application of new skills demonstrates value to current employer while building portfolio for future opportunities. Side projects provide creative outlet for skill development.",
                 completed: false
               },
               {
                 name: "Showcase digital expertise through presentations, projects, or mentoring colleagues",
+                explanation: "Visibility of expertise leads to promotion opportunities and establishes professional reputation. Teaching others reinforces your own knowledge while building valuable workplace relationships.",
                 completed: false
               }
             ]
@@ -160,10 +320,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Open Lifetime ISA and set up maximum £4,000 annual contributions for 25% government bonus",
+                explanation: "LISA provides 25% government bonus on contributions up to £4,000 annually, effectively giving you £1,000 free money each year toward house deposit. This makes homeownership significantly more achievable.",
                 completed: false
               },
               {
                 name: "Research target areas and calculate realistic deposit needed based on location preferences",
+                explanation: "UK house prices vary dramatically by region - from £26,769 in North East to £108,848 in London. Strategic location research helps identify affordable areas with good prospects.",
                 completed: false
               }
             ]
@@ -175,10 +337,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Research Help to Buy schemes and first-time buyer programs in target areas",
+                explanation: "Government schemes like Help to Buy and shared ownership can reduce deposit requirements and make homeownership accessible. Each region offers different programs with varying benefits.",
                 completed: false
               },
               {
                 name: "Get mortgage pre-approval to understand borrowing capacity and requirements",
+                explanation: "Pre-approval provides realistic budget for house hunting and demonstrates seriousness to sellers. Understanding borrowing capacity helps set appropriate savings targets and timeline.",
                 completed: false
               }
             ]
@@ -523,17 +687,113 @@ export const DOMAIN_DEFINITIONS = [
           {
             id: "european",
             name: "European Languages (French, German, Spanish)",
-            description: "Learn popular European language for travel, culture, and post-Brexit connections"
+            description: "Learn popular European language for travel, culture, and post-Brexit connections",
+            projects: [
+              {
+                name: "European Language Foundation",
+                description: "Build solid foundation in French, German, or Spanish grammar and vocabulary",
+                explanation: "Post-Brexit context reignites European language interest. 63% do online learning, making app-based approaches highly viable.",
+                tasks: [
+                  {
+                    name: "Complete Duolingo or Babbel course reaching A2 level in chosen European language",
+                    completed: false
+                  },
+                  {
+                    name: "Practice daily with native content (news, podcasts, films) for 20-30 minutes",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "European Cultural Immersion",
+                description: "Apply language skills through cultural engagement and conversation practice",
+                explanation: "B1-level achievable in 18 months. EU travel and cultural connections provide practical motivation for UK learners.",
+                tasks: [
+                  {
+                    name: "Join local European language meetup or find conversation exchange partner",
+                    completed: false
+                  },
+                  {
+                    name: "Plan trip to European country and navigate key interactions in target language",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           },
           {
             id: "programming",
             name: "Programming Languages (Python, JavaScript)",
-            description: "Master coding languages for career development and technical skills"
+            description: "Master coding languages for career development and technical skills",
+            projects: [
+              {
+                name: "Programming Fundamentals",
+                description: "Learn core programming concepts and syntax in Python or JavaScript",
+                explanation: "UK tech sector (£784bn) offers strong career prospects. Programming skills provide £26,000-£80,000+ salary potential.",
+                tasks: [
+                  {
+                    name: "Complete Python for Everybody or JavaScript fundamentals course on Coursera/freeCodeCamp",
+                    completed: false
+                  },
+                  {
+                    name: "Build 3 small projects demonstrating variables, functions, loops, and data structures",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Applied Programming Projects",
+                description: "Create real-world applications showcasing programming problem-solving",
+                explanation: "Portfolio projects essential for career transition. Self-taught programmers increasingly accepted by UK employers.",
+                tasks: [
+                  {
+                    name: "Build web application or automation script solving real problem you face",
+                    completed: false
+                  },
+                  {
+                    name: "Share code on GitHub and present project to demonstrate technical communication",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           },
           {
             id: "bsl",
             name: "British Sign Language (BSL)",
-            description: "Learn BSL for communication accessibility and community connection"
+            description: "Learn BSL for communication accessibility and community connection",
+            projects: [
+              {
+                name: "BSL Communication Basics",
+                description: "Master essential BSL vocabulary and grammar for daily communication",
+                explanation: "BSL is UK's fourth most-used language. Growing demand for accessibility creates career opportunities and community connections.",
+                tasks: [
+                  {
+                    name: "Complete BSL Level 1 course through local college or online provider like SignHealth",
+                    completed: false
+                  },
+                  {
+                    name: "Practice fingerspelling alphabet and numbers until fluent (30+ words/minute)",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Deaf Community Engagement",
+                description: "Connect with Deaf community and apply BSL skills in real conversations",
+                explanation: "150,000 BSL users in UK. Community engagement essential for language development and cultural understanding.",
+                tasks: [
+                  {
+                    name: "Attend local Deaf community events or BSL practice groups for conversation",
+                    completed: false
+                  },
+                  {
+                    name: "Volunteer with deaf organizations to practice BSL while supporting accessibility",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           }
         ],
         projects: [
@@ -739,17 +999,113 @@ export const DOMAIN_DEFINITIONS = [
           {
             id: "photography",
             name: "Photography & Visual Arts",
-            description: "Develop photography skills from smartphone basics to DSLR mastery"
+            description: "Develop photography skills from smartphone basics to DSLR mastery",
+            projects: [
+              {
+                name: "Photography Fundamentals",
+                description: "Master basic photography techniques and equipment",
+                explanation: "Photography is most desired creative skill (33%). Start with smartphone, progress to basic DSLR (£200-500). Instagram sharing culture supports progress tracking.",
+                tasks: [
+                  {
+                    name: "Learn composition basics (rule of thirds, lighting, framing) through daily photo practice",
+                    completed: false
+                  },
+                  {
+                    name: "Complete online photography course and practice manual camera settings",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Visual Portfolio Development",
+                description: "Build portfolio showcasing photography skills and artistic vision",
+                explanation: "Strong UK creative communities provide feedback and inspiration. Monthly skill goals maintain momentum and clear progression.",
+                tasks: [
+                  {
+                    name: "Create themed photography project (portraits, landscapes, street) with 20+ images",
+                    completed: false
+                  },
+                  {
+                    name: "Share work on Instagram/portfolio site and join local photography meetups",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           },
           {
             id: "crafts",
             name: "Crafts & Making (pottery, woodwork, textiles)",
-            description: "Learn hands-on crafts like pottery, woodworking, or textile arts"
+            description: "Learn hands-on crafts like pottery, woodworking, or textile arts",
+            projects: [
+              {
+                name: "Craft Skills Foundation",
+                description: "Learn basic techniques in chosen craft through structured practice",
+                explanation: "Trending crafts include pottery, candle painting, tufting. Strong community culture with local studios and workshops across UK cities.",
+                tasks: [
+                  {
+                    name: "Take beginner workshop in chosen craft (pottery, woodwork, textiles) to learn basics",
+                    completed: false
+                  },
+                  {
+                    name: "Practice at home or studio space weekly, completing 2-3 pieces monthly",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Craft Mastery & Community",
+                description: "Develop advanced techniques and connect with maker community",
+                explanation: "UK has strong maker culture with studio spaces, markets, and online communities supporting craft development and sharing.",
+                tasks: [
+                  {
+                    name: "Complete intermediate course or mentorship to develop signature style/technique",
+                    completed: false
+                  },
+                  {
+                    name: "Display work at local market, craft fair, or gift pieces to demonstrate skill level",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           },
           {
             id: "music-performance",
             name: "Music & Performance Arts",
-            description: "Learn musical instrument, singing, or performance skills"
+            description: "Learn musical instrument, singing, or performance skills",
+            projects: [
+              {
+                name: "Musical Instrument Mastery",
+                description: "Learn to play guitar, piano, or other instrument with consistent practice",
+                explanation: "Under-35s most likely to engage in creative pursuits. Music provides stress relief and social connection through jam sessions and performances.",
+                tasks: [
+                  {
+                    name: "Choose instrument and complete beginner course or weekly lessons for 3 months",
+                    completed: false
+                  },
+                  {
+                    name: "Practice 30 minutes daily and learn 5 songs you can perform confidently",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Performance & Musical Community",
+                description: "Apply musical skills through performance and collaboration",
+                explanation: "Strong UK music scene with open mic nights, community choirs, and amateur bands providing performance opportunities at all skill levels.",
+                tasks: [
+                  {
+                    name: "Perform at open mic night, join local band/choir, or busker license for street performance",
+                    completed: false
+                  },
+                  {
+                    name: "Record and share 2-3 songs to demonstrate musical progress and confidence",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           }
         ],
         projects: [
@@ -841,17 +1197,113 @@ export const DOMAIN_DEFINITIONS = [
           {
             id: "carbon-reduction",
             name: "Personal Carbon Footprint Reduction",
-            description: "Focus on reducing personal carbon emissions through lifestyle changes"
+            description: "Focus on reducing personal carbon emissions through lifestyle changes",
+            projects: [
+              {
+                name: "Carbon Footprint Assessment",
+                description: "Calculate and systematically reduce personal carbon emissions",
+                explanation: "20% emission reduction achievable through lifestyle changes. Average UK carbon footprint is 10.9 tonnes CO2/year, targeting 6-8 tonnes is realistic.",
+                tasks: [
+                  {
+                    name: "Use carbon calculator to measure current footprint and identify top 3 emission sources",
+                    completed: false
+                  },
+                  {
+                    name: "Implement transport changes (cycling, public transport, reduced flights) to cut emissions 30%",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Sustainable Lifestyle Integration",
+                description: "Create long-term sustainable habits across diet, energy, and consumption",
+                explanation: "Plant-based meals reduce food emissions 50%. Home energy efficiency improvements save £300+ annually while reducing carbon impact.",
+                tasks: [
+                  {
+                    name: "Reduce meat consumption 50% and switch to renewable energy provider",
+                    completed: false
+                  },
+                  {
+                    name: "Track monthly carbon savings and share progress to inspire others",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           },
           {
             id: "zero-waste",
             name: "Zero-Waste & Sustainable Living",
-            description: "Implement zero-waste practices and sustainable consumption habits"
+            description: "Implement zero-waste practices and sustainable consumption habits",
+            projects: [
+              {
+                name: "Zero-Waste Implementation",
+                description: "Systematically eliminate household waste through the 5 R's (Refuse, Reduce, Reuse, Recycle, Rot)",
+                explanation: "UK generates 222M tonnes waste annually. Food waste reduction alone saves £1,000/year per household. 80% waste reduction achievable.",
+                tasks: [
+                  {
+                    name: "Audit household waste and implement refuse/reduce strategies for single-use items",
+                    completed: false
+                  },
+                  {
+                    name: "Set up comprehensive home systems for reuse, recycling, and composting",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Sustainable Consumption Mastery",
+                description: "Extend zero-waste principles to all purchasing and consumption decisions",
+                explanation: "Initial setup £150-400 for reusable containers/bags. Ongoing savings £500-1,000 annually through reduced consumption and waste.",
+                tasks: [
+                  {
+                    name: "Replace household products with sustainable alternatives and eliminate single-use items",
+                    completed: false
+                  },
+                  {
+                    name: "Document 6-month zero-waste journey and share tips with community",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           },
           {
             id: "community-action",
             name: "Community Environmental Action",
-            description: "Join local environmental groups and campaigns for systemic change"
+            description: "Join local environmental groups and campaigns for systemic change",
+            projects: [
+              {
+                name: "Environmental Community Engagement",
+                description: "Connect with local climate action groups and participate in campaigns",
+                explanation: "Climate Coalition has 130+ member organizations. 70% of Gen Z see climate as biggest threat, driving community action demand.",
+                tasks: [
+                  {
+                    name: "Join local environmental group (Friends of the Earth, Transition Towns, etc.) and attend meetings",
+                    completed: false
+                  },
+                  {
+                    name: "Participate in 2 community environmental campaigns or initiatives (tree planting, cleanup, advocacy)",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Climate Action Leadership",
+                description: "Take leadership role in local environmental initiatives and campaigns",
+                explanation: "Community environmental projects provide systemic impact beyond individual action. Addresses climate anxiety through collective efficacy.",
+                tasks: [
+                  {
+                    name: "Organize neighborhood environmental initiative (community garden, solar co-op, repair cafe)",
+                    completed: false
+                  },
+                  {
+                    name: "Engage with local council on environmental policies and track community impact",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           }
         ],
         projects: [

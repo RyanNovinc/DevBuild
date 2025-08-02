@@ -5,7 +5,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
-  StatusBar
+  StatusBar,
+  Text
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import ResponsiveText from './ResponsiveText';
@@ -15,45 +16,52 @@ const NavigationHeader = ({
   onBack, 
   iconName, 
   iconColor = '#3b82f6',
-  rightComponent
+  rightComponent,
+  titleOffset = 0
 }) => {
-  // Calculate the offset needed to center the text with the icon
-  const iconOffset = iconName ? -18 : 0; // Half the width of the icon container
+  // No offset needed - title should be centered regardless of icon presence
   
   return (
     <View style={styles.header}>
       <StatusBar barStyle="light-content" backgroundColor="#0c1425" />
       
-      {/* Back button */}
-      {onBack && (
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={onBack}
-          activeOpacity={0.7}
-          hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
-        >
-          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
-        </TouchableOpacity>
-      )}
+      {/* Left side - Back button or spacer */}
+      <View style={styles.leftContainer}>
+        {onBack && (
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={onBack}
+            activeOpacity={0.7}
+            hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+          >
+            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+        )}
+      </View>
       
-      {/* Absolutely positioned title container for true centering */}
-      <View style={styles.absoluteTitleContainer}>
+      {/* Text centered on screen with icon flowing to its left */}
+      <View style={styles.absoluteCenter}>
         <View style={[
-          styles.titleInnerContainer,
-          { marginLeft: iconOffset } // Offset to center based on the text
+          styles.titleWithIcon,
+          // Only apply the left shift when there's an icon
+          iconName ? { transform: [{ translateX: -24 + titleOffset }] } : { transform: [{ translateX: titleOffset }] }
         ]}>
           {iconName && (
             <View style={[styles.iconContainer, { backgroundColor: iconColor }]}>
               <Ionicons name={iconName} size={20} color="#FFFFFF" />
             </View>
           )}
-          <ResponsiveText style={styles.title} numberOfLines={1} ellipsizeMode="tail">
+          <Text 
+            style={styles.title} 
+            numberOfLines={2} 
+            ellipsizeMode="tail"
+          >
             {title}
-          </ResponsiveText>
+          </Text>
         </View>
       </View>
       
-      {/* Right component or placeholder */}
+      {/* Right side - component or spacer */}
       <View style={styles.rightContainer}>
         {rightComponent && rightComponent}
       </View>
@@ -64,14 +72,18 @@ const NavigationHeader = ({
 const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'ios' ? 35 : 15, // Reduced to move header higher
-    paddingBottom: 10,
+    paddingTop: Platform.OS === 'ios' ? 35 : 15,
+    paddingBottom: 15,
     backgroundColor: '#0c1425',
     zIndex: 20,
     position: 'relative',
+  },
+  leftContainer: {
+    width: 40,
+    alignItems: 'flex-start',
+    zIndex: 20, // Higher z-index to be above center container
   },
   backButton: {
     width: 40,
@@ -80,22 +92,22 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 25,
+    zIndex: 25, // Highest z-index for clickability
   },
-  absoluteTitleContainer: {
+  absoluteCenter: {
     position: 'absolute',
-    top: Platform.OS === 'ios' ? 35 : 15,
     left: 0,
     right: 0,
-    bottom: 10,
+    top: Platform.OS === 'ios' ? 35 : 15,
+    bottom: 15,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 15,
   },
-  titleInnerContainer: {
+  titleWithIcon: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    // Transform is now applied conditionally in the JSX based on icon presence
   },
   iconContainer: {
     width: 36,
@@ -103,13 +115,15 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 10,
+    marginRight: 12,
   },
   title: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#FFFFFF',
     textAlign: 'center',
+    lineHeight: 22,
+    includeFontPadding: false,
   },
   rightContainer: {
     width: 40,

@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { useAppContext } from '../../context/AppContext';
 import { useNotification } from '../../context/NotificationContext'; // Added import for notifications
 import FeatureExplorerTracker from '../../services/FeatureExplorerTracker'; // Import the tracker
@@ -140,6 +141,10 @@ const ThemeColorPickerModal = ({
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(screenHeight)).current;
+  const translateY = useRef(new Animated.Value(0)).current; // For swipe gesture
+  
+  // Track if we're dismissing via gesture
+  const [isDismissing, setIsDismissing] = useState(false);
   
   // Create shake animations for each color
   const shakeAnims = useRef(
@@ -204,6 +209,83 @@ const ThemeColorPickerModal = ({
   
   // Track whether animation system has been pre-warmed
   const hasPreWarmed = useRef(false);
+  
+  // Swipe gesture handlers
+  const handleGesture = Animated.event(
+    [{ nativeEvent: { translationY: translateY } }],
+    { 
+      useNativeDriver: true,
+      listener: (event) => {
+        const { translationY } = event.nativeEvent;
+        // Only allow downward movement (dismissal)
+        if (translationY > 0) {
+          // Background opacity fades to 0 as modal approaches bottom
+          const progress = Math.min(translationY / (screenHeight * 0.4), 1);
+          const opacity = 1 - progress; // Fade completely from 1 to 0
+          fadeAnim.setValue(opacity);
+        }
+      }
+    }
+  );
+
+  const handleGestureEnd = (event) => {
+    const { translationY, velocityY } = event.nativeEvent;
+    
+    // Dismissal logic: lower threshold + velocity consideration
+    const dismissThreshold = screenHeight * 0.2; // 20% of screen height
+    const fastSwipeVelocity = 1200; // High velocity threshold
+    
+    const shouldDismiss = translationY > dismissThreshold || velocityY > fastSwipeVelocity;
+    
+    if (shouldDismiss) {
+      // Set dismissing flag to prevent modal from reopening during animation
+      setIsDismissing(true);
+      
+      // Animate dismissal
+      Animated.parallel([
+        Animated.timing(translateY, {
+          toValue: screenHeight,
+          duration: 350,
+          useNativeDriver: true,
+          easing: Easing.out(Easing.ease)
+        }),
+        Animated.timing(slideAnim, {
+          toValue: screenHeight,
+          duration: 350,
+          useNativeDriver: true,
+          easing: Easing.out(Easing.ease)
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 350,
+          useNativeDriver: true,
+          easing: Easing.out(Easing.ease)
+        })
+      ]).start(({ finished }) => {
+        if (finished) {
+          setModalVisible(false);
+          setIsDismissing(false);
+          onClose();
+        }
+      });
+    } else {
+      // Snap back
+      Animated.parallel([
+        Animated.spring(translateY, {
+          toValue: 0,
+          tension: 150,
+          friction: 8,
+          useNativeDriver: true
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+          easing: Easing.out(Easing.cubic)
+        })
+      ]).start();
+    }
+  };
   
   // Function to get available colors based on user level and Pro status
   const getAvailableColors = useMemo(() => {
@@ -276,13 +358,14 @@ const ThemeColorPickerModal = ({
   
   // Handle opening and closing animations
   useEffect(() => {
-    if (visible) {
+    if (visible && !isDismissing) {
       // Set modal visible immediately when opening
       setModalVisible(true);
       
       // Reset animations to starting values
       fadeAnim.setValue(0);
       slideAnim.setValue(screenHeight);
+      translateY.setValue(0); // Reset swipe position
       
       // Run animations when modal opens
       Animated.parallel([
@@ -301,8 +384,8 @@ const ThemeColorPickerModal = ({
           easing: Easing.out(Easing.ease)
         })
       ]).start();
-    } else if (modalVisible) {
-      // Run animations when modal closes
+    } else if (modalVisible && !visible && !isDismissing) {
+      // Run animations when modal closes (not via gesture)
       Animated.parallel([
         // Fade out the background
         Animated.timing(fadeAnim, {
@@ -317,6 +400,13 @@ const ThemeColorPickerModal = ({
           duration: 280, // Slightly longer for smoother exit
           useNativeDriver: true,
           easing: Easing.in(Easing.ease)
+        }),
+        // Reset translateY
+        Animated.timing(translateY, {
+          toValue: 0,
+          duration: 280,
+          useNativeDriver: true,
+          easing: Easing.in(Easing.ease)
         })
       ]).start(({ finished }) => {
         // Only hide the modal if the animation actually finished
@@ -325,7 +415,7 @@ const ThemeColorPickerModal = ({
         }
       });
     }
-  }, [visible, modalVisible, fadeAnim, slideAnim, screenHeight]);
+  }, [visible, modalVisible, isDismissing, fadeAnim, slideAnim, translateY, screenHeight]);
 
   // Create falling palette/color animations
   const createFallingColorAnimations = (colorType) => {
@@ -607,23 +697,33 @@ const ThemeColorPickerModal = ({
         </Animated.View>
         
         {/* Modal Content - animated sliding up from bottom */}
-        <Animated.View 
-          style={[
-            styles.colorPickerContent, 
-            { 
-              backgroundColor: theme.background,
-              borderTopWidth: 1,
-              borderLeftWidth: 1,
-              borderRightWidth: 1,
-              borderColor: theme.border,
-              transform: [{ translateY: slideAnim }],
-              paddingBottom: 32 + safeSpacing.bottom // Add safe area padding to bottom
+        <PanGestureHandler
+          onGestureEvent={handleGesture}
+          onHandlerStateChange={(event) => {
+            if (event.nativeEvent.state === State.END) {
+              handleGestureEnd(event);
             }
-          ]}
-          accessible={true}
-          accessibilityRole="dialog"
-          accessibilityLabel="Theme color picker"
+          }}
         >
+          <Animated.View 
+            style={[
+              styles.colorPickerContent, 
+              { 
+                backgroundColor: theme.background,
+                borderTopWidth: 1,
+                borderLeftWidth: 1,
+                borderRightWidth: 1,
+                borderColor: theme.border,
+                transform: [
+                  { translateY: Animated.add(slideAnim, translateY) }
+                ],
+                paddingBottom: 32 + safeSpacing.bottom // Add safe area padding to bottom
+              }
+            ]}
+            accessible={true}
+            accessibilityRole="dialog"
+            accessibilityLabel="Theme color picker"
+          >
           <View style={styles.modalHeader}>
             <Text 
               style={[styles.modalTitle, { color: textColor }]}
@@ -1019,6 +1119,7 @@ const ThemeColorPickerModal = ({
             </Text>
           </View>
         </Animated.View>
+        </PanGestureHandler>
       </View>
       
       {/* Pro Upgrade Modal - Same style as GoalScreen */}

@@ -52,6 +52,15 @@ export const ACHIEVEMENTS = {
     criteria: 'Create and save your first life direction statement in your profile.',
     points: 5
   },
+  'foundation-builder': {
+    id: 'foundation-builder',
+    title: 'Foundation Builder',
+    description: 'Complete the full onboarding journey',
+    icon: 'construct',
+    category: 'strategic',
+    criteria: 'Complete the entire onboarding process by selecting a domain, goal, and setting up your personalized life compass.',
+    points: 10
+  },
   'goal-pioneer': {
     id: 'goal-pioneer',
     title: 'Goal Pioneer',

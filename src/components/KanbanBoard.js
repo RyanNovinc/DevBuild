@@ -39,9 +39,27 @@ const KanbanBoard = ({
   isProjectLevel = false, // Whether this is a project-level board
   filterBy = null, // Optional filter (e.g., by goal, by domain)
   color = '#4CAF50', // Color for styling
-  darkMode = true // Default to dark mode
+  darkMode = true, // Default to dark mode
+  allProjects = [], // All projects for color inheritance
+  allGoals = [] // All goals for color inheritance
 }) => {
   const [draggingItem, setDraggingItem] = useState(null);
+  
+  // Function to get the color for a task based on its project's goal's color
+  const getTaskColor = (task) => {
+    if (!task.projectId) return color;
+    
+    // Find the project this task belongs to
+    const project = allProjects.find(p => p.id === task.projectId);
+    if (!project || !project.goalId) return color;
+    
+    // Find the goal this project belongs to
+    const goal = allGoals.find(g => g.id === project.goalId);
+    if (!goal) return color;
+    
+    // Return the goal's color, or the project's color, or the default color
+    return goal.color || project.color || color;
+  };
   
   // Get column items based on status
   const getItemsByStatus = (status) => {
@@ -202,7 +220,7 @@ const KanbanBoard = ({
                 {/* Left color bar */}
                 <View style={[
                   styles.itemColorBar, 
-                  { backgroundColor: item.color || color }
+                  { backgroundColor: isProjectLevel ? (item.color || color) : getTaskColor(item) }
                 ]} />
                 
                 <View style={styles.itemContent}>
@@ -261,7 +279,7 @@ const KanbanBoard = ({
                                 styles.progressFill,
                                 { 
                                   width: `${item.progress || 0}%`, 
-                                  backgroundColor: item.color || color 
+                                  backgroundColor: isProjectLevel ? (item.color || color) : getTaskColor(item) 
                                 }
                               ]}
                             />

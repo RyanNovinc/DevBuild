@@ -13,8 +13,11 @@ import {
   Keyboard,
   Alert,
   ScrollView,
-  Animated
+  Animated,
+  Easing,
+  Dimensions
 } from 'react-native';
+import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useAppContext } from '../context/AppContext';
@@ -65,14 +68,47 @@ const AddTaskModal = ({
   const projectDropdownHeight = useRef(new Animated.Value(0)).current;
   const projectDropdownOpacity = useRef(new Animated.Value(0)).current;
   
-  // Get goals and projects from AppContext
-  const goals = appContext?.goals || [];
-  const allProjects = appContext?.projects || [];
+  // Modal animation values
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(Dimensions.get('window').height)).current;
+  const translateY = useRef(new Animated.Value(0)).current;
   
-  // Filter projects based on selected goal
+  // Get goals and projects from AppContext - filter to only show active/incomplete items
+  const goals = (appContext?.goals || []).filter(goal => !goal.completed);
+  const allProjects = (appContext?.projects || []).filter(project => 
+    !project.completed && project.status !== 'done'
+  );
+  
+  // Filter projects based on selected goal - only show active projects
   const availableProjects = selectedGoalId 
     ? allProjects.filter(project => project.goalId === selectedGoalId) 
     : allProjects;
+  
+  // Handle modal animation
+  useEffect(() => {
+    if (visible) {
+      // Reset animation values
+      fadeAnim.setValue(0);
+      slideAnim.setValue(Dimensions.get('window').height);
+      translateY.setValue(0);
+      
+      // Animate in
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+          easing: Easing.out(Easing.ease)
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+          easing: Easing.out(Easing.ease)
+        })
+      ]).start();
+    }
+  }, [visible]);
   
   // Log visibility changes for debugging
   useEffect(() => {
@@ -154,40 +190,80 @@ const AddTaskModal = ({
         setTitle(task.title || '');
         setDescription(task.description || '');
         
-        // Set goal and project if available
+        // Set goal and project if available and still active
         if (task.goalId) {
-          setSelectedGoalId(task.goalId);
-          setSelectedGoalTitle(task.goalTitle || '');
+          const goalStillActive = goals.some(goal => goal.id === task.goalId);
+          if (goalStillActive) {
+            setSelectedGoalId(task.goalId);
+            setSelectedGoalTitle(task.goalTitle || '');
+          } else {
+            setSelectedGoalId(null);
+            setSelectedGoalTitle('');
+          }
         }
         
         if (task.projectId) {
-          setSelectedProjectId(task.projectId);
-          setSelectedProjectTitle(task.projectTitle || '');
+          const projectStillActive = allProjects.some(project => project.id === task.projectId);
+          if (projectStillActive) {
+            setSelectedProjectId(task.projectId);
+            setSelectedProjectTitle(task.projectTitle || '');
+          } else {
+            setSelectedProjectId(null);
+            setSelectedProjectTitle('');
+          }
         }
       } else if (task) {
         console.log('Setting form for new task with pre-filled data:', task.title);
         setTitle(task.title || '');
         setDescription(task.description || '');
         
-        // Set goal and project if available
+        // Set goal and project if available and still active
         if (task.goalId) {
-          setSelectedGoalId(task.goalId);
-          setSelectedGoalTitle(task.goalTitle || '');
+          const goalStillActive = goals.some(goal => goal.id === task.goalId);
+          if (goalStillActive) {
+            setSelectedGoalId(task.goalId);
+            setSelectedGoalTitle(task.goalTitle || '');
+          } else {
+            setSelectedGoalId(null);
+            setSelectedGoalTitle('');
+          }
         }
         
         if (task.projectId) {
-          setSelectedProjectId(task.projectId);
-          setSelectedProjectTitle(task.projectTitle || '');
+          const projectStillActive = allProjects.some(project => project.id === task.projectId);
+          if (projectStillActive) {
+            setSelectedProjectId(task.projectId);
+            setSelectedProjectTitle(task.projectTitle || '');
+          } else {
+            setSelectedProjectId(null);
+            setSelectedProjectTitle('');
+          }
         }
       } else {
         // Reset form when adding a new task without pre-filled data
         console.log('Resetting form for new task');
         setTitle('');
         setDescription('');
-        // Don't reset goal and project to preserve previous selections
+        
+        // Check if current selections are still valid (not completed)
+        if (selectedGoalId) {
+          const goalStillActive = goals.some(goal => goal.id === selectedGoalId);
+          if (!goalStillActive) {
+            setSelectedGoalId(null);
+            setSelectedGoalTitle('');
+          }
+        }
+        
+        if (selectedProjectId) {
+          const projectStillActive = allProjects.some(project => project.id === selectedProjectId);
+          if (!projectStillActive) {
+            setSelectedProjectId(null);
+            setSelectedProjectTitle('');
+          }
+        }
       }
     }
-  }, [isEditing, task, visible]);
+  }, [isEditing, task, visible, goals, allProjects]);
   
   // Handle goal selection
   const handleGoalSelect = (goal) => {
@@ -196,7 +272,7 @@ const AddTaskModal = ({
     setSelectedGoalTitle(goal.title);
     setShowGoalList(false);
     
-    // Reset project selection if it doesn't belong to this goal
+    // Reset project selection if it doesn't belong to this goal or if the project is completed
     const projectBelongsToGoal = allProjects.some(
       project => project.id === selectedProjectId && project.goalId === goal.id
     );
@@ -258,11 +334,76 @@ const AddTaskModal = ({
     // Don't reset goal and project to preserve previous selections
   };
   
+  // Handle swipe gesture
+  const handleGestureEnd = (event) => {
+    const { translationY, velocityY } = event.nativeEvent;
+    const screenHeight = Dimensions.get('window').height;
+    const dismissThreshold = screenHeight * 0.2;
+    const fastSwipeVelocity = 1200;
+    
+    const shouldDismiss = translationY > dismissThreshold || velocityY > fastSwipeVelocity;
+    
+    if (shouldDismiss) {
+      // Animate dismiss
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+          easing: Easing.in(Easing.ease)
+        }),
+        Animated.timing(slideAnim, {
+          toValue: screenHeight,
+          duration: 250,
+          useNativeDriver: true,
+          easing: Easing.in(Easing.ease)
+        })
+      ]).start(() => {
+        onClose();
+      });
+    } else {
+      // Bounce back
+      Animated.spring(translateY, {
+        toValue: 0,
+        useNativeDriver: true,
+        tension: 100,
+        friction: 8
+      }).start();
+    }
+  };
+  
+  const onGestureEvent = Animated.event(
+    [{ nativeEvent: { translationY: translateY } }],
+    { useNativeDriver: true }
+  );
+  
   // Dismiss keyboard and dropdowns when clicking outside inputs
   const dismissKeyboard = () => {
     Keyboard.dismiss();
     setShowGoalList(false);
     setShowProjectList(false);
+  };
+  
+  // Handle close with animation
+  const handleClose = () => {
+    const screenHeight = Dimensions.get('window').height;
+    
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+        easing: Easing.in(Easing.ease)
+      }),
+      Animated.timing(slideAnim, {
+        toValue: screenHeight,
+        duration: 250,
+        useNativeDriver: true,
+        easing: Easing.in(Easing.ease)
+      })
+    ]).start(() => {
+      onClose();
+    });
   };
   
   // Return null if not visible to avoid rendering issues
@@ -471,28 +612,63 @@ const AddTaskModal = ({
     <Modal
       visible={visible}
       transparent={true}
-      animationType="slide"
-      onRequestClose={onClose}
+      animationType="none"
+      onRequestClose={handleClose}
       accessible={true}
       accessibilityViewIsModal={true}
       accessibilityLabel={isEditing ? "Edit task modal" : "Add task modal"}
     >
-      <TouchableWithoutFeedback onPress={dismissKeyboard}>
-        <KeyboardAvoidingView 
-          style={styles.container} 
-          behavior={Platform.OS === 'ios' ? 'padding' : null}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? scaleHeight(64) : 0}
-        >
-          <View style={[
-            styles.modalContent, 
-            { 
-              backgroundColor: theme.card,
-              padding: spacing.m,
-              paddingBottom: safeSpacing.bottom > spacing.m ? safeSpacing.bottom : spacing.xl,
-              borderTopLeftRadius: scaleWidth(16),
-              borderTopRightRadius: scaleWidth(16),
+      <Animated.View 
+        style={[
+          styles.overlay,
+          {
+            opacity: fadeAnim
+          }
+        ]}
+      >
+        <TouchableWithoutFeedback onPress={handleClose}>
+          <View style={styles.overlayTouchable} />
+        </TouchableWithoutFeedback>
+        
+        <PanGestureHandler
+          onGestureEvent={onGestureEvent}
+          onHandlerStateChange={(event) => {
+            if (event.nativeEvent.state === State.END) {
+              handleGestureEnd(event);
             }
-          ]}>
+          }}
+        >
+          <Animated.View
+            style={[
+              styles.gestureContainer,
+              {
+                transform: [
+                  { translateY: Animated.add(slideAnim, translateY) }
+                ]
+              }
+            ]}
+          >
+            <TouchableWithoutFeedback onPress={dismissKeyboard}>
+              <KeyboardAvoidingView 
+                style={styles.keyboardContainer} 
+                behavior={Platform.OS === 'ios' ? 'padding' : null}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? scaleHeight(64) : 0}
+              >
+                <View style={[
+                  styles.modalContent, 
+                  { 
+                    backgroundColor: theme.card,
+                    padding: spacing.m,
+                    paddingBottom: safeSpacing.bottom > spacing.m ? safeSpacing.bottom : spacing.xl,
+                    borderTopLeftRadius: scaleWidth(16),
+                    borderTopRightRadius: scaleWidth(16),
+                  }
+                ]}>
+                  {/* Swipe indicator */}
+                  <View style={[
+                    styles.swipeIndicator,
+                    { backgroundColor: theme.textSecondary + '40' }
+                  ]} />
             <View style={[
               styles.modalHeader,
               { marginBottom: spacing.m }
@@ -514,7 +690,7 @@ const AddTaskModal = ({
                   ensureAccessibleTouchTarget({ width: 30, height: 30 }),
                   { padding: spacing.xs }
                 ]} 
-                onPress={onClose}
+                onPress={handleClose}
                 accessible={true}
                 accessibilityRole="button"
                 accessibilityLabel="Close modal"
@@ -850,19 +1026,39 @@ const AddTaskModal = ({
                 </Text>
               </TouchableOpacity>
             </ScrollView>
-          </View>
-        </KeyboardAvoidingView>
-      </TouchableWithoutFeedback>
+                </View>
+              </KeyboardAvoidingView>
+            </TouchableWithoutFeedback>
+          </Animated.View>
+        </PanGestureHandler>
+      </Animated.View>
     </Modal>
   );
 };
 
 // Styles with responsive values
 const styles = StyleSheet.create({
-  container: {
+  overlay: {
     flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.5)'
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end'
+  },
+  overlayTouchable: {
+    flex: 1
+  },
+  gestureContainer: {
+    justifyContent: 'flex-end'
+  },
+  keyboardContainer: {
+    justifyContent: 'flex-end'
+  },
+  swipeIndicator: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginTop: 8,
+    marginBottom: 16
   },
   modalContent: {
     maxHeight: '90%'

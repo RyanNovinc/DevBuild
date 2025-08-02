@@ -51,26 +51,27 @@ const translations = {
     },
     domain: {
       title: "Choose a Domain",
-      initialMessage: "Select one area of your life where progress would make the biggest difference right now. This is just your starting point—you can explore other areas later.",
+      initialMessage: "Pick one area of your life to focus on first. You can always explore other areas later.",
+      secondMessage: "This is just your starting point - let's dive in.",
       justStartingPoint: "Just a Starting Point",
       frameworkHelp: "This framework helps you get started quickly. You can edit, add, or remove any of these projects and tasks after setup."
     },
     goal: {
       title: "{{domain}} Goals",
-      initialMessage: "Great choice! Now select a specific goal within {{domain}}. What would create the most meaningful impact in your life right now?",
-      dontWorry: "Remember, this isn't set in stone. Goals can evolve as you discover what works best for your unique circumstances."
+      initialMessage: "Now let's pick a specific goal within {{domain}}. Getting clear on exactly what you want to achieve makes all the difference.",
+      dontWorry: "Remember, this isn't set in stone. You can add more goals once you're in the app."
     },
     projects: {
-      title: "Projects & Tasks",
-      message1: "Here's how we've broken down your goal into actionable projects and tasks. This structure makes consistent progress possible and sustainable.",
-      message2: "This framework transforms your big goal into manageable steps. Feel free to explore each component to understand how they work together."
+      title: "{{goalName}} Breakdown",
+      message1: "Now we can turn your goal into actionable steps. This breakdown system is what turns aspirations into results.",
+      message2: "Each level builds on the next - your goal becomes projects, and projects become specific tasks you can actually complete."
     },
     completion: {
       title: "All Set!",
-      message1: "All set!",
-      message2: "Your personalised goal system is ready to go!",
-      message3: "Knowing exactly what you want and how to get there is your unfair advantage.",
-      message4: "Now you have both.",
+      message1: "Research reveals why most people struggle to achieve their goals.",
+      message2: "They set vague aspirations and wonder why they never make tangible progress.",
+      message3: "You've just implemented what the studies show actually works.",
+      message4: "A system that turns your effort into results.",
       allSet: "You're All Set!",
       goalCreated: "Your goal is now set up and ready to go. Let's start making progress together!",
       researchInsights: "Research Insights",
@@ -150,26 +151,27 @@ const translations = {
     },
     domain: {
       title: "ドメインを選択",
-      initialMessage: "今、最も大きな変化をもたらす生活の分野を1つ選んでください。これは単なる出発点です—後で他の分野も探索できます。",
+      initialMessage: "最初に集中する人生の分野を1つ選んでください。他の分野はいつでも探索できます。",
+      secondMessage: "これはただのスタート地点です—飛び込みましょう。",
       justStartingPoint: "始めるためのポイント",
       frameworkHelp: "このフレームワークはすぐに始めるのに役立ちます。セットアップ後、これらのプロジェクトやタスクを編集、追加、削除できます。"
     },
     goal: {
       title: "{{domain}}の目標",
-      initialMessage: "素晴らしい選択です！今、{{domain}}内の具体的な目標を選びましょう。あなたの人生に最も意味のある影響を与えるものは何でしょうか？",
-      dontWorry: "これは絶対的なものではありません。あなたの独自の状況に最適なものを見つけるにつれて、目標は進化することがあります。"
+      initialMessage: "次に{{domain}}内の具体的な目標を選びましょう。達成したいことを明確にすることが大きな違いを生みます。",
+      dontWorry: "これは絶対的なものではありません。アプリに入ったら、より多くの目標を追加できます。"
     },
     projects: {
-      title: "プロジェクトとタスク",
-      message1: "あなたの目標を実行可能なプロジェクトとタスクに分解しました。この構造により、一貫した進捗が可能かつ持続可能になります。",
-      message2: "このフレームワークは大きな目標を管理可能なステップに変換します。各コンポーネントがどのように連携するか理解するために、ぜひ探索してみてください。"
+      title: "{{goalName}}の詳細",
+      message1: "今度は、あなたの目標を実行可能なステップに変換できます。この分解システムが願望を結果に変えるものです。",
+      message2: "各レベルは次のレベルの基盤となります—目標はプロジェクトになり、プロジェクトは実際に完了できる具体的なタスクになります。"
     },
     completion: {
       title: "すべて準備完了！",
-      message1: "すべて準備完了！",
-      message2: "あなたのパーソナライズされた目標システムの準備ができました！",
-      message3: "何が欲しいのか、そしてそれをどう手に入れるかを正確に知ることは、あなたの比類なき強みです。",
-      message4: "今、あなたはその両方を手にしています。",
+      message1: "研究により、なぜ多くの人が目標達成に苦労するかが明らかになりました。",
+      message2: "彼らは曖昧な願望を設定し、なぜ具体的な進歩を遂げられないのか疑問に思います。",
+      message3: "あなたは研究が実際に効果的だと示すものを実装したのです。",
+      message4: "あなたの努力を結果に変えるシステムです。",
       allSet: "すべて設定完了！",
       goalCreated: "あなたの目標が設定され、使用できる状態になりました。一緒に進捗を作っていきましょう！",
       researchInsights: "研究インサイト",

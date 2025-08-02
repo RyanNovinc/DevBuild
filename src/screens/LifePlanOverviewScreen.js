@@ -1,5 +1,5 @@
 // src/screens/LifePlanOverviewScreen.js
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import * as FeatureExplorerTracker from '../services/FeatureExplorerTracker';
 import { 
   View, 
@@ -8,11 +8,9 @@ import {
   ScrollView, 
   TouchableOpacity, 
   Animated,
-  Dimensions,
   SafeAreaView,
   StatusBar,
   Platform,
-  Alert,
   Modal,
   TextInput,
   KeyboardAvoidingView,
@@ -25,20 +23,17 @@ import { useTheme } from '../context/ThemeContext';
 import { useAppContext } from '../context/AppContext';
 import { useNotification } from '../context/NotificationContext';
 import Svg, { Circle } from 'react-native-svg';
+import Confetti from '../components/Confetti';
 import {
   scaleWidth,
   scaleHeight,
-  scaleFontSize,
   isSmallDevice,
   isTablet,
   spacing,
   fontSizes,
-  useScreenDimensions,
   useIsLandscape,
   useSafeSpacing,
-  ensureAccessibleTouchTarget,
-  meetsContrastRequirements,
-  accessibility
+  meetsContrastRequirements
 } from '../utils/responsive';
 
 const LifePlanOverviewScreen = ({ navigation }) => {
@@ -46,7 +41,6 @@ const LifePlanOverviewScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const safeSpacing = useSafeSpacing();
   const { showSuccess, showError } = useNotification();
-  const { width, height } = useScreenDimensions();
   const isLandscape = useIsLandscape();
   
   // Get app context with goals, projects, tasks
@@ -59,13 +53,65 @@ const LifePlanOverviewScreen = ({ navigation }) => {
     getLifeDirection,
     updateProject,
     updateTask,
+    updateGoal,
     updateGoalProgress,
-    updateProjectProgress,
     updateAppSetting
   } = appContext;
   
   const lifeDirection = getLifeDirection ? getLifeDirection() : 
     "Define your life direction in settings";
+  
+  // Generate confetti colors based on project color (matches TasksScreen implementation)
+  const getProjectConfettiColors = (baseColor) => {
+    // Default color if none provided
+    const color = baseColor || '#4CAF50';
+    
+    // Generate lighter and darker variations of the base color
+    // Convert hex to RGB for easier manipulation
+    const r = parseInt(color.slice(1, 3), 16);
+    const g = parseInt(color.slice(3, 5), 16);
+    const b = parseInt(color.slice(5, 7), 16);
+    
+    // Generate lighter variations (add white)
+    const lighter1 = `#${Math.min(255, r + 40).toString(16).padStart(2, '0')}${Math.min(255, g + 40).toString(16).padStart(2, '0')}${Math.min(255, b + 40).toString(16).padStart(2, '0')}`;
+    const lighter2 = `#${Math.min(255, r + 80).toString(16).padStart(2, '0')}${Math.min(255, g + 80).toString(16).padStart(2, '0')}${Math.min(255, b + 80).toString(16).padStart(2, '0')}`;
+    
+    // Generate darker variations (add black)
+    const darker1 = `#${Math.max(0, r - 40).toString(16).padStart(2, '0')}${Math.max(0, g - 40).toString(16).padStart(2, '0')}${Math.max(0, b - 40).toString(16).padStart(2, '0')}`;
+    const darker2 = `#${Math.max(0, r - 80).toString(16).padStart(2, '0')}${Math.max(0, g - 80).toString(16).padStart(2, '0')}${Math.max(0, b - 80).toString(16).padStart(2, '0')}`;
+    
+    // Return all colors including base
+    return [color, lighter1, lighter2, darker1, darker2];
+  };
+
+  // Generate fireworks colors for goal completion (matches GoalsScreen implementation)
+  const getGoalFireworksColors = (goalColor) => {
+    // Use the goal's actual color if available, otherwise fall back to theme primary
+    const baseColor = goalColor || theme.primary || '#4CAF50';
+    
+    // Convert hex to RGB for easier manipulation
+    const r = parseInt(baseColor.slice(1, 3), 16);
+    const g = parseInt(baseColor.slice(3, 5), 16);
+    const b = parseInt(baseColor.slice(5, 7), 16);
+    
+    // Generate lighter variations
+    const lighter1 = `#${Math.min(255, r + 40).toString(16).padStart(2, '0')}${Math.min(255, g + 40).toString(16).padStart(2, '0')}${Math.min(255, b + 40).toString(16).padStart(2, '0')}`;
+    const lighter2 = `#${Math.min(255, r + 80).toString(16).padStart(2, '0')}${Math.min(255, g + 80).toString(16).padStart(2, '0')}${Math.min(255, b + 80).toString(16).padStart(2, '0')}`;
+    
+    // Generate darker variations
+    const darker1 = `#${Math.max(0, r - 40).toString(16).padStart(2, '0')}${Math.max(0, g - 40).toString(16).padStart(2, '0')}${Math.max(0, b - 40).toString(16).padStart(2, '0')}`;
+    const darker2 = `#${Math.max(0, r - 80).toString(16).padStart(2, '0')}${Math.max(0, g - 80).toString(16).padStart(2, '0')}${Math.max(0, b - 80).toString(16).padStart(2, '0')}`;
+    
+    // Generate complementary color
+    const complementary = `#${(255 - r).toString(16).padStart(2, '0')}${(255 - g).toString(16).padStart(2, '0')}${(255 - b).toString(16).padStart(2, '0')}`;
+    
+    // Add some accent colors for fireworks
+    const goldAccent = '#FFD700';
+    const whiteAccent = '#FFFFFF';
+    const silverAccent = '#C0C0C0';
+    
+    return [baseColor, baseColor, baseColor, lighter1, lighter2, darker1, darker2, complementary, goldAccent, whiteAccent, silverAccent];
+  };
   
   // State for expanded sections
   const [expandedGoals, setExpandedGoals] = useState({});
@@ -83,6 +129,14 @@ const LifePlanOverviewScreen = ({ navigation }) => {
   const [directionModalVisible, setDirectionModalVisible] = useState(false);
   const [editedDirection, setEditedDirection] = useState("");
   const [infoModalVisible, setInfoModalVisible] = useState(false);
+  
+  // Confetti state for project completion (falling confetti)
+  const [showProjectConfetti, setShowProjectConfetti] = useState(false);
+  const [projectConfettiColors, setProjectConfettiColors] = useState(['#4CAF50', '#8BC34A', '#CDDC39', '#2E7D32', '#1B5E20']);
+  
+  // Confetti state for goal completion (fireworks)
+  const [showGoalConfetti, setShowGoalConfetti] = useState(false);
+  const [goalConfettiColors, setGoalConfettiColors] = useState(['#4CAF50', '#8BC34A', '#CDDC39', '#2E7D32', '#1B5E20']);
 
   // Ensure text colors meet contrast requirements
   const textColor = meetsContrastRequirements(theme.text, theme.card) 
@@ -128,7 +182,7 @@ const LifePlanOverviewScreen = ({ navigation }) => {
   
   // Process goals, projects, and tasks data to create a hierarchical structure
   const processData = () => {
-    // Filter out completed goals if needed
+    // Filter out completed goals - LifePlanOverview only shows active goals
     const activeGoals = goals.filter(goal => !goal.completed);
     
     return activeGoals.map(goal => {
@@ -186,124 +240,209 @@ const LifePlanOverviewScreen = ({ navigation }) => {
     }));
   };
 
-  // Toggle task completion
-  const handleToggleTask = (task, projectId) => {
-    // Update local state first for immediate feedback
-    const updatedTask = {
-      ...task,
-      completed: !task.completed,
-      status: !task.completed ? 'done' : 'todo'
-    };
-
-    // Find the project to update
-    const projectToUpdate = projects.find(p => p.id === projectId);
+  // Toggle task completion - Fixed to use correct data structure
+  const handleToggleTask = async (taskId, projectId) => {
+    console.log('=== TASK TOGGLE ATTEMPT ===');
+    console.log('Task ID:', taskId);
+    console.log('Project ID:', projectId);
     
-    if (projectToUpdate) {
-      // Update task in project's tasks array
-      const updatedTasks = projectToUpdate.tasks?.map(t => 
-        t.id === task.id ? updatedTask : t
-      ) || [];
+    // Find the task in the global tasks array (not on the project object)
+    const taskToUpdate = tasks.find(t => t.id === taskId && t.projectId === projectId);
+    if (!taskToUpdate) {
+      console.error("Task not found in tasks array");
+      showError("Couldn't find task");
+      return;
+    }
+    
+    // Verify the project exists
+    const projectExists = projects.find(p => p.id === projectId);
+    if (!projectExists) {
+      console.error("Project not found");
+      showError("Couldn't find project");
+      return;
+    }
+    
+    console.log('Found task:', taskToUpdate.title);
+    console.log('Current task state:');
+    console.log('  - completed:', taskToUpdate.completed);
+    console.log('  - status:', taskToUpdate.status);
+    
+    try {
+      // Determine new status (toggle between 'todo' and 'done')
+      const currentStatus = taskToUpdate.status || (taskToUpdate.completed ? 'done' : 'todo');
+      const newStatus = currentStatus === 'done' ? 'todo' : 'done';
+      const completed = newStatus === 'done';
       
-      // Create updated project object
-      const updatedProject = {
-        ...projectToUpdate,
-        tasks: updatedTasks
+      console.log('Status transition:');
+      console.log('  - currentStatus:', currentStatus);
+      console.log('  - newStatus:', newStatus);
+      console.log('  - newCompleted:', completed);
+      
+      // Create updated task
+      const updatedTask = {
+        ...taskToUpdate,
+        status: newStatus,
+        completed: completed,
+        updatedAt: new Date().toISOString()
       };
       
-      // Recalculate project task progress without changing completion status
-      if (updatedTasks.length > 0) {
-        const completedTasks = updatedTasks.filter(t => t.completed).length;
-        updatedProject.progress = Math.round((completedTasks / updatedTasks.length) * 100);
-        
-        // IMPORTANT: Do NOT automatically mark project as complete
-        // Keep existing completed status - only user can explicitly mark as complete
-      }
+      console.log('Calling updateTask with:', { projectId, taskId, updatedTask: { status: updatedTask.status, completed: updatedTask.completed } });
       
-      // Update project in context
-      if (typeof updateProject === 'function') {
-        updateProject(updatedProject);
-        showSuccess(updatedTask.completed ? 'Task completed' : 'Task marked incomplete');
+      // Update the task using the context method with 3 parameters like TasksScreen
+      if (typeof updateTask === 'function') {
+        await updateTask(projectId, taskId, updatedTask);
+        console.log('✅ updateTask call completed successfully');
+        showSuccess(completed ? 'Task completed' : 'Task marked incomplete');
       } else {
-        console.error("updateProject function not available in context");
+        console.error("updateTask function not available in context");
         showError("Couldn't update task");
       }
-    } else if (typeof updateTask === 'function') {
-      // If we have direct task update function, use it
-      updateTask(updatedTask);
-      showSuccess(updatedTask.completed ? 'Task completed' : 'Task marked incomplete');
+    } catch (error) {
+      console.error("Error updating task status:", error);
+      showError("An error occurred. Please try again.");
+    }
+    
+    console.log('=== END TASK TOGGLE ===');
+  };
+
+  // Handle goal completion - similar to GoalsScreen
+  const handleToggleGoalCompletion = (goal) => {
+    const wasCompleted = goal.completed;
+    const isNowCompleted = !goal.completed;
+    
+    // Create updated goal
+    const updatedGoal = {
+      ...goal,
+      completed: !goal.completed,
+      progress: !goal.completed ? 100 : goal.progress, // Set progress to 100% when completed
+      completedAt: !goal.completed ? new Date().toISOString() : null
+    };
+    
+    // If goal is being completed (not already completed), show fireworks!
+    if (!wasCompleted && isNowCompleted) {
+      console.log("COMPLETING GOAL! Triggering fireworks for:", goal.title);
+      
+      // Set fireworks colors based on goal color
+      setGoalConfettiColors(getGoalFireworksColors(goal.color));
+      
+      // Show fireworks
+      setShowGoalConfetti(true);
+    }
+    
+    // Update goal in context
+    if (typeof updateGoal === 'function') {
+      updateGoal(updatedGoal);
+      
+      showSuccess(updatedGoal.completed ? 
+        'Goal completed! 🎆' : 
+        'Goal reactivated!'
+      );
     } else {
-      console.error("Neither project nor direct task update method available");
-      showError("Couldn't update task");
+      console.error("updateGoal function not available in context");
+      showError("Couldn't update goal");
     }
   };
 
   // Check if all project tasks are completed
   const areAllTasksCompleted = (project) => {
-    if (!project || !project.tasks || project.tasks.length === 0) {
+    if (!project) {
       return false;
     }
-    return project.tasks.every(task => task.completed || task.status === 'done');
+    
+    // Get tasks for this project from the global tasks array
+    const projectTasks = tasks.filter(task => task.projectId === project.id);
+    
+    if (projectTasks.length === 0) {
+      return false;
+    }
+    
+    return projectTasks.every(task => task.completed || task.status === 'done');
+  };
+
+  // Check if all projects in a goal are completed
+  const areAllProjectsCompleted = (goal) => {
+    if (!goal) {
+      return false;
+    }
+    
+    // Get projects for this goal
+    const goalProjects = projects.filter(project => project.goalId === goal.id);
+    
+    if (goalProjects.length === 0) {
+      return false;
+    }
+    
+    return goalProjects.every(project => project.completed || project.status === 'done');
   };
 
   // Mark project as completed
   const handleToggleProjectCompletion = (project) => {
-    // Confirm with the user
-    Alert.alert(
-      project.completed ? "Mark as Incomplete?" : "Mark as Completed?",
-      project.completed ? 
-        "Are you sure you want to mark this project as incomplete?" : 
-        "Are you sure you want to mark this project as completed?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel"
-        },
-        {
-          text: "Confirm",
-          onPress: () => {
-            // Create updated project
-            const updatedProject = {
-              ...project,
-              completed: !project.completed,
-              status: !project.completed ? 'done' : 'todo',
-              // If marking as complete, set progress to 100%
-              // If marking as incomplete, recalculate based on task completion
-              progress: !project.completed ? 100 : 
-                (project.tasks?.length > 0 ? 
-                  Math.round((project.tasks.filter(t => t.completed).length / project.tasks.length) * 100) : 
-                  0)
-            };
-            
-            // Also update all tasks if marking as complete
-            if (!project.completed && project.tasks?.length > 0) {
-              updatedProject.tasks = project.tasks.map(task => ({
-                ...task,
-                completed: true,
-                status: 'done'
-              }));
-            }
-            
-            // Update project in context
-            if (typeof updateProject === 'function') {
-              updateProject(updatedProject);
-              
-              // Specifically update goal progress to reflect the project completion status change
-              if (updatedProject.goalId && typeof updateGoalProgress === 'function') {
-                updateGoalProgress(updatedProject.id, updatedProject.goalId);
-              }
-              
-              showSuccess(updatedProject.completed ? 
-                'Project marked as completed' : 
-                'Project marked as incomplete'
-              );
-            } else {
-              console.error("updateProject function not available in context");
-              showError("Couldn't update project");
-            }
+    const wasCompleted = project.completed || project.status === 'done';
+    const isNowCompleted = !project.completed;
+    
+    // Get tasks for this project from the global tasks array
+    const projectTasks = tasks.filter(task => task.projectId === project.id);
+    
+    // Create updated project
+    const updatedProject = {
+      ...project,
+      completed: !project.completed,
+      status: !project.completed ? 'done' : 'todo',
+      // If marking as complete, set progress to 100%
+      // If marking as incomplete, recalculate based on task completion
+      progress: !project.completed ? 100 : 
+        (projectTasks.length > 0 ? 
+          Math.round((projectTasks.filter(t => t.completed).length / projectTasks.length) * 100) : 
+          0)
+    };
+    
+    // Also update all tasks if marking project as complete
+    if (!project.completed && projectTasks.length > 0) {
+      // Update each task individually using the updateTask function
+      projectTasks.forEach(async (task) => {
+        if (!task.completed && task.status !== 'done') {
+          const updatedTask = {
+            ...task,
+            completed: true,
+            status: 'done',
+            updatedAt: new Date().toISOString()
+          };
+          
+          if (typeof updateTask === 'function') {
+            await updateTask(project.id, task.id, updatedTask);
           }
         }
-      ]
-    );
+      });
+    }
+    
+    // If project is being completed (not already completed), show falling confetti!
+    if (!wasCompleted && isNowCompleted) {
+      console.log("COMPLETING PROJECT! Triggering confetti for:", project.title);
+      
+      // Set confetti colors based on project color
+      setProjectConfettiColors(getProjectConfettiColors(project.color));
+      
+      // Show falling confetti
+      setShowProjectConfetti(true);
+    }
+    
+    // Update project in context
+    if (typeof updateProject === 'function') {
+      updateProject(updatedProject);
+      
+      // Specifically update goal progress to reflect the project completion status change
+      if (updatedProject.goalId && typeof updateGoalProgress === 'function') {
+        updateGoalProgress(updatedProject.id, updatedProject.goalId);
+      }
+      
+      showSuccess(updatedProject.completed ? 
+        'Project marked as completed' : 
+        'Project marked as incomplete'
+      );
+    } else {
+      console.error("updateProject function not available in context");
+      showError("Couldn't update project");
+    }
   };
   
   // Toggle the collapsed state of the direction card
@@ -318,20 +457,50 @@ const LifePlanOverviewScreen = ({ navigation }) => {
   };
   
   // Save the updated direction
-const saveDirection = () => {
+const saveDirection = async () => {
   if (typeof updateAppSetting === 'function') {
-    updateAppSetting('lifeDirection', editedDirection.trim());
-    showSuccess('Strategic Direction updated');
-    
-    // Track vision setter achievement
     try {
-      FeatureExplorerTracker.trackVisionSetter(editedDirection, showSuccess);
+      await updateAppSetting('lifeDirection', editedDirection.trim());
+      showSuccess('Strategic Direction updated');
+      
+      // Track vision setter achievement
+      try {
+        FeatureExplorerTracker.trackVisionSetter(editedDirection, showSuccess);
+      } catch (error) {
+        console.error('Error tracking vision setter achievement:', error);
+        // Silently handle tracking errors without affecting main functionality
+      }
+      
+      // Update app summary to reflect the new life direction in AI context
+      try {
+        const AppSummaryService = await import('../services/AppSummaryService');
+        const DocumentService = await import('../services/DocumentService');
+        
+        // Generate new app summary with updated life direction
+        const appData = {
+          goals: goals || [],
+          projects: projects || [],
+          tasks: tasks || [],
+          settings: {
+            ...appContext.settings,
+            lifeDirection: editedDirection.trim()
+          }
+        };
+        
+        const summary = AppSummaryService.default.generateAppSummary(appData);
+        await DocumentService.default.updateAppContextDocument(summary);
+        
+        console.log('App summary updated with new Strategic Direction');
+      } catch (error) {
+        console.error('Error updating app summary after Strategic Direction change:', error);
+        // Don't fail the main operation if summary update fails
+      }
+      
+      setDirectionModalVisible(false);
     } catch (error) {
-      console.error('Error tracking vision setter achievement:', error);
-      // Silently handle tracking errors without affecting main functionality
+      console.error('Error updating Strategic Direction:', error);
+      showError("Couldn't update Strategic Direction");
     }
-    
-    setDirectionModalVisible(false);
   } else {
     showError("Couldn't update Strategic Direction");
   }
@@ -472,12 +641,14 @@ const saveDirection = () => {
     );
   };
 
-  // Completion suggestion component
+  // Project completion suggestion component
   const CompletionSuggestionBadge = ({ project, color }) => {
+    // Get tasks for this project from the global tasks array
+    const projectTasks = tasks.filter(task => task.projectId === project.id);
+    
     // Only show if all tasks are completed, there are tasks, and project isn't completed
     if (!project || 
-        !project.tasks || 
-        project.tasks.length === 0 || 
+        projectTasks.length === 0 || 
         !areAllTasksCompleted(project) || 
         project.completed || 
         project.status === 'done') {
@@ -529,6 +700,25 @@ const saveDirection = () => {
         paddingBottom: insets.bottom 
       }
     ]}>
+      {/* Confetti component for project completion - falling animation */}
+      <Confetti 
+        active={showProjectConfetti} 
+        colors={projectConfettiColors} 
+        duration={4000}
+        type="confetti"
+        count={50}
+        onComplete={() => setShowProjectConfetti(false)}
+      />
+      
+      {/* Confetti component for goal completion - fireworks animation */}
+      <Confetti 
+        active={showGoalConfetti} 
+        colors={goalConfettiColors} 
+        duration={5000}
+        type="fireworks"
+        onComplete={() => setShowGoalConfetti(false)}
+      />
+      
       <StatusBar 
         backgroundColor={theme.statusBar || theme.background} 
         barStyle={theme.dark ? 'light-content' : 'dark-content'} 
@@ -692,8 +882,11 @@ const saveDirection = () => {
             style={[
               styles.directionContentContainer,
               {
-                padding: spacing.m,
-                alignItems: 'center'
+                paddingHorizontal: spacing.m,
+                paddingVertical: spacing.l, // More vertical padding for longer text
+                alignItems: 'center',
+                minHeight: 'auto', // Allow to expand with content
+                flexGrow: 1 // Allow to grow as needed
               }
             ]}
             onPress={openDirectionModal}
@@ -741,7 +934,11 @@ const saveDirection = () => {
                 
                 <View style={[
                   styles.directionTextContainer,
-                  { width: '100%' }
+                  { 
+                    width: '100%',
+                    minHeight: 'auto', // Allow container to size to content
+                    flexShrink: 0 // Prevent shrinking
+                  }
                 ]}>
                   <Text 
                     style={[
@@ -751,10 +948,12 @@ const saveDirection = () => {
                         fontSize: fontSizes.m,
                         lineHeight: scaleHeight(24),
                         fontStyle: 'italic',
-                        textAlign: 'center'
+                        textAlign: 'center',
+                        flexWrap: 'wrap' // Allow text to wrap
                       }
                     ]}
                     maxFontSizeMultiplier={1.5}
+                    numberOfLines={0} // Remove any line limit
                   >
                     {lifeDirection}
                   </Text>
@@ -770,7 +969,7 @@ const saveDirection = () => {
           { paddingBottom: spacing.m }
         ]}>
           {processedData.length > 0 ? (
-            processedData.map((goal, index) => (
+            processedData.map((goal) => (
               <Animated.View 
                 key={goal.id}
                 style={[
@@ -967,6 +1166,80 @@ const saveDirection = () => {
                       </Text>
                     </TouchableOpacity>
                   </View>
+                  
+                  {/* Auto-suggestion banner when all projects are complete */}
+                  {areAllProjectsCompleted(goal) && 
+                   projects.filter(project => project.goalId === goal.id).length > 0 && 
+                   !goal.completed && 
+                   goal.progress >= 100 && (
+                    <View style={[
+                      styles.completionSuggestion,
+                      { 
+                        backgroundColor: colorWithOpacity(goal.color || theme.primary, 0.1),
+                        borderColor: goal.color || theme.primary,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        padding: spacing.m,
+                        borderRadius: scaleWidth(12),
+                        borderWidth: 1,
+                        borderStyle: 'dashed',
+                        marginTop: spacing.m
+                      }
+                    ]}
+                    accessible={true}
+                    accessibilityRole="alert"
+                    accessibilityLabel="Goal completion suggestion"
+                    >
+                      <Ionicons 
+                        name="trophy" 
+                        size={scaleWidth(20)} 
+                        color={goal.color || theme.primary} 
+                      />
+                      <Text style={[
+                        styles.completionSuggestionText,
+                        { 
+                          color: textColor,
+                          flex: 1,
+                          fontSize: fontSizes.m,
+                          marginLeft: spacing.s
+                        }
+                      ]}
+                      maxFontSizeMultiplier={1.3}
+                      >
+                        All projects complete! Mark this goal as achieved?
+                      </Text>
+                      <TouchableOpacity
+                        style={[
+                          styles.completionSuggestionButton,
+                          { 
+                            backgroundColor: goal.color || theme.primary,
+                            paddingHorizontal: spacing.m,
+                            paddingVertical: spacing.s,
+                            borderRadius: scaleWidth(20),
+                            marginLeft: spacing.s
+                          }
+                        ]}
+                        onPress={() => handleToggleGoalCompletion(goal)}
+                        accessible={true}
+                        accessibilityRole="button"
+                        accessibilityLabel="Mark goal as complete"
+                      >
+                        <Text 
+                          style={[
+                            styles.completionSuggestionButtonText,
+                            {
+                              color: '#FFFFFF',
+                              fontSize: fontSizes.s,
+                              fontWeight: '600'
+                            }
+                          ]}
+                          maxFontSizeMultiplier={1.3}
+                        >
+                          Complete Goal
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
                 </TouchableOpacity>
                 
                 {/* Projects for this Goal */}
@@ -1104,11 +1377,16 @@ const saveDirection = () => {
                                   {project.title}
                                 </Text>
                                 
-                                {/* Add the completion suggestion badge here */}
-                                <CompletionSuggestionBadge 
-                                  project={project} 
-                                  color={project.color || goal.color || theme.primary} 
-                                />
+                                {/* Add the completion suggestion badge here - only if NOT showing completion banner below */}
+                                {!(areAllTasksCompleted(project) && 
+                                   tasks.filter(task => task.projectId === project.id).length > 0 && 
+                                   !project.completed && 
+                                   project.status !== 'done') && (
+                                  <CompletionSuggestionBadge 
+                                    project={project} 
+                                    color={project.color || goal.color || theme.primary} 
+                                  />
+                                )}
                               </View>
                               
                               <View style={[
@@ -1252,7 +1530,7 @@ const saveDirection = () => {
                             
                             {/* Auto-suggestion banner when all tasks are complete */}
                             {areAllTasksCompleted(project) && 
-                             project.tasks.length > 0 && 
+                             tasks.filter(task => task.projectId === project.id).length > 0 && 
                              !project.completed && 
                              project.status !== 'done' && (
                               <View style={[
@@ -1359,12 +1637,12 @@ const saveDirection = () => {
                                       }
                                     ]} />
                                     
-                                    {/* Task Item */}
+                                    {/* Task Item - Make entire area clickable */}
                                     <TouchableOpacity 
                                       style={[
                                         styles.taskItem, 
                                         { 
-                                          backgroundColor: task.completed ? 
+                                          backgroundColor: (task.completed || task.status === 'done') ? 
                                             colorWithOpacity(project.color || goal.color || theme.primary, 0.1) : 
                                             theme.card,
                                           borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
@@ -1373,31 +1651,37 @@ const saveDirection = () => {
                                           padding: spacing.s,
                                           borderWidth: 1,
                                           flexDirection: 'row',
-                                          alignItems: 'center',
+                                          alignItems: 'flex-start',
                                           flex: 1,
                                           shadowOffset: { width: 0, height: scaleHeight(1) },
                                           shadowOpacity: 0.1,
                                           shadowRadius: scaleWidth(2),
-                                          elevation: 1
+                                          elevation: 1,
+                                          minHeight: scaleHeight(40)
                                         }
                                       ]}
-                                      onPress={() => navigateToTask(task, project.id)}
-                                      activeOpacity={0.8}
+                                      onPress={() => {
+                                        console.log('🔍 Task clicked:', task.title);
+                                        console.log('🔍 Task state at render:', { completed: task.completed, status: task.status });
+                                        console.log('🔍 Visual state:', (task.completed || task.status === 'done'));
+                                        handleToggleTask(task.id, project.id);
+                                      }}
+                                      activeOpacity={0.7}
                                       accessible={true}
                                       accessibilityRole="button"
-                                      accessibilityLabel={`Task: ${task.title}${task.completed ? ', Completed' : ''}`}
-                                      accessibilityHint="Tap to view task details"
-                                      accessibilityState={{ checked: task.completed }}
+                                      accessibilityLabel={`Task: ${task.title}${(task.completed || task.status === 'done') ? ', Completed' : ''}`}
+                                      accessibilityHint="Tap to toggle completion"
+                                      accessibilityState={{ checked: (task.completed || task.status === 'done') }}
                                     >
-                                      {/* Make the checkbox clickable */}
-                                      <TouchableOpacity
+                                      {/* Checkbox visual indicator */}
+                                      <View
                                         style={[
                                           styles.taskCheckCircle,
                                           {
-                                            backgroundColor: task.completed ? 
+                                            backgroundColor: (task.completed || task.status === 'done') ? 
                                               project.color || goal.color || theme.primary : 
                                               'transparent',
-                                            borderColor: task.completed ? 
+                                            borderColor: (task.completed || task.status === 'done') ? 
                                               'transparent' : 
                                               secondaryTextColor,
                                             width: scaleWidth(20),
@@ -1406,35 +1690,29 @@ const saveDirection = () => {
                                             borderWidth: scaleWidth(2),
                                             justifyContent: 'center',
                                             alignItems: 'center',
-                                            marginRight: spacing.s
+                                            marginRight: spacing.s,
+                                            marginTop: spacing.xxs
                                           }
                                         ]}
-                                        onPress={() => handleToggleTask(task, project.id)}
-                                        accessible={true}
-                                        accessibilityRole="checkbox"
-                                        accessibilityLabel={task.completed ? 
-                                          `Mark ${task.title} as incomplete` : 
-                                          `Mark ${task.title} as complete`}
-                                        accessibilityState={{ checked: task.completed }}
-                                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                                       >
-                                        {task.completed && (
+                                        {(task.completed || task.status === 'done') && (
                                           <Ionicons name="checkmark" size={scaleWidth(12)} color="#FFFFFF" />
                                         )}
-                                      </TouchableOpacity>
+                                      </View>
                                       
                                       <Text 
                                         style={[
                                           styles.taskTitle, 
                                           { 
                                             color: textColor,
-                                            textDecorationLine: task.completed ? 'line-through' : 'none',
-                                            opacity: task.completed ? 0.7 : 1,
+                                            textDecorationLine: (task.completed || task.status === 'done') ? 'line-through' : 'none',
+                                            opacity: (task.completed || task.status === 'done') ? 0.7 : 1,
                                             fontSize: fontSizes.s,
-                                            flex: 1
+                                            flex: 1,
+                                            lineHeight: scaleHeight(18),
+                                            paddingTop: spacing.xxs
                                           }
                                         ]}
-                                        numberOfLines={1}
                                         maxFontSizeMultiplier={1.3}
                                       >
                                         {task.title}

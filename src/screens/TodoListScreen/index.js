@@ -283,28 +283,47 @@ const TodoListScreen = ({ navigation, route }) => {
   const renderTodoTabs = () => (
     <NavigationContainer independent={true}>
       <TopTab.Navigator
-        screenOptions={{
-          tabBarActiveTintColor: theme.primary,
+        screenOptions={({ route }) => ({
+          tabBarActiveTintColor: '#FFFFFF', // White text on active tab for better contrast
           tabBarInactiveTintColor: theme.textSecondary,
           tabBarStyle: {
-            backgroundColor: theme.card,
+            backgroundColor: theme.cardElevated,
             borderBottomColor: theme.border,
             borderBottomWidth: 0.5,
             elevation: 0,
             shadowOpacity: 0,
+            borderRadius: 25,
+            marginHorizontal: spacing.m,
+            marginVertical: spacing.xs,
+            height: 44,
           },
           tabBarIndicatorStyle: {
             backgroundColor: theme.primary,
-            height: 2,
+            height: 38,
+            borderRadius: 19,
+            margin: 3, // Consistent 3px spacing on all sides
+            width: `${100/3 - 2}%`, // Each tab is 1/3 width minus margin
           },
           tabBarLabelStyle: {
-            fontSize: scaleFontSize(14),
+            fontSize: scaleFontSize(16),
             fontWeight: '600',
             textTransform: 'none',
+            zIndex: 2, // Ensure text is above indicator
+            marginTop: 1, // Move text down slightly to center it
+          },
+          tabBarItemStyle: {
+            zIndex: 2, // Ensure tab content is above indicator
           },
           // Enable swipe but disable problematic animations
           swipeEnabled: true,
           animationEnabled: false,
+          tabBarPressColor: 'transparent', // Remove press ripple that might interfere
+          tabBarPressOpacity: 1, // Prevent opacity changes on press
+          lazy: false, // Ensure all tabs are rendered for smooth swiping
+        })}
+        sceneContainerStyle={{ 
+          flex: 1,
+          backgroundColor: 'transparent' 
         }}
         onStateChange={(state) => {
           if (state?.index !== undefined) {
@@ -495,7 +514,7 @@ const TodoListScreen = ({ navigation, route }) => {
         </View>
 
         {/* Content */}
-        <View style={styles.content}>
+        <View style={[styles.content, { flex: 1 }]}>
           {currentView === 'todo' ? renderTodoTabs() : renderNotesView()}
         </View>
       </SafeAreaView>

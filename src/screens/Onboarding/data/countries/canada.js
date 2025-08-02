@@ -17,17 +17,149 @@ export const DOMAIN_DEFINITIONS = [
           {
             id: "ai-ml",
             name: "AI & Machine Learning Applications",
-            description: "Learn practical AI tools and machine learning fundamentals"
+            description: "Learn practical AI tools and machine learning fundamentals",
+            projects: [
+              {
+                name: "AI Tools Mastery for Canadian Market",
+                description: "Master practical AI applications essential for Canada's digital transformation",
+                explanation: "AI skills command 35% salary premiums. Federal government investing $2.5 billion in digital skills development with focus on AI capabilities.",
+                tasks: [
+                  {
+                    name: "Complete IBM AI Professional Certificate or Google AI Course focusing on business applications",
+                    summary: "Get AI certified",
+                    explanation: "IBM and Google AI certificates are highly recognized by Canadian employers and provide practical skills for immediate workplace application. These programs focus on business value creation rather than purely technical implementation.",
+                    timeframe: "4 months",
+                    completed: false
+                  },
+                  {
+                    name: "Build AI-powered project solving Canadian business problem (bilingual support, seasonal planning, etc.)",
+                    summary: "Build AI project",
+                    explanation: "Canadian-specific AI projects demonstrate understanding of local market needs like bilingual support and seasonal variations. These projects create portfolio pieces that resonate with Canadian employers and show practical application skills.",
+                    timeframe: "2 months",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Machine Learning Career Application",
+                description: "Apply ML skills in Canadian job context with portfolio development",
+                explanation: "305,000+ tech workers needed by 2024. ML skills particularly valuable in finance, healthcare, and resource sectors dominant in Canadian economy.",
+                tasks: [
+                  {
+                    name: "Create ML portfolio with projects relevant to Canadian industries (energy, finance, healthcare)",
+                    summary: "ML portfolio",
+                    explanation: "Portfolio projects targeting Canada's dominant industries (energy, finance, healthcare) demonstrate sector-specific knowledge and increase appeal to Canadian employers. These industries offer highest ML salary premiums and job security.",
+                    timeframe: "3 months",
+                    completed: false
+                  },
+                  {
+                    name: "Network with Canadian AI/ML community through Vector Institute events and job placement programs",
+                    summary: "Network AI",
+                    explanation: "Vector Institute is Canada's premier AI research organization with strong industry connections. Networking through their events provides access to Canada's AI ecosystem and often leads to job opportunities with leading tech companies.",
+                    timeframe: "2 months",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           },
           {
             id: "cloud-cybersecurity",
             name: "Cloud Computing & Cybersecurity",
-            description: "Master cloud platforms and security analysis skills"
+            description: "Master cloud platforms and security analysis skills",
+            projects: [
+              {
+                name: "Cloud Platform Certification",
+                description: "Earn industry-recognized cloud computing credentials for Canadian market",
+                explanation: "Cloud computing jobs grew 37% in Canada. Major Canadian companies migrating to cloud, creating high demand for certified professionals.",
+                tasks: [
+                  {
+                    name: "Complete AWS Cloud Practitioner or Microsoft Azure Fundamentals certification",
+                    summary: "Cloud certified",
+                    explanation: "AWS and Azure certifications are in high demand by Canadian companies migrating to cloud infrastructure. These entry-level certifications provide foundation for higher-paying cloud architect and engineer roles.",
+                    timeframe: "3 months",
+                    completed: false
+                  },
+                  {
+                    name: "Build cloud infrastructure project demonstrating cost optimization and scalability",
+                    summary: "Cloud project",
+                    explanation: "Hands-on cloud projects demonstrate practical skills that Canadian employers value beyond theoretical certification knowledge. Cost optimization focus addresses key business concern for cloud adoption decisions.",
+                    timeframe: "2 months",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Cybersecurity Expertise Development", 
+                description: "Develop cybersecurity skills addressing Canadian digital protection needs",
+                explanation: "Cybersecurity is critical for Canadian businesses and government. Strong job security with average salaries $70,000-$120,000 CAD.",
+                tasks: [
+                  {
+                    name: "Complete CompTIA Security+ or CISSP certification focusing on Canadian compliance requirements",
+                    summary: "Security cert",
+                    explanation: "Security certifications command $70,000-$120,000 CAD salaries with excellent job security. Focus on Canadian compliance (PIPEDA, provincial regulations) makes you valuable for local organizations.",
+                    timeframe: "4 months",
+                    completed: false
+                  },
+                  {
+                    name: "Conduct security assessment for local Canadian business or organization",
+                    summary: "Security audit",
+                    explanation: "Real-world security assessment experience provides practical portfolio pieces while building relationships with local Canadian businesses. Many small/medium businesses need affordable security expertise.",
+                    timeframe: "1 month",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           },
           {
             id: "data-analytics",
             name: "Data Analytics & Business Intelligence",
-            description: "Develop data analysis and business intelligence capabilities"
+            description: "Develop data analysis and business intelligence capabilities",
+            projects: [
+              {
+                name: "Canadian Data Analytics Certification",
+                description: "Master data analysis tools essential for Canadian business intelligence",
+                explanation: "Data analytics crucial for Canadian sectors like finance, retail, and resources. Strong demand for bilingual data professionals.",
+                tasks: [
+                  {
+                    name: "Complete Google Data Analytics Certificate or IBM Data Science certification",
+                    summary: "Data certified",
+                    explanation: "Google and IBM data certifications are recognized by Canadian employers and often lead to job placement assistance. These programs provide hands-on experience with tools used by Canadian businesses.",
+                    timeframe: "4 months",
+                    completed: false
+                  },
+                  {
+                    name: "Master SQL, Python, and Tableau with focus on Canadian business data challenges",
+                    summary: "Master tools",
+                    explanation: "SQL, Python, and Tableau are core requirements for Canadian data analyst roles. Focus on Canadian business challenges like bilingual data, regional variations, and seasonal patterns increases relevance to employers.",
+                    timeframe: "3 months",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Business Intelligence Portfolio",
+                description: "Create BI solutions addressing real Canadian market needs",
+                explanation: "Canadian businesses need data insights for seasonal patterns, regional variations, and bilingual market analysis.",
+                tasks: [
+                  {
+                    name: "Build BI dashboard analyzing Canadian market data (e.g., housing, retail, seasonal trends)",
+                    summary: "Build dashboard",
+                    explanation: "Canadian market analysis projects demonstrate understanding of local business environment and data patterns. Housing, retail, and seasonal trend analysis addresses key areas of Canadian business interest.",
+                    timeframe: "2 months",
+                    completed: false
+                  },
+                  {
+                    name: "Present data insights to Canadian business network and document business impact",
+                    summary: "Present insights",
+                    explanation: "Presenting to Canadian business networks builds professional reputation and demonstrates communication skills. Documenting business impact provides evidence of value creation for future employers.",
+                    timeframe: "1 month",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           }
         ],
         projects: [
@@ -38,10 +170,16 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Research certification programs for your chosen tech focus area and enroll in reputable provider",
+                summary: "Research certs",
+                explanation: "Canadian employers increasingly value industry certifications over formal degrees for tech roles. Research helps identify which certifications have strongest recognition and job placement rates in Canadian market.",
+                timeframe: "2 weeks",
                 completed: false
               },
               {
                 name: "Complete foundational courses and earn first industry-recognized certification",
+                summary: "Get certified",
+                explanation: "Industry-recognized certifications provide credible evidence of technical skills to Canadian employers. First certification often leads to immediate job opportunities or internal promotions with salary increases.",
+                timeframe: "4 months",
                 completed: false
               }
             ]
@@ -53,10 +191,16 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Create portfolio showcasing projects and skills learned in chosen tech area",
+                summary: "Build portfolio",
+                explanation: "Technical portfolios provide tangible evidence of capabilities that complement certifications. Canadian employers value practical demonstration of skills through completed projects and real-world applications.",
+                timeframe: "2 months",
                 completed: false
               },
               {
                 name: "Network with Canadian tech professionals and apply tech skills in current role",
+                summary: "Network & apply",
+                explanation: "Canadian tech community is collaborative and supportive for career growth. Applying new skills in current role demonstrates value while networking opens doors to new opportunities and mentorship.",
+                timeframe: "3 months",
                 completed: false
               }
             ]
@@ -76,10 +220,16 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Research salary benchmarks for your role and industry in Canadian markets",
+                summary: "Research salary",
+                explanation: "Canadian salary data varies significantly by province and industry. Research provides evidence for negotiations and helps identify markets where your skills command premium compensation.",
+                timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Document achievements and prepare compelling case for salary increase exceeding 3.5%",
+                summary: "Prepare case",
+                explanation: "Documented achievements provide objective evidence for salary negotiations. Exceeding 3.5% national average ensures real purchasing power gains and keeps pace with Canadian cost of living increases.",
+                timeframe: "2 weeks",
                 completed: false
               }
             ]
@@ -91,10 +241,16 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Identify specific advancement opportunities within current organization or industry",
+                summary: "Find opportunities",
+                explanation: "Canadian job market rewards internal advancement and industry expertise. Identifying specific opportunities allows strategic skill development and positioning for promotions or lateral moves with salary increases.",
+                timeframe: "2 weeks",
                 completed: false
               },
               {
                 name: "Develop high-value skills that command higher compensation in Canadian job market",
+                summary: "Develop skills",
+                explanation: "Skills like AI, data analysis, and bilingual capability command salary premiums in Canadian market. Strategic skill development creates competitive advantage and justifies compensation increases.",
+                timeframe: "6 months",
                 completed: false
               }
             ]
@@ -114,10 +270,16 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Research your company's flexible work policy and document productivity benefits",
+                summary: "Research policy",
+                explanation: "Understanding existing policy provides foundation for negotiation and identifies opportunities for arrangement that benefits both employee and employer. Productivity documentation strengthens your case.",
+                timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Prepare proposal highlighting how flexible work supports both performance and wellbeing",
+                summary: "Prepare proposal",
+                explanation: "Well-prepared proposals addressing employer concerns about productivity and collaboration increase likelihood of approval. Focus on business benefits and specific arrangements builds confidence in your professionalism.",
+                timeframe: "2 weeks",
                 completed: false
               }
             ]
@@ -129,10 +291,16 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Set up optimal home office space and master remote collaboration tools",
+                summary: "Setup office",
+                explanation: "Professional home office setup demonstrates commitment to remote work success and qualifies for tax deductions. Mastering collaboration tools ensures seamless team integration and productivity.",
+                timeframe: "2 weeks",
                 completed: false
               },
               {
                 name: "Develop time management and communication systems that excel in flexible work environment",
+                summary: "Develop systems",
+                explanation: "Effective remote work systems prove your capability to maintain high performance in flexible arrangements. Strong systems build manager confidence and support long-term arrangement sustainability.",
+                timeframe: "1 month",
                 completed: false
               }
             ]
@@ -160,10 +328,16 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Calculate four months of essential expenses to determine your $15,000 emergency fund target",
+                summary: "Calculate fund",
+                explanation: "Four months of expenses provides sufficient buffer for job transitions and unexpected costs while being achievable for median Canadian earners. Calculating exact needs ensures realistic target setting.",
+                timeframe: "1 day",
                 completed: false
               },
               {
                 name: "Open high-interest savings account and set up automatic weekly transfers",
+                summary: "Setup savings",
+                explanation: "High-interest savings accounts earning 2.85-3.7% maximize emergency fund growth while maintaining accessibility. Automatic transfers ensure consistent progress without relying on willpower or memory.",
+                timeframe: "1 week",
                 completed: false
               }
             ]
@@ -175,10 +349,16 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Track all expenses for one month to identify spending patterns and reduction opportunities",
+                summary: "Track expenses",
+                explanation: "Expense tracking reveals unconscious spending patterns and identifies easy wins for cost reduction. Most people discover $200-400 monthly in unnecessary expenses that can be redirected to savings.",
+                timeframe: "1 month",
                 completed: false
               },
               {
                 name: "Cancel or reduce subscription services and recurring expenses you don't actively use",
+                summary: "Cut subscriptions",
+                explanation: "Subscription audits often reveal $50-200 monthly in forgotten or underused services. Canceling unused subscriptions provides immediate monthly savings that compound over time toward financial goals.",
+                timeframe: "1 week",
                 completed: false
               }
             ]
@@ -198,10 +378,16 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Open First Home Savings Account and maximize annual contributions for tax-free home savings",
+                summary: "Open FHSA",
+                explanation: "FHSA provides $40,000 contribution room with tax deduction benefits and tax-free withdrawals for home purchases. This unique Canadian program significantly accelerates down payment savings.",
+                timeframe: "2 weeks",
                 completed: false
               },
               {
                 name: "Research First Home Owner programs and down payment assistance in target provinces",
+                summary: "Research programs",
+                explanation: "Provincial programs vary significantly across Canada and can provide substantial down payment assistance or reduced qualification requirements. Research helps maximize available government support.",
+                timeframe: "2 weeks",
                 completed: false
               }
             ]
@@ -213,10 +399,16 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Calculate monthly savings needed to reach $25,000 target within your timeline",
+                summary: "Calculate savings",
+                explanation: "Clear monthly savings target makes homeownership goal concrete and achievable. Breaking down large goal into monthly actions prevents overwhelm while tracking progress toward major milestone.",
+                timeframe: "1 day",
                 completed: false
               },
               {
                 name: "Set up dedicated down payment savings account with automatic transfers",
+                summary: "Setup account",
+                explanation: "Dedicated account prevents down payment funds from being used for other expenses while automatic transfers ensure consistent progress. Separate account creates psychological commitment to homeownership goal.",
+                timeframe: "1 week",
                 completed: false
               }
             ]
@@ -236,10 +428,16 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "List all student debts with balances and interest rates to prioritize repayment strategy",
+                summary: "List debts",
+                explanation: "Complete debt inventory provides clarity on repayment priorities and enables strategic planning. Understanding interest rates helps focus efforts on highest-cost debt for maximum financial impact.",
+                timeframe: "1 day",
                 completed: false
               },
               {
                 name: "Create monthly payment plan to eliminate $10,000 of highest-priority student debt",
+                summary: "Payment plan",
+                explanation: "Systematic payment plan makes debt elimination achievable and measurable. Focusing on $10,000 portion provides manageable target while creating meaningful cash flow improvement.",
+                timeframe: "1 week",
                 completed: false
               }
             ]
@@ -251,10 +449,16 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Calculate monthly cash flow improvement from paying off targeted debt amount",
+                summary: "Calculate flow",
+                explanation: "Understanding cash flow improvement provides motivation and enables planning for redirected funds. Calculating specific monthly benefit demonstrates tangible value of debt elimination effort.",
+                timeframe: "1 day",
                 completed: false
               },
               {
                 name: "Plan how to redirect debt payments toward other financial goals once target is reached",
+                summary: "Redirect plan",
+                explanation: "Planning fund redirection prevents lifestyle inflation and maximizes debt elimination benefits. Having clear plan for freed cash flow maintains financial momentum toward other goals.",
+                timeframe: "1 week",
                 completed: false
               }
             ]
@@ -282,10 +486,16 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Connect with mental health resources through Canada's healthcare system or employee benefits",
+                summary: "Find resources",
+                explanation: "Universal healthcare covers basic mental health services while many employers provide additional EAP benefits. Accessing available resources reduces financial barriers to mental health support.",
+                timeframe: "2 weeks",
                 completed: false
               },
               {
                 name: "Establish regular therapy or counseling routine and develop daily wellness practices",
+                summary: "Start therapy",
+                explanation: "Regular therapy provides consistent support for mental health maintenance and growth. Combined with daily wellness practices, creates comprehensive approach to emotional well-being and stress management.",
+                timeframe: "1 month",
                 completed: false
               }
             ]
@@ -297,10 +507,16 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Identify stress triggers and develop specific coping strategies for each",
+                summary: "Manage stress",
+                explanation: "Understanding personal stress triggers enables proactive management rather than reactive responses. Specific coping strategies for each trigger create toolbox for maintaining mental health under pressure.",
+                timeframe: "2 weeks",
                 completed: false
               },
               {
                 name: "Create daily routines that help transition between work and personal life",
+                summary: "Work routines",
+                explanation: "Transition rituals help your brain shift between work and personal modes, especially important for remote workers. Clear boundaries reduce stress and improve focus in both work and personal activities.",
+                timeframe: "2 weeks",
                 completed: false
               }
             ]
@@ -320,10 +536,16 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Choose 3 physical activities focusing on functional movement you can do consistently",
+                summary: "Choose activities",
+                explanation: "Functional movement activities improve daily quality of life and long-term health while being more sustainable than purely aesthetic fitness goals. Consistency matters more than intensity for health benefits.",
+                timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Schedule 150+ minutes of moderate exercise weekly meeting national health guidelines",
+                summary: "Schedule exercise",
+                explanation: "Meeting Health Canada's 150-minute guideline reduces risk of chronic disease and improves mental health. Scheduling exercise like appointments increases consistency and prioritizes health in busy schedules.",
+                timeframe: "Ongoing",
                 completed: false
               }
             ]
@@ -335,10 +557,16 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Integrate movement breaks throughout workday, especially for remote workers",
+                summary: "Movement breaks",
+                explanation: "Regular movement breaks counter negative effects of prolonged sitting and improve focus and productivity. Particularly important for remote workers who lack natural movement from office environment.",
+                timeframe: "Ongoing",
                 completed: false
               },
               {
                 name: "Use Canadian outdoor opportunities for active transportation and recreation",
+                summary: "Active transport",
+                explanation: "Canada's outdoor infrastructure supports active transportation like cycling and walking while providing free recreation opportunities. Active transport combines fitness with practical transportation needs.",
+                timeframe: "Ongoing",
                 completed: false
               }
             ]
@@ -358,10 +586,16 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Schedule annual health check-up with GP including blood tests and recommended screenings",
+                summary: "Book checkup",
+                explanation: "Universal healthcare makes preventive care accessible and affordable. Annual check-ups detect health issues early when treatment is most effective and least costly.",
+                timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Create nutrition and sleep optimization plan based on Canadian health guidelines",
+                summary: "Health plan",
+                explanation: "Health Canada guidelines provide evidence-based recommendations for nutrition and sleep that support long-term wellness. Structured plans make healthy choices easier and more consistent.",
+                timeframe: "2 weeks",
                 completed: false
               }
             ]
@@ -373,10 +607,16 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Use health tracking app or wearable to monitor key health metrics daily",
+                summary: "Track health",
+                explanation: "Health tracking provides objective data about patterns and trends that inform lifestyle adjustments. Regular monitoring helps identify what works for your individual health optimization.",
+                timeframe: "Ongoing",
                 completed: false
               },
               {
                 name: "Establish consistent sleep schedule of 7-8 hours nightly for optimal health",
+                summary: "Fix sleep",
+                explanation: "Consistent sleep schedule regulates circadian rhythms and improves both physical and mental health. Quality sleep forms foundation for all other health and performance goals.",
+                timeframe: "2 weeks",
                 completed: false
               }
             ]
@@ -404,10 +644,16 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Learn effective text conversation techniques and response timing for dating apps",
+                summary: "Learn texting",
+                explanation: "Effective texting skills are essential for modern dating success when 67% prefer texting as primary communication. Learning conversation techniques and timing improves match conversion to dates.",
+                timeframe: "2 weeks",
                 completed: false
               },
               {
                 name: "Practice authentic communication that builds genuine connection through digital platforms",
+                summary: "Practice dating",
+                explanation: "Authentic communication attracts compatible partners while filtering out superficial connections. Genuine conversation skills translate from digital to in-person interactions for relationship success.",
+                timeframe: "Ongoing",
                 completed: false
               }
             ]
@@ -419,10 +665,16 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Optimize dating profiles and choose platforms that attract people seeking your relationship goals",
+                summary: "Optimize profiles",
+                explanation: "Strategic profile optimization and platform selection increase quality matches while reducing time spent on incompatible connections. Different platforms attract different relationship intentions.",
+                timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Develop dating strategy that focuses on quality connections over quantity of matches",
+                summary: "Dating strategy",
+                explanation: "Quality-focused strategy reduces dating fatigue and increases likelihood of meaningful relationships. Strategic approach saves time and emotional energy while improving relationship outcomes.",
+                timeframe: "2 weeks",
                 completed: false
               }
             ]
@@ -442,10 +694,16 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Plan creative, low-cost date ideas that focus on connection rather than spending",
+                summary: "Plan dates",
+                explanation: "Creative dating demonstrates thoughtfulness while reducing financial pressure. Connection-focused activities build stronger relationships than expensive consumption-based dates.",
+                timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Have honest conversations about financial constraints and creative relationship building",
+                summary: "Financial talks",
+                explanation: "Financial transparency early in relationships prevents misunderstandings and builds trust. Open communication about constraints often leads to creative solutions that strengthen connections.",
+                timeframe: "Ongoing",
                 completed: false
               }
             ]
@@ -457,10 +715,16 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Discuss financial goals and constraints openly in developing relationships",
+                summary: "Discuss money",
+                explanation: "Early financial discussions align expectations and build foundation for long-term compatibility. Money conversations prevent relationship conflicts and ensure shared values around financial priorities.",
+                timeframe: "Ongoing",
                 completed: false
               },
               {
                 name: "Create budget for dating and relationship activities that aligns with other financial goals",
+                summary: "Dating budget",
+                explanation: "Dating budgets prevent overspending while ensuring relationship building remains priority. Balanced approach allows for meaningful connections without compromising other financial goals.",
+                timeframe: "1 week",
                 completed: false
               }
             ]
@@ -480,10 +744,16 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Join local activities, clubs, or groups where you can meet like-minded people regularly",
+                summary: "Join groups",
+                explanation: "Regular group activities create natural opportunities for friendship development while pursuing shared interests. Consistent participation builds familiarity and trust that develops into meaningful connections.",
+                timeframe: "2 weeks",
                 completed: false
               },
               {
                 name: "Reach out to existing friends and schedule regular in-person social activities",
+                summary: "Schedule socials",
+                explanation: "Proactive social outreach strengthens existing relationships while combating social isolation. Regular in-person activities deepen friendships and provide emotional support essential for mental health.",
+                timeframe: "Ongoing",
                 completed: false
               }
             ]
@@ -495,10 +765,16 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Participate in intergenerational activities or volunteer opportunities",
+                summary: "Volunteer social",
+                explanation: "Intergenerational activities provide perspective and wisdom while volunteering creates meaningful connections through shared purpose. These activities build diverse social networks that enrich life experience.",
+                timeframe: "1 month",
                 completed: false
               },
               {
                 name: "Make effort to deepen existing friendships through vulnerable conversations and quality time",
+                summary: "Deepen friendship",
+                explanation: "Vulnerability and quality time transform surface relationships into deep friendships that provide emotional support. Deeper connections create more resilient social networks for life's challenges.",
+                timeframe: "Ongoing",
                 completed: false
               }
             ]
@@ -526,10 +802,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Identify AI tools and digital platforms most relevant to your industry and role",
+                explanation: "Understanding which AI tools provide value for your specific role ensures focused learning and immediate workplace application. Industry-specific tools create competitive advantage and demonstrate innovation.",
                 completed: false
               },
               {
                 name: "Complete online courses in AI applications and digital literacy for your profession",
+                explanation: "Structured courses provide systematic AI education and recognized credentials that employers value. Professional-focused AI training creates immediately applicable skills for career advancement.",
                 completed: false
               }
             ]
@@ -541,10 +819,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Implement AI tools and digital processes in your current role to demonstrate value",
+                explanation: "Practical AI implementation proves your ability to create business value and positions you as an innovator. Demonstrating AI success in current role often leads to promotion opportunities.",
                 completed: false
               },
               {
                 name: "Share knowledge through presentations or training to build professional reputation",
+                explanation: "Knowledge sharing establishes you as an AI thought leader while building professional network. Teaching others demonstrates expertise and often leads to speaking opportunities and career advancement.",
                 completed: false
               }
             ]
@@ -561,17 +841,121 @@ export const DOMAIN_DEFINITIONS = [
           {
             id: "conversational",
             name: "Conversational Proficiency",
-            description: "Develop ability to have basic work and social conversations in French"
+            description: "Develop ability to have basic work and social conversations in French",
+            projects: [
+              {
+                name: "Basic French Communication",
+                description: "Build foundation for everyday French conversations using Canadian resources",
+                explanation: "Government-funded Mauril app has 64% success rate. Conversational French opens social opportunities and demonstrates cultural respect.",
+                tasks: [
+                  {
+                    name: "Complete Mauril app basic levels and practice daily conversations for 30 minutes",
+                    explanation: "Mauril app provides free, government-funded French education with proven 64% success rate. Daily practice builds conversational confidence and practical communication skills for Canadian social integration.",
+                    completed: false
+                  },
+                  {
+                    name: "Join local Alliance Française or French conversation meetups for speaking practice",
+                    explanation: "Speaking practice with native speakers accelerates fluency development and builds confidence for real-world conversations. Alliance Française provides structured learning environment with cultural context.",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "French Social Integration",
+                description: "Apply conversational French in real Canadian social contexts",
+                explanation: "French social connections enrich Canadian experience and build cultural bridges beyond career benefits.",
+                tasks: [
+                  {
+                    name: "Attend French cultural events or festivals in your Canadian city",
+                    explanation: "Cultural events provide immersive French practice in relaxed social settings while building appreciation for French-Canadian heritage. These experiences make language learning enjoyable and culturally meaningful.",
+                    completed: false
+                  },
+                  {
+                    name: "Have 5 basic conversations with French speakers in community settings",
+                    explanation: "Real conversations provide practical application of language skills and build confidence for everyday French communication. Community settings offer supportive environment for learning and cultural connection.",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           },
           {
             id: "professional",
             name: "Professional Bilingualism",
-            description: "Achieve business-level French for federal jobs and Quebec market access"
+            description: "Achieve business-level French for federal jobs and Quebec market access",
+            projects: [
+              {
+                name: "Business French Certification",
+                description: "Achieve professional-level French competency for Canadian career advancement",
+                explanation: "Bilingualism opens federal employment with salary bonuses. Remote work enables access to Quebec's $380B economy.",
+                tasks: [
+                  {
+                    name: "Complete advanced Mauril courses and prepare for federal language test (SLE)",
+                    explanation: "SLE certification opens federal employment opportunities with bilingual bonuses up to $800 annually. Advanced Mauril courses provide structured preparation for professional-level French competency.",
+                    completed: false
+                  },
+                  {
+                    name: "Practice business French through online courses focusing on Canadian workplace vocabulary",
+                    explanation: "Business French skills enable professional communication in bilingual workplaces and Quebec job market. Canadian workplace vocabulary differs from international French and is essential for career success.",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Quebec Market Access",
+                description: "Position for Quebec job opportunities through professional French skills",
+                explanation: "Remote work revolution enables English speakers to access Quebec's job market with proper French skills.",
+                tasks: [
+                  {
+                    name: "Research Quebec employers in your field and understand bilingual job requirements",
+                    explanation: "Quebec's $380B economy offers significant career opportunities for bilingual professionals. Understanding specific job requirements helps target French learning toward career-relevant skills.",
+                    completed: false
+                  },
+                  {
+                    name: "Network with Quebec professionals and practice business French in professional contexts",
+                    explanation: "Professional networking in French builds career connections while providing authentic practice in business contexts. Quebec professionals can provide insights into career opportunities and cultural workplace norms.",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           },
           {
             id: "cultural",
             name: "Cultural Integration",
-            description: "Learn French to connect with Quebecois culture and communities"
+            description: "Learn French to connect with Quebecois culture and communities",
+            projects: [
+              {
+                name: "Quebecois Cultural Immersion",
+                description: "Experience French-Canadian culture through language learning",
+                explanation: "Cultural integration strengthens Canadian identity and builds lasting connections with francophone communities.",
+                tasks: [
+                  {
+                    name: "Watch Quebec films/TV shows and read French-Canadian literature with language learning focus",
+                    completed: false
+                  },
+                  {
+                    name: "Learn Quebec French expressions and cultural nuances distinct from European French",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Francophone Community Connection",
+                description: "Build meaningful relationships within French-speaking Canadian communities",
+                explanation: "Deep cultural connections enrich Canadian experience and create lasting friendships across linguistic communities.",
+                tasks: [
+                  {
+                    name: "Join French-Canadian cultural organizations or volunteer with francophone community groups",
+                    completed: false
+                  },
+                  {
+                    name: "Plan trip to Quebec and navigate cultural experiences primarily in French",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           }
         ],
         projects: [
@@ -617,17 +1001,113 @@ export const DOMAIN_DEFINITIONS = [
           {
             id: "tech",
             name: "Technology Certifications",
-            description: "Earn tech industry credentials in high-demand areas like cloud, AI, or cybersecurity"
+            description: "Earn tech industry credentials in high-demand areas like cloud, AI, or cybersecurity",
+            projects: [
+              {
+                name: "Canadian Tech Certification Strategy",
+                description: "Pursue high-demand tech certifications with Canadian employer funding support",
+                explanation: "49% of employers upskill employees, 43% provide certification funding. Tech skills shortage creates opportunities for funded learning.",
+                tasks: [
+                  {
+                    name: "Research employer-funded tech certification programs (AWS, Microsoft, Google, Cisco)",
+                    completed: false
+                  },
+                  {
+                    name: "Complete certification with employer support and negotiate salary increase based on new credentials",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Tech Career Advancement",
+                description: "Leverage tech certifications for Canadian job market advancement",
+                explanation: "$351.2 million committed to youth employment programs. Tech certifications provide clear pathway to higher-paying roles.",
+                tasks: [
+                  {
+                    name: "Build portfolio demonstrating certified skills through practical projects",
+                    completed: false
+                  },
+                  {
+                    name: "Apply for tech roles or internal promotions leveraging new certifications",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           },
           {
             id: "healthcare",
             name: "Healthcare Professional Designations",
-            description: "Pursue healthcare certifications with loan forgiveness options in rural areas"
+            description: "Pursue healthcare certifications with loan forgiveness options in rural areas",
+            projects: [
+              {
+                name: "Healthcare Certification with Loan Forgiveness",
+                description: "Pursue healthcare credentials that qualify for Canadian rural loan forgiveness programs",
+                explanation: "Healthcare professionals in rural areas receive student loan forgiveness. Growing healthcare needs create job security.",
+                tasks: [
+                  {
+                    name: "Research healthcare certifications eligible for loan forgiveness in rural Canadian areas",
+                    completed: false
+                  },
+                  {
+                    name: "Enroll in healthcare certification program and explore rural placement opportunities",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Healthcare Career Development",
+                description: "Build healthcare career through strategic certification and placement",
+                explanation: "Aging population creates sustained healthcare demand. Rural practice combines loan forgiveness with meaningful community impact.",
+                tasks: [
+                  {
+                    name: "Complete healthcare certification requirements and licensing process",
+                    completed: false
+                  },
+                  {
+                    name: "Secure healthcare position in rural area and apply for loan forgiveness programs",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           },
           {
             id: "green-economy",
             name: "Green Economy Credentials",
-            description: "Get certified in environmental, sustainability, or clean energy sectors"
+            description: "Get certified in environmental, sustainability, or clean energy sectors",
+            projects: [
+              {
+                name: "Green Economy Certification",
+                description: "Earn credentials in Canada's growing environmental and clean energy sectors",
+                explanation: "Canada's net-zero commitment creates growing demand for green economy professionals. Government incentives support training.",
+                tasks: [
+                  {
+                    name: "Research green economy certifications (renewable energy, environmental management, sustainability)",
+                    completed: false
+                  },
+                  {
+                    name: "Complete certification in chosen green economy specialization",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Sustainable Career Transition",
+                description: "Transition career toward sustainable and environmentally-focused roles",
+                explanation: "Clean energy and environmental sectors offer growth opportunities aligned with Canada's climate commitments.",
+                tasks: [
+                  {
+                    name: "Build portfolio demonstrating green economy expertise through projects or volunteer work",
+                    completed: false
+                  },
+                  {
+                    name: "Network with Canadian green economy employers and apply for sustainable sector roles",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           }
         ],
         projects: [
@@ -719,17 +1199,113 @@ export const DOMAIN_DEFINITIONS = [
           {
             id: "winter-sports",
             name: "Winter Sports Mastery",
-            description: "Learn skiing, snowboarding, or ice skating for winter enjoyment"
+            description: "Learn skiing, snowboarding, or ice skating for winter enjoyment",
+            projects: [
+              {
+                name: "Winter Sports Foundation",
+                description: "Master essential Canadian winter sports for lifelong enjoyment",
+                explanation: "21 million+ ski visits in 2022/23 set records. 2.8 million active skiers/snowboarders. Winter sports build Canadian cultural connections.",
+                tasks: [
+                  {
+                    name: "Take skiing or snowboarding lessons at local Canadian resort or community center",
+                    completed: false
+                  },
+                  {
+                    name: "Practice winter sport regularly and join Canadian winter sports community groups",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Canadian Winter Lifestyle",
+                description: "Integrate winter sports into year-round Canadian lifestyle",
+                explanation: "Winter skills transform Canadian winter from endurance to enjoyment, building social connections and physical fitness.",
+                tasks: [
+                  {
+                    name: "Plan regular winter sport outings throughout cold season with friends or groups",
+                    completed: false
+                  },
+                  {
+                    name: "Explore different Canadian winter destinations and ski areas for variety",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           },
           {
             id: "summer-outdoor",
             name: "Summer Outdoor Adventures",
-            description: "Develop hiking, camping, cycling, or water sport skills"
+            description: "Develop hiking, camping, cycling, or water sport skills",
+            projects: [
+              {
+                name: "Canadian Summer Activity Mastery",
+                description: "Build skills for maximizing Canada's spectacular summer outdoor opportunities",
+                explanation: "Canada's summer outdoor opportunities are world-class. Skills development enables exploration of national parks and wilderness areas.",
+                tasks: [
+                  {
+                    name: "Learn one new summer outdoor skill (hiking, camping, cycling, kayaking) through courses or groups",
+                    completed: false
+                  },
+                  {
+                    name: "Plan and execute summer adventure trips to Canadian national parks or wilderness areas",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Outdoor Adventure Community",
+                description: "Build connections through shared Canadian outdoor adventures",
+                explanation: "Outdoor activities create lasting friendships and deep connection to Canadian natural heritage.",
+                tasks: [
+                  {
+                    name: "Join Canadian outdoor clubs or adventure groups for regular summer activities",
+                    completed: false
+                  },
+                  {
+                    name: "Organize group outdoor adventures and build network of outdoor-minded Canadians",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           },
           {
             id: "year-round",
             name: "Year-Round Activity System",
-            description: "Build skills for activities in all four Canadian seasons"
+            description: "Build skills for activities in all four Canadian seasons",
+            projects: [
+              {
+                name: "Four-Season Activity Development",
+                description: "Master different activities for each distinct Canadian season",
+                explanation: "Canada's four distinct seasons each offer unique opportunities. Year-round activity skills maximize Canadian lifestyle.",
+                tasks: [
+                  {
+                    name: "Identify and learn one activity for each Canadian season (winter, spring, summer, fall)",
+                    completed: false
+                  },
+                  {
+                    name: "Create seasonal activity calendar maximizing year-round Canadian outdoor opportunities",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Canadian Seasonal Mastery",
+                description: "Embrace all four seasons as opportunities rather than obstacles",
+                explanation: "Year-round outdoor lifestyle creates deep appreciation for Canadian climate and geography while maintaining fitness.",
+                tasks: [
+                  {
+                    name: "Document seasonal activity experiences and share Canadian outdoor lifestyle with others",
+                    completed: false
+                  },
+                  {
+                    name: "Mentor others in developing year-round Canadian outdoor skills and appreciation",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           }
         ],
         projects: [
@@ -859,17 +1435,113 @@ export const DOMAIN_DEFINITIONS = [
           {
             id: "social-impact",
             name: "Social Impact Business",
-            description: "Create business that addresses social problems or community needs"
+            description: "Create business that addresses social problems or community needs",
+            projects: [
+              {
+                name: "Social Impact Business Development",
+                description: "Launch business addressing Canadian social challenges while generating income",
+                explanation: "89-92% consider purpose essential. Social impact businesses align values with income while addressing real community needs.",
+                tasks: [
+                  {
+                    name: "Identify social problem in Canadian community and develop business solution",
+                    completed: false
+                  },
+                  {
+                    name: "Launch social impact business and measure both financial and social outcomes",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Community-Centered Business Growth",
+                description: "Scale social impact business through community partnerships and support",
+                explanation: "Community-centered businesses build stronger customer loyalty and sustainable growth through mission alignment.",
+                tasks: [
+                  {
+                    name: "Partner with Canadian community organizations to amplify social impact",
+                    completed: false
+                  },
+                  {
+                    name: "Document and share social impact results to attract mission-aligned customers",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           },
           {
             id: "environmental",
             name: "Environmental Solutions",
-            description: "Develop business focused on sustainability or environmental improvement"
+            description: "Develop business focused on sustainability or environmental improvement",
+            projects: [
+              {
+                name: "Green Business Launch",
+                description: "Create environmentally-focused business aligned with Canada's sustainability goals",
+                explanation: "Canada's net-zero commitment creates market opportunities for environmental solutions. Consumer demand for sustainable options growing.",
+                tasks: [
+                  {
+                    name: "Develop business addressing environmental challenge (waste reduction, energy efficiency, sustainable products)",
+                    completed: false
+                  },
+                  {
+                    name: "Launch green business with clear environmental impact measurement",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Sustainable Business Scaling",
+                description: "Grow environmental business through Canadian green economy networks",
+                explanation: "Government incentives and consumer preference for sustainable businesses create growth opportunities in Canadian market.",
+                tasks: [
+                  {
+                    name: "Connect with Canadian green economy networks and sustainable business communities",
+                    completed: false
+                  },
+                  {
+                    name: "Scale business operations while maintaining environmental commitment and impact",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           },
           {
             id: "creative-services",
             name: "Creative Services with Purpose",
-            description: "Offer creative services that support causes or meaningful organizations"
+            description: "Offer creative services that support causes or meaningful organizations",
+            projects: [
+              {
+                name: "Purpose-Driven Creative Business",
+                description: "Build creative services business supporting Canadian nonprofits and social causes",
+                explanation: "28% have side hustles, with creative services averaging higher hourly rates. Purpose-driven clients offer meaningful work relationships.",
+                tasks: [
+                  {
+                    name: "Develop creative service offering (design, writing, marketing) focused on supporting meaningful causes",
+                    completed: false
+                  },
+                  {
+                    name: "Build client base of Canadian nonprofits, social enterprises, and purpose-driven businesses",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Creative Impact Amplification",
+                description: "Scale creative services to maximize both income and social impact",
+                explanation: "Creative services for purpose-driven organizations combine artistic fulfillment with meaningful contribution to causes.",
+                tasks: [
+                  {
+                    name: "Create portfolio showcasing creative work that generated real impact for client causes",
+                    completed: false
+                  },
+                  {
+                    name: "Expand services to reach more purpose-driven organizations while maintaining quality and mission focus",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           }
         ],
         projects: [

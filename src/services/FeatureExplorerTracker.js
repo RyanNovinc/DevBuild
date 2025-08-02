@@ -6,6 +6,7 @@ import AchievementService from './AchievementService';
 const TRACKING_KEYS = {
   PROFILE_PICTURE_UPDATED: 'achievement_tracker_profile_picture_updated',
   THEME_COLOR_CHANGED: 'achievement_tracker_theme_color_changed',
+  ONBOARDING_COMPLETED: 'achievement_tracker_onboarding_completed',
   DASHBOARD_HOLISTIC_VIEW: 'achievement_tracker_dashboard_holistic_view',
   DOMAIN_FOCUS_VIEW: 'achievement_tracker_domain_focus_view',
   NOTE_CREATED: 'achievement_tracker_note_created',
@@ -116,6 +117,32 @@ export const trackThemeColorChange = async (color, showSuccess = null) => {
     }
   } catch (error) {
     console.error('Error tracking theme color change:', error);
+  }
+};
+
+/**
+ * Track when a user completes the full onboarding process
+ * @param {Function} showSuccess - Optional success notification function
+ */
+export const trackOnboardingCompletion = async (showSuccess = null) => {
+  try {
+    logDebug('Tracking onboarding completion');
+    
+    // Check if we've already tracked this achievement
+    const hasTrackedOnboarding = await AsyncStorage.getItem(TRACKING_KEYS.ONBOARDING_COMPLETED);
+    
+    if (hasTrackedOnboarding !== 'true') {
+      // This is the first time completing onboarding
+      logDebug('First onboarding completion, unlocking achievement');
+      
+      // Set tracking flag
+      await AsyncStorage.setItem(TRACKING_KEYS.ONBOARDING_COMPLETED, 'true');
+      
+      // Unlock the achievement
+      await AchievementService.unlockAchievement('foundation-builder', showSuccess);
+    }
+  } catch (error) {
+    console.error('Error tracking onboarding completion:', error);
   }
 };
 
@@ -1345,6 +1372,7 @@ export const trackInsiderStatus = async (showSuccess = null) => {
 export default {
   trackProfilePictureUpdate,
   trackThemeColorChange,
+  trackOnboardingCompletion,
   trackDashboardHolisticView,
   trackDomainFocusView,
   trackNoteCreation,

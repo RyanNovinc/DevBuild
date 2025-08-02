@@ -893,29 +893,64 @@ const AddProjectModal = ({
     <Modal
       visible={visible}
       transparent={true}
-      animationType="slide"
+      animationType="none"
       onRequestClose={handleClose}
       accessible={true}
       accessibilityViewIsModal={true}
       accessibilityLabel="Create project modal"
     >
-      <KeyboardAvoidingView 
-        style={styles.container} 
-        behavior={Platform.OS === 'ios' ? 'padding' : null}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
-      >
-        <View style={[
-          styles.modalContent, 
-          { 
-            backgroundColor: theme.card,
-            borderTopLeftRadius: scaleWidth(16),
-            borderTopRightRadius: scaleWidth(16),
-            padding: spacing.m,
-            paddingBottom: Math.max(insets.bottom, spacing.m),
-            maxHeight: '95%', // Increased by half (0.5x)
-            minHeight: scaleHeight(625), // Increased minimum by half
+      <Animated.View 
+        style={[
+          styles.overlay,
+          {
+            opacity: fadeAnim
           }
-        ]}>
+        ]}
+      >
+        <TouchableWithoutFeedback onPress={handleClose}>
+          <View style={styles.overlayTouchable} />
+        </TouchableWithoutFeedback>
+        
+        <PanGestureHandler
+          onGestureEvent={onGestureEvent}
+          onHandlerStateChange={(event) => {
+            if (event.nativeEvent.state === State.END) {
+              handleGestureEnd(event);
+            }
+          }}
+        >
+          <Animated.View
+            style={[
+              styles.gestureContainer,
+              {
+                transform: [
+                  { translateY: Animated.add(slideAnim, translateY) }
+                ]
+              }
+            ]}
+          >
+            <KeyboardAvoidingView 
+              style={styles.keyboardContainer} 
+              behavior={Platform.OS === 'ios' ? 'padding' : null}
+              keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+            >
+              <View style={[
+                styles.modalContent, 
+                { 
+                  backgroundColor: theme.card,
+                  borderTopLeftRadius: scaleWidth(16),
+                  borderTopRightRadius: scaleWidth(16),
+                  padding: spacing.m,
+                  paddingBottom: Math.max(insets.bottom, spacing.m),
+                  maxHeight: '95%', // Increased by half (0.5x)
+                  minHeight: scaleHeight(625), // Increased minimum by half
+                }
+              ]}>
+                {/* Swipe indicator */}
+                <View style={[
+                  styles.swipeIndicator,
+                  { backgroundColor: theme.textSecondary + '40' }
+                ]} />
           <View style={[styles.modalHeader, { marginBottom: spacing.xs }]}>
             <Text 
               style={[
@@ -1121,17 +1156,37 @@ const AddProjectModal = ({
               </Text>
             </TouchableOpacity>
           )}
-        </View>
-      </KeyboardAvoidingView>
+              </View>
+            </KeyboardAvoidingView>
+          </Animated.View>
+        </PanGestureHandler>
+      </Animated.View>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  overlay: {
     flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.5)'
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end'
+  },
+  overlayTouchable: {
+    flex: 1
+  },
+  gestureContainer: {
+    justifyContent: 'flex-end'
+  },
+  keyboardContainer: {
+    justifyContent: 'flex-end'
+  },
+  swipeIndicator: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginTop: 8,
+    marginBottom: 16
   },
   modalContent: {
     // height defined inline for proper visibility
