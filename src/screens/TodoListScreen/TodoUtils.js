@@ -192,7 +192,7 @@ export const generateExportContent = (todosToExport) => {
   }
   
   content += `\nTotal: ${todosToExport.length} items\n`;
-  content += `\nExported from Life Balance app`;
+  content += `\nExported from LifeCompass app`;
   
   return content;
 };

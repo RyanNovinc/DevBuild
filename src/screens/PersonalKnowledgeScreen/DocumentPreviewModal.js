@@ -13,6 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import DocumentService from '../../services/DocumentService';
 import { APP_CONTEXT_DOCUMENT_ID } from '../../services/AppSummaryService';
+import SimpleMarkdownRenderer from '../../components/SimpleMarkdownRenderer';
 
 /**
  * DocumentPreviewModal component for viewing document details and content
@@ -375,9 +376,13 @@ const DocumentPreviewModal = ({ visible, theme, document, onClose, onDelete }) =
               </View>
             ) : documentContent ? (
               <ScrollView style={styles.contentPreviewScroll}>
-                <Text style={[styles.contentPreviewText, { color: theme.text }]}>
-                  {documentContent}
-                </Text>
+                {(isSystemDocument || document.type?.includes('markdown') || document.name?.endsWith('.md')) ? (
+                  <SimpleMarkdownRenderer content={documentContent} theme={theme} />
+                ) : (
+                  <Text style={[styles.contentPreviewText, { color: theme.text }]}>
+                    {documentContent}
+                  </Text>
+                )}
               </ScrollView>
             ) : (
               <View style={styles.contentPreviewPlaceholder}>

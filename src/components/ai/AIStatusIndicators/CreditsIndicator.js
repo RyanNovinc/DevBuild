@@ -2,6 +2,7 @@
 import React from 'react';
 import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../../../context/ThemeContext';
 
 /**
  * A simple button that displays the user's remaining AI credits
@@ -15,6 +16,7 @@ const CreditsIndicator = ({
   },
   onPress                  // Function to call when button is pressed
 }) => {
+  const { theme } = useTheme();
   // Calculate remaining credits
   const totalCredits = credits.baseCredits + credits.rolledOverCredits;
   const remainingCredits = totalCredits - credits.creditsUsed;
@@ -32,14 +34,16 @@ const CreditsIndicator = ({
   
   return (
     <TouchableOpacity 
-      style={[styles.button, { backgroundColor: color }]}
+      style={[styles.button, { 
+        backgroundColor: '#1C1C1E' // Keep dark background
+      }]}
       onPress={() => {
         console.log('Credits button pressed');
         if (onPress) onPress();
       }}
       activeOpacity={0.7}
     >
-      <Ionicons name="flash" size={16} color="#FFFFFF" />
+      <Ionicons name="flash" size={16} color={theme.primary} />
       <Text style={styles.text}>{formattedCredits}</Text>
     </TouchableOpacity>
   );

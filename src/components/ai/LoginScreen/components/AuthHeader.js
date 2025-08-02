@@ -55,7 +55,7 @@ const AuthHeader = ({ title, subtitle, icon = "star" }) => {
       ]}
       accessible={true}
       accessibilityRole="header"
-      accessibilityLabel={`${title || "Life Balance"} app`}
+      accessibilityLabel={`${title || "LifeCompass"} app`}
     >
       <View 
         style={[
@@ -96,7 +96,7 @@ const AuthHeader = ({ title, subtitle, icon = "star" }) => {
         accessibilityRole="text"
         maxFontSizeMultiplier={1.8} // Support for Dynamic Type
       >
-        {title || "Life Balance"}
+        {title || "LifeCompass"}
       </Text>
       <Text 
         style={[

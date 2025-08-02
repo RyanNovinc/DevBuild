@@ -50,10 +50,14 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
   const { 
     projects, 
     goals,
+    tasks,
     isProjectActive, 
     updateProject, 
     addProject, 
     deleteProject, 
+    addTask,
+    updateTask,
+    deleteTask,
     mainGoals,
     userSubscriptionStatus 
   } = useAppContext();
@@ -89,8 +93,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
     description: '',
     color: '#4CAF50',
     dueDate: new Date(),
-    hasDueDate: false,
-    tasks: []
+    hasDueDate: false
   });
   
   // UI state
@@ -154,8 +157,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
       projectState.color !== initialValues.color ||
       selectedGoalId !== initialValues.selectedGoalId ||
       projectState.hasDueDate !== initialValues.hasDueDate ||
-      (projectState.hasDueDate && projectState.dueDate.toISOString() !== initialValues.dueDate?.toISOString()) ||
-      JSON.stringify(projectState.tasks) !== JSON.stringify(initialValues.tasks);
+      (projectState.hasDueDate && projectState.dueDate.toISOString() !== initialValues.dueDate?.toISOString());
     
     setUiState(prev => ({
       ...prev,
@@ -307,8 +309,13 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
             }
           }
           
+          // Get tasks from global tasks array instead of project.tasks
+          const projectTasks = Array.isArray(tasks) 
+            ? tasks.filter(task => task.projectId === projectId)
+            : [];
+          
           // FIXED: Ensure all tasks have proper status property with better fallback logic
-          const updatedTasks = (project.tasks || []).map(task => {
+          const updatedTasks = projectTasks.map(task => {
             let status = task.status;
             
             // If no status is set, determine it based on completion
@@ -335,8 +342,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
             description: descriptionValue,
             color: colorValue,
             dueDate: dueDateValue,
-            hasDueDate: hasDueDateValue,
-            tasks: updatedTasks
+            hasDueDate: hasDueDateValue
           });
           
           setSelectedGoalId(goalIdValue);
@@ -348,8 +354,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
             color: colorValue,
             selectedGoalId: goalIdValue,
             hasDueDate: hasDueDateValue,
-            dueDate: dueDateValue,
-            tasks: [...updatedTasks]
+            dueDate: dueDateValue
           });
           
           setUiState(prev => ({
@@ -405,8 +410,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
           color: colorValue,
           selectedGoalId: goalIdValue,
           hasDueDate: false,
-          dueDate: new Date(),
-          tasks: []
+          dueDate: new Date()
         });
         
         setUiState(prev => ({
@@ -423,7 +427,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
       }));
       showError("Error loading project data");
     }
-  }, [isCreating, projectId, preselectedGoalId, mainGoals, goals, isProjectActive, showError, projects]); 
+  }, [isCreating, projectId, preselectedGoalId, mainGoals, goals, isProjectActive, showError, projects, tasks]); 
   
   // Update color when goal is selected
   useEffect(() => {
@@ -445,8 +449,13 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
     // Pro users have unlimited tasks
     if (isPro) return true;
     
+    // Get current tasks for this project from global tasks array
+    const currentProjectTasks = Array.isArray(tasks) 
+      ? tasks.filter(task => task.projectId === projectId)
+      : [];
+    
     // Free users are limited
-    return projectState.tasks.length < FREE_PLAN_LIMITS.MAX_TASKS_PER_PROJECT;
+    return currentProjectTasks.length < FREE_PLAN_LIMITS.MAX_TASKS_PER_PROJECT;
   };
 
   // Show upgrade modal (similar to GoalsScreen)
@@ -489,29 +498,32 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
   };
   
   // Add or edit task
-  const handleAddTask = (task) => {
+  const handleAddTask = async (task) => {
     if (isDeleting.current) return;
     
     if (uiState.isEditingTask && currentTask) {
-      // Update existing task
-      const updatedTasks = projectState.tasks.map(t => 
-        t.id === currentTask.id ? { 
+      // Update existing task using global updateTask function
+      try {
+        const updatedTaskData = { 
           ...task, 
-          id: currentTask.id,
           status: task.status || currentTask.status || 'todo',
-          completed: task.completed || false
-        } : t
-      );
-      setProjectState(prev => ({
-        ...prev,
-        tasks: updatedTasks
-      }));
-      setUiState(prev => ({
-        ...prev,
-        isEditingTask: false
-      }));
-      setCurrentTask(null);
-      showSuccess('Task updated successfully');
+          completed: task.completed || false,
+          updatedAt: new Date().toISOString()
+        };
+        
+        await updateTask(projectId, currentTask.id, updatedTaskData);
+        
+        setUiState(prev => ({
+          ...prev,
+          isEditingTask: false
+        }));
+        setCurrentTask(null);
+        showSuccess('Task updated successfully');
+      } catch (error) {
+        console.error('Error updating task:', error);
+        showError('Failed to update task');
+        return;
+      }
     } else {
       // Check if can add more tasks
       if (!canAddMoreTasks()) {
@@ -527,18 +539,22 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
         return;
       }
       
-      // Add new task with proper defaults
-      const newTask = { 
-        ...task, 
-        id: Date.now().toString(), 
-        status: task.status || 'todo',
-        completed: task.completed || false 
-      };
-      setProjectState(prev => ({
-        ...prev,
-        tasks: [...prev.tasks, newTask]
-      }));
-      showSuccess('Task added successfully');
+      // Add new task using global addTask function
+      try {
+        const newTaskData = { 
+          ...task, 
+          status: task.status || 'todo',
+          completed: task.completed || false,
+          createdAt: new Date().toISOString()
+        };
+        
+        await addTask(projectId, newTaskData);
+        showSuccess('Task added successfully');
+      } catch (error) {
+        console.error('Error adding task:', error);
+        showError('Failed to add task');
+        return;
+      }
     }
     setUiState(prev => ({
       ...prev,
@@ -598,65 +614,69 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
   };
   
   // Toggle task completion
-  const handleToggleTask = (taskId) => {
+  const handleToggleTask = async (taskId) => {
     if (isDeleting.current) return;
     
-    setProjectState(prev => {
-      const updatedTasks = prev.tasks.map(task => {
-        if (task.id === taskId) {
-          const newCompleted = !task.completed;
-          const newStatus = newCompleted ? 'done' : 'todo';
-          
-          console.log(`[Toggle] Task ${taskId}: completed=${newCompleted}, status=${newStatus}`);
-          
-          return { 
-            ...task, 
-            completed: newCompleted,
-            status: newStatus
-          };
-        }
-        return task;
-      });
+    try {
+      // Find the task in global tasks array
+      const task = tasks.find(t => t.id === taskId && t.projectId === projectId);
+      if (!task) {
+        console.error(`Task ${taskId} not found`);
+        return;
+      }
       
-      return {
-        ...prev,
-        tasks: updatedTasks
+      const newCompleted = !task.completed;
+      const newStatus = newCompleted ? 'done' : 'todo';
+      
+      console.log(`[Toggle] Task ${taskId}: completed=${newCompleted}, status=${newStatus}`);
+      
+      const updatedTaskData = {
+        ...task,
+        completed: newCompleted,
+        status: newStatus,
+        updatedAt: new Date().toISOString()
       };
-    });
+      
+      await updateTask(projectId, taskId, updatedTaskData);
+    } catch (error) {
+      console.error('Error toggling task:', error);
+      showError('Failed to update task');
+    }
   };
   
   // Handle task status change
-  const handleChangeTaskStatus = useCallback((taskId, newStatus) => {
+  const handleChangeTaskStatus = useCallback(async (taskId, newStatus) => {
     if (isDeleting.current) return;
     
     console.log(`Moving task ${taskId} to ${newStatus}`);
     
-    setProjectState(prev => {
-      const updatedTasks = prev.tasks.map(task => {
-        if (task.id === taskId) {
-          const completed = newStatus === 'done';
-          return { 
-            ...task, 
-            status: newStatus, 
-            completed: completed
-          };
-        }
-        return task;
-      });
+    try {
+      // Find the task in global tasks array
+      const task = tasks.find(t => t.id === taskId && t.projectId === projectId);
+      if (!task) {
+        console.error(`Task ${taskId} not found`);
+        return;
+      }
       
-      console.log('Updated tasks:', updatedTasks.map(t => `${t.id}:${t.status}`));
-      
-      return {
-        ...prev,
-        tasks: updatedTasks
+      const completed = newStatus === 'done';
+      const updatedTaskData = {
+        ...task,
+        status: newStatus,
+        completed: completed,
+        updatedAt: new Date().toISOString()
       };
-    });
-    
-    // Show success message
-    const statusText = newStatus === 'todo' ? 'To Do' : 
-                      newStatus === 'in_progress' ? 'In Progress' : 'Done';
-    showSuccess(`Task moved to ${statusText}`);
-  }, [showSuccess]);
+      
+      await updateTask(projectId, taskId, updatedTaskData);
+      
+      // Show success message
+      const statusText = newStatus === 'todo' ? 'To Do' : 
+                        newStatus === 'in_progress' ? 'In Progress' : 'Done';
+      showSuccess(`Task moved to ${statusText}`);
+    } catch (error) {
+      console.error('Error changing task status:', error);
+      showError('Failed to update task');
+    }
+  }, [showSuccess, showError, tasks, projectId, updateTask]);
   
   // Delete task
   const handleDeleteTask = (taskId) => {
@@ -670,16 +690,18 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
         { 
           text: 'Delete', 
           style: 'destructive',
-          onPress: () => {
-            setProjectState(prev => ({
-              ...prev,
-              tasks: prev.tasks.filter(task => task.id !== taskId)
-            }));
-            setUiState(prev => ({
-              ...prev,
-              showTaskDetailModal: false
-            }));
-            showSuccess('Task deleted');
+          onPress: async () => {
+            try {
+              await deleteTask(projectId, taskId);
+              setUiState(prev => ({
+                ...prev,
+                showTaskDetailModal: false
+              }));
+              showSuccess('Task deleted');
+            } catch (error) {
+              console.error('Error deleting task:', error);
+              showError('Failed to delete task');
+            }
           }
         }
       ]
@@ -688,10 +710,15 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
   
   // Calculate project progress
   const calculateProgress = useCallback(() => {
-    if (projectState.tasks.length === 0) return 0;
-    const completedTasks = projectState.tasks.filter(task => task.completed || task.status === 'done').length;
-    return Math.round((completedTasks / projectState.tasks.length) * 100);
-  }, [projectState.tasks]);
+    // Get current tasks for this project from global tasks array
+    const currentProjectTasks = Array.isArray(tasks) 
+      ? tasks.filter(task => task.projectId === projectId)
+      : [];
+    
+    if (currentProjectTasks.length === 0) return 0;
+    const completedTasks = currentProjectTasks.filter(task => task.completed || task.status === 'done').length;
+    return Math.round((completedTasks / currentProjectTasks.length) * 100);
+  }, [tasks, projectId]);
   
   // Animate save button
   const animateSaveButton = () => {
@@ -754,7 +781,6 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
       description: projectState.description,
       color: projectState.color,
       dueDate: projectState.hasDueDate ? projectState.dueDate.toISOString() : null,
-      tasks: projectState.tasks,
       progress,
       goalId: selectedGoalId,
       goalTitle: goalTitle,
@@ -1022,7 +1048,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
           getGoalName={getGoalName}
           goalColor={availableGoals.find(g => g.id === selectedGoalId)?.color}
           hasGoal={!!selectedGoalId}
-          taskCount={projectState.tasks.length}
+          taskCount={Array.isArray(tasks) ? tasks.filter(task => task.projectId === projectId).length : 0}
         />
         
         {/* Tabs Navigation */}
@@ -1068,7 +1094,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
           
           {uiState.activeTab === 'list' && (
             <TaskListView 
-              tasks={projectState.tasks}
+              tasks={Array.isArray(tasks) ? tasks.filter(task => task.projectId === projectId) : []}
               color={projectState.color}
               theme={theme}
               calculateProgress={calculateProgress}

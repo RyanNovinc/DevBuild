@@ -11,8 +11,11 @@ import {
   TouchableOpacity, 
   Text,
   Modal,
-  ActivityIndicator
+  ActivityIndicator,
+  Animated,
+  Easing
 } from 'react-native';
+import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { ThemeProvider, useTheme } from '../context/ThemeContext';
 import { useAppContext } from '../context/AppContext';
 import { AIAssistantProvider, useAIAssistant } from '../context/AIAssistantContext/index';
@@ -858,7 +861,9 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
         break;
         
       case 'createTask':
-        console.log('Creating task modal');
+        console.log('Creating task modal with data:', JSON.stringify(action.data));
+        // Simply set the task data and show the modal
+        // Let the user pick the correct project in the modal
         setCurrentTaskData(action.data);
         setTaskModalVisible(true);
         break;
@@ -878,14 +883,15 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
         break;
         
       case 'updateLifeDirection':
-        console.log('Processing life direction update:', action.data);
+      case 'updateStrategicDirection':
+        console.log('Processing strategic direction update:', action.data);
         setCurrentLifeDirection(action.data);
         setLifeDirectionModalVisible(true);
         break;
         
       default:
         console.log(`Unknown action type: ${action.type}`);
-        console.log('Available action types are: createGoal, createProject, createTask, createTimeBlock, createTodo, createTodoGroup, updateLifeDirection');
+        console.log('Available action types are: createGoal, createProject, createTask, createTimeBlock, createTodo, createTodoGroup, updateLifeDirection, updateStrategicDirection');
         // Skip to next action
         processNextAction(actions, currentIndex + 1);
     }
@@ -1302,6 +1308,7 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
   const closeMenu = () => {
     dispatch({ type: 'SET_MENU_STATE', payload: 'closing' });
   };
+
   
   // Clear chat history
   const handleClearChat = () => {

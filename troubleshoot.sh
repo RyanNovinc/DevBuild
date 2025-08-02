@@ -9,7 +9,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 echo -e "${BLUE}==============================================${NC}"
-echo -e "${BLUE}        LifeBalance Builder Troubleshooter${NC}"
+echo -e "${BLUE}        LifeCompass Troubleshooter${NC}"
 echo -e "${BLUE}==============================================${NC}"
 
 # Check Node.js version

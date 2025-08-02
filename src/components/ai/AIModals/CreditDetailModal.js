@@ -12,6 +12,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { Auth } from 'aws-amplify'; // Import Auth for user info
+import { useTheme } from '../../../context/ThemeContext';
 
 // API endpoint for Lambda functions
 const API_ENDPOINT = 'https://your-api-gateway-url/dev'; // Replace with your actual API Gateway URL
@@ -31,6 +32,7 @@ const CreditDetailModal = ({
   },
   onRefresh = null // Refresh callback
 }) => {
+  const { theme } = useTheme();
   // Add loading state for API calls
   const [loading, setLoading] = useState(false);
   const [activeOperation, setActiveOperation] = useState(null);
@@ -176,71 +178,71 @@ const CreditDetailModal = ({
 
   return (
     <Modal
-      animationType="slide"
+      animationType="fade"
       transparent={true}
       visible={visible}
       onRequestClose={onClose}
     >
       <SafeAreaView style={styles.centeredView}>
-        <View style={styles.modalView}>
+        <View style={[styles.modalView, { backgroundColor: theme.card }]}>
           {/* Fixed Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>AI Credits</Text>
+            <Text style={[styles.title, { color: theme.text }]}>AI Credits</Text>
             <TouchableOpacity 
               style={styles.closeButton}
               onPress={onClose}
             >
-              <Text style={styles.closeX}>✕</Text>
+              <Text style={[styles.closeX, { color: theme.text }]}>✕</Text>
             </TouchableOpacity>
           </View>
           
           {/* Scrollable Content */}
           <ScrollView style={styles.scrollView}>
-            {/* Credit Meter */}
-            <View style={styles.section}>
+            {/* Credit Usage Meter */}
+            <View style={[styles.section, { borderBottomColor: theme.border }]}>
               <View style={styles.meterContainer}>
-                <View style={styles.meterBackground}>
+                <View style={[styles.meterBackground, { backgroundColor: theme.border }]}>
                   <View 
                     style={[
                       styles.meterFill, 
                       { 
-                        width: `${100-percentUsed}%`,
-                        backgroundColor: percentUsed > 80 ? '#FF3B30' : percentUsed > 50 ? '#FF9500' : '#34C759'
+                        width: `${percentUsed}%`,
+                        backgroundColor: percentUsed > 80 ? theme.error : percentUsed > 50 ? theme.warning : theme.primary
                       }
                     ]} 
                   />
                 </View>
-                <Text style={styles.meterText}>
-                  {remainingFormatted} credits remaining ({100-percentUsed}%)
+                <Text style={[styles.meterText, { color: theme.text }]}>
+                  {usedFormatted} / {baseFormatted + rolloverFormatted} credits used ({percentUsed}%)
                 </Text>
               </View>
             </View>
             
             {/* Credit Details */}
-            <View style={styles.section}>
+            <View style={[styles.section, { borderBottomColor: theme.border }]}>
               <View style={styles.row}>
-                <Text style={styles.label}>Monthly allocation:</Text>
-                <Text style={styles.value}>{baseFormatted} credits</Text>
+                <Text style={[styles.label, { color: theme.textSecondary }]}>Monthly allocation:</Text>
+                <Text style={[styles.value, { color: theme.text }]}>{baseFormatted} credits</Text>
               </View>
               <View style={styles.row}>
-                <Text style={styles.label}>Rollover credits:</Text>
-                <Text style={styles.value}>{rolloverFormatted} credits</Text>
+                <Text style={[styles.label, { color: theme.textSecondary }]}>Rollover credits:</Text>
+                <Text style={[styles.value, { color: theme.text }]}>{rolloverFormatted} credits</Text>
               </View>
               <View style={styles.row}>
-                <Text style={styles.label}>Used this period:</Text>
-                <Text style={styles.value}>{usedFormatted} credits</Text>
+                <Text style={[styles.label, { color: theme.textSecondary }]}>Used this period:</Text>
+                <Text style={[styles.value, { color: theme.text }]}>{usedFormatted} credits</Text>
               </View>
-              <View style={[styles.row, styles.totalRow]}>
-                <Text style={styles.totalLabel}>Total available:</Text>
-                <Text style={styles.totalValue}>{remainingFormatted} credits</Text>
+              <View style={[styles.row, styles.totalRow, { borderTopColor: theme.border }]}>
+                <Text style={[styles.totalLabel, { color: theme.text }]}>Total available:</Text>
+                <Text style={[styles.totalValue, { color: theme.text }]}>{remainingFormatted} credits</Text>
               </View>
             </View>
             
             {/* Estimated Messages */}
-            <View style={styles.section}>
+            <View style={[styles.section, { borderBottomColor: theme.border }]}>
               <View style={styles.estimateContainer}>
                 <Text style={styles.icon}>💬</Text>
-                <Text style={styles.estimate}>
+                <Text style={[styles.estimate, { color: theme.text }]}>
                   Approximately {estimatedMessages} more messages
                 </Text>
               </View>
@@ -261,17 +263,17 @@ const CreditDetailModal = ({
               <Text style={styles.sectionTitle}>Subscription Options</Text>
               
               <TouchableOpacity 
-                style={[styles.subscriptionButton, { backgroundColor: '#4CAF50' }]}
-                onPress={() => updateSubscription('light')}
+                style={[styles.subscriptionButton, { backgroundColor: '#9C27B0' }]}
+                onPress={() => updateSubscription('max')}
                 disabled={loading}
               >
-                {loading && activeOperation === 'update-light' ? (
+                {loading && activeOperation === 'update-max' ? (
                   <ActivityIndicator color="#FFFFFF" size="small" />
                 ) : (
                   <>
-                    <Text style={styles.subscriptionButtonTitle}>Light Tier</Text>
-                    <Text style={styles.subscriptionButtonText}>600 credits/month</Text>
-                    <Text style={styles.subscriptionButtonPrice}>$4.99/month</Text>
+                    <Text style={styles.subscriptionButtonTitle}>Max Tier</Text>
+                    <Text style={styles.subscriptionButtonText}>5,000 credits/month</Text>
+                    <Text style={styles.subscriptionButtonPrice}>$16.99/month</Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -293,17 +295,17 @@ const CreditDetailModal = ({
               </TouchableOpacity>
               
               <TouchableOpacity 
-                style={[styles.subscriptionButton, { backgroundColor: '#9C27B0' }]}
-                onPress={() => updateSubscription('max')}
+                style={[styles.subscriptionButton, { backgroundColor: '#4CAF50' }]}
+                onPress={() => updateSubscription('light')}
                 disabled={loading}
               >
-                {loading && activeOperation === 'update-max' ? (
+                {loading && activeOperation === 'update-light' ? (
                   <ActivityIndicator color="#FFFFFF" size="small" />
                 ) : (
                   <>
-                    <Text style={styles.subscriptionButtonTitle}>Max Tier</Text>
-                    <Text style={styles.subscriptionButtonText}>5,000 credits/month</Text>
-                    <Text style={styles.subscriptionButtonPrice}>$16.99/month</Text>
+                    <Text style={styles.subscriptionButtonTitle}>Light Tier</Text>
+                    <Text style={styles.subscriptionButtonText}>600 credits/month</Text>
+                    <Text style={styles.subscriptionButtonPrice}>$4.99/month</Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -346,7 +348,6 @@ const styles = StyleSheet.create({
     width: '90%',
     maxWidth: 400,
     height: '80%', // Fixed height percentage
-    backgroundColor: '#1C1C1E',
     borderRadius: 20,
     paddingHorizontal: 20,
     paddingTop: 20,
@@ -369,7 +370,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FFFFFF'
   },
   closeButton: {
     padding: 8
@@ -377,7 +377,6 @@ const styles = StyleSheet.create({
   closeX: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFFFFF'
   },
   scrollView: {
     flex: 1,
@@ -386,7 +385,6 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#2C2C2E',
     paddingBottom: 20
   },
   sectionTitle: {
@@ -405,25 +403,20 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#2C2C2E'
   },
   label: {
     fontSize: 16,
-    color: '#AAAAAA'
   },
   value: {
     fontSize: 16,
-    color: '#FFFFFF',
     fontWeight: '500'
   },
   totalLabel: {
     fontSize: 16,
-    color: '#FFFFFF',
     fontWeight: 'bold'
   },
   totalValue: {
     fontSize: 16,
-    color: '#FFFFFF',
     fontWeight: 'bold'
   },
   meterContainer: {
@@ -431,7 +424,6 @@ const styles = StyleSheet.create({
   },
   meterBackground: {
     height: 16,
-    backgroundColor: '#2C2C2E',
     borderRadius: 8,
     overflow: 'hidden'
   },
@@ -442,7 +434,6 @@ const styles = StyleSheet.create({
   },
   meterText: {
     fontSize: 14,
-    color: '#FFFFFF',
     marginTop: 8,
     textAlign: 'center'
   },
@@ -464,7 +455,6 @@ const styles = StyleSheet.create({
   },
   estimate: {
     fontSize: 16,
-    color: '#AAAAAA'
   },
   refresh: {
     fontSize: 16,

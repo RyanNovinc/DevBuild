@@ -18,7 +18,7 @@ const AppDataSection = ({ theme }) => {
       <View style={styles.appDataItems}>
         <View style={styles.appDataItem}>
           <Ionicons name="person" size={18} color={theme.primary} />
-          <Text style={[styles.appDataItemText, { color: theme.text }]}>User Profile & Life Direction</Text>
+          <Text style={[styles.appDataItemText, { color: theme.text }]}>User Profile & Strategic Direction</Text>
         </View>
         <View style={styles.appDataItem}>
           <Ionicons name="flag" size={18} color={theme.primary} />

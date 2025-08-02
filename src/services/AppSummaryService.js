@@ -79,8 +79,8 @@ This context summary is automatically generated from the user's app data.
 Name: ${profile.name || 'Not specified'}
 ${profile.bio ? `Bio: ${profile.bio}` : ''}
 
-### LIFE DIRECTION
-${lifeDirection || 'No life direction specified'}`;
+### STRATEGIC DIRECTION
+${lifeDirection || 'No strategic direction specified'}`;
   }
   
   /**

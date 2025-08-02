@@ -390,7 +390,7 @@ const NotesSection = ({
         shareContent += `\n`;
       });
       
-      shareContent += `\nExported from Life Balance app`;
+      shareContent += `\nExported from LifeCompass app`;
       
       Share.share({
         message: shareContent,
@@ -443,7 +443,7 @@ const NotesSection = ({
         content += `\n`;
       });
       
-      content += `\nExported from Life Balance app`;
+      content += `\nExported from LifeCompass app`;
       
       Clipboard.setString(content);
       showSuccess('Copied to clipboard!');

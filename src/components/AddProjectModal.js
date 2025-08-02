@@ -14,8 +14,10 @@ import {
   Alert,
   Animated,
   Switch,
-  Dimensions
+  Dimensions,
+  TouchableWithoutFeedback
 } from 'react-native';
+import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useAppContext } from '../context/AppContext';
@@ -64,6 +66,9 @@ const AddProjectModal = ({
   // Animation values
   const dropdownHeight = useRef(new Animated.Value(0)).current;
   const dropdownOpacity = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(300)).current;
+  const translateY = useRef(new Animated.Value(0)).current;
   
   // Add validation state
   const [validationErrors, setValidationErrors] = useState({
@@ -75,9 +80,41 @@ const AddProjectModal = ({
   
   // Handle modal close with proper cleanup
   const handleClose = () => {
-    Keyboard.dismiss();
-    setShowGoalList(false);
-    onClose();
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 300,
+        duration: 250,
+        useNativeDriver: true,
+      })
+    ]).start(() => {
+      Keyboard.dismiss();
+      setShowGoalList(false);
+      onClose();
+    });
+  };
+
+  // Gesture handlers for pan gesture
+  const onGestureEvent = Animated.event(
+    [{ nativeEvent: { translationY: translateY } }],
+    { useNativeDriver: true }
+  );
+
+  const handleGestureEnd = (event) => {
+    const { translationY, velocityY } = event.nativeEvent;
+    
+    if (translationY > 100 || velocityY > 1000) {
+      handleClose();
+    } else {
+      Animated.spring(translateY, {
+        toValue: 0,
+        useNativeDriver: true,
+      }).start();
+    }
   };
   
   // Calculate minimum touch target size
@@ -114,6 +151,24 @@ const AddProjectModal = ({
     }
   }, [showGoalList]);
   
+  // Modal animation on show/hide
+  useEffect(() => {
+    if (visible) {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: true,
+        })
+      ]).start();
+    }
+  }, [visible]);
+
   // Update form when editing an existing project
   useEffect(() => {
     if (visible && projectData) {
@@ -156,6 +211,11 @@ const AddProjectModal = ({
       const defaultDate = new Date();
       defaultDate.setMonth(defaultDate.getMonth() + 1);
       setDueDate(defaultDate);
+      
+      // Reset animation values
+      translateY.setValue(0);
+      slideAnim.setValue(300);
+      fadeAnim.setValue(0);
     }
   }, [projectData, visible, goals]);
   

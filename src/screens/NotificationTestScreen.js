@@ -110,7 +110,7 @@ const NotificationTestScreen = ({ navigation }) => {
                   iOS Settings Check
                 </Text>
                 <Text style={[styles.iosText, { color: theme.textSecondary }]}>
-                  Make sure these are all enabled in Settings → Notifications → LifeBalance Builder:
+                  Make sure these are all enabled in Settings → Notifications → LifeCompass:
                 </Text>
                 <View style={styles.iosOptions}>
                   <Text style={[styles.iosOption, { color: theme.text }]}>

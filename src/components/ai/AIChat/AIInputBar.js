@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from '../../../context/ThemeContext';
 import { 
   scaleWidth, 
   scaleHeight, 
@@ -48,6 +49,7 @@ const AIInputBar = ({
   maxThreshold = 50000,
   aiTier = 'guide'
 }) => {
+  const { theme } = useTheme();
   // Get safe area and screen dimensions
   const insets = useSafeAreaInsets();
   const { width: screenWidth } = useScreenDimensions();
@@ -420,7 +422,7 @@ const AIInputBar = ({
               },
               internalValue.trim() ? 
                 (conversationSize + internalValue.length <= maxThreshold ? 
-                  styles.sendButtonActive : 
+                  { backgroundColor: theme.primary } : 
                   styles.sendButtonWarning) : 
                 styles.sendButtonInactive,
               (disabled || isStreaming) && { opacity: 0.5 }
@@ -505,7 +507,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sendButtonActive: {
-    backgroundColor: '#19C37D',
+    // Background color now comes from theme
   },
   sendButtonWarning: {
     backgroundColor: '#FF9800',
