@@ -104,7 +104,7 @@ const TaskListView = ({
               onToggle={() => handleToggleTask(task.id)}
               onDelete={() => handleDeleteTask(task.id)}
               onEdit={() => handleEditTask(task)}
-              onPress={() => handleViewTask(task)}
+              onPress={() => handleToggleTask(task.id)}
               theme={theme}
             />
           ))
