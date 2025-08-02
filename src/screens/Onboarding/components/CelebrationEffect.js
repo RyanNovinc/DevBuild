@@ -24,10 +24,19 @@ const CelebrationEffect = ({ visible, type = 'confetti', colors = [], onComplete
     if (visible) {
       generateParticles();
       
-      // Auto-hide after animation duration
+      // Auto-hide after animation duration - allow extra time for particles to fall off screen
+      let duration = 2000; // Base duration
+      
+      // Add extra time for falling animations to complete
+      if (type === 'confetti' || type === 'shimmer') {
+        duration = 5000; // Allow confetti/shimmer to fully fall off screen
+      } else if (type === 'fireworks') {
+        duration = 3000; // Fireworks need a bit more time
+      }
+      
       const timer = setTimeout(() => {
         if (onComplete) onComplete();
-      }, 2000);
+      }, duration);
       
       return () => {
         clearTimeout(timer);

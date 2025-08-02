@@ -398,11 +398,11 @@ const CustomizableDashboard = ({ theme, navigation }) => {
             style={[
               styles.removeButton, 
               { 
-                backgroundColor: componentType === COMPONENT_TYPES.FOCUS_TIMER ? 'rgba(255, 0, 0, 1)' : 'rgba(255, 59, 48, 0.8)',
-                zIndex: componentType === COMPONENT_TYPES.FOCUS_TIMER ? 1000 : 20, // Extra high z-index for Focus Timer
-                elevation: componentType === COMPONENT_TYPES.FOCUS_TIMER ? 50 : 5, // Android elevation
-                borderWidth: componentType === COMPONENT_TYPES.FOCUS_TIMER ? 2 : 0,
-                borderColor: componentType === COMPONENT_TYPES.FOCUS_TIMER ? '#FFFFFF' : 'transparent',
+                backgroundColor: 'rgba(255, 59, 48, 0.8)',
+                zIndex: 20,
+                elevation: 5,
+                borderWidth: 0,
+                borderColor: 'transparent',
               }
             ]}
             onPress={() => {
@@ -417,7 +417,7 @@ const CustomizableDashboard = ({ theme, navigation }) => {
           >
             <Ionicons 
               name="close" 
-              size={componentType === COMPONENT_TYPES.FOCUS_TIMER ? 20 : 16} 
+              size={16} 
               color="#FFFFFF" 
             />
           </TouchableOpacity>

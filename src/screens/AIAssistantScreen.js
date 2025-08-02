@@ -1655,13 +1655,38 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
     setLifeDirectionModalVisible(false);
     
     try {
-      const { updateAppSetting } = appContext;
+      const { updateAppSetting, goals, projects, tasks, settings } = appContext;
       
       if (typeof updateAppSetting === 'function') {
         // Update in app context
         await updateAppSetting('lifeDirection', newLifeDirection);
         
         console.log(`Updated life direction to: "${newLifeDirection}"`);
+        
+        // Update app summary to reflect the new life direction in AI context
+        try {
+          const AppSummaryService = await import('../services/AppSummaryService');
+          const DocumentService = await import('../services/DocumentService');
+          
+          // Generate new app summary with updated life direction
+          const appData = {
+            goals: goals || [],
+            projects: projects || [],
+            tasks: tasks || [],
+            settings: {
+              ...settings,
+              lifeDirection: newLifeDirection
+            }
+          };
+          
+          const summary = AppSummaryService.default.generateAppSummary(appData);
+          await DocumentService.default.updateAppContextDocument(summary);
+          
+          console.log('App summary updated with new Strategic Direction from AI');
+        } catch (error) {
+          console.error('Error updating app summary after Strategic Direction change:', error);
+          // Don't fail the main operation if summary update fails
+        }
         
         const successMessage = {
           id: (Date.now() + 1).toString(),

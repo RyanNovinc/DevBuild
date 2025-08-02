@@ -38,6 +38,48 @@ const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, isNavigating 
     return result;
   };
   
+  // Create title for projects page - handle long goal names with line breaks
+  const getProjectsTitle = () => {
+    if (!goal || !goal.name) {
+      return currentLanguage === 'ja' ? 'プロジェクトとタスク' : 'Breakdown';
+    }
+    
+    // For very long goal names, format them nicely for 2-line display
+    let goalName = goal.name;
+    
+    // Shorten some common long goal names for better display
+    const abbreviations = {
+      'Environment & Organization': 'Environment & Org',
+      'Build 6-Month Emergency Fund': 'Emergency Fund',
+      'Pay Off High-Interest Debt': 'Pay Off Debt',
+      'Save $25,000 Down Payment for Home': 'Save for Home',
+      'Develop Sustainable Mental Health Practices': 'Mental Health Practices',
+      'Master Digital Literacy and AI Tools': 'Digital Literacy & AI',
+      'Achieve French Language Proficiency': 'French Proficiency',
+      'Build Functional Strength and Mobility': 'Strength & Mobility',
+      'Explore Canada Through Epic Adventures': 'Epic Adventures',
+      'Master Four-Season Outdoor Activities': 'Outdoor Activities',
+      'Complete Active Challenge Events': 'Challenge Events',
+      'Volunteer Using Professional Skills': 'Professional Volunteering',
+      'Create Affordable Home Office Space': 'Home Office Setup',
+      'Improve Home Energy Efficiency': 'Energy Efficiency',
+      'Live Zero-Waste Lifestyle': 'Zero-Waste Life',
+      'Find Quality Shared Housing': 'Quality Housing'
+    };
+    
+    // Use abbreviation if available
+    if (abbreviations[goalName]) {
+      goalName = abbreviations[goalName];
+    }
+    
+    // Format for display
+    if (currentLanguage === 'ja') {
+      return `${goalName}\nプロジェクトとタスク`;
+    } else {
+      return `${goalName}\nBreakdown`;
+    }
+  };
+  
   // Core state
   const [messageStep, setMessageStep] = useState(1);
   const [messageComplete, setMessageComplete] = useState(false);
@@ -247,14 +289,9 @@ const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, isNavigating 
   const getCurrentMessage = () => {
     switch(messageStep) {
       case 1:
-        // First message: Simple acknowledgment
-        return "Perfect!";
+        return t('message1', 'projects');
       case 2:
-        // Second message: Introduce the breakdown concept
-        return "Let's transform your goal into smaller, achievable projects and tasks...";
-      case 3:
-        // Third message: Explain the practical benefit
-        return "and we can turn your vision into specific, actionable steps you can take today.";
+        return t('message2', 'projects');
       default:
         return "";
     }
@@ -284,7 +321,7 @@ const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, isNavigating 
         useNativeDriver: true
       }).start();
       
-      if (messageStep < 3) {
+      if (messageStep < 2) {
         // Transition to next message
         Animated.timing(messageTextOpacity, {
           toValue: 0,
@@ -301,8 +338,8 @@ const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, isNavigating 
             useNativeDriver: true
           }).start();
         });
-      } else if (messageStep === 3) {
-        // If third message is complete, proceed to hierarchy view
+      } else if (messageStep === 2) {
+        // If second message is complete, proceed to hierarchy view
         // Hide tap prompt
         Animated.timing(tapPromptOpacity, {
           toValue: 0,
@@ -601,24 +638,25 @@ const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, isNavigating 
   
   const domainColorShades = getDomainColorShades();
 
-  // Helper function to shorten task name for display
+  // Helper function to shorten task name for display (fallback only)
   const getShortenedTaskName = (taskName) => {
     if (!taskName) return "";
     
-    // If the task name is already short, return as is
-    if (taskName.length <= 40) return taskName;
+    // Allow more characters since we want cleaner display
+    if (taskName.length <= 60) return taskName;
     
     // Otherwise, truncate and add ellipsis
-    return taskName.substring(0, 37) + "...";
+    return taskName.substring(0, 57) + "...";
   };
   
   return (
     <View style={styles.container}>
       <NavigationHeader 
-        title={translate('projects', 'title')}
+        title={getProjectsTitle()}
         onBack={onBack} 
         iconName={domain.icon}
         iconColor={domain.color}
+        titleOffset={16}
       />
       
       {/* Animated Confetti */}
@@ -852,7 +890,7 @@ const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, isNavigating 
                             </View>
                             <View style={styles.taskTextContainer}>
                               <ResponsiveText style={styles.hierarchyTaskText}>
-                                {getShortenedTaskName(task.name)}
+                                {task.summary || getShortenedTaskName(task.name)}
                               </ResponsiveText>
                               <ResponsiveText style={styles.hierarchyItemType}>
                                 {translate('common', 'task').toUpperCase()}

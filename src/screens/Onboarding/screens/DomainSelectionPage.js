@@ -314,17 +314,17 @@ const DomainSelectionPage = ({
   // Get first message text
   const getFirstMessage = () => {
     if (appLanguage === 'ja') {
-      return "今、最も大きな変化をもたらす生活の分野を1つ選んでください。";
+      return "最初に集中する人生の分野を1つ選んでください。他の分野はいつでも探索できます。";
     }
-    return "Select one area of your life where progress would make the biggest difference right now.";
+    return "Pick one area of your life to focus on first. You can always explore other areas later.";
   };
   
   // Get second message text
   const getSecondMessage = () => {
     if (appLanguage === 'ja') {
-      return "これは単なる出発点です—後で他の分野も探索できます。";
+      return "これはただのスタート地点です—飛び込みましょう。";
     }
-    return "This is just your starting point—you can explore other areas later.";
+    return "This is just your starting point - let's dive in.";
   };
   
   // Get current message based on step
@@ -809,7 +809,12 @@ const DomainSelectionPage = ({
   
   return (
     <View style={styles.container}>
-      <NavigationHeader title={getPageTitle()} onBack={onBack} />
+      <NavigationHeader 
+        title={selectedDomain ? getTranslatedDomainName(selectedDomain.name) : getPageTitle()} 
+        iconName={selectedDomain ? selectedDomain.icon : null}
+        iconColor={selectedDomain ? selectedDomain.color : null}
+        onBack={onBack} 
+      />
       
       {/* Full-screen touchable overlay - only visible before wheel appears */}
       {!wheelVisible && (

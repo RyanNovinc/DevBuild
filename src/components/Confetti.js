@@ -12,7 +12,8 @@ const Confetti = ({
   colors = ['#FFD700', '#FFC125', '#FFDF00', '#F0E68C', '#DAA520'], // Default to golden colors
   duration = 4000, 
   onComplete,
-  type = 'confetti' // 'confetti' or 'fireworks'
+  type = 'confetti', // 'confetti' or 'fireworks'
+  count = null // Optional particle count override
 }) => {
   const [particles, setParticles] = useState([]);
   const [animations, setAnimations] = useState(null);
@@ -43,11 +44,12 @@ const Confetti = ({
   
   const createConfettiEffect = () => {
     // Create confetti particles (falling from top)
-    const newParticles = Array(MAX_PARTICLES).fill().map(() => {
+    const particleCount = count || MAX_PARTICLES;
+    const newParticles = Array(particleCount).fill().map(() => {
       return {
         id: Math.random().toString(),
         x: Math.random() * SCREEN_WIDTH,
-        y: -20 - Math.random() * 100,
+        y: -150 - Math.random() * 200, // Much higher starting position (off-screen)
         size: 5 + Math.random() * 10,
         color: colors[Math.floor(Math.random() * colors.length)],
         rotation: Math.random() * 360,
@@ -62,20 +64,25 @@ const Confetti = ({
     
     setParticles(newParticles);
     
-    // FIXED: Start animations immediately without requestAnimationFrame
-    const particleAnimations = newParticles.map(particle => {
+    // Create staggered animations so particles fall at different times from the top
+    const particleAnimations = newParticles.map((particle, index) => {
+      // Stagger start times - particles drop over a longer period (2 seconds)
+      const delayTime = (index / particleCount) * 2000; // Spread release over 2 seconds
+      
       return Animated.parallel([
         // Fall down with slight horizontal drift
         Animated.timing(particle.yAnimation, {
           toValue: 1,
           duration: duration,
+          delay: delayTime, // Each particle starts at a different time
           easing: Easing.ease,
           useNativeDriver: true
         }),
         // Slight horizontal drift
         Animated.timing(particle.xAnimation, {
-          toValue: (Math.random() - 0.5) * 200, // Increased range for more movement
+          toValue: (Math.random() - 0.5) * 300, // Further increased range for more spread
           duration: duration,
+          delay: delayTime, // Same delay for consistent movement
           easing: Easing.ease,
           useNativeDriver: true
         }),
@@ -83,6 +90,7 @@ const Confetti = ({
         Animated.timing(particle.rotationAnimation, {
           toValue: 1,
           duration: duration,
+          delay: delayTime, // Same delay for consistent movement
           easing: Easing.linear,
           useNativeDriver: true
         }),
@@ -90,14 +98,15 @@ const Confetti = ({
         Animated.timing(particle.opacityAnimation, {
           toValue: 0,
           duration: duration * 0.4,
-          delay: duration * 0.6,
+          delay: delayTime + (duration * 0.6), // Fade starts relative to particle start time
           easing: Easing.ease,
           useNativeDriver: true
         })
       ]);
     });
     
-    const animationGroup = Animated.stagger(10, particleAnimations); // Faster stagger
+    // Start all animations at once (but they have individual delays)
+    const animationGroup = Animated.parallel(particleAnimations);
     setAnimations(animationGroup);
     
     animationGroup.start(() => {

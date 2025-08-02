@@ -278,7 +278,13 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
   
   // SIMPLIFIED: Complete onboarding using the new OnboardingService
   const completeOnboarding = async () => {
-    if (isNavigating) return;
+    // Prevent multiple simultaneous calls
+    if (isNavigating) {
+      console.log("Onboarding completion already in progress, ignoring duplicate call");
+      return;
+    }
+    
+    console.log("Starting onboarding completion...");
     setIsNavigating(true);
     
     try {
@@ -446,9 +452,9 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
         icon: standardDomain.icon
       };
       
-      // Use service to create data
+      // Use service to create data (specify this is NOT full onboarding)
       console.error('🚀 CALLING OnboardingService.createOnboardingData');
-      const result = await OnboardingService.createOnboardingData(finalDomain, defaultGoal);
+      const result = await OnboardingService.createOnboardingData(finalDomain, defaultGoal, { isFullOnboarding: false });
       console.error('🚀 OnboardingService result:', result);
       
       if (!result.success) {

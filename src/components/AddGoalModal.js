@@ -1,5 +1,5 @@
 // src/components/AddGoalModal.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -12,8 +12,12 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   ScrollView,
-  Switch
+  Switch,
+  Animated,
+  Easing,
+  Dimensions
 } from 'react-native';
+import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -48,6 +52,11 @@ const AddGoalModal = ({
 }) => {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
+  
+  // Modal animation values
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(Dimensions.get('window').height)).current;
+  const translateY = useRef(new Animated.Value(0)).current;
   
   // Goal state
   const [title, setTitle] = useState('');
@@ -209,6 +218,32 @@ const AddGoalModal = ({
   
   const domainDisplayData = getDomainDisplayData();
   
+  // Handle modal animation
+  useEffect(() => {
+    if (visible) {
+      // Reset animation values
+      fadeAnim.setValue(0);
+      slideAnim.setValue(Dimensions.get('window').height);
+      translateY.setValue(0);
+      
+      // Animate in
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+          easing: Easing.out(Easing.ease)
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+          easing: Easing.out(Easing.ease)
+        })
+      ]).start();
+    }
+  }, [visible]);
+  
   // Update form when editing an existing goal
   useEffect(() => {
     if (visible && goalData) {
@@ -316,9 +351,74 @@ const AddGoalModal = ({
     }
   };
   
+  // Handle swipe gesture
+  const handleGestureEnd = (event) => {
+    const { translationY, velocityY } = event.nativeEvent;
+    const screenHeight = Dimensions.get('window').height;
+    const dismissThreshold = screenHeight * 0.2;
+    const fastSwipeVelocity = 1200;
+    
+    const shouldDismiss = translationY > dismissThreshold || velocityY > fastSwipeVelocity;
+    
+    if (shouldDismiss) {
+      // Animate dismiss
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+          easing: Easing.in(Easing.ease)
+        }),
+        Animated.timing(slideAnim, {
+          toValue: screenHeight,
+          duration: 250,
+          useNativeDriver: true,
+          easing: Easing.in(Easing.ease)
+        })
+      ]).start(() => {
+        onClose();
+      });
+    } else {
+      // Bounce back
+      Animated.spring(translateY, {
+        toValue: 0,
+        useNativeDriver: true,
+        tension: 100,
+        friction: 8
+      }).start();
+    }
+  };
+  
+  const onGestureEvent = Animated.event(
+    [{ nativeEvent: { translationY: translateY } }],
+    { useNativeDriver: true }
+  );
+  
   // Dismiss keyboard when user taps outside inputs
   const dismissKeyboard = () => {
     Keyboard.dismiss();
+  };
+  
+  // Handle close with animation
+  const handleClose = () => {
+    const screenHeight = Dimensions.get('window').height;
+    
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+        easing: Easing.in(Easing.ease)
+      }),
+      Animated.timing(slideAnim, {
+        toValue: screenHeight,
+        duration: 250,
+        useNativeDriver: true,
+        easing: Easing.in(Easing.ease)
+      })
+    ]).start(() => {
+      onClose();
+    });
   };
   
   // Toggle date picker mode between spinner and calendar
@@ -340,24 +440,59 @@ const AddGoalModal = ({
     <Modal
       visible={visible}
       transparent={true}
-      animationType="slide"
-      onRequestClose={onClose}
+      animationType="none"
+      onRequestClose={handleClose}
       accessibilityViewIsModal={true}
     >
-      <KeyboardAvoidingView 
-          style={styles.container} 
-          behavior={Platform.OS === 'ios' ? 'padding' : null}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
-        >
-          <View style={[
-            styles.modalContent, 
-            { 
-              backgroundColor: theme.card,
-              paddingBottom: Math.max(insets.bottom, spacing.m),
-              borderTopLeftRadius: scaleWidth(16),
-              borderTopRightRadius: scaleWidth(16),
+      <Animated.View 
+        style={[
+          styles.overlay,
+          {
+            opacity: fadeAnim
+          }
+        ]}
+      >
+        <TouchableWithoutFeedback onPress={handleClose}>
+          <View style={styles.overlayTouchable} />
+        </TouchableWithoutFeedback>
+        
+        <PanGestureHandler
+          onGestureEvent={onGestureEvent}
+          onHandlerStateChange={(event) => {
+            if (event.nativeEvent.state === State.END) {
+              handleGestureEnd(event);
             }
-          ]}>
+          }}
+        >
+          <Animated.View
+            style={[
+              styles.gestureContainer,
+              {
+                transform: [
+                  { translateY: Animated.add(slideAnim, translateY) }
+                ]
+              }
+            ]}
+          >
+            <KeyboardAvoidingView 
+              style={styles.keyboardContainer} 
+              behavior={Platform.OS === 'ios' ? 'padding' : null}
+              keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+            >
+              <View style={[
+                styles.modalContent, 
+                { 
+                  backgroundColor: theme.card,
+                  paddingBottom: Math.max(insets.bottom, spacing.m),
+                  borderTopLeftRadius: scaleWidth(16),
+                  borderTopRightRadius: scaleWidth(16),
+                }
+              ]}>
+                {/* Swipe indicator */}
+                <View style={[
+                  styles.swipeIndicator,
+                  { backgroundColor: theme.textSecondary + '40' }
+                ]} />
             <View style={styles.modalHeader}>
               <Text 
                 style={[
@@ -382,7 +517,7 @@ const AddGoalModal = ({
                     justifyContent: 'center'
                   }
                 ]} 
-                onPress={onClose}
+                onPress={handleClose}
                 accessible={true}
                 accessibilityRole="button"
                 accessibilityLabel="Close modal"
@@ -801,17 +936,37 @@ const AddGoalModal = ({
                 </Text>
               </TouchableOpacity>
             </ScrollView>
-          </View>
-      </KeyboardAvoidingView>
+              </View>
+            </KeyboardAvoidingView>
+          </Animated.View>
+        </PanGestureHandler>
+      </Animated.View>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  overlay: {
     flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.5)'
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end'
+  },
+  overlayTouchable: {
+    flex: 1
+  },
+  gestureContainer: {
+    justifyContent: 'flex-end'
+  },
+  keyboardContainer: {
+    justifyContent: 'flex-end'
+  },
+  swipeIndicator: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginTop: 8,
+    marginBottom: 16
   },
   modalContent: {
     padding: spacing.m,

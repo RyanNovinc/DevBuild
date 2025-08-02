@@ -28,7 +28,7 @@ const ProfileHeader = ({ theme, toggleSettings }) => {
 };
 
 // Banner subcomponent - settings button aligned with name
-ProfileHeader.Banner = ({ theme, isDarkMode, profile, user, navigation, onThemePickerOpen, toggleSettings }) => {
+ProfileHeader.Banner = ({ theme, isDarkMode, profile, user, navigation, toggleSettings, onThemeColorPress }) => {
   // Get safe area insets to properly position elements
   const insets = useSafeAreaInsets();
   
@@ -278,20 +278,22 @@ ProfileHeader.Banner = ({ theme, isDarkMode, profile, user, navigation, onThemeP
   };
 
   return (
-    <TouchableOpacity 
-        activeOpacity={0.6}
-        onPress={onThemePickerOpen}
-        accessible={true}
-        accessibilityRole="button"
-        accessibilityLabel="Change app theme"
-        accessibilityHint="Opens the theme color picker to customize app appearance"
-        style={[styles.profileBanner, profileBannerStyles]}
-      >
+    <View style={[styles.profileBanner, profileBannerStyles]}>
       {/* Banner extension for overscroll - positioned OUTSIDE normal flow */}
       <View style={bannerExtensionStyle} />
       
-      {/* Banner content with original spacing */}
-      <View style={styles.profileContent}>
+      {/* Touchable area for theme color selection */}
+      <TouchableOpacity 
+        style={styles.themeColorTouchable}
+        onPress={onThemeColorPress}
+        activeOpacity={0.95}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel="Change theme color"
+        accessibilityHint="Tap to open theme color picker"
+      >
+        {/* Banner content with original spacing */}
+        <View style={styles.profileContent}>
         <View style={styles.profileHeader}>
           {/* Profile image on the left - with centering container */}
           <View style={styles.profileImageWrapper}>
@@ -330,7 +332,10 @@ ProfileHeader.Banner = ({ theme, isDarkMode, profile, user, navigation, onThemeP
               styles.settingsButton,
               ensureAccessibleTouchTarget(scaleWidth(36), scaleWidth(36))
             ]}
-            onPress={toggleSettings}
+            onPress={() => {
+              console.log('=== SETTINGS BUTTON PRESSED IN HEADER ===');
+              toggleSettings();
+            }}
             activeOpacity={0.7}
             accessible={true}
             accessibilityRole="button"
@@ -344,8 +349,9 @@ ProfileHeader.Banner = ({ theme, isDarkMode, profile, user, navigation, onThemeP
             />
           </TouchableOpacity>
         </View>
-      </View>
-    </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    </View>
   );
 };
 
@@ -361,14 +367,10 @@ const styles = StyleSheet.create({
     position: 'relative', // This ensures the absolute positioning works
     overflow: 'visible', // IMPORTANT: Changed from 'hidden' to 'visible' to allow extension to show
   },
-  // NEW: Theme touchable area - covers the entire banner
-  themeTouchableArea: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 1, // Above the background but below the content
+  // Touchable area for theme color selection
+  themeColorTouchable: {
+    flex: 1,
+    zIndex: 1, // Below other touchable elements but above the background
   },
   // Settings button - now inline with profile name
   settingsButton: {

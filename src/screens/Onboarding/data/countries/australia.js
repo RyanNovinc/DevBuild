@@ -20,10 +20,16 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Research your company's flexible work policy and document key points",
+                summary: "Research policy",
+                explanation: "Understanding existing policy provides foundation for successful negotiation and identifies opportunities for arrangement that benefits both employee and company. Documentation helps structure compelling proposal.",
+                timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Prepare proposal highlighting productivity benefits and skill development plan",
+                summary: "Prepare proposal",
+                explanation: "Professional proposals addressing business benefits increase approval likelihood. Combining flexible work with skill development demonstrates commitment to adding value while improving work-life balance.",
+                timeframe: "2 weeks",
                 completed: false
               }
             ]
@@ -35,10 +41,16 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Identify top 3 skills most valued in your industry for hybrid roles",
+                summary: "Identify skills",
+                explanation: "Skills research ensures learning investment aligns with market demand and employer needs. Hybrid roles often require additional technical and communication skills for remote collaboration.",
+                timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Complete online certification or course in chosen skill area",
+                summary: "Complete course",
+                explanation: "Certification provides credible evidence of new capabilities that strengthen flexible work requests and career advancement opportunities. Online learning demonstrates self-direction valued by employers.",
+                timeframe: "3 months",
                 completed: false
               }
             ]
@@ -58,10 +70,16 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Enroll in leadership training program or workshop",
+                summary: "Enroll training",
+                explanation: "Leadership training provides structured development of management skills essential for promotion. Most organizations offer internal programs or support external training for high-potential employees.",
+                timeframe: "2 weeks",
                 completed: false
               },
               {
                 name: "Volunteer to lead team projects to demonstrate management potential",
+                summary: "Lead projects",
+                explanation: "Project leadership provides practical management experience and visible demonstration of capability to senior management. Successful project delivery creates track record for promotion discussions.",
+                timeframe: "Ongoing",
                 completed: false
               }
             ]
@@ -73,10 +91,16 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Schedule career development conversation with your manager",
+                summary: "Schedule meeting",
+                explanation: "Proactive career conversations signal ambition and enable manager support for advancement. Regular discussions keep management opportunities top-of-mind for decision makers.",
+                timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Identify specific management roles to target and requirements needed",
+                summary: "Identify roles",
+                explanation: "Specific role targeting enables focused skill development and strategic positioning. Understanding requirements helps create development plan that aligns with promotion opportunities.",
+                timeframe: "2 weeks",
                 completed: false
               }
             ]
@@ -93,17 +117,145 @@ export const DOMAIN_DEFINITIONS = [
           {
             id: "cybersecurity",
             name: "Cybersecurity & Data Protection",
-            description: "Focus on security analysis, threat detection, and data protection roles"
+            description: "Focus on security analysis, threat detection, and data protection roles",
+            projects: [
+              {
+                name: "Cybersecurity Foundation Skills",
+                description: "Build core cybersecurity knowledge and practical experience with security tools",
+                explanation: "Cybersecurity Analyst ranks #1 fastest-growing job (57% growth). Australian government invests $1.67B in cyber security. Skills shortage creates entry opportunities.",
+                tasks: [
+                  {
+                    name: "Complete CompTIA Security+ or similar cybersecurity certification course",
+                    summary: "Get certified",
+                    explanation: "CompTIA Security+ provides industry-recognized foundation for cybersecurity careers. Government investment of $1.67B in cyber security creates strong job demand with competitive salaries.",
+                    timeframe: "4 months",
+                    completed: false
+                  },
+                  {
+                    name: "Practice with security tools (Wireshark, Metasploit, Nmap) in virtual lab environment",
+                    summary: "Practice tools",
+                    explanation: "Hands-on experience with security tools provides practical skills that employers value. Virtual labs offer safe environment to develop technical competency without risk to production systems.",
+                    timeframe: "2 months",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Security Career Portfolio",
+                description: "Build practical portfolio demonstrating security analysis and incident response skills",
+                explanation: "Hands-on experience essential for cybersecurity roles. Government and private sector actively recruiting with competitive salaries.",
+                tasks: [
+                  {
+                    name: "Complete vulnerability assessment project and document security findings",
+                    summary: "Security audit",
+                    explanation: "Vulnerability assessment projects provide portfolio pieces demonstrating real-world security analysis skills. Documented findings showcase professional communication and technical competency to potential employers.",
+                    timeframe: "1 month",
+                    completed: false
+                  },
+                  {
+                    name: "Apply for cybersecurity trainee roles or internships with Australian government agencies",
+                    summary: "Apply roles",
+                    explanation: "Government agencies offer structured entry pathways into cybersecurity careers with excellent training and advancement opportunities. Trainee positions provide mentorship and real-world experience.",
+                    timeframe: "2 months",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           },
           {
             id: "development",
             name: "Software Development & Programming", 
-            description: "Learn coding, app development, and software engineering skills"
+            description: "Learn coding, app development, and software engineering skills",
+            projects: [
+              {
+                name: "Programming Language Mastery",
+                description: "Learn in-demand programming languages and development frameworks",
+                explanation: "Python, JavaScript, and Java dominate Australian tech job market. Bootcamps report 80%+ job placement rates within 6 months.",
+                tasks: [
+                  {
+                    name: "Complete comprehensive course in Python or JavaScript including web development frameworks",
+                    summary: "Learn coding",
+                    explanation: "Python and JavaScript dominate Australian tech job market with highest demand. Comprehensive courses including frameworks provide practical skills needed for immediate employment in development roles.",
+                    timeframe: "6 months",
+                    completed: false
+                  },
+                  {
+                    name: "Build 3 portfolio projects demonstrating different programming concepts and skills",
+                    summary: "Build portfolio",
+                    explanation: "Portfolio projects provide tangible evidence of programming capabilities that employers can evaluate. Diverse projects showcase adaptability and problem-solving skills across different programming domains.",
+                    timeframe: "3 months",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Development Career Transition",
+                description: "Create professional portfolio and apply for entry-level development positions",
+                explanation: "Tech talent shortage means employers hire based on skills over degrees. GitHub portfolio essential for demonstrating capabilities.",
+                tasks: [
+                  {
+                    name: "Deploy portfolio projects on GitHub with professional documentation and live demos",
+                    summary: "Deploy projects",
+                    explanation: "GitHub portfolio demonstrates version control skills and professional development practices. Live demos allow employers to interact with your work, significantly improving job application success rates.",
+                    timeframe: "1 month",
+                    completed: false
+                  },
+                  {
+                    name: "Apply for junior developer roles at Australian tech companies and startups",
+                    summary: "Apply jobs",
+                    explanation: "Tech talent shortage means employers hire based on demonstrated skills over formal qualifications. Bootcamps report 80%+ job placement rates, indicating strong demand for skilled developers.",
+                    timeframe: "2 months",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           },
           {
             id: "digital-marketing",
             name: "Digital Marketing & Analytics",
-            description: "Master digital marketing tools, data analysis, and online strategy"
+            description: "Master digital marketing tools, data analysis, and online strategy",
+            projects: [
+              {
+                name: "Digital Marketing Certification",
+                description: "Master Google Ads, Analytics, and social media marketing tools",
+                explanation: "Digital marketing growing 7.4% annually in Australia. Google and Facebook certifications valued by employers. Remote work opportunities abundant.",
+                tasks: [
+                  {
+                    name: "Complete Google Ads and Google Analytics certifications plus Facebook Blueprint",
+                    summary: "Get certified",
+                    timeframe: "3 months",
+                    completed: false
+                  },
+                  {
+                    name: "Master SEO fundamentals and content marketing strategy through practical projects",
+                    summary: "Learn SEO",
+                    timeframe: "2 months",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Marketing Analytics Portfolio",
+                description: "Build data analysis skills and create marketing campaign case studies",
+                explanation: "Marketing analytics roles combine creativity with data skills. Average salary $75,000+ for experienced professionals.",
+                tasks: [
+                  {
+                    name: "Create and analyze 2 complete digital marketing campaigns with ROI measurement",
+                    summary: "Run campaigns",
+                    timeframe: "3 months",
+                    completed: false
+                  },
+                  {
+                    name: "Build portfolio showcasing data visualization and campaign optimization skills",
+                    summary: "Build portfolio",
+                    timeframe: "1 month",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           }
         ],
         projects: [
@@ -114,10 +266,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Research certification programs and choose reputable provider",
+                summary: "Research programs",
+                timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Complete foundational courses and earn first certification",
+                summary: "Get certified",
+                timeframe: "4 months",
                 completed: false
               }
             ]
@@ -129,10 +285,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Create portfolio showcasing projects and skills learned",
+                summary: "Build portfolio",
+                timeframe: "1 month",
                 completed: false
               },
               {
                 name: "Network with tech professionals and apply for entry-level positions",
+                summary: "Network & apply",
+                timeframe: "2 months",
                 completed: false
               }
             ]
@@ -160,10 +320,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Calculate 6 months of essential expenses for your target emergency fund",
+                summary: "Calculate fund",
+                timeframe: "1 day",
                 completed: false
               },
               {
                 name: "Open high-interest savings account and set up automatic weekly transfers",
+                summary: "Setup savings",
+                timeframe: "1 week",
                 completed: false
               }
             ]
@@ -175,10 +339,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Track all expenses for one month to identify spending patterns",
+                summary: "Track expenses",
+                timeframe: "1 month",
                 completed: false
               },
               {
                 name: "Cancel or reduce 3 subscription services or recurring expenses you don't actively use",
+                summary: "Cut subscriptions",
+                timeframe: "1 week",
                 completed: false
               }
             ]
@@ -198,10 +366,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Identify marketable skill or service you can offer part-time",
+                summary: "Find skill",
+                timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Set up business on relevant platform (Airtasker, Uber, Etsy, freelancing sites)",
+                summary: "Setup platform",
+                timeframe: "1 week",
                 completed: false
               }
             ]
@@ -213,10 +385,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Complete first 5 paid jobs to establish ratings and reviews",
+                summary: "Complete jobs",
+                timeframe: "2 months",
                 completed: false
               },
               {
                 name: "Optimize pricing and marketing to reach $500+ monthly target",
+                summary: "Optimize pricing",
+                timeframe: "1 month",
                 completed: false
               }
             ]
@@ -236,10 +412,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Research First Home Owner Grant and government assistance programs",
+                summary: "Research grants",
+                timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Get pre-approval to understand your borrowing capacity and target price range",
+                summary: "Get pre-approval",
+                timeframe: "2 weeks",
                 completed: false
               }
             ]
@@ -251,10 +431,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Calculate deposit needed (10-20% of target property price) and create savings timeline",
+                summary: "Plan deposit",
+                timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Open dedicated house deposit savings account with automatic transfers",
+                summary: "Setup deposit fund",
+                timeframe: "1 week",
                 completed: false
               }
             ]
@@ -282,10 +466,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Choose 3 physical activities you enjoy and can do consistently",
+                summary: "Choose activities",
+                timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Schedule 30-minute exercise sessions 3 times per week focusing on mental health benefits",
+                summary: "Schedule exercise",
+                timeframe: "Ongoing",
                 completed: false
               }
             ]
@@ -297,10 +485,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Track mood and stress levels before/after exercise sessions for motivation",
+                summary: "Track mood",
+                timeframe: "Ongoing",
                 completed: false
               },
               {
                 name: "Join fitness class or group activity for social support and accountability",
+                summary: "Join class",
+                timeframe: "2 weeks",
                 completed: false
               }
             ]
@@ -320,10 +512,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Establish consistent sleep schedule of 7-8 hours nightly",
+                summary: "Fix sleep",
+                timeframe: "2 weeks",
                 completed: false
               },
               {
                 name: "Plan and prepare healthy meals 4 days per week instead of takeaway",
+                summary: "Meal prep",
+                timeframe: "Ongoing",
                 completed: false
               }
             ]
@@ -335,10 +531,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Book annual health check-up with GP including blood tests and screenings",
+                summary: "Book checkup",
+                timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Use health tracking app or wearable to monitor key health metrics daily",
+                summary: "Track health",
+                timeframe: "Ongoing",
                 completed: false
               }
             ]
@@ -358,10 +558,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Schedule 3 specific workout sessions in your calendar each week",
+                summary: "Schedule workouts",
+                timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Choose mix of cardio, strength, and flexibility activities you enjoy",
+                summary: "Choose activities",
+                timeframe: "1 week",
                 completed: false
               }
             ]
@@ -373,10 +577,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Walk or cycle to work at least 2 days per week if possible",
+                summary: "Active commute",
+                timeframe: "Ongoing",
                 completed: false
               },
               {
                 name: "Take stairs instead of elevators and find opportunities for daily movement",
+                summary: "Daily movement",
+                timeframe: "Ongoing",
                 completed: false
               }
             ]
@@ -404,10 +612,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Define your relationship values and what you want in a long-term partner",
+                summary: "Define values",
+                timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Join activities or groups where you can meet like-minded people with similar values",
+                summary: "Join groups",
+                timeframe: "2 weeks",
                 completed: false
               }
             ]
@@ -419,10 +631,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Set up dating profiles or ask friends for introductions to meet potential partners",
+                summary: "Setup dating",
+                timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Practice being authentic and vulnerable in dating conversations",
+                summary: "Practice dating",
+                timeframe: "Ongoing",
                 completed: false
               }
             ]
@@ -442,10 +658,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Schedule regular social activities with friends and maintain consistent contact",
+                summary: "Schedule socials",
+                timeframe: "Ongoing",
                 completed: false
               },
               {
                 name: "Join social groups, hobby clubs, or community activities to expand your network",
+                summary: "Join clubs",
+                timeframe: "2 weeks",
                 completed: false
               }
             ]
@@ -457,10 +677,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Participate in group activities like sports leagues, fitness classes, or hobby groups",
+                summary: "Join activities",
+                timeframe: "2 weeks",
                 completed: false
               },
               {
                 name: "Make effort to deepen existing friendships through quality time and shared experiences",
+                summary: "Deepen friendship",
+                timeframe: "Ongoing",
                 completed: false
               }
             ]
@@ -480,10 +704,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Schedule weekly date nights or quality time together without distractions",
+                summary: "Date nights",
+                timeframe: "Ongoing",
                 completed: false
               },
               {
                 name: "Have monthly relationship check-ins to discuss goals, feelings, and connection openly",
+                summary: "Relationship talks",
+                timeframe: "Monthly",
                 completed: false
               }
             ]
@@ -495,10 +723,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Discuss and align major life goals like career, housing, and family planning",
+                summary: "Align goals",
+                timeframe: "1 month",
                 completed: false
               },
               {
                 name: "Create system for supporting each other's individual goals and growth",
+                summary: "Support system",
+                timeframe: "2 weeks",
                 completed: false
               }
             ]
@@ -526,10 +758,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Research certifications most valued in your industry and career goals",
+                summary: "Research certs",
+                timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Enroll in chosen certification program and create study schedule",
+                summary: "Enroll program",
+                timeframe: "2 weeks",
                 completed: false
               }
             ]
@@ -541,10 +777,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Complete all required coursework and assignments within program timeline",
+                summary: "Complete course",
+                timeframe: "6 months",
                 completed: false
               },
               {
                 name: "Pass final certification exam and add credential to professional profiles",
+                summary: "Pass exam",
+                timeframe: "1 month",
                 completed: false
               }
             ]
@@ -564,10 +804,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Choose creative project that combines personal interests with skills development",
+                summary: "Choose project",
+                timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Create project timeline with specific milestones and launch date",
+                summary: "Plan timeline",
+                timeframe: "1 week",
                 completed: false
               }
             ]
@@ -579,10 +823,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Complete creative project according to planned timeline and quality standards",
+                summary: "Finish project",
+                timeframe: "3 months",
                 completed: false
               },
               {
                 name: "Share project online and gather feedback from community or target audience",
+                summary: "Share project",
+                timeframe: "2 weeks",
                 completed: false
               }
             ]
@@ -599,17 +847,137 @@ export const DOMAIN_DEFINITIONS = [
           {
             id: "cooking",
             name: "Advanced Cooking & Meal Prep",
-            description: "Master cooking techniques and meal planning to save money and eat healthier"
+            description: "Master cooking techniques and meal planning to save money and eat healthier",
+            projects: [
+              {
+                name: "Culinary Skills Development",
+                description: "Master fundamental cooking techniques and build confidence in the kitchen",
+                explanation: "Average Australian household spends $272/week on food. Cooking skills can reduce this by 40-50%. Meal prep saves 5+ hours weekly.",
+                tasks: [
+                  {
+                    name: "Learn 5 fundamental cooking techniques (sautéing, roasting, braising, grilling, steaming)",
+                    summary: "Learn cooking",
+                    timeframe: "2 months",
+                    completed: false
+                  },
+                  {
+                    name: "Master knife skills and basic food preparation techniques for efficiency",
+                    summary: "Master knife skills",
+                    timeframe: "1 month",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Meal Planning System",
+                description: "Develop efficient meal planning and preparation system to save money and time",
+                explanation: "Food costs rising 7.8% annually. Strategic meal planning and bulk cooking reduce expenses while improving nutrition quality.",
+                tasks: [
+                  {
+                    name: "Create weekly meal planning system with shopping lists and prep schedules",
+                    summary: "Plan meals",
+                    timeframe: "2 weeks",
+                    completed: false
+                  },
+                  {
+                    name: "Master batch cooking and food storage techniques to prepare 4-5 meals efficiently",
+                    summary: "Batch cooking",
+                    timeframe: "1 month",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           },
           {
             id: "maintenance",
             name: "Home Maintenance & Repairs",
-            description: "Learn basic home repair, maintenance, and DIY skills"
+            description: "Learn basic home repair, maintenance, and DIY skills",
+            projects: [
+              {
+                name: "Essential Home Repair Skills",
+                description: "Learn basic repair and maintenance skills to handle common household issues",
+                explanation: "Average tradesperson callout costs $150-300 minimum. Basic DIY skills save thousands annually while increasing property value.",
+                tasks: [
+                  {
+                    name: "Master basic plumbing repairs (leaky taps, blocked drains, toilet maintenance)",
+                    summary: "Learn plumbing",
+                    timeframe: "2 months",
+                    completed: false
+                  },
+                  {
+                    name: "Learn electrical basics (outlet replacement, light fixtures, circuit breaker safety)",
+                    summary: "Learn electrical",
+                    timeframe: "2 months",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "DIY Project Capability",
+                description: "Build confidence with tools and complete practical home improvement projects",
+                explanation: "DIY market worth $12B in Australia. YouTube and community workshops provide accessible learning. Skills valuable for rental improvements.",
+                tasks: [
+                  {
+                    name: "Acquire basic tool kit and learn proper use of power tools for home projects",
+                    summary: "Get tools",
+                    timeframe: "1 month",
+                    completed: false
+                  },
+                  {
+                    name: "Complete 2 DIY home improvement projects (shelving, painting, minor renovations)",
+                    summary: "DIY projects",
+                    timeframe: "3 months",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           },
           {
             id: "finance",
             name: "Personal Finance Management",
-            description: "Master budgeting, investing, and financial planning skills"
+            description: "Master budgeting, investing, and financial planning skills",
+            projects: [
+              {
+                name: "Financial Literacy Foundation",
+                description: "Master budgeting, investing basics, and financial planning fundamentals",
+                explanation: "Only 64% of Australians are financially literate. Understanding compound interest and investing basics essential for wealth building.",
+                tasks: [
+                  {
+                    name: "Create comprehensive budget tracking all income and expenses using app or spreadsheet",
+                    summary: "Create budget",
+                    timeframe: "1 week",
+                    completed: false
+                  },
+                  {
+                    name: "Learn investment basics and set up diversified portfolio (ETFs, shares, super contributions)",
+                    summary: "Start investing",
+                    timeframe: "2 months",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Wealth Building Strategy",
+                description: "Implement long-term financial strategy for wealth accumulation and security",
+                explanation: "Superannuation alone insufficient for retirement. Early investing leverages compound interest. Side investments provide additional security.",
+                tasks: [
+                  {
+                    name: "Maximize superannuation contributions and understand investment options within super",
+                    summary: "Optimize super",
+                    timeframe: "1 month",
+                    completed: false
+                  },
+                  {
+                    name: "Set up automatic investing plan contributing $200+ monthly to diversified portfolio",
+                    summary: "Auto investing",
+                    timeframe: "2 weeks",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           }
         ],
         projects: [
@@ -620,10 +988,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Research learning resources and create structured learning plan",
+                summary: "Plan learning",
+                timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Practice chosen skill weekly and track progress toward competency",
+                summary: "Practice skill",
+                timeframe: "Ongoing",
                 completed: false
               }
             ]
@@ -635,10 +1007,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Apply skill in real situations and document cost savings or benefits",
+                summary: "Apply skill",
+                timeframe: "2 months",
                 completed: false
               },
               {
                 name: "Share knowledge with others or teach skill to friends/family",
+                summary: "Teach others",
+                timeframe: "1 month",
                 completed: false
               }
             ]
@@ -666,10 +1042,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Research and visit 3 local hiking trails or nature reserves in your area",
+                summary: "Visit trails",
+                timeframe: "2 months",
                 completed: false
               },
               {
                 name: "Plan monthly nature outings and invite friends or join hiking groups",
+                summary: "Plan outings",
+                timeframe: "Ongoing",
                 completed: false
               }
             ]
@@ -681,10 +1061,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Create bucket list of national parks and natural destinations to visit",
+                summary: "Create list",
+                timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Plan and complete first multi-day national park adventure",
+                summary: "Park adventure",
+                timeframe: "3 months",
                 completed: false
               }
             ]
@@ -704,10 +1088,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Create Australian travel bucket list with specific destinations and experiences",
+                summary: "Travel list",
+                timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Plan and budget for quarterly weekend trips or extended holidays",
+                summary: "Plan trips",
+                timeframe: "2 weeks",
                 completed: false
               }
             ]
@@ -719,10 +1107,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Complete first planned Australian destination trip and document experience",
+                summary: "First trip",
+                timeframe: "3 months",
                 completed: false
               },
               {
                 name: "Build travel skills and confidence for future independent adventures",
+                summary: "Travel skills",
+                timeframe: "Ongoing",
                 completed: false
               }
             ]
@@ -739,17 +1131,137 @@ export const DOMAIN_DEFINITIONS = [
           {
             id: "creative",
             name: "Creative Arts (photography, music, writing)",
-            description: "Develop artistic skills through creative expression and practice"
+            description: "Develop artistic skills through creative expression and practice",
+            projects: [
+              {
+                name: "Creative Skill Foundation",
+                description: "Build fundamental skills in chosen creative art form",
+                explanation: "22% Gen Z engage in digital creation daily. Creative pursuits provide mental health benefits and potential income streams through platforms like Etsy, YouTube.",
+                tasks: [
+                  {
+                    name: "Choose primary creative focus (photography, music, or writing) and acquire basic equipment",
+                    summary: "Choose focus",
+                    timeframe: "2 weeks",
+                    completed: false
+                  },
+                  {
+                    name: "Complete beginner course or tutorial series to learn fundamental techniques",
+                    summary: "Learn basics",
+                    timeframe: "2 months",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Creative Portfolio Development",
+                description: "Create body of work and share with community for feedback and growth",
+                explanation: "Creator economy worth $104B globally. Australian creators increasingly successful on platforms. Skills complement professional development.",
+                tasks: [
+                  {
+                    name: "Create 10 pieces of work (photos, songs, writings) to build initial portfolio",
+                    summary: "Create portfolio",
+                    timeframe: "3 months",
+                    completed: false
+                  },
+                  {
+                    name: "Share work on social media or creative platforms to connect with community",
+                    summary: "Share work",
+                    timeframe: "1 month",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           },
           {
             id: "outdoor",
             name: "Outdoor Activities (hiking, cycling, gardening)", 
-            description: "Engage with nature through active outdoor pursuits"
+            description: "Engage with nature through active outdoor pursuits",
+            projects: [
+              {
+                name: "Outdoor Activity Setup",
+                description: "Choose outdoor pursuit and acquire necessary gear and knowledge for safe participation",
+                explanation: "Bushwalking participation jumped 68% nationally. Cycling infrastructure improving in major cities. Gardening surged during pandemic, continues growing.",
+                tasks: [
+                  {
+                    name: "Choose primary outdoor activity and research gear, safety, and local opportunities",
+                    summary: "Choose activity",
+                    timeframe: "2 weeks",
+                    completed: false
+                  },
+                  {
+                    name: "Acquire essential equipment and complete first guided experience or course",
+                    summary: "Get equipped",
+                    timeframe: "1 month",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Regular Outdoor Practice",
+                description: "Establish consistent outdoor activity routine and connect with community",
+                explanation: "Free or low-cost activities with high health benefits. Strong community networks provide social connection and safety support.",
+                tasks: [
+                  {
+                    name: "Schedule weekly outdoor sessions and explore 5+ local locations or trails",
+                    summary: "Weekly sessions",
+                    timeframe: "Ongoing",
+                    completed: false
+                  },
+                  {
+                    name: "Join outdoor club, group, or online community related to your chosen activity",
+                    summary: "Join group",
+                    timeframe: "2 weeks",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           },
           {
             id: "social",
             name: "Social Hobbies (sports leagues, board games, classes)",
-            description: "Join group activities that combine fun with social connection"
+            description: "Join group activities that combine fun with social connection",
+            projects: [
+              {
+                name: "Social Activity Selection",
+                description: "Find and join social group activities that match your interests and schedule",
+                explanation: "Post-pandemic desire for in-person connection. Sports leagues, board game cafes, and classes provide structured social interaction.",
+                tasks: [
+                  {
+                    name: "Research local sports leagues, game groups, or classes that fit your interests",
+                    summary: "Research groups",
+                    timeframe: "1 week",
+                    completed: false
+                  },
+                  {
+                    name: "Sign up for regular social activity and attend first 3 sessions consistently",
+                    summary: "Join activity",
+                    timeframe: "1 month",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Community Building",
+                description: "Build meaningful connections and potentially take on organizational role",
+                explanation: "Social hobbies combat isolation while developing leadership skills. Many groups need volunteers for organization and event planning.",
+                tasks: [
+                  {
+                    name: "Build relationships with 3-5 regular participants in your chosen social activity",
+                    summary: "Build friendships",
+                    timeframe: "2 months",
+                    completed: false
+                  },
+                  {
+                    name: "Volunteer to help organize events, tournaments, or group activities",
+                    summary: "Organize events",
+                    timeframe: "3 months",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           }
         ],
         projects: [
@@ -760,10 +1272,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Research hobby options and choose one that fits your interests and schedule",
+                summary: "Choose hobby",
+                timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Acquire basic equipment or materials needed and set up practice space",
+                summary: "Setup space",
+                timeframe: "2 weeks",
                 completed: false
               }
             ]
@@ -775,10 +1291,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Practice hobby regularly and track progress toward initial competency goals",
+                summary: "Practice hobby",
+                timeframe: "Ongoing",
                 completed: false
               },
               {
                 name: "Join community group or online forum related to your hobby for learning and social connection",
+                summary: "Join community",
+                timeframe: "2 weeks",
                 completed: false
               }
             ]
@@ -806,10 +1326,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Research charities and causes that align with your values and could use your professional skills",
+                summary: "Research causes",
+                timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Contact chosen organization and establish regular monthly volunteering commitment",
+                summary: "Start volunteering",
+                timeframe: "2 weeks",
                 completed: false
               }
             ]
@@ -821,10 +1345,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Complete first 3 months of regular volunteering and assess impact created",
+                summary: "Assess impact",
+                timeframe: "3 months",
                 completed: false
               },
               {
                 name: "Take on additional responsibility or leadership role within volunteer organization",
+                summary: "Take leadership",
+                timeframe: "6 months",
                 completed: false
               }
             ]
@@ -841,17 +1369,137 @@ export const DOMAIN_DEFINITIONS = [
           {
             id: "environmental",
             name: "Environmental & Sustainability Roles",
-            description: "Work in roles focused on environmental protection, sustainability, or climate action"
+            description: "Work in roles focused on environmental protection, sustainability, or climate action",
+            projects: [
+              {
+                name: "Environmental Career Preparation",
+                description: "Build credentials and network for environmental/sustainability career transition",
+                explanation: "Australian government investing $20B in renewable energy. Climate tech growing 48% annually. 40% of companies need sustainability expertise.",
+                tasks: [
+                  {
+                    name: "Complete environmental science or sustainability certification relevant to your background",
+                    summary: "Get certified",
+                    timeframe: "6 months",
+                    completed: false
+                  },
+                  {
+                    name: "Volunteer with environmental organizations to gain practical experience and network",
+                    summary: "Volunteer env",
+                    timeframe: "2 months",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Green Industry Transition",
+                description: "Apply for roles in renewable energy, environmental consulting, or sustainability",
+                explanation: "Clean energy jobs growing 3x faster than overall economy. Government support creates stable career pathways in environmental sector.",
+                tasks: [
+                  {
+                    name: "Research environmental organizations, green companies, and government roles in your area",
+                    summary: "Research roles",
+                    timeframe: "2 weeks",
+                    completed: false
+                  },
+                  {
+                    name: "Apply for entry-level environmental roles or sustainability positions in your field",
+                    summary: "Apply jobs",
+                    timeframe: "2 months",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           },
           {
             id: "social-impact",
             name: "Healthcare & Community Services",
-            description: "Contribute to healthcare, social services, or community development"
+            description: "Contribute to healthcare, social services, or community development",
+            projects: [
+              {
+                name: "Healthcare Career Foundation",
+                description: "Build qualifications and experience for healthcare or community service roles",
+                explanation: "Healthcare demand growing with aging population. Community services expanding with social housing initiatives. Stable, meaningful employment.",
+                tasks: [
+                  {
+                    name: "Research healthcare qualifications (nursing, allied health) or community service training",
+                    summary: "Research training",
+                    timeframe: "2 weeks",
+                    completed: false
+                  },
+                  {
+                    name: "Complete first aid, mental health first aid, or relevant healthcare certifications",
+                    summary: "Get certified",
+                    timeframe: "1 month",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Community Service Career",
+                description: "Apply for roles in healthcare, social services, or community development",
+                explanation: "NDIS creates diverse opportunities. Mental health support roles growing. Regional areas offer attractive packages for healthcare workers.",
+                tasks: [
+                  {
+                    name: "Volunteer with community health organizations or disability services for experience",
+                    summary: "Volunteer health",
+                    timeframe: "3 months",
+                    completed: false
+                  },
+                  {
+                    name: "Apply for roles in healthcare, NDIS support, or community service organizations",
+                    summary: "Apply roles",
+                    timeframe: "2 months",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           },
           {
             id: "education",
             name: "Education & Social Impact",
-            description: "Work in education, training, or social impact organizations"
+            description: "Work in education, training, or social impact organizations",
+            projects: [
+              {
+                name: "Education Sector Preparation",
+                description: "Build teaching credentials or education support qualifications",
+                explanation: "Teacher shortage creates opportunities. Alternative pathways available. Adult education and training sectors growing with reskilling needs.",
+                tasks: [
+                  {
+                    name: "Research teaching qualifications or education support roles in your area of expertise",
+                    summary: "Research teaching",
+                    timeframe: "2 weeks",
+                    completed: false
+                  },
+                  {
+                    name: "Complete teaching assistant training or substitute teaching registration",
+                    summary: "Get training",
+                    timeframe: "3 months",
+                    completed: false
+                  }
+                ]
+              },
+              {
+                name: "Social Impact Career Transition",
+                description: "Apply for education roles or join social impact organizations",
+                explanation: "NFPs hiring for digital skills. Corporate social responsibility creates new roles. Education technology sector expanding rapidly.",
+                tasks: [
+                  {
+                    name: "Volunteer as tutor, mentor, or education support to gain experience",
+                    summary: "Volunteer tutor",
+                    timeframe: "2 months",
+                    completed: false
+                  },
+                  {
+                    name: "Apply for education roles, social impact organizations, or purpose-driven companies",
+                    summary: "Apply education",
+                    timeframe: "2 months",
+                    completed: false
+                  }
+                ]
+              }
+            ]
           }
         ],
         projects: [
@@ -862,10 +1510,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Define your core values and research organizations/roles that align with them",
+                summary: "Define values",
+                timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Network with professionals working in purpose-driven roles in your chosen area",
+                summary: "Network purpose",
+                timeframe: "2 months",
                 completed: false
               }
             ]
@@ -877,10 +1529,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Identify ways to increase meaningful impact within your current role or organization",
+                summary: "Find impact",
+                timeframe: "2 weeks",
                 completed: false
               },
               {
                 name: "Apply for purpose-driven roles or propose sustainability/social impact initiatives at work",
+                summary: "Apply purpose",
+                timeframe: "2 months",
                 completed: false
               }
             ]
@@ -900,10 +1556,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Research local issues in your community and choose one to focus on",
+                summary: "Research issues",
+                timeframe: "2 weeks",
                 completed: false
               },
               {
                 name: "Attend community meetings or join local advocacy group working on your chosen issue",
+                summary: "Join advocacy",
+                timeframe: "1 month",
                 completed: false
               }
             ]
@@ -915,10 +1575,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Volunteer for local campaign, initiative, or community organization in leadership capacity",
+                summary: "Lead campaign",
+                timeframe: "3 months",
                 completed: false
               },
               {
                 name: "Consider running for local council or taking formal role in community leadership",
+                summary: "Run for office",
+                timeframe: "12 months",
                 completed: false
               }
             ]
@@ -946,10 +1610,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Research shared housing options and co-living opportunities in your preferred areas",
+                summary: "Research housing",
+                timeframe: "2 weeks",
                 completed: false
               },
               {
                 name: "Visit potential properties and interview potential housemates for compatibility",
+                summary: "Visit properties",
+                timeframe: "1 month",
                 completed: false
               }
             ]
@@ -961,10 +1629,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Create clear house agreements covering expenses, responsibilities, and boundaries",
+                summary: "House agreements",
+                timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Build positive house community through shared activities and communication",
+                summary: "Build community",
+                timeframe: "Ongoing",
                 completed: false
               }
             ]
@@ -984,10 +1656,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Audit current consumption patterns and implement zero-waste practices in daily life",
+                summary: "Zero waste audit",
+                timeframe: "1 month",
                 completed: false
               },
               {
                 name: "Switch to sustainable products and reduce single-use items in household",
+                summary: "Switch products",
+                timeframe: "2 months",
                 completed: false
               }
             ]
@@ -999,10 +1675,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Set up home composting, recycling system, and waste reduction practices",
+                summary: "Setup systems",
+                timeframe: "1 month",
                 completed: false
               },
               {
                 name: "Participate in sharing economy (tool libraries, clothing swaps, buy-nothing groups)",
+                summary: "Join sharing",
+                timeframe: "2 weeks",
                 completed: false
               }
             ]
@@ -1022,10 +1702,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Declutter possessions and organize living space for maximum functionality",
+                summary: "Declutter space",
+                timeframe: "2 weeks",
                 completed: false
               },
               {
                 name: "Invest in organizational solutions and storage that maximize your available space",
+                summary: "Get storage",
+                timeframe: "1 month",
                 completed: false
               }
             ]
@@ -1037,10 +1721,14 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Create designated areas for work, relaxation, and hobbies within your living space",
+                summary: "Create zones",
+                timeframe: "2 weeks",
                 completed: false
               },
               {
                 name: "Optimize lighting, furniture arrangement, and decor to support productivity and wellbeing",
+                summary: "Optimize space",
+                timeframe: "1 month",
                 completed: false
               }
             ]

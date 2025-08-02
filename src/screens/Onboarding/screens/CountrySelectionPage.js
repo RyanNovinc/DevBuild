@@ -10,7 +10,7 @@ import {
   Text,
   Dimensions
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import TypingAnimation from '../components/TypingAnimation';
 import NavigationHeader from '../components/NavigationHeader';
@@ -28,9 +28,10 @@ const CountrySelectionPage = ({ onContinue, onBack }) => {
   const [containerAnimationComplete, setContainerAnimationComplete] = useState(false);
   const [aiMessageSkipped, setAiMessageSkipped] = useState(false);
   
-  // Flag celebration state
-  const [showFlagCelebration, setShowFlagCelebration] = useState(false);
-  const [celebrationFlag, setCelebrationFlag] = useState('🏳️'); // Generic flag as default
+  // Sparkle celebration state
+  const [showSparkleCelebration, setShowSparkleCelebration] = useState(false);
+  const [celebrationCountry, setCelebrationCountry] = useState(null);
+  const [celebrationPosition, setCelebrationPosition] = useState({ x: 0, y: 0 });
   const [animationRunning, setAnimationRunning] = useState(false);
   
   // Refs for timeout management
@@ -73,22 +74,13 @@ const CountrySelectionPage = ({ onContinue, onBack }) => {
       useNativeDriver: true,
     }).start();
     
-    // Staggered animations for elements
-    Animated.sequence([
-      // Country options fade in first
-      Animated.timing(optionsFade, {
-        toValue: 1,
-        duration: 500,
-        useNativeDriver: true,
-      }),
-      // AI message fades in last
-      Animated.timing(aiMessageOpacity, {
-        toValue: 1,
-        duration: 400,
-        delay: 200,
-        useNativeDriver: true,
-      })
-    ]).start(() => {
+    // AI message fades in first
+    Animated.timing(aiMessageOpacity, {
+      toValue: 1,
+      duration: 400,
+      delay: 200,
+      useNativeDriver: true,
+    }).start(() => {
       // Set container animation complete to trigger typing animation
       setContainerAnimationComplete(true);
     });
@@ -121,10 +113,19 @@ const CountrySelectionPage = ({ onContinue, onBack }) => {
     };
   }, []);
   
-  // Show continue button after message is complete or skipped
+  // Show country options and continue button after message is complete or skipped
   useEffect(() => {
     if (messageComplete || aiMessageSkipped) {
-      console.log("Message complete or skipped, showing continue button");
+      console.log("Message complete or skipped, showing country options and continue button");
+      
+      // Show country options first
+      Animated.timing(optionsFade, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }).start();
+      
+      // Show continue button after a delay
       setTimeout(() => {
         setShowContinueButton(true);
         Animated.timing(buttonOpacity, {
@@ -132,12 +133,12 @@ const CountrySelectionPage = ({ onContinue, onBack }) => {
           duration: 300,
           useNativeDriver: true,
         }).start();
-      }, aiMessageSkipped ? 0 : 500); // No delay if skipped
+      }, aiMessageSkipped ? 200 : 500); // Shorter delay if skipped
     }
   }, [messageComplete, aiMessageSkipped]);
   
   // Handle country selection - immediately skip AI and continue
-  const handleCountrySelect = async (countryCode) => {
+  const handleCountrySelect = async (countryCode, event) => {
     console.log("Country selected:", countryCode);
     
     try {
@@ -159,42 +160,72 @@ const CountrySelectionPage = ({ onContinue, onBack }) => {
       setMessageComplete(true);
     }
     
-    // Only trigger celebration if selecting a different country
-    const isNewCountry = countryCode !== selectedCountry;
-    
-    // Update selected country immediately
-    setSelectedCountry(countryCode);
-    
-    // Only show celebration for new country selections
-    if (isNewCountry) {
-      // Clear any existing timeouts - but allow immediate new animations
+    // If same country is selected, deselect it
+    if (countryCode === selectedCountry) {
+      console.log("Deselecting country:", countryCode);
+      setSelectedCountry(null);
+      
+      // Stop any ongoing celebration animation
       if (celebrationTimeoutRef.current) {
         clearTimeout(celebrationTimeoutRef.current);
       }
       if (animationTimeoutRef.current) {
         clearTimeout(animationTimeoutRef.current);
       }
+      setShowSparkleCelebration(false);
+      setAnimationRunning(false);
       
-      // Get the flag for celebration
-      const selectedFlag = countries.find(c => c.code === countryCode)?.flag || '🇦🇺';
-      setCelebrationFlag(selectedFlag);
-      
-      // Brief animation running period to prevent too rapid firing
+      // Remove from AsyncStorage
+      try {
+        await AsyncStorage.removeItem('userCountry');
+        console.log("Country removed from AsyncStorage");
+      } catch (error) {
+        console.log("Error removing country:", error);
+      }
+      return; // Exit early, no celebration needed
+    }
+    
+    // Update selected country immediately
+    setSelectedCountry(countryCode);
+    
+    // Show celebration for new country selection
+    // Always clear existing timeouts and stop current animation
+    if (celebrationTimeoutRef.current) {
+      clearTimeout(celebrationTimeoutRef.current);
+    }
+    if (animationTimeoutRef.current) {
+      clearTimeout(animationTimeoutRef.current);
+    }
+    
+    // Stop current animation immediately
+    setShowSparkleCelebration(false);
+    
+    // Get the country for celebration
+    const selectedCountry = countries.find(c => c.code === countryCode);
+    setCelebrationCountry(selectedCountry);
+    
+    // Calculate card position for sparkle origin
+    if (event && event.nativeEvent) {
+      const { pageX, pageY } = event.nativeEvent;
+      // Adjust Y position to account for header and status bar offset
+      const adjustedY = pageY - 40; // Move up by 40px to match finger position better
+      setCelebrationPosition({ x: pageX, y: adjustedY });
+    } else {
+      // Fallback to center of screen if touch data is not available
+      setCelebrationPosition({ x: SCREEN_WIDTH / 2, y: SCREEN_HEIGHT / 2 });
+    }
+    
+    // Brief delay to ensure state updates, then start new animation
+    setTimeout(() => {
       setAnimationRunning(true);
-      
-      // Start celebration immediately - this "primes" the animation system
-      setShowFlagCelebration(true);
+      setShowSparkleCelebration(true);
       
       // Stop celebration after animation duration
       celebrationTimeoutRef.current = setTimeout(() => {
-        setShowFlagCelebration(false);
-      }, 2200); // Match the new longer animation timing + buffer
-      
-      // Short blocking period - allows rapid switching but prevents spam
-      animationTimeoutRef.current = setTimeout(() => {
+        setShowSparkleCelebration(false);
         setAnimationRunning(false);
-      }, 200); // Very short - just prevents button spam
-    }
+      }, 1500);
+    }, 50); // Very short delay to ensure clean state transition
     
     // Save to AsyncStorage
     try {
@@ -204,10 +235,7 @@ const CountrySelectionPage = ({ onContinue, onBack }) => {
       console.log("Error saving country:", error);
     }
     
-    // Continue immediately after country selection (small delay for UX)
-    setTimeout(() => {
-      handleContinue();
-    }, isNewCountry ? 500 : 100); // Short delay for celebration, or immediate if same country
+    // Don't auto-continue - user must click Continue button
   };
   
   // Handle continue
@@ -249,129 +277,174 @@ const CountrySelectionPage = ({ onContinue, onBack }) => {
 
   // Handle screen tap to skip AI message
   const handleScreenTap = () => {
+    console.log("Screen tapped, checking if can skip:", { messageComplete, aiMessageSkipped });
     if (!messageComplete && !aiMessageSkipped) {
       console.log("Screen tapped, skipping AI message");
       setAiMessageSkipped(true);
-      // Stop typing animation if it's running
-      if (typingRef.current && typingRef.current.skipToEnd) {
-        typingRef.current.skipToEnd();
+      // Complete typing animation if it's running
+      if (typingRef.current) {
+        if (typingRef.current.skipToEnd) {
+          typingRef.current.skipToEnd();
+        } else if (typingRef.current.complete) {
+          typingRef.current.complete();
+        }
       }
+      // Also set message as complete
+      setMessageComplete(true);
     }
   };
   
-  // Simplified flag celebration that works well with rapid switching
-  const FlagCelebration = ({ visible, flag }) => {
-    if (!visible) return null;
-    
-    // Create a new animation instance for each flag change
-    // This ensures each flag gets its own fresh animation
-    return <SimpleFlagAnimation key={`${flag}-${visible}`} flag={flag} />;
+  // Get country-specific emoji for falling effect (like the flags)
+  const getCountryEmoji = (countryCode) => {
+    switch (countryCode) {
+      case 'usa':
+        return '🦅'; // Eagle
+      case 'uk':
+        return '☕'; // Tea cup
+      case 'canada':
+        return '🍁'; // Maple leaf
+      case 'australia':
+        return '🦘'; // Kangaroo
+      default:
+        return '⭐'; // Default star
+    }
   };
 
-  // Dead simple animation component with proper cleanup
-  const SimpleFlagAnimation = ({ flag }) => {
-    // Start flags much higher up so priming animation is completely invisible
-    const startPosition = -200; // Much higher up off-screen
+  // Sparkle celebration component
+  const SparkleCelebration = ({ visible, country, position }) => {
+    if (!visible || !country) return null;
     
-    const flag1Y = useRef(createSafeAnimatedValue(startPosition)).current;
-    const flag2Y = useRef(createSafeAnimatedValue(startPosition)).current;
-    const flag3Y = useRef(createSafeAnimatedValue(startPosition)).current;
+    return <SparkleAnimation key={`${country.code}-${visible}`} country={country} position={position} />;
+  };
+
+  // Simple falling emoji animation (like the original flags)
+  const SparkleAnimation = ({ country, position }) => {
+    const emoji = getCountryEmoji(country.code);
+    const emojiCount = 5; // Fewer emojis, like the original flags
+    const emojis = Array.from({ length: emojiCount }, (_, i) => i);
+    
+    // Create animated values for firework burst animation
+    const emojiAnims = emojis.map(() => ({
+      opacity: useRef(createSafeAnimatedValue(0)).current,
+      scale: useRef(createSafeAnimatedValue(0)).current,
+      translateX: useRef(createSafeAnimatedValue(0)).current,
+      translateY: useRef(createSafeAnimatedValue(0)).current,
+    }));
+    
     const animationsRef = useRef([]);
     
     useEffect(() => {
-      // Reset animation values to high start position
-      safeAnimatedCall(flag1Y, 'setValue', startPosition);
-      safeAnimatedCall(flag2Y, 'setValue', startPosition);
-      safeAnimatedCall(flag3Y, 'setValue', startPosition);
-      
-      // Create animations but store references for cleanup
-      // Increased end position to ensure flags fully exit screen
-      const endPosition = SCREEN_HEIGHT + 150; // Much further past screen bottom
-      
-      const anim1 = Animated.timing(flag1Y, {
-        toValue: endPosition,
-        duration: 2000, // Slightly longer duration for complete exit
-        delay: 0,
-        useNativeDriver: true,
+      // Reset all values to starting position (at touch point)
+      emojiAnims.forEach((anim) => {
+        safeAnimatedCall(anim.opacity, 'setValue', 0);
+        safeAnimatedCall(anim.scale, 'setValue', 0);
+        safeAnimatedCall(anim.translateX, 'setValue', 0);
+        safeAnimatedCall(anim.translateY, 'setValue', 0);
       });
       
-      const anim2 = Animated.timing(flag2Y, {
-        toValue: endPosition,
-        duration: 2000, // Slightly longer duration for complete exit
-        delay: 200,
-        useNativeDriver: true,
+      // Create firework burst animations
+      const allAnimations = emojiAnims.map((anim, index) => {
+        // Calculate burst direction for each emoji
+        const angle = (index / emojiCount) * Math.PI * 2; // Full circle
+        const distance = 80 + Math.random() * 40; // Random distance 80-120px
+        const finalX = Math.cos(angle) * distance;
+        const finalY = Math.sin(angle) * distance;
+        
+        return Animated.sequence([
+          // Pop in at touch point
+          Animated.parallel([
+            Animated.timing(anim.opacity, {
+              toValue: 1,
+              duration: 150,
+              delay: index * 80, // Quick stagger
+              useNativeDriver: true,
+            }),
+            Animated.timing(anim.scale, {
+              toValue: 1,
+              duration: 150,
+              delay: index * 80,
+              useNativeDriver: true,
+            }),
+          ]),
+          // Burst outward in arc motion
+          Animated.parallel([
+            Animated.timing(anim.translateX, {
+              toValue: finalX,
+              duration: 1200,
+              useNativeDriver: true,
+            }),
+            Animated.timing(anim.translateY, {
+              toValue: finalY,
+              duration: 1200,
+              useNativeDriver: true,
+            }),
+            // Fade out while moving
+            Animated.timing(anim.opacity, {
+              toValue: 0,
+              duration: 800,
+              delay: 400, // Start fading partway through
+              useNativeDriver: true,
+            }),
+            // Slight scale down while fading
+            Animated.timing(anim.scale, {
+              toValue: 0.7,
+              duration: 1200,
+              useNativeDriver: true,
+            }),
+          ]),
+        ]);
       });
       
-      const anim3 = Animated.timing(flag3Y, {
-        toValue: endPosition,
-        duration: 2000, // Slightly longer duration for complete exit
-        delay: 400,
-        useNativeDriver: true,
-      });
-      
-      // Store animation references
-      animationsRef.current = [anim1, anim2, anim3];
+      // Store animations for cleanup
+      animationsRef.current = allAnimations;
       
       // Start all animations
-      anim1.start();
-      anim2.start();
-      anim3.start();
+      allAnimations.forEach(anim => anim.start());
       
-      // Cleanup function - stop animations when component unmounts
+      // Cleanup function
       return () => {
         animationsRef.current.forEach(anim => {
           if (anim && anim.stop) {
             anim.stop();
           }
         });
-        // Reset values when cleaning up
-        safeAnimatedCall(flag1Y, 'setValue', startPosition);
-        safeAnimatedCall(flag2Y, 'setValue', startPosition);
-        safeAnimatedCall(flag3Y, 'setValue', startPosition);
+        // Reset values
+        emojiAnims.forEach((anim) => {
+          safeAnimatedCall(anim.opacity, 'setValue', 0);
+          safeAnimatedCall(anim.scale, 'setValue', 0);
+          safeAnimatedCall(anim.translateX, 'setValue', 0);
+          safeAnimatedCall(anim.translateY, 'setValue', 0);
+        });
       };
     }, []);
     
     return (
       <View style={styles.celebrationContainer} pointerEvents="none">
-        <Animated.Text
-          style={[
-            styles.celebrationFlag,
-            {
-              position: 'absolute',
-              left: 80,
-              top: 0,
-              transform: [{ translateY: flag1Y }],
-            },
-          ]}
-        >
-          {flag}
-        </Animated.Text>
-        <Animated.Text
-          style={[
-            styles.celebrationFlag,
-            {
-              position: 'absolute',
-              left: SCREEN_WIDTH / 2 - 16,
-              top: 0,
-              transform: [{ translateY: flag2Y }],
-            },
-          ]}
-        >
-          {flag}
-        </Animated.Text>
-        <Animated.Text
-          style={[
-            styles.celebrationFlag,
-            {
-              position: 'absolute',
-              left: SCREEN_WIDTH - 80,
-              top: 0,
-              transform: [{ translateY: flag3Y }],
-            },
-          ]}
-        >
-          {flag}
-        </Animated.Text>
+        {emojis.map((emojiIndex) => {
+            const anim = emojiAnims[emojiIndex];
+            
+            return (
+              <Animated.Text
+                key={emojiIndex}
+                style={[
+                  styles.fallingEmoji,
+                  {
+                    position: 'absolute',
+                    left: (position?.x || SCREEN_WIDTH / 2) - 16, // Center emoji on touch point
+                    top: (position?.y || SCREEN_HEIGHT / 2) - 16,
+                    opacity: anim.opacity,
+                    transform: [
+                      { scale: anim.scale },
+                      { translateX: anim.translateX },
+                      { translateY: anim.translateY },
+                    ],
+                  },
+                ]}
+              >
+                {emoji}
+              </Animated.Text>
+            );
+          })}
       </View>
     );
   };
@@ -380,8 +453,14 @@ const CountrySelectionPage = ({ onContinue, onBack }) => {
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
       <NavigationHeader onBack={onBack} />
       
-      <TouchableWithoutFeedback onPress={handleScreenTap}>
-        <Animated.View style={[styles.content, { opacity: contentFade }]}>
+      <Animated.View style={[styles.content, { opacity: contentFade }]}>
+        {/* Background touchable area for skipping AI message - only active if message is not complete */}
+        {(!messageComplete && !aiMessageSkipped) && (
+          <TouchableWithoutFeedback onPress={handleScreenTap}>
+            <View style={styles.backgroundTouchable} />
+          </TouchableWithoutFeedback>
+        )}
+        
         {/* AI Message Section */}
         <Animated.View style={[styles.messageContainer, { opacity: aiMessageOpacity }]}>
           <View style={styles.iconContainer}>
@@ -416,7 +495,7 @@ const CountrySelectionPage = ({ onContinue, onBack }) => {
                   styles.countryOption,
                   selectedCountry === country.code && styles.selectedCountryOption
                 ]}
-                onPress={() => handleCountrySelect(country.code)}
+                onPress={(event) => handleCountrySelect(country.code, event)}
                 accessible={true}
                 accessibilityRole="button"
                 accessibilityLabel={`Select ${country.name}`}
@@ -459,11 +538,14 @@ const CountrySelectionPage = ({ onContinue, onBack }) => {
             </TouchableOpacity>
           </Animated.View>
         )}
-        </Animated.View>
-      </TouchableWithoutFeedback>
+      </Animated.View>
       
-      {/* Flag Celebration Effect */}
-      <FlagCelebration visible={showFlagCelebration} flag={celebrationFlag} />
+      {/* Sparkle Celebration Effect */}
+      <SparkleCelebration 
+        visible={showSparkleCelebration} 
+        country={celebrationCountry} 
+        position={celebrationPosition} 
+      />
     </Animated.View>
   );
 };
@@ -595,10 +677,21 @@ const styles = StyleSheet.create({
     zIndex: 1000,
     pointerEvents: 'none',
   },
-  celebrationFlag: {
+  sparkleCenter: {
     position: 'absolute',
+    width: 1,
+    height: 1,
+  },
+  fallingEmoji: {
     fontSize: 32,
     textAlign: 'center',
+    textShadowColor: 'rgba(255, 255, 255, 0.8)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 3,
+  },
+  backgroundTouchable: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1,
   },
 });
 

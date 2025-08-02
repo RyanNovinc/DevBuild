@@ -42,6 +42,67 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
   // Get 3 goals from the domain
   const goals = domain.goals.slice(0, 3);
   
+  // Helper function to convert goal name to proper sentence form
+  const convertGoalToSentence = (goalName) => {
+    // Convert goal names to proper sentence form for grammar
+    const conversions = {
+      'Learn Practical Life Skill': 'Learning a practical life skill',
+      'Build Better Relationship': 'Building a better relationship',
+      'Start Regular Exercise': 'Starting regular exercise',
+      'Develop New Career Skill': 'Developing a new career skill',
+      'Create Financial Plan': 'Creating a financial plan',
+      'Learn New Creative Hobby': 'Learning a new creative hobby',
+      'Improve Time Management': 'Improving time management',
+      'Start Meditation Practice': 'Starting a meditation practice',
+      'Learn Programming Language': 'Learning a programming language',
+      'Build Professional Network': 'Building a professional network',
+      'Develop Leadership Skills': 'Developing leadership skills',
+      'Start Side Business': 'Starting a side business',
+      'Improve Health Habits': 'Improving health habits',
+      'Learn Musical Instrument': 'Learning a musical instrument',
+      'Build Emergency Fund': 'Building an emergency fund',
+      'Develop Public Speaking': 'Developing public speaking skills',
+      'Start Investment Portfolio': 'Starting an investment portfolio',
+      'Learn Foreign Language': 'Learning a foreign language',
+      'Improve Work-Life Balance': 'Improving work-life balance',
+      'Build Home Organization': 'Building better home organization',
+      'Live Sustainably/Zero-Waste': 'Living sustainably and reducing waste',
+      'Master Work-Life Balance': 'Mastering work-life balance',
+      'Build Career-Advancing Skills': 'Building career-advancing skills',
+      'Find Purpose-Driven Work': 'Finding purpose-driven work',
+      'Master In-Demand Tech Skills': 'Mastering in-demand tech skills',
+      'Achieve 3.5%+ Salary Increase': 'Achieving a 3.5%+ salary increase',
+      'Secure Flexible Work Arrangement': 'Securing flexible work arrangements',
+      'Get Significant Salary Increase': 'Getting a significant salary increase',
+      'Build High-Value Digital Skills': 'Building high-value digital skills',
+      'Secure Flexible Work with New Skills': 'Securing flexible work with new skills',
+      'Move into Management Role': 'Moving into a management role',
+      'Switch to Tech Career': 'Switching to a tech career',
+      'Master Quality Sleep': 'Mastering quality sleep',
+      'Build Fitness Routine': 'Building a fitness routine',
+      'Get Regular Mental Health Support': 'Getting regular mental health support',
+      'Develop Sustainable Mental Health Practices': 'Developing sustainable mental health practices',
+      'Build Functional Strength and Mobility': 'Building functional strength and mobility',
+      'Establish Preventive Health Optimization': 'Establishing preventive health optimization',
+      'Complete First 5K Run': 'Completing your first 5K run',
+      'Reduce Alcohol Consumption': 'Reducing alcohol consumption',
+      'Exercise for Mental Health': 'Exercising for mental health',
+      'Prevent Chronic Disease': 'Preventing chronic disease',
+      'Build Strong Friendships': 'Building strong friendships',
+      'Find Long-Term Partner': 'Finding a long-term partner',
+      'Strengthen Family Relationships': 'Strengthening family relationships',
+      'Master Textual Chemistry': 'Mastering textual chemistry',
+      'Build Budget-Friendly Romance': 'Building budget-friendly romance',
+      'Beat the Loneliness Epidemic': 'Beating the loneliness epidemic',
+      'Move in with Partner': 'Moving in with your partner',
+      'Find Quality Romantic Connection': 'Finding a quality romantic connection',
+      'Build Strong Social Circle': 'Building a strong social circle',
+      'Strengthen Romantic Relationship': 'Strengthening your romantic relationship'
+    };
+    
+    return conversions[goalName] || goalName.toLowerCase();
+  };
+  
   // Reference to the TypingAnimation component
   const typingRef = useRef(null);
   
@@ -84,9 +145,9 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
     
     switch(messageStep) {
       case 1:
-        return "Great choice!";
+        return t('initialMessage', 'goal', { domain: translatedDomainName });
       case 2:
-        return `Now select a specific goal within ${translatedDomainName} that you would like to achieve.`;
+        return t('dontWorry', 'goal');
       default:
         return "";
     }
@@ -493,12 +554,8 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
     // Update selected goal
     setSelectedGoal(goal);
     
-    // If this goal needs clarification, show modal after selection animation
-    if (goal.needsClarification && goal.clarificationOptions) {
-      setTimeout(() => {
-        openClarificationModal();
-      }, 400); // Wait for selection animation to complete
-    }
+    // Don't automatically open clarification modal anymore
+    // Let the user see the personalized message first, then click the button to choose focus area
   };
   
   // Reset card animations
@@ -583,9 +640,15 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
         return;
       }
       
-      // If we have a clarification selected, include it in the goal data
+      // If we have a clarification selected, update the goal with specific projects/tasks
       const goalToPass = selectedClarification 
-        ? { ...selectedGoal, selectedClarification }
+        ? { 
+            ...selectedGoal, 
+            name: selectedClarification.name, 
+            originalName: selectedGoal.name, // Keep reference to original for fallback
+            projects: selectedClarification.projects || selectedGoal.projects, // Use clarification-specific projects if available
+            selectedClarification 
+          }
         : selectedGoal;
       
       onGoalSelected(goalToPass);
@@ -729,6 +792,28 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
         return "Excellent decision! Establishing better work-life balance will reduce burnout and increase your overall productivity and satisfaction both at work and home.";
       case "Career & Work-Skill Development":
         return "Perfect! Deliberately developing new skills will make you more valuable in your career and open doors to exciting opportunities you haven't even considered yet.";
+      case "Career & Work-Master Work-Life Balance":
+        return "Excellent goal! Mastering work-life balance will reduce stress, improve relationships, and create sustainable success in both personal and professional areas.";
+      case "Career & Work-Build Career-Advancing Skills":
+        return "Smart choice! Building career-advancing skills will increase your value in the job market, open new opportunities, and accelerate your professional growth.";
+      case "Career & Work-Find Purpose-Driven Work":
+        return "Inspiring decision! Finding purpose-driven work will increase job satisfaction, align your career with your values, and create more meaningful daily experiences.";
+      case "Career & Work-Master In-Demand Tech Skills":
+        return "Excellent choice! Mastering in-demand tech skills will future-proof your career, increase earning potential, and open doors to exciting opportunities.";
+      case "Career & Work-Achieve 3.5%+ Salary Increase":
+        return "Smart goal! Achieving a significant salary increase will improve your financial security, validate your professional growth, and boost confidence.";
+      case "Career & Work-Secure Flexible Work Arrangement":
+        return "Great decision! Securing flexible work arrangements will improve work-life balance, reduce commuting stress, and increase overall job satisfaction.";
+      case "Career & Work-Get Significant Salary Increase":
+        return "Excellent goal! Getting a significant salary increase will improve your financial situation, reflect your increased value, and motivate continued growth.";
+      case "Career & Work-Build High-Value Digital Skills":
+        return "Wise choice! Building high-value digital skills will make you indispensable, increase earning potential, and prepare you for the future economy.";
+      case "Career & Work-Secure Flexible Work with New Skills":
+        return "Smart goal! Securing flexible work through new skills will combine career advancement with lifestyle improvement for optimal work-life integration.";
+      case "Career & Work-Move into Management Role":
+        return "Excellent decision! Moving into management will develop leadership skills, increase earning potential, and expand your career opportunities significantly.";
+      case "Career & Work-Switch to Tech Career":
+        return "Bold choice! Switching to a tech career will open high-paying opportunities, provide job security, and position you in a growing industry.";
       
       // Health & Wellness Domain
       case "Health & Wellness-Regular Exercise":
@@ -737,6 +822,26 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
         return "Excellent decision! Better nutrition will fuel your body properly, leading to increased energy, better concentration, and long-term health benefits.";
       case "Health & Wellness-Better Sleep Habits":
         return "Perfect! Improving your sleep quality will enhance your mental clarity, emotional resilience, and physical recovery - affecting every aspect of your life positively.";
+      case "Health & Wellness-Master Quality Sleep":
+        return "Excellent choice! Mastering quality sleep will improve cognitive function, boost immune system, and enhance physical recovery for better overall performance.";
+      case "Health & Wellness-Build Fitness Routine":
+        return "Great decision! Building a fitness routine will increase energy, improve mood, strengthen your body, and create a foundation for long-term health.";
+      case "Health & Wellness-Get Regular Mental Health Support":
+        return "Wise choice! Getting regular mental health support will improve emotional resilience, provide coping strategies, and enhance your overall quality of life.";
+      case "Health & Wellness-Develop Sustainable Mental Health Practices":
+        return "Important goal! Developing sustainable mental health practices will build emotional resilience, reduce stress, and improve your ability to handle life's challenges.";
+      case "Health & Wellness-Build Functional Strength and Mobility":
+        return "Smart choice! Building functional strength and mobility will improve daily activities, prevent injuries, and maintain independence as you age.";
+      case "Health & Wellness-Establish Preventive Health Optimization":
+        return "Excellent decision! Establishing preventive health optimization will catch issues early, reduce future healthcare costs, and maintain long-term wellness.";
+      case "Health & Wellness-Complete First 5K Run":
+        return "Fantastic goal! Completing your first 5K run will build cardiovascular fitness, boost confidence, and provide a sense of accomplishment.";
+      case "Health & Wellness-Reduce Alcohol Consumption":
+        return "Great choice! Reducing alcohol consumption will improve sleep quality, increase energy, support liver health, and enhance overall wellbeing.";
+      case "Health & Wellness-Exercise for Mental Health":
+        return "Excellent decision! Exercising for mental health will reduce anxiety and depression, boost mood, and provide natural stress relief.";
+      case "Health & Wellness-Prevent Chronic Disease":
+        return "Smart goal! Focusing on chronic disease prevention will improve long-term health outcomes, reduce healthcare costs, and increase quality of life.";
       
       // Relationships Domain
       case "Relationships-Quality Time":
@@ -745,6 +850,26 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
         return "Excellent decision! Enhancing your communication skills will help resolve conflicts more effectively and create more authentic, satisfying relationships.";
       case "Relationships-Building New Connections":
         return "Perfect! Expanding your social circle will introduce you to diverse perspectives and potentially create valuable relationships that enrich your life.";
+      case "Relationships-Build Strong Friendships":
+        return "Wonderful choice! Building strong friendships will provide emotional support, increase happiness, and create a reliable network of people who care about you.";
+      case "Relationships-Find Long-Term Partner":
+        return "Great goal! Finding a long-term partner will bring companionship, emotional support, and the joy of building a life together with someone special.";
+      case "Relationships-Strengthen Family Relationships":
+        return "Excellent decision! Strengthening family relationships will create deeper bonds, improve communication, and build a stronger support system for life's challenges.";
+      case "Relationships-Master Textual Chemistry":
+        return "Smart choice! Mastering textual chemistry will improve your dating success, enhance digital communication skills, and help you build better connections online.";
+      case "Relationships-Build Budget-Friendly Romance":
+        return "Wise goal! Building budget-friendly romance will show that meaningful connections don't require expensive gestures and will develop creativity in relationships.";
+      case "Relationships-Beat the Loneliness Epidemic":
+        return "Important choice! Beating loneliness will improve mental health, increase life satisfaction, and help you build the social connections essential for wellbeing.";
+      case "Relationships-Move in with Partner":
+        return "Exciting decision! Moving in with your partner will deepen your relationship, share life experiences more intimately, and take an important step toward commitment.";
+      case "Relationships-Find Quality Romantic Connection":
+        return "Excellent goal! Finding a quality romantic connection will bring love, companionship, and emotional fulfillment while enriching your life experience.";
+      case "Relationships-Build Strong Social Circle":
+        return "Great choice! Building a strong social circle will provide emotional support, increase opportunities, and create a sense of belonging and community.";
+      case "Relationships-Strengthen Romantic Relationship":
+        return "Wonderful decision! Strengthening your romantic relationship will increase intimacy, improve communication, and build a stronger foundation for your future together.";
       
       // Personal Growth Domain
       case "Personal Growth-Learning New Skills":
@@ -753,6 +878,30 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
         return "Excellent decision! Regular reading will expand your knowledge, improve your vocabulary, and give you valuable insights that can transform your thinking.";
       case "Personal Growth-Mindfulness Practice":
         return "Perfect! Developing a mindfulness practice will help you stay present, reduce stress, and respond more thoughtfully to life's challenges rather than reacting automatically.";
+      case "Personal Growth-Learn Data Analytics":
+        return "Excellent choice! Learning data analytics will make you more valuable in the job market, improve decision-making skills, and open doors to high-paying career opportunities.";
+      case "Personal Growth-Start Creative Side Hustle":
+        return "Fantastic goal! Starting a creative side hustle will provide additional income, develop entrepreneurial skills, and give you a fulfilling outlet for creativity.";
+      case "Personal Growth-Learn AI/Machine Learning":
+        return "Smart decision! Learning AI and machine learning will position you at the forefront of technology, increase your earning potential, and future-proof your career.";
+      case "Personal Growth-Master Digital Literacy and AI Tools":
+        return "Wise choice! Mastering digital literacy and AI tools will make you more efficient, increase your value in the workplace, and prepare you for the future economy.";
+      case "Personal Growth-Achieve French Language Proficiency":
+        return "Excellent goal! Achieving French proficiency will open cultural and career opportunities, improve cognitive function, and enhance your connection to Canadian culture.";
+      case "Personal Growth-Obtain Professional Certifications":
+        return "Smart choice! Obtaining professional certifications will validate your skills, increase earning potential, and demonstrate commitment to career advancement.";
+      case "Personal Growth-Learn New Language":
+        return "Wonderful decision! Learning a new language will enhance cognitive function, open cultural opportunities, and make you more valuable in the global marketplace.";
+      case "Personal Growth-Master Public Speaking":
+        return "Excellent choice! Mastering public speaking will boost confidence, advance your career, and help you communicate ideas more effectively in all areas of life.";
+      case "Personal Growth-Build Financial Knowledge":
+        return "Smart goal! Building financial knowledge will help you make better money decisions, build wealth more effectively, and achieve financial independence faster.";
+      case "Personal Growth-Earn Professional Certification":
+        return "Great decision! Earning professional certification will validate your expertise, increase earning potential, and demonstrate your commitment to excellence.";
+      case "Personal Growth-Launch Creative Project":
+        return "Inspiring choice! Launching a creative project will provide a fulfilling outlet for self-expression, potentially generate income, and build valuable skills.";
+      case "Personal Growth-Learn Practical Life Skill":
+        return "Excellent decision! Learning practical life skills will increase self-reliance, save money, and give you confidence to handle various life situations independently.";
       
       // Financial Security Domain
       case "Financial Security-Emergency Fund":
@@ -761,6 +910,28 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
         return "Excellent decision! Systematically reducing debt will free up your resources and create more options for your future financial decisions.";
       case "Financial Security-Retirement Planning":
         return "Perfect! Taking retirement planning seriously now will compound over time, potentially giving you more freedom and security in your later years.";
+      case "Financial Security-Build 6-Month Emergency Fund":
+        return "Excellent goal! Building a 6-month emergency fund will provide substantial financial security, reduce stress, and give you confidence to take calculated risks.";
+      case "Financial Security-Pay Off High-Interest Debt":
+        return "Smart choice! Paying off high-interest debt will save you significant money over time, improve your credit score, and free up cash flow for other goals.";
+      case "Financial Security-Start Long-Term Investing":
+        return "Wise decision! Starting long-term investing will harness the power of compound growth and build wealth for your future financial independence.";
+      case "Financial Security-Build $15,000 Emergency Fund":
+        return "Fantastic goal! Building a $15,000 emergency fund will provide substantial financial security and peace of mind for major unexpected expenses.";
+      case "Financial Security-Save $25,000 Down Payment for Home":
+        return "Excellent choice! Saving for a home down payment will build discipline, reduce future mortgage costs, and move you closer to homeownership.";
+      case "Financial Security-Pay Off $10,000 Student Debt":
+        return "Great decision! Paying off student debt will eliminate monthly payments, reduce financial stress, and free up money for other important goals.";
+      case "Financial Security-Save for House Deposit":
+        return "Smart goal! Saving for a house deposit will require discipline but will significantly reduce your future mortgage burden and interest payments.";
+      case "Financial Security-Build Emergency Fund":
+        return "Wise choice! Building an emergency fund will provide financial security, reduce stress about unexpected expenses, and prevent debt accumulation.";
+      case "Financial Security-Maximize ISA Savings":
+        return "Excellent decision! Maximizing ISA savings will help you save tax-efficiently while building wealth and taking advantage of government incentives.";
+      case "Financial Security-Start Profitable Side Hustle":
+        return "Fantastic choice! Starting a profitable side hustle will diversify your income, develop new skills, and accelerate your path to financial independence.";
+      case "Financial Security-Plan Path to Homeownership":
+        return "Smart goal! Planning your path to homeownership will help you make informed decisions, avoid mistakes, and achieve this major financial milestone efficiently.";
       
       // Recreation & Leisure Domain
       case "Recreation & Leisure-New Hobby":
@@ -769,6 +940,30 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
         return "Excellent decision! Planning travel experiences will broaden your perspective, create lasting memories, and give you something exciting to look forward to.";
       case "Recreation & Leisure-Creative Expression":
         return "Perfect! Making time for creative expression will tap into different parts of your brain, reduce stress, and provide a meaningful outlet for self-expression.";
+      case "Recreation & Leisure-Plan Solo Adventure Travel":
+        return "Exciting choice! Planning solo adventure travel will build confidence, create unforgettable memories, and give you the freedom to explore at your own pace.";
+      case "Recreation & Leisure-Explore Wellness Activities":
+        return "Wonderful decision! Exploring wellness activities will improve your physical and mental health while helping you discover new passions and stress-relief methods.";
+      case "Recreation & Leisure-Explore Local Culture":
+        return "Great choice! Exploring local culture will deepen your connection to your community, discover hidden gems, and gain new appreciation for your surroundings.";
+      case "Recreation & Leisure-Explore Canada Through Epic Adventures":
+        return "Amazing goal! Exploring Canada through epic adventures will create incredible memories, build confidence, and help you discover the beauty of your home country.";
+      case "Recreation & Leisure-Master Four-Season Outdoor Activities":
+        return "Fantastic choice! Mastering four-season outdoor activities will keep you active year-round, build resilience, and help you embrace Canada's unique climate.";
+      case "Recreation & Leisure-Create Through Hobby Renaissance":
+        return "Inspiring decision! Creating through a hobby renaissance will reignite your creativity, provide stress relief, and give you multiple outlets for self-expression.";
+      case "Recreation & Leisure-Complete Active Challenge Events":
+        return "Excellent goal! Completing active challenge events will push your physical limits, build mental toughness, and create a sense of accomplishment and community.";
+      case "Recreation & Leisure-Explore UK Heritage Sites":
+        return "Wonderful choice! Exploring UK heritage sites will deepen your cultural knowledge, create memorable experiences, and connect you with your country's rich history.";
+      case "Recreation & Leisure-Develop Creative Hobby":
+        return "Great decision! Developing a creative hobby will provide stress relief, enhance problem-solving skills, and give you a fulfilling outlet for self-expression.";
+      case "Recreation & Leisure-Explore Australian Nature":
+        return "Amazing choice! Exploring Australian nature will connect you with incredible landscapes, build appreciation for the environment, and create unforgettable adventures.";
+      case "Recreation & Leisure-Travel Around Australia":
+        return "Fantastic goal! Traveling around Australia will broaden your perspective, create lifelong memories, and help you discover the diverse beauty of your home country.";
+      case "Recreation & Leisure-Develop New Hobby":
+        return "Excellent choice! Developing a new hobby will bring joy to your routine, help you meet like-minded people, and provide a creative outlet outside of work.";
       
       // Purpose & Meaning Domain
       case "Purpose & Meaning-Spiritual Practice":
@@ -777,6 +972,28 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
         return "Excellent decision! Serving others creates a sense of purpose and perspective while making a tangible difference in the world around you.";
       case "Purpose & Meaning-Finding Life Purpose":
         return "Perfect! Clarifying your life purpose will help align your daily actions with your core values, bringing a greater sense of fulfillment and direction.";
+      case "Purpose & Meaning-Volunteer in Community":
+        return "Wonderful choice! Volunteering in your community will create meaningful connections, develop new skills, and make a positive impact while enriching your own life.";
+      case "Purpose & Meaning-Align Work with Values":
+        return "Excellent decision! Aligning your work with your values will increase job satisfaction, reduce internal conflict, and create a more fulfilling career path.";
+      case "Purpose & Meaning-Live More Sustainably":
+        return "Great choice! Living more sustainably will align your daily actions with environmental values while often saving money and improving your health.";
+      case "Purpose & Meaning-Lead Climate Action Initiative":
+        return "Inspiring goal! Leading climate action will create meaningful environmental impact while developing leadership skills and connecting you with like-minded individuals.";
+      case "Purpose & Meaning-Build Purpose-Driven Side Business":
+        return "Fantastic choice! Building a purpose-driven side business will combine financial goals with meaningful impact while developing entrepreneurial skills.";
+      case "Purpose & Meaning-Use Skills for Community Volunteering":
+        return "Perfect decision! Using your professional skills for volunteering will maximize your impact, advance your career, and create a sense of meaningful contribution.";
+      case "Purpose & Meaning-Volunteer Using Professional Skills":
+        return "Excellent choice! Volunteering with your professional skills will amplify your impact, build your network, and add meaningful purpose to your career development.";
+      case "Purpose & Meaning-Reduce Environmental Impact":
+        return "Great decision! Reducing your environmental impact will align your lifestyle with your values while often saving money and improving your health.";
+      case "Purpose & Meaning-Take Community Leadership Role":
+        return "Wonderful goal! Taking a community leadership role will develop your leadership skills, create positive change, and build valuable networks and relationships.";
+      case "Purpose & Meaning-Find Purpose-Driven Work":
+        return "Inspiring choice! Finding purpose-driven work will increase job satisfaction, create meaningful impact, and align your career with your deepest values.";
+      case "Purpose & Meaning-Get Involved in Local Community":
+        return "Excellent decision! Getting involved in your local community will create meaningful connections, develop new skills, and make a positive impact where you live.";
       
       // Environment & Organization Domain
       case "Environment & Organization-Home Organization":
@@ -785,6 +1002,30 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
         return "Excellent decision! Optimizing your daily routines will help you use your time more effectively and create space for what truly matters to you.";
       case "Environment & Organization-Creating Peaceful Spaces":
         return "Perfect! Designing more peaceful surroundings will reduce mental clutter and provide the right environment for you to thrive in all areas of life.";
+      case "Environment & Organization-Live Sustainably/Zero-Waste":
+        return "Excellent choice! Living sustainably and reducing waste will help you align your daily actions with your environmental values while creating a healthier planet for future generations.";
+      case "Environment & Organization-Buy First Home":
+        return "Fantastic goal! Buying your first home will build equity, provide stability, and give you a space to truly call your own while establishing a foundation for long-term wealth.";
+      case "Environment & Organization-Organize Living Space":
+        return "Great choice! Organizing your living space will improve your daily efficiency, reduce stress, and create a more peaceful environment for relaxation and productivity.";
+      case "Environment & Organization-Create Eco-Friendly Home":
+        return "Excellent decision! Creating an eco-friendly home will reduce your environmental impact, lower utility costs, and provide a healthier living environment for you and your family.";
+      case "Environment & Organization-Create Affordable Home Office Space":
+        return "Smart choice! Setting up an affordable home office will boost your productivity, improve work-life boundaries, and potentially increase your earning potential.";
+      case "Environment & Organization-Navigate Path to Homeownership":
+        return "Wise goal! Learning about homeownership will help you make informed decisions, avoid costly mistakes, and build a clear roadmap to achieving this major milestone.";
+      case "Environment & Organization-Build Eco-Conscious Living Space":
+        return "Perfect choice! Building an eco-conscious living space will align your environment with your values while creating a healthier, more sustainable lifestyle.";
+      case "Environment & Organization-Create Home Office Setup":
+        return "Excellent decision! Creating a proper home office setup will increase your productivity, improve your professional presence, and enhance your work-from-home experience.";
+      case "Environment & Organization-Improve Home Energy Efficiency":
+        return "Smart goal! Improving your home's energy efficiency will reduce utility bills, increase property value, and minimize your environmental footprint.";
+      case "Environment & Organization-Live Zero-Waste Lifestyle":
+        return "Inspiring choice! Living a zero-waste lifestyle will dramatically reduce your environmental impact while often saving money and creating mindful consumption habits.";
+      case "Environment & Organization-Find Quality Shared Housing":
+        return "Practical choice! Finding quality shared housing will help you save money, build social connections, and live in a better location while maintaining financial flexibility.";
+      case "Environment & Organization-Create Organized Living Space":
+        return "Great decision! Creating an organized living space will save you time daily, reduce stress, and create a more peaceful environment that supports your other goals.";
       
       // Fallback for any goals not explicitly covered
       default:
@@ -803,14 +1044,30 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
           return "Great choice! Learning new skills will expand your capabilities and bring a sense of accomplishment that carries over to all areas of life.";
         }
         
-        // Generic fallback that still sounds personal
-        return `Great choice! Focusing on ${goal.name.toLowerCase()} will help you make meaningful progress in your ${domainName.toLowerCase()} and create positive momentum.`;
+        // Generic fallback with proper grammar
+        const goalSentence = convertGoalToSentence(goal.name);
+        return `Great choice! ${goalSentence.charAt(0).toUpperCase() + goalSentence.slice(1)} will help you make meaningful progress in your ${domainName.toLowerCase()} journey and create positive momentum.`;
     }
   };
   
-  // Get the title for the navigation header with proper translation
+  // Get the title for the navigation header with proper translation and abbreviation for long names
   const getHeaderTitle = () => {
-    const translatedDomain = getTranslatedDomainName(domain.name, currentLanguage);
+    let translatedDomain = getTranslatedDomainName(domain.name, currentLanguage);
+    
+    // Abbreviate long domain names for header display to prevent overlap with icon
+    if (currentLanguage === 'en') {
+      if (translatedDomain === 'Environment & Organization') {
+        translatedDomain = 'Environment & Org';
+      } else if (translatedDomain === 'Financial Security') {
+        translatedDomain = 'Financial';
+      } else if (translatedDomain === 'Recreation & Leisure') {
+        translatedDomain = 'Recreation';
+      }
+    } else if (currentLanguage === 'ja') {
+      // Keep Japanese translations as is since they're typically shorter
+      // Could add specific abbreviations here if needed
+    }
+    
     return t('title', 'goal', { domain: translatedDomain });
   };
   
@@ -1019,7 +1276,7 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
       
       
       {/* Sticky Bottom Bar with Confirmation Message and CTA Button */}
-      {showConfirmation && selectedGoal && !showClarificationModal && (
+      {showConfirmation && selectedGoal && (
         <Animated.View 
           style={[
             styles.stickyBottomContainer,
@@ -1044,18 +1301,18 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
             </ResponsiveText>
           </View>
           
-          {/* Continue Button */}
+          {/* Continue Button - show for all selected goals */}
           <TouchableOpacity
             style={[
               styles.confirmButton,
               { backgroundColor: domain.color }
             ]}
-            onPress={handleConfirm}
+            onPress={selectedGoal?.needsClarification ? openClarificationModal : handleConfirm}
             disabled={isNavigating}
           >
             <ResponsiveText style={styles.confirmButtonText}>
               {selectedGoal?.needsClarification 
-                ? 'Choose Focus Area' 
+                ? 'Choose Focus Area'
                 : t('continueWith', 'common', { item: t('goal', 'common') })
               }
             </ResponsiveText>
@@ -1106,7 +1363,7 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
             
             {/* Subtitle */}
             <ResponsiveText style={styles.clarificationSubtitle}>
-              {selectedGoal.name} can mean different things. Which area would you like to focus on?
+              {convertGoalToSentence(selectedGoal.name)} can mean different things. Which area would you like to focus on?
             </ResponsiveText>
             
             {/* Options */}

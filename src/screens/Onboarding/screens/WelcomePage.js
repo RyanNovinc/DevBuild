@@ -35,6 +35,7 @@ const WelcomePage = ({ onContinue, onSkipOnboarding }) => {
   const promptOpacity = useRef(new Animated.Value(0)).current;
   const promptY = useRef(new Animated.Value(0)).current;
   const skipButtonOpacity = useRef(new Animated.Value(0)).current;
+  const businessIconsOpacity = useRef(new Animated.Value(0)).current;
   
   // Animation for the sparkle icon (pulse always)
   const iconPulse = useRef(new Animated.Value(1)).current;
@@ -227,6 +228,16 @@ const WelcomePage = ({ onContinue, onSkipOnboarding }) => {
     if (messageComplete) {
       setShowTapPrompt(true);
       
+      // Show business icons for second message
+      if (messageStep === 2) {
+        Animated.timing(businessIconsOpacity, {
+          toValue: 1,
+          duration: 600,
+          delay: 300,
+          useNativeDriver: true,
+        }).start();
+      }
+      
       // Animate prompt
       Animated.timing(promptOpacity, {
         toValue: 1,
@@ -283,7 +294,7 @@ const WelcomePage = ({ onContinue, onSkipOnboarding }) => {
       if (appLanguage === 'ja') {
         return "大きな目標を実現可能な日々のステップに変えましょう。";
       }
-      return "Let's turn your big goals into achievable daily steps.";
+      return "Let's break down your goals using the same methods that the world's most successful companies rely on.";
     }
   };
   
@@ -429,6 +440,26 @@ const WelcomePage = ({ onContinue, onSkipOnboarding }) => {
             </View>
           </Animated.View>
           
+          {/* Business Icons - only show on second message - positioned absolutely */}
+          {messageStep === 2 && (
+            <Animated.View style={[styles.businessIconsContainer, { opacity: businessIconsOpacity }]}>
+              <View style={styles.businessIconsRow}>
+                <View style={styles.businessIcon}>
+                  <Ionicons name="shield-checkmark" size={24} color="#3b82f6" />
+                </View>
+                <View style={styles.businessIcon}>
+                  <Ionicons name="business" size={24} color="#3b82f6" />
+                </View>
+                <View style={styles.businessIcon}>
+                  <Ionicons name="analytics" size={24} color="#3b82f6" />
+                </View>
+              </View>
+              <ResponsiveText style={styles.businessText}>
+                Fortune 500 Methods
+              </ResponsiveText>
+            </Animated.View>
+          )}
+
           {/* Touch to continue prompt */}
           {showTapPrompt && (
             <Animated.View 
@@ -466,9 +497,9 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'center', // Match LoadingScreen - center all content
     paddingHorizontal: 20,
-    paddingTop: 40,
+    paddingTop: 40, // Back to original
     paddingBottom: 80,
   },
   logoSection: {
@@ -531,9 +562,9 @@ const styles = StyleSheet.create({
   messageSection: {
     width: '100%',
     paddingHorizontal: 10,
-    marginBottom: 40,
+    marginBottom: 20, // Reduced margin
     minHeight: 120,
-    justifyContent: 'center',
+    justifyContent: 'flex-start', // Changed from center to flex-start
   },
   messageContainer: {
     flexDirection: 'row',
@@ -598,6 +629,37 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
+  },
+  businessIconsContainer: {
+    position: 'absolute',
+    bottom: 160, // Position above the "tap to continue" prompt
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 5, // Ensure it appears above other content
+  },
+  businessIconsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  businessIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(59, 130, 246, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.3)',
+  },
+  businessText: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontWeight: '600',
+    letterSpacing: 0.5,
   }
 });
 

@@ -1,6 +1,7 @@
 // src/services/OnboardingService.js
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { log } from '../utils/LoggerUtility';
+import FeatureExplorerTracker from './FeatureExplorerTracker';
 
 /**
  * OnboardingService - A dedicated service for reliably creating onboarding data
@@ -29,8 +30,13 @@ class OnboardingService {
   
   /**
    * Main function to create all onboarding data in a batch operation
+   * @param {Object} selectedDomain - The selected domain object
+   * @param {Object} selectedGoal - The selected goal object
+   * @param {Object} options - Optional parameters
+   * @param {boolean} options.isFullOnboarding - Whether this is from completing full onboarding (true) or skipping (false)
    */
-  static async createOnboardingData(selectedDomain, selectedGoal) {
+  static async createOnboardingData(selectedDomain, selectedGoal, options = {}) {
+    const { isFullOnboarding = true } = options;
     console.log("OnboardingService: Starting batch data creation");
     
     try {
@@ -51,7 +57,7 @@ class OnboardingService {
       const newGoal = {
         id: goalId,
         title: selectedGoal.name,
-        description: selectedGoal.explanation || "",
+        description: selectedGoal.description || "",
         icon: selectedDomain.icon,
         color: selectedDomain.color,
         progress: 0,
@@ -110,7 +116,7 @@ class OnboardingService {
             goalId: goalId,
             goalTitle: selectedGoal.name,
             title: projectTemplate.name,
-            description: projectTemplate.explanation || "",
+            description: projectTemplate.description || "",
             progress: 0,
             status: "todo",
             completed: false,
@@ -165,6 +171,17 @@ class OnboardingService {
       
       // 8. Verify the data was saved correctly
       const success = await this.verifyCreatedData(goalId, newProjects.length, allTasksForStorage.length);
+      
+      // 9. Track onboarding completion achievement (only if successful AND full onboarding)
+      if (success && isFullOnboarding) {
+        try {
+          await FeatureExplorerTracker.trackOnboardingCompletion();
+          log('Info', '🏆 [OnboardingService] Full onboarding completion achievement tracked');
+        } catch (error) {
+          console.error('OnboardingService: Error tracking onboarding completion achievement:', error);
+          // Don't fail the onboarding if achievement tracking fails
+        }
+      }
       
       return {
         success,

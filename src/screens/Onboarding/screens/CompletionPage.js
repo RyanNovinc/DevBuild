@@ -42,6 +42,8 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
   const [messageComplete, setMessageComplete] = useState(false);
   const [showTapToContinue, setShowTapToContinue] = useState(false);
   const [allMessagesComplete, setAllMessagesComplete] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false); // Prevent rapid taps
+  const [hasCompleted, setHasCompleted] = useState(false); // Prevent multiple completion calls
   
   // State for statistics
   const [statsList, setStatsList] = useState([]);
@@ -105,6 +107,15 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
     const domainName = domain?.name || defaultDomain.name;
     const goalName = goal?.name || defaultGoal.name;
     
+    // Debug logging
+    console.log('CompletionPage - Loading stats for:', {
+      domainName,
+      goalName,
+      country,
+      domain: domain?.name,
+      goal: goal?.name
+    });
+    
     try {
       // Clear any existing stats and reset index when domain or goal changes
       setStatsList([]);
@@ -125,6 +136,8 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
         // Fall back to general stats for other countries
         statsResult = getRelevantStats(domainName, goalName, currentLanguage);
       }
+      
+      console.log('Stats result:', statsResult);
       
       if (statsResult?.all && statsResult.all.length > 0) {
         setStatsList(statsResult.all);
@@ -171,6 +184,9 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
   useEffect(() => {
     if (messageComplete && messageStep < 5) {
       setShowTapToContinue(true);
+      
+      // Reset transitioning state when message completes (safety mechanism)
+      setIsTransitioning(false);
       
       // Animate in the tap prompt
       Animated.timing(tapPromptOpacity, {
@@ -231,6 +247,11 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
   
   // Handle screen tap to skip typing animation or continue to next step
   const handleScreenTap = () => {
+    // Prevent rapid taps that cause race conditions
+    if (isTransitioning) {
+      return;
+    }
+
     try {
       // Provide haptic feedback
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -246,6 +267,9 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
     
     // If current message is complete, proceed to next message or finish
     if (messageComplete) {
+      // Set transitioning state to prevent rapid taps
+      setIsTransitioning(true);
+      
       // Hide tap prompt
       Animated.timing(tapPromptOpacity, {
         toValue: 0,
@@ -268,7 +292,10 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
             toValue: 1,
             duration: 200,
             useNativeDriver: true
-          }).start();
+          }).start(() => {
+            // Reset transitioning state after animation completes
+            setIsTransitioning(false);
+          });
         });
       } else if (messageStep === 4) {
         // All messages complete, show congratulations
@@ -278,6 +305,8 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
           useNativeDriver: true
         }).start(() => {
           setAllMessagesComplete(true);
+          // Reset transitioning state after final animation
+          setIsTransitioning(false);
         });
       }
     }
@@ -402,17 +431,35 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
       console.error('Error opening URL:', error);
     }
   };
+
+  // Handle completion with protection against multiple calls
+  const handleComplete = () => {
+    // Prevent multiple completion calls
+    if (hasCompleted || isNavigating) {
+      return;
+    }
+
+    try {
+      // Provide haptic feedback
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } catch (error) {
+      console.log('Haptics not available:', error);
+    }
+
+    // Set completion state to prevent further calls
+    setHasCompleted(true);
+    
+    // Call the parent's onComplete function
+    if (onComplete) {
+      onComplete();
+    }
+  };
   
   // Get the current statistic
   const currentStat = statsList[currentStatIndex];
   
   return (
     <View style={styles.container}>
-      <NavigationHeader 
-        title={translate('title')} 
-        onBack={onBack} 
-      />
-      
       {/* Full-screen touchable overlay */}
       {!allMessagesComplete && (
         <TouchableOpacity
@@ -433,6 +480,10 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
         showsVerticalScrollIndicator={false}
         pointerEvents={!allMessagesComplete ? "none" : "auto"} // Make ScrollView non-interactive during messages
       >
+        <NavigationHeader 
+          title={translate('title')} 
+          onBack={onBack} 
+        />
         {/* AI Message - Single container that changes content */}
         {!allMessagesComplete && (
           <Animated.View style={[styles.messageContainer, { opacity: messageOpacity }]}>
@@ -562,15 +613,7 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
                 </ResponsiveText>
               </View>
               
-              <ResponsiveText style={styles.statDescription}>
-                {currentStat.description}
-              </ResponsiveText>
-              
               <View style={styles.statFooter}>
-                <ResponsiveText style={styles.sourceText}>
-                  {translate('sourceTitle')}: {currentStat.source}
-                </ResponsiveText>
-                
                 <TouchableOpacity
                   style={styles.moreInfoButton}
                   onPress={handleShowDetails}
@@ -617,10 +660,10 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
             <TouchableOpacity
               style={[
                 styles.startButton,
-                isNavigating && styles.disabledButton
+                (isNavigating || hasCompleted) && styles.disabledButton
               ]}
-              onPress={onComplete}
-              disabled={isNavigating}
+              onPress={handleComplete}
+              disabled={isNavigating || hasCompleted}
               accessibilityLabel={translate('startUsing', 'common')}
               accessibilityRole="button"
             >
@@ -673,6 +716,15 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
             </ResponsiveText>
             
             <ScrollView style={styles.detailsScroll}>
+              <View style={styles.detailsSection}>
+                <ResponsiveText style={styles.detailsSectionTitle}>
+                  Research Summary
+                </ResponsiveText>
+                <ResponsiveText style={styles.detailsText}>
+                  {currentStat?.description || "No summary available."}
+                </ResponsiveText>
+              </View>
+              
               <View style={styles.detailsSection}>
                 <ResponsiveText style={styles.detailsSectionTitle}>
                   {translate('publicationTitle')}
@@ -932,20 +984,24 @@ const styles = StyleSheet.create({
   },
   statFooter: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
     borderTopWidth: 1,
     borderTopColor: 'rgba(255, 255, 255, 0.1)',
-    paddingTop: 10,
-    paddingBottom: 4,
+    paddingTop: 12,
+    paddingBottom: 8,
   },
   sourceText: {
     fontSize: 12,
     color: 'rgba(255, 255, 255, 0.6)',
+    marginBottom: 8, // Add space between source and button
+    lineHeight: 16, // Better line height for readability
   },
   moreInfoButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
   },
   moreInfoButtonText: {
     fontSize: 12,
@@ -962,7 +1018,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 20,
     paddingTop: 10,
-    backgroundColor: 'rgba(12, 20, 37, 0.95)', // Semi-transparent background to ensure visibility
+    backgroundColor: 'transparent', // Transparent background for floating effect
   },
   startButton: {
     backgroundColor: '#3b82f6',
@@ -973,10 +1029,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 8 }, // Increased shadow for better visibility
+    shadowOpacity: 0.4, // Stronger shadow
+    shadowRadius: 12, // Larger shadow radius
+    elevation: 10, // Higher elevation for Android
   },
   disabledButton: {
     opacity: 0.7,

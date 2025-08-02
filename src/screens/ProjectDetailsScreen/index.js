@@ -218,19 +218,8 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
     } else {
       // Check if we came from LifePlanOverview
       if (route.params?.previousScreen === 'LifePlanOverview') {
-        // Use reset to ensure we go to the ProjectsTab tab directly
-        navigation.reset({
-          index: 0,
-          routes: [
-            { 
-              name: 'Main',
-              state: {
-                routes: [{ name: 'ProjectsTab' }],
-                index: 0,
-              }
-            },
-          ],
-        });
+        // Navigate directly to LifePlanOverview (correct screen name from App.js)
+        navigation.navigate('LifePlanOverview');
       } else {
         navigation.goBack();
       }
@@ -247,19 +236,8 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
     
     // Check if we came from LifePlanOverview
     if (route.params?.previousScreen === 'LifePlanOverview') {
-      // Use reset to ensure we go to the ProjectsTab tab directly
-      navigation.reset({
-        index: 0,
-        routes: [
-          { 
-            name: 'Main',
-            state: {
-              routes: [{ name: 'ProjectsTab' }],
-              index: 0,
-            }
-          },
-        ],
-      });
+      // Navigate directly to LifePlanOverview (correct screen name from App.js)
+      navigation.navigate('LifePlanOverview');
     } else {
       navigation.goBack();
     }

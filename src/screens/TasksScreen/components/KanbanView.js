@@ -455,6 +455,9 @@ const KanbanView = ({ taskScreenProps }) => {
                     color={selectedGoalId !== 'all' ? 
                       taskScreenProps.goalsToShow.find(g => g.id === selectedGoalId)?.color || theme.primary 
                       : theme.primary}
+                    // Pass all projects and goals for color inheritance
+                    allProjects={getFilteredProjects()}
+                    allGoals={taskScreenProps.goalsToShow || []}
                   />
                 ) : (
                   <KanbanBoard
@@ -478,6 +481,9 @@ const KanbanView = ({ taskScreenProps }) => {
                     color={selectedGoalId !== 'all' ? 
                       taskScreenProps.goalsToShow.find(g => g.id === selectedGoalId)?.color || theme.primary 
                       : theme.primary}
+                    // Pass all projects and goals for color inheritance
+                    allProjects={getFilteredProjects()}
+                    allGoals={taskScreenProps.goalsToShow || []}
                   />
                 )}
               </View>
@@ -573,6 +579,9 @@ const KanbanView = ({ taskScreenProps }) => {
                 color={selectedGoalId !== 'all' ? 
                   taskScreenProps.goalsToShow.find(g => g.id === selectedGoalId)?.color || theme.primary 
                   : theme.primary}
+                // Pass all projects and goals for color inheritance
+                allProjects={getFilteredProjects()}
+                allGoals={taskScreenProps.goalsToShow || []}
               />
             ) : (
               <KanbanBoard
@@ -595,6 +604,9 @@ const KanbanView = ({ taskScreenProps }) => {
                 color={selectedGoalId !== 'all' ? 
                   taskScreenProps.goalsToShow.find(g => g.id === selectedGoalId)?.color || theme.primary 
                   : theme.primary}
+                // Pass all projects and goals for color inheritance
+                allProjects={getFilteredProjects()}
+                allGoals={taskScreenProps.goalsToShow || []}
               />
             )}
           </View>
