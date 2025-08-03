@@ -16,6 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppContext } from '../../context/AppContext'; // Add this import
 import { useAchievements } from '../../context/AchievementContext';
+import { useNotification } from '../../context/NotificationContext';
 import LevelService from '../../services/LevelService';
 import { 
   scaleWidth, 
@@ -77,13 +78,17 @@ const DASHBOARD_COMPONENTS = {
 };
 
 const CustomizableDashboard = ({ theme, navigation }) => {
-  const [dashboardItems, setDashboardItems] = useState([]);
+  const [dashboardItems, setDashboardItems] = useState([]); // Now stores widget instances with unique IDs
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [removingMode, setRemovingMode] = useState(false);
   const [shakeAnimations, setShakeAnimations] = useState({});
   const [showFocusTimerCongrats, setShowFocusTimerCongrats] = useState(false);
   const [focusTimerUnlockState, setFocusTimerUnlockState] = useState('locked'); // 'locked', 'unlocked', 'seen'
   const [fallingClockAnimations, setFallingClockAnimations] = useState([]);
+  
+  // Add state for upgrade modal (like in GoalsScreen)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeMessage, setUpgradeMessage] = useState('');
   const isDarkMode = theme.background === '#000000';
   const insets = useSafeAreaInsets();
   const { width, height } = useScreenDimensions();
@@ -94,6 +99,11 @@ const CustomizableDashboard = ({ theme, navigation }) => {
   
   // Get achievements context for level checking
   const { getTotalPoints } = useAchievements();
+  
+  // Get notification context for banner messages
+  const { showSuccess } = useNotification() || { 
+    showSuccess: (msg) => console.log(msg)
+  };
   
   // Check if user is premium - now uses AppContext value directly
   const isPremiumUser = userSubscriptionStatus === 'pro' || userSubscriptionStatus === 'unlimited';
@@ -131,6 +141,41 @@ const CustomizableDashboard = ({ theme, navigation }) => {
   
   const userLevel = calculatedLevel;
 
+  // Utility functions for widget instances
+  const generateWidgetId = () => {
+    return `widget_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  };
+
+  const createWidgetInstance = (componentType, customName = null) => {
+    const component = DASHBOARD_COMPONENTS[componentType];
+    return {
+      id: generateWidgetId(),
+      type: componentType,
+      name: customName || component.title,
+      createdAt: new Date().toISOString(),
+      data: {} // This will store widget-specific data
+    };
+  };
+
+  // Widget data utility functions (to be used by widget components)
+  const saveWidgetData = async (widgetId, data) => {
+    try {
+      await AsyncStorage.setItem(`widget_data_${widgetId}`, JSON.stringify(data));
+    } catch (error) {
+      console.error(`Error saving data for widget ${widgetId}:`, error);
+    }
+  };
+
+  const loadWidgetData = async (widgetId) => {
+    try {
+      const data = await AsyncStorage.getItem(`widget_data_${widgetId}`);
+      return data ? JSON.parse(data) : null;
+    } catch (error) {
+      console.error(`Error loading data for widget ${widgetId}:`, error);
+      return null;
+    }
+  };
+
   // Check Focus Timer unlock state
   useEffect(() => {
     const checkFocusTimerUnlockState = async () => {
@@ -160,16 +205,20 @@ const CustomizableDashboard = ({ theme, navigation }) => {
       // Check if user manually removed Focus Timer
       const manuallyRemoved = await AsyncStorage.getItem('focusTimerManuallyRemoved');
       
+      // Check if any Focus Timer widgets exist on dashboard
+      const hasFocusTimer = dashboardItems.some(widget => widget.type === COMPONENT_TYPES.FOCUS_TIMER);
+      
       console.log('Auto-add check:', {
         userLevel,
         hasLevel4: userLevel >= 4,
-        includesFocusTimer: dashboardItems.includes(COMPONENT_TYPES.FOCUS_TIMER),
+        hasFocusTimer,
         manuallyRemoved
       });
       
-      if (userLevel >= 4 && !dashboardItems.includes(COMPONENT_TYPES.FOCUS_TIMER) && !manuallyRemoved) {
+      if (userLevel >= 4 && !hasFocusTimer && !manuallyRemoved) {
         console.log('Auto-adding Focus Timer');
-        const updatedItems = [...dashboardItems, COMPONENT_TYPES.FOCUS_TIMER];
+        const focusTimerWidget = createWidgetInstance(COMPONENT_TYPES.FOCUS_TIMER);
+        const updatedItems = [...dashboardItems, focusTimerWidget];
         setDashboardItems(updatedItems);
         saveDashboardConfig(updatedItems);
       }
@@ -254,26 +303,38 @@ const CustomizableDashboard = ({ theme, navigation }) => {
       const dashboardConfig = await AsyncStorage.getItem('dashboardConfig');
       
       if (dashboardConfig) {
-        // Parse stored config
-        setDashboardItems(JSON.parse(dashboardConfig));
+        const parsedConfig = JSON.parse(dashboardConfig);
+        
+        // Check if it's old format (array of strings) and migrate to new format
+        if (parsedConfig.length > 0 && typeof parsedConfig[0] === 'string') {
+          console.log('Migrating old dashboard format to widget instances');
+          const migratedWidgets = parsedConfig.map(componentType => 
+            createWidgetInstance(componentType)
+          );
+          setDashboardItems(migratedWidgets);
+          await AsyncStorage.setItem('dashboardConfig', JSON.stringify(migratedWidgets));
+        } else {
+          // New format with widget instances
+          setDashboardItems(parsedConfig);
+        }
       } else {
         // Default configuration for first-time users
-        const defaultConfig = [
-          COMPONENT_TYPES.STREAK_COUNTER,
-          COMPONENT_TYPES.RESEARCH_STATS
+        const defaultWidgets = [
+          createWidgetInstance(COMPONENT_TYPES.STREAK_COUNTER),
+          createWidgetInstance(COMPONENT_TYPES.RESEARCH_STATS)
           // Focus Timer will be added when user reaches level 4
         ];
-        setDashboardItems(defaultConfig);
-        await AsyncStorage.setItem('dashboardConfig', JSON.stringify(defaultConfig));
+        setDashboardItems(defaultWidgets);
+        await AsyncStorage.setItem('dashboardConfig', JSON.stringify(defaultWidgets));
       }
     } catch (error) {
       console.error('Error loading dashboard configuration:', error);
       // Fall back to default configuration
-      setDashboardItems([
-        COMPONENT_TYPES.STREAK_COUNTER,
-        COMPONENT_TYPES.RESEARCH_STATS
-        // Focus Timer will be added when user reaches level 4
-      ]);
+      const defaultWidgets = [
+        createWidgetInstance(COMPONENT_TYPES.STREAK_COUNTER),
+        createWidgetInstance(COMPONENT_TYPES.RESEARCH_STATS)
+      ];
+      setDashboardItems(defaultWidgets);
     }
   };
   
@@ -285,7 +346,25 @@ const CustomizableDashboard = ({ theme, navigation }) => {
       console.error('Error saving dashboard configuration:', error);
     }
   };
+
   
+  // Get widget instance limit based on subscription
+  const getWidgetInstanceLimit = (componentType) => {
+    return (userSubscriptionStatus === 'pro' || userSubscriptionStatus === 'unlimited') ? 3 : 1;
+  };
+
+  // Show upgrade modal (like in GoalsScreen)
+  const showUpgradePrompt = (message) => {
+    setUpgradeMessage(message);
+    setShowUpgradeModal(true);
+  };
+
+  // Navigate to pricing screen
+  const goToPricingScreen = () => {
+    setShowUpgradeModal(false);
+    navigation.navigate('PricingScreen');
+  };
+
   // Add a component to the dashboard
   const addComponent = async (componentType) => {
     console.log('=== AddComponent Debug ===');
@@ -293,12 +372,23 @@ const CustomizableDashboard = ({ theme, navigation }) => {
     console.log('User Level:', userLevel);
     console.log('Component:', DASHBOARD_COMPONENTS[componentType]);
     
-    // Check if component is already on dashboard
-    if (dashboardItems.includes(componentType)) {
-      Alert.alert(
-        'Already Added',
-        `${DASHBOARD_COMPONENTS[componentType].title} is already on your dashboard.`
-      );
+    // Check widget instance limit
+    const currentInstanceCount = dashboardItems.filter(widget => widget.type === componentType).length;
+    const instanceLimit = getWidgetInstanceLimit(componentType);
+    
+    if (currentInstanceCount >= instanceLimit) {
+      if (instanceLimit === 1) {
+        // Free user trying to add second widget - show upgrade modal
+        showUpgradePrompt(
+          `You've reached the limit of 1 ${DASHBOARD_COMPONENTS[componentType].title} widget in the free version. Upgrade to Pro for 3 instances per widget type.`
+        );
+      } else {
+        // Pro user hitting their limit - show simple banner notification
+        showSuccess(
+          `You can only have ${instanceLimit} instances of ${DASHBOARD_COMPONENTS[componentType].title}.`,
+          { type: 'warning' }
+        );
+      }
       setIsAddModalVisible(false);
       return;
     }
@@ -335,7 +425,8 @@ const CustomizableDashboard = ({ theme, navigation }) => {
           await AsyncStorage.setItem('focusTimerCongratsShown', 'true');
           setFocusTimerUnlockState('seen');
           // Add the component after showing congrats
-          const updatedItems = [...dashboardItems, componentType];
+          const newWidget = createWidgetInstance(componentType);
+          const updatedItems = [...dashboardItems, newWidget];
           setDashboardItems(updatedItems);
           saveDashboardConfig(updatedItems);
           return;
@@ -346,33 +437,45 @@ const CustomizableDashboard = ({ theme, navigation }) => {
     }
     
     console.log('Adding component normally');
-    const updatedItems = [...dashboardItems, componentType];
+    // Create new widget instance
+    const newWidget = createWidgetInstance(componentType);
+    const updatedItems = [...dashboardItems, newWidget];
     setDashboardItems(updatedItems);
     saveDashboardConfig(updatedItems);
     setIsAddModalVisible(false);
   };
   
-  // Remove a component from the dashboard
+  // Remove a component from the dashboard (permanently delete)
   const removeComponent = async (index) => {
     console.log('=== Remove Component Debug ===');
     console.log('Removing index:', index);
     console.log('Current dashboard items:', dashboardItems);
     console.log('Item being removed:', dashboardItems[index]);
     
-    const componentToRemove = dashboardItems[index];
+    const widgetToRemove = dashboardItems[index];
     
     // If removing Focus Timer, mark it as manually removed
-    if (componentToRemove === COMPONENT_TYPES.FOCUS_TIMER) {
+    if (widgetToRemove.type === COMPONENT_TYPES.FOCUS_TIMER) {
       console.log('Marking Focus Timer as manually removed');
       await AsyncStorage.setItem('focusTimerManuallyRemoved', 'true');
     }
     
+    // Remove widget's stored data
+    try {
+      await AsyncStorage.removeItem(`widget_data_${widgetToRemove.id}`);
+      console.log('Removed widget data for:', widgetToRemove.id);
+    } catch (error) {
+      console.error('Error removing widget data:', error);
+    }
+    
     const updatedItems = dashboardItems.filter((_, i) => i !== index);
     console.log('Updated items after removal:', updatedItems);
+    console.log('Widget permanently deleted:', widgetToRemove);
     
     setDashboardItems(updatedItems);
     saveDashboardConfig(updatedItems);
   };
+
   
   // Toggle removing mode
   const toggleRemovingMode = () => {
@@ -380,8 +483,8 @@ const CustomizableDashboard = ({ theme, navigation }) => {
   };
   
   // Render a specific dashboard component
-  const renderDashboardComponent = (componentType, index) => {
-    const componentInfo = DASHBOARD_COMPONENTS[componentType];
+  const renderDashboardComponent = (widget, index) => {
+    const componentInfo = DASHBOARD_COMPONENTS[widget.type];
     
     if (!componentInfo) return null;
     
@@ -392,7 +495,7 @@ const CustomizableDashboard = ({ theme, navigation }) => {
     const hasLevelAccess = !requiresLevel || userLevel >= requiresLevel;
     
     return (
-      <View key={`${componentType}-${index}`} style={styles.componentContainer}>
+      <View key={widget.id} style={styles.componentContainer}>
         {removingMode && (
           <TouchableOpacity
             style={[
@@ -406,13 +509,13 @@ const CustomizableDashboard = ({ theme, navigation }) => {
               }
             ]}
             onPress={() => {
-              console.log(`Remove button clicked for ${componentInfo.title} at index ${index}`);
+              console.log(`Remove button clicked for ${widget.name} at index ${index}`);
               removeComponent(index);
             }}
             accessible={true}
             accessibilityRole="button"
-            accessibilityLabel={`Remove ${componentInfo.title}`}
-            accessibilityHint={`Removes ${componentInfo.title} from your dashboard`}
+            accessibilityLabel={`Remove ${widget.name}`}
+            accessibilityHint={`Removes ${widget.name} from your dashboard`}
             hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
           >
             <Ionicons 
@@ -442,6 +545,11 @@ const CustomizableDashboard = ({ theme, navigation }) => {
           navigation={navigation} 
           isPremium={hasPremiumAccess}
           isUnlocked={hasLevelAccess}
+          widgetId={widget.id}
+          widgetData={widget.data}
+          widgetName={widget.name}
+          saveWidgetData={saveWidgetData}
+          loadWidgetData={loadWidgetData}
         />
       </View>
     );
@@ -449,10 +557,8 @@ const CustomizableDashboard = ({ theme, navigation }) => {
   
   // Render the "Add Component" modal
   const renderAddComponentModal = () => {
-    // Get components that aren't already on the dashboard
-    const availableComponents = Object.values(DASHBOARD_COMPONENTS).filter(
-      component => !dashboardItems.includes(component.id)
-    );
+    // Show all components (allow multiple instances)
+    const availableComponents = Object.values(DASHBOARD_COMPONENTS);
     
     // Adjust modal size based on device orientation and size
     const modalWidth = isLandscape 
@@ -503,166 +609,149 @@ const CustomizableDashboard = ({ theme, navigation }) => {
               contentContainerStyle={{ paddingBottom: scaleHeight(10) }}
               showsVerticalScrollIndicator={true}
             >
-              {availableComponents.length > 0 ? (
-                availableComponents.map((component) => {
-                  const shakeAnim = shakeAnimations[component.id] || new Animated.Value(0);
-                  
-                  return (
-                    <Animated.View
-                      key={component.id}
-                      style={{
-                        transform: [{ translateX: shakeAnim }]
-                      }}
+              {availableComponents.map((component) => {
+                const shakeAnim = shakeAnimations[component.id] || new Animated.Value(0);
+                
+                return (
+                  <Animated.View
+                    key={`${component.id}-${Math.random()}`}
+                    style={{
+                      transform: [{ translateX: shakeAnim }]
+                    }}
+                  >
+                    <TouchableOpacity
+                      style={[
+                        styles.componentOption, 
+                        { 
+                          backgroundColor: theme.card,
+                          borderColor: theme.border,
+                          padding: scaleWidth(12),
+                          borderRadius: scaleWidth(12),
+                        }
+                      ]}
+                      onPress={() => addComponent(component.id)}
+                      accessible={true}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Add ${component.title}`}
+                      accessibilityHint={`Adds ${component.title} to your dashboard`}
                     >
-                      <TouchableOpacity
-                        style={[
-                          styles.componentOption, 
-                          { 
-                            backgroundColor: theme.card,
-                            borderColor: theme.border,
-                            padding: scaleWidth(12),
-                            borderRadius: scaleWidth(12),
-                          }
-                        ]}
-                        onPress={() => addComponent(component.id)}
-                        accessible={true}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Add ${component.title}`}
-                        accessibilityHint={`Adds ${component.title} to your dashboard`}
-                      >
-                    <View style={[
-                      styles.componentIconContainer, 
-                      { 
-                        backgroundColor: theme.primary + '20',
-                        width: scaleWidth(40),
-                        height: scaleWidth(40),
-                        borderRadius: scaleWidth(20),
-                      }
-                    ]}>
-                      <Ionicons 
-                        name={component.icon} 
-                        size={scaleWidth(22)} 
-                        color={theme.primary} 
-                      />
-                    </View>
-                    <View style={styles.componentTitleContainer}>
+                  <View style={[
+                    styles.componentIconContainer, 
+                    { 
+                      backgroundColor: theme.primary + '20',
+                      width: scaleWidth(40),
+                      height: scaleWidth(40),
+                      borderRadius: scaleWidth(20),
+                    }
+                  ]}>
+                    <Ionicons 
+                      name={component.icon} 
+                      size={scaleWidth(22)} 
+                      color={theme.primary} 
+                    />
+                  </View>
+                  <View style={styles.componentTitleContainer}>
+                    <Text 
+                      style={[
+                        styles.componentTitle, 
+                        { 
+                          color: theme.text,
+                          fontSize: scaleFontSize(16),
+                        }
+                      ]}
+                      maxFontSizeMultiplier={1.3}
+                      numberOfLines={1}
+                    >
+                      {component.title}
+                    </Text>
+                    
+                    {/* Show "Lifetime Members only" for premium components */}
+                    {component.isPremium && !isPremiumUser && (
                       <Text 
                         style={[
-                          styles.componentTitle, 
+                          styles.premiumLabel, 
                           { 
-                            color: theme.text,
-                            fontSize: scaleFontSize(16),
+                            color: theme.textSecondary,
+                            fontSize: scaleFontSize(12),
                           }
                         ]}
                         maxFontSizeMultiplier={1.3}
                         numberOfLines={1}
                       >
-                        {component.title}
+                        Lifetime Members only
                       </Text>
-                      
-                      {/* Show "Lifetime Members only" for premium components */}
-                      {component.isPremium && !isPremiumUser && (
-                        <Text 
-                          style={[
-                            styles.premiumLabel, 
-                            { 
-                              color: theme.textSecondary,
-                              fontSize: scaleFontSize(12),
-                            }
-                          ]}
-                          maxFontSizeMultiplier={1.3}
-                          numberOfLines={1}
-                        >
-                          Lifetime Members only
-                        </Text>
-                      )}
-                      
-                      {/* Show level requirement for level-locked components */}
-                      {component.requiresLevel && userLevel < component.requiresLevel && (
-                        <Text 
-                          style={[
-                            styles.levelLabel, 
-                            { 
-                              color: '#FF9500',
-                              fontSize: scaleFontSize(12),
-                            }
-                          ]}
-                          maxFontSizeMultiplier={1.3}
-                          numberOfLines={1}
-                        >
-                          Unlock at level {component.requiresLevel}
-                        </Text>
-                      )}
-                      
-                      {/* Show "Unlock" text for newly unlocked Focus Timer */}
-                      {component.id === COMPONENT_TYPES.FOCUS_TIMER && focusTimerUnlockState === 'unlocked' && (
-                        <Text 
-                          style={[
-                            styles.unlockLabel, 
-                            { 
-                              color: '#4CAF50',
-                              fontSize: scaleFontSize(12),
-                              fontWeight: '600'
-                            }
-                          ]}
-                          maxFontSizeMultiplier={1.3}
-                          numberOfLines={1}
-                        >
-                          Unlock
-                        </Text>
-                      )}
-                    </View>
+                    )}
                     
-                    {/* Show appropriate icon based on requirements */}
-                    <Ionicons 
-                      name={
-                        // Premium locked
-                        (component.isPremium && !isPremiumUser) 
-                          ? "lock-closed"
-                        // Level locked
-                        : (component.requiresLevel && userLevel < component.requiresLevel)
-                          ? "lock-closed"
-                        // Focus Timer newly unlocked
-                        : (component.id === COMPONENT_TYPES.FOCUS_TIMER && focusTimerUnlockState === 'unlocked')
-                          ? "lock-open"
-                        // Default add icon
-                        : "add-circle"
-                      } 
-                      size={scaleWidth(22)} 
-                      color={
-                        // Premium locked
-                        (component.isPremium && !isPremiumUser) 
-                          ? theme.primary
-                        // Level locked  
-                        : (component.requiresLevel && userLevel < component.requiresLevel)
-                          ? '#FF9500'
-                        // Focus Timer newly unlocked
-                        : (component.id === COMPONENT_TYPES.FOCUS_TIMER && focusTimerUnlockState === 'unlocked')
-                          ? '#4CAF50'
-                        // Default add color
-                        : theme.primary
-                      } 
-                    />
-                      </TouchableOpacity>
-                    </Animated.View>
-                  );
-                })
-              ) : (
-                <View style={styles.noComponentsContainer}>
-                  <Text 
-                    style={[
-                      styles.noComponentsText, 
-                      { 
-                        color: theme.textSecondary,
-                        fontSize: scaleFontSize(14),
-                      }
-                    ]}
-                    maxFontSizeMultiplier={1.3}
-                  >
-                    All components have been added to your dashboard.
-                  </Text>
-                </View>
-              )}
+                    {/* Show level requirement for level-locked components */}
+                    {component.requiresLevel && userLevel < component.requiresLevel && (
+                      <Text 
+                        style={[
+                          styles.levelLabel, 
+                          { 
+                            color: '#FF9500',
+                            fontSize: scaleFontSize(12),
+                          }
+                        ]}
+                        maxFontSizeMultiplier={1.3}
+                        numberOfLines={1}
+                      >
+                        Unlock at level {component.requiresLevel}
+                      </Text>
+                    )}
+                    
+                    {/* Show "Unlock" text for newly unlocked Focus Timer */}
+                    {component.id === COMPONENT_TYPES.FOCUS_TIMER && focusTimerUnlockState === 'unlocked' && (
+                      <Text 
+                        style={[
+                          styles.unlockLabel, 
+                          { 
+                            color: '#4CAF50',
+                            fontSize: scaleFontSize(12),
+                            fontWeight: '600'
+                          }
+                        ]}
+                        maxFontSizeMultiplier={1.3}
+                        numberOfLines={1}
+                      >
+                        Unlock
+                      </Text>
+                    )}
+                  </View>
+                  
+                  {/* Show appropriate icon based on requirements */}
+                  <Ionicons 
+                    name={
+                      // Premium locked
+                      (component.isPremium && !isPremiumUser) 
+                        ? "lock-closed"
+                      // Level locked
+                      : (component.requiresLevel && userLevel < component.requiresLevel)
+                        ? "lock-closed"
+                      // Focus Timer newly unlocked
+                      : (component.id === COMPONENT_TYPES.FOCUS_TIMER && focusTimerUnlockState === 'unlocked')
+                        ? "lock-open"
+                      // Default add icon
+                      : "add-circle"
+                    } 
+                    size={scaleWidth(22)} 
+                    color={
+                      // Premium locked
+                      (component.isPremium && !isPremiumUser) 
+                        ? theme.primary
+                      // Level locked  
+                      : (component.requiresLevel && userLevel < component.requiresLevel)
+                        ? '#FF9500'
+                      // Focus Timer newly unlocked
+                      : (component.id === COMPONENT_TYPES.FOCUS_TIMER && focusTimerUnlockState === 'unlocked')
+                        ? '#4CAF50'
+                      // Default add color
+                      : theme.primary
+                    } 
+                  />
+                    </TouchableOpacity>
+                  </Animated.View>
+                );
+              })}
               
               {/* Feature Request Button */}
               <View style={[
@@ -730,138 +819,6 @@ const CustomizableDashboard = ({ theme, navigation }) => {
                   />
                 </TouchableOpacity>
                 
-                {/* Debug Buttons - Dev Only */}
-                {__DEV__ && (
-                  <>
-                    <TouchableOpacity
-                      style={[
-                        styles.featureRequestButton, 
-                        { 
-                          backgroundColor: 'rgba(255,0,0,0.1)',
-                          borderColor: '#FF0000',
-                          padding: scaleWidth(14),
-                          borderRadius: scaleWidth(12),
-                          marginTop: scaleHeight(10),
-                        }
-                      ]}
-                      onPress={async () => {
-                        await AsyncStorage.removeItem('focusTimerCongratsShown');
-                        // Reset unlock state to 'unlocked' so it shows the unlock symbol and text
-                        if (userLevel >= 4) {
-                          setFocusTimerUnlockState('unlocked');
-                        }
-                        // Clear any existing falling animations
-                        setFallingClockAnimations([]);
-                        Alert.alert('Debug', 'Congratulations flag reset! Focus Timer should now show unlock state.');
-                      }}
-                      accessible={true}
-                      accessibilityRole="button"
-                      accessibilityLabel="Reset congratulations"
-                    >
-                      <Ionicons 
-                        name="refresh" 
-                        size={scaleWidth(20)} 
-                        color="#FF0000" 
-                        style={styles.featureRequestIcon} 
-                      />
-                      <Text 
-                        style={[
-                          styles.featureRequestButtonText, 
-                          { 
-                            color: '#FF0000',
-                            fontSize: scaleFontSize(16),
-                          }
-                        ]}
-                        maxFontSizeMultiplier={1.3}
-                      >
-                        Reset Congrats (Dev)
-                      </Text>
-                    </TouchableOpacity>
-                    
-                    <TouchableOpacity
-                      style={[
-                        styles.featureRequestButton, 
-                        { 
-                          backgroundColor: 'rgba(255,165,0,0.1)',
-                          borderColor: '#FFA500',
-                          padding: scaleWidth(14),
-                          borderRadius: scaleWidth(12),
-                          marginTop: scaleHeight(10),
-                        }
-                      ]}
-                      onPress={() => {
-                        const focusTimerIndex = dashboardItems.indexOf(COMPONENT_TYPES.FOCUS_TIMER);
-                        if (focusTimerIndex !== -1) {
-                          removeComponent(focusTimerIndex);
-                          Alert.alert('Debug', 'Focus Timer removed from dashboard!');
-                        } else {
-                          Alert.alert('Debug', 'Focus Timer not found on dashboard.');
-                        }
-                      }}
-                      accessible={true}
-                      accessibilityRole="button"
-                      accessibilityLabel="Remove Focus Timer"
-                    >
-                      <Ionicons 
-                        name="trash" 
-                        size={scaleWidth(20)} 
-                        color="#FFA500" 
-                        style={styles.featureRequestIcon} 
-                      />
-                      <Text 
-                        style={[
-                          styles.featureRequestButtonText, 
-                          { 
-                            color: '#FFA500',
-                            fontSize: scaleFontSize(16),
-                          }
-                        ]}
-                        maxFontSizeMultiplier={1.3}
-                      >
-                        Remove Focus Timer (Dev)
-                      </Text>
-                    </TouchableOpacity>
-                    
-                    <TouchableOpacity
-                      style={[
-                        styles.featureRequestButton, 
-                        { 
-                          backgroundColor: 'rgba(0,255,0,0.1)',
-                          borderColor: '#00FF00',
-                          padding: scaleWidth(14),
-                          borderRadius: scaleWidth(12),
-                          marginTop: scaleHeight(10),
-                        }
-                      ]}
-                      onPress={async () => {
-                        await AsyncStorage.removeItem('focusTimerManuallyRemoved');
-                        Alert.alert('Debug', 'Manual removal flag reset! Focus Timer can auto-add again.');
-                      }}
-                      accessible={true}
-                      accessibilityRole="button"
-                      accessibilityLabel="Reset manual removal flag"
-                    >
-                      <Ionicons 
-                        name="add-circle" 
-                        size={scaleWidth(20)} 
-                        color="#00FF00" 
-                        style={styles.featureRequestIcon} 
-                      />
-                      <Text 
-                        style={[
-                          styles.featureRequestButtonText, 
-                          { 
-                            color: '#00FF00',
-                            fontSize: scaleFontSize(16),
-                          }
-                        ]}
-                        maxFontSizeMultiplier={1.3}
-                      >
-                        Reset Manual Removal (Dev)
-                      </Text>
-                    </TouchableOpacity>
-                  </>
-                )}
               </View>
             </ScrollView>
             
@@ -890,6 +847,148 @@ const CustomizableDashboard = ({ theme, navigation }) => {
                 Close
               </Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
+
+  // Render upgrade modal (like in GoalsScreen)
+  const renderUpgradeModal = () => {
+    return (
+      <Modal
+        visible={showUpgradeModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowUpgradeModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[
+            styles.upgradeModalContent,
+            {
+              backgroundColor: isDarkMode ? '#121214' : '#F5F5F7',
+              borderColor: theme.border,
+              borderRadius: scaleWidth(20),
+              padding: scaleWidth(24),
+              margin: scaleWidth(20),
+              borderWidth: 1,
+            }
+          ]}>
+            {/* Pro Icon */}
+            <View style={[
+              styles.upgradeIconContainer,
+              {
+                backgroundColor: '#3F51B5',
+                width: scaleWidth(80),
+                height: scaleWidth(80),
+                borderRadius: scaleWidth(40),
+                alignSelf: 'center',
+                marginBottom: scaleHeight(20)
+              }
+            ]}>
+              <Ionicons name="diamond" size={scaleWidth(40)} color="#FFFFFF" />
+            </View>
+            
+            {/* Title */}
+            <Text 
+              style={[
+                styles.upgradeTitle,
+                {
+                  color: theme.text,
+                  fontSize: scaleFontSize(22),
+                  fontWeight: 'bold',
+                  textAlign: 'center',
+                  marginBottom: scaleHeight(12)
+                }
+              ]}
+            >
+              Upgrade to Pro
+            </Text>
+            
+            {/* Message */}
+            <Text 
+              style={[
+                styles.upgradeMessage,
+                {
+                  color: theme.textSecondary,
+                  fontSize: scaleFontSize(16),
+                  lineHeight: scaleHeight(22),
+                  textAlign: 'center',
+                  marginBottom: scaleHeight(24)
+                }
+              ]}
+            >
+              {upgradeMessage}
+            </Text>
+            
+            {/* Buttons */}
+            <View style={styles.upgradeButtonContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.upgradeButton,
+                  {
+                    backgroundColor: '#3F51B5',
+                    paddingVertical: scaleHeight(14),
+                    paddingHorizontal: scaleWidth(20),
+                    borderRadius: scaleWidth(12),
+                    marginBottom: scaleHeight(12),
+                    width: '100%',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }
+                ]}
+                onPress={goToPricingScreen}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Upgrade to Pro"
+              >
+                <Text 
+                  style={[
+                    styles.upgradeButtonText,
+                    {
+                      color: '#FFFFFF',
+                      fontSize: scaleFontSize(16),
+                      fontWeight: 'bold',
+                      textAlign: 'center'
+                    }
+                  ]}
+                >
+                  Upgrade Now
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[
+                  styles.cancelButton,
+                  {
+                    paddingVertical: scaleHeight(14),
+                    paddingHorizontal: scaleWidth(20),
+                    borderRadius: scaleWidth(12),
+                    width: '100%',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }
+                ]}
+                onPress={() => setShowUpgradeModal(false)}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Maybe later"
+              >
+                <Text 
+                  style={[
+                    styles.cancelButtonText,
+                    {
+                      color: theme.textSecondary,
+                      fontSize: scaleFontSize(16),
+                      textAlign: 'center'
+                    }
+                  ]}
+                >
+                  Maybe Later
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -1125,6 +1224,7 @@ const CustomizableDashboard = ({ theme, navigation }) => {
         </View>
         
         <View style={styles.headerActions}>
+          
           {dashboardItems.length > 0 && (
             <TouchableOpacity
               style={[
@@ -1134,6 +1234,7 @@ const CustomizableDashboard = ({ theme, navigation }) => {
                   width: scaleWidth(32),
                   height: scaleWidth(32),
                   borderRadius: scaleWidth(16),
+                  marginRight: scaleWidth(8),
                 }
               ]}
               onPress={toggleRemovingMode}
@@ -1220,12 +1321,13 @@ const CustomizableDashboard = ({ theme, navigation }) => {
           </Text>
         </View>
       ) : (
-        dashboardItems.map((componentType, index) => 
-          renderDashboardComponent(componentType, index)
+        dashboardItems.map((widget, index) => 
+          renderDashboardComponent(widget, index)
         )
       )}
       
       {renderAddComponentModal()}
+      {renderUpgradeModal()}
       {renderFocusTimerCongratsModal()}
     </View>
   );
@@ -1258,7 +1360,6 @@ const styles = StyleSheet.create({
     // width, height, borderRadius set in component
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: scaleWidth(8),
   },
   addButton: {
     // width, height, borderRadius set in component
@@ -1433,6 +1534,35 @@ const styles = StyleSheet.create({
     // fontSize set in component
     fontWeight: '600',
   },
+  // Upgrade modal styles
+  upgradeModalContent: {
+    alignItems: 'center',
+  },
+  upgradeIconContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  upgradeTitle: {},
+  upgradeMessage: {},
+  upgradeButtonContainer: {
+    width: '100%',
+    flexDirection: 'column',
+  },
+  upgradeButton: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  upgradeButtonText: {},
+  cancelButton: {},
+  cancelButtonText: {},
   // Congratulations modal styles
   congratsModalContent: {
     alignItems: 'center',

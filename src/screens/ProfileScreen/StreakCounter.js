@@ -7,7 +7,10 @@ import {
   TouchableOpacity, 
   Platform,
   Animated,
-  Easing
+  Easing,
+  Modal,
+  ScrollView,
+  Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -42,7 +45,14 @@ const DEFAULT_COLORS = [
   '#FD3393', // Pink
 ];
 
-const StreakCounter = ({ navigation }) => {
+const StreakCounter = ({ 
+  navigation, 
+  widgetId, 
+  saveWidgetData, 
+  loadWidgetData, 
+  widgetName,
+  theme: propTheme
+}) => {
   const { showSuccess, showError } = useNotification() || { 
     showSuccess: (msg) => console.log(msg),
     showError: (msg) => console.error(msg)
@@ -73,6 +83,7 @@ const StreakCounter = ({ navigation }) => {
       { id: '3', text: 'Stay consistent', completed: false }
     ]
   });
+
   
   // Get screen dimensions for responsive layout
   const { width, height } = useScreenDimensions();
@@ -95,7 +106,26 @@ const StreakCounter = ({ navigation }) => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const streakJson = await AsyncStorage.getItem('streakData');
+        // Use widget instance storage if available, fall back to old storage for migration
+        let streakJson = null;
+        
+        if (widgetId && loadWidgetData) {
+          const widgetData = await loadWidgetData(widgetId);
+          if (widgetData) {
+            streakJson = JSON.stringify(widgetData);
+          }
+        }
+        
+        // For new widget instances with widgetId, never load old data - start completely fresh
+        if (!streakJson && widgetId) {
+          console.log('New widget instance starting fresh - no data inheritance');
+          return; // Exit early, don't load any old data
+        } 
+        
+        // Only fall back to old storage for very old installations without widgetId
+        if (!streakJson && !widgetId) {
+          streakJson = await AsyncStorage.getItem('streakData');
+        }
         
         if (streakJson) {
           const data = JSON.parse(streakJson);
@@ -144,7 +174,7 @@ const StreakCounter = ({ navigation }) => {
         })
       ])
     ).start();
-  }, []);
+  }, [widgetId, loadWidgetData]);
 
   // Run progress animation when streak data changes
   useEffect(() => {
@@ -171,7 +201,13 @@ const StreakCounter = ({ navigation }) => {
 
   const saveStreakData = async (data) => {
     try {
-      await AsyncStorage.setItem('streakData', JSON.stringify(data));
+      // Use widget instance storage if available
+      if (widgetId && saveWidgetData) {
+        await saveWidgetData(widgetId, data);
+      } else {
+        // Fall back to old storage
+        await AsyncStorage.setItem('streakData', JSON.stringify(data));
+      }
       return true;
     } catch (error) {
       console.error('Error saving streak data:', error);
@@ -179,6 +215,7 @@ const StreakCounter = ({ navigation }) => {
       return false;
     }
   };
+
 
   const updateStreak = async () => {
     try {
@@ -283,9 +320,45 @@ const StreakCounter = ({ navigation }) => {
   const days = getLastSevenDays();
   const recentDays = days.slice(-3); // Get the most recent 3 days
 
+  // Save current streak data as a separate instance
+  const saveCurrentStreakInstance = async (dataToSave = streakData) => {
+    try {
+      // Generate a unique ID for the saved instance
+      const timestamp = Date.now();
+      const saveId = `widget_data_streak_${timestamp}`;
+      
+      // Add timestamp to the data
+      const finalDataToSave = {
+        ...dataToSave,
+        lastUpdated: new Date().toISOString(),
+        savedAt: timestamp
+      };
+      
+      // Save to AsyncStorage with unique key
+      await AsyncStorage.setItem(saveId, JSON.stringify(finalDataToSave));
+      console.log('Streak data auto-saved with ID:', saveId);
+      
+      return saveId;
+    } catch (error) {
+      console.error('Error saving current streak data:', error);
+      throw error;
+    }
+  };
+
   // Navigate to full screen view
   const navigateToFullScreen = () => {
-    navigation.navigate('StreakDetailScreen', { theme: DARK_THEME });
+    navigation.navigate('StreakDetailScreen', { 
+      theme: DARK_THEME,
+      widgetId,
+      saveWidgetData,
+      loadWidgetData,
+      currentStreakData: streakData,
+      onStreakDataUpdate: (newData) => {
+        setStreakData(newData);
+        saveStreakData(newData);
+      },
+      saveCurrentStreakInstance
+    });
   };
 
   // Render checklist dots based on actual items
@@ -466,6 +539,7 @@ const StreakCounter = ({ navigation }) => {
           </Text>
         </View>
       </TouchableOpacity>
+      
     </Animated.View>
   );
 };

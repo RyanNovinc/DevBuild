@@ -172,39 +172,65 @@ const TimeScreen = ({ navigation }) => {
   const handleZoomIn = () => {
     animateButtonPress();
     
-    const newScale = Math.min(scale + 0.25, 3);
+    const newScale = Math.min(scale + 0.1, 3);
     
-    // Use the middle of the viewport as focal point
-    const viewportHeight = height;
-    const viewportCenter = viewportHeight / 2;
-    
-    // Calculate new scroll position to maintain focal point
+    // Calculate new scroll position to maintain current center view
     if (scrollViewRef.current) {
-      const newScrollY = calculateFocalZoom(scale, newScale, { x: 0, y: viewportCenter });
-      scrollViewRef.current.scrollTo({ y: newScrollY, animated: true });
+      const currentScrollY = startScrollY.current;
+      const viewportHeight = height;
+      const viewportCenter = currentScrollY + (viewportHeight / 2);
+      
+      // Calculate the new scroll position to keep the same content centered
+      const scaleFactor = newScale / scale;
+      const newCenterPosition = viewportCenter * scaleFactor;
+      const newScrollY = newCenterPosition - (viewportHeight / 2);
+      
+      // Update scale and scroll position in next frame to avoid state conflicts
+      requestAnimationFrame(() => {
+        setScale(newScale);
+        requestAnimationFrame(() => {
+          if (scrollViewRef.current) {
+            scrollViewRef.current.scrollTo({ y: Math.max(0, newScrollY), animated: false });
+          }
+        });
+      });
+    } else {
+      setScale(newScale);
     }
     
     lastScale.current = newScale;
-    setScale(newScale);
   };
   
   const handleZoomOut = () => {
     animateButtonPress();
     
-    const newScale = Math.max(scale - 0.25, 0.5);
+    const newScale = Math.max(scale - 0.1, 0.2);
     
-    // Use the middle of the viewport as focal point
-    const viewportHeight = height;
-    const viewportCenter = viewportHeight / 2;
-    
-    // Calculate new scroll position to maintain focal point
+    // Calculate new scroll position to maintain current center view
     if (scrollViewRef.current) {
-      const newScrollY = calculateFocalZoom(scale, newScale, { x: 0, y: viewportCenter });
-      scrollViewRef.current.scrollTo({ y: newScrollY, animated: true });
+      const currentScrollY = startScrollY.current;
+      const viewportHeight = height;
+      const viewportCenter = currentScrollY + (viewportHeight / 2);
+      
+      // Calculate the new scroll position to keep the same content centered
+      const scaleFactor = newScale / scale;
+      const newCenterPosition = viewportCenter * scaleFactor;
+      const newScrollY = newCenterPosition - (viewportHeight / 2);
+      
+      // Update scale and scroll position in next frame to avoid state conflicts
+      requestAnimationFrame(() => {
+        setScale(newScale);
+        requestAnimationFrame(() => {
+          if (scrollViewRef.current) {
+            scrollViewRef.current.scrollTo({ y: Math.max(0, newScrollY), animated: false });
+          }
+        });
+      });
+    } else {
+      setScale(newScale);
     }
     
     lastScale.current = newScale;
-    setScale(newScale);
   };
   
   // Function to calculate focal-based scroll position
@@ -243,7 +269,7 @@ const TimeScreen = ({ navigation }) => {
     focalPoint.current = { x: focalX, y: focalY };
     
     // Calculate new scale with limits
-    const newScale = Math.max(0.5, Math.min(lastScale.current * pinchScale, 3));
+    const newScale = Math.max(0.2, Math.min(lastScale.current * pinchScale, 3));
     
     // Only update if scale has changed significantly
     if (Math.abs(scale - newScale) > 0.01) {
@@ -554,6 +580,35 @@ const TimeScreen = ({ navigation }) => {
     }
     
     navigation.navigate('TimeBlock', { mode: 'create', date: currentDate, isPremium });
+  };
+
+  // Function to add a new time block with pre-filled times
+  const handleAddTimeBlockWithTime = (startTime, endTime) => {
+    animateButtonPress();
+    
+    // Check for free tier planning horizon
+    if (!isPremium && isBeyondFreePlanningHorizon(currentDate)) {
+      setLimitModalType('horizon');
+      setShowLimitModal(true);
+      return;
+    }
+    
+    // Check weekly time block limit for free users
+    const { limitReached, current, max } = checkWeeklyTimeBlockLimit();
+    
+    if (limitReached) {
+      setLimitModalType('weeklyLimit');
+      setShowLimitModal(true);
+      return;
+    }
+    
+    navigation.navigate('TimeBlock', { 
+      mode: 'create', 
+      date: currentDate, 
+      isPremium,
+      prefilledStartTime: startTime,
+      prefilledEndTime: endTime
+    });
   };
   
   // Function to view time block details
@@ -908,6 +963,7 @@ else if (isPremium && tabName === 'Month') {
                 currentDate={currentDate}
                 handleTimeBlockPress={handleTimeBlockPress}
                 handleAddTimeBlock={handleAddTimeBlock}
+                handleAddTimeBlockWithTime={handleAddTimeBlockWithTime}
                 getHourHeight={getHourHeight}
                 calculateTimeBlockStyle={calculateTimeBlockStyle}
                 getDarkerShade={getDarkerShade}
@@ -917,6 +973,7 @@ else if (isPremium && tabName === 'Month') {
                 theme={theme}
                 isDarkMode={isDarkMode}
                 isPremium={isPremium}
+                scale={scale}
               />
             </ScrollView>
           </Animated.View>

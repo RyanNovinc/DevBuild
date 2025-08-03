@@ -19,6 +19,8 @@ import OnboardingService from '../../services/OnboardingService';
 // Import I18nProvider
 import { I18nProvider } from './context/I18nContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+// Import the new atomic onboarding completion system
+import { useOnboardingCompletion, ONBOARDING_STATES } from '../../hooks/useOnboardingCompletion';
 
 // Import our screens
 import WelcomePage from './screens/WelcomePage';
@@ -47,6 +49,20 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
     showSuccess,
     showError
   } = useAppContext();
+
+  // Use the new atomic onboarding completion system
+  const {
+    state: onboardingState,
+    error: onboardingError,
+    progress: onboardingProgress,
+    completeOnboarding: executeOnboardingCompletion,
+    isProcessing: isOnboardingProcessing,
+    isCompleted: isOnboardingCompleted,
+    hasError: hasOnboardingError
+  } = useOnboardingCompletion({
+    updateAppSetting,
+    refreshData
+  });
   
   // Screen state
   const [currentScreen, setCurrentScreen] = useState(0);
@@ -276,31 +292,27 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
     );
   };
   
-  // SIMPLIFIED: Complete onboarding using the new OnboardingService
+  // NEW: Complete onboarding using atomic transaction system
   const completeOnboarding = async () => {
     // Prevent multiple simultaneous calls
-    if (isNavigating) {
+    if (isOnboardingProcessing || isNavigating) {
       console.log("Onboarding completion already in progress, ignoring duplicate call");
       return;
     }
     
-    console.log("Starting onboarding completion...");
+    console.log("🚀 Starting atomic onboarding completion...");
     setIsNavigating(true);
     
     try {
-      console.log("Starting simplified onboarding completion process...");
-      
       if (!selectedDomain || !selectedGoal) {
         throw new Error("Missing domain or goal selection");
       }
       
-      // Standardize domain properties - create a completely new object to avoid property assignment errors
+      // Standardize domain properties
       const standardDomain = getStandardDomain(selectedDomain.name);
       
       const finalDomain = {
-        // Copy all existing properties first
         ...selectedDomain,
-        // Then override with standard properties if available
         ...(standardDomain && {
           name: standardDomain.name,
           color: standardDomain.color,
@@ -308,91 +320,26 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
         })
       };
       
-      // SIMPLIFIED: Use OnboardingService for all data creation in one batch
-      const result = await OnboardingService.createOnboardingData(finalDomain, selectedGoal);
+      // Use the atomic completion system
+      const result = await executeOnboardingCompletion(finalDomain, selectedGoal, selectedCountry);
       
-      if (!result.success) {
-        console.error("Failed to create onboarding data:", result.message);
-        throw new Error(result.message || "Failed to create onboarding data");
-      }
-      
-      console.log("Onboarding data created successfully:", result);
-      
-      // Update app context settings if available - wrap in try-catch to prevent crashes
-      if (updateAppSetting && typeof updateAppSetting === 'function') {
-        try {
-          await updateAppSetting('onboardingCompleted', true);
-          await updateAppSetting('themeColor', '#1e3a8a');
-          await updateAppSetting('selectedDomain', finalDomain.name);
-          await updateAppSetting('selectedCountry', selectedCountry); // Save selected country
-          await updateAppSetting('selectedGoal', {
-            domain: finalDomain.name,
-            goalName: selectedGoal.name,
-            projects: selectedGoal.projects || []
-          });
-          console.log("✅ App settings updated successfully");
-        } catch (settingsError) {
-          console.warn("⚠️ Failed to update some app settings:", settingsError);
-          // Continue anyway - this shouldn't break the onboarding
-        }
-      }
-      
-      // Force refresh of app context data with better error handling
-      if (typeof refreshData === 'function') {
-        try {
-          console.log("🔄 Refreshing app context data...");
-          await refreshData().catch(err => console.warn('First refresh failed:', err));
-          
-          // Wait to ensure state is updated and do a second refresh
-          await new Promise(resolve => setTimeout(resolve, 1500));
-          await refreshData().catch(err => console.warn('Second refresh failed:', err));
-          console.log("✅ App context data refreshed");
-        } catch (refreshError) {
-          console.warn("⚠️ Data refresh encountered errors:", refreshError);
-          // Continue anyway - app should still work with existing data
-        }
-      }
-      
-      // Set flag to indicate we're coming directly from onboarding
-      try {
-        await AsyncStorage.setItem('directFromOnboarding', 'true');
-        console.log("✅ Direct from onboarding flag set");
-      } catch (error) {
-        console.warn('⚠️ Failed to set directFromOnboarding flag:', error);
-      }
+      console.log("✅ Atomic onboarding completion successful:", result);
       
       // Show success message
       if (typeof showSuccess === 'function') {
         showSuccess('Your goal has been created successfully!');
       }
       
-      // Wait before navigation to ensure all data is processed and state is stable
-      console.log("⏳ Onboarding completed, preparing for navigation...");
-      await new Promise(resolve => setTimeout(resolve, 3000)); // Extended delay to ensure settings update propagates
+      // The App component will handle navigation based on the onboardingCompleted state
+      console.log("🏠 Onboarding complete - App will handle navigation automatically");
       
-      // Navigate to the main screen - try automatic navigation first, then fallback
-      try {
-        console.log("🏠 Onboarding complete - attempting navigation...");
-        
-        // Clean up any potential memory leaks before navigation
-        setIsNavigating(false);
-        
-        // The app should automatically navigate when onboardingCompleted becomes true
-        // This is handled by the conditional rendering in App.js
-        console.log("🏠 Waiting for app to automatically navigate based on onboardingCompleted state...");
-        
-        console.log("✅ Onboarding completion process finished");
-      } catch (navError) {
-        console.error('❌ Error during onboarding completion:', navError);
-        // If there's still an issue, the app will stay on onboarding and user can try again
-      }
     } catch (error) {
-      console.error('Error completing onboarding:', error);
+      console.error('❌ Atomic onboarding completion failed:', error);
       
       if (typeof showError === 'function') {
-        showError('There was an error creating your goal. Please try again.');
+        showError(error.message || 'There was an error creating your goal. Please try again.');
       }
-      
+    } finally {
       setIsNavigating(false);
     }
   };
@@ -426,17 +373,17 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
     goToNextScreen();
   };
   
-  // Handle skipping onboarding completely  
+  // Handle skipping onboarding completely using atomic system
   const handleSkipOnboarding = async () => {
     try {
-      console.error('🚀 SKIP ONBOARDING STARTED');
+      console.log('🚀 Starting atomic skip onboarding');
       setIsNavigating(true);
       
       // Set default values for a quick start
       const defaultDomain = getDomainDefinitions()[3]; // Personal Growth
       const defaultGoal = defaultDomain.goals[0]; // Learning New Skills
       
-      // Create a standardized domain - avoid property assignment errors
+      // Create a standardized domain
       const standardDomain = getStandardDomain(defaultDomain.name) || {
         name: "Personal Growth",
         icon: "school",
@@ -444,69 +391,30 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
       };
       
       const finalDomain = {
-        // Copy all existing properties first
         ...defaultDomain,
-        // Then override with standard properties
         name: standardDomain.name,
         color: standardDomain.color,
         icon: standardDomain.icon
       };
       
-      // Use service to create data (specify this is NOT full onboarding)
-      console.error('🚀 CALLING OnboardingService.createOnboardingData');
-      const result = await OnboardingService.createOnboardingData(finalDomain, defaultGoal, { isFullOnboarding: false });
-      console.error('🚀 OnboardingService result:', result);
+      // Use the atomic completion system for skip onboarding
+      const result = await executeOnboardingCompletion(finalDomain, defaultGoal, selectedCountry);
       
-      if (!result.success) {
-        throw new Error(result.message || "Failed to create default onboarding data");
-      }
-      
-      // Update app settings - wrap in try-catch to prevent crashes
-      if (updateAppSetting && typeof updateAppSetting === 'function') {
-        try {
-          await updateAppSetting('onboardingCompleted', true);
-          await updateAppSetting('themeColor', '#1e3a8a');
-          await updateAppSetting('selectedDomain', finalDomain.name);
-          await updateAppSetting('selectedCountry', selectedCountry); // Save selected country
-          await updateAppSetting('selectedGoal', {
-            domain: finalDomain.name,
-            goalName: defaultGoal.name,
-            projects: defaultGoal.projects || []
-          });
-          console.log("✅ Skip onboarding: App settings updated successfully");
-        } catch (settingsError) {
-          console.warn("⚠️ Skip onboarding: Failed to update some app settings:", settingsError);
-          // Continue anyway - this shouldn't break the onboarding
-        }
-      }
-      
-      // Refresh data - wrap in try-catch to prevent crashes
-      if (typeof refreshData === 'function') {
-        try {
-          await refreshData().catch(err => console.warn('Skip onboarding: First refresh failed:', err));
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          await refreshData().catch(err => console.warn('Skip onboarding: Second refresh failed:', err));
-          console.log("✅ Skip onboarding: Data refresh completed");
-        } catch (refreshError) {
-          console.warn("⚠️ Skip onboarding: Data refresh encountered errors:", refreshError);
-          // Continue anyway - app should still work
-        }
-      }
+      console.log("✅ Atomic skip onboarding successful:", result);
       
       // Show success
       if (typeof showSuccess === 'function') {
         showSuccess('Welcome to LifeCompass! We\'ve set up a default goal to get you started.');
       }
       
-      // App will automatically navigate to main screen since onboardingCompleted is now true
-      console.log("✅ Skip onboarding complete - app should navigate automatically");
+      console.log("✅ Skip onboarding complete - App will handle navigation automatically");
     } catch (error) {
-      console.error('🚀 ERROR SKIPPING ONBOARDING:', error);
+      console.error('❌ Atomic skip onboarding failed:', error);
       
       if (typeof showError === 'function') {
-        showError('There was an error skipping onboarding. Please try again.');
+        showError(error.message || 'There was an error skipping onboarding. Please try again.');
       }
-      
+    } finally {
       setIsNavigating(false);
     }
   };

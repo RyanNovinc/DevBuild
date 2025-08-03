@@ -9,7 +9,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
-import { CommonActions } from '@react-navigation/native';
+import { CommonActions, useFocusEffect } from '@react-navigation/native';
+import { CardStyleInterpolators } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { 
@@ -22,6 +23,8 @@ import {
   InteractionManager,
   Animated
 } from 'react-native';
+import PagerView from 'react-native-pager-view';
+import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 import { 
   SafeAreaProvider, 
   initialWindowMetrics
@@ -65,6 +68,9 @@ import AppContextUpdater from './src/context/AppContextUpdater';
 
 // Import I18nProvider for translation support
 import { I18nProvider } from './src/screens/Onboarding/context/I18nContext';
+
+// Import the new transition screen for stable onboarding completion
+import OnboardingTransitionScreen from './src/components/OnboardingTransitionScreen';
 
 // Initialize AWS Amplify at the application root
 const initializeAmplify = () => {
@@ -404,7 +410,191 @@ class NavigationErrorBoundary extends React.Component {
   }
 }
 
-// Stack navigators for each tab
+// Custom Goals Screen with Built-in Tab Switching (No Material Top Tab Navigator)
+// This eliminates the nested navigator issue completely
+
+// Local override for goals limit to show 2 instead of 3
+const LOCAL_MAX_GOALS = 2;
+
+// Tab Badge Component - Optimized for smaller size and better spacing
+const TabBadge = ({ count, maxCount, isPro }) => {
+  if (count === 0) return null;
+  
+  return (
+    <View style={{
+      backgroundColor: 'rgba(255,255,255,0.25)',
+      borderRadius: scaleWidth(8),
+      paddingHorizontal: scaleWidth(6),
+      paddingVertical: scaleHeight(2),
+      marginLeft: scaleWidth(6),
+      minWidth: scaleWidth(16),
+      alignItems: 'center',
+      justifyContent: 'center'
+    }}>
+      <Text style={{
+        color: '#FFFFFF',
+        fontSize: scaleFontSize(10),
+        fontWeight: '600',
+        includeFontPadding: false,
+        textAlignVertical: 'center'
+      }}>
+        {isPro ? count : `${count}/${maxCount}`}
+      </Text>
+    </View>
+  );
+};
+
+// Goals Tab Navigator using react-native-tab-view for proper color animations
+const GoalsTabNavigator = ({ navigation, route }) => {
+  const { theme } = useTheme();
+  const { width } = useScreenDimensions();
+  const appContext = useAppContext();
+  const goals = appContext?.goals || [];
+  const isPro = appContext?.userSubscriptionStatus === 'pro' || appContext?.userSubscriptionStatus === 'unlimited' || false;
+  
+  // Get safe area insets to match TasksScreen positioning
+  const safeSpacing = useSafeSpacing();
+  
+  // Calculate goal counts
+  const activeGoals = goals.filter(goal => !goal.completed);
+  const completedGoals = goals.filter(goal => goal.completed);
+  
+  // Always start at Overview tab to match content behavior
+  const [navigationState, setNavigationState] = React.useState({
+    index: 0,
+    routes: [
+      { key: 'overview', title: 'Overview' },
+      { key: 'active', title: 'Goals' },
+      { key: 'completed', title: 'Done' },
+    ],
+  });
+  
+  // Force key to remount TabView when returning to screen
+  const [tabViewKey, setTabViewKey] = React.useState(0);
+
+  // Reset to Overview tab whenever screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      setNavigationState({
+        index: 0,
+        routes: [
+          { key: 'overview', title: 'Overview' },
+          { key: 'active', title: 'Goals' },
+          { key: 'completed', title: 'Done' },
+        ],
+      });
+      setTabViewKey(prev => prev + 1); // Force TabView to remount
+    }, [])
+  );
+  
+  // Render scene function that responds to state changes
+  const renderScene = ({ route }) => {
+    switch (route.key) {
+      case 'overview':
+        return <LifePlanOverviewScreen navigation={navigation} hideBackButton={true} />;
+      case 'active':
+        return <GoalsScreen navigation={navigation} tabMode="active" />;
+      case 'completed':
+        return <GoalsScreen navigation={navigation} tabMode="completed" />;
+      default:
+        return null;
+    }
+  };
+  
+  return (
+    <View style={{ 
+      flex: 1, 
+      backgroundColor: theme.background,
+      paddingTop: safeSpacing.top // Match TasksScreen safe area padding
+    }}>
+      <TabView
+        key={tabViewKey}
+        navigationState={navigationState}
+        renderScene={renderScene}
+        onIndexChange={(index) => {
+          setNavigationState(prev => ({ ...prev, index }));
+        }}
+        initialLayout={{ width }}
+        renderTabBar={(props) => (
+          <TabBar
+            {...props}
+            style={{
+              backgroundColor: theme.cardElevated || '#1F1F1F',
+              elevation: 0,
+              shadowOpacity: 0,
+              borderRadius: scaleWidth(25),
+              marginHorizontal: scaleWidth(20),
+              marginVertical: scaleHeight(10),
+              height: scaleHeight(44),
+            }}
+            indicatorStyle={{
+              backgroundColor: theme.primary,
+              height: scaleHeight(38),
+              borderRadius: scaleWidth(20),
+              marginBottom: 3,
+              marginLeft: 3,
+              width: Math.floor((width - scaleWidth(46)) / 3) - 6,
+              zIndex: 1,
+            }}
+            labelStyle={{
+              fontSize: scaleFontSize(16),
+              fontWeight: '600',
+              textTransform: 'none',
+              margin: 0,
+            }}
+            renderLabel={({ route, focused, color }) => {
+              // Get icon and badge for each route
+              let iconName, badge = null;
+              if (route.key === 'overview') {
+                iconName = focused ? 'compass' : 'compass-outline';
+              } else if (route.key === 'active') {
+                iconName = focused ? 'flag' : 'flag-outline';
+                badge = <TabBadge count={activeGoals.length} maxCount={LOCAL_MAX_GOALS} isPro={isPro} />;
+              } else if (route.key === 'completed') {
+                iconName = focused ? 'trophy' : 'trophy-outline';
+                badge = <TabBadge count={completedGoals.length} maxCount={LOCAL_MAX_GOALS} isPro={isPro} />;
+              }
+              
+              return (
+                <View style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingVertical: 0,
+                  paddingHorizontal: scaleWidth(12),
+                  height: scaleHeight(38),
+                  marginTop: -scaleHeight(6),
+                }}>
+                  <Ionicons
+                    name={iconName}
+                    size={scaleWidth(22)}
+                    color={color}
+                    style={{ 
+                      marginRight: spacing.xs,
+                      marginTop: scaleHeight(1),
+                    }}
+                  />
+                  <Text style={{
+                    color: color,
+                    fontSize: scaleFontSize(16),
+                    fontWeight: '600',
+                    textTransform: 'none',
+                    marginTop: scaleHeight(1),
+                  }}>
+                    {route.title}
+                  </Text>
+                  {badge}
+                </View>
+              );
+            }}
+          />
+        )}
+      />
+    </View>
+  );
+};
+
+// Stack navigators for each tab - Updated Goals Stack
 const GoalsStack = () => {
   return (
     <Stack.Navigator
@@ -416,10 +606,77 @@ const GoalsStack = () => {
     >
       <Stack.Screen 
         name="Goals" 
-        component={GoalsScreen} 
+        component={GoalsTabNavigator} 
         options={{ unmountOnBlur: false }} 
       />
-      <Stack.Screen name="GoalDetails" component={GoalDetailsScreen} />
+      <Stack.Screen 
+        name="GoalDetails" 
+        component={GoalDetailsScreen}
+        options={{
+          gestureDirection: 'horizontal',
+          transitionSpec: {
+            open: {
+              animation: 'timing',
+              config: { duration: 300 }
+            },
+            close: {
+              animation: 'timing', 
+              config: { duration: 300 }
+            }
+          },
+          cardStyleInterpolator: ({ current, next, layouts }) => {
+            const progress = current.progress;
+            
+            // Goal/Project screens should enter from right and exit to right
+            return {
+              cardStyle: {
+                transform: [
+                  {
+                    translateX: progress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [layouts.screen.width, 0]
+                    })
+                  }
+                ]
+              }
+            };
+          }
+        }}
+      />
+      <Stack.Screen 
+        name="ProjectDetails" 
+        component={ProjectDetailsScreen}
+        options={{
+          gestureDirection: 'horizontal',
+          transitionSpec: {
+            open: {
+              animation: 'timing',
+              config: { duration: 300 }
+            },
+            close: {
+              animation: 'timing', 
+              config: { duration: 300 }
+            }
+          },
+          cardStyleInterpolator: ({ current, next, layouts }) => {
+            const progress = current.progress;
+            
+            // Goal/Project screens should enter from right and exit to right
+            return {
+              cardStyle: {
+                transform: [
+                  {
+                    translateX: progress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [layouts.screen.width, 0]
+                    })
+                  }
+                ]
+              }
+            };
+          }
+        }}
+      />
     </Stack.Navigator>
   );
 };
@@ -436,7 +693,40 @@ const ProjectsStack = () => {
         component={TasksScreen} 
         options={{ unmountOnBlur: false }} 
       />
-      <Stack.Screen name="ProjectDetails" component={ProjectDetailsScreen} />
+      <Stack.Screen 
+        name="ProjectDetails" 
+        component={ProjectDetailsScreen}
+        options={{
+          gestureDirection: 'horizontal',
+          transitionSpec: {
+            open: {
+              animation: 'timing',
+              config: { duration: 300 }
+            },
+            close: {
+              animation: 'timing', 
+              config: { duration: 300 }
+            }
+          },
+          cardStyleInterpolator: ({ current, next, layouts }) => {
+            const progress = current.progress;
+            
+            // Goal/Project screens should enter from right and exit to right
+            return {
+              cardStyle: {
+                transform: [
+                  {
+                    translateX: progress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [layouts.screen.width, 0]
+                    })
+                  }
+                ]
+              }
+            };
+          }
+        }}
+      />
     </Stack.Navigator>
   );
 };
@@ -693,7 +983,8 @@ function MainTabNavigator({ route }) {
               tabBarLabel: 'Goals',
               tabBarIcon: ({ focused, color }) => 
                 createTabBarIcon('star', 'Goals', focused, color),
-              tabBarAccessibilityLabel: "Goals tab"
+              tabBarAccessibilityLabel: "Goals tab",
+              unmountOnBlur: false
             }} 
           />
           <Tab.Screen 
@@ -768,6 +1059,7 @@ function AppContent({ navigationRef }) {
   const [isStable, setIsStable] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [directFromOnboarding, setDirectFromOnboarding] = useState(false);
+  const [transitionState, setTransitionState] = useState('stable'); // 'stable', 'transitioning'
   
   // Get safe area insets for proper spacing
   const safeSpacing = useSafeSpacing();
@@ -775,6 +1067,27 @@ function AppContent({ navigationRef }) {
   // Check if onboarding is completed
   const { settings = {} } = appContext || {};
   const onboardingCompleted = settings?.onboardingCompleted || false;
+  
+  // Track onboarding completion state changes for smooth transitions
+  const prevOnboardingCompleted = useRef(onboardingCompleted);
+  
+  useEffect(() => {
+    // Detect when onboarding completion state changes
+    if (prevOnboardingCompleted.current === false && onboardingCompleted === true) {
+      console.log('🎯 Onboarding completion detected, starting transition');
+      setTransitionState('transitioning');
+      
+      // Give the system time to process all state changes
+      InteractionManager.runAfterInteractions(() => {
+        setTimeout(() => {
+          console.log('🎯 Transition complete, showing main app');
+          setTransitionState('stable');
+        }, 1000); // Short transition period
+      });
+    }
+    
+    prevOnboardingCompleted.current = onboardingCompleted;
+  }, [onboardingCompleted]);
   
   // Check if we're coming directly from onboarding
   useEffect(() => {
@@ -879,9 +1192,41 @@ function AppContent({ navigationRef }) {
           screenOptions={{
             headerShown: false,
             gestureEnabled: false,
-            // Use fade animation to prevent issues
-            animation: 'fade',
-            animationDuration: 200,
+            animationTypeForReplace: 'push',
+            // Global configuration to ensure previous screens animate
+            cardStyleInterpolator: ({ current, next, layouts }) => {
+              const progress = current.progress;
+              
+              // If this screen is being pushed by another screen (underlying screen animation)
+              if (next) {
+                return {
+                  cardStyle: {
+                    transform: [
+                      {
+                        translateX: next.progress.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [0, -layouts.screen.width * 0.3]
+                        })
+                      }
+                    ]
+                  }
+                };
+              }
+              
+              // Default animation for incoming screens
+              return {
+                cardStyle: {
+                  transform: [
+                    {
+                      translateX: progress.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [layouts.screen.width, 0]
+                      })
+                    }
+                  ]
+                }
+              };
+            }
           }}
         >
           {/* Modified navigation structure based on onboarding status */}
@@ -926,7 +1271,49 @@ function AppContent({ navigationRef }) {
           <Stack.Screen name="EditProfile" component={EditProfileScreen} />
           <Stack.Screen name="PricingScreen" component={PricingScreen} />
           <Stack.Screen name="ReferralScreen" component={ReferralScreen} />
-          <Stack.Screen name="LifePlanOverview" component={LifePlanOverviewScreen} />
+          <Stack.Screen 
+            name="LifePlanOverview" 
+            component={LifePlanOverviewScreen}
+            options={{
+              gestureDirection: 'horizontal',
+              transitionSpec: {
+                open: {
+                  animation: 'timing',
+                  config: { duration: 300 }
+                },
+                close: {
+                  animation: 'timing', 
+                  config: { duration: 300 }
+                }
+              },
+              cardStyleInterpolator: ({ current, next, layouts, index }) => {
+                const progress = current.progress;
+                
+                // LifePlan screen should enter from right and exit to right
+                return {
+                  cardStyle: {
+                    transform: [
+                      {
+                        translateX: progress.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [layouts.screen.width, 0]
+                        })
+                      }
+                    ]
+                  },
+                  // Animate the screen behind when there is one
+                  overlayStyle: {
+                    opacity: next 
+                      ? next.progress.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [0, 0.2]
+                        })
+                      : 0
+                  }
+                };
+              }
+            }}
+          />
           <Stack.Screen name="Diagnostics" component={DiagnosticsScreen} />
           <Stack.Screen name="AchievementsScreen" component={AchievementsScreen} />
           <Stack.Screen name="AILoginScreen" component={AILoginScreen} />
@@ -942,6 +1329,16 @@ function AppContent({ navigationRef }) {
       <GlobalAchievementToast />
     </NavigationContainer>
   );
+  
+  // Show transition screen during onboarding completion
+  if (transitionState === 'transitioning') {
+    return (
+      <OnboardingTransitionScreen 
+        state="preparing_app"
+        progress={90}
+      />
+    );
+  }
   
   // Conditional rendering based on onboarding status
   return (onboardingCompleted && !directFromOnboarding) ? (

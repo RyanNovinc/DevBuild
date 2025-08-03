@@ -19,7 +19,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MainGoalCard from '../components/MainGoalCard';
 import Confetti from '../components/Confetti';
 import { LinearGradient } from 'expo-linear-gradient';
-import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
+// import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs'; // Moved to App.js
+// import LifePlanOverviewScreen from './LifePlanOverviewScreen'; // Moved to App.js
 import {
   scaleWidth,
   scaleHeight,
@@ -70,7 +71,7 @@ const getTextColorForBackground = (bgColor) => {
   return isDarkColor(bgColor) ? '#FFFFFF' : '#000000';
 };
 
-const GoalsScreen = ({ navigation, route }) => {
+const GoalsScreen = ({ navigation, route, tabMode }) => {
   // Get safe area insets and safe spacing
   const insets = useSafeAreaInsets();
   const safeSpacing = useSafeSpacing();
@@ -92,8 +93,8 @@ const GoalsScreen = ({ navigation, route }) => {
   // Check if using dark mode
   const isDarkMode = theme.background.toLowerCase() === '#000000' || theme.background.toLowerCase() === '#121212';
   
-  // Create tab navigator
-  const Tab = createMaterialTopTabNavigator();
+  // Tab navigator creation is now handled in App.js
+  // const Tab = createMaterialTopTabNavigator();
   
   // Add processing flag to prevent race conditions
   const isProcessingGoals = useRef(false);
@@ -125,6 +126,15 @@ const GoalsScreen = ({ navigation, route }) => {
   // Add state for upgrade modal (similar to IncomeTab)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [upgradeMessage, setUpgradeMessage] = useState('');
+  
+  // State to track current active tab for hiding UI elements
+  const [currentTabIndex, setCurrentTabIndex] = useState(0);
+  
+  // State for manual fullscreen toggle on Overview tab
+  const [isOverviewFullscreen, setIsOverviewFullscreen] = useState(false);
+  
+  // Track current tab for UI state only
+  // (React Navigation will handle persistence automatically)
   
   // Fireworks state for goal completion
   const [showFireworks, setShowFireworks] = useState(false);
@@ -163,6 +173,75 @@ const GoalsScreen = ({ navigation, route }) => {
       isProcessingGoals.current = false;
     };
   }, []);
+
+  // TEMPORARILY DISABLING FULLSCREEN FUNCTIONALITY TO TEST IF IT'S CAUSING NAVIGATION ISSUES
+  // Handle fullscreen state changes (manual toggle for Overview, automatic for other tabs)
+  // useEffect(() => {
+  //   // Only enable fullscreen for Overview tab when manually toggled
+  //   const shouldHideTabBar = currentTabIndex === 0 ? isOverviewFullscreen : false;
+    
+  //   console.log('🔥 FULLSCREEN EFFECT TRIGGERED');
+  //   console.log('Setting fullscreen state:', shouldHideTabBar ? 'fullscreen' : 'normal', 'for tab index:', currentTabIndex, 'manual toggle:', isOverviewFullscreen);
+  //   console.log('This might be causing tab navigator to re-render and reset to index 0');
+    
+  //   // Hide/show AI button using the same method as KanbanView
+  //   if (typeof window !== 'undefined' && window.setAIButtonVisible) {
+  //     window.setAIButtonVisible(!shouldHideTabBar);
+  //   }
+    
+  //   // Set global state to hide bottom tabs - same pattern as KanbanView
+  //   if (typeof global !== 'undefined') {
+  //     try {
+  //       global.kanbanFullScreen = shouldHideTabBar;
+  //       console.log('GoalsScreen: Set global.kanbanFullScreen =', shouldHideTabBar);
+        
+  //       // Also try the document approach for web environments
+  //       if (typeof document !== 'undefined') {
+  //         const event = new CustomEvent('app-fullscreen-changed', { 
+  //           detail: { fullScreen: shouldHideTabBar } 
+  //         });
+  //         document.dispatchEvent(event);
+  //       }
+  //     } catch (error) {
+  //       console.log('Error dispatching full-screen event:', error);
+  //     }
+  //   }
+    
+  //   // Cleanup function to restore normal state when component unmounts or tab changes
+  //   return () => {
+  //     // Only restore if we were the ones who set fullscreen
+  //     if (shouldHideTabBar && typeof global !== 'undefined') {
+  //       try {
+  //         global.kanbanFullScreen = false;
+  //         console.log('GoalsScreen cleanup: Set global.kanbanFullScreen = false');
+          
+  //         if (typeof document !== 'undefined') {
+  //           const event = new CustomEvent('app-fullscreen-changed', { 
+  //             detail: { fullScreen: false } 
+  //           });
+  //           document.dispatchEvent(event);
+  //         }
+  //       } catch (error) {
+  //         console.log('Error in GoalsScreen cleanup:', error);
+  //       }
+  //     }
+      
+  //     // Restore AI button
+  //     if (typeof window !== 'undefined' && window.setAIButtonVisible) {
+  //       window.setAIButtonVisible(true);
+  //     }
+  //   };
+  // }, [currentTabIndex, isOverviewFullscreen, navigation]);
+
+  // Simple focus listener just for fullscreen reset
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      // Only reset fullscreen state when returning from another screen
+      setIsOverviewFullscreen(false);
+    });
+
+    return unsubscribe;
+  }, [navigation]);
   
   // Initialize state
   useEffect(() => {
@@ -888,25 +967,27 @@ const GoalsScreen = ({ navigation, route }) => {
   };
   
 
-  // Tab Badge Component
+  // Tab Badge Component - Optimized for smaller size and better spacing
   const TabBadge = ({ count, maxCount, isPro }) => {
     if (count === 0) return null;
     
     return (
       <View style={{
         backgroundColor: 'rgba(255,255,255,0.25)',
-        borderRadius: scaleWidth(10),
-        paddingHorizontal: spacing.xs,
-        paddingVertical: spacing.xxxs,
-        marginLeft: spacing.s,
-        minWidth: scaleWidth(20),
+        borderRadius: scaleWidth(8), // Slightly smaller radius
+        paddingHorizontal: scaleWidth(6), // Reduced horizontal padding
+        paddingVertical: scaleHeight(2), // Reduced vertical padding
+        marginLeft: scaleWidth(6), // Reduced margin from text
+        minWidth: scaleWidth(16), // Smaller minimum width
         alignItems: 'center',
         justifyContent: 'center'
       }}>
         <Text style={{
           color: '#FFFFFF',
-          fontSize: fontSizes.xs,
-          fontWeight: '700'
+          fontSize: scaleFontSize(10), // Smaller font size
+          fontWeight: '600', // Slightly lighter weight
+          includeFontPadding: false, // Remove extra font padding
+          textAlignVertical: 'center'
         }}>
           {isPro ? count : `${count}/${maxCount}`}
         </Text>
@@ -1095,318 +1176,248 @@ const GoalsScreen = ({ navigation, route }) => {
   
   // Calculate button dimensions to ensure minimum touch target size
   const addButtonSize = Math.max(scaleWidth(60), 44); // Consistent with accessibility standards
+  
+  // Handler for fullscreen toggle
+  const handleFullscreenToggle = () => {
+    setIsOverviewFullscreen(!isOverviewFullscreen);
+  };
 
-  // Calculate the tab indicator width based on screen width
-  const tabIndicatorWidth = Math.floor((width - scaleWidth(40)) / 2);
+  // Determine what content to render based on tabMode
+  const renderTabContent = () => {
+    if (tabMode === 'active') {
+      return renderActiveGoalsContent();
+    } else if (tabMode === 'completed') {
+      return renderCompletedGoalsContent();
+    } else {
+      // Default behavior (when used as standalone screen) - render the tab navigator
+      return null; // This will be handled below
+    }
+  };
 
+  // Calculate the tab indicator width based on screen width (now for 3 tabs)
+  const tabIndicatorWidth = Math.floor((width - scaleWidth(40)) / 3);
+
+  // If this is being used as a specific tab mode, render just that content
+  if (tabMode) {
+    return (
+      <View style={[
+        styles.container, 
+        { 
+          backgroundColor: theme.background,
+          paddingTop: tabMode ? 0 : insets.top, // No padding when in tab mode
+        }
+      ]}>
+        {/* Fireworks component */}
+        <Confetti 
+          active={showFireworks} 
+          colors={fireworksColors} 
+          duration={5000}
+          type="fireworks"
+          onComplete={() => setShowFireworks(false)}
+        />
+        
+        {/* Filter buttons (only shown when domain filter is active) */}
+        {screenState.filterDomain && (
+          <View style={styles.filterButtonContainer}>
+            <TouchableOpacity 
+              style={[
+                styles.filterButton, 
+                { 
+                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                  minHeight: accessibility.minTouchTarget,
+                  paddingHorizontal: spacing.m,
+                  paddingVertical: spacing.xs
+                }
+              ]} 
+              onPress={clearDomainFilter}
+              activeOpacity={0.7}
+              disabled={isProcessingGoals.current}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={`Clear filter: ${screenState.filterDomain}`}
+              accessibilityHint="Removes the current domain filter"
+            >
+              <Ionicons name="close-circle" size={scaleWidth(16)} color={theme.textSecondary} />
+              <Text 
+                style={[
+                  styles.filterButtonText, 
+                  { 
+                    color: theme.textSecondary,
+                    fontSize: fontSizes.s,
+                    marginLeft: spacing.xs
+                  }
+                ]}
+                maxFontSizeMultiplier={1.5}
+              >
+                Clear Filter: {screenState.filterDomain}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        
+        {/* Tab-specific content */}
+        {isLoading ? (
+          renderLoadingPlaceholder()
+        ) : (
+          <Animated.View style={{
+            flex: 1,
+            opacity: listFadeIn
+          }}>
+            {renderTabContent()}
+          </Animated.View>
+        )}
+
+        {/* Floating Add Button - only show for goals tabs */}
+        {!isLoading && (tabMode === 'active' || tabMode === 'completed') && (
+          <Animated.View 
+            style={[
+              styles.floatingAddButton,
+              { 
+                transform: [{ scale: addButtonScale }],
+                bottom: scaleHeight(20), // Adjust for tab mode
+                left: scaleWidth(20)
+              }
+            ]}
+          >
+            <TouchableOpacity
+              style={[
+                styles.floatingAddButtonInner,
+                { 
+                  backgroundColor: theme.primary,
+                  width: addButtonSize,
+                  height: addButtonSize,
+                  borderRadius: addButtonSize / 2
+                }
+              ]}
+              onPress={handleAddGoal}
+              activeOpacity={0.8}
+              disabled={isProcessingGoals.current}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Add new goal"
+              accessibilityHint="Opens the goal creation screen"
+            >
+              <LinearGradient
+                colors={['rgba(255,255,255,0.2)', 'rgba(255,255,255,0)']}
+                style={styles.buttonGradient}
+              />
+              <Ionicons name="add" size={scaleWidth(28)} color="#FFFFFF" />
+            </TouchableOpacity>
+          </Animated.View>
+        )}
+
+        {/* Feature Limit Banner */}
+        {showLimitBanner && (
+          <Animated.View 
+            style={[
+              styles.limitBannerContainer,
+              {
+                transform: [{ translateY: limitBannerAnimation }],
+                bottom: spacing.m
+              }
+            ]}
+          >
+            <FeatureLimitBanner
+              theme={theme}
+              message={limitMessage}
+              onUpgrade={handleUpgradePress}
+            />
+          </Animated.View>
+        )}
+
+        {/* Upgrade Modal */}
+        <Modal
+          visible={showUpgradeModal}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowUpgradeModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={[
+              styles.upgradeModal, 
+              { 
+                backgroundColor: theme.card || theme.background,
+                marginTop: insets.top,
+                marginBottom: insets.bottom,
+                marginLeft: spacing.m,
+                marginRight: spacing.m
+              }
+            ]}>
+              <View style={styles.upgradeModalHeader}>
+                <Ionicons name="lock-closed" size={scaleWidth(40)} color="#3F51B5" />
+                <Text 
+                  style={[styles.upgradeModalTitle, { color: theme.text }]}
+                  maxFontSizeMultiplier={1.3}
+                >
+                  Premium Feature
+                </Text>
+              </View>
+              
+              <Text 
+                style={[styles.upgradeModalMessage, { color: theme.text }]}
+                maxFontSizeMultiplier={1.3}
+              >
+                {upgradeMessage || "Upgrade to Pro to track unlimited goals."}
+              </Text>
+              
+              <TouchableOpacity
+                style={[
+                  styles.upgradeButton, 
+                  { backgroundColor: '#3F51B5' },
+                  { minHeight: accessibility.minTouchTarget }
+                ]}
+                onPress={goToPricingScreen}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Upgrade to Pro"
+                accessibilityHint="Opens the pricing screen to upgrade your subscription"
+              >
+                <Ionicons name="rocket" size={scaleWidth(20)} color="#FFFFFF" style={{marginRight: spacing.xs}} />
+                <Text 
+                  style={styles.upgradeButtonText}
+                  maxFontSizeMultiplier={1.3}
+                >
+                  Upgrade to Pro
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[
+                  styles.laterButton,
+                  { minHeight: accessibility.minTouchTarget }
+                ]}
+                onPress={() => setShowUpgradeModal(false)}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Maybe Later"
+                accessibilityHint="Closes the upgrade prompt"
+              >
+                <Text 
+                  style={[styles.laterButtonText, { color: theme.textSecondary }]}
+                  maxFontSizeMultiplier={1.3}
+                >
+                  Maybe Later
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      </View>
+    );
+  }
+
+  // Legacy behavior - this should not be used anymore but keeping for safety
   return (
     <View style={[
       styles.container, 
       { 
         backgroundColor: theme.background,
         paddingTop: insets.top,
-        // Removed paddingBottom: insets.bottom to fix the extra space issue
       }
     ]}>
-      {/* Fireworks component */}
-      <Confetti 
-        active={showFireworks} 
-        colors={fireworksColors} 
-        duration={5000}
-        type="fireworks"
-        onComplete={() => setShowFireworks(false)}
-      />
-      
-      {/* Filter buttons (only shown when domain filter is active) */}
-      {screenState.filterDomain && (
-        <View style={styles.filterButtonContainer}>
-          <TouchableOpacity 
-            style={[
-              styles.filterButton, 
-              { 
-                backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                minHeight: accessibility.minTouchTarget,
-                paddingHorizontal: spacing.m,
-                paddingVertical: spacing.xs
-              }
-            ]} 
-            onPress={clearDomainFilter}
-            activeOpacity={0.7}
-            disabled={isProcessingGoals.current}
-            accessible={true}
-            accessibilityRole="button"
-            accessibilityLabel={`Clear filter: ${screenState.filterDomain}`}
-            accessibilityHint="Removes the current domain filter"
-          >
-            <Ionicons name="close-circle" size={scaleWidth(16)} color={theme.textSecondary} />
-            <Text 
-              style={[
-                styles.filterButtonText, 
-                { 
-                  color: theme.textSecondary,
-                  fontSize: fontSizes.s,
-                  marginLeft: spacing.xs
-                }
-              ]}
-              maxFontSizeMultiplier={1.5}
-            >
-              Clear Filter: {screenState.filterDomain}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
-      
-      {/* React Navigation Tab Navigator */}
-      {isLoading ? (
-        renderLoadingPlaceholder()
-      ) : (
-        <Animated.View style={{
-          flex: 1,
-          opacity: listFadeIn
-        }}>
-          <Tab.Navigator
-            screenOptions={{
-              tabBarActiveTintColor: '#FFFFFF',
-              tabBarInactiveTintColor: theme.textSecondary,
-              tabBarStyle: { 
-                backgroundColor: theme.cardElevated || '#1F1F1F',
-                borderRadius: scaleWidth(25),
-                marginHorizontal: scaleWidth(20),
-                marginVertical: scaleHeight(10),
-                height: scaleHeight(44),
-              },
-              tabBarLabelStyle: {
-                fontSize: scaleFontSize(15),
-                fontWeight: '600',
-              },
-              tabBarIconStyle: {
-                marginRight: spacing.xs,
-                marginTop: 1,
-              },
-              tabBarIndicatorStyle: { 
-                backgroundColor: theme.primary,
-                height: scaleHeight(38),
-                borderRadius: scaleWidth(20),
-                marginBottom: 3,
-                marginLeft: 3,
-                width: Math.floor((width - scaleWidth(46)) / 2) - 6, // Better spacing like TimeScreen
-                zIndex: 1,
-              },
-              tabBarItemStyle: {
-                flexDirection: 'row',
-                justifyContent: 'center',
-                alignItems: 'center',
-              }
-            }}
-          >
-            <Tab.Screen 
-              name="ActiveGoals" 
-              options={{
-                tabBarLabel: ({ focused }) => (
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <Text style={{ 
-                      color: focused ? '#FFFFFF' : theme.textSecondary,
-                      fontSize: scaleFontSize(15),
-                      fontWeight: '600' 
-                    }}>
-                      Active Goals
-                    </Text>
-                    <TabBadge 
-                      count={screenState.activeGoals.length} 
-                      maxCount={LOCAL_MAX_GOALS} 
-                      isPro={isPro} 
-                    />
-                  </View>
-                ),
-                tabBarIcon: ({ focused }) => (
-                  <Ionicons 
-                    name={focused ? 'flag' : 'flag-outline'} 
-                    size={20} 
-                    color={focused ? '#FFFFFF' : theme.textSecondary} 
-                  />
-                )
-              }}
-            >
-              {() => (
-                <View style={[styles.tabContent, { backgroundColor: theme.background }]}>
-                  {renderActiveGoalsContent()}
-                </View>
-              )}
-            </Tab.Screen>
-            
-            <Tab.Screen 
-              name="CompletedGoals" 
-              options={{
-                tabBarLabel: ({ focused }) => (
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <Text style={{ 
-                      color: focused ? '#FFFFFF' : theme.textSecondary,
-                      fontSize: scaleFontSize(15),
-                      fontWeight: '600' 
-                    }}>
-                      Completed Goals
-                    </Text>
-                    <TabBadge 
-                      count={screenState.completedGoals.length} 
-                      maxCount={LOCAL_MAX_GOALS} 
-                      isPro={isPro} 
-                    />
-                  </View>
-                ),
-                tabBarIcon: ({ focused }) => (
-                  <Ionicons 
-                    name={focused ? 'trophy' : 'trophy-outline'} 
-                    size={20} 
-                    color={focused ? '#FFFFFF' : theme.textSecondary} 
-                  />
-                )
-              }}
-            >
-              {() => (
-                <View style={[styles.tabContent, { backgroundColor: theme.background }]}>
-                  {renderCompletedGoalsContent()}
-                </View>
-              )}
-            </Tab.Screen>
-          </Tab.Navigator>
-        </Animated.View>
-      )}
-
-      {/* Floating Add Button */}
-      {!isLoading && (
-        <Animated.View 
-          style={[
-            styles.floatingAddButton,
-            { 
-              transform: [{ scale: addButtonScale }],
-              bottom: insets.bottom - scaleHeight(20), // A bit higher
-              left: scaleWidth(20)
-            }
-          ]}
-        >
-          <TouchableOpacity
-            style={[
-              styles.floatingAddButtonInner,
-              { 
-                backgroundColor: theme.primary,
-                width: addButtonSize,
-                height: addButtonSize,
-                borderRadius: addButtonSize / 2
-              }
-            ]}
-            onPress={handleAddGoal}
-            activeOpacity={0.8}
-            disabled={isProcessingGoals.current}
-            accessible={true}
-            accessibilityRole="button"
-            accessibilityLabel="Add new goal"
-            accessibilityHint="Opens the goal creation screen"
-          >
-            <LinearGradient
-              colors={['rgba(255,255,255,0.2)', 'rgba(255,255,255,0)']}
-              style={styles.buttonGradient}
-            />
-            <Ionicons name="add" size={scaleWidth(28)} color="#FFFFFF" />
-          </TouchableOpacity>
-        </Animated.View>
-      )}
-
-      {/* Feature Limit Banner (KEEPING AS FALLBACK) */}
-      {showLimitBanner && (
-        <Animated.View 
-          style={[
-            styles.limitBannerContainer,
-            {
-              transform: [{ translateY: limitBannerAnimation }],
-              bottom: insets.bottom > 0 ? insets.bottom : spacing.m
-            }
-          ]}
-        >
-          <FeatureLimitBanner
-            theme={theme}
-            message={limitMessage}
-            onUpgrade={handleUpgradePress}
-          />
-        </Animated.View>
-      )}
-
-      {/* Add Upgrade Modal (NEW, from IncomeTab) */}
-      <Modal
-        visible={showUpgradeModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowUpgradeModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[
-            styles.upgradeModal, 
-            { 
-              backgroundColor: theme.card || theme.background,
-              marginTop: insets.top,
-              marginBottom: insets.bottom,
-              marginLeft: spacing.m,
-              marginRight: spacing.m
-            }
-          ]}>
-            <View style={styles.upgradeModalHeader}>
-              <Ionicons name="lock-closed" size={scaleWidth(40)} color="#3F51B5" />
-              <Text 
-                style={[styles.upgradeModalTitle, { color: theme.text }]}
-                maxFontSizeMultiplier={1.3}
-              >
-                Premium Feature
-              </Text>
-            </View>
-            
-            <Text 
-              style={[styles.upgradeModalMessage, { color: theme.text }]}
-              maxFontSizeMultiplier={1.3}
-            >
-              {upgradeMessage || "Upgrade to Pro to track unlimited goals."}
-            </Text>
-            
-            <TouchableOpacity
-              style={[
-                styles.upgradeButton, 
-                { backgroundColor: '#3F51B5' },
-                { minHeight: accessibility.minTouchTarget }
-              ]}
-              onPress={goToPricingScreen}
-              accessible={true}
-              accessibilityRole="button"
-              accessibilityLabel="Upgrade to Pro"
-              accessibilityHint="Opens the pricing screen to upgrade your subscription"
-            >
-              <Ionicons name="rocket" size={scaleWidth(20)} color="#FFFFFF" style={{marginRight: spacing.xs}} />
-              <Text 
-                style={styles.upgradeButtonText}
-                maxFontSizeMultiplier={1.3}
-              >
-                Upgrade to Pro
-              </Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={[
-                styles.laterButton,
-                { minHeight: accessibility.minTouchTarget }
-              ]}
-              onPress={() => setShowUpgradeModal(false)}
-              accessible={true}
-              accessibilityRole="button"
-              accessibilityLabel="Maybe Later"
-              accessibilityHint="Closes the upgrade prompt"
-            >
-              <Text 
-                style={[styles.laterButtonText, { color: theme.textSecondary }]}
-                maxFontSizeMultiplier={1.3}
-              >
-                Maybe Later
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+      <Text style={{ color: theme.text, padding: 20 }}>
+        GoalsScreen should now be used with tabMode prop
+      </Text>
     </View>
   );
 };

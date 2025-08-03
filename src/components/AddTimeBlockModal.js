@@ -1,5 +1,5 @@
 // src/components/AddTimeBlockModal.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -13,12 +13,16 @@ import {
   Keyboard,
   ScrollView,
   Switch,
-  Animated
+  Animated,
+  Easing,
+  Dimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useAppContext } from '../context/AppContext';
+import { FREE_PLAN_LIMITS } from '../services/SubscriptionService';
+import TextInputPopup from './TextInputPopup';
 
 // Import responsive utilities
 import responsive, { 
@@ -45,7 +49,14 @@ const AddTimeBlockModal = ({
 }) => {
   const { theme } = useTheme();
   const appContext = useAppContext();
+  const { 
+    userSubscriptionStatus,
+    timeBlocks = []
+  } = appContext;
   const safeSpacing = useSafeSpacing();
+  
+  // Check if user is pro
+  const isPro = userSubscriptionStatus === 'pro' || userSubscriptionStatus === 'unlimited';
   const { width, height } = useScreenDimensions();
   const isLandscape = useIsLandscape();
   
@@ -66,6 +77,10 @@ const AddTimeBlockModal = ({
   // NEW: Advanced mode toggle
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   
+  // Text input popup states
+  const [showLocationPopup, setShowLocationPopup] = useState(false);
+  const [showNotesPopup, setShowNotesPopup] = useState(false);
+  
   // Goal/Project/Task state
   const [selectedGoalId, setSelectedGoalId] = useState(null);
   const [selectedGoalTitle, setSelectedGoalTitle] = useState('');
@@ -76,6 +91,10 @@ const AddTimeBlockModal = ({
   
   // Animation value for advanced options panel
   const advancedOptionsHeight = useState(new Animated.Value(0))[0];
+  
+  // Modal animation values
+  const backgroundOpacityAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(Dimensions.get('window').height)).current;
   
   // Get available data from app context
   const goals = appContext?.goals || appContext?.mainGoals || [];
@@ -185,6 +204,33 @@ const AddTimeBlockModal = ({
       return new Date();
     }
   };
+  
+  // Handle modal animation
+  useEffect(() => {
+    if (visible) {
+      // Reset animation values
+      backgroundOpacityAnim.setValue(0);
+      slideAnim.setValue(Dimensions.get('window').height);
+      
+      // Animate in with staggered timing
+      Animated.sequence([
+        // First darken the background gradually
+        Animated.timing(backgroundOpacityAnim, {
+          toValue: 1,
+          duration: 250,
+          useNativeDriver: true,
+          easing: Easing.out(Easing.ease)
+        }),
+        // Then slide in the content
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+          easing: Easing.out(Easing.ease)
+        })
+      ]).start();
+    }
+  }, [visible]);
   
   // Update form when editing a time block
   useEffect(() => {
@@ -305,10 +351,43 @@ const AddTimeBlockModal = ({
     // Don't reset goal/project/task IDs to preserve them between sessions
   };
   
+  // Handle close with animation
+  const handleClose = () => {
+    const screenHeight = Dimensions.get('window').height;
+    
+    Animated.sequence([
+      // First slide out the content
+      Animated.timing(slideAnim, {
+        toValue: screenHeight,
+        duration: 250,
+        useNativeDriver: true,
+        easing: Easing.in(Easing.ease)
+      }),
+      // Then fade out the background
+      Animated.timing(backgroundOpacityAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+        easing: Easing.in(Easing.ease)
+      })
+    ]).start(() => {
+      onClose();
+    });
+  };
+  
   // Handle add time block
   const handleAddTimeBlock = () => {
     if (!title.trim()) {
       return; // Don't add empty time blocks
+    }
+
+    // Check limits for free users
+    if (!isPro) {
+      const limitCheck = checkTimeBlockLimits();
+      if (!limitCheck.canAdd) {
+        showTimeBlockLimitAlert(limitCheck);
+        return;
+      }
     }
     
     // Ensure dates are valid before submitting
@@ -480,6 +559,60 @@ const AddTimeBlockModal = ({
   
   // Get theme-aware button color
   const buttonColor = color || theme.primary;
+
+  // Function to check if adding a time block would exceed limits
+  const checkTimeBlockLimits = () => {
+    if (isPro) return { canAdd: true }; // Pro users have no limits
+    
+    // Get current week time blocks (this week only)
+    const now = new Date();
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay()); // Start of current week
+    startOfWeek.setHours(0, 0, 0, 0);
+    
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 7); // End of current week
+    
+    const thisWeekBlocks = timeBlocks.filter(block => {
+      const blockDate = new Date(block.startTime);
+      return blockDate >= startOfWeek && blockDate < endOfWeek;
+    });
+    
+    const currentCount = thisWeekBlocks.length;
+    const limit = FREE_PLAN_LIMITS.MAX_TIME_BLOCKS;
+    
+    return {
+      canAdd: currentCount < limit,
+      currentCount,
+      limit,
+      isWeekly: true
+    };
+  };
+
+  // Function to show time block limit exceeded alert
+  const showTimeBlockLimitAlert = (limitCheck) => {
+    Alert.alert(
+      "Weekly Time Block Limit Reached",
+      `You've reached the limit of ${limitCheck.limit} time blocks per week.\n\n` +
+      `Current this week: ${limitCheck.currentCount}/${limitCheck.limit}\n\n` +
+      `Free accounts are limited to ${limitCheck.limit} time blocks per week. ` +
+      `Upgrade to Pro for unlimited time blocks and better planning.`,
+      [
+        {
+          text: "Upgrade to Pro",
+          onPress: () => {
+            // TODO: Navigate to upgrade screen
+            Alert.alert("Upgrade to Pro", "Navigate to upgrade screen - implement this navigation");
+          }
+        },
+        {
+          text: "Cancel",
+          style: "cancel"
+        }
+      ],
+      { cancelable: true }
+    );
+  };
   
   // Handle goal selection
   const handleSelectGoal = (goal) => {
@@ -533,28 +666,44 @@ const AddTimeBlockModal = ({
     <Modal
       visible={visible}
       transparent={true}
-      animationType="slide"
-      onRequestClose={onClose}
+      animationType="none"
+      onRequestClose={handleClose}
       accessible={true}
       accessibilityViewIsModal={true}
       accessibilityLabel="Schedule time block modal"
     >
-      <KeyboardAvoidingView 
-        style={styles.container} 
-        behavior={Platform.OS === 'ios' ? 'padding' : null}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? scaleHeight(64) : 0}
+      <Animated.View 
+        style={[
+          styles.overlay,
+          {
+            opacity: backgroundOpacityAnim
+          }
+        ]}
       >
-        <View 
+        <Animated.View
           style={[
-            styles.modalContent, 
-            { 
-              backgroundColor: theme.card,
-              padding: getContainerPadding(),
-              paddingBottom: Platform.OS === 'ios' ? safeSpacing.bottom : getContainerPadding(),
-              maxHeight: getModalMaxHeight()
+            styles.gestureContainer,
+            {
+              transform: [{ translateY: slideAnim }]
             }
           ]}
         >
+          <KeyboardAvoidingView 
+            style={styles.keyboardContainer} 
+            behavior={Platform.OS === 'ios' ? 'padding' : null}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? scaleHeight(64) : 0}
+          >
+            <View 
+              style={[
+                styles.modalContent, 
+                { 
+                  backgroundColor: theme.card,
+                  padding: getContainerPadding(),
+                  paddingBottom: Platform.OS === 'ios' ? safeSpacing.bottom : getContainerPadding(),
+                  maxHeight: getModalMaxHeight()
+                }
+              ]}
+            >
           <View style={styles.modalHeader}>
             <Text 
               style={[
@@ -571,7 +720,7 @@ const AddTimeBlockModal = ({
                 styles.closeButton,
                 ensureAccessibleTouchTarget(scaleWidth(32), scaleWidth(32))
               ]}
-              onPress={onClose}
+              onPress={handleClose}
               accessible={true}
               accessibilityRole="button"
               accessibilityLabel="Close modal"
@@ -1305,80 +1454,100 @@ const AddTimeBlockModal = ({
               )}
               
               {/* Location Field */}
-              <TouchableWithoutFeedback onPress={dismissKeyboard}>
-                <View>
+              <View>
+                <Text 
+                  style={[
+                    styles.label, 
+                    { color: theme.textSecondary }
+                  ]}
+                  maxFontSizeMultiplier={1.5}
+                  accessibilityRole="text"
+                >
+                  Location (Optional)
+                </Text>
+                <TouchableOpacity
+                  style={[
+                    styles.clickableInput,
+                    { 
+                      backgroundColor: theme.inputBackground,
+                      borderColor: theme.border,
+                      minHeight: scaleHeight(48)
+                    }
+                  ]}
+                  onPress={() => setShowLocationPopup(true)}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel="Location input"
+                  accessibilityHint="Tap to enter location"
+                >
                   <Text 
                     style={[
-                      styles.label, 
-                      { color: theme.textSecondary }
-                    ]}
-                    maxFontSizeMultiplier={1.5}
-                    accessibilityRole="text"
-                  >
-                    Location (Optional)
-                  </Text>
-                  <TextInput
-                    style={[
-                      styles.input,
+                      styles.clickableInputText, 
                       { 
-                        backgroundColor: theme.inputBackground,
-                        color: theme.text,
-                        borderColor: theme.border,
-                        minHeight: scaleHeight(48)
+                        color: location ? theme.text : theme.textSecondary 
                       }
                     ]}
-                    value={location}
-                    onChangeText={setLocation}
-                    placeholder="Enter location"
-                    placeholderTextColor={theme.textSecondary}
                     maxFontSizeMultiplier={1.3}
-                    accessible={true}
-                    accessibilityLabel="Location"
-                    accessibilityHint="Enter the location for this time block"
-                    accessibilityRole="text"
-                  />
-                </View>
-              </TouchableWithoutFeedback>
+                    numberOfLines={1}
+                  >
+                    {location || 'Enter location'}
+                  </Text>
+                  <Ionicons name="create-outline" size={scaleWidth(18)} color={theme.textSecondary} />
+                </TouchableOpacity>
+              </View>
               
               {/* Notes Field */}
-              <TouchableWithoutFeedback onPress={dismissKeyboard}>
-                <View>
-                  <Text 
-                    style={[
-                      styles.label, 
-                      { color: theme.textSecondary }
-                    ]}
-                    maxFontSizeMultiplier={1.5}
-                    accessibilityRole="text"
-                  >
-                    Notes (Optional)
-                  </Text>
-                  <TextInput
-                    style={[
-                      styles.input,
-                      styles.textArea,
-                      { 
-                        backgroundColor: theme.inputBackground,
-                        color: theme.text,
-                        borderColor: theme.border,
-                        minHeight: scaleHeight(100)
-                      }
-                    ]}
-                    value={notes}
-                    onChangeText={setNotes}
-                    placeholder="Enter notes"
-                    placeholderTextColor={theme.textSecondary}
-                    multiline
-                    numberOfLines={4}
-                    textAlignVertical="top"
-                    maxFontSizeMultiplier={1.3}
-                    accessible={true}
-                    accessibilityLabel="Notes"
-                    accessibilityHint="Enter any additional notes for this time block"
-                    accessibilityRole="text"
-                  />
-                </View>
-              </TouchableWithoutFeedback>
+              <View>
+                <Text 
+                  style={[
+                    styles.label, 
+                    { color: theme.textSecondary }
+                  ]}
+                  maxFontSizeMultiplier={1.5}
+                  accessibilityRole="text"
+                >
+                  Notes (Optional)
+                </Text>
+                <TouchableOpacity
+                  style={[
+                    styles.clickableInput,
+                    styles.clickableTextArea,
+                    { 
+                      backgroundColor: theme.inputBackground,
+                      borderColor: theme.border,
+                      minHeight: scaleHeight(80),
+                      alignItems: 'flex-start'
+                    }
+                  ]}
+                  onPress={() => setShowNotesPopup(true)}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel="Notes input"
+                  accessibilityHint="Tap to enter notes"
+                >
+                  <View style={styles.clickableTextAreaContent}>
+                    <Text 
+                      style={[
+                        styles.clickableInputText, 
+                        { 
+                          color: notes ? theme.text : theme.textSecondary,
+                          flex: 1
+                        }
+                      ]}
+                      maxFontSizeMultiplier={1.3}
+                      numberOfLines={3}
+                    >
+                      {notes || 'Enter notes'}
+                    </Text>
+                    <Ionicons 
+                      name="create-outline" 
+                      size={scaleWidth(18)} 
+                      color={theme.textSecondary}
+                      style={styles.clickableTextAreaIcon}
+                    />
+                  </View>
+                </TouchableOpacity>
+              </View>
             </Animated.View>
             
             <TouchableOpacity 
@@ -1523,17 +1692,53 @@ const AddTimeBlockModal = ({
               )}
             </>
           )}
-        </View>
-      </KeyboardAvoidingView>
+          
+          {/* Text Input Popups */}
+          <TextInputPopup
+            visible={showLocationPopup}
+            onClose={() => setShowLocationPopup(false)}
+            onSave={setLocation}
+            title="Location"
+            value={location}
+            placeholder="Enter location for this time block"
+            multiline={false}
+            maxLength={100}
+          />
+          
+          <TextInputPopup
+            visible={showNotesPopup}
+            onClose={() => setShowNotesPopup(false)}
+            onSave={setNotes}
+            title="Notes"
+            value={notes}
+            placeholder="Enter any additional notes or details"
+            multiline={true}
+            maxLength={500}
+          />
+            </View>
+          </KeyboardAvoidingView>
+        </Animated.View>
+      </Animated.View>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end'
+  },
+  gestureContainer: {
+    justifyContent: 'flex-end'
+  },
+  keyboardContainer: {
+    justifyContent: 'flex-end'
+  },
   container: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.5)'
+    backgroundColor: 'transparent'
   },
   modalContent: {
     borderTopLeftRadius: scaleWidth(16),
@@ -1573,6 +1778,33 @@ const styles = StyleSheet.create({
   },
   textArea: {
     paddingTop: spacing.s
+  },
+  // Clickable input styles
+  clickableInput: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderRadius: scaleWidth(8),
+    paddingHorizontal: spacing.m,
+    paddingVertical: spacing.m,
+    marginBottom: spacing.m,
+  },
+  clickableInputText: {
+    fontSize: fontSizes.m,
+    flex: 1,
+  },
+  clickableTextArea: {
+    paddingVertical: spacing.s,
+  },
+  clickableTextAreaContent: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    width: '100%',
+  },
+  clickableTextAreaIcon: {
+    marginTop: spacing.xxxs,
+    marginLeft: spacing.xs,
   },
   // Switch styles
   switchContainer: {

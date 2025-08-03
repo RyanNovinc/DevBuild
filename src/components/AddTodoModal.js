@@ -1,5 +1,5 @@
 // src/components/AddTodoModal.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -12,11 +12,22 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   ScrollView,
-  Alert
+  Alert,
+  Animated,
+  Easing,
+  Dimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
+import { useAppContext } from '../context/AppContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Todo limits for free users
+const TODO_LIMITS = {
+  TODAY: 10,
+  TOMORROW: 7,
+  LATER: 5,
+};
 
 // Import responsive utilities
 import {
@@ -40,6 +51,19 @@ const AddTodoModal = ({
 }) => {
   const { theme } = useTheme();
   const safeSpacing = useSafeSpacing();
+  const { 
+    userSubscriptionStatus, 
+    todos = [], 
+    tomorrowTodos = [], 
+    laterTodos = []
+  } = useAppContext();
+  
+  // Check if user is pro
+  const isPro = userSubscriptionStatus === 'pro' || userSubscriptionStatus === 'unlimited';
+  
+  // Modal animation values
+  const backgroundOpacityAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(Dimensions.get('window').height)).current;
   
   // Todo state
   const [title, setTitle] = useState('');
@@ -50,6 +74,138 @@ const AddTodoModal = ({
   
   // Get theme-aware button color
   const buttonColor = theme.primary;
+
+  // Function to get current todo count for a specific tab
+  const getCurrentTodoCount = (targetTab) => {
+    switch (targetTab) {
+      case 'today':
+        return todos.length;
+      case 'tomorrow':
+        return tomorrowTodos.length;
+      case 'later':
+        return laterTodos.length;
+      default:
+        return 0;
+    }
+  };
+
+  // Function to check if adding todos would exceed limits
+  const checkTodoLimits = (targetTab, itemsToAdd = 1) => {
+    if (isPro) return { canAdd: true }; // Pro users have no limits
+    
+    const currentCount = getCurrentTodoCount(targetTab);
+    const limit = TODO_LIMITS[targetTab.toUpperCase()];
+    const newTotal = currentCount + itemsToAdd;
+    
+    return {
+      canAdd: newTotal <= limit,
+      currentCount,
+      limit,
+      newTotal,
+      overflow: Math.max(0, newTotal - limit)
+    };
+  };
+
+  // Function to get available space in other tabs
+  const getAvailableSpaceInTabs = () => {
+    return {
+      today: Math.max(0, TODO_LIMITS.TODAY - getCurrentTodoCount('today')),
+      tomorrow: Math.max(0, TODO_LIMITS.TOMORROW - getCurrentTodoCount('tomorrow')),
+      later: Math.max(0, TODO_LIMITS.LATER - getCurrentTodoCount('later'))
+    };
+  };
+
+  // Function to show limit exceeded alert with helpful options
+  const showLimitExceededAlert = (limitCheck, itemsToAdd) => {
+    const availableSpace = getAvailableSpaceInTabs();
+    const tabName = tab.charAt(0).toUpperCase() + tab.slice(1);
+    
+    // Create message with current status
+    let message = `You're trying to add ${itemsToAdd} ${itemsToAdd === 1 ? 'todo' : 'todos'} to ${tabName}, but you've reached the limit of ${limitCheck.limit} items.\n\n`;
+    message += `Current: ${limitCheck.currentCount}/${limitCheck.limit} in ${tabName}\n`;
+    message += `This would exceed by: ${limitCheck.overflow} ${limitCheck.overflow === 1 ? 'item' : 'items'}\n\n`;
+    
+    // Add information about other tabs
+    const alternatives = [];
+    Object.entries(availableSpace).forEach(([tabKey, space]) => {
+      if (tabKey !== tab && space > 0) {
+        const tabDisplayName = tabKey.charAt(0).toUpperCase() + tabKey.slice(1);
+        alternatives.push(`${tabDisplayName}: ${space} ${space === 1 ? 'slot' : 'slots'} available`);
+      }
+    });
+    
+    if (alternatives.length > 0) {
+      message += "Available space in other tabs:\n" + alternatives.join('\n') + '\n\n';
+    }
+    
+    message += "What would you like to do?";
+    
+    // Create alert buttons
+    const alertButtons = [];
+    
+    // Add "Switch Tab" options if there's space elsewhere
+    Object.entries(availableSpace).forEach(([tabKey, space]) => {
+      if (tabKey !== tab && space >= itemsToAdd) {
+        const tabDisplayName = tabKey.charAt(0).toUpperCase() + tabKey.slice(1);
+        alertButtons.push({
+          text: `Switch to ${tabDisplayName}`,
+          onPress: () => {
+            setTab(tabKey);
+            // Don't close modal, let user confirm the switch
+          }
+        });
+      }
+    });
+    
+    // Add "Upgrade to Pro" button
+    alertButtons.push({
+      text: "Upgrade to Pro",
+      onPress: () => {
+        // TODO: Navigate to upgrade screen
+        Alert.alert("Upgrade to Pro", "Navigate to upgrade screen - implement this navigation");
+      }
+    });
+    
+    // Add "Cancel" button
+    alertButtons.push({
+      text: "Cancel",
+      style: "cancel"
+    });
+    
+    Alert.alert(
+      `${tabName} Tab Full`,
+      message,
+      alertButtons,
+      { cancelable: true }
+    );
+  };
+
+  // Handle modal animation
+  useEffect(() => {
+    if (visible) {
+      // Reset animation values
+      backgroundOpacityAnim.setValue(0);
+      slideAnim.setValue(Dimensions.get('window').height);
+      
+      // Animate in with staggered timing
+      Animated.sequence([
+        // First darken the background gradually
+        Animated.timing(backgroundOpacityAnim, {
+          toValue: 1,
+          duration: 250,
+          useNativeDriver: true,
+          easing: Easing.out(Easing.ease)
+        }),
+        // Then slide in the content
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+          easing: Easing.out(Easing.ease)
+        })
+      ]).start();
+    }
+  }, [visible]);
 
   // Update form when editing a todo
   useEffect(() => {
@@ -98,6 +254,17 @@ const AddTodoModal = ({
         [{ text: "OK" }]
       );
       return;
+    }
+
+    // Check limits for free users
+    if (!isPro) {
+      const itemsToAdd = isGroup ? groupItems.length : 1;
+      const limitCheck = checkTodoLimits(tab, itemsToAdd);
+      
+      if (!limitCheck.canAdd) {
+        showLimitExceededAlert(limitCheck, itemsToAdd);
+        return;
+      }
     }
     
     try {
@@ -172,31 +339,71 @@ const AddTodoModal = ({
     Keyboard.dismiss();
   };
   
+  // Handle close with animation
+  const handleClose = () => {
+    const screenHeight = Dimensions.get('window').height;
+    
+    Animated.sequence([
+      // First slide out the content
+      Animated.timing(slideAnim, {
+        toValue: screenHeight,
+        duration: 250,
+        useNativeDriver: true,
+        easing: Easing.in(Easing.ease)
+      }),
+      // Then fade out the background
+      Animated.timing(backgroundOpacityAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+        easing: Easing.in(Easing.ease)
+      })
+    ]).start(() => {
+      onClose();
+    });
+  };
+  
   return (
     <Modal
       visible={visible}
       transparent={true}
-      animationType="slide"
-      onRequestClose={onClose}
+      animationType="none"
+      onRequestClose={handleClose}
       accessible={true}
       accessibilityViewIsModal={true}
       accessibilityLabel="Add to-do modal"
     >
-      <TouchableWithoutFeedback onPress={dismissKeyboard}>
-        <KeyboardAvoidingView 
-          style={styles.container} 
-          behavior={Platform.OS === 'ios' ? 'padding' : null}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? scaleHeight(64) : 0}
-        >
-          <View style={[
-            styles.modalContent, 
-            { 
-              backgroundColor: theme.card,
-              paddingBottom: safeSpacing.bottom > spacing.m ? safeSpacing.bottom : spacing.xl,
-              borderTopLeftRadius: scaleWidth(16),
-              borderTopRightRadius: scaleWidth(16),
+      <Animated.View 
+        style={[
+          styles.overlay,
+          {
+            opacity: backgroundOpacityAnim
+          }
+        ]}
+      >
+        <Animated.View
+          style={[
+            styles.gestureContainer,
+            {
+              transform: [{ translateY: slideAnim }]
             }
-          ]}>
+          ]}
+        >
+          <TouchableWithoutFeedback onPress={dismissKeyboard}>
+            <KeyboardAvoidingView 
+              style={styles.keyboardContainer} 
+              behavior={Platform.OS === 'ios' ? 'padding' : null}
+              keyboardVerticalOffset={Platform.OS === 'ios' ? scaleHeight(64) : 0}
+            >
+              <View style={[
+                styles.modalContent, 
+                { 
+                  backgroundColor: theme.card,
+                  paddingBottom: safeSpacing.bottom > spacing.m ? safeSpacing.bottom : spacing.xl,
+                  borderTopLeftRadius: scaleWidth(16),
+                  borderTopRightRadius: scaleWidth(16),
+                }
+              ]}>
             <View style={styles.modalHeader}>
               <Text style={[
                 styles.modalTitle, 
@@ -213,7 +420,7 @@ const AddTodoModal = ({
                   styles.closeButton,
                   ensureAccessibleTouchTarget({ width: 30, height: 30 })
                 ]} 
-                onPress={onClose}
+                onPress={handleClose}
                 accessible={true}
                 accessibilityRole="button"
                 accessibilityLabel="Close modal"
@@ -507,12 +714,15 @@ const AddTodoModal = ({
                             paddingVertical: spacing.xs,
                             flex: 1,
                             minHeight: accessibility.minTouchTarget,
+                            textAlignVertical: 'top',
                           }
                         ]}
                         value={item.title}
                         onChangeText={(text) => handleUpdateGroupItem(item.id, text)}
                         placeholder={`Item ${index + 1}`}
                         placeholderTextColor={theme.textSecondary}
+                        multiline={true}
+                        scrollEnabled={false}
                         maxFontSizeMultiplier={1.3}
                         accessible={true}
                         accessibilityLabel={`Group item ${index + 1}`}
@@ -659,18 +869,31 @@ const AddTodoModal = ({
                 </Text>
               </TouchableOpacity>
             </ScrollView>
-          </View>
-        </KeyboardAvoidingView>
-      </TouchableWithoutFeedback>
+              </View>
+            </KeyboardAvoidingView>
+          </TouchableWithoutFeedback>
+        </Animated.View>
+      </Animated.View>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end'
+  },
+  gestureContainer: {
+    justifyContent: 'flex-end'
+  },
+  keyboardContainer: {
+    justifyContent: 'flex-end'
+  },
   container: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.5)'
+    backgroundColor: 'transparent'
   },
   modalContent: {
     borderTopLeftRadius: 16,

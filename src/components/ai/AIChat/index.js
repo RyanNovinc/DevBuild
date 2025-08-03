@@ -91,7 +91,7 @@ const AIChat = ({
   
   // Common suggestions
   const suggestions = [
-    { id: '1', text: 'Help me define my life direction' },
+    { id: '1', text: 'Help me define my strategic direction' },
     { id: '2', text: 'Create a goal for me' },
     { id: '3', text: 'Help me break down a big goal' },
     { id: '4', text: 'Schedule time for an activity' },

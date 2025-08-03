@@ -395,7 +395,7 @@ const GoalDetailsScreen = ({ route, navigation }) => {
     } else {
       // Check if we came from LifePlanOverview
       if (route.params?.previousScreen === 'LifePlanOverview') {
-        // Navigate directly to LifePlanOverview (correct screen name from App.js)
+        // Navigate directly back to LifePlanOverview
         navigation.navigate('LifePlanOverview');
       } else {
         navigation.goBack();

@@ -15,6 +15,7 @@ import {
   Animated,
   Easing
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { ThemeProvider, useTheme } from '../context/ThemeContext';
 import { useAppContext } from '../context/AppContext';
@@ -83,40 +84,33 @@ const LOCAL_MAX_GOALS = 2;
 
 // Collection of dynamic intro messages
 const introMessages = [
-  // Speed & Efficiency Focus
-  "Your productivity partner.\nLet's 10x your output today.",
-  "Cutting through complexity.\nMaking progress simple.",
-  "Work smarter, not harder.\nWhat are we tackling today?",
-  "Your strategic edge.\nLet's build something great.",
-  "Time is your most valuable asset.\nLet's make every minute count.",
+  // Natural & Helpful
+  "Hi there!\nWhat's on your mind today?",
+  "Ready to dive in?\nWhat would you like to work on?",
+  "Let's get started.\nHow can I help you today?",
+  "What's up?\nAnything you'd like to tackle?",
+  "Hey!\nWhat would you like to focus on?",
 
-  // Achievement-Oriented
-  "From idea to execution.\nLet's make it happen.",
-  "Turn your vision into reality.\nWhat's the goal?",
-  "Building momentum.\nCreating results.\nReady when you are.",
-  "Your goals, amplified.\nLet's get to work.",
-  "Success isn't built overnight.\nBut we can accelerate it.",
+  // Goal-Oriented but Natural
+  "Got any goals you're working on?\nI'm here to help.",
+  "What's next on your list?\nLet's figure it out together.",
+  "Planning anything interesting?\nI'd love to help you think it through.",
+  "Working on something exciting?\nTell me about it.",
+  "Any projects keeping you busy?\nI can help you organize your thoughts.",
 
-  // Professional Growth
-  "Your strategic partner for what matters most.\nWhat's your focus today?",
-  "Building systems that scale.\nWhat's your focus today?",
-  "Transforming ambition into achievement.\nLet's begin.",
-  "Your competitive advantage starts here.\nWhat are we building today?",
-  "Let's turn possibilities into outcomes.\nWhat's first?",
+  // Encouraging but Simple
+  "Ready to make some progress?\nWhat's the plan?",
+  "Let's tackle something together.\nWhat's been on your mind?",
+  "I'm here when you need me.\nWhat would you like to discuss?",
+  "Fresh start, fresh possibilities.\nWhat are you thinking about?",
+  "New conversation, new opportunities.\nWhat's the focus today?",
 
-  // Action-Oriented
-  "Less planning. More doing.\nLet's start.",
-  "Clarity. Focus. Action.\nWhat's first on your list?",
-  "Ready to execute.\nWhat's the priority?",
-  "From roadmap to reality.\nLet's make progress.",
-  "Your ideas + my efficiency = results worth talking about.\nWhat's on your mind?",
-
-  // Value-First
-  "Skip the busywork.\nFocus on what moves the needle.",
-  "Work that matters.\nResults that count.",
-  "Your productivity multiplier.\nWhat needs solving?",
-  "Focused on impact, not just activity.\nLet's get started.",
-  "Transforming potential into performance.\nReady when you are."
+  // Conversational
+  "What's happening in your world?\nAnything I can help with?",
+  "Let's chat about what matters to you.\nWhat's on your agenda?",
+  "I'm all ears.\nWhat would you like to explore?",
+  "Ready for a productive conversation?\nWhat's the topic?",
+  "What's worth talking about today?\nI'm here to help however I can."
 ];
 
 // Function to get a random intro message
@@ -528,91 +522,64 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
     return unsubscribe;
   }, [navigation, hasUserInteracted, conversationId]);
   
-  // Initialize conversation
+  // Create new conversation when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log('AI Assistant screen focused - creating new conversation');
+      createNewConversation();
+    }, [])
+  );
+
+  // Initialize conversation (keeping original logic for route-based navigation)
   useEffect(() => {
     const initializeConversation = async () => {
+      // Only initialize from route if we have a specific conversation ID
+      if (!routeConversationId) {
+        return; // Let useFocusEffect handle the default case
+      }
+      
       dispatch({ type: 'SET_INITIALIZING', payload: true });
       
       try {
         // Initialize the assistant service
         await assistantService.initialize();
         
-        // First attempt to load the last conversation ID from AsyncStorage
-        const lastConversationId = await AsyncStorage.getItem('currentConversationId');
-        
-        if (routeConversationId) {
-          console.log(`Loading conversation from route: ${routeConversationId}`);
-          try {
-            const savedConversation = await AIService.getConversation(routeConversationId);
+        console.log(`Loading conversation from route: ${routeConversationId}`);
+        try {
+          const savedConversation = await AIService.getConversation(routeConversationId);
+          
+          if (savedConversation && Array.isArray(savedConversation.messages)) {
+            dispatch({ type: 'SET_CONVERSATION_ID', payload: routeConversationId });
+            dispatch({ type: 'SET_MESSAGES', payload: savedConversation.messages });
+            dispatch({ type: 'SET_SHOW_SUGGESTIONS', payload: false });
             
-            if (savedConversation && Array.isArray(savedConversation.messages)) {
-              dispatch({ type: 'SET_CONVERSATION_ID', payload: routeConversationId });
-              dispatch({ type: 'SET_MESSAGES', payload: savedConversation.messages });
-              dispatch({ type: 'SET_SHOW_SUGGESTIONS', payload: false });
-              
-              // Check if this conversation has user messages
-              const hasUserMessages = savedConversation.messages.some(msg => msg.type === 'user');
-              setHasUserInteracted(hasUserMessages);
-              
-              // Save this conversation ID to AsyncStorage
-              await AsyncStorage.setItem('currentConversationId', routeConversationId);
-              
-              console.log(`Loaded conversation with ${savedConversation.messages.length} messages`);
-            } else if (savedConversation && Array.isArray(savedConversation)) {
-              dispatch({ type: 'SET_CONVERSATION_ID', payload: routeConversationId });
-              dispatch({ type: 'SET_MESSAGES', payload: savedConversation });
-              dispatch({ type: 'SET_SHOW_SUGGESTIONS', payload: false });
-              
-              // Check if this conversation has user messages
-              const hasUserMessages = savedConversation.some(msg => msg.type === 'user');
-              setHasUserInteracted(hasUserMessages);
-              
-              // Save this conversation ID to AsyncStorage
-              await AsyncStorage.setItem('currentConversationId', routeConversationId);
-              
-              console.log(`Loaded conversation with ${savedConversation.length} messages`);
-            } else {
-              console.error('Invalid conversation format:', savedConversation);
-              await createNewConversation();
-            }
-          } catch (error) {
-            console.error('Error loading conversation from route:', error);
+            // Check if this conversation has user messages
+            const hasUserMessages = savedConversation.messages.some(msg => msg.type === 'user');
+            setHasUserInteracted(hasUserMessages);
+            
+            // Save this conversation ID to AsyncStorage
+            await AsyncStorage.setItem('currentConversationId', routeConversationId);
+            
+            console.log(`Loaded conversation with ${savedConversation.messages.length} messages`);
+          } else if (savedConversation && Array.isArray(savedConversation)) {
+            dispatch({ type: 'SET_CONVERSATION_ID', payload: routeConversationId });
+            dispatch({ type: 'SET_MESSAGES', payload: savedConversation });
+            dispatch({ type: 'SET_SHOW_SUGGESTIONS', payload: false });
+            
+            // Check if this conversation has user messages
+            const hasUserMessages = savedConversation.some(msg => msg.type === 'user');
+            setHasUserInteracted(hasUserMessages);
+            
+            // Save this conversation ID to AsyncStorage
+            await AsyncStorage.setItem('currentConversationId', routeConversationId);
+            
+            console.log(`Loaded conversation with ${savedConversation.length} messages`);
+          } else {
+            console.error('Invalid conversation format:', savedConversation);
             await createNewConversation();
           }
-        } else if (lastConversationId) {
-          console.log(`Loading last saved conversation: ${lastConversationId}`);
-          try {
-            const savedConversation = await AIService.getConversation(lastConversationId);
-            
-            if (savedConversation && Array.isArray(savedConversation.messages) && savedConversation.messages.length > 0) {
-              dispatch({ type: 'SET_CONVERSATION_ID', payload: lastConversationId });
-              dispatch({ type: 'SET_MESSAGES', payload: savedConversation.messages });
-              dispatch({ type: 'SET_SHOW_SUGGESTIONS', payload: false });
-              
-              // Check if this conversation has user messages
-              const hasUserMessages = savedConversation.messages.some(msg => msg.type === 'user');
-              setHasUserInteracted(hasUserMessages);
-              
-              console.log(`Loaded last conversation with ${savedConversation.messages.length} messages`);
-            } else if (savedConversation && Array.isArray(savedConversation) && savedConversation.length > 0) {
-              dispatch({ type: 'SET_CONVERSATION_ID', payload: lastConversationId });
-              dispatch({ type: 'SET_MESSAGES', payload: savedConversation });
-              dispatch({ type: 'SET_SHOW_SUGGESTIONS', payload: false });
-              
-              // Check if this conversation has user messages
-              const hasUserMessages = savedConversation.some(msg => msg.type === 'user');
-              setHasUserInteracted(hasUserMessages);
-              
-              console.log(`Loaded last conversation with ${savedConversation.length} messages`);
-            } else {
-              console.log('Last conversation was empty or invalid, creating new conversation');
-              await createNewConversation();
-            }
-          } catch (error) {
-            console.error('Error loading last conversation:', error);
-            await createNewConversation();
-          }
-        } else {
+        } catch (error) {
+          console.error('Error loading conversation from route:', error);
           await createNewConversation();
         }
       } catch (error) {
@@ -877,9 +844,23 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
       case 'createTodo':
       case 'createTodoGroup':
         console.log('Creating todo modal');
+        console.log('Action type:', action.type);
+        console.log('Action data:', JSON.stringify(action.data, null, 2));
         // Handle both todo types
-        setCurrentTodoData(action.data);
+        const todoData = {
+          ...action.data,
+          // Ensure isGroup is set for createTodoGroup actions
+          isGroup: action.type === 'createTodoGroup'
+        };
+        console.log('Final todoData:', JSON.stringify(todoData, null, 2));
+        console.log('Todo items structure:', todoData.items);
+        if (todoData.items && Array.isArray(todoData.items)) {
+          console.log('First item:', todoData.items[0]);
+          console.log('Items length:', todoData.items.length);
+        }
+        setCurrentTodoData(todoData);
         setTodoModalVisible(true);
+        console.log('Todo modal should now be visible');
         break;
         
       case 'updateLifeDirection':
@@ -2013,6 +1994,10 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
         onAdd={handleTodoConfirm}
         todoData={currentTodoData}
       />
+      
+      {/* Debug: Log modal visibility */}
+      {console.log('DEBUG: todoModalVisible =', todoModalVisible)}
+      {console.log('DEBUG: currentTodoData =', currentTodoData)}
       
       <UpdateLifeDirectionModal
         visible={lifeDirectionModalVisible}

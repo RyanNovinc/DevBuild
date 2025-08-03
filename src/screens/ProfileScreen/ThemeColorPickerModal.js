@@ -1003,91 +1003,6 @@ const ThemeColorPickerModal = ({
             </TouchableOpacity>
             
             
-            {/* Debug Buttons - Dev Only */}
-            {__DEV__ && (
-              <View style={styles.debugSection}>
-                <Text style={[styles.debugSectionTitle, { color: secondaryTextColor }]}>
-                  Debug Controls (Dev Only)
-                </Text>
-                
-                <TouchableOpacity
-                  style={[styles.debugButton, { backgroundColor: 'rgba(255,0,0,0.1)', borderColor: '#FF0000' }]}
-                  onPress={async () => {
-                    await AsyncStorage.removeItem('charcoalColorCongratsShown');
-                    if (userLevel >= 3) {
-                      setCharcoalUnlockState('unlocked');
-                    }
-                    setFallingCharcoalAnimations([]);
-                    Alert.alert('Debug', 'Charcoal color congratulations reset! Color should now show unlock state.');
-                  }}
-                >
-                  <Ionicons name="refresh" size={16} color="#FF0000" />
-                  <Text style={[styles.debugButtonText, { color: '#FF0000' }]}>
-                    Reset Charcoal Congrats
-                  </Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity
-                  style={[styles.debugButton, { backgroundColor: 'rgba(0,150,0,0.1)', borderColor: '#059669' }]}
-                  onPress={async () => {
-                    await AsyncStorage.removeItem('forestGreenColorCongratsShown');
-                    if (userLevel >= 5) {
-                      setForestGreenUnlockState('unlocked');
-                    }
-                    setFallingForestAnimations([]);
-                    Alert.alert('Debug', 'Forest Green color congratulations reset! Color should now show unlock state.');
-                  }}
-                >
-                  <Ionicons name="refresh" size={16} color="#059669" />
-                  <Text style={[styles.debugButtonText, { color: '#059669' }]}>
-                    Reset Forest Green Congrats
-                  </Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity
-                  style={[styles.debugButton, { backgroundColor: 'rgba(255,165,0,0.1)', borderColor: '#FFA500' }]}
-                  onPress={async () => {
-                    await AsyncStorage.multiRemove([
-                      'charcoalColorCongratsShown',
-                      'forestGreenColorCongratsShown'
-                    ]);
-                    if (userLevel >= 3) {
-                      setCharcoalUnlockState('unlocked');
-                    }
-                    if (userLevel >= 5) {
-                      setForestGreenUnlockState('unlocked');
-                    }
-                    setFallingCharcoalAnimations([]);
-                    setFallingForestAnimations([]);
-                    Alert.alert('Debug', 'All color congratulations reset!');
-                  }}
-                >
-                  <Ionicons name="color-palette" size={16} color="#FFA500" />
-                  <Text style={[styles.debugButtonText, { color: '#FFA500' }]}>
-                    Reset All Color Congrats
-                  </Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity
-                  style={[styles.debugButton, { backgroundColor: 'rgba(0,0,255,0.1)', borderColor: '#0000FF' }]}
-                  onPress={() => {
-                    Alert.alert('Debug Info', 
-                      `User Level: ${userLevel}\n` +
-                      `Available Colors: ${availableColors.length}\n` +
-                      `Charcoal State: ${charcoalUnlockState}\n` +
-                      `Forest Green State: ${forestGreenUnlockState}\n` +
-                      `Forest Green Available: ${availableColors.includes('#059669')}\n` +
-                      `Charcoal Available: ${availableColors.includes('#1f2937')}`
-                    );
-                  }}
-                >
-                  <Ionicons name="information-circle" size={16} color="#0000FF" />
-                  <Text style={[styles.debugButtonText, { color: '#0000FF' }]}>
-                    Show Debug Info
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            )}
 
             <TouchableOpacity
               style={[styles.applyButton, { 
@@ -1523,36 +1438,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 4,
-  },
-  
-  // Debug button styles
-  debugSection: {
-    marginBottom: 20,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0, 0, 0, 0.1)',
-  },
-  debugSectionTitle: {
-    fontSize: 12,
-    fontWeight: '500',
-    textAlign: 'center',
-    marginBottom: 12,
-    opacity: 0.7,
-  },
-  debugButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    marginBottom: 8,
-  },
-  debugButtonText: {
-    fontSize: 12,
-    fontWeight: '500',
-    marginLeft: 6,
   },
 });
 

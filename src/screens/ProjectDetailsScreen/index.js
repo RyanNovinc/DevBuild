@@ -218,10 +218,13 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
         showUnsavedChangesModal: true
       }));
     } else {
-      // Check if we came from LifePlanOverview
+      // Check where we came from and navigate accordingly
       if (route.params?.previousScreen === 'LifePlanOverview') {
-        // Navigate directly to LifePlanOverview (correct screen name from App.js)
+        // Navigate directly back to LifePlanOverview (from ProfileTab settings)
         navigation.navigate('LifePlanOverview');
+      } else if (route.params?.previousScreen === 'GoalsTab') {
+        // Navigate back within the same stack (smooth slide animation)
+        navigation.goBack();
       } else {
         navigation.goBack();
       }
@@ -236,10 +239,13 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
       hasUnsavedChanges: false
     }));
     
-    // Check if we came from LifePlanOverview
+    // Check where we came from and navigate accordingly
     if (route.params?.previousScreen === 'LifePlanOverview') {
-      // Navigate directly to LifePlanOverview (correct screen name from App.js)
+      // Navigate directly to LifePlanOverview (from ProfileTab settings)
       navigation.navigate('LifePlanOverview');
+    } else if (route.params?.previousScreen === 'GoalsTab') {
+      // Navigate back within the same stack (smooth slide animation)
+      navigation.goBack();
     } else {
       navigation.goBack();
     }

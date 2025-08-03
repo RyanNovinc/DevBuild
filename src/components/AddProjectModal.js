@@ -66,7 +66,7 @@ const AddProjectModal = ({
   // Animation values
   const dropdownHeight = useRef(new Animated.Value(0)).current;
   const dropdownOpacity = useRef(new Animated.Value(0)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const backgroundOpacityAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(300)).current;
   const translateY = useRef(new Animated.Value(0)).current;
   
@@ -80,15 +80,17 @@ const AddProjectModal = ({
   
   // Handle modal close with proper cleanup
   const handleClose = () => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 250,
-        useNativeDriver: true,
-      }),
+    Animated.sequence([
+      // First slide out the content
       Animated.timing(slideAnim, {
         toValue: 300,
         duration: 250,
+        useNativeDriver: true,
+      }),
+      // Then fade out the background
+      Animated.timing(backgroundOpacityAnim, {
+        toValue: 0,
+        duration: 200,
         useNativeDriver: true,
       })
     ]).start(() => {
@@ -154,12 +156,20 @@ const AddProjectModal = ({
   // Modal animation on show/hide
   useEffect(() => {
     if (visible) {
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
+      // Reset animation values
+      backgroundOpacityAnim.setValue(0);
+      slideAnim.setValue(300);
+      translateY.setValue(0);
+      
+      // Animate in with staggered timing
+      Animated.sequence([
+        // First darken the background gradually
+        Animated.timing(backgroundOpacityAnim, {
           toValue: 1,
           duration: 250,
           useNativeDriver: true,
         }),
+        // Then slide in the content
         Animated.timing(slideAnim, {
           toValue: 0,
           duration: 250,
@@ -215,7 +225,7 @@ const AddProjectModal = ({
       // Reset animation values
       translateY.setValue(0);
       slideAnim.setValue(300);
-      fadeAnim.setValue(0);
+      backgroundOpacityAnim.setValue(0);
     }
   }, [projectData, visible, goals]);
   
@@ -963,7 +973,7 @@ const AddProjectModal = ({
         style={[
           styles.overlay,
           {
-            opacity: fadeAnim
+            opacity: backgroundOpacityAnim
           }
         ]}
       >
