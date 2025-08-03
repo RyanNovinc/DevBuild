@@ -27,8 +27,17 @@ import {
   initializeWithExampleData
 } from './utils';
 import CurrencyService from './CurrencyService';
+import { getCurrencySymbol } from '../../../utils/countryToCurrency';
 
-const FinancialTracker = ({ theme, navigation, isPremium = true }) => {
+const FinancialTracker = ({ 
+  theme, 
+  navigation, 
+  isPremium = true,
+  widgetId,
+  saveWidgetData,
+  loadWidgetData,
+  widgetName 
+}) => {
   // Financial data state with empty goals array
   const [financialData, setFinancialData] = useState({
     incomeSources: [],
@@ -86,7 +95,24 @@ const FinancialTracker = ({ theme, navigation, isPremium = true }) => {
     });
     
     initializeExchangeRates();
-  }, []);
+  }, [widgetId, loadWidgetData]);
+
+  // Initialize currency based on user's selected country
+  const initializeCurrencyFromCountry = async () => {
+    try {
+      const savedCountry = await AsyncStorage.getItem('userCountry');
+      if (savedCountry) {
+        const currencySymbol = getCurrencySymbol(savedCountry);
+        console.log(`Setting currency to ${currencySymbol} for country: ${savedCountry}`);
+        return currencySymbol;
+      }
+    } catch (error) {
+      console.error('Error loading country for currency initialization:', error);
+    }
+    
+    // Default to $ if no country is found
+    return "$";
+  };
   
   // Initialize exchange rates
   const initializeExchangeRates = async () => {
@@ -110,9 +136,37 @@ const FinancialTracker = ({ theme, navigation, isPremium = true }) => {
   // Load financial data from storage
   const loadFinancialData = async () => {
     try {
-      const dataJson = await AsyncStorage.getItem('financialTrackerData');
+      // Use widget instance storage if available, fall back to old storage for migration
+      let dataJson = null;
+      
+      if (widgetId && loadWidgetData) {
+        const widgetData = await loadWidgetData(widgetId);
+        if (widgetData) {
+          dataJson = JSON.stringify(widgetData);
+        }
+      }
+      
+      // For new widget instances with widgetId, never load old data - start completely fresh
+      if (!dataJson && widgetId) {
+        console.log('New financial tracker widget instance starting fresh - no data inheritance');
+        return; // Exit early, don't load any old data
+      }
+      
+      // Only fall back to old storage for very old installations without widgetId
+      if (!dataJson && !widgetId) {
+        dataJson = await AsyncStorage.getItem('financialTrackerData');
+      }
+      
       if (dataJson) {
         const loadedData = JSON.parse(dataJson);
+        
+        // Initialize currency from country if no currency is saved
+        let currency = loadedData.currency;
+        if (!currency) {
+          currency = await initializeCurrencyFromCountry();
+          console.log('Initialized currency from country:', currency);
+        }
+        
         setFinancialData(prevData => ({
           ...prevData,
           ...loadedData,
@@ -122,7 +176,7 @@ const FinancialTracker = ({ theme, navigation, isPremium = true }) => {
           savings: loadedData.savings || [],
           debts: loadedData.debts || [],
           goals: loadedData.goals || [], // Empty array if no goals exist
-          currency: loadedData.currency || "$"
+          currency: currency
         }));
       } else {
         // Initialize with example data for better UX
@@ -130,6 +184,11 @@ const FinancialTracker = ({ theme, navigation, isPremium = true }) => {
         
         // CRITICAL: Ensure example data has empty goals array
         exampleData.goals = [];
+        
+        // Initialize currency from country for new users
+        const countryCurrency = await initializeCurrencyFromCountry();
+        exampleData.currency = countryCurrency;
+        console.log('New financial tracker initialized with currency:', countryCurrency);
         
         setFinancialData(prevData => ({
           ...prevData,
@@ -151,7 +210,13 @@ const FinancialTracker = ({ theme, navigation, isPremium = true }) => {
     }
     
     try {
-      await AsyncStorage.setItem('financialTrackerData', JSON.stringify(updatedData));
+      // Use widget instance storage if available
+      if (widgetId && saveWidgetData) {
+        await saveWidgetData(widgetId, updatedData);
+      } else {
+        // Fall back to old storage
+        await AsyncStorage.setItem('financialTrackerData', JSON.stringify(updatedData));
+      }
       
       // Provide haptic feedback for data update
       if (Platform.OS !== 'web') {
@@ -527,6 +592,59 @@ const FinancialTracker = ({ theme, navigation, isPremium = true }) => {
     }
   };
   
+  // Load saved financial data instance
+  const loadSavedFinancialData = async (savedData) => {
+    try {
+      setFinancialData(savedData);
+      await saveFinancialData(savedData);
+    } catch (error) {
+      console.error('Error loading saved financial data:', error);
+    }
+  };
+
+  // Save current financial data as a new instance
+  const saveCurrentFinancialData = async () => {
+    try {
+      // Generate a unique ID for the saved instance
+      const timestamp = Date.now();
+      const saveId = `widget_data_financial_${timestamp}`;
+      
+      // Add timestamp to the data
+      const dataToSave = {
+        ...financialData,
+        lastUpdated: new Date().toISOString(),
+        savedAt: timestamp
+      };
+      
+      // Save to AsyncStorage with unique key
+      await AsyncStorage.setItem(saveId, JSON.stringify(dataToSave));
+      console.log('Financial data saved with ID:', saveId);
+      
+      return saveId;
+    } catch (error) {
+      console.error('Error saving current financial data:', error);
+      throw error;
+    }
+  };
+
+  // Start fresh with new financial data
+  const startFreshFinancialData = async () => {
+    try {
+      const freshData = {
+        incomeSources: [],
+        expenses: [],
+        savings: [],
+        debts: [],
+        goals: [],
+        currency: await initializeCurrencyFromCountry()
+      };
+      setFinancialData(freshData);
+      await saveFinancialData(freshData);
+    } catch (error) {
+      console.error('Error starting fresh financial data:', error);
+    }
+  };
+
   // Prepare handlers object for child components
   const handlers = {
     setNewItemName,
@@ -543,7 +661,10 @@ const FinancialTracker = ({ theme, navigation, isPremium = true }) => {
     handleAddGoal,
     handleDeleteGoal,
     handleReplaceAllGoals,
-    setCurrency: handleCurrencyChange
+    setCurrency: handleCurrencyChange,
+    loadSavedFinancialData,
+    startFreshFinancialData,
+    saveCurrentFinancialData
   };
   
   // Main return

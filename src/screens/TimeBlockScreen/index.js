@@ -74,7 +74,7 @@ const TimeBlockScreen = ({ route, navigation }) => {
   // Check if using dark mode
   const isDarkMode = theme.background === '#000000';
   
-  const { mode, timeBlock: initialTimeBlock, date } = route.params || { mode: 'create' };
+  const { mode, timeBlock: initialTimeBlock, date, prefilledStartTime, prefilledEndTime } = route.params || { mode: 'create' };
   const isCreating = mode === 'create';
 
   // Animation values
@@ -368,21 +368,32 @@ const TimeBlockScreen = ({ route, navigation }) => {
       
     } else if (isCreating && date) {
       // If creating a new time block with a specific date
-      const newDate = new Date(date);
+      let startTimeToUse, endTimeToUse;
       
-      // Set start time to current hour rounded up to nearest half hour
-      const currentTime = new Date();
-      const minutes = currentTime.getMinutes();
-      const roundedMinutes = minutes < 30 ? 30 : 0;
-      const hoursToAdd = minutes < 30 ? 0 : 1;
+      // Check if we have pre-filled times from tap-to-create
+      if (prefilledStartTime && prefilledEndTime) {
+        startTimeToUse = new Date(prefilledStartTime);
+        endTimeToUse = new Date(prefilledEndTime);
+      } else {
+        // Default time logic (original behavior)
+        const newDate = new Date(date);
+        
+        // Set start time to current hour rounded up to nearest half hour
+        const currentTime = new Date();
+        const minutes = currentTime.getMinutes();
+        const roundedMinutes = minutes < 30 ? 30 : 0;
+        const hoursToAdd = minutes < 30 ? 0 : 1;
+        
+        newDate.setHours(currentTime.getHours() + hoursToAdd, roundedMinutes, 0, 0);
+        startTimeToUse = newDate;
+        
+        // Set end time to 1 hour after start time
+        endTimeToUse = new Date(newDate);
+        endTimeToUse.setHours(endTimeToUse.getHours() + 1);
+      }
       
-      newDate.setHours(currentTime.getHours() + hoursToAdd, roundedMinutes, 0, 0);
-      setStartTime(newDate);
-      
-      // Set end time to 1 hour after start time
-      const newEndTime = new Date(newDate);
-      newEndTime.setHours(newEndTime.getHours() + 1);
-      setEndTime(newEndTime);
+      setStartTime(startTimeToUse);
+      setEndTime(endTimeToUse);
 
       // Store initial values for a new time block
       setInitialValues({
@@ -392,8 +403,8 @@ const TimeBlockScreen = ({ route, navigation }) => {
         domainColor: '#4CAF50',
         category: 'Personal',
         customColor: '#4285F4',
-        startTime: newDate.toISOString(),
-        endTime: newEndTime.toISOString(),
+        startTime: startTimeToUse.toISOString(),
+        endTime: endTimeToUse.toISOString(),
         location: '',
         notes: '',
         isCompleted: false,

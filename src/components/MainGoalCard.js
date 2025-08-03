@@ -108,9 +108,9 @@ const MainGoalCard = ({ goal, onPress, onProgressUpdate, onComplete, showComplet
   
   // Measure the content for height animation
   const onContentLayout = (event) => {
-    if (!contentHeight) {
-      setContentHeight(event.nativeEvent.layout.height);
-    }
+    const newHeight = event.nativeEvent.layout.height;
+    // Always update content height to account for dynamic content
+    setContentHeight(newHeight);
   };
   
   // Format target date in relative terms
@@ -159,7 +159,7 @@ const MainGoalCard = ({ goal, onPress, onProgressUpdate, onComplete, showComplet
   // Calculate animated height value
   const animatedHeight = expandAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, contentHeight || scaleHeight(200)] // Use measured height or responsive fallback
+    outputRange: [0, contentHeight || scaleHeight(300)] // Use measured height or larger responsive fallback
   });
   
   // Increment progress by step (for manual progress)
@@ -587,7 +587,7 @@ const MainGoalCard = ({ goal, onPress, onProgressUpdate, onComplete, showComplet
                       marginBottom: spacing.m
                     }
                   ]} 
-                  numberOfLines={2}
+                  numberOfLines={undefined}
                   maxFontSizeMultiplier={1.5}
                 >
                   {goal.description}
@@ -712,7 +712,8 @@ const MainGoalCard = ({ goal, onPress, onProgressUpdate, onComplete, showComplet
                       paddingHorizontal: spacing.m,
                       minHeight: accessibility.minTouchTarget,
                       width: '100%',
-                      marginTop: spacing.m
+                      marginTop: spacing.m,
+                      marginBottom: spacing.s
                     }
                   ]} 
                   onPress={handleComplete}
@@ -819,10 +820,6 @@ const styles = StyleSheet.create({
   },
   measureContent: {
     width: '100%',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
   },
   expandContentInner: {
     // Padding set inline with scaling

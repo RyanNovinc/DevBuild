@@ -40,7 +40,7 @@ const AIInputBar = ({
   onNewConversation,
   disabled = false,
   isStreaming = false,
-  placeholder = 'Your move...',
+  placeholder = 'Ask anything...',
   onFocus,
   onBlur,
   conversationId,

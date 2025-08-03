@@ -533,52 +533,6 @@ const SettingsModal = ({
               </Animated.View>
             )}
             
-            {/* Life Plan Overview Button - NEW ADDITION */}
-            <TouchableOpacity 
-              style={[styles.settingButton, { 
-                backgroundColor: theme.card,
-                borderColor: theme.border,
-                marginBottom: 16
-              }]}
-              onPress={() => {
-                handleClose();
-                navigation.navigate('LifePlanOverview');
-              }}
-              accessible={true}
-              accessibilityRole="button"
-              accessibilityLabel="Life Plan Overview"
-              accessibilityHint="View a holistic overview of your goals, projects, and life direction"
-            >
-              <View style={styles.settingButtonContent}>
-                <View style={[styles.settingIconContainer, { 
-                  backgroundColor: '#9C27B020'
-                }]}>
-                  <Ionicons name="compass" size={20} color="#9C27B0" />
-                </View>
-                <View style={styles.settingTextContainer}>
-                  <Text 
-                    style={[styles.settingButtonText, { color: theme.text }]}
-                    maxFontSizeMultiplier={1.3}
-                    numberOfLines={1}
-                  >
-                    Life Plan Overview
-                  </Text>
-                  <Text 
-                    style={[styles.settingButtonSubtext, { color: theme.textSecondary }]}
-                    maxFontSizeMultiplier={1.5}
-                    numberOfLines={1}
-                  >
-                    View your complete life plan
-                  </Text>
-                </View>
-              </View>
-              <Ionicons 
-                name="chevron-forward" 
-                size={20} 
-                color={theme.textSecondary} 
-              />
-            </TouchableOpacity>
-            
             {/* LifeCompassAI Button */}
             <TouchableOpacity 
               style={[styles.settingButton, { 

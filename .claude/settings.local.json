@@ -6,7 +6,22 @@
       "Bash(npm start)",
       "Bash(npx expo start:*)",
       "Bash(npx react-native start:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(node:*)",
+      "Bash(timeout 15 npx expo start --dev-client --port 8085)",
+      "Bash(npx react-native-syntax-checker:*)",
+      "Bash(npm run lint)",
+      "Bash(npm run:*)",
+      "Bash(timeout 10 npm start)",
+      "Bash(timeout 15 npm start)",
+      "Bash(gh:*)",
+      "Bash(git --version)",
+      "Bash(winget install:*)",
+      "Bash(powershell:*)",
+      "Bash(git remote remove:*)",
+      "Bash(git remote add:*)",
+      "Bash(git branch:*)",
+      "Bash(git add:*)"
     ],
     "deny": []
   }

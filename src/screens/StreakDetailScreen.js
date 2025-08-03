@@ -72,6 +72,16 @@ const StreakDetailScreen = ({ navigation, route }) => {
     showError: (msg) => console.error(msg)
   };
 
+  // Get route params for widget instance data
+  const { 
+    widgetId, 
+    saveWidgetData, 
+    loadWidgetData, 
+    currentStreakData, 
+    onStreakDataUpdate,
+    saveCurrentStreakInstance
+  } = route?.params || {};
+
   // Use dark theme
   const theme = DARK_THEME;
 
@@ -84,7 +94,12 @@ const StreakDetailScreen = ({ navigation, route }) => {
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showChecklistModal, setShowChecklistModal] = useState(false);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
+  const [showSaveDataModal, setShowSaveDataModal] = useState(false);
   const [newItem, setNewItem] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // Save data browser state
+  const [savedInstances, setSavedInstances] = useState([]);
   
   // Main streak data state
   const [streakData, setStreakData] = useState({
@@ -120,9 +135,15 @@ const StreakDetailScreen = ({ navigation, route }) => {
   // Check if screen is in landscape mode
   const isLandscape = width > height;
 
-  // Initialize with data from AsyncStorage
+  // Initialize with data from route params or AsyncStorage
   useEffect(() => {
-    loadStreakData();
+    if (currentStreakData) {
+      // Use data from widget instance
+      setStreakData(currentStreakData);
+    } else {
+      // Fall back to old storage loading
+      loadStreakData();
+    }
     
     // Run animations on mount
     Animated.timing(fadeAnim, {
@@ -130,7 +151,7 @@ const StreakDetailScreen = ({ navigation, route }) => {
       duration: 600,
       useNativeDriver: true,
     }).start();
-  }, []);
+  }, [currentStreakData]);
 
   // Run progress animation when streak data loads
   useEffect(() => {
@@ -217,13 +238,153 @@ const StreakDetailScreen = ({ navigation, route }) => {
 
   const saveStreakData = async (data) => {
     try {
-      await AsyncStorage.setItem('streakData', JSON.stringify(data));
+      // Use widget instance storage if available
+      if (widgetId && saveWidgetData) {
+        await saveWidgetData(widgetId, data);
+        // Also update the widget via callback
+        if (onStreakDataUpdate) {
+          onStreakDataUpdate(data);
+        }
+      } else {
+        // Fall back to old storage
+        await AsyncStorage.setItem('streakData', JSON.stringify(data));
+      }
       return true;
     } catch (error) {
       console.error('Error saving streak data:', error);
       showError('Failed to save streak data');
       return false;
     }
+  };
+
+  // Load all saved streak instances for the save data browser (limit to 3)
+  const loadSavedInstances = async () => {
+    try {
+      const allKeys = await AsyncStorage.getAllKeys();
+      const widgetDataKeys = allKeys.filter(key => key.startsWith('widget_data_'));
+      const instances = [];
+
+      for (const key of widgetDataKeys) {
+        try {
+          const data = await AsyncStorage.getItem(key);
+          if (data) {
+            const parsedData = JSON.parse(data);
+            // Only include streak counter data
+            if (parsedData.streakName || parsedData.currentStreak !== undefined) {
+              // Create a better name for saved instances
+              const savedAt = parsedData.savedAt ? new Date(parsedData.savedAt) : new Date();
+              const instanceName = parsedData.streakName && parsedData.streakName !== 'My Streak' 
+                ? `${parsedData.streakName} (${savedAt.toLocaleDateString()})`
+                : `Saved ${savedAt.toLocaleDateString()} ${savedAt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+              
+              instances.push({
+                id: key,
+                name: instanceName,
+                currentStreak: parsedData.currentStreak || 0,
+                longestStreak: parsedData.longestStreak || 0,
+                lastUpdated: parsedData.lastCheckIn || 'Never',
+                data: parsedData
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Error loading instance:', key, error);
+        }
+      }
+
+      // Also check old storage for migration
+      const oldData = await AsyncStorage.getItem('streakData');
+      if (oldData && !instances.length) {
+        const parsedOldData = JSON.parse(oldData);
+        instances.push({
+          id: 'legacy_streak',
+          name: parsedOldData.streakName || 'Legacy Streak',
+          currentStreak: parsedOldData.currentStreak || 0,
+          longestStreak: parsedOldData.longestStreak || 0,
+          lastUpdated: parsedOldData.lastCheckIn || 'Never',
+          data: parsedOldData
+        });
+      }
+
+      // Limit to 3 most recent instances
+      setSavedInstances(instances.slice(0, 3));
+    } catch (error) {
+      console.error('Error loading saved instances:', error);
+    }
+  };
+
+  // Load a specific saved instance
+  const loadSavedInstance = async (instance) => {
+    try {
+      setStreakData(instance.data);
+      await saveStreakData(instance.data);
+      setShowSaveDataModal(false);
+      showSuccess(`Loaded "${instance.name}" streak data`);
+    } catch (error) {
+      console.error('Error loading saved instance:', error);
+      showError('Failed to load streak data');
+    }
+  };
+
+  // Handle going back with automatic saving
+  const handleGoBack = async () => {
+    setIsSaving(true);
+    try {
+      // Update the widget in the dashboard via callback first
+      if (onStreakDataUpdate) {
+        onStreakDataUpdate(streakData);
+      }
+      
+      // Save current data as a separate instance using the function from StreakCounter
+      if (saveCurrentStreakInstance) {
+        await saveCurrentStreakInstance(streakData);
+      } else {
+        // Fallback: save directly if function not available
+        const timestamp = Date.now();
+        const saveId = `widget_data_streak_${timestamp}`;
+        
+        const dataToSave = {
+          ...streakData,
+          lastUpdated: new Date().toISOString(),
+          savedAt: timestamp
+        };
+        
+        await AsyncStorage.setItem(saveId, JSON.stringify(dataToSave));
+        console.log('Streak data auto-saved with ID:', saveId);
+      }
+      
+      // Add a minimum delay to ensure the user sees the saving indicator
+      await new Promise(resolve => setTimeout(resolve, 800));
+    } catch (error) {
+      console.error('Error auto-saving streak data:', error);
+    } finally {
+      setIsSaving(false);
+      navigation.goBack();
+    }
+  };
+
+  // Start fresh with new streak
+  const startFreshStreak = async () => {
+    const freshData = {
+      streakName: 'My Streak',
+      streakIcon: 'flame',
+      streakColor: DEFAULT_COLORS[0],
+      currentStreak: 0,
+      longestStreak: 0,
+      lastCheckIn: null,
+      checkInDates: {},
+      nextMilestone: 7,
+      notes: '',
+      checklist: [
+        { id: '1', text: 'Complete daily activity', completed: false },
+        { id: '2', text: 'Track progress', completed: false },
+        { id: '3', text: 'Stay consistent', completed: false }
+      ]
+    };
+    setStreakData(freshData);
+    await saveStreakData(freshData);
+    setShowSaveDataModal(false);
+    showSuccess('Started fresh streak');
   };
 
   const updateStreak = async () => {
@@ -855,6 +1016,71 @@ const StreakDetailScreen = ({ navigation, route }) => {
     </Modal>
   );
 
+  // Save data browser modal
+  const renderSaveDataModal = () => (
+    <Modal
+      visible={showSaveDataModal}
+      animationType="slide"
+      transparent={true}
+      onRequestClose={() => setShowSaveDataModal(false)}
+    >
+      <View style={[styles.modalOverlay, { backgroundColor: theme.overlay }]}>
+        <View style={[styles.modalContent, styles.saveDataModalContent, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <View style={styles.modalHeader}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>Load Saved Data</Text>
+            <TouchableOpacity onPress={() => setShowSaveDataModal(false)}>
+              <Ionicons name="close" size={24} color={theme.textSecondary} />
+            </TouchableOpacity>
+          </View>
+          
+          <Text style={[styles.saveDataDescription, { color: theme.textSecondary }]}>
+            Choose from your saved streak data or start fresh
+          </Text>
+          
+          <ScrollView style={styles.savedInstancesContainer}>
+            {savedInstances.length > 0 ? (
+              savedInstances.map((instance, index) => (
+                <TouchableOpacity
+                  key={instance.id}
+                  style={[styles.savedInstanceItem, { backgroundColor: theme.cardAlt, borderColor: theme.border }]}
+                  onPress={() => loadSavedInstance(instance)}
+                >
+                  <View style={styles.savedInstanceInfo}>
+                    <Text style={[styles.savedInstanceName, { color: theme.text }]}>
+                      {instance.name}
+                    </Text>
+                    <Text style={[styles.savedInstanceStats, { color: theme.textSecondary }]}>
+                      Current: {instance.currentStreak} days • Best: {instance.longestStreak} days
+                    </Text>
+                    <Text style={[styles.savedInstanceDate, { color: theme.textSecondary }]}>
+                      Last updated: {instance.lastUpdated === 'Never' ? 'Never' : new Date(instance.lastUpdated).toLocaleDateString()}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
+                </TouchableOpacity>
+              ))
+            ) : (
+              <View style={styles.noSavedDataContainer}>
+                <Ionicons name="folder-open-outline" size={48} color={theme.textSecondary} />
+                <Text style={[styles.noSavedDataText, { color: theme.textSecondary }]}>
+                  No saved streak data found
+                </Text>
+              </View>
+            )}
+          </ScrollView>
+          
+          <TouchableOpacity 
+            style={[styles.startFreshButton, { backgroundColor: streakData.streakColor }]}
+            onPress={startFreshStreak}
+          >
+            <Ionicons name="add-circle" size={20} color="#FFFFFF" />
+            <Text style={styles.startFreshButtonText}>Start Fresh Streak</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <StatusBar barStyle={statusBarStyle} backgroundColor={theme.background} />
@@ -870,18 +1096,31 @@ const StreakDetailScreen = ({ navigation, route }) => {
       ]}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
+          onPress={handleGoBack}
+          disabled={isSaving}
           hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
           accessible={true}
           accessibilityRole="button"
-          accessibilityLabel="Go back"
+          accessibilityLabel="Go back and save"
         >
-          <Ionicons name="chevron-back" size={28} color={theme.text} />
+          {isSaving ? (
+            <Ionicons name="ellipsis-horizontal" size={28} color={theme.textSecondary} />
+          ) : (
+            <Ionicons name="chevron-back" size={28} color={theme.text} />
+          )}
         </TouchableOpacity>
         
-        <Text style={[styles.headerTitle, { color: theme.text }]}>
-          {streakData.streakName}
-        </Text>
+        <View style={styles.titleContainer}>
+          <Text style={[styles.headerTitle, { color: theme.text }]}>
+            {streakData.streakName}
+          </Text>
+          {isSaving && (
+            <View style={styles.savingIndicator}>
+              <Ionicons name="cloud-upload-outline" size={16} color={streakData.streakColor} />
+              <Text style={[styles.savingText, { color: streakData.streakColor }]}>Saving...</Text>
+            </View>
+          )}
+        </View>
         
         <View style={styles.headerButtons}>
           <TouchableOpacity
@@ -893,6 +1132,20 @@ const StreakDetailScreen = ({ navigation, route }) => {
             accessibilityLabel="View information about this tracker"
           >
             <Ionicons name="information-circle-outline" size={22} color={theme.textSecondary} />
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.saveDataButton}
+            onPress={() => {
+              loadSavedInstances();
+              setShowSaveDataModal(true);
+            }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Load saved streak data"
+          >
+            <Ionicons name="folder-outline" size={22} color={theme.textSecondary} />
           </TouchableOpacity>
           
           <TouchableOpacity
@@ -1247,6 +1500,7 @@ const StreakDetailScreen = ({ navigation, route }) => {
       {renderInfoModal()}
       {renderChecklistModal()}
       {renderResetConfirmationModal()}
+      {renderSaveDataModal()}
     </SafeAreaView>
   );
 };
@@ -1262,12 +1516,25 @@ const styles = StyleSheet.create({
     height: scaleHeight(60),
     paddingVertical: spacing.s,
   },
+  titleContainer: {
+    flex: 1,
+    alignItems: 'center',
+    marginHorizontal: spacing.m,
+  },
   headerTitle: {
     fontSize: fontSizes.l,
     fontWeight: '600',
-    flex: 1,
     textAlign: 'center',
-    marginHorizontal: spacing.m,
+  },
+  savingIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.xxs,
+  },
+  savingText: {
+    fontSize: fontSizes.s,
+    fontWeight: '600',
+    marginLeft: spacing.xxs,
   },
   backButton: {
     padding: spacing.xs,
@@ -1287,6 +1554,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   infoIconButton: {
+    marginRight: spacing.s,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.05)'
+  },
+  saveDataButton: {
     marginRight: spacing.s,
     width: 36,
     height: 36,
@@ -1827,6 +2103,65 @@ const styles = StyleSheet.create({
   modalButtonText: {
     fontSize: fontSizes.m,
     fontWeight: '600',
+  },
+  // Save data modal styles
+  saveDataModalContent: {
+    maxHeight: '80%',
+  },
+  saveDataDescription: {
+    fontSize: fontSizes.s,
+    textAlign: 'center',
+    marginBottom: spacing.l,
+  },
+  savedInstancesContainer: {
+    maxHeight: 300,
+    marginBottom: spacing.l,
+  },
+  savedInstanceItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: spacing.m,
+    borderRadius: scaleWidth(12),
+    marginBottom: spacing.s,
+    borderWidth: 1,
+  },
+  savedInstanceInfo: {
+    flex: 1,
+  },
+  savedInstanceName: {
+    fontSize: fontSizes.m,
+    fontWeight: '600',
+    marginBottom: spacing.xxs,
+  },
+  savedInstanceStats: {
+    fontSize: fontSizes.s,
+    marginBottom: spacing.xxs,
+  },
+  savedInstanceDate: {
+    fontSize: fontSizes.xs,
+  },
+  noSavedDataContainer: {
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  noSavedDataText: {
+    fontSize: fontSizes.s,
+    marginTop: spacing.m,
+    textAlign: 'center',
+  },
+  startFreshButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.m,
+    borderRadius: scaleWidth(12),
+  },
+  startFreshButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: fontSizes.m,
+    marginLeft: spacing.xs,
   },
 });
 

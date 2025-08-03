@@ -75,7 +75,7 @@ const AddTaskModal = ({
   const projectDropdownOpacity = useRef(new Animated.Value(0)).current;
   
   // Modal animation values
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const backgroundOpacityAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(Dimensions.get('window').height)).current;
   const translateY = useRef(new Animated.Value(0)).current;
   
@@ -94,18 +94,20 @@ const AddTaskModal = ({
   useEffect(() => {
     if (visible) {
       // Reset animation values
-      fadeAnim.setValue(0);
+      backgroundOpacityAnim.setValue(0);
       slideAnim.setValue(Dimensions.get('window').height);
       translateY.setValue(0);
       
-      // Animate in
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
+      // Animate in with staggered timing
+      Animated.sequence([
+        // First darken the background gradually
+        Animated.timing(backgroundOpacityAnim, {
           toValue: 1,
-          duration: 200,
+          duration: 250,
           useNativeDriver: true,
           easing: Easing.out(Easing.ease)
         }),
+        // Then slide in the content
         Animated.timing(slideAnim, {
           toValue: 0,
           duration: 300,
@@ -303,16 +305,18 @@ const AddTaskModal = ({
   const handleClose = () => {
     const screenHeight = Dimensions.get('window').height;
     
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-        easing: Easing.in(Easing.ease)
-      }),
+    Animated.sequence([
+      // First slide out the content
       Animated.timing(slideAnim, {
         toValue: screenHeight,
         duration: 250,
+        useNativeDriver: true,
+        easing: Easing.in(Easing.ease)
+      }),
+      // Then fade out the background
+      Animated.timing(backgroundOpacityAnim, {
+        toValue: 0,
+        duration: 200,
         useNativeDriver: true,
         easing: Easing.in(Easing.ease)
       })
@@ -381,7 +385,7 @@ const AddTaskModal = ({
         style={[
           styles.overlay,
           {
-            opacity: fadeAnim,
+            opacity: backgroundOpacityAnim,
             backgroundColor: 'rgba(0,0,0,0.5)'
           }
         ]}

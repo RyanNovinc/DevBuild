@@ -86,6 +86,7 @@ const CompactView = ({ theme, data, openDetailModal }) => {
                 style={[
                   styles.incomeBar, 
                   { 
+                    backgroundColor: '#4CAF50', // Green for income
                     height: barAnim.interpolate({
   inputRange: [0, 1],
   outputRange: [0, Math.round((totalIncome / highestBar) * 100)]

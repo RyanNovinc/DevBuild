@@ -36,13 +36,18 @@ import {
 } from '../../utils/responsive';
 
 const FocusTimer = ({ theme, navigation }) => {
-  // Timer states
-  const [isRunning, setIsRunning] = useState(false);
-  const [timeElapsed, setTimeElapsed] = useState(0); // in seconds
-  const [targetTime, setTargetTime] = useState(90 * 60); // default to 90 minutes
+  // Timer states - separate for each mode
+  const [isCountdownRunning, setIsCountdownRunning] = useState(false);
+  const [isCountupRunning, setIsCountupRunning] = useState(false);
+  const [countdownTimeElapsed, setCountdownTimeElapsed] = useState(0);
+  const [countupTimeElapsed, setCountupTimeElapsed] = useState(0);
+  const [countdownStartTime, setCountdownStartTime] = useState(null);
+  const [countupStartTime, setCountupStartTime] = useState(null);
+  const [targetTime, setTargetTime] = useState(0); // default to 0, user sets their own time
   const [isCountdown, setIsCountdown] = useState(true);
   const [fullscreenMode, setFullscreenMode] = useState(false);
-  const [distractionCount, setDistractionCount] = useState(0);
+  const [countdownDistractions, setCountdownDistractions] = useState(0);
+  const [countupDistractions, setCountupDistractions] = useState(0);
   const [timerHistory, setTimerHistory] = useState([]);
   const [showCustomTimeInput, setShowCustomTimeInput] = useState(false);
   const [customTime, setCustomTime] = useState('');
@@ -55,6 +60,15 @@ const FocusTimer = ({ theme, navigation }) => {
   
   // Important: Instead of a separate modal for tips, we use a state to track info view
   const [showInfoInFullscreen, setShowInfoInFullscreen] = useState(false);
+  
+  // State for hint button
+  const [showEditHint, setShowEditHint] = useState(false);
+  
+  // Track which mode the timer was started in
+  const [activeTimerMode, setActiveTimerMode] = useState(null); // 'countdown' or 'countup' or null
+  
+  // Force re-render state for real-time updates
+  const [forceUpdate, setForceUpdate] = useState(0);
   
   // Track interaction states
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -93,9 +107,15 @@ const FocusTimer = ({ theme, navigation }) => {
 
   useEffect(() => {
     loadTimerHistory();
+    loadEditHintState();
+  }, []);
+
+  // Separate effect for animations and UI updates
+  useEffect(() => {
+    const currentlyRunning = getCurrentRunningState();
     
     // Start pulse animation for the pause/play button when timer is running
-    if (isRunning) {
+    if (currentlyRunning) {
       Animated.loop(
         Animated.sequence([
           Animated.timing(pulseAnim, {
@@ -110,24 +130,52 @@ const FocusTimer = ({ theme, navigation }) => {
           }),
         ])
       ).start();
-      
-      // Start the timer
-      startTimerInterval();
     } else {
       pulseAnim.setValue(1);
-      
-      // Clear the timer interval
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
+    }
+  }, [isCountdownRunning, isCountupRunning, isCountdown]);
+
+  // Effect for UI updates and countdown completion check
+  useEffect(() => {
+    let updateInterval;
+    
+    if (isCountdownRunning || isCountupRunning) {
+      updateInterval = setInterval(() => {
+        // Check if countdown timer has completed
+        if (isCountdownRunning && countdownStartTime) {
+          const now = new Date().getTime();
+          const sessionElapsed = Math.floor((now - countdownStartTime) / 1000);
+          const totalElapsed = countdownTimeElapsed + sessionElapsed;
+          
+          if (totalElapsed >= targetTime) {
+            // Timer completed
+            setCountdownTimeElapsed(targetTime);
+            setCountdownStartTime(null);
+            setIsCountdownRunning(false);
+            
+            // Provide feedback when timer completes
+            if (Platform.OS !== 'web') {
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            }
+            
+            // Save the completed session
+            saveTimerSession(targetTime, countdownDistractions);
+          }
+        }
+        
+        // Force re-render to update displayed time
+        setForceUpdate(prev => prev + 1);
+      }, 1000);
     }
 
     return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
+      if (updateInterval) {
+        clearInterval(updateInterval);
       }
+      // Save state when component unmounts
+      saveTimerState();
     };
-  }, [isRunning]);
+  }, [isCountdownRunning, isCountupRunning, countdownStartTime, countupStartTime, targetTime]);
 
   // Update pager when mode changes
   useEffect(() => {
@@ -187,7 +235,7 @@ const FocusTimer = ({ theme, navigation }) => {
   useEffect(() => {
     let saveInterval;
     
-    if (isRunning) {
+    if (isCountdownRunning || isCountupRunning) {
       // Save timer state every 10 seconds when running
       saveInterval = setInterval(() => {
         saveTimerState();
@@ -199,7 +247,7 @@ const FocusTimer = ({ theme, navigation }) => {
         clearInterval(saveInterval);
       }
     };
-  }, [isRunning, timeElapsed, targetTime, isCountdown, distractionCount]);
+  }, [isCountdownRunning, isCountupRunning, countdownTimeElapsed, countupTimeElapsed, countdownStartTime, countupStartTime, targetTime, isCountdown, countdownDistractions, countupDistractions]);
 
   // Update edit time fields when target time changes
   useEffect(() => {
@@ -224,6 +272,28 @@ const FocusTimer = ({ theme, navigation }) => {
     }
   };
 
+  // Load edit hint state from storage
+  const loadEditHintState = async () => {
+    try {
+      const hintDismissed = await AsyncStorage.getItem('focusTimerEditHintDismissed');
+      if (!hintDismissed) {
+        setShowEditHint(true);
+      }
+    } catch (error) {
+      console.error('Error loading edit hint state:', error);
+    }
+  };
+
+  // Dismiss the edit hint permanently
+  const dismissEditHint = async () => {
+    try {
+      await AsyncStorage.setItem('focusTimerEditHintDismissed', 'true');
+      setShowEditHint(false);
+    } catch (error) {
+      console.error('Error saving edit hint state:', error);
+    }
+  };
+
   // Load timer state from storage
   const loadTimerState = async () => {
     try {
@@ -232,20 +302,44 @@ const FocusTimer = ({ theme, navigation }) => {
         const state = JSON.parse(timerStateJson);
         const now = new Date().getTime();
         
-        // If last update was less than 5 minutes ago and timer was running, restore state
-        if (state.lastUpdated && (now - state.lastUpdated < 5 * 60 * 1000)) {
+        // Restore state if last update was within 24 hours (much longer window)
+        if (state.lastUpdated && (now - state.lastUpdated < 24 * 60 * 60 * 1000)) {
           setIsCountdown(state.isCountdown);
           setTargetTime(state.targetTime);
-          setDistractionCount(state.distractionCount);
+          setActiveTimerMode(state.activeTimerMode || null);
           
-          if (state.isRunning) {
+          // Restore countdown state
+          if (state.countdownDistractions !== undefined) {
+            setCountdownDistractions(state.countdownDistractions);
+          }
+          if (state.countupDistractions !== undefined) {
+            setCountupDistractions(state.countupDistractions);
+          }
+          
+          // Restore countdown timer state
+          if (state.isCountdownRunning && state.countdownStartTime) {
             // Calculate elapsed time including time passed while app was in background
-            const elapsedSinceLastUpdate = Math.floor((now - state.lastUpdated) / 1000);
-            setTimeElapsed(state.timeElapsed + elapsedSinceLastUpdate);
-            setIsRunning(true);
-          } else {
-            setTimeElapsed(state.timeElapsed);
-            setIsRunning(false);
+            const totalElapsed = Math.floor((now - state.countdownStartTime) / 1000);
+            
+            // Check if countdown timer has finished while in background
+            if (totalElapsed >= state.targetTime) {
+              setCountdownTimeElapsed(state.targetTime);
+              setIsCountdownRunning(false);
+              setCountdownStartTime(null);
+            } else {
+              setCountdownStartTime(state.countdownStartTime);
+              setIsCountdownRunning(true);
+            }
+          } else if (state.countdownTimeElapsed !== undefined) {
+            setCountdownTimeElapsed(state.countdownTimeElapsed);
+          }
+          
+          // Restore countup timer state
+          if (state.isCountupRunning && state.countupStartTime) {
+            setCountupStartTime(state.countupStartTime);
+            setIsCountupRunning(true);
+          } else if (state.countupTimeElapsed !== undefined) {
+            setCountupTimeElapsed(state.countupTimeElapsed);
           }
         }
       }
@@ -258,11 +352,17 @@ const FocusTimer = ({ theme, navigation }) => {
   const saveTimerState = async () => {
     try {
       const timerState = {
-        isRunning,
-        timeElapsed,
+        isCountdownRunning,
+        isCountupRunning,
+        countdownTimeElapsed,
+        countupTimeElapsed,
+        countdownStartTime,
+        countupStartTime,
         targetTime,
         isCountdown,
-        distractionCount,
+        countdownDistractions,
+        countupDistractions,
+        activeTimerMode,
         lastUpdated: new Date().getTime()
       };
       await AsyncStorage.setItem('focusTimerCurrentState', JSON.stringify(timerState));
@@ -271,32 +371,10 @@ const FocusTimer = ({ theme, navigation }) => {
     }
   };
 
-  // Start the timer interval
+  // Start the timer interval using a persistent background timer
   const startTimerInterval = () => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
-    
-    timerRef.current = setInterval(() => {
-      setTimeElapsed(prev => {
-        // For countdown mode, check if we've reached the target
-        if (isCountdown && prev + 1 >= targetTime) {
-          clearInterval(timerRef.current);
-          setIsRunning(false);
-          
-          // Provide feedback when timer completes
-          if (Platform.OS !== 'web') {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          }
-          
-          // Save the completed session
-          saveTimerSession(targetTime, distractionCount);
-          
-          return targetTime;
-        }
-        return prev + 1;
-      });
-    }, 1000);
+    // Don't create a new interval if one is already running
+    // The timer will be updated based on elapsed time calculations from start time
   };
 
   // Save timer session
@@ -307,7 +385,7 @@ const FocusTimer = ({ theme, navigation }) => {
         date: new Date().toISOString(),
         duration, // in seconds
         distractions,
-        isCompleted: isCountdown ? (timeElapsed >= targetTime) : true
+        isCompleted: isCountdown ? (getCurrentTimeElapsed() >= targetTime) : true
       };
       
       const updatedHistory = [newSession, ...timerHistory].slice(0, 50); // Keep last 50 sessions
@@ -331,21 +409,147 @@ const FocusTimer = ({ theme, navigation }) => {
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  // Get remaining time for countdown mode
-  const getRemainingTime = () => {
-    if (!isCountdown) return timeElapsed;
-    return Math.max(0, targetTime - timeElapsed);
+
+  // Helper functions for current mode
+  const getCurrentRunningState = () => {
+    return isCountdown ? isCountdownRunning : isCountupRunning;
+  };
+
+  // Get running state for a specific mode (prevents flash during transitions)
+  const getRunningStateForMode = (forCountdown) => {
+    return forCountdown ? isCountdownRunning : isCountupRunning;
+  };
+
+  // Calculate real-time elapsed time based on start timestamp
+  const calculateElapsedTime = (startTime, baseElapsed) => {
+    if (!startTime) return baseElapsed;
+    const now = new Date().getTime();
+    const actualElapsed = Math.floor((now - startTime) / 1000) + baseElapsed;
+    return actualElapsed;
+  };
+
+  const getCurrentTimeElapsed = () => {
+    if (isCountdown) {
+      if (isCountdownRunning && countdownStartTime) {
+        // Calculate total elapsed time: stored elapsed + time since start
+        const now = new Date().getTime();
+        const sessionElapsed = Math.floor((now - countdownStartTime) / 1000);
+        return countdownTimeElapsed + sessionElapsed;
+      }
+      return countdownTimeElapsed;
+    } else {
+      if (isCountupRunning && countupStartTime) {
+        // Calculate total elapsed time: stored elapsed + time since start
+        const now = new Date().getTime();
+        const sessionElapsed = Math.floor((now - countupStartTime) / 1000);
+        return countupTimeElapsed + sessionElapsed;
+      }
+      return countupTimeElapsed;
+    }
+  };
+
+  const getCurrentDistractions = () => {
+    return isCountdown ? countdownDistractions : countupDistractions;
+  };
+
+  const setCurrentRunningState = (running) => {
+    if (isCountdown) {
+      setIsCountdownRunning(running);
+    } else {
+      setIsCountupRunning(running);
+    }
+  };
+
+  const setCurrentTimeElapsed = (time) => {
+    if (isCountdown) {
+      setCountdownTimeElapsed(time);
+    } else {
+      setCountupTimeElapsed(time);
+    }
+  };
+
+  const setCurrentDistractions = (count) => {
+    if (isCountdown) {
+      setCountdownDistractions(count);
+    } else {
+      setCountupDistractions(count);
+    }
+  };
+
+  // Get time to display for current mode
+  const getDisplayTime = () => {
+    if (isCountdown) {
+      const currentElapsed = getCurrentTimeElapsed();
+      return Math.max(0, targetTime - currentElapsed);
+    } else {
+      return getCurrentTimeElapsed();
+    }
+  };
+
+  // Get time to display for a specific mode (used in fullscreen to prevent flash during transitions)
+  const getDisplayTimeForMode = (forCountdown) => {
+    if (forCountdown) {
+      // Always use countdown state for countdown display
+      if (isCountdownRunning && countdownStartTime) {
+        const now = new Date().getTime();
+        const sessionElapsed = Math.floor((now - countdownStartTime) / 1000);
+        const totalElapsed = countdownTimeElapsed + sessionElapsed;
+        return Math.max(0, targetTime - totalElapsed);
+      }
+      return Math.max(0, targetTime - countdownTimeElapsed);
+    } else {
+      // Always use countup state for countup display
+      if (isCountupRunning && countupStartTime) {
+        const now = new Date().getTime();
+        const sessionElapsed = Math.floor((now - countupStartTime) / 1000);
+        return countupTimeElapsed + sessionElapsed;
+      }
+      return countupTimeElapsed;
+    }
   };
 
   // Start the timer
   const startTimer = () => {
-    setIsRunning(true);
+    // If in edit mode, save the edited time first
+    if (isTimerEditMode) {
+      saveEditedTime();
+      setIsTimerEditMode(false);
+    }
+    
+    // Set the active timer mode based on current mode
+    setActiveTimerMode(isCountdown ? 'countdown' : 'countup');
+    
+    // Set start time for real-time calculations (resume from current elapsed time)
+    const now = new Date().getTime();
+    if (isCountdown) {
+      setCountdownStartTime(now);
+      setIsCountdownRunning(true);
+    } else {
+      setCountupStartTime(now);
+      setIsCountupRunning(true);
+    }
   };
 
   // Pause the timer - increment distraction counter every time
   const pauseTimer = () => {
-    setIsRunning(false);
-    setDistractionCount(prev => prev + 1);
+    // Calculate and save elapsed time before pausing
+    if (isCountdown && isCountdownRunning && countdownStartTime) {
+      const now = new Date().getTime();
+      const sessionElapsed = Math.floor((now - countdownStartTime) / 1000);
+      const totalElapsed = countdownTimeElapsed + sessionElapsed;
+      setCountdownTimeElapsed(totalElapsed);
+      setCountdownStartTime(null);
+      setIsCountdownRunning(false);
+    } else if (!isCountdown && isCountupRunning && countupStartTime) {
+      const now = new Date().getTime();
+      const sessionElapsed = Math.floor((now - countupStartTime) / 1000);
+      const totalElapsed = countupTimeElapsed + sessionElapsed;
+      setCountupTimeElapsed(totalElapsed);
+      setCountupStartTime(null);
+      setIsCountupRunning(false);
+    }
+    
+    setCurrentDistractions(prev => prev + 1);
     
     // Provide haptic feedback for distraction logging
     if (Platform.OS !== 'web') {
@@ -354,29 +558,46 @@ const FocusTimer = ({ theme, navigation }) => {
   };
 
   // Reset the timer
-  const resetTimer = () => {
+  const resetTimer = (resetTargetTime = false) => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
     }
     
+    const currentTimeElapsed = getCurrentTimeElapsed();
+    const currentDistractions = getCurrentDistractions();
+    
     // If we had accumulated some time, save the session
-    if (timeElapsed > 0) {
-      saveTimerSession(timeElapsed, distractionCount);
+    if (currentTimeElapsed > 0) {
+      saveTimerSession(currentTimeElapsed, currentDistractions);
     }
     
-    setIsRunning(false);
-    setTimeElapsed(0);
-    setDistractionCount(0);
-    
-    // Reset to initial state if in countdown mode
+    // Reset the current mode's state
     if (isCountdown) {
+      setIsCountdownRunning(false);
+      setCountdownTimeElapsed(0);
+      setCountdownStartTime(null);
+      setCountdownDistractions(0);
+    } else {
+      setIsCountupRunning(false);
+      setCountupTimeElapsed(0);
+      setCountupStartTime(null);
+      setCountupDistractions(0);
+    }
+    
+    setActiveTimerMode(null); // Clear active timer mode
+    
+    // Only reset target time if explicitly requested (e.g., when changing modes)
+    if (resetTargetTime && isCountdown) {
       setTargetTime(0);
     }
   };
 
   // Toggle between count-up and countdown modes
   const toggleTimerMode = () => {
-    resetTimer();
+    // Only reset if no timers are currently running
+    if (!isCountdownRunning && !isCountupRunning) {
+      resetTimer(true); // Reset target time when changing modes
+    }
     setIsCountdown(!isCountdown);
   };
 
@@ -414,7 +635,10 @@ const FocusTimer = ({ theme, navigation }) => {
   const handlePageSelected = (e) => {
     const pageIndex = e.nativeEvent.position;
     if ((pageIndex === 1) !== isCountdown) {
-      resetTimer();
+      // Only reset if no timers are currently running
+      if (!isCountdownRunning && !isCountupRunning) {
+        resetTimer(true); // Reset target time when changing modes
+      }
       setIsCountdown(pageIndex === 1);
     }
   };
@@ -426,7 +650,10 @@ const FocusTimer = ({ theme, navigation }) => {
     }
     
     if ((tabIndex === 1) !== isCountdown) {
-      resetTimer();
+      // Only reset if no timers are currently running
+      if (!isCountdownRunning && !isCountupRunning) {
+        resetTimer(true); // Reset target time when changing modes
+      }
       setIsCountdown(tabIndex === 1);
     }
   };
@@ -443,21 +670,21 @@ const FocusTimer = ({ theme, navigation }) => {
     // If already at 90 minutes, reset to 0
     if (targetTime === 90 * 60) {
       setTargetTime(0);
-      setTimeElapsed(0);
+      setCurrentTimeElapsed(0);
     } else {
       // Otherwise set to 90 minutes
       setTargetTime(90 * 60);
-      setTimeElapsed(0);
+      setCurrentTimeElapsed(0);
     }
   };
 
   // Toggle timer edit mode
   const toggleTimerEditMode = () => {
-    if (isRunning) return; // Don't allow editing while timer is running
+    if (getCurrentRunningState()) return; // Don't allow editing while timer is running
     
     if (isTimerEditMode) {
-      // Apply the edited time
-      saveEditedTime();
+      // Exit edit mode without saving (will be saved when play is pressed)
+      setIsTimerEditMode(false);
     } else {
       // Enter edit mode
       setIsTimerEditMode(true);
@@ -479,7 +706,7 @@ const FocusTimer = ({ theme, navigation }) => {
     
     if (newTargetTime > 0) {
       setTargetTime(newTargetTime);
-      setTimeElapsed(0);
+      setCurrentTimeElapsed(0);
     }
     
     // Update the state with the validated values
@@ -496,154 +723,177 @@ const FocusTimer = ({ theme, navigation }) => {
       style={[
         styles.timerContainer,
         {
+          borderRadius: 20,
+          padding: 20,
+          backgroundColor: '#1A1A1A',
           borderWidth: 1,
-          borderColor: theme.border,
-          borderRadius: 16,
-          padding: 12, // Reduced padding
-          backgroundColor: '#000000' // Pure black background
+          borderColor: '#2A2A2A',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 8,
+          elevation: 8,
         }
       ]}
       onPress={toggleFullscreen}
-      activeOpacity={0.9}
+      activeOpacity={0.95}
       accessible={true}
       accessibilityRole="button"
       accessibilityLabel="Enter fullscreen mode"
       accessibilityHint="Opens the timer in fullscreen for better focus"
-      disabled={isTransitioning} // Disable during transitions
+      disabled={isTransitioning}
     >
-      <View style={styles.timerHeader}>
-        <Text 
-          style={[
-            styles.timerTitle, 
-            { 
-              color: '#FFFFFF', // Always white text for dark theme
-              fontSize: 16, // Smaller font size
-              fontWeight: 'bold'
-            }
-          ]}
-          maxFontSizeMultiplier={1.5}
-          accessible={true}
-          accessibilityRole="header"
-        >
-          Focus Timer
-        </Text>
-        
-        <View style={styles.timerControls}>
-          <TouchableOpacity 
-            style={[
-              styles.modeToggle, 
-              { 
-                backgroundColor: 'rgba(59, 89, 152, 0.2)', // Blue tint for toggle button
-                padding: 4, // Reduced padding
-                borderRadius: 12, // Smaller radius
-                flexDirection: 'row',
-                alignItems: 'center'
-              }
-            ]}
-            onPress={(e) => {
-              e.stopPropagation(); // Prevent triggering fullscreen
-              toggleTimerMode();
-            }}
-            accessible={true}
-            accessibilityRole="button"
-            accessibilityLabel={`Switch to ${isCountdown ? 'count up' : 'countdown'} mode`}
-            accessibilityHint={`Changes the timer to ${isCountdown ? 'count up from zero' : 'count down from a target time'}`}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            disabled={isTransitioning} // Disable during transitions
-          >
-            <Text 
-              style={[
-                styles.modeToggleText, 
-                { 
-                  color: '#FFFFFF',
-                  fontSize: 10, // Smaller font
-                  marginRight: 2
-                }
-              ]}
-              maxFontSizeMultiplier={1.5}
-            >
-              {isCountdown ? 'Countdown' : 'Count Up'}
-            </Text>
-            <Ionicons 
-              name={isCountdown ? "timer-outline" : "stopwatch-outline"} 
-              size={12} // Smaller icon
-              color="#FFFFFF" 
-            />
-          </TouchableOpacity>
-        </View>
-      </View>
-      
+      {/* Header Section */}
       <View style={[
-        styles.timerBody,
+        styles.timerHeader,
         {
-          paddingVertical: 8, // Reduced padding
-          alignItems: 'center'
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 20
         }
       ]}>
-        <View 
-          style={[
-            styles.timerDisplay,
-            {
-              padding: 8, // Reduced padding
-              minHeight: 65, // Reduced height
-              justifyContent: 'center',
-              alignItems: 'center',
-              backgroundColor: '#000000' // Pure black background, no visual container
-            }
-          ]}
-        >
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View style={{
+            width: 8,
+            height: 8,
+            borderRadius: 4,
+            backgroundColor: getCurrentRunningState() ? '#FF9500' : '#4CAF50',
+            marginRight: 10
+          }} />
           <Text 
             style={[
-              styles.timeText, 
+              styles.timerTitle, 
               { 
-                color: '#FFFFFF', // Always white text for better visibility on dark background
-                fontSize: 28, // Smaller font
-                fontWeight: 'bold',
+                color: '#FFFFFF',
+                fontSize: 18,
+                fontWeight: '600'
+              }
+            ]}
+            maxFontSizeMultiplier={1.5}
+            accessible={true}
+            accessibilityRole="header"
+          >
+            Focus Timer
+          </Text>
+        </View>
+        
+        <TouchableOpacity 
+          style={[
+            styles.modeToggle, 
+            { 
+              backgroundColor: isCountdown ? '#FF9500' : '#4CAF50',
+              paddingVertical: 6,
+              paddingHorizontal: 12,
+              borderRadius: 16,
+              flexDirection: 'row',
+              alignItems: 'center'
+            }
+          ]}
+          onPress={(e) => {
+            e.stopPropagation();
+            toggleTimerMode();
+          }}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={`Switch to ${isCountdown ? 'count up' : 'countdown'} mode`}
+          accessibilityHint={`Changes the timer to ${isCountdown ? 'count up from zero' : 'count down from a target time'}`}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          disabled={isTransitioning}
+        >
+          <Ionicons 
+            name={isCountdown ? "timer" : "stopwatch"} 
+            size={14}
+            color="#FFFFFF" 
+            style={{ marginRight: 4 }}
+          />
+          <Text 
+            style={[
+              styles.modeToggleText, 
+              { 
+                color: '#FFFFFF',
+                fontSize: 12,
+                fontWeight: '600'
+              }
+            ]}
+            maxFontSizeMultiplier={1.5}
+          >
+            {isCountdown ? 'Countdown' : 'Count Up'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+      
+      {/* Main Timer Display */}
+      <View style={[
+        styles.timerDisplay,
+        {
+          backgroundColor: '#0A0A0A',
+          borderRadius: 16,
+          padding: 24,
+          marginBottom: 20,
+          alignItems: 'center',
+          borderWidth: 1,
+          borderColor: '#333'
+        }
+      ]}>
+        <Text 
+          style={[
+            styles.timeText, 
+            { 
+              color: '#FFFFFF',
+              fontSize: 36,
+              fontWeight: '700',
+              fontVariant: ['tabular-nums'],
+              letterSpacing: 1
+            }
+          ]}
+          maxFontSizeMultiplier={1.3}
+          accessible={true}
+          accessibilityRole="text"
+          accessibilityLabel={`${isCountdown ? 'Remaining time' : 'Elapsed time'} ${formatTime(getDisplayTime())}`}
+        >
+          {formatTime(getDisplayTime())}
+        </Text>
+        
+        {isCountdown && (
+          <Text 
+            style={[
+              styles.targetText, 
+              { 
+                color: 'rgba(255, 255, 255, 0.6)',
+                fontSize: 14,
+                marginTop: 8,
                 fontVariant: ['tabular-nums']
               }
             ]}
-            maxFontSizeMultiplier={1.3}
+            maxFontSizeMultiplier={1.5}
             accessible={true}
             accessibilityRole="text"
-            accessibilityLabel={`${isCountdown ? 'Remaining time' : 'Elapsed time'} ${formatTime(getRemainingTime())}`}
+            accessibilityLabel={`Target time ${formatTime(targetTime)}`}
           >
-            {formatTime(getRemainingTime())}
+            Target: {formatTime(targetTime)}
           </Text>
-          
-          {isCountdown ? (
-            <Text 
-              style={[
-                styles.targetText, 
-                { 
-                  color: 'rgba(255, 255, 255, 0.7)', // Semi-transparent white for secondary text
-                  fontSize: 14, // Smaller font
-                  marginTop: 2,
-                  fontVariant: ['tabular-nums']
-                }
-              ]}
-              maxFontSizeMultiplier={1.5}
-              accessible={true}
-              accessibilityRole="text"
-              accessibilityLabel={`Target time ${formatTime(targetTime)}`}
-            >
-              Target: {formatTime(targetTime)}
-            </Text>
-          ) : null}
-        </View>
-        
+        )}
+      </View>
+      
+      {/* Controls Section */}
+      <View style={{
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 16
+      }}>
+        {/* Play/Pause Button */}
         <View style={[
           styles.mainButtonContainer,
-          { marginVertical: 6 } // Reduced margin
+          { flex: 0 }
         ]}>
-          {isRunning ? (
+          {getCurrentRunningState() ? (
             <Animated.View 
               style={[
                 styles.pauseButtonWrapper,
                 { 
-                  transform: [{ scale: pulseAnim }],
-                  width: 64, // Smaller size
-                  height: 64, // Smaller size
-                  borderRadius: 32 // Smaller radius
+                  transform: [{ scale: pulseAnim }]
                 }
               ]}
             >
@@ -651,32 +901,32 @@ const FocusTimer = ({ theme, navigation }) => {
                 style={[
                   styles.pauseButton, 
                   { 
-                    backgroundColor: theme.primary,
-                    width: 60, // Smaller size
-                    height: 60, // Smaller size
-                    borderRadius: 30, // Smaller radius
+                    backgroundColor: '#FF6B6B',
+                    width: 56,
+                    height: 56,
+                    borderRadius: 28,
                     justifyContent: 'center',
                     alignItems: 'center',
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 2 },
+                    shadowColor: '#FF6B6B',
+                    shadowOffset: { width: 0, height: 4 },
                     shadowOpacity: 0.3,
-                    shadowRadius: 4,
-                    elevation: 5,
+                    shadowRadius: 8,
+                    elevation: 8,
                   }
                 ]}
                 onPress={(e) => {
-                  e.stopPropagation(); // Prevent triggering fullscreen
+                  e.stopPropagation();
                   pauseTimer();
                 }}
                 accessible={true}
                 accessibilityRole="button"
                 accessibilityLabel="Pause timer and log distraction"
                 accessibilityHint="Pauses the timer and adds 1 to your distraction count"
-                disabled={isTransitioning} // Disable during transitions
+                disabled={isTransitioning}
               >
                 <Ionicons 
                   name="pause" 
-                  size={24} // Smaller icon
+                  size={24}
                   color="#FFFFFF" 
                 />
               </TouchableOpacity>
@@ -686,263 +936,274 @@ const FocusTimer = ({ theme, navigation }) => {
               style={[
                 styles.startButton, 
                 { 
-                  backgroundColor: theme.primary,
-                  width: 60, // Smaller size
-                  height: 60, // Smaller size
-                  borderRadius: 30, // Smaller radius
+                  backgroundColor: '#4CAF50',
+                  width: 56,
+                  height: 56,
+                  borderRadius: 28,
                   justifyContent: 'center',
                   alignItems: 'center',
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 2 },
+                  shadowColor: '#4CAF50',
+                  shadowOffset: { width: 0, height: 4 },
                   shadowOpacity: 0.3,
-                  shadowRadius: 4,
-                  elevation: 5,
+                  shadowRadius: 8,
+                  elevation: 8,
                 }
               ]}
               onPress={(e) => {
-                e.stopPropagation(); // Prevent triggering fullscreen
+                e.stopPropagation();
                 startTimer();
               }}
               accessible={true}
               accessibilityRole="button"
               accessibilityLabel="Start timer"
               accessibilityHint="Begins your focus session"
-              disabled={isTransitioning} // Disable during transitions
+              disabled={isTransitioning}
             >
               <Ionicons 
                 name="play" 
-                size={24} // Smaller icon
+                size={24}
                 color="#FFFFFF" 
               />
             </TouchableOpacity>
           )}
         </View>
         
-        <View style={styles.distractionCounter}>
-          <Text 
-            style={[
-              styles.distractionCountText, 
-              { 
-                color: 'rgba(255, 255, 255, 0.7)', // Semi-transparent white for secondary text
-                fontSize: 12
-              }
-            ]}
-            maxFontSizeMultiplier={1.5}
-            accessible={true}
-            accessibilityRole="text"
-            accessibilityLabel={`Distractions: ${distractionCount}`}
-          >
-            Distractions: {distractionCount}
-          </Text>
+        {/* Stats Section */}
+        <View style={{
+          flex: 1,
+          flexDirection: 'row',
+          justifyContent: 'space-around',
+          paddingHorizontal: 20
+        }}>
+          <View style={{ alignItems: 'center' }}>
+            <Text style={{
+              color: 'rgba(255, 255, 255, 0.6)',
+              fontSize: 12,
+              fontWeight: '500'
+            }}>
+              Distractions
+            </Text>
+            <Text style={{
+              color: '#FFFFFF',
+              fontSize: 20,
+              fontWeight: '700',
+              marginTop: 4
+            }}>
+              {getCurrentDistractions()}
+            </Text>
+          </View>
+          
+          {getCurrentTimeElapsed() > 0 && (
+            <View style={{ alignItems: 'center' }}>
+              <Text style={{
+                color: 'rgba(255, 255, 255, 0.6)',
+                fontSize: 12,
+                fontWeight: '500'
+              }}>
+                Total Min
+              </Text>
+              <Text style={{
+                color: '#FFFFFF',
+                fontSize: 20,
+                fontWeight: '700',
+                marginTop: 4
+              }}>
+                {Math.floor(getCurrentTimeElapsed() / 60)}
+              </Text>
+            </View>
+          )}
         </View>
         
-        {isCountdown && !isRunning && (
-          <View style={[
-            styles.presetButtons,
-            { 
-              marginTop: 8, // Reduced margin
-              width: '90%', // Slightly narrower
-              flexDirection: 'row',
-              justifyContent: 'center'
-            }
-          ]}>
-            {/* Show only 90 minutes option */}
-            <TouchableOpacity
-              style={[
-                styles.presetButton, 
-                { 
-                  backgroundColor: PRESET_DURATIONS[0].value === targetTime ? '#3B5998' : '#000000',
-                  borderColor: '#333333',
-                  paddingVertical: 4, // Reduced padding
-                  paddingHorizontal: 8, // Reduced padding
-                  borderRadius: 12, // Smaller radius
-                  marginHorizontal: 4, // Reduced margin
-                  marginBottom: 2, // Reduced margin
-                  borderWidth: 1
-                }
-              ]}
-              onPress={(e) => {
-                e.stopPropagation(); // Prevent triggering fullscreen
-                toggle90MinutesPreset();
-              }}
-              accessible={true}
-              accessibilityRole="button"
-              accessibilityLabel={`Set timer for ${PRESET_DURATIONS[0].label}`}
-              accessibilityState={{ selected: PRESET_DURATIONS[0].value === targetTime }}
-              disabled={isTransitioning} // Disable during transitions
-            >
-              <Text 
-                style={[
-                  styles.presetButtonText, 
-                  { 
-                    color: '#FFFFFF',
-                    fontSize: 12 // Smaller font
-                  }
-                ]}
-                maxFontSizeMultiplier={1.5}
-              >
-                {PRESET_DURATIONS[0].label}
-              </Text>
-            </TouchableOpacity>
-            
-            {/* Custom time button - Keep in minimized view */}
-            <TouchableOpacity
-              style={[
-                styles.presetButton, 
-                { 
-                  backgroundColor: showCustomTimeInput ? '#3B5998' : '#000000',
-                  borderColor: '#333333',
-                  paddingVertical: 4, // Reduced padding
-                  paddingHorizontal: 8, // Reduced padding
-                  borderRadius: 12, // Smaller radius
-                  marginHorizontal: 4, // Reduced margin
-                  marginBottom: 2, // Reduced margin
-                  borderWidth: 1
-                }
-              ]}
-              onPress={(e) => {
-                e.stopPropagation(); // Prevent triggering fullscreen
-                setShowCustomTimeInput(!showCustomTimeInput);
-              }}
-              accessible={true}
-              accessibilityRole="button"
-              accessibilityLabel="Set custom timer duration"
-              accessibilityState={{ expanded: showCustomTimeInput }}
-              disabled={isTransitioning} // Disable during transitions
-            >
-              <Text 
-                style={[
-                  styles.presetButtonText, 
-                  { 
-                    color: '#FFFFFF',
-                    fontSize: 12 // Smaller font
-                  }
-                ]}
-                maxFontSizeMultiplier={1.5}
-              >
-                Custom
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
-        
-        {showCustomTimeInput && (
-          <View style={[
-            styles.customTimeContainer,
-            { 
-              marginTop: 4, // Reduced margin
-              width: '90%', // Slightly narrower
-              flexDirection: 'row',
-              alignItems: 'center'
-            }
-          ]}>
-            <TextInput
-              style={[
-                styles.customTimeInput, 
-                { 
-                  borderColor: '#333333',
-                  color: '#FFFFFF',
-                  backgroundColor: '#000000',
-                  height: 36, // Reduced height
-                  borderWidth: 1,
-                  borderRadius: 8,
-                  paddingHorizontal: 8, // Reduced padding
-                  marginRight: 8, // Reduced margin
-                  flex: 1
-                }
-              ]}
-              value={customTime}
-              onChangeText={setCustomTime}
-              placeholder="Enter minutes"
-              placeholderTextColor="rgba(255,255,255,0.4)"
-              keyboardType="number-pad"
-              returnKeyType="done"
-              onSubmitEditing={handleCustomTimeSubmit}
-              maxFontSizeMultiplier={1.5}
-              accessible={true}
-              accessibilityLabel="Enter custom time in minutes"
-              accessibilityHint="Enter a number for your custom timer duration in minutes"
-              onTouchStart={(e) => e.stopPropagation()} // Prevent triggering fullscreen
-            />
-            <TouchableOpacity
-              style={[
-                styles.customTimeButton, 
-                { 
-                  backgroundColor: '#3B5998',
-                  height: 36, // Reduced height
-                  paddingHorizontal: 12, // Reduced padding
-                  borderRadius: 8,
-                  justifyContent: 'center'
-                }
-              ]}
-              onPress={(e) => {
-                e.stopPropagation(); // Prevent triggering fullscreen
-                handleCustomTimeSubmit();
-              }}
-              accessible={true}
-              accessibilityRole="button"
-              accessibilityLabel="Set custom time"
-              disabled={isTransitioning} // Disable during transitions
-            >
-              <Text 
-                style={[
-                  styles.customTimeButtonText,
-                  {
-                    color: '#FFFFFF',
-                    fontWeight: '500',
-                    fontSize: 12 // Smaller font
-                  }
-                ]}
-                maxFontSizeMultiplier={1.5}
-              >
-                Set
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
-        
-        {timeElapsed > 0 && !isRunning && (
+        {/* Reset Button */}
+        {getCurrentTimeElapsed() > 0 && !getCurrentRunningState() && (
           <TouchableOpacity
             style={[
               styles.resetButton, 
               { 
-                backgroundColor: 'rgba(59, 89, 152, 0.2)',
-                paddingVertical: 4, // Reduced padding
-                paddingHorizontal: 12, // Reduced padding
-                borderRadius: 12, // Smaller radius
-                marginTop: 8, // Reduced margin
-                flexDirection: 'row',
+                backgroundColor: '#333333',
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                justifyContent: 'center',
                 alignItems: 'center'
               }
             ]}
             onPress={(e) => {
-              e.stopPropagation(); // Prevent triggering fullscreen
+              e.stopPropagation();
               resetTimer();
             }}
             accessible={true}
             accessibilityRole="button"
             accessibilityLabel="Reset timer"
             accessibilityHint="Resets the timer and saves your session"
-            disabled={isTransitioning} // Disable during transitions
+            disabled={isTransitioning}
           >
-            <Ionicons name="refresh" size={12} color="#FFFFFF" />
+            <Ionicons name="refresh" size={20} color="#FFFFFF" />
+          </TouchableOpacity>
+        )}
+      </View>
+      
+      {/* Quick Actions - Only for countdown mode when not running */}
+      {isCountdown && !getCurrentRunningState() && (
+        <View style={[
+          styles.presetButtons,
+          { 
+            flexDirection: 'row',
+            justifyContent: 'center',
+            gap: 12
+          }
+        ]}>
+          <TouchableOpacity
+            style={[
+              styles.presetButton, 
+              { 
+                backgroundColor: PRESET_DURATIONS[0].value === targetTime ? '#FF9500' : '#2A2A2A',
+                paddingVertical: 8,
+                paddingHorizontal: 16,
+                borderRadius: 20,
+                borderWidth: 1,
+                borderColor: PRESET_DURATIONS[0].value === targetTime ? '#FF9500' : '#3A3A3A'
+              }
+            ]}
+            onPress={(e) => {
+              e.stopPropagation();
+              toggle90MinutesPreset();
+            }}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={`Set timer for ${PRESET_DURATIONS[0].label}`}
+            accessibilityState={{ selected: PRESET_DURATIONS[0].value === targetTime }}
+            disabled={isTransitioning}
+          >
             <Text 
               style={[
-                styles.resetButtonText, 
+                styles.presetButtonText, 
                 { 
                   color: '#FFFFFF',
-                  marginLeft: 4, // Reduced margin
-                  fontSize: 12, // Smaller font
-                  fontWeight: '500'
+                  fontSize: 14,
+                  fontWeight: '600'
                 }
               ]}
               maxFontSizeMultiplier={1.5}
             >
-              Reset Timer
+              {PRESET_DURATIONS[0].label}
             </Text>
           </TouchableOpacity>
-        )}
-      </View>
+          
+          <TouchableOpacity
+            style={[
+              styles.presetButton, 
+              { 
+                backgroundColor: showCustomTimeInput ? '#FF9500' : '#2A2A2A',
+                paddingVertical: 8,
+                paddingHorizontal: 16,
+                borderRadius: 20,
+                borderWidth: 1,
+                borderColor: showCustomTimeInput ? '#FF9500' : '#3A3A3A'
+              }
+            ]}
+            onPress={(e) => {
+              e.stopPropagation();
+              setShowCustomTimeInput(!showCustomTimeInput);
+            }}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Set custom timer duration"
+            accessibilityState={{ expanded: showCustomTimeInput }}
+            disabled={isTransitioning}
+          >
+            <Text 
+              style={[
+                styles.presetButtonText, 
+                { 
+                  color: '#FFFFFF',
+                  fontSize: 14,
+                  fontWeight: '600'
+                }
+              ]}
+              maxFontSizeMultiplier={1.5}
+            >
+              Custom
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      
+      {/* Custom Time Input */}
+      {showCustomTimeInput && (
+        <View style={[
+          styles.customTimeContainer,
+          { 
+            marginTop: 16,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 12
+          }
+        ]}>
+          <TextInput
+            style={[
+              styles.customTimeInput, 
+              { 
+                borderColor: '#3A3A3A',
+                color: '#FFFFFF',
+                backgroundColor: '#2A2A2A',
+                height: 44,
+                borderWidth: 1,
+                borderRadius: 12,
+                paddingHorizontal: 16,
+                flex: 1,
+                fontSize: 16
+              }
+            ]}
+            value={customTime}
+            onChangeText={setCustomTime}
+            placeholder="Enter minutes"
+            placeholderTextColor="rgba(255,255,255,0.5)"
+            keyboardType="number-pad"
+            returnKeyType="done"
+            onSubmitEditing={handleCustomTimeSubmit}
+            maxFontSizeMultiplier={1.5}
+            accessible={true}
+            accessibilityLabel="Enter custom time in minutes"
+            accessibilityHint="Enter a number for your custom timer duration in minutes"
+            onTouchStart={(e) => e.stopPropagation()}
+          />
+          <TouchableOpacity
+            style={[
+              styles.customTimeButton, 
+              { 
+                backgroundColor: '#4CAF50',
+                height: 44,
+                paddingHorizontal: 20,
+                borderRadius: 12,
+                justifyContent: 'center'
+              }
+            ]}
+            onPress={(e) => {
+              e.stopPropagation();
+              handleCustomTimeSubmit();
+            }}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Set custom time"
+            disabled={isTransitioning}
+          >
+            <Text 
+              style={[
+                styles.customTimeButtonText,
+                {
+                  color: '#FFFFFF',
+                  fontWeight: '600',
+                  fontSize: 14
+                }
+              ]}
+              maxFontSizeMultiplier={1.5}
+            >
+              Set
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </TouchableOpacity>
   );
   
@@ -1092,9 +1353,9 @@ const FocusTimer = ({ theme, navigation }) => {
           maxFontSizeMultiplier={1.3}
           accessible={true}
           accessibilityRole="text"
-          accessibilityLabel={`Elapsed time ${formatTime(timeElapsed)}`}
+          accessibilityLabel={`Elapsed time ${formatTime(getDisplayTimeForMode(false))}`}
         >
-          {formatTime(timeElapsed)}
+          {formatTime(getDisplayTimeForMode(false))}
         </Text>
         
         {/* Empty space to match the height of the target text in countdown mode */}
@@ -1124,7 +1385,7 @@ const FocusTimer = ({ theme, navigation }) => {
           marginBottom: scaleHeight(40)
         }
       ]}>
-        {isRunning ? (
+        {getRunningStateForMode(false) ? (
           <Animated.View 
             style={[
               styles.fullscreenPauseWrapper,
@@ -1176,7 +1437,7 @@ const FocusTimer = ({ theme, navigation }) => {
           </TouchableOpacity>
         )}
         
-        {timeElapsed > 0 && !isRunning && (
+        {countupTimeElapsed > 0 && !getRunningStateForMode(false) && (
           <TouchableOpacity
             style={[
               styles.fullscreenResetButton, 
@@ -1223,7 +1484,7 @@ const FocusTimer = ({ theme, navigation }) => {
           ]}
           accessible={true}
           accessibilityRole="text"
-          accessibilityLabel={`${distractionCount} distractions`}
+          accessibilityLabel={`${countupDistractions} distractions`}
         >
           <Text 
             style={[
@@ -1236,7 +1497,7 @@ const FocusTimer = ({ theme, navigation }) => {
             ]}
             maxFontSizeMultiplier={1.5}
           >
-            {distractionCount}
+            {countupDistractions}
           </Text>
           <Text 
             style={[
@@ -1268,7 +1529,7 @@ const FocusTimer = ({ theme, navigation }) => {
           ]}
           accessible={true}
           accessibilityRole="text"
-          accessibilityLabel={`${Math.floor(timeElapsed / 60)} minutes elapsed`}
+          accessibilityLabel={`${Math.floor(getDisplayTimeForMode(false) / 60)} minutes elapsed`}
         >
           <Text 
             style={[
@@ -1281,7 +1542,7 @@ const FocusTimer = ({ theme, navigation }) => {
             ]}
             maxFontSizeMultiplier={1.5}
           >
-            {Math.floor(timeElapsed / 60)}
+            {Math.floor(getDisplayTimeForMode(false) / 60)}
           </Text>
           <Text 
             style={[
@@ -1422,41 +1683,6 @@ const FocusTimer = ({ theme, navigation }) => {
     </View>
   );
   
-  // Render the save button for time picker
-  const renderSaveTimeButton = () => (
-    <TouchableOpacity
-      style={[
-        styles.saveTimeButton,
-        {
-          backgroundColor: '#FF9500',
-          paddingVertical: spacing.m,
-          paddingHorizontal: spacing.xl,
-          borderRadius: scaleWidth(12),
-          alignSelf: 'center',
-          marginBottom: scaleHeight(20)
-        }
-      ]}
-      onPress={saveEditedTime}
-      accessible={true}
-      accessibilityRole="button"
-      accessibilityLabel="Save time"
-      accessibilityHint="Applies the time you entered to the timer"
-    >
-      <Text
-        style={[
-          styles.saveTimeButtonText,
-          {
-            color: '#FFFFFF',
-            fontSize: fontSizes.l,
-            fontWeight: 'bold'
-          }
-        ]}
-        maxFontSizeMultiplier={1.5}
-      >
-        Set Timer
-      </Text>
-    </TouchableOpacity>
-  );
   
   // Render content for the countdown page
   const renderCountdownPage = () => (
@@ -1468,20 +1694,20 @@ const FocusTimer = ({ theme, navigation }) => {
       ]}>
         {isTimerEditMode ? (
           // Show time picker in edit mode
-          <>
-            {renderTimePicker()}
-            {renderSaveTimeButton()}
-          </>
+          renderTimePicker()
         ) : (
           // Show timer display
           <>
             <TouchableOpacity
-              onPress={!isRunning ? toggleTimerEditMode : undefined}
-              activeOpacity={isRunning ? 1 : 0.7}
+              onPress={!getRunningStateForMode(true) ? () => {
+                toggleTimerEditMode();
+                dismissEditHint();
+              } : undefined}
+              activeOpacity={getRunningStateForMode(true) ? 1 : 0.7}
               accessible={true}
               accessibilityRole="button"
-              accessibilityLabel={isRunning ? "Timer running" : "Edit timer"}
-              accessibilityHint={isRunning ? undefined : "Tap to edit hours, minutes, and seconds"}
+              accessibilityLabel={getRunningStateForMode(true) ? "Timer running" : "Edit timer"}
+              accessibilityHint={getRunningStateForMode(true) ? undefined : "Tap to edit hours, minutes, and seconds"}
             >
               <Text 
                 style={[
@@ -1495,9 +1721,63 @@ const FocusTimer = ({ theme, navigation }) => {
                 ]}
                 maxFontSizeMultiplier={1.3}
               >
-                {formatTime(getRemainingTime())}
+                {formatTime(getDisplayTimeForMode(true))}
               </Text>
             </TouchableOpacity>
+            
+            {/* Show edit hint only if not running and hint hasn't been dismissed */}
+            {!getRunningStateForMode(true) && showEditHint && (
+              <View style={[
+                styles.editHintContainer,
+                {
+                  backgroundColor: 'rgba(255, 149, 0, 0.9)',
+                  borderRadius: scaleWidth(20),
+                  paddingVertical: spacing.xs,
+                  paddingHorizontal: spacing.m,
+                  marginTop: spacing.s,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  maxWidth: '80%',
+                  alignSelf: 'center'
+                }
+              ]}>
+                <Ionicons 
+                  name="finger-print-outline" 
+                  size={scaleWidth(16)} 
+                  color="#FFFFFF" 
+                  style={{ marginRight: spacing.xs }}
+                />
+                <Text 
+                  style={[
+                    styles.editHintText,
+                    {
+                      color: '#FFFFFF',
+                      fontSize: fontSizes.s,
+                      fontWeight: '500',
+                      flex: 1,
+                      textAlign: 'center'
+                    }
+                  ]}
+                  maxFontSizeMultiplier={1.3}
+                >
+                  Tap time to edit
+                </Text>
+                <TouchableOpacity
+                  onPress={dismissEditHint}
+                  style={{
+                    marginLeft: spacing.xs,
+                    padding: spacing.xxs
+                  }}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Ionicons 
+                    name="close" 
+                    size={scaleWidth(14)} 
+                    color="#FFFFFF" 
+                  />
+                </TouchableOpacity>
+              </View>
+            )}
           </>
         )}
       </View>
@@ -1512,7 +1792,7 @@ const FocusTimer = ({ theme, navigation }) => {
           marginBottom: scaleHeight(40)
         }
       ]}>
-        {isRunning ? (
+        {getRunningStateForMode(true) ? (
           <Animated.View 
             style={[
               styles.fullscreenPauseWrapper,
@@ -1564,7 +1844,7 @@ const FocusTimer = ({ theme, navigation }) => {
           </TouchableOpacity>
         )}
         
-        {timeElapsed > 0 && !isRunning && (
+        {countdownTimeElapsed > 0 && !getRunningStateForMode(true) && (
           <TouchableOpacity
             style={[
               styles.fullscreenResetButton, 
@@ -1611,7 +1891,7 @@ const FocusTimer = ({ theme, navigation }) => {
           ]}
           accessible={true}
           accessibilityRole="text"
-          accessibilityLabel={`${distractionCount} distractions`}
+          accessibilityLabel={`${countdownDistractions} distractions`}
         >
           <Text 
             style={[
@@ -1624,7 +1904,7 @@ const FocusTimer = ({ theme, navigation }) => {
             ]}
             maxFontSizeMultiplier={1.5}
           >
-            {distractionCount}
+            {countdownDistractions}
           </Text>
           <Text 
             style={[
@@ -1656,7 +1936,7 @@ const FocusTimer = ({ theme, navigation }) => {
           ]}
           accessible={true}
           accessibilityRole="text"
-          accessibilityLabel={`${Math.floor((targetTime - getRemainingTime()) / 60)} minutes elapsed`}
+          accessibilityLabel={`${Math.floor(countdownTimeElapsed / 60)} minutes elapsed`}
         >
           <Text 
             style={[
@@ -1669,7 +1949,7 @@ const FocusTimer = ({ theme, navigation }) => {
             ]}
             maxFontSizeMultiplier={1.5}
           >
-            {Math.floor((targetTime - getRemainingTime()) / 60)}
+            {Math.floor(countdownTimeElapsed / 60)}
           </Text>
           <Text 
             style={[
@@ -1688,7 +1968,7 @@ const FocusTimer = ({ theme, navigation }) => {
       </View>
       
       {/* Preset Time Buttons - Only show when timer is not running */}
-      {!isRunning && !isTimerEditMode && (
+      {!getRunningStateForMode(true) && !isTimerEditMode && (
         <View style={[
           styles.fullscreenPresetContainer,
           {
@@ -2477,8 +2757,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   timePickerInput: {},
-  saveTimeButton: {},
-  saveTimeButtonText: {},
   
   // Info view styles
   infoView: {},
@@ -2492,6 +2770,10 @@ const styles = StyleSheet.create({
   infoContent: {},
   infoHeading: {},
   infoText: {},
+  
+  // Edit hint styles
+  editHintContainer: {},
+  editHintText: {},
 });
 
 export default FocusTimer;

@@ -36,7 +36,9 @@ import {
   meetsContrastRequirements
 } from '../utils/responsive';
 
-const LifePlanOverviewScreen = ({ navigation }) => {
+const LifePlanOverviewScreen = ({ navigation, hideBackButton = false }) => {
+  // Determine if we're embedded in a tab (Goals tab) or standalone (from ProfileTab)
+  const isEmbeddedInTab = hideBackButton;
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const safeSpacing = useSafeSpacing();
@@ -516,7 +518,7 @@ const saveDirection = async () => {
     navigation.navigate('GoalDetails', { 
       mode: 'edit', 
       goal: goal,
-      previousScreen: 'LifePlanOverview' // Add this to track where we came from
+      previousScreen: isEmbeddedInTab ? 'GoalsTab' : 'LifePlanOverview'
     });
   };
   
@@ -525,7 +527,7 @@ const saveDirection = async () => {
     navigation.navigate('ProjectDetails', { 
       projectId: project.id, 
       mode: 'edit',
-      previousScreen: 'LifePlanOverview' // Add this to track where we came from
+      previousScreen: isEmbeddedInTab ? 'GoalsTab' : 'LifePlanOverview'
     });
   };
   
@@ -535,7 +537,7 @@ const saveDirection = async () => {
       projectId: projectId,
       mode: 'edit',
       initialTaskId: task.id,
-      previousScreen: 'LifePlanOverview' // Add this to track where we came from
+      previousScreen: isEmbeddedInTab ? 'GoalsTab' : 'LifePlanOverview'
     });
   };
   
@@ -770,41 +772,44 @@ const saveDirection = async () => {
             "Strategic Direction - collapsed" : 
             `Strategic Direction - ${lifeDirection}`}
         >
-          {/* Back button overlaid on the card */}
-          <TouchableOpacity 
-            style={[
-              styles.backButtonOverlay,
-              {
-                position: 'absolute',
-                top: spacing.s,
-                left: spacing.m,
-                zIndex: 10,
-                borderRadius: scaleWidth(20)
-              }
-            ]}
-            onPress={() => {
-              // Navigate directly to the Profile tab to break any navigation loops
-              navigation.navigate('ProfileTab');
-            }}
-            accessible={true}
-            accessibilityRole="button"
-            accessibilityLabel="Go back to profile"
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <View style={[
-              styles.iconBackground,
-              {
-                backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-                width: scaleWidth(36),
-                height: scaleWidth(36),
-                borderRadius: scaleWidth(18),
-                alignItems: 'center',
-                justifyContent: 'center'
-              }
-            ]}>
-              <Ionicons name="arrow-back" size={scaleWidth(22)} color={textColor} />
-            </View>
-          </TouchableOpacity>
+          {/* Back button overlaid on the card - only show when not embedded in tabs */}
+          {!hideBackButton && (
+            <TouchableOpacity 
+              style={[
+                styles.backButtonOverlay,
+                {
+                  position: 'absolute',
+                  top: spacing.s,
+                  left: spacing.m,
+                  zIndex: 10,
+                  borderRadius: scaleWidth(20)
+                }
+              ]}
+              onPress={() => {
+                // Since hideBackButton controls visibility, this only runs when back button is shown
+                // Back button is only shown when accessed from ProfileTab settings, so always go to ProfileTab
+                navigation.navigate('ProfileTab');
+              }}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Go back to profile"
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <View style={[
+                styles.iconBackground,
+                {
+                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                  width: scaleWidth(36),
+                  height: scaleWidth(36),
+                  borderRadius: scaleWidth(18),
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }
+              ]}>
+                <Ionicons name="arrow-back" size={scaleWidth(22)} color={textColor} />
+              </View>
+            </TouchableOpacity>
+          )}
           
           {/* Collapse/Expand button */}
           <TouchableOpacity 
@@ -1844,7 +1849,10 @@ const saveDirection = async () => {
                     borderRadius: scaleWidth(25)
                   }
                 ]}
-                onPress={() => navigation.navigate('GoalDetails', { mode: 'create' })}
+                onPress={() => navigation.navigate('GoalDetails', { 
+                  mode: 'create',
+                  previousScreen: isEmbeddedInTab ? 'GoalsTab' : 'LifePlanOverview'
+                })}
                 accessible={true}
                 accessibilityRole="button"
                 accessibilityLabel="Add your first goal"

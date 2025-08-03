@@ -37,6 +37,9 @@ const DetailModal = ({ visible, theme, data, handlers, onClose }) => {
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
   const [showCurrencyInfoModal, setShowCurrencyInfoModal] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [showSaveDataModal, setShowSaveDataModal] = useState(false);
+  const [savedInstances, setSavedInstances] = useState([]);
+  const [isSaving, setIsSaving] = useState(false);
   
   // Access currency data from props
   const { financialData, formatCurrency } = data;
@@ -74,6 +77,116 @@ const DetailModal = ({ visible, theme, data, handlers, onClose }) => {
       Alert.alert('Error', 'Unable to change currency. Please try again later.');
     }
   };
+
+  // Load all saved financial tracker instances (limit to 3)
+  const loadSavedInstances = async () => {
+    try {
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      const allKeys = await AsyncStorage.getAllKeys();
+      const widgetDataKeys = allKeys.filter(key => key.startsWith('widget_data_'));
+      const instances = [];
+
+      for (const key of widgetDataKeys) {
+        try {
+          const data = await AsyncStorage.getItem(key);
+          if (data) {
+            const parsedData = JSON.parse(data);
+            // Only include financial tracker data
+            if (parsedData.incomeSources !== undefined || parsedData.expenses !== undefined) {
+              const totalIncome = (parsedData.incomeSources || []).reduce((sum, item) => sum + item.amount, 0);
+              const totalExpenses = (parsedData.expenses || []).reduce((sum, item) => sum + item.amount, 0);
+              
+              // Create a better name for saved instances
+              const savedAt = parsedData.savedAt ? new Date(parsedData.savedAt) : new Date();
+              const instanceName = `Financial ${savedAt.toLocaleDateString()} ${savedAt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+              
+              instances.push({
+                id: key,
+                name: instanceName,
+                totalIncome,
+                totalExpenses,
+                currency: parsedData.currency || '$',
+                lastUpdated: parsedData.lastUpdated || 'Never',
+                data: parsedData
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Error loading instance:', key, error);
+        }
+      }
+
+      // Also check old storage for migration
+      const oldData = await AsyncStorage.getItem('financialTrackerData');
+      if (oldData && !instances.length) {
+        const parsedOldData = JSON.parse(oldData);
+        const totalIncome = (parsedOldData.incomeSources || []).reduce((sum, item) => sum + item.amount, 0);
+        const totalExpenses = (parsedOldData.expenses || []).reduce((sum, item) => sum + item.amount, 0);
+        
+        instances.push({
+          id: 'legacy_financial',
+          name: 'Legacy Financial Data',
+          totalIncome,
+          totalExpenses,
+          currency: parsedOldData.currency || '$',
+          lastUpdated: parsedOldData.lastUpdated || 'Never',
+          data: parsedOldData
+        });
+      }
+
+      // Limit to 3 most recent instances
+      setSavedInstances(instances.slice(0, 3));
+    } catch (error) {
+      console.error('Error loading saved instances:', error);
+    }
+  };
+
+  // Load a specific saved instance
+  const loadSavedInstance = async (instance) => {
+    try {
+      if (handlers.loadSavedFinancialData) {
+        handlers.loadSavedFinancialData(instance.data);
+        setShowSaveDataModal(false);
+        Alert.alert('Success', `Loaded "${instance.name}" financial data`);
+      }
+    } catch (error) {
+      console.error('Error loading saved instance:', error);
+      Alert.alert('Error', 'Failed to load financial data');
+    }
+  };
+
+  // Handle closing modal with automatic saving
+  const handleClose = async () => {
+    setIsSaving(true);
+    try {
+      // Automatically save current data when closing
+      if (handlers.saveCurrentFinancialData) {
+        await handlers.saveCurrentFinancialData();
+      }
+      
+      // Add a minimum delay to ensure the user sees the saving indicator
+      await new Promise(resolve => setTimeout(resolve, 800));
+    } catch (error) {
+      console.error('Error auto-saving financial data:', error);
+    } finally {
+      setIsSaving(false);
+      onClose();
+    }
+  };
+
+  // Start fresh with new financial data
+  const startFreshFinancialData = async () => {
+    try {
+      if (handlers.startFreshFinancialData) {
+        handlers.startFreshFinancialData();
+        setShowSaveDataModal(false);
+        Alert.alert('Success', 'Started fresh financial tracker');
+      }
+    } catch (error) {
+      console.error('Error starting fresh:', error);
+      Alert.alert('Error', 'Failed to start fresh financial data');
+    }
+  };
   
 
   return (
@@ -82,21 +195,34 @@ const DetailModal = ({ visible, theme, data, handlers, onClose }) => {
       animationType="slide"
       transparent={false}
       statusBarTranslucent={true}
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
     >
       <SafeAreaView style={[styles.detailModalContainer, { backgroundColor: theme.background }]}>
         {/* Header */}
         <View style={[styles.detailHeader, { borderBottomColor: theme.border }]}>
           <TouchableOpacity
             style={styles.closeModalButton}
-            onPress={onClose}
+            onPress={handleClose}
+            disabled={isSaving}
           >
-            <Ionicons name="arrow-back" size={24} color={theme.text} />
+            {isSaving ? (
+              <Ionicons name="ellipsis-horizontal" size={24} color={theme.textSecondary} />
+            ) : (
+              <Ionicons name="arrow-back" size={24} color={theme.text} />
+            )}
           </TouchableOpacity>
           
-          <Text style={[styles.detailTitle, { color: theme.text }]}>
-            Financial Tracker
-          </Text>
+          <View style={styles.titleContainer}>
+            <Text style={[styles.detailTitle, { color: theme.text }]}>
+              Financial Tracker
+            </Text>
+            {isSaving && (
+              <View style={styles.savingIndicator}>
+                <Ionicons name="cloud-upload-outline" size={18} color={theme.primary} />
+                <Text style={[styles.savingText, { color: theme.primary }]}>Saving...</Text>
+              </View>
+            )}
+          </View>
           
           {/* Currency selector in header */}
           <View style={styles.headerRight}>
@@ -108,6 +234,16 @@ const DetailModal = ({ visible, theme, data, handlers, onClose }) => {
                 {financialData.currency}
               </Text>
               <Ionicons name="chevron-down" size={16} color={theme.textSecondary} />
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.saveDataButton}
+              onPress={() => {
+                loadSavedInstances();
+                setShowSaveDataModal(true);
+              }}
+            >
+              <Ionicons name="folder-outline" size={22} color={theme.textSecondary} />
             </TouchableOpacity>
             
             <TouchableOpacity 
@@ -290,6 +426,69 @@ const DetailModal = ({ visible, theme, data, handlers, onClose }) => {
           theme={theme}
           lastUpdated={lastUpdated}
         />
+        
+        {/* Save Data Modal */}
+        <Modal
+          visible={showSaveDataModal}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={() => setShowSaveDataModal(false)}
+        >
+          <View style={styles.saveDataModalOverlay}>
+            <View style={[styles.saveDataModalContent, { backgroundColor: theme.card, borderColor: theme.border }]}>
+              <View style={styles.saveDataModalHeader}>
+                <Text style={[styles.saveDataModalTitle, { color: theme.text }]}>Load Saved Data</Text>
+                <TouchableOpacity onPress={() => setShowSaveDataModal(false)}>
+                  <Ionicons name="close" size={24} color={theme.textSecondary} />
+                </TouchableOpacity>
+              </View>
+              
+              <Text style={[styles.saveDataDescription, { color: theme.textSecondary }]}>
+                Choose from your saved financial data or start fresh
+              </Text>
+              
+              <View style={styles.savedInstancesContainer}>
+                {savedInstances.length > 0 ? (
+                  savedInstances.map((instance, index) => (
+                    <TouchableOpacity
+                      key={instance.id}
+                      style={[styles.savedInstanceItem, { backgroundColor: theme.cardAlt || theme.card, borderColor: theme.border }]}
+                      onPress={() => loadSavedInstance(instance)}
+                    >
+                      <View style={styles.savedInstanceInfo}>
+                        <Text style={[styles.savedInstanceName, { color: theme.text }]}>
+                          {instance.name}
+                        </Text>
+                        <Text style={[styles.savedInstanceStats, { color: theme.textSecondary }]}>
+                          Income: {instance.currency}{instance.totalIncome.toLocaleString()} • Expenses: {instance.currency}{instance.totalExpenses.toLocaleString()}
+                        </Text>
+                        <Text style={[styles.savedInstanceDate, { color: theme.textSecondary }]}>
+                          Last updated: {instance.lastUpdated === 'Never' ? 'Never' : new Date(instance.lastUpdated).toLocaleDateString()}
+                        </Text>
+                      </View>
+                      <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
+                    </TouchableOpacity>
+                  ))
+                ) : (
+                  <View style={styles.noSavedDataContainer}>
+                    <Ionicons name="folder-open-outline" size={48} color={theme.textSecondary} />
+                    <Text style={[styles.noSavedDataText, { color: theme.textSecondary }]}>
+                      No saved financial data found
+                    </Text>
+                  </View>
+                )}
+              </View>
+              
+              <TouchableOpacity 
+                style={[styles.startFreshButton, { backgroundColor: theme.primary }]}
+                onPress={startFreshFinancialData}
+              >
+                <Ionicons name="add-circle" size={20} color="#FFFFFF" />
+                <Text style={styles.startFreshButtonText}>Start Fresh Financial Data</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </SafeAreaView>
     </Modal>
   );
@@ -311,11 +510,24 @@ const styles = StyleSheet.create({
   closeModalButton: {
     padding: 8,
   },
+  titleContainer: {
+    flex: 1,
+    alignItems: 'center',
+  },
   detailTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    flex: 1,
     textAlign: 'center',
+  },
+  savingIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  savingText: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginLeft: 4,
   },
   headerRight: {
     flexDirection: 'row',
@@ -335,12 +547,103 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginRight: 4,
   },
+  saveDataButton: {
+    padding: 4,
+    marginRight: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
   infoButton: {
     padding: 4,
   },
   tabContent: {
     flex: 1,
     paddingTop: 4,
+  },
+  // Save data modal styles
+  saveDataModalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    padding: 20,
+  },
+  saveDataModalContent: {
+    width: '90%',
+    maxWidth: 500,
+    borderRadius: 20,
+    padding: 24,
+    borderWidth: 1,
+    maxHeight: '80%',
+  },
+  saveDataModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  saveDataModalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  saveDataDescription: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  savedInstancesContainer: {
+    maxHeight: 300,
+    marginBottom: 20,
+  },
+  savedInstanceItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+  },
+  savedInstanceInfo: {
+    flex: 1,
+  },
+  savedInstanceName: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  savedInstanceStats: {
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  savedInstanceDate: {
+    fontSize: 12,
+  },
+  noSavedDataContainer: {
+    alignItems: 'center',
+    padding: 32,
+  },
+  noSavedDataText: {
+    fontSize: 14,
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  startFreshButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    borderRadius: 12,
+  },
+  startFreshButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 16,
+    marginLeft: 8,
   },
 });
 
