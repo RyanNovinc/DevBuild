@@ -16,13 +16,20 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import ResponsiveText from '../components/ResponsiveText';
-import TypingAnimation from '../components/TypingAnimation';
 import NavigationHeader from '../components/NavigationHeader';
 import { getRelevantStats } from '../utils/getLanguageStats';
 import { getAustralianRelevantStats } from '../data/australianGoalStats';
 import { getUKRelevantStats } from '../data/ukGoalStats';
 import { getUSARelevantStats } from '../data/usaGoalStats';
 import { getCanadaRelevantStats } from '../data/canadaGoalStats';
+import { getIndiaRelevantStats } from '../data/indiaGoalStats';
+import { getIrelandRelevantStats } from '../data/irelandGoalStats';
+import { getMalaysiaRelevantStats } from '../data/malaysiaGoalStats';
+import { getNewZealandRelevantStats } from '../data/newzealandGoalStats';
+import { getNigeriaRelevantStats } from '../data/nigeriaGoalStats';
+import { getPhilippinesRelevantStats } from '../data/philippinesGoalStats';
+import { getSingaporeRelevantStats } from '../data/singaporeGoalStats';
+import { getSouthAfricaRelevantStats } from '../data/southafricaGoalStats';
 // Import useI18n hook
 import { useI18n } from '../context/I18nContext';
 
@@ -37,11 +44,8 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
     return t(key, namespace, params);
   };
 
-  // Core state
-  const [messageStep, setMessageStep] = useState(1);
-  const [messageComplete, setMessageComplete] = useState(false);
-  const [showTapToContinue, setShowTapToContinue] = useState(false);
-  const [allMessagesComplete, setAllMessagesComplete] = useState(false);
+  // Core state - simplified without AI messaging
+  const [allMessagesComplete, setAllMessagesComplete] = useState(true); // Skip AI messages
   const [isTransitioning, setIsTransitioning] = useState(false); // Prevent rapid taps
   const [hasCompleted, setHasCompleted] = useState(false); // Prevent multiple completion calls
   
@@ -54,8 +58,6 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
   const modalFadeAnim = useRef(new Animated.Value(0)).current;
   const modalScaleAnim = useRef(new Animated.Value(0.9)).current;
   
-  // Ref for typing animation
-  const typingRef = useRef(null);
   
   // Core animations
   const messageOpacity = useRef(new Animated.Value(1)).current;
@@ -132,6 +134,22 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
         statsResult = getUSARelevantStats(domainName, goalName);
       } else if (country === 'canada') {
         statsResult = getCanadaRelevantStats(domainName, goalName);
+      } else if (country === 'india') {
+        statsResult = getIndiaRelevantStats(domainName, goalName);
+      } else if (country === 'ireland') {
+        statsResult = getIrelandRelevantStats(domainName, goalName);
+      } else if (country === 'malaysia') {
+        statsResult = getMalaysiaRelevantStats(domainName, goalName);
+      } else if (country === 'newzealand') {
+        statsResult = getNewZealandRelevantStats(domainName, goalName);
+      } else if (country === 'nigeria') {
+        statsResult = getNigeriaRelevantStats(domainName, goalName);
+      } else if (country === 'philippines') {
+        statsResult = getPhilippinesRelevantStats(domainName, goalName);
+      } else if (country === 'singapore') {
+        statsResult = getSingaporeRelevantStats(domainName, goalName);
+      } else if (country === 'southafrica') {
+        statsResult = getSouthAfricaRelevantStats(domainName, goalName);
       } else {
         // Fall back to general stats for other countries
         statsResult = getRelevantStats(domainName, goalName, currentLanguage);
@@ -180,23 +198,7 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
     }
   }, [domain, goal, country, currentLanguage]); // Make sure this effect reruns when domain, goal, or country changes
   
-  // Show tap prompt after message completes
-  useEffect(() => {
-    if (messageComplete && messageStep < 5) {
-      setShowTapToContinue(true);
-      
-      // Reset transitioning state when message completes (safety mechanism)
-      setIsTransitioning(false);
-      
-      // Animate in the tap prompt
-      Animated.timing(tapPromptOpacity, {
-        toValue: 1,
-        duration: 300,
-        delay: 200,
-        useNativeDriver: true
-      }).start();
-    }
-  }, [messageComplete]);
+  // Removed message handling - skip AI prompts
   
   // Show congrats animation after all messages are complete
   useEffect(() => {
@@ -460,30 +462,17 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
   
   return (
     <View style={styles.container}>
-      {/* Full-screen touchable overlay */}
-      {!allMessagesComplete && (
-        <TouchableOpacity
-          style={styles.fullScreenTouchable}
-          activeOpacity={1}
-          onPress={handleScreenTap}
-        >
-          {/* This touchable covers the entire screen */}
-        </TouchableOpacity>
-      )}
+      {/* Removed full-screen touchable - not needed */}
       
       <ScrollView 
         contentContainerStyle={[
           styles.scrollContent,
           // Increased padding to avoid overlap with button
-          { paddingBottom: allMessagesComplete ? 100 : (showTapToContinue ? 200 : 20) }
+          { paddingBottom: 100 }
         ]}
         showsVerticalScrollIndicator={false}
-        pointerEvents={!allMessagesComplete ? "none" : "auto"} // Make ScrollView non-interactive during messages
+        pointerEvents="auto"
       >
-        <NavigationHeader 
-          title={translate('title')} 
-          onBack={onBack} 
-        />
         {/* AI Message - Single container that changes content */}
         {!allMessagesComplete && (
           <Animated.View style={[styles.messageContainer, { opacity: messageOpacity }]}>
@@ -498,13 +487,9 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
               </Animated.View>
             </View>
             <Animated.View style={[styles.messageTextContainer, { opacity: messageTextOpacity }]}>
-              <TypingAnimation
-                ref={typingRef}
-                key={messageStep} // Force re-render when step changes
-                text={getCurrentMessage()}
-                typingSpeed={30}
-                onComplete={() => setMessageComplete(true)}
-              />
+              <ResponsiveText style={styles.messageText}>
+                🎉 Congratulations! Your personalized life compass is ready.
+              </ResponsiveText>
             </Animated.View>
           </Animated.View>
         )}
@@ -632,26 +617,7 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
         )}
       </ScrollView>
       
-      {/* Central Tap to Continue Prompt */}
-      {showTapToContinue && !allMessagesComplete && (
-        <Animated.View 
-          style={[
-            styles.centralTapPrompt,
-            { opacity: tapPromptOpacity }
-          ]}
-          pointerEvents="none"
-        >
-          <ResponsiveText style={styles.tapPromptText}>
-            {translate('tapToContinue', 'common')}
-          </ResponsiveText>
-          <Ionicons 
-            name="chevron-down" 
-            size={24} 
-            color="rgba(255,255,255,0.7)" 
-            style={styles.tapPromptIcon} 
-          />
-        </Animated.View>
-      )}
+      {/* Removed tap to continue prompt - not needed */}
       
       {/* Start Using App Button - Now outside ScrollView to make it sticky */}
       {allMessagesComplete && (
@@ -800,6 +766,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
+    paddingTop: 60, // Add top padding to compensate for removed NavigationHeader
     flexGrow: 1,
   },
   messageContainer: {

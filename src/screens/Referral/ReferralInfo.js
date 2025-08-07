@@ -17,16 +17,21 @@ const ReferralInfo = ({ theme }) => {
   const faqs = [
     {
       id: 1,
-      question: "How long does the 50% discount last?",
-      answer: "The 50% discount applies for one month on any paid AI plan for both you and your friend."
+      question: "How do I get my 50% discount?",
+      answer: "Once you successfully refer a friend who buys Pro, your next Pro purchase will automatically be 50% off - no additional steps required!"
     },
     {
       id: 2,
-      question: "When will I receive my reward?",
-      answer: "You'll receive your reward when your referred friend purchases Founder's Access. The discount will be applied to your next AI plan renewal."
+      question: "When is the discount applied?",
+      answer: "The 50% off is automatically applied at checkout when you purchase Pro after a successful referral - it just shows up as savings!"
     },
     {
       id: 3,
+      question: "Where does my friend enter the referral code?",
+      answer: "Your friend must go to Profile → Settings → Enter Referral Code in the app and input your code BEFORE buying the Pro version. This is crucial - the code must be entered first!"
+    },
+    {
+      id: 4,
       question: "Is there a limit to how many friends I can refer?",
       answer: "Yes, you can refer up to 3 friends. Complete app challenges to earn additional referral opportunities."
     }
@@ -65,10 +70,10 @@ const ReferralInfo = ({ theme }) => {
             </View>
             <View style={styles.stepContent}>
               <Text style={styles.stepTitle}>
-                Friend Signs Up
+                Friend Enters Code
               </Text>
               <Text style={styles.stepDescription}>
-                They create an account and enter your code during signup
+                They add your referral code in the app before upgrading
               </Text>
             </View>
           </View>
@@ -79,10 +84,24 @@ const ReferralInfo = ({ theme }) => {
             </View>
             <View style={styles.stepContent}>
               <Text style={styles.stepTitle}>
-                Both Get Rewarded
+                Friend Buys Pro
               </Text>
               <Text style={styles.stepDescription}>
-                When they purchase Founder{"'"}s Access, you both get 50% off your next month of any AI plan
+                They purchase the Pro version of LifeCompass
+              </Text>
+            </View>
+          </View>
+          
+          <View style={styles.stepItem}>
+            <View style={styles.stepNumber}>
+              <Text style={styles.stepNumberText}>✓</Text>
+            </View>
+            <View style={styles.stepContent}>
+              <Text style={styles.stepTitle}>
+                Both Get 50% Off
+              </Text>
+              <Text style={styles.stepDescription}>
+                You both save 50% on your Pro purchase - instant rewards for sharing!
               </Text>
             </View>
           </View>

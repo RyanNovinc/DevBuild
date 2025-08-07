@@ -1,0 +1,304 @@
+{
+  "tables": [
+    {
+      "TableName": "LifeCompass-AnonymousUsers",
+      "KeySchema": [
+        {
+          "AttributeName": "deviceId",
+          "KeyType": "HASH"
+        }
+      ],
+      "AttributeDefinitions": [
+        {
+          "AttributeName": "deviceId",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "anonymousUserId",
+          "AttributeType": "S"
+        }
+      ],
+      "GlobalSecondaryIndexes": [
+        {
+          "IndexName": "AnonymousUserIdIndex",
+          "KeySchema": [
+            {
+              "AttributeName": "anonymousUserId",
+              "KeyType": "HASH"
+            }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          },
+          "ProvisionedThroughput": {
+            "ReadCapacityUnits": 5,
+            "WriteCapacityUnits": 5
+          }
+        }
+      ],
+      "BillingMode": "PROVISIONED",
+      "ProvisionedThroughput": {
+        "ReadCapacityUnits": 5,
+        "WriteCapacityUnits": 5
+      }
+    },
+    {
+      "TableName": "LifeCompass-ReferralCodes",
+      "KeySchema": [
+        {
+          "AttributeName": "code",
+          "KeyType": "HASH"
+        }
+      ],
+      "AttributeDefinitions": [
+        {
+          "AttributeName": "code",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "ownerId",
+          "AttributeType": "S"
+        }
+      ],
+      "GlobalSecondaryIndexes": [
+        {
+          "IndexName": "OwnerIdIndex",
+          "KeySchema": [
+            {
+              "AttributeName": "ownerId",
+              "KeyType": "HASH"
+            }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          },
+          "ProvisionedThroughput": {
+            "ReadCapacityUnits": 5,
+            "WriteCapacityUnits": 5
+          }
+        }
+      ],
+      "BillingMode": "PROVISIONED",
+      "ProvisionedThroughput": {
+        "ReadCapacityUnits": 5,
+        "WriteCapacityUnits": 5
+      }
+    },
+    {
+      "TableName": "LifeCompass-ReferralStats",
+      "KeySchema": [
+        {
+          "AttributeName": "ownerId",
+          "KeyType": "HASH"
+        }
+      ],
+      "AttributeDefinitions": [
+        {
+          "AttributeName": "ownerId",
+          "AttributeType": "S"
+        }
+      ],
+      "BillingMode": "PROVISIONED",
+      "ProvisionedThroughput": {
+        "ReadCapacityUnits": 5,
+        "WriteCapacityUnits": 5
+      }
+    },
+    {
+      "TableName": "LifeCompass-ReferralConversions",
+      "KeySchema": [
+        {
+          "AttributeName": "conversionId",
+          "KeyType": "HASH"
+        }
+      ],
+      "AttributeDefinitions": [
+        {
+          "AttributeName": "conversionId",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "referrerId",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "purchaserId",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "referralCode",
+          "AttributeType": "S"
+        }
+      ],
+      "GlobalSecondaryIndexes": [
+        {
+          "IndexName": "ReferrerIdIndex",
+          "KeySchema": [
+            {
+              "AttributeName": "referrerId",
+              "KeyType": "HASH"
+            }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          },
+          "ProvisionedThroughput": {
+            "ReadCapacityUnits": 5,
+            "WriteCapacityUnits": 5
+          }
+        },
+        {
+          "IndexName": "PurchaserIdIndex",
+          "KeySchema": [
+            {
+              "AttributeName": "purchaserId",
+              "KeyType": "HASH"
+            }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          },
+          "ProvisionedThroughput": {
+            "ReadCapacityUnits": 5,
+            "WriteCapacityUnits": 5
+          }
+        },
+        {
+          "IndexName": "ReferralCodeIndex",
+          "KeySchema": [
+            {
+              "AttributeName": "referralCode",
+              "KeyType": "HASH"
+            }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          },
+          "ProvisionedThroughput": {
+            "ReadCapacityUnits": 5,
+            "WriteCapacityUnits": 5
+          }
+        }
+      ],
+      "BillingMode": "PROVISIONED",
+      "ProvisionedThroughput": {
+        "ReadCapacityUnits": 5,
+        "WriteCapacityUnits": 5
+      }
+    },
+    {
+      "TableName": "LifeCompass-DiscountRedemptions",
+      "KeySchema": [
+        {
+          "AttributeName": "redemptionId",
+          "KeyType": "HASH"
+        }
+      ],
+      "AttributeDefinitions": [
+        {
+          "AttributeName": "redemptionId",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "userId",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "conversionId",
+          "AttributeType": "S"
+        }
+      ],
+      "GlobalSecondaryIndexes": [
+        {
+          "IndexName": "UserIdIndex",
+          "KeySchema": [
+            {
+              "AttributeName": "userId",
+              "KeyType": "HASH"
+            }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          },
+          "ProvisionedThroughput": {
+            "ReadCapacityUnits": 5,
+            "WriteCapacityUnits": 5
+          }
+        },
+        {
+          "IndexName": "ConversionIdIndex",
+          "KeySchema": [
+            {
+              "AttributeName": "conversionId",
+              "KeyType": "HASH"
+            }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          },
+          "ProvisionedThroughput": {
+            "ReadCapacityUnits": 5,
+            "WriteCapacityUnits": 5
+          }
+        }
+      ],
+      "BillingMode": "PROVISIONED",
+      "ProvisionedThroughput": {
+        "ReadCapacityUnits": 5,
+        "WriteCapacityUnits": 5
+      }
+    }
+  ],
+  "sampleData": {
+    "anonymousUser": {
+      "deviceId": "LC_abc123_xyz789",
+      "anonymousUserId": "anon_LC_abc123_xyz789",
+      "deviceFingerprint": "hash_of_device_characteristics",
+      "createdAt": "2024-08-04T12:00:00.000Z",
+      "lastSeen": "2024-08-04T12:00:00.000Z",
+      "linkedUserId": null,
+      "linkedAt": null
+    },
+    "referralCode": {
+      "code": "ABCD1234",
+      "ownerId": "anon_LC_abc123_xyz789",
+      "ownerType": "anonymous",
+      "linkedEmail": null,
+      "createdAt": "2024-08-04T12:00:00.000Z",
+      "isActive": true
+    },
+    "referralStats": {
+      "ownerId": "anon_LC_abc123_xyz789",
+      "ownerType": "anonymous",
+      "sent": 5,
+      "clicked": 3,
+      "converted": 2,
+      "plansEarned": 2,
+      "plansGifted": 2,
+      "createdAt": "2024-08-04T12:00:00.000Z",
+      "updatedAt": "2024-08-04T12:00:00.000Z"
+    },
+    "referralConversion": {
+      "conversionId": "conv_1234567890",
+      "referralCode": "ABCD1234",
+      "referrerId": "anon_LC_abc123_xyz789",
+      "purchaserId": "anon_LC_def456_uvw321",
+      "conversionDate": "2024-08-04T12:00:00.000Z",
+      "rewardStatus": "pending",
+      "rewardAmount": 50,
+      "rewardType": "percentage_discount",
+      "appliedAt": null,
+      "expiresAt": null
+    },
+    "discountRedemption": {
+      "redemptionId": "redeem_1234567890",
+      "conversionId": "conv_1234567890",
+      "userId": "anon_LC_def456_uvw321",
+      "redeemedAt": "2024-08-04T12:00:00.000Z",
+      "subscriptionType": "pro_monthly",
+      "originalPrice": 29.99,
+      "discountedPrice": 14.99,
+      "discountAmount": 15.00
+    }
+  }
+}

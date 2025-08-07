@@ -149,8 +149,8 @@ const ProgressRing = ({
         {/* Points Text in Center */}
         <AnimatedSvgText
           x={center}
-          y={center - 10}
-          fontSize={size / 10}
+          y={center + 5}
+          fontSize={size / 6}
           fontWeight="bold"
           fill={theme.text}
           textAnchor="middle"
@@ -159,29 +159,18 @@ const ProgressRing = ({
           {currentLevelPoints}
         </AnimatedSvgText>
         
-        {/* Points Label */}
+        {/* Next Stage Text */}
         <AnimatedSvgText
           x={center}
-          y={center + 15}
-          fontSize={size / 20}
-          fill={theme.textSecondary}
-          textAnchor="middle"
-          opacity={textOpacity}
-        >
-          POINTS
-        </AnimatedSvgText>
-        
-        {/* Next Level Text */}
-        <AnimatedSvgText
-          x={center}
-          y={center + 40}
+          y={center + 30}
           fontSize={size / 25}
           fill={theme.textSecondary}
           textAnchor="middle"
           opacity={textOpacity}
         >
-          {pointsNeeded > 0 ? `${pointsNeeded} to Level ${level + 1}` : "MAX LEVEL"}
+          {pointsNeeded > 0 ? `${pointsNeeded} to Stage ${level + 1}` : "MAX STAGE"}
         </AnimatedSvgText>
+        
       </Svg>
     </View>
   );

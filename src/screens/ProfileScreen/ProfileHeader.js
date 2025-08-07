@@ -19,7 +19,7 @@ import {
 } from '../../utils/responsive';
 import FeatureExplorerTracker from '../../services/FeatureExplorerTracker';
 // Import the shared avatar components
-import { DefaultAvatar, COLOR_PALETTE, LevelAvatar } from '../../components/AvatarComponents';
+import { DefaultAvatar, COLOR_PALETTE } from '../../components/AvatarComponents';
 
 // Main header component - completely removed
 const ProfileHeader = ({ theme, toggleSettings }) => {
@@ -123,14 +123,8 @@ ProfileHeader.Banner = ({ theme, isDarkMode, profile, user, navigation, toggleSe
     return '🔥'; // Flame (1-6 days)
   };
 
-  // Render the profile image based on priority: custom photo > level picture > legacy avatar > initials
+  // Render the profile image based on priority: custom photo > legacy avatar > initials
   const renderProfileImage = () => {
-    console.log('ProfileHeader: Rendering profile image with data:', {
-      profileImage: profile.profileImage,
-      levelProfilePicture: profile.levelProfilePicture,
-      defaultAvatar: profile.defaultAvatar
-    });
-
     if (profile.profileImage) {
       // Priority 1: Render actual profile image (custom photo)
       return (
@@ -150,40 +144,6 @@ ProfileHeader.Banner = ({ theme, isDarkMode, profile, user, navigation, toggleSe
             accessibilityLabel="Profile picture"
             accessibilityRole="image"
           />
-          
-          {/* Streak Badge - only show if streak > 0 */}
-          {streakData.currentStreak > 0 && (
-            <View style={styles.streakBadge}>
-              <Text style={styles.streakEmoji}>
-                {getStreakEmoji(streakData.currentStreak)}
-              </Text>
-              <Text style={styles.streakCount}>
-                {streakData.currentStreak}
-              </Text>
-            </View>
-          )}
-        </View>
-      );
-    } else if (profile.levelProfilePicture) {
-      // Priority 2: Render level-based profile picture
-      return (
-        <View style={styles.profileImageContainer}>
-          <View style={[
-            styles.defaultAvatarContainer,
-            { 
-              width: profileImageSize,
-              height: profileImageSize,
-              borderRadius: borderRadius,
-              borderColor: isDarkMode ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.8)',
-              borderWidth: 2,
-              overflow: 'hidden'
-            }
-          ]}>
-            <LevelAvatar
-              size={profileImageSize - 4} // Account for border
-              pictureData={profile.levelProfilePicture}
-            />
-          </View>
           
           {/* Streak Badge - only show if streak > 0 */}
           {streakData.currentStreak > 0 && (

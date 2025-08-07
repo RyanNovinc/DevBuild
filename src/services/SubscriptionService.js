@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PREMIUM_FEATURES, FREE_PLAN_LIMITS } from './SubscriptionConstants';
 import ReferralTracker from './ReferralTracker';
 import * as FeatureExplorerTracker from './FeatureExplorerTracker';
+import referralBackendService from './ReferralBackendService';
 
 // Export the constants for convenience
 export { PREMIUM_FEATURES, FREE_PLAN_LIMITS };
@@ -391,28 +392,33 @@ export const upgradeSubscription = async (subscriptionType, userId = null) => {
     // Store the new subscription status
     await AsyncStorage.setItem('subscriptionStatus', subscriptionType);
     
-    // Process any pending referrals
-    if (userId) {
-      const processedReferral = await ReferralTracker.processPendingReferral(userId, subscriptionType);
-      
-      if (processedReferral) {
-        console.log('Processed referral on subscription upgrade:', processedReferral);
-        
-        // Here you would typically:
-        // 1. Send this data to your backend
-        // 2. Credit the referrer's account
-        // 3. Update referral statistics
-        
-        // For now, we'll just log and store locally
-        await notifyReferralSuccess(processedReferral);
+    // Record referral conversion if user entered a referral code
+    try {
+      const enteredReferralCode = await AsyncStorage.getItem('enteredReferralCode');
+      if (enteredReferralCode) {
+        console.log('Recording referral conversion for code:', enteredReferralCode);
+        await referralBackendService.recordReferralConversion(enteredReferralCode);
         
         // Track achievement for referral conversion
         try {
           await FeatureExplorerTracker.trackReferralConversion();
         } catch (achievementError) {
           console.error('Error tracking referral conversion achievement:', achievementError);
-          // Don't fail the whole function if achievement tracking fails
         }
+      }
+    } catch (referralError) {
+      console.error('Error processing referral conversion:', referralError);
+      // Don't fail the whole function if referral processing fails
+    }
+    
+    // Process any pending referrals (legacy support) 
+    let processedReferral = null;
+    if (userId) {
+      processedReferral = await ReferralTracker.processPendingReferral(userId, subscriptionType);
+      
+      if (processedReferral) {
+        console.log('Processed referral on subscription upgrade:', processedReferral);
+        await notifyReferralSuccess(processedReferral);
       }
       
       // Track Insider Status achievement for Pro upgrades
@@ -424,10 +430,13 @@ export const upgradeSubscription = async (subscriptionType, userId = null) => {
       }
     }
     
+    // Check if referral code was processed
+    const enteredReferralCode = await AsyncStorage.getItem('enteredReferralCode');
+    
     return {
       success: true,
       subscriptionType,
-      processedReferral: !!processedReferral
+      processedReferral: !!processedReferral || !!enteredReferralCode
     };
   } catch (error) {
     console.error('Error upgrading subscription:', error);

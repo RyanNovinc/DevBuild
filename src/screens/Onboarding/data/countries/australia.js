@@ -3,14 +3,14 @@
 export const DOMAIN_DEFINITIONS = [
   {
     name: "Career & Work",
-    icon: "briefcase-outline",
+    icon: "briefcase",
     color: "#3b82f6", // Blue
     description: "Professional advancement, workplace goals, career development",
     goals: [
       {
         name: "Secure Flexible Work with New Skills",
         description: "Master new capabilities while maintaining or negotiating hybrid/remote work arrangements",
-        icon: "laptop-outline",
+        icon: "laptop",
         explanation: "Work-life balance is now twice as important as career development for attracting employees. 52% of professionals actively explore new career paths, and 76% consider career moves in 2024.",
         projects: [
           {
@@ -60,7 +60,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Move into Management Role",
         description: "Progress from individual contributor to people manager through leadership development",
-        icon: "people-outline",
+        icon: "people",
         explanation: "Manager roles face persistent shortage with projected growth of 151,500 positions (8.2%) by 2029. Leadership positions feature prominently on Core Skills Occupation List.",
         projects: [
           {
@@ -110,7 +110,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Switch to Tech Career",
         description: "Pivot into growth technology sectors through certification and reskilling",
-        icon: "code-outline",
+        icon: "code-slash",
         explanation: "Cybersecurity Analyst ranks #1 fastest-growing job (57% growth). Skills changed 24% since 2015, expected to change 65% by 2030. 94% of IT professionals contemplate job changes.",
         needsClarification: true,
         clarificationOptions: [
@@ -225,12 +225,14 @@ export const DOMAIN_DEFINITIONS = [
                   {
                     name: "Complete Google Ads and Google Analytics certifications plus Facebook Blueprint",
                     summary: "Get certified",
+                    explanation: "Google and Facebook certifications are industry-standard credentials valued by employers. These platforms dominate digital advertising, and certification demonstrates competency in essential marketing tools for career advancement.",
                     timeframe: "3 months",
                     completed: false
                   },
                   {
                     name: "Master SEO fundamentals and content marketing strategy through practical projects",
                     summary: "Learn SEO",
+                    explanation: "SEO and content marketing form the foundation of digital strategy. These skills are in high demand as businesses focus on organic growth and cost-effective customer acquisition through search visibility.",
                     timeframe: "2 months",
                     completed: false
                   }
@@ -244,12 +246,14 @@ export const DOMAIN_DEFINITIONS = [
                   {
                     name: "Create and analyze 2 complete digital marketing campaigns with ROI measurement",
                     summary: "Run campaigns",
+                    explanation: "Hands-on campaign experience demonstrates practical application of marketing skills and data analysis capabilities. ROI measurement skills are essential for proving marketing effectiveness to employers and advancing in digital marketing roles.",
                     timeframe: "3 months",
                     completed: false
                   },
                   {
                     name: "Build portfolio showcasing data visualization and campaign optimization skills",
                     summary: "Build portfolio",
+                    explanation: "Marketing portfolios provide tangible evidence of analytical skills and creative problem-solving abilities. Data visualization skills are increasingly important as marketing becomes more data-driven and performance-focused.",
                     timeframe: "1 month",
                     completed: false
                   }
@@ -267,12 +271,14 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Research certification programs and choose reputable provider",
                 summary: "Research programs",
+                explanation: "Researching certification programs ensures you choose credible, industry-recognized credentials that align with career goals. Reputable providers offer better employer recognition and higher-quality training that leads to successful career transitions.",
                 timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Complete foundational courses and earn first certification",
                 summary: "Get certified",
+                explanation: "First certification provides credible evidence of new technical skills that enable career transition discussions with employers. Foundation courses build confidence and practical knowledge needed for entry-level tech positions.",
                 timeframe: "4 months",
                 completed: false
               }
@@ -286,12 +292,14 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Create portfolio showcasing projects and skills learned",
                 summary: "Build portfolio",
+                explanation: "Tech portfolios demonstrate practical application of learned skills through real projects. Employers value portfolios more than certifications alone, as they show problem-solving abilities and hands-on experience with relevant technologies.",
                 timeframe: "1 month",
                 completed: false
               },
               {
                 name: "Network with tech professionals and apply for entry-level positions",
                 summary: "Network & apply",
+                explanation: "Tech industry networking provides insights into company culture, hidden job opportunities, and referral possibilities. Many tech positions are filled through networking rather than job boards, making professional connections essential for career transition success.",
                 timeframe: "2 months",
                 completed: false
               }
@@ -303,14 +311,14 @@ export const DOMAIN_DEFINITIONS = [
   },
   {
     name: "Financial Security",
-    icon: "cash-outline",
+    icon: "cash",
     color: "#10b981", // Green
     description: "Building wealth, managing expenses, and achieving financial goals",
     goals: [
       {
         name: "Build 6-Month Emergency Fund",
         description: "Save 3-6 months expenses using high-interest accounts and disciplined budgeting",
-        icon: "shield-outline",
+        icon: "shield",
         explanation: "Gen Z NAB customers opened 24% more high-interest savings accounts past year. 56% of young Australians redirect spending cuts ($450/month average) directly into savings.",
         projects: [
           {
@@ -321,12 +329,14 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Calculate 6 months of essential expenses for your target emergency fund",
                 summary: "Calculate fund",
+                explanation: "Calculating your target emergency fund provides clear savings goal and motivation. Knowing exact amount needed helps create realistic timeline and monthly savings targets for financial security.",
                 timeframe: "1 day",
                 completed: false
               },
               {
                 name: "Open high-interest savings account and set up automatic weekly transfers",
                 summary: "Setup savings",
+                explanation: "High-interest accounts maximize emergency fund growth while automatic transfers ensure consistent progress toward savings goals. Automation removes willpower barriers and builds disciplined saving habits.",
                 timeframe: "1 week",
                 completed: false
               }
@@ -340,12 +350,14 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Track all expenses for one month to identify spending patterns",
                 summary: "Track expenses",
+                explanation: "Expense tracking reveals spending patterns and identifies opportunities for savings. Understanding where money goes enables informed decisions about budget optimization and fund reallocation toward emergency savings.",
                 timeframe: "1 month",
                 completed: false
               },
               {
                 name: "Cancel or reduce 3 subscription services or recurring expenses you don't actively use",
                 summary: "Cut subscriptions",
+                explanation: "Cutting unused subscriptions provides immediate monthly savings that can be redirected to emergency fund. Average household saves $50-100+ monthly by auditing and eliminating unnecessary recurring expenses.",
                 timeframe: "1 week",
                 completed: false
               }
@@ -356,7 +368,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Start Profitable Side Hustle",
         description: "Establish side business generating $500+ monthly within 12 months",
-        icon: "storefront-outline",
+        icon: "storefront",
         explanation: "48% of Australians have or plan side hustles. 950,000+ work multiple jobs (10% increase). Average side hustle earning potential $52.60/hour.",
         projects: [
           {
@@ -367,12 +379,14 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Identify marketable skill or service you can offer part-time",
                 summary: "Find skill",
+                explanation: "Identifying marketable skills ensures your side hustle leverages existing strengths and has market demand. Starting with skills you already possess reduces learning curve and increases likelihood of early profitability.",
                 timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Set up business on relevant platform (Airtasker, Uber, Etsy, freelancing sites)",
                 summary: "Setup platform",
+                explanation: "Platform setup provides immediate access to customers and handles payment processing, reducing startup barriers. Established platforms offer built-in marketing and trust systems that accelerate early customer acquisition.",
                 timeframe: "1 week",
                 completed: false
               }
@@ -386,12 +400,14 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Complete first 5 paid jobs to establish ratings and reviews",
                 summary: "Complete jobs",
+                explanation: "Initial jobs establish credibility through reviews and ratings that attract future customers. Strong early performance creates positive feedback loop leading to more work opportunities and higher pricing power.",
                 timeframe: "2 months",
                 completed: false
               },
               {
                 name: "Optimize pricing and marketing to reach $500+ monthly target",
                 summary: "Optimize pricing",
+                explanation: "Pricing and marketing optimization maximizes income potential from side hustle activities. Data-driven approach to pricing based on market rates and personal value proposition increases profitability and sustainable growth.",
                 timeframe: "1 month",
                 completed: false
               }
@@ -402,7 +418,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Plan Path to Homeownership",
         description: "Develop actionable pathway to property through strategic saving and planning",
-        icon: "home-outline",
+        icon: "home",
         explanation: "56% of Gen Z and millennials plan property entry within 5 years. Average first buyer age risen to 36. Regional purchases save $126,439 average on loans.",
         projects: [
           {
@@ -413,12 +429,14 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Research First Home Owner Grant and government assistance programs",
                 summary: "Research grants",
+                explanation: "Government assistance programs can significantly reduce deposit requirements and provide financial support for first-time buyers. Understanding available grants maximizes purchasing power and creates realistic homeownership pathway.",
                 timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Get pre-approval to understand your borrowing capacity and target price range",
                 summary: "Get pre-approval",
+                explanation: "Pre-approval provides clear understanding of borrowing capacity and strengthens position when making offers. Knowing exact budget range focuses property search and demonstrates serious buyer intent to vendors.",
                 timeframe: "2 weeks",
                 completed: false
               }
@@ -432,12 +450,14 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Calculate deposit needed (10-20% of target property price) and create savings timeline",
                 summary: "Plan deposit",
+                explanation: "Calculating exact deposit requirements creates specific savings target and realistic timeline for homeownership. Clear financial goals enable strategic planning and motivate consistent saving behaviors toward property purchase.",
                 timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Open dedicated house deposit savings account with automatic transfers",
                 summary: "Setup deposit fund",
+                explanation: "Dedicated deposit account separates house savings from other funds and maximizes interest earnings. Automatic transfers ensure consistent progress toward deposit goal without relying on willpower or memory.",
                 timeframe: "1 week",
                 completed: false
               }
@@ -449,14 +469,14 @@ export const DOMAIN_DEFINITIONS = [
   },
   {
     name: "Health & Wellness",
-    icon: "fitness-outline",
+    icon: "fitness",
     color: "#06b6d4", // Cyan
     description: "Physical fitness, mental health, nutrition, and overall wellbeing",
     goals: [
       {
         name: "Exercise for Mental Health",
         description: "Establish consistent workout routine specifically targeting stress and mental wellbeing",
-        icon: "heart-outline",
+        icon: "heart",
         explanation: "Mental health ranks #1 Australian fitness trend 2024. 46% cite financial pressure as key stressor. Exercise proven 1.5x more effective than medication for anxiety/depression.",
         projects: [
           {
@@ -467,12 +487,14 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Choose 3 physical activities you enjoy and can do consistently",
                 summary: "Choose activities",
+                explanation: "Choosing enjoyable activities increases likelihood of long-term adherence to exercise routine. Variety prevents boredom and provides flexibility for different moods, schedules, and weather conditions.",
                 timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Schedule 30-minute exercise sessions 3 times per week focusing on mental health benefits",
                 summary: "Schedule exercise",
+                explanation: "Regular scheduling creates routine that prioritizes mental health and ensures consistency. 30-minute sessions are manageable for busy schedules while providing sufficient duration for mental health benefits.",
                 timeframe: "Ongoing",
                 completed: false
               }
@@ -486,12 +508,14 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Track mood and stress levels before/after exercise sessions for motivation",
                 summary: "Track mood",
+                explanation: "Mood tracking provides tangible evidence of exercise benefits, reinforcing motivation to continue routine. Visible improvement in stress and mood creates positive feedback loop that sustains long-term exercise habits.",
                 timeframe: "Ongoing",
                 completed: false
               },
               {
                 name: "Join fitness class or group activity for social support and accountability",
                 summary: "Join class",
+                explanation: "Group fitness provides social connection and accountability that increases exercise adherence. Community support enhances motivation while addressing social isolation that contributes to mental health challenges.",
                 timeframe: "2 weeks",
                 completed: false
               }
@@ -502,7 +526,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Prevent Chronic Disease",
         description: "Implement evidence-based habits reducing diabetes, heart disease, and cancer risk",
-        icon: "medical-outline",
+        icon: "medical",
         explanation: "6 in 10 Australians live with chronic conditions. Over 90% of disease burden relates to preventable conditions. Millennials showing increased health consciousness.",
         projects: [
           {
@@ -513,12 +537,14 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Establish consistent sleep schedule of 7-8 hours nightly",
                 summary: "Fix sleep",
+                explanation: "Consistent sleep schedule regulates circadian rhythms and supports immune function, metabolism, and mental health. Quality sleep is foundational for preventing chronic diseases and maintaining energy for daily activities.",
                 timeframe: "2 weeks",
                 completed: false
               },
               {
                 name: "Plan and prepare healthy meals 4 days per week instead of takeaway",
                 summary: "Meal prep",
+                explanation: "Home-prepared meals provide better nutrition control and reduce processed food intake linked to chronic disease. Meal planning saves money while improving dietary quality and supporting long-term health goals.",
                 timeframe: "Ongoing",
                 completed: false
               }
@@ -532,12 +558,14 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Book annual health check-up with GP including blood tests and screenings",
                 summary: "Book checkup",
+                explanation: "Regular health screenings enable early detection of chronic conditions when treatment is most effective. Preventive care catches issues before symptoms appear, reducing long-term healthcare costs and improving outcomes.",
                 timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Use health tracking app or wearable to monitor key health metrics daily",
                 summary: "Track health",
+                explanation: "Daily health tracking provides awareness of patterns and progress toward wellness goals. Continuous monitoring enables early intervention and motivates healthy behaviors through visible data and trends.",
                 timeframe: "Ongoing",
                 completed: false
               }
@@ -548,7 +576,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Build Fitness Routine",
         description: "Create sustainable exercise habits that improve daily quality of life",
-        icon: "barbell-outline",
+        icon: "barbell",
         explanation: "Only 27.2% of young Australians meet recommended activity guidelines. Trend shifted from aesthetic goals to functional fitness supporting busy professional lifestyles.",
         projects: [
           {
@@ -559,12 +587,14 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Schedule 3 specific workout sessions in your calendar each week",
                 summary: "Schedule workouts",
+                explanation: "Scheduled workouts treat exercise as important appointments, increasing adherence and consistency. Calendar blocking protects fitness time from other commitments and creates sustainable routine that supports long-term health.",
                 timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Choose mix of cardio, strength, and flexibility activities you enjoy",
                 summary: "Choose activities",
+                explanation: "Balanced exercise program incorporating cardio, strength, and flexibility addresses all aspects of fitness while preventing overuse injuries. Choosing enjoyable activities increases long-term adherence to exercise routine.",
                 timeframe: "1 week",
                 completed: false
               }
@@ -578,12 +608,14 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Walk or cycle to work at least 2 days per week if possible",
                 summary: "Active commute",
+                explanation: "Active commuting integrates exercise into daily routine without requiring additional time allocation. Regular walking or cycling improves cardiovascular health while reducing transportation costs and environmental impact.",
                 timeframe: "Ongoing",
                 completed: false
               },
               {
                 name: "Take stairs instead of elevators and find opportunities for daily movement",
                 summary: "Daily movement",
+                explanation: "Incorporating movement into daily activities accumulates significant health benefits without requiring structured exercise time. Small changes like taking stairs create sustainable habits that support overall fitness goals.",
                 timeframe: "Ongoing",
                 completed: false
               }
@@ -595,14 +627,14 @@ export const DOMAIN_DEFINITIONS = [
   },
   {
     name: "Relationships",
-    icon: "people-outline",
+    icon: "people",
     color: "#ec4899", // Pink
     description: "Building and maintaining meaningful personal connections",
     goals: [
       {
         name: "Find Long-Term Partner",
         description: "Develop meaningful romantic relationship with long-term potential",
-        icon: "heart-outline",
+        icon: "heart",
         explanation: "60% of young Australians identify their partner as their most important relationship, prioritizing quality time (38%) and meaningful connection over materialistic expressions.",
         projects: [
           {
@@ -648,7 +680,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Build Strong Social Circle",
         description: "Create meaningful friendships and community connections beyond work relationships",
-        icon: "people-outline",
+        icon: "people",
         explanation: "Post-pandemic isolation revealed importance of social connection. Over 50% of hybrid workers feel lonelier than pre-pandemic, making friendship investment essential.",
         projects: [
           {
@@ -694,7 +726,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Strengthen Romantic Relationship",
         description: "Improve quality and connection in existing partnership",
-        icon: "heart-circle-outline",
+        icon: "heart-circle",
         explanation: "76.9% of young Australians communicate openly about problems in relationships. Quality time and communication are prioritized over material expressions of love.",
         projects: [
           {
@@ -741,14 +773,14 @@ export const DOMAIN_DEFINITIONS = [
   },
   {
     name: "Personal Growth",
-    icon: "school-outline",
+    icon: "school",
     color: "#8b5cf6", // Purple
     description: "Learning, self-improvement, and developing new capabilities",
     goals: [
       {
         name: "Earn Professional Certification",
         description: "Complete industry-recognized credential in emerging field through online learning",
-        icon: "school-outline",
+        icon: "school",
         explanation: "Learning ranks top 3 reasons for employer choice. 77% believe GenAI will impact work within year. Over 50% of adults took online training past year.",
         projects: [
           {
@@ -794,7 +826,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Launch Creative Project",
         description: "Start passion project combining personal interests with potential portfolio building",
-        icon: "brush-outline",
+        icon: "brush",
         explanation: "92% consider purpose important to job satisfaction. Only 6% prioritize leadership, seeking fulfillment elsewhere. Remote work provides time flexibility for creative pursuits.",
         projects: [
           {
@@ -840,7 +872,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Learn Practical Life Skill",
         description: "Master concrete capability that reduces dependence and costs",
-        icon: "construct-outline",
+        icon: "construct",
         explanation: "46% feel financially insecure, driving self-sufficiency interest. Rising service costs make DIY valuable. Cultural values emphasize practical skills.",
         needsClarification: true,
         clarificationOptions: [
@@ -1025,14 +1057,14 @@ export const DOMAIN_DEFINITIONS = [
   },
   {
     name: "Recreation & Leisure",
-    icon: "bicycle-outline",
+    icon: "bicycle",
     color: "#f59e0b", // Orange
     description: "Hobbies, entertainment, travel, and lifestyle enjoyment",
     goals: [
       {
         name: "Explore Australian Nature",
         description: "Discover local trails and national parks through regular outdoor adventures",
-        icon: "leaf-outline",
+        icon: "leaf",
         explanation: "Bushwalking participation jumped 68% nationally (3.7M adults). Now 3rd most popular adult activity. Post-COVID emphasis on nature connection.",
         projects: [
           {
@@ -1078,7 +1110,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Travel Around Australia",
         description: "Create bucket list of destinations and systematically explore through trips",
-        icon: "airplane-outline",  
+        icon: "airplane",  
         explanation: "78% of 25-39 year-olds plan domestic travel next year (highest demographic). 45% prioritize travel over home ownership. Work flexibility enables extended stays.",
         projects: [
           {
@@ -1124,7 +1156,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Develop New Hobby",
         description: "Start engaging hobby that provides personal satisfaction and potential social connection",
-        icon: "palette-outline",
+        icon: "color-palette",
         explanation: "Millennials spend least on recreation but show 90% participation. Only 53% of 30-49 age group report satisfaction with leisure time. New hobbies provide fulfillment.",
         needsClarification: true,
         clarificationOptions: [
@@ -1309,14 +1341,14 @@ export const DOMAIN_DEFINITIONS = [
   },
   {
     name: "Purpose & Meaning",
-    icon: "compass-outline",
+    icon: "compass",
     color: "#ef4444", // Red
     description: "Finding fulfillment, contributing to causes, and living with intention",
     goals: [
       {
         name: "Volunteer Using Professional Skills",
         description: "Establish monthly volunteering commitment aligning professional skills with chosen cause",
-        icon: "heart-outline",
+        icon: "heart",
         explanation: "29.7% of 18-24 year-olds volunteer formally. 70% volunteered at least once past year. Young volunteers seek skills-based opportunities that use professional capabilities.",
         projects: [
           {
@@ -1362,7 +1394,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Find Purpose-Driven Work",
         description: "Transition to role or create initiatives that align with personal values and impact",
-        icon: "compass-outline",
+        icon: "compass",
         explanation: "89% Gen Z and 92% millennials consider purpose important. 44% Gen Z rejected employers over values misalignment. 76% consider corporate responsibility before accepting jobs.",
         needsClarification: true,
         clarificationOptions: [
@@ -1546,7 +1578,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Get Involved in Local Community",
         description: "Take active role in addressing local issues through civic participation or grassroots advocacy",
-        icon: "people-outline",
+        icon: "people",
         explanation: "Young Australians redefining civic participation. 40% see climate needing immediate action. 73% identify affordable housing as priority issue requiring community solutions.",
         projects: [
           {
@@ -1593,14 +1625,14 @@ export const DOMAIN_DEFINITIONS = [
   },
   {
     name: "Environment & Organization",
-    icon: "home-outline",
+    icon: "home",
     color: "#6366f1", // Indigo
     description: "Creating organized, comfortable living and working spaces",
     goals: [
       {
         name: "Find Quality Shared Housing",
         description: "Establish sustainable co-living arrangement balancing community, affordability, and quality",
-        icon: "home-outline",
+        icon: "home",
         explanation: "1.46 million 25-34 year-olds currently rent. Only 16% satisfied with housing affordability. Co-living reduces costs 30-50% while providing community.",
         projects: [
           {
@@ -1646,7 +1678,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Live Sustainably/Zero-Waste",
         description: "Implement comprehensive sustainability practices reducing environmental impact",
-        icon: "leaf-outline",
+        icon: "leaf",
         explanation: "55% view sustainability as extremely important. 92% millennials consider environmental effects when purchasing. 67% pay more for durable products.",
         projects: [
           {
@@ -1692,7 +1724,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Create Organized Living Space",
         description: "Design efficient, organized home environment that supports productivity and wellbeing",
-        icon: "grid-outline",
+        icon: "grid",
         explanation: "Generation Rent focuses on multifunctional furniture and organization. 25% of workforce now remote requires organized home workspace for productivity.",
         projects: [
           {

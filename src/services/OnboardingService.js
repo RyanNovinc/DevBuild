@@ -172,13 +172,13 @@ class OnboardingService {
       // 8. Verify the data was saved correctly
       const success = await this.verifyCreatedData(goalId, newProjects.length, allTasksForStorage.length);
       
-      // 9. Track onboarding completion achievement (only if successful AND full onboarding)
+      // 9. Set flag for onboarding completion achievement to be triggered after profile loads
       if (success && isFullOnboarding) {
         try {
-          await FeatureExplorerTracker.trackOnboardingCompletion();
-          log('Info', '🏆 [OnboardingService] Full onboarding completion achievement tracked');
+          await AsyncStorage.setItem('pendingOnboardingAchievement', 'true');
+          log('Info', '🏆 [OnboardingService] Onboarding achievement marked as pending for profile screen');
         } catch (error) {
-          console.error('OnboardingService: Error tracking onboarding completion achievement:', error);
+          console.error('OnboardingService: Error setting pending onboarding achievement flag:', error);
           // Don't fail the onboarding if achievement tracking fails
         }
       }

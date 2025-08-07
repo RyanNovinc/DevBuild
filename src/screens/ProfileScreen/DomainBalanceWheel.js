@@ -671,14 +671,15 @@ const DomainBalanceWheel = ({ theme, navigation }) => {
   const totalGoals = domainsToCount.reduce((sum, domain) => sum + domain.goalCount, 0);
   const completedGoals = domainsToCount.reduce((sum, domain) => sum + domain.completedGoalCount, 0);
   const activeGoals = domainsToCount.reduce((sum, domain) => sum + getDomainActiveGoalCount(domain), 0);
+  const activeDomains = domainsToCount.filter(domain => getDomainActiveGoalCount(domain) > 0).length;
   
   // Create accessibility text for screen readers
   const getWheelAccessibilityLabel = () => {
-    if (activeGoals === 0) {
-      return 'Domain balance wheel. No active goals.';
+    if (activeDomains === 0) {
+      return 'Domain balance wheel. No active domains.';
     }
     
-    let label = `Domain balance wheel. ${activeGoals} active goal${activeGoals === 1 ? '' : 's'} across ${activeOnlyDomains.filter(d => getDomainActiveGoalCount(d) > 0).length} domains. `;
+    let label = `Domain balance wheel. ${activeDomains} active domain${activeDomains === 1 ? '' : 's'}. `;
     
     // Add info about each active domain
     activeOnlyDomains
@@ -874,27 +875,37 @@ const DomainBalanceWheel = ({ theme, navigation }) => {
                 opacity={0.9}
               />
               
-              {/* Center content - Always show active goals count */}
+              {/* Center content - Always show active domains count */}
               <SvgText
                 x="0"
-                y="-4"
+                y="-8"
                 textAnchor="middle"
                 fontSize="18"
                 fontWeight="bold"
                 fill="#FFFFFF"
                 onPress={toggleBalanceView}
               >
-                {activeGoals}
+                {activeDomains}
               </SvgText>
               <SvgText
                 x="0"
-                y="14"
+                y="6"
                 textAnchor="middle"
-                fontSize="10"
+                fontSize="9"
                 fill="rgba(255,255,255,0.8)"
                 onPress={toggleBalanceView}
               >
-                {activeGoals === 1 ? "Active Goal" : "Active Goals"}
+                Active
+              </SvgText>
+              <SvgText
+                x="0"
+                y="18"
+                textAnchor="middle"
+                fontSize="9"
+                fill="rgba(255,255,255,0.8)"
+                onPress={toggleBalanceView}
+              >
+                {activeDomains === 1 ? "Domain" : "Domains"}
               </SvgText>
             </G>
           </Svg>

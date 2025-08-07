@@ -63,8 +63,7 @@ const translations = {
     },
     projects: {
       title: "{{goalName}} Breakdown",
-      message1: "Now we can turn your goal into actionable steps. This breakdown system is what turns aspirations into results.",
-      message2: "Each level builds on the next - your goal becomes projects, and projects become specific tasks you can actually complete."
+      message1: "Now we can turn your goal into actionable steps. This breakdown system is what turns aspirations into results."
     },
     completion: {
       title: "All Set!",
@@ -163,8 +162,7 @@ const translations = {
     },
     projects: {
       title: "{{goalName}}の詳細",
-      message1: "今度は、あなたの目標を実行可能なステップに変換できます。この分解システムが願望を結果に変えるものです。",
-      message2: "各レベルは次のレベルの基盤となります—目標はプロジェクトになり、プロジェクトは実際に完了できる具体的なタスクになります。"
+      message1: "今度は、あなたの目標を実行可能なステップに変換できます。この分解システムが願望を結果に変えるものです。"
     },
     completion: {
       title: "すべて準備完了！",

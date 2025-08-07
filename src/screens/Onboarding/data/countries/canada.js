@@ -3,14 +3,14 @@
 export const DOMAIN_DEFINITIONS = [
   {
     name: "Career & Work",
-    icon: "briefcase-outline",
+    icon: "briefcase",
     color: "#3b82f6", // Blue
     description: "Professional advancement, workplace goals, career development",
     goals: [
       {
         name: "Master In-Demand Tech Skills",
         description: "Develop technology capabilities essential for Canada's digital transformation",
-        icon: "laptop-outline",
+        icon: "laptop",
         explanation: "305,000+ tech workers needed by 2024. AI and machine learning skills command 35% salary premiums with federal government investing $2.5 billion in digital skills development.",
         needsClarification: true,
         clarificationOptions: [
@@ -210,7 +210,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Achieve 3.5%+ Salary Increase",
         description: "Exceed national average salary growth to gain real purchasing power",
-        icon: "trending-up-outline",
+        icon: "trending-up",
         explanation: "2025 salary projections average 3.4-3.6% nationally with inflation at 2.4%. Tech professionals expect 4.3% increases, professional services 3.7%, finance 3.6%.",
         projects: [
           {
@@ -260,7 +260,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Secure Flexible Work Arrangement",
         description: "Negotiate hybrid or remote work options for optimal work-life integration",
-        icon: "home-outline",
+        icon: "home",
         explanation: "95% of young professionals say work-life balance is important. 29% of new job postings offer hybrid work and 12% fully remote positions.",
         projects: [
           {
@@ -311,14 +311,14 @@ export const DOMAIN_DEFINITIONS = [
   },
   {
     name: "Financial Security",
-    icon: "cash-outline",
+    icon: "cash",
     color: "#10b981", // Green
     description: "Building wealth, managing expenses, and achieving financial goals",
     goals: [
       {
         name: "Build $15,000 Emergency Fund",
         description: "Save four months of expenses using high-interest accounts and disciplined budgeting",
-        icon: "shield-outline",
+        icon: "shield",
         explanation: "60% of young Canadians live paycheck-to-paycheck. This target represents approximately four months of expenses for median earners - enough to weather job transitions.",
         projects: [
           {
@@ -368,7 +368,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Save $25,000 Down Payment for Home",
         description: "Build foundation for homeownership despite challenging housing market",
-        icon: "home-outline",
+        icon: "home",
         explanation: "72% of millennials want homeownership but 46% think it's unrealistic. This covers 5% minimum down payment on $500,000 home, making it achievable first milestone.",
         projects: [
           {
@@ -418,7 +418,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Pay Off $10,000 Student Debt",
         description: "Eliminate manageable portion of student loans for improved cash flow",
-        icon: "card-outline",
+        icon: "card",
         explanation: "Average debt load $28,000-32,000 takes 9.5 years to repay. Federal student loan interest at 2.45% affects 1.7 million Canadians, causes 17.6% of Ontario insolvencies.",
         projects: [
           {
@@ -469,14 +469,14 @@ export const DOMAIN_DEFINITIONS = [
   },
   {
     name: "Health & Wellness",
-    icon: "fitness-outline",
+    icon: "fitness",
     color: "#06b6d4", // Cyan
     description: "Physical fitness, mental health, nutrition, and overall wellbeing",
     goals: [
       {
         name: "Develop Sustainable Mental Health Practices",
         description: "Build comprehensive mental wellness support using Canadian healthcare resources",
-        icon: "happy-outline",
+        icon: "happy",
         explanation: "42% of employees rate wellbeing as fair or poor. 24% experience constant burnout. Federal government investing $500 million in youth mental health programs.",
         projects: [
           {
@@ -526,7 +526,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Build Functional Strength and Mobility",
         description: "Develop practical fitness that supports everyday activities and long-term health",
-        icon: "barbell-outline",
+        icon: "barbell",
         explanation: "76% of millennials consider themselves active but cardiorespiratory fitness declining nationally. Focus on functional movement over aesthetic goals.",
         projects: [
           {
@@ -576,7 +576,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Establish Preventive Health Optimization",
         description: "Build comprehensive approach to preventing chronic disease and optimizing wellness",
-        icon: "medical-outline",
+        icon: "medical",
         explanation: "84% of Gen Z and 79% of millennials actively tried improving health last year. New national pharmacare program covers contraceptives and diabetes medications.",
         projects: [
           {
@@ -627,14 +627,14 @@ export const DOMAIN_DEFINITIONS = [
   },
   {
     name: "Relationships",
-    icon: "people-outline",
+    icon: "people",
     color: "#ec4899", // Pink
     description: "Building and maintaining meaningful personal connections",
     goals: [
       {
         name: "Master Textual Chemistry",
         description: "Develop effective digital communication skills for modern dating success",
-        icon: "chatbubble-outline",
+        icon: "chatbubble",
         explanation: "67% of Canadian singles prefer texting as primary communication. 68% follow 'no wait' response protocols. 29% use AI for dating assistance, 80% use dating apps.",
         projects: [
           {
@@ -684,7 +684,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Build Budget-Friendly Romance",
         description: "Create meaningful romantic connections without financial strain",
-        icon: "heart-outline",
+        icon: "heart",
         explanation: "35% have passed on dates due to financial constraints, 24% plan to spend less on dating. Housing costs consume one-third of income, requiring creative approaches.",
         projects: [
           {
@@ -734,7 +734,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Beat the Loneliness Epidemic",
         description: "Build authentic community connections beyond social media",
-        icon: "people-outline",
+        icon: "people",
         explanation: "52% of Canadians feel lonely weekly. 77% of Gen Z and 72% of millennials experience regular loneliness. Remote work eliminated traditional workplace friendships.",
         projects: [
           {
@@ -785,14 +785,14 @@ export const DOMAIN_DEFINITIONS = [
   },
   {
     name: "Personal Growth",
-    icon: "school-outline",
+    icon: "school",
     color: "#8b5cf6", // Purple
     description: "Learning, self-improvement, and developing new capabilities",
     goals: [
       {
         name: "Master Digital Literacy and AI Tools",
         description: "Develop comprehensive technology skills for Canadian workplace competitiveness",
-        icon: "laptop-outline",
+        icon: "laptop",
         explanation: "51% of hiring managers identify AI skills as in-demand. 47% of Gen Z report AI increases work efficiency. 90% of Canadian employers experience skills gaps.",
         projects: [
           {
@@ -802,11 +802,13 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Identify AI tools and digital platforms most relevant to your industry and role",
+                summary: "Research AI tools",
                 explanation: "Understanding which AI tools provide value for your specific role ensures focused learning and immediate workplace application. Industry-specific tools create competitive advantage and demonstrate innovation.",
                 completed: false
               },
               {
                 name: "Complete online courses in AI applications and digital literacy for your profession",
+                summary: "AI courses",
                 explanation: "Structured courses provide systematic AI education and recognized credentials that employers value. Professional-focused AI training creates immediately applicable skills for career advancement.",
                 completed: false
               }
@@ -819,11 +821,13 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Implement AI tools and digital processes in your current role to demonstrate value",
+                summary: "Implement AI",
                 explanation: "Practical AI implementation proves your ability to create business value and positions you as an innovator. Demonstrating AI success in current role often leads to promotion opportunities.",
                 completed: false
               },
               {
                 name: "Share knowledge through presentations or training to build professional reputation",
+                summary: "Share knowledge",
                 explanation: "Knowledge sharing establishes you as an AI thought leader while building professional network. Teaching others demonstrates expertise and often leads to speaking opportunities and career advancement.",
                 completed: false
               }
@@ -834,7 +838,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Achieve French Language Proficiency",
         description: "Develop bilingual capability for unique Canadian career advantage",
-        icon: "language-outline",
+        icon: "language",
         explanation: "Bilingualism opens federal employment and salary bonuses. Government-funded Mauril app has 64% of users learning French. Remote work enables Quebec job market access.",
         needsClarification: true,
         clarificationOptions: [
@@ -850,11 +854,13 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Complete Mauril app basic levels and practice daily conversations for 30 minutes",
+                    summary: "Daily French",
                     explanation: "Mauril app provides free, government-funded French education with proven 64% success rate. Daily practice builds conversational confidence and practical communication skills for Canadian social integration.",
                     completed: false
                   },
                   {
                     name: "Join local Alliance Française or French conversation meetups for speaking practice",
+                    summary: "French meetups",
                     explanation: "Speaking practice with native speakers accelerates fluency development and builds confidence for real-world conversations. Alliance Française provides structured learning environment with cultural context.",
                     completed: false
                   }
@@ -867,11 +873,13 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Attend French cultural events or festivals in your Canadian city",
+                    summary: "French events",
                     explanation: "Cultural events provide immersive French practice in relaxed social settings while building appreciation for French-Canadian heritage. These experiences make language learning enjoyable and culturally meaningful.",
                     completed: false
                   },
                   {
                     name: "Have 5 basic conversations with French speakers in community settings",
+                    summary: "Practice conversations",
                     explanation: "Real conversations provide practical application of language skills and build confidence for everyday French communication. Community settings offer supportive environment for learning and cultural connection.",
                     completed: false
                   }
@@ -891,11 +899,13 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Complete advanced Mauril courses and prepare for federal language test (SLE)",
+                    summary: "SLE preparation",
                     explanation: "SLE certification opens federal employment opportunities with bilingual bonuses up to $800 annually. Advanced Mauril courses provide structured preparation for professional-level French competency.",
                     completed: false
                   },
                   {
                     name: "Practice business French through online courses focusing on Canadian workplace vocabulary",
+                    summary: "Business French",
                     explanation: "Business French skills enable professional communication in bilingual workplaces and Quebec job market. Canadian workplace vocabulary differs from international French and is essential for career success.",
                     completed: false
                   }
@@ -908,11 +918,13 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Research Quebec employers in your field and understand bilingual job requirements",
+                    summary: "Research Quebec jobs",
                     explanation: "Quebec's $380B economy offers significant career opportunities for bilingual professionals. Understanding specific job requirements helps target French learning toward career-relevant skills.",
                     completed: false
                   },
                   {
                     name: "Network with Quebec professionals and practice business French in professional contexts",
+                    summary: "Quebec networking",
                     explanation: "Professional networking in French builds career connections while providing authentic practice in business contexts. Quebec professionals can provide insights into career opportunities and cultural workplace norms.",
                     completed: false
                   }
@@ -932,10 +944,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Watch Quebec films/TV shows and read French-Canadian literature with language learning focus",
+                    summary: "Quebec media",
                     completed: false
                   },
                   {
                     name: "Learn Quebec French expressions and cultural nuances distinct from European French",
+                    summary: "Quebec expressions",
                     completed: false
                   }
                 ]
@@ -947,10 +961,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Join French-Canadian cultural organizations or volunteer with francophone community groups",
+                    summary: "Join groups",
                     completed: false
                   },
                   {
                     name: "Plan trip to Quebec and navigate cultural experiences primarily in French",
+                    summary: "Quebec trip",
                     completed: false
                   }
                 ]
@@ -966,10 +982,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Download Mauril app and establish daily French learning routine using government resources",
+                summary: "Start Mauril",
                 completed: false
               },
               {
                 name: "Set specific French proficiency goals and timeline based on career objectives",
+                summary: "Set goals",
                 completed: false
               }
             ]
@@ -981,10 +999,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Join French conversation groups or find francophone conversation partners",
+                summary: "Find partners",
                 completed: false
               },
               {
                 name: "Apply French skills in work context or seek opportunities requiring bilingual capability",
+                summary: "Apply skills",
                 completed: false
               }
             ]
@@ -994,7 +1014,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Obtain Professional Certifications",
         description: "Earn industry credentials that advance career in Canadian job market",
-        icon: "school-outline",
+        icon: "school",
         explanation: "49% of employers upskill employees, 43% provide certification funding. $351.2 million committed to youth employment programs creating 90,000 placements.",
         needsClarification: true,
         clarificationOptions: [
@@ -1010,10 +1030,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Research employer-funded tech certification programs (AWS, Microsoft, Google, Cisco)",
+                    summary: "Research certs",
                     completed: false
                   },
                   {
                     name: "Complete certification with employer support and negotiate salary increase based on new credentials",
+                    summary: "Get certified",
                     completed: false
                   }
                 ]
@@ -1025,10 +1047,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Build portfolio demonstrating certified skills through practical projects",
+                    summary: "Build portfolio",
                     completed: false
                   },
                   {
                     name: "Apply for tech roles or internal promotions leveraging new certifications",
+                    summary: "Apply roles",
                     completed: false
                   }
                 ]
@@ -1047,10 +1071,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Research healthcare certifications eligible for loan forgiveness in rural Canadian areas",
+                    summary: "Research healthcare",
                     completed: false
                   },
                   {
                     name: "Enroll in healthcare certification program and explore rural placement opportunities",
+                    summary: "Enroll program",
                     completed: false
                   }
                 ]
@@ -1062,10 +1088,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Complete healthcare certification requirements and licensing process",
+                    summary: "Get licensed",
                     completed: false
                   },
                   {
                     name: "Secure healthcare position in rural area and apply for loan forgiveness programs",
+                    summary: "Rural position",
                     completed: false
                   }
                 ]
@@ -1084,10 +1112,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Research green economy certifications (renewable energy, environmental management, sustainability)",
+                    summary: "Research green",
                     completed: false
                   },
                   {
                     name: "Complete certification in chosen green economy specialization",
+                    summary: "Green certified",
                     completed: false
                   }
                 ]
@@ -1099,10 +1129,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Build portfolio demonstrating green economy expertise through projects or volunteer work",
+                    summary: "Green portfolio",
                     completed: false
                   },
                   {
                     name: "Network with Canadian green economy employers and apply for sustainable sector roles",
+                    summary: "Green networking",
                     completed: false
                   }
                 ]
@@ -1118,10 +1150,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Research certification options in your field and identify those with funding or employer support",
+                summary: "Research options",
                 completed: false
               },
               {
                 name: "Enroll in certification program and create study timeline for completion",
+                summary: "Enroll program",
                 completed: false
               }
             ]
@@ -1133,10 +1167,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Complete certification requirements and add credentials to professional profiles",
+                summary: "Complete cert",
                 completed: false
               },
               {
                 name: "Leverage new certification for promotion, salary increase, or job advancement",
+                summary: "Leverage cert",
                 completed: false
               }
             ]
@@ -1147,14 +1183,14 @@ export const DOMAIN_DEFINITIONS = [
   },
   {
     name: "Recreation & Leisure",
-    icon: "bicycle-outline",
+    icon: "bicycle",
     color: "#f59e0b", // Orange
     description: "Hobbies, entertainment, travel, and lifestyle enjoyment",
     goals: [
       {
         name: "Explore Canada Through Epic Adventures",
         description: "Discover diverse Canadian regions through meaningful domestic travel",
-        icon: "airplane-outline",
+        icon: "airplane",
         explanation: "71% prefer domestic destinations. Travel spending reached $129.6 billion in 2024. 44% plan provincial exploration, 45% want interprovincial adventures.",
         projects: [
           {
@@ -1164,10 +1200,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Create Canadian travel bucket list with specific destinations and seasonal experiences",
+                summary: "Travel bucket list",
                 completed: false
               },
               {
                 name: "Plan and budget for quarterly domestic adventures exploring different provinces",
+                summary: "Plan adventures",
                 completed: false
               }
             ]
@@ -1179,10 +1217,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Learn outdoor skills relevant to Canadian adventures (camping, hiking, winter activities)",
+                summary: "Learn outdoor skills",
                 completed: false
               },
               {
                 name: "Complete first planned Canadian destination trip and document experience for future planning",
+                summary: "First trip",
                 completed: false
               }
             ]
@@ -1192,7 +1232,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Master Four-Season Outdoor Activities",
         description: "Develop skills for year-round enjoyment of Canada's distinct seasons",
-        icon: "snow-outline",
+        icon: "snow",
         explanation: "21 million+ ski visits in 2022/23 set new records. 2.8 million active skiers/snowboarders. Learning seasonal activities builds lifelong community connections.",
         needsClarification: true,
         clarificationOptions: [
@@ -1208,10 +1248,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Take skiing or snowboarding lessons at local Canadian resort or community center",
+                    summary: "Learn skiing",
                     completed: false
                   },
                   {
                     name: "Practice winter sport regularly and join Canadian winter sports community groups",
+                    summary: "Winter community",
                     completed: false
                   }
                 ]
@@ -1223,10 +1265,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Plan regular winter sport outings throughout cold season with friends or groups",
+                    summary: "Winter outings",
                     completed: false
                   },
                   {
                     name: "Explore different Canadian winter destinations and ski areas for variety",
+                    summary: "Explore destinations",
                     completed: false
                   }
                 ]
@@ -1245,10 +1289,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Learn one new summer outdoor skill (hiking, camping, cycling, kayaking) through courses or groups",
+                    summary: "Summer skill",
                     completed: false
                   },
                   {
                     name: "Plan and execute summer adventure trips to Canadian national parks or wilderness areas",
+                    summary: "National parks",
                     completed: false
                   }
                 ]
@@ -1260,10 +1306,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Join Canadian outdoor clubs or adventure groups for regular summer activities",
+                    summary: "Outdoor clubs",
                     completed: false
                   },
                   {
                     name: "Organize group outdoor adventures and build network of outdoor-minded Canadians",
+                    summary: "Organize adventures",
                     completed: false
                   }
                 ]
@@ -1282,10 +1330,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Identify and learn one activity for each Canadian season (winter, spring, summer, fall)",
+                    summary: "Four seasons",
                     completed: false
                   },
                   {
                     name: "Create seasonal activity calendar maximizing year-round Canadian outdoor opportunities",
+                    summary: "Activity calendar",
                     completed: false
                   }
                 ]
@@ -1297,10 +1347,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Document seasonal activity experiences and share Canadian outdoor lifestyle with others",
+                    summary: "Document experiences",
                     completed: false
                   },
                   {
                     name: "Mentor others in developing year-round Canadian outdoor skills and appreciation",
+                    summary: "Mentor others",
                     completed: false
                   }
                 ]
@@ -1316,10 +1368,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Choose one seasonal activity to learn this year and find instruction or community groups",
+                summary: "Choose activity",
                 completed: false
               },
               {
                 name: "Practice chosen activity regularly and connect with others who share the interest",
+                summary: "Practice activity",
                 completed: false
               }
             ]
@@ -1331,10 +1385,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Plan seasonal activities throughout the year to maintain active outdoor engagement",
+                summary: "Plan seasons",
                 completed: false
               },
               {
                 name: "Join outdoor clubs or groups that participate in your chosen seasonal activities",
+                summary: "Join clubs",
                 completed: false
               }
             ]
@@ -1344,7 +1400,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Create Through Hobby Renaissance",
         description: "Develop fulfilling creative hobbies that connect cooking, creating, and community",
-        icon: "palette-outline",
+        icon: "color-palette",
         explanation: "Cooking and reading rank as top Canadian hobbies, with 80% engaging in reading. Culinary exploration celebrates Canada's multicultural cities.",
         projects: [
           {
@@ -1354,10 +1410,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Choose creative hobby (cooking ethnic cuisines, writing, art, music) and set up practice space",
+                summary: "Choose hobby",
                 completed: false
               },
               {
                 name: "Practice chosen creative skill regularly and track progress toward competency goals",
+                summary: "Practice creativity",
                 completed: false
               }
             ]
@@ -1369,10 +1427,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Join community groups related to your creative hobby (book clubs, cooking classes, maker spaces)",
+                summary: "Creative groups",
                 completed: false
               },
               {
                 name: "Share your creative work with others through hosting, teaching, or community participation",
+                summary: "Share creativity",
                 completed: false
               }
             ]
@@ -1383,14 +1443,14 @@ export const DOMAIN_DEFINITIONS = [
   },
   {
     name: "Purpose & Meaning",
-    icon: "compass-outline",
+    icon: "compass",
     color: "#ef4444", // Red
     description: "Finding fulfillment, contributing to causes, and living with intention",
     goals: [
       {
         name: "Lead Climate Action Initiative",
         description: "Channel climate anxiety into concrete local environmental impact",
-        icon: "leaf-outline",
+        icon: "leaf",
         explanation: "62% believe Canada should lead on climate action. 78% report climate change impacts mental health. 58% increasing sustainable transport, 64% cutting single-use plastics.",
         projects: [
           {
@@ -1400,10 +1460,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Join or start local environmental group focused on specific climate action in your community",
+                summary: "Join climate group",
                 completed: false
               },
               {
                 name: "Lead specific climate initiative (community garden, cleanup, advocacy) with measurable goals",
+                summary: "Lead initiative",
                 completed: false
               }
             ]
@@ -1415,10 +1477,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Measure and document environmental impact of your climate action initiatives",
+                summary: "Measure impact",
                 completed: false
               },
               {
                 name: "Engage others in climate action through education, events, or social media advocacy",
+                summary: "Engage others",
                 completed: false
               }
             ]
@@ -1428,7 +1492,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Build Purpose-Driven Side Business",
         description: "Create meaningful income stream that aligns with personal values",
-        icon: "storefront-outline",
+        icon: "storefront",
         explanation: "28% have side hustles (up from 13% in 2022). 66% of millennials/Gen Z plan to start one. 89-92% consider purpose essential, 49% want to 'be their own boss'.",
         needsClarification: true,
         clarificationOptions: [
@@ -1444,10 +1508,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Identify social problem in Canadian community and develop business solution",
+                    summary: "Identify problem",
                     completed: false
                   },
                   {
                     name: "Launch social impact business and measure both financial and social outcomes",
+                    summary: "Launch business",
                     completed: false
                   }
                 ]
@@ -1459,10 +1525,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Partner with Canadian community organizations to amplify social impact",
+                    summary: "Partner organizations",
                     completed: false
                   },
                   {
                     name: "Document and share social impact results to attract mission-aligned customers",
+                    summary: "Document impact",
                     completed: false
                   }
                 ]
@@ -1481,10 +1549,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Develop business addressing environmental challenge (waste reduction, energy efficiency, sustainable products)",
+                    summary: "Develop green business",
                     completed: false
                   },
                   {
                     name: "Launch green business with clear environmental impact measurement",
+                    summary: "Launch green",
                     completed: false
                   }
                 ]
@@ -1496,10 +1566,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Connect with Canadian green economy networks and sustainable business communities",
+                    summary: "Connect networks",
                     completed: false
                   },
                   {
                     name: "Scale business operations while maintaining environmental commitment and impact",
+                    summary: "Scale sustainably",
                     completed: false
                   }
                 ]
@@ -1518,10 +1590,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Develop creative service offering (design, writing, marketing) focused on supporting meaningful causes",
+                    summary: "Creative services",
                     completed: false
                   },
                   {
                     name: "Build client base of Canadian nonprofits, social enterprises, and purpose-driven businesses",
+                    summary: "Build clients",
                     completed: false
                   }
                 ]
@@ -1533,10 +1607,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Create portfolio showcasing creative work that generated real impact for client causes",
+                    summary: "Impact portfolio",
                     completed: false
                   },
                   {
                     name: "Expand services to reach more purpose-driven organizations while maintaining quality and mission focus",
+                    summary: "Expand services",
                     completed: false
                   }
                 ]
@@ -1552,10 +1628,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Identify business opportunity that aligns with your values and addresses real need",
+                summary: "Identify opportunity",
                 completed: false
               },
               {
                 name: "Create business plan and launch with focus on both profitability and purpose",
+                summary: "Launch purposeful",
                 completed: false
               }
             ]
@@ -1567,10 +1645,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Complete first 10 sales or projects to establish reputation and sustainable operations",
+                summary: "First 10 sales",
                 completed: false
               },
               {
                 name: "Optimize business model to balance purpose-driven impact with financial sustainability",
+                summary: "Optimize model",
                 completed: false
               }
             ]
@@ -1580,7 +1660,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Use Skills for Community Volunteering",
         description: "Apply professional expertise to meaningful causes through strategic volunteering",
-        icon: "heart-outline",
+        icon: "heart",
         explanation: "Canadian millennials volunteer more hours for environmental causes than older adults. 93% motivated by community contribution, 78% want to use professional skills.",
         projects: [
           {
@@ -1590,10 +1670,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Research nonprofit organizations that could benefit from your professional skills",
+                summary: "Research nonprofits",
                 completed: false
               },
               {
                 name: "Commit to regular volunteer role that utilizes your expertise (board member, mentor, advisor)",
+                summary: "Volunteer role",
                 completed: false
               }
             ]
@@ -1605,10 +1687,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Track impact of your volunteer work and measure community benefit created",
+                summary: "Track impact",
                 completed: false
               },
               {
                 name: "Build relationships with other volunteers and community leaders who share your values",
+                summary: "Build relationships",
                 completed: false
               }
             ]
@@ -1619,14 +1703,14 @@ export const DOMAIN_DEFINITIONS = [
   },
   {
     name: "Environment & Organization",
-    icon: "home-outline",
+    icon: "home",
     color: "#6366f1", // Indigo
     description: "Creating organized, comfortable living and working spaces",
     goals: [
       {
         name: "Create Affordable Home Office Space",
         description: "Design productive workspace that supports remote work and claims tax benefits",
-        icon: "laptop-outline",
+        icon: "laptop",
         explanation: "50% of federal office space sits underused, hybrid work standard. CRA's $500 home office deduction recognizes necessity. Proper workspace impacts mental health and performance.",
         projects: [
           {
@@ -1636,10 +1720,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Set up dedicated home office space and ensure it meets CRA requirements for tax deduction",
+                summary: "Setup office",
                 completed: false
               },
               {
                 name: "Invest in ergonomic furniture and technology that supports long-term productivity and health",
+                summary: "Ergonomic setup",
                 completed: false
               }
             ]
@@ -1651,10 +1737,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Create clear boundaries between work and living spaces to maintain work-life balance",
+                summary: "Work boundaries",
                 completed: false
               },
               {
                 name: "Organize storage and systems that support both professional and personal activities",
+                summary: "Organize systems",
                 completed: false
               }
             ]
@@ -1664,7 +1752,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Navigate Path to Homeownership",
         description: "Develop strategic approach to eventual homeownership despite affordability challenges",
-        icon: "home-outline",
+        icon: "home",
         explanation: "Homeownership rates for 25-29 dropped from 44% to 36.5%. 73% highly concerned about affordability but new 30-year mortgages and enhanced buyer programs available.",
         projects: [
           {
@@ -1674,10 +1762,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Research and maximize First Home Savings Account, Home Buyers' Plan, and regional programs",
+                summary: "Research programs",
                 completed: false
               },
               {
                 name: "Evaluate different markets and consider 'Goldilocks zones' - areas with optimal affordability-opportunity balance",
+                summary: "Evaluate markets",
                 completed: false
               }
             ]
@@ -1689,10 +1779,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Research co-ownership, house hacking, and other alternative paths to homeownership",
+                summary: "Alternative paths",
                 completed: false
               },
               {
                 name: "Build credit score and financial profile to qualify for best mortgage rates when ready",
+                summary: "Build credit",
                 completed: false
               }
             ]
@@ -1702,7 +1794,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Build Eco-Conscious Living Space",
         description: "Create sustainable living environment that reflects environmental values",
-        icon: "leaf-outline",
+        icon: "leaf",
         explanation: "80% pay 9.7% more for sustainable goods, 85% experience climate impacts. Over 90% concerned about packaging waste, 46% actively buying sustainable products.",
         projects: [
           {
@@ -1712,10 +1804,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Implement zero-waste practices and sustainable purchasing decisions in your living space",
+                summary: "Zero waste",
                 completed: false
               },
               {
                 name: "Choose furnishings and products from companies whose environmental practices align with your values",
+                summary: "Sustainable products",
                 completed: false
               }
             ]
@@ -1727,10 +1821,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Audit energy usage and implement efficiency improvements (LED lighting, smart thermostat, appliances)",
+                summary: "Energy audit",
                 completed: false
               },
               {
                 name: "Set up composting, recycling, and waste reduction systems appropriate for your living situation",
+                summary: "Waste systems",
                 completed: false
               }
             ]

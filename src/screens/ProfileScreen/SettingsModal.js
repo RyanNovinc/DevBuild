@@ -18,6 +18,7 @@ import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { useAuth } from '../../context/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import responsive from '../../utils/responsive';
+import ReferralCodeInputModal from '../../components/ReferralCodeInputModal';
 
 const { width } = Dimensions.get('window');
 
@@ -35,7 +36,8 @@ const SettingsModal = ({
   onLogout,
   updateAppSetting, // Added this prop to receive the function from parent
   isEdgeSwipeActive,
-  edgeSwipeX
+  edgeSwipeX,
+  onScreenStateUpdate // Add this prop to update parent state
 }) => {
   const { logout } = useAuth() || {};
   const insets = useSafeAreaInsets();
@@ -48,6 +50,9 @@ const SettingsModal = ({
   // Track actual modal visibility state for closing animations
   const [modalVisible, setModalVisible] = useState(visible);
   const [isDismissing, setIsDismissing] = useState(false);
+  
+  // Referral code input modal state
+  const [referralModalVisible, setReferralModalVisible] = useState(false);
   
   // Function to trigger shake animation
   const triggerShake = () => {
@@ -364,6 +369,54 @@ const SettingsModal = ({
                   name="chevron-forward" 
                   size={20} 
                   color="#FFFFFF" 
+                />
+              </TouchableOpacity>
+            )}
+
+            {/* Received a referral code? Button - For Free Users Only */}
+            {screenState.userSubscriptionStatus === 'free' && !screenState.hasEnteredReferralCode && (
+              <TouchableOpacity 
+                style={[styles.settingButton, { 
+                  backgroundColor: theme.card,
+                  borderColor: '#4CAF50',
+                  borderWidth: 1,
+                  marginBottom: 16
+                }]}
+                onPress={() => {
+                  setReferralModalVisible(true);
+                }}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Received a referral code?"
+                accessibilityHint="Enter a referral code to get 50% off your first AI plan"
+              >
+                <View style={styles.settingButtonContent}>
+                  <View style={[styles.settingIconContainer, { 
+                    backgroundColor: '#4CAF5020' 
+                  }]}>
+                    <Ionicons name="ticket-outline" size={20} color="#4CAF50" />
+                  </View>
+                  <View style={styles.settingTextContainer}>
+                    <Text 
+                      style={[styles.settingButtonText, { color: theme.text }]}
+                      maxFontSizeMultiplier={1.3}
+                      numberOfLines={1}
+                    >
+                      Received a referral code?
+                    </Text>
+                    <Text 
+                      style={[styles.settingButtonSubtext, { color: theme.textSecondary }]}
+                      maxFontSizeMultiplier={1.5}
+                      numberOfLines={1}
+                    >
+                      Get 50% off your first AI plan
+                    </Text>
+                  </View>
+                </View>
+                <Ionicons 
+                  name="chevron-forward" 
+                  size={20} 
+                  color={theme.textSecondary} 
                 />
               </TouchableOpacity>
             )}
@@ -869,6 +922,20 @@ const SettingsModal = ({
           </ScrollView>
         </Animated.View>
         </PanGestureHandler>
+        
+        {/* Referral Code Input Modal */}
+        <ReferralCodeInputModal
+          visible={referralModalVisible}
+          onClose={() => setReferralModalVisible(false)}
+          theme={theme}
+          onSuccess={(referralCode) => {
+            // Update parent state to hide the referral button
+            if (onScreenStateUpdate) {
+              onScreenStateUpdate({ hasEnteredReferralCode: true });
+            }
+            setReferralModalVisible(false);
+          }}
+        />
       </View>
     </Modal>
   );

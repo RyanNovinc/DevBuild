@@ -123,7 +123,9 @@ const DomainSelectionPage = ({
   onDomainPreview, 
   onResetPreview,
   onBack,
-  isNavigating = false
+  isNavigating = false,
+  segmentsRevealed = false,
+  onSegmentsRevealed
 }) => {
   // State
   const [messageStep, setMessageStep] = useState(1); // 1: first message, 2: second message
@@ -141,6 +143,15 @@ const DomainSelectionPage = ({
   const [currentMessageCategory, setCurrentMessageCategory] = useState(0);
   const [showMessage, setShowMessage] = useState(false);
   const [messageText, setMessageText] = useState('');
+  
+  // Progressive reveal state
+  const [revealInProgress, setRevealInProgress] = useState(false);
+  const [revealedSegments, setRevealedSegments] = useState([]);
+  const [textRevealed, setTextRevealed] = useState(false);
+  
+  // Old guided interaction state - keeping for compatibility but unused
+  const [showGuidedInteraction, setShowGuidedInteraction] = useState(false);
+  const [hasSeenGuidance, setHasSeenGuidance] = useState(false);
   
   // Celebration state
   const [showCelebration, setShowCelebration] = useState(false);
@@ -163,6 +174,11 @@ const DomainSelectionPage = ({
   // Center button message animations
   const centerMessageOpacity = useRef(new Animated.Value(0)).current;
   const centerMessageY = useRef(new Animated.Value(20)).current;
+
+  // Guided interaction animations
+  const guidedHandOpacity = useRef(new Animated.Value(0)).current;
+  const guidedHandScale = useRef(new Animated.Value(0.8)).current;
+  const guidedTooltipOpacity = useRef(new Animated.Value(0)).current;
 
   // Icon animations
   const iconPulse = useRef(new Animated.Value(1)).current;
@@ -245,9 +261,68 @@ const DomainSelectionPage = ({
           tension: 40,
           useNativeDriver: true
         })
-      ]).start();
+      ]).start(() => {
+        // Wheel is now ready for interaction - segments will reveal on center button click
+      });
     }
   }, [wheelVisible]);
+  
+  // Progressive reveal of domain segments
+  const revealSegmentsSequentially = () => {
+    if (revealInProgress || segmentsRevealed) return;
+    
+    setRevealInProgress(true);
+    setRevealedSegments([]);
+    
+    // Show center button message and celebration immediately when reveal starts
+    cycleToNextMessage();
+    setShowMessage(true);
+    centerMessageY.setValue(20);
+    Animated.parallel([
+      Animated.timing(centerMessageOpacity, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true
+      }),
+      Animated.timing(centerMessageY, {
+        toValue: 0,
+        duration: 400,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true
+      })
+    ]).start();
+    
+    // Show celebration
+    setCelebrationType('confetti');
+    setShowCelebration(true);
+    
+    // Celebration haptic feedback
+    try {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (error) {
+      console.log('Haptics not available:', error);
+    }
+    
+    // Reveal segments one by one with staggered timing
+    domains.forEach((domain, index) => {
+      setTimeout(() => {
+        setRevealedSegments(prev => [...prev, index]);
+        
+        // After last segment is revealed
+        if (index === domains.length - 1) {
+          setTimeout(() => {
+            onSegmentsRevealed(true);
+            setRevealInProgress(false);
+            
+            // Trigger text reveal after a short delay
+            setTimeout(() => {
+              setTextRevealed(true);
+            }, 300); // Small delay before text appears
+          }, 200); // Small delay after last segment
+        }
+      }, index * 150); // 150ms delay between each segment
+    });
+  };
   
   // Show info card when domain is selected with enhanced animations
   useEffect(() => {
@@ -334,6 +409,8 @@ const DomainSelectionPage = ({
   
   // Handle domain selection
   const handleDomainSelect = (domain) => {
+    // Don't allow domain selection until segments are revealed
+    if (!segmentsRevealed) return;
     // Add a tactile feedback animation on the wheel when selecting
     Animated.sequence([
       // Quick pulse inward
@@ -402,24 +479,7 @@ const DomainSelectionPage = ({
         onDomainPreview(domain);
       }
       
-      // Hide the center button message when selecting a domain
-      if (showMessage) {
-        Animated.parallel([
-          Animated.timing(centerMessageOpacity, {
-            toValue: 0,
-            duration: 200,
-            useNativeDriver: true
-          }),
-          Animated.timing(centerMessageY, {
-            toValue: 30,
-            duration: 200,
-            easing: Easing.ease,
-            useNativeDriver: true
-          })
-        ]).start(() => {
-          setShowMessage(false);
-        });
-      }
+      // Message and celebration already triggered on first center tap, so no need here
       
       // Apply different haptic patterns based on state
       try {
@@ -460,6 +520,30 @@ const DomainSelectionPage = ({
   
   // Handle center button press
   const handleCenterButtonPress = () => {
+    // Don't allow interaction during animations
+    if (revealInProgress) return;
+
+    // If segments haven't been revealed yet, start the progressive reveal
+    if (!segmentsRevealed) {
+      // Increment click count for the initial reveal
+      setCenterButtonClicks(1);
+      
+      // Show confetti on first click
+      setCelebrationIndex(0);
+      setCelebrationType(CELEBRATION_TYPES[0]); // Confetti
+      setShowCelebration(true);
+      
+      // Apply celebration haptic feedback
+      try {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } catch (error) {
+        console.log('Haptics not available:', error);
+      }
+      
+      revealSegmentsSequentially();
+      return;
+    }
+    
     // Always reset any domain selection
     if (selectedDomain) {
       // Apply deselection haptic feedback
@@ -498,40 +582,42 @@ const DomainSelectionPage = ({
       onResetPreview();
     }
     
-    // Increment click count
-    const newClickCount = centerButtonClicks + 1;
-    setCenterButtonClicks(newClickCount);
-    
-    // Determine if we should show celebration
-    // Rules: 
-    // 1. ALWAYS on the first click
-    // 2. 40% chance on subsequent clicks
-    const isFirstClick = newClickCount === 1;
-    const shouldShowCelebration = isFirstClick || Math.random() < 0.4;
-    
-    if (shouldShowCelebration) {
-      // Cycle through celebration types in order
-      const nextCelebrationIndex = isFirstClick ? 0 : (celebrationIndex + 1) % CELEBRATION_TYPES.length;
-      setCelebrationIndex(nextCelebrationIndex);
-      setCelebrationType(CELEBRATION_TYPES[nextCelebrationIndex]);
+    // Only show celebration if segments are already revealed (subsequent center button clicks)
+    if (segmentsRevealed) {
+      // Increment click count
+      const newClickCount = centerButtonClicks + 1;
+      setCenterButtonClicks(newClickCount);
       
-      // Apply celebration haptic feedback
-      try {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } catch (error) {
-        console.log('Haptics not available:', error);
-      }
+      // Determine if we should show celebration
+      // Rules: 
+      // 1. First click (when segments not revealed) already showed confetti 
+      // 2. 40% chance on all subsequent clicks - cycles through remaining animations
+      const shouldShowCelebration = Math.random() < 0.4;
       
-      // Show celebration
-      setShowCelebration(true);
-    } else {
-      // Regular click haptic feedback
-      try {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      } catch (error) {
-        console.log('Haptics not available:', error);
+        if (shouldShowCelebration) {
+          // Cycle through animations (confetti was already used on first click)
+          const nextCelebrationIndex = (celebrationIndex + 1) % CELEBRATION_TYPES.length;
+          setCelebrationIndex(nextCelebrationIndex);
+          setCelebrationType(CELEBRATION_TYPES[nextCelebrationIndex]);
+          
+          // Apply celebration haptic feedback
+          try {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          } catch (error) {
+            console.log('Haptics not available:', error);
+          }
+          
+          // Show celebration
+          setShowCelebration(true);
+        } else {
+          // Regular click haptic feedback
+          try {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          } catch (error) {
+            console.log('Haptics not available:', error);
+          }
+        }
       }
-    }
     
     // Update message
     updateCenterButtonMessage();
@@ -749,7 +835,7 @@ const DomainSelectionPage = ({
       return;
     }
     
-    // If first message is complete, proceed to second message
+    // If first message is complete, skip to wheel directly
     if (messageComplete && messageStep === 1) {
       // Hide tap prompt
       Animated.timing(tapPromptOpacity, {
@@ -758,44 +844,16 @@ const DomainSelectionPage = ({
         useNativeDriver: true
       }).start();
       
-      // Transition to second message
+      // Skip second message - go straight to wheel
       Animated.timing(messageOpacity, {
         toValue: 0,
         duration: 300,
         useNativeDriver: true
       }).start(() => {
-        setMessageStep(2);
-        setMessageComplete(false);
-        setShowTapToContinue(false);
-        
-        // Fade in the second message
-        messageOpacity.setValue(0);
-        Animated.timing(messageOpacity, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true
-        }).start();
-      });
-    }
-    // If second message is complete, show wheel
-    else if (messageComplete && messageStep === 2) {
-      // Hide tap prompt
-      Animated.timing(tapPromptOpacity, {
-        toValue: 0,
-        duration: 150,
-        useNativeDriver: true
-      }).start();
-      
-      // Hide message
-      Animated.timing(messageOpacity, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true
-      }).start(() => {
-        // Show wheel
         setWheelVisible(true);
       });
     }
+    // Removed second message handling - we skip directly to wheel
   };
   
   // Render loading indicator while language is loading
@@ -894,6 +952,9 @@ const DomainSelectionPage = ({
               selectedDomain={selectedDomain}
               onCenterButtonPress={handleCenterButtonPress}
               language={appLanguage}
+              segmentsRevealed={segmentsRevealed}
+              revealedSegments={revealedSegments}
+              textRevealed={textRevealed}
             />
             
             {/* Center button message */}
@@ -920,6 +981,7 @@ const DomainSelectionPage = ({
               colors={allDomainColors}
               onComplete={() => setShowCelebration(false)}
             />
+            
           </Animated.View>
         )}
       </ScrollView>
@@ -1082,7 +1144,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    bottom: '30%',
+    bottom: '20%',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 9, // Lower than the touchable but visible
@@ -1194,7 +1256,62 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     lineHeight: 20,
     textAlign: 'center',
-  }
+  },
+  // Guided Interaction Styles
+  guidedTooltip: {
+    position: 'absolute',
+    top: -120, // Move higher to avoid being cut off
+    left: '50%',
+    transform: [{ translateX: -75 }], // Half of tooltip width
+    backgroundColor: 'rgba(59, 130, 246, 0.95)', // Use blue theme color
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 25,
+    zIndex: 15,
+    minWidth: 150,
+    alignItems: 'center',
+    shadowColor: '#3b82f6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  guidedTooltipText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  guidedTooltipArrow: {
+    position: 'absolute',
+    bottom: -8,
+    left: '50%',
+    transform: [{ translateX: -8 }],
+    width: 0,
+    height: 0,
+    borderLeftWidth: 8,
+    borderRightWidth: 8,
+    borderTopWidth: 8,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: 'rgba(59, 130, 246, 0.95)',
+  },
+  guidedHand: {
+    position: 'absolute',
+    top: 60, // Position closer to center button
+    left: '50%',
+    transform: [{ translateX: -16 }], // Center the emoji properly
+    zIndex: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  guidedHandEmoji: {
+    fontSize: 32,
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+  },
 });
 
 export default DomainSelectionPage;

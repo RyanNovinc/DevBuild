@@ -2756,6 +2756,14 @@ export const AppProvider = ({ children }) => {
   // Calendar events management
   const loadCalendarEvents = async (dateRange = null) => {
     try {
+      // Check permission status before making calendar calls
+      const permissionStatus = await getCalendarPermissionStatus();
+      if (permissionStatus.status !== 'granted') {
+        console.log('Calendar permission not granted, skipping calendar events load');
+        setCalendarEvents([]);
+        return { success: false, reason: 'Calendar permission not granted' };
+      }
+
       let events;
       
       if (dateRange) {
@@ -2788,6 +2796,13 @@ export const AppProvider = ({ children }) => {
   
   const getCalendarEventsForDate = async (date) => {
     try {
+      // Check permission status before making calendar calls
+      const permissionStatus = await getCalendarPermissionStatus();
+      if (permissionStatus.status !== 'granted') {
+        console.log('Calendar permission not granted, returning empty events array');
+        return [];
+      }
+
       const events = await CalendarService.getEventsForDate(date);
       return events;
     } catch (error) {
@@ -2853,6 +2868,13 @@ export const AppProvider = ({ children }) => {
   // Get available calendars
   const getAvailableCalendars = async () => {
     try {
+      // Check permission status before making calendar calls
+      const permissionStatus = await getCalendarPermissionStatus();
+      if (permissionStatus.status !== 'granted') {
+        console.log('Calendar permission not granted, returning empty calendars array');
+        return [];
+      }
+
       return await CalendarService.getAvailableCalendars();
     } catch (error) {
       console.error('Error getting available calendars:', error);

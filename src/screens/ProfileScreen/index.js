@@ -35,7 +35,7 @@ import {
   ensureAccessibleTouchTarget
 } from '../../utils/responsive';
 import { Ionicons } from '@expo/vector-icons';
-import { PanGestureHandler, State } from 'react-native-gesture-handler';
+import FeatureExplorerTracker from '../../services/FeatureExplorerTracker';
 
 // Import profile screen components
 import ProfileHeader from './ProfileHeader';
@@ -49,6 +49,29 @@ import ThemeColorPickerModal from './ThemeColorPickerModal';
 import { STANDARD_DOMAINS } from './constants';
 
 const { width: screenWidth } = Dimensions.get('window');
+
+// Helper function to check for pending onboarding achievement
+const checkPendingOnboardingAchievement = async () => {
+  try {
+    const pendingAchievement = await AsyncStorage.getItem('pendingOnboardingAchievement');
+    if (pendingAchievement === 'true') {
+      // Clear the flag first
+      await AsyncStorage.removeItem('pendingOnboardingAchievement');
+      
+      // Trigger the onboarding completion achievement after a short delay to ensure UI is ready
+      setTimeout(async () => {
+        try {
+          await FeatureExplorerTracker.trackOnboardingCompletion();
+          profileLog('🏆 Onboarding completion achievement triggered after profile load');
+        } catch (error) {
+          console.error('Error triggering onboarding completion achievement:', error);
+        }
+      }, 1000); // 1 second delay to ensure profile screen is fully rendered
+    }
+  } catch (error) {
+    console.error('Error checking pending onboarding achievement:', error);
+  }
+};
 
 const ProfileScreen = ({ navigation, route }) => {
   // Add initialization guard to prevent multiple runs
@@ -122,6 +145,7 @@ const ProfileScreen = ({ navigation, route }) => {
     useColoredTheme: isColoredTheme,
     showAIButton: true,
     userSubscriptionStatus: 'free',
+    hasEnteredReferralCode: false,
     profile: {
       name: user?.displayName || '',
       email: user?.email || '',
@@ -532,10 +556,11 @@ const ProfileScreen = ({ navigation, route }) => {
           }
           
           // Load other data in parallel
-          const [subscriptionStatus, lifeDirection, aiButtonValue] = await Promise.all([
+          const [subscriptionStatus, lifeDirection, aiButtonValue, hasEnteredReferralCode] = await Promise.all([
             AsyncStorage.getItem('subscriptionStatus').catch(() => 'free'),
             loadLifeDirection(),
-            AsyncStorage.getItem('showAIButton').catch(() => null)
+            AsyncStorage.getItem('showAIButton').catch(() => null),
+            AsyncStorage.getItem('hasEnteredReferralCode').then(value => value === 'true').catch(() => false)
           ]);
           
           // Process referral data if needed
@@ -564,6 +589,7 @@ const ProfileScreen = ({ navigation, route }) => {
               ...prev,
               profile: newProfile,
               userSubscriptionStatus: subscriptionStatus || 'free',
+              hasEnteredReferralCode: hasEnteredReferralCode,
               lifeDirection: lifeDirection || '',
               showAIButton: aiButtonValue === null ? true : aiButtonValue === 'true',
               referralCode,
@@ -964,6 +990,9 @@ const ProfileScreen = ({ navigation, route }) => {
               totalActiveTasks: activeTasksCount
             }));
             
+            // Check for pending onboarding achievement after profile loads
+            await checkPendingOnboardingAchievement();
+            
             loadComplete = true;
           }
         } catch (error) {
@@ -1185,45 +1214,6 @@ const ProfileScreen = ({ navigation, route }) => {
     });
   };
   
-  // Edge swipe with real-time finger tracking
-  const edgeSwipeX = useRef(new Animated.Value(0)).current;
-  const [isEdgeSwipeActive, setIsEdgeSwipeActive] = useState(false);
-
-  const edgeGestureEvent = Animated.event(
-    [{ nativeEvent: { translationX: edgeSwipeX } }],
-    { useNativeDriver: true }
-  );
-
-  const handleEdgeSwipeState = (event) => {
-    const { state, translationX, velocityX } = event.nativeEvent;
-
-    if (state === State.BEGAN) {
-      // Only start if modal isn't already open
-      if (!screenState.showSettings) {
-        edgeSwipeX.setValue(0); // Reset animation value
-        setIsEdgeSwipeActive(true);
-        setScreenState(prev => ({ ...prev, showSettings: true }));
-      }
-    } else if (state === State.ACTIVE && isEdgeSwipeActive) {
-      // Update the modal position in real-time as user drags
-      // The modal should handle this translationX value to position itself
-    } else if (state === State.END && isEdgeSwipeActive) {
-      const shouldStayOpen = Math.abs(translationX) > 80 || Math.abs(velocityX) > 800;
-      
-      if (shouldStayOpen) {
-        // Transition to normal modal state - let the modal handle the smooth transition
-        setIsEdgeSwipeActive(false);
-      } else {
-        // Close the modal
-        setScreenState(prev => ({ ...prev, showSettings: false }));
-        setIsEdgeSwipeActive(false);
-      }
-    } else if ((state === State.CANCELLED || state === State.FAILED) && isEdgeSwipeActive) {
-      // Cancel - close the modal
-      setScreenState(prev => ({ ...prev, showSettings: false }));
-      setIsEdgeSwipeActive(false);
-    }
-  };
   
   const handleDomainPress = (domain) => {
     setScreenState(prev => ({
@@ -1243,6 +1233,11 @@ const ProfileScreen = ({ navigation, route }) => {
   
   const closeDomainColorPicker = () => {
     setScreenState(prev => ({ ...prev, showDomainColorPicker: false }));
+  };
+  
+  // Handler to update screen state from child components
+  const handleScreenStateUpdate = (updates) => {
+    setScreenState(prev => ({ ...prev, ...updates }));
   };
   
   // Calculate total domains once
@@ -1305,17 +1300,6 @@ const ProfileScreen = ({ navigation, route }) => {
         translucent={true}
       />
       
-      {/* Edge swipe detection */}
-      <PanGestureHandler
-        onGestureEvent={edgeGestureEvent}
-        onHandlerStateChange={handleEdgeSwipeState}
-        activeOffsetX={[-2, 1000]} // More sensitive - trigger after just 2px leftward movement
-        activeOffsetY={[-50, 50]} // Allow some vertical movement
-        shouldCancelWhenOutside={false}
-        avgTouches={false}
-      >
-        <View style={styles.edgeSwipeArea} />
-      </PanGestureHandler>
       
       <ScrollView 
         ref={scrollViewRef}
@@ -1396,8 +1380,7 @@ const ProfileScreen = ({ navigation, route }) => {
         navigation={navigation}
         onLogout={toggleSettings}
         updateAppSetting={updateAppSetting}
-        isEdgeSwipeActive={isEdgeSwipeActive}
-        edgeSwipeX={edgeSwipeX}
+        onScreenStateUpdate={handleScreenStateUpdate}
       />
       
       {/* AI Explanation Modal */}
@@ -1437,15 +1420,6 @@ const ProfileScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-  },
-  edgeSwipeArea: {
-    position: 'absolute',
-    top: 250,
-    right: 0,
-    width: 20,
-    height: 300,
-    zIndex: 1000,
-    backgroundColor: 'transparent',
   },
   loadingContainer: {
     flex: 1,

@@ -469,6 +469,54 @@ const GoalsTabNavigator = ({ navigation, route }) => {
     ],
   });
   
+  // Full-screen state for Overview tab
+  const [isOverviewFullscreen, setIsOverviewFullscreen] = React.useState(false);
+  
+  // Full-screen toggle handler
+  const handleFullScreenToggle = React.useCallback(() => {
+    setIsOverviewFullscreen(prev => !prev);
+  }, []);
+
+  // Effect to set global fullscreen state
+  React.useEffect(() => {
+    if (isOverviewFullscreen) {
+      // Only hide tabs/AI button when the Overview tab is in fullscreen and currently active
+      const isOverviewActive = navigationState && navigationState.index === 0;
+      if (isOverviewActive) {
+        // Hide AI button
+        if (typeof window !== 'undefined' && window.setAIButtonVisible) {
+          window.setAIButtonVisible(false);
+        }
+        
+        // Set global state to hide bottom tabs
+        if (typeof global !== 'undefined') {
+          global.kanbanFullScreen = true;
+        }
+      }
+    } else {
+      // Restore normal state
+      if (typeof window !== 'undefined' && window.setAIButtonVisible) {
+        window.setAIButtonVisible(true);
+      }
+      
+      if (typeof global !== 'undefined') {
+        global.kanbanFullScreen = false;
+      }
+    }
+    
+    // Cleanup function
+    return () => {
+      if (isOverviewFullscreen) {
+        if (typeof window !== 'undefined' && window.setAIButtonVisible) {
+          window.setAIButtonVisible(true);
+        }
+        if (typeof global !== 'undefined') {
+          global.kanbanFullScreen = false;
+        }
+      }
+    };
+  }, [isOverviewFullscreen, navigationState?.index]);
+  
   // Force key to remount TabView when returning to screen
   const [tabViewKey, setTabViewKey] = React.useState(0);
 
@@ -491,7 +539,11 @@ const GoalsTabNavigator = ({ navigation, route }) => {
   const renderScene = ({ route }) => {
     switch (route.key) {
       case 'overview':
-        return <LifePlanOverviewScreen navigation={navigation} hideBackButton={true} />;
+        return <LifePlanOverviewScreen 
+          navigation={navigation} 
+          hideBackButton={true} 
+          onFullScreenToggle={handleFullScreenToggle}
+        />;
       case 'active':
         return <GoalsScreen navigation={navigation} tabMode="active" />;
       case 'completed':
@@ -501,6 +553,20 @@ const GoalsTabNavigator = ({ navigation, route }) => {
     }
   };
   
+  // Early return if navigationState is not properly initialized
+  if (!navigationState || !navigationState.routes || navigationState.routes.length === 0) {
+    return (
+      <View style={{ 
+        flex: 1, 
+        backgroundColor: theme.background,
+        justifyContent: 'center',
+        alignItems: 'center'
+      }}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={{ 
       flex: 1, 
@@ -515,21 +581,27 @@ const GoalsTabNavigator = ({ navigation, route }) => {
           setNavigationState(prev => ({ ...prev, index }));
         }}
         initialLayout={{ width }}
-        renderTabBar={(props) => (
-          <TabBar
-            {...props}
-            style={{
-              backgroundColor: theme.cardElevated || '#1F1F1F',
-              elevation: 0,
-              shadowOpacity: 0,
-              borderRadius: scaleWidth(25),
-              marginHorizontal: scaleWidth(20),
-              marginVertical: scaleHeight(10),
-              height: scaleHeight(44),
-            }}
-            indicatorStyle={{
-              backgroundColor: theme.primary,
-              height: scaleHeight(38),
+        renderTabBar={(props) => {
+          // Hide tab bar when Overview is in fullscreen mode
+          if (isOverviewFullscreen && navigationState && navigationState.index === 0) {
+            return null;
+          }
+          
+          return (
+            <TabBar
+              {...props}
+              style={{
+                backgroundColor: theme.cardElevated || '#1F1F1F',
+                elevation: 0,
+                shadowOpacity: 0,
+                borderRadius: scaleWidth(25),
+                marginHorizontal: scaleWidth(20),
+                marginVertical: scaleHeight(10),
+                height: scaleHeight(44),
+              }}
+              indicatorStyle={{
+                backgroundColor: theme.primary,
+                height: scaleHeight(38),
               borderRadius: scaleWidth(20),
               marginBottom: 3,
               marginLeft: 3,
@@ -587,8 +659,9 @@ const GoalsTabNavigator = ({ navigation, route }) => {
                 </View>
               );
             }}
-          />
-        )}
+            />
+          );
+        }}
       />
     </View>
   );
@@ -845,7 +918,7 @@ function MainTabNavigator({ route }) {
       if (typeof global !== 'undefined' && typeof global.kanbanFullScreen === 'boolean') {
         const globalFullScreen = global.kanbanFullScreen;
         setIsAnyScreenFullScreen(globalFullScreen);
-        console.log('App.js: Checked global.kanbanFullScreen =', globalFullScreen);
+        // Removed annoying log
       }
     };
     

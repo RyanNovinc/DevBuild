@@ -1,5 +1,5 @@
 // src/components/OnboardingTransitionScreen.js
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -26,6 +26,8 @@ const OnboardingTransitionScreen = ({
   const progressAnim = useRef(new Animated.Value(0)).current;
   const iconRotation = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  const percentageAnim = useRef(new Animated.Value(0)).current;
+  const [displayedPercentage, setDisplayedPercentage] = useState(0);
 
   // Start animations on mount
   useEffect(() => {
@@ -75,6 +77,22 @@ const OnboardingTransitionScreen = ({
     if (state !== ONBOARDING_STATES.ERROR) {
       rotationLoop.start();
       pulseLoop.start();
+      
+      // Start percentage counter animation
+      const listener = percentageAnim.addListener(({ value }) => {
+        setDisplayedPercentage(Math.round(value));
+      });
+      
+      Animated.timing(percentageAnim, {
+        toValue: 100,
+        duration: 2500, // 2.5 seconds to count from 0 to 100
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: false,
+      }).start();
+      
+      return () => {
+        percentageAnim.removeListener(listener);
+      };
     }
 
     return () => {
@@ -117,7 +135,7 @@ const OnboardingTransitionScreen = ({
       case ONBOARDING_STATES.PREPARING_APP:
         return {
           icon: 'rocket-outline',
-          title: 'Almost Done!',
+          title: 'Preparing Your App',
           subtitle: 'Finalizing your LifeCompass experience...'
         };
       case ONBOARDING_STATES.ERROR:
@@ -190,32 +208,15 @@ const OnboardingTransitionScreen = ({
           {content.title}
         </ResponsiveText>
 
-        {/* Subtitle */}
-        <ResponsiveText style={styles.subtitle}>
-          {content.subtitle}
-        </ResponsiveText>
-
-        {/* Progress Bar (only show if not error and progress > 0) */}
-        {!isError && progress > 0 && (
-          <View style={styles.progressContainer}>
-            <View style={styles.progressBarBackground}>
-              <Animated.View 
-                style={[
-                  styles.progressBarFill,
-                  {
-                    width: progressAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: ['0%', '100%']
-                    })
-                  }
-                ]}
-              />
-            </View>
-            <ResponsiveText style={styles.progressText}>
-              {Math.round(progress)}%
+        {/* Animated Percentage Counter */}
+        {!isError && (
+          <View style={styles.percentageContainer}>
+            <ResponsiveText style={styles.percentageText}>
+              {displayedPercentage}%
             </ResponsiveText>
           </View>
         )}
+
 
         {/* Error message */}
         {isError && error && (
@@ -327,12 +328,15 @@ const styles = StyleSheet.create({
   errorTitle: {
     color: '#ef4444',
   },
-  subtitle: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    textAlign: 'center',
-    lineHeight: 24,
+  percentageContainer: {
     marginBottom: 32,
+    alignItems: 'center',
+  },
+  percentageText: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#3b82f6',
+    textAlign: 'center',
   },
   progressContainer: {
     width: '100%',

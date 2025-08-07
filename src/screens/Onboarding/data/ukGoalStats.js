@@ -54,7 +54,7 @@ const GOAL_BREAKDOWN_RESEARCH_STATS = [
 export const UK_GOAL_STATS = {
   // Domain: Career & Work
   "Career & Work": {
-    "Skill Development": {
+    "Get Significant Salary Increase": {
       title: "UK Professionals with Flexible Working Arrangements Earn More and Progress Faster",
       figure: "62%",
       description: "UK professionals with regular flexible working options represent 62% of the workforce, with 4.23 million employees now on flexible contracts. The ONS reports that managers, directors and senior officials saw a 7.6% increase in median weekly earnings in 2024, significantly outpacing inflation during the cost-of-living crisis.",
@@ -69,7 +69,7 @@ export const UK_GOAL_STATS = {
         link: "https://www.ons.gov.uk/employmentandlabourmarket/peopleinwork/earningsandworkinghours/bulletins/annualsurveyofhoursandearnings/2024"
       }
     },
-    "Career Advancement": {
+    "Secure Flexible Work Arrangement": {
       title: "UK Professionals Who Secure Management Positions Earn 15% More",
       figure: "15%",
       description: "UK professionals who transition into management and senior director roles achieve an average 15% salary increase when changing positions, according to ONS data. Career progression peaks between ages 25-35, with those who change jobs regularly experiencing 4.3% higher pay growth than those who remain static during Britain's evolving post-pandemic employment landscape.",
@@ -84,7 +84,7 @@ export const UK_GOAL_STATS = {
         link: "https://standout-cv.com/stats/career-change-statistics-uk"
       }
     },
-    "Work-Life Balance": {
+    "Build High-Value Digital Skills": {
       title: "UK Workers with Good Work-Life Balance Are 21% More Productive",
       figure: "21%",
       description: "UK employees with strong work-life balance report 21% higher productivity levels and significantly lower stress-related absence. With 79% of UK professionals citing work-life balance as a key job consideration, companies prioritizing employee wellbeing see measurably better retention and performance outcomes.",
@@ -103,7 +103,7 @@ export const UK_GOAL_STATS = {
 
   // Domain: Health & Wellness
   "Health & Wellness": {
-    "Regular Exercise": {
+    "Complete First 5K Run": {
       title: "Regular Fitness Boosts UK Professional Productivity by 50%",
       figure: "50%",
       description: "Employees who exercised only occasionally were 50% more likely to report lower productivity than UK employees who maintained a consistent exercise routine. Regular physical activity interventions in UK workplaces have shown statistically significant improvements in workability and performance.",
@@ -118,7 +118,7 @@ export const UK_GOAL_STATS = {
         link: "https://standout-cv.com/stats/workplace-productivity-statistics-uk"
       }
     },
-    "Better Sleep Habits": {
+    "Master Quality Sleep": {
       title: "Poor Sleep Costs UK Economy £40 Billion Annually in Lost Productivity",
       figure: "£40 billion",
       description: "Sleep deprivation among UK workers costs the economy up to £40 billion annually (1.86% of GDP), with the UK losing over 200,000 working days per year. Only 36% of UK employees rate their sleep as 'good', with 37% reporting reduced productivity after poor sleep.",
@@ -133,7 +133,7 @@ export const UK_GOAL_STATS = {
         link: "https://www.rand.org/news/press/2016/11/30/index1.html"
       }
     },
-    "Improved Nutrition": {
+    "Reduce Alcohol Consumption": {
       title: "Poor Nutrition Habits Reduce UK Workplace Productivity by 66%",
       figure: "66%",
       description: "UK employees with unhealthy diets have a 66% higher chance of experiencing productivity decline compared to those consuming whole grains, fruits, and vegetables. Poor eating habits cost UK employers £17 billion, while workplace nutrition interventions can increase productivity by 1-2%.",
@@ -152,7 +152,7 @@ export const UK_GOAL_STATS = {
 
   // Domain: Relationships
   "Relationships": {
-    "Strengthen Romantic Partnership": {
+    "Move in with Partner": {
       title: "Strong Partnerships Drive Career Success for UK Professionals",
       figure: "50.4%",
       description: "ONS data shows that just over half of UK adults maintain stable partnerships, with married couples benefiting from joint financial planning and career support. UK tax benefits like Marriage Allowance can save couples up to £252 annually, demonstrating government recognition of partnership benefits.",
@@ -167,7 +167,7 @@ export const UK_GOAL_STATS = {
         link: "https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates/bulletins/populationestimatesbymaritalstatusandlivingarrangements/2019"
       }
     },
-    "Build Stronger Family Connections": {
+    "Build Strong Friendships": {
       title: "Family-Friendly Workplaces Boost UK Professional Performance by 71%",
       figure: "71.2%",
       description: "University of Birmingham research shows that supporting family connections through flexible working arrangements significantly improves professional outcomes. Additionally, 76.5% of UK managers report increased productivity when employees can balance family responsibilities effectively.",
@@ -182,7 +182,7 @@ export const UK_GOAL_STATS = {
         link: "https://workingfamilies.org.uk/news-events/news/family-friendly-certification-programme-launches-in-the-uk/"
       }
     },
-    "Expand Professional Network": {
+    "Find Quality Romantic Connection": {
       title: "Nearly 40% of UK Professionals Secure Jobs Through Strategic Networking",
       figure: "39%",
       description: "Money.co.uk's 2024 survey of 2,000 UK professionals reveals networking's critical role in career advancement. LinkedIn data supports this, showing 80% of UK professionals consider networking vital to career success, with 70% of hires having existing company connections.",
@@ -201,7 +201,7 @@ export const UK_GOAL_STATS = {
 
   // Domain: Personal Growth
   "Personal Growth": {
-    "Develop New Professional Skills": {
+    "Learn New Language": {
       title: "UK Employers Invest £53.0 Billion in Professional Training Annually",
       figure: "£53.0 billion",
       description: "British employers invested £53.0 billion in training and workforce development in 2024, with 63% of employees receiving training. However, skills gaps persist with 27% of UK vacancies classified as skill-shortage positions, highlighting the critical importance of continuous professional development for career advancement.",
@@ -216,7 +216,7 @@ export const UK_GOAL_STATS = {
         link: "https://explore-education-statistics.service.gov.uk/find-statistics/employer-skills-survey/2024"
       }
     },
-    "Read More for Knowledge and Growth": {
+    "Master Public Speaking": {
       title: "Half of UK Adults Have Stopped Reading Regularly, Missing Career Benefits",
       figure: "50%",
       description: "Only half of UK adults now read regularly, down from 58% in 2015, with young professionals aged 16-34 facing the greatest barriers including difficulty concentrating (42%). Regular readers demonstrate higher wellbeing, improved concentration, and enhanced empathy—all crucial skills for professional success and career advancement.",
@@ -231,7 +231,7 @@ export const UK_GOAL_STATS = {
         link: "https://readingagency.org.uk/adult-reading-research-report-2024/"
       }
     },
-    "Practice Mindfulness and Mental Wellness": {
+    "Build Financial Knowledge": {
       title: "UK Mental Health Crisis Costs Economy £57.4 Billion Annually",
       figure: "£57.4 billion",
       description: "Work-related mental health issues cost the UK economy £57.4 billion yearly, with 79% of employees experiencing moderate-to-high stress levels. However, organisations implementing mental health training see 30% reductions in absences, whilst employees with access to wellness programmes report 52% higher engagement and productivity levels.",
@@ -250,7 +250,7 @@ export const UK_GOAL_STATS = {
 
   // Domain: Financial Security
   "Financial Security": {
-    "Build Emergency Fund (3-6 months expenses)": {
+    "Save for House Deposit": {
       title: "One in Ten Brits Have No Emergency Savings Amid Housing Crisis",
       figure: "31%",
       description: "FCA research reveals that 10% of UK adults have no cash savings at all, while another 21% have less than £1,000 to draw on in emergencies. With average UK house prices at £290,000 and first-time buyers needing deposits of £53,000, building emergency funds has become critical for 25-35 year olds navigating the property ladder.",
@@ -265,7 +265,7 @@ export const UK_GOAL_STATS = {
         link: "https://www.fca.org.uk/news/press-releases/more-people-have-bank-accounts-one-ten-have-no-cash-savings"
       }
     },
-    "Eliminate High-Interest Debt": {
+    "Build Emergency Fund": {
       title: "UK Personal Debt Nearly Equals Full Year's Salary at 99.9% of Earnings",
       figure: "£1,295",
       description: "The Money Charity reports that average personal debt stands at 99.9% of average earnings, with credit card debt averaging £1,295 per household at punishing 24% interest rates. For young professionals earning around £35,000, debt elimination becomes essential for accessing mortgages, as 38% of potential buyers are first-time buyers struggling with affordability in a market where average loans reach £217,125.",
@@ -280,7 +280,7 @@ export const UK_GOAL_STATS = {
         link: "https://themoneycharity.org.uk/the-money-stats-february-2024-personal-debt-levels-remain-threat-to-financial-wellbeing-of-uk-households/"
       }
     },
-    "Start Investing for Long-term Wealth": {
+    "Maximize ISA Savings": {
       title: "UK Stocks & Shares ISAs Deliver 9.6% Returns vs 1.2% for Cash Savings",
       figure: "£12,249",
       description: "Investment Association data shows Stocks & Shares ISAs averaged 9.6% annual returns over 10 years compared to just 1.2% for Cash ISAs, with £10,000 invested five years ago now worth £12,249 versus £8,713 in cash after inflation. Despite this, only 16% of UK adults hold investment ISAs versus 31% with Cash ISAs, while 61% of those with £10,000+ keep three-quarters in cash rather than investments, missing crucial long-term wealth building during the housing affordability crisis.",
@@ -299,7 +299,7 @@ export const UK_GOAL_STATS = {
 
   // Domain: Recreation & Leisure
   "Recreation & Leisure": {
-    "Pursue Meaningful Hobbies": {
+    "Complete Active Challenge Events": {
       title: "One-Third of Young Professionals Use Hobbies to Build Social Connections",
       figure: "33%",
       description: "UK professionals increasingly turn to meaningful hobbies as affordable alternatives to expensive nights out, with reading being the most popular activity (67% participation). Those aged 25-34 take the least leisure time of any age group at just 4 hours 46 minutes daily, making efficient hobby engagement particularly valuable for work-life balance.",
@@ -314,7 +314,7 @@ export const UK_GOAL_STATS = {
         link: "https://store.mintel.com/report/uk-hobbies-and-interests-market-report"
       }
     },
-    "Plan Regular Travel and Adventures": {
+    "Explore UK Heritage Sites": {
       title: "UK Leads Europe's Adventure Tourism Market Worth £72 Million by 2030",
       figure: "19%",
       description: "The UK boasts Europe's largest adventure tourism market, with professionals increasingly seeking 'workations' that combine business with leisure. Day trips and local getaways represent 44.7% of industry activity in 2024, appealing to busy professionals who prefer shorter, high-quality experiences over extended vacations.",
@@ -329,7 +329,7 @@ export const UK_GOAL_STATS = {
         link: "https://www.travelperk.com/blog/uk-travel-tourism-statistics/"
       }
     },
-    "Engage in Creative Expression": {
+    "Develop Creative Hobby": {
       title: "Creative Arts Boost Mental Health as Much as Having Employment",
       figure: "93%",
       description: "UK research demonstrates that engaging in arts and crafts provides mental health benefits equivalent to employment. The creative industries contribute £126bn to the UK economy, with 72% of the creative workforce being highly qualified professionals who report using creative expression for stress relief and professional development.",
@@ -348,7 +348,7 @@ export const UK_GOAL_STATS = {
 
   // Domain: Purpose & Meaning
   "Purpose & Meaning": {
-    "Clarify Life Values and Direction": {
+    "Volunteer Using Professional Skills": {
       title: "Nearly 9 in 10 Young Professionals Say Purpose is Key to Job Satisfaction",
       figure: "89%",
       description: "UK research reveals purpose-driven career decisions are paramount among young professionals, with half of Gen Z (50%) and 43% of millennials turning down assignments conflicting with personal ethics. This trend reflects growing importance of values alignment in professional life, with 44% of young workers rejecting employers for ethical misalignment.",
@@ -363,7 +363,7 @@ export const UK_GOAL_STATS = {
         link: "https://www.irishtimes.com/advertising-feature/2024/12/20/how-sustainability-and-purpose-drive-job-satisfaction-in-the-modern-workforce/"
       }
     },
-    "Contribute to Community/Volunteer": {
+    "Reduce Environmental Impact": {
       title: "Volunteering Satisfaction Reaches 92% Despite Declining Participation",
       figure: "92%",
       description: "While only 27% of UK adults volunteered formally in 2021/22 (down from 37% pre-pandemic), satisfaction rates remain exceptionally high at 92%. Professionals aged 25-34 show the lowest volunteering rates (12% monthly) but those who do volunteer report significant personal and professional benefits, including skill development and networking opportunities.",
@@ -378,7 +378,7 @@ export const UK_GOAL_STATS = {
         link: "https://www.ncvo.org.uk/news-and-insights/news-index/uk-civil-society-almanac-2024/volunteering/"
       }
     },
-    "Explore Spiritual/Philosophical Growth": {
+    "Take Community Leadership Role": {
       title: "Quiet Reflection Increases Among Young Professionals During Uncertainty",
       figure: "18%",
       description: "While traditional religious belief declines in the UK (30% believe in God/Gods), there's growing interest in contemplative practices among professionals. During recent crises, 26% of 18-24 year olds increased quiet reflection time, with 22% of 25-34 year olds showing interest in yoga and mindfulness practices for stress management and personal growth.",
@@ -397,7 +397,7 @@ export const UK_GOAL_STATS = {
 
   // Domain: Environment & Organization
   "Environment & Organization": {
-    "Create Organized, Productive Spaces": {
+    "Create Home Office Setup": {
       title: "Organised Workspaces Boost UK Professional Productivity by 19%",
       figure: "19%",
       description: "UK professionals report they would be 19% more productive in better-designed working environments, according to Gensler's workplace survey. Additionally, Brother UK research reveals that disorganised workspaces cost UK businesses an average of £148 per day per worker, with 31% of office workers experiencing tremendous stress when unable to keep their workplace tidy.",
@@ -412,7 +412,7 @@ export const UK_GOAL_STATS = {
         link: "https://www.sketchstudios.co.uk/blog/the-impact-of-workplace-design-on-productivity"
       }
     },
-    "Establish Effective Daily Routines": {
+    "Improve Home Energy Efficiency": {
       title: "UK Workers Are Only Productive for 2 Hours 53 Minutes Daily",
       figure: "2 hours 53 minutes",
       description: "The average UK employee works 8 hours daily but is only productive for 2 hours and 53 minutes, according to UK workplace productivity research. However, studies show that establishing structured morning routines helps UK professionals maximise their productive hours, with 77% of UK Millennials reporting that flexible schedules enhance their productivity performance.",
@@ -427,7 +427,7 @@ export const UK_GOAL_STATS = {
         link: "https://standout-cv.com/stats/workplace-productivity-statistics-uk"
       }
     },
-    "Reduce Environmental Impact": {
+    "Live Zero-Waste Lifestyle": {
       title: "Environmental Consciousness Increases UK Professional Salaries by £11,000",
       figure: "£51,250",
       description: "UK environmental professionals with Chartered Environmentalist status earn a median salary of £51,250 compared to £40,250 for general professionals, representing a £11,000 career premium. The Institute of Environmental Sciences' 2019 UK survey found that 85% of environmental professionals find their work meaningful, knowing they're making positive contributions to society through their career choices.",
@@ -453,100 +453,8 @@ export const UK_GOAL_STATS = {
 const mapGoalNameToStatKey = (goalName) => {
   if (!goalName) return null;
   
-  const goalLower = goalName.toLowerCase();
-  
-  // Career & Work domain mappings
-  if (goalLower.includes('skill') && goalLower.includes('development')) {
-    return 'Skill Development';
-  }
-  if (goalLower.includes('flexible') || goalLower.includes('new skills')) {
-    return 'Skill Development';
-  }
-  if (goalLower.includes('advance') || goalLower.includes('promotion') || goalLower.includes('leadership')) {
-    return 'Career Advancement';
-  }
-  if (goalLower.includes('work-life') || goalLower.includes('balance')) {
-    return 'Work-Life Balance';
-  }
-  
-  // Health & Wellness domain mappings
-  if (goalLower.includes('exercise') || goalLower.includes('fitness') || goalLower.includes('active')) {
-    return 'Regular Exercise';
-  }
-  if (goalLower.includes('sleep')) {
-    return 'Better Sleep Habits';
-  }
-  if (goalLower.includes('nutrition') || goalLower.includes('diet') || goalLower.includes('eating')) {
-    return 'Improved Nutrition';
-  }
-  
-  // Relationships domain mappings
-  if (goalLower.includes('romantic') || goalLower.includes('partner') || goalLower.includes('relationship')) {
-    return 'Strengthen Romantic Partnership';
-  }
-  if (goalLower.includes('family')) {
-    return 'Build Stronger Family Connections';
-  }
-  if (goalLower.includes('network') || goalLower.includes('professional connections')) {
-    return 'Expand Professional Network';
-  }
-  
-  // Personal Growth domain mappings
-  if (goalLower.includes('professional skills') || goalLower.includes('new professional')) {
-    return 'Develop New Professional Skills';
-  }
-  if (goalLower.includes('read') || goalLower.includes('knowledge')) {
-    return 'Read More for Knowledge and Growth';
-  }
-  if (goalLower.includes('mindfulness') || goalLower.includes('mental wellness')) {
-    return 'Practice Mindfulness and Mental Wellness';
-  }
-  
-  // Financial Security domain mappings
-  if (goalLower.includes('emergency') || goalLower.includes('fund')) {
-    return 'Build Emergency Fund (3-6 months expenses)';
-  }
-  if (goalLower.includes('debt') || goalLower.includes('eliminate')) {
-    return 'Eliminate High-Interest Debt';
-  }
-  if (goalLower.includes('invest') || goalLower.includes('wealth')) {
-    return 'Start Investing for Long-term Wealth';
-  }
-  
-  // Recreation & Leisure domain mappings
-  if (goalLower.includes('hobbies')) {
-    return 'Pursue Meaningful Hobbies';
-  }
-  if (goalLower.includes('travel') || goalLower.includes('adventure')) {
-    return 'Plan Regular Travel and Adventures';
-  }
-  if (goalLower.includes('creative') || goalLower.includes('expression')) {
-    return 'Engage in Creative Expression';
-  }
-  
-  // Purpose & Meaning domain mappings
-  if (goalLower.includes('values') || goalLower.includes('direction') || goalLower.includes('clarify')) {
-    return 'Clarify Life Values and Direction';
-  }
-  if (goalLower.includes('community') || goalLower.includes('volunteer')) {
-    return 'Contribute to Community/Volunteer';
-  }
-  if (goalLower.includes('spiritual') || goalLower.includes('philosophical')) {
-    return 'Explore Spiritual/Philosophical Growth';
-  }
-  
-  // Environment & Organization domain mappings
-  if (goalLower.includes('organized') || goalLower.includes('productive spaces') || goalLower.includes('space')) {
-    return 'Create Organized, Productive Spaces';
-  }
-  if (goalLower.includes('routine') || goalLower.includes('daily')) {
-    return 'Establish Effective Daily Routines';
-  }
-  if (goalLower.includes('environmental') || goalLower.includes('impact') || goalLower.includes('sustainable')) {
-    return 'Reduce Environmental Impact';
-  }
-  
-  // If no mapping found, return the original goal name (exact match attempt)
+  // With exact goal name alignment, we no longer need mapping logic
+  // Goals in country definitions now match research stats exactly
   return goalName;
 };
 

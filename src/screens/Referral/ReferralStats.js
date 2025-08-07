@@ -1,15 +1,36 @@
 // src/screens/Referral/ReferralStats.js
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView
+  ScrollView,
+  ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import referralBackendService from '../../services/ReferralBackendService';
 
 const ReferralStats = ({ data, theme }) => {
   const { stats, referrals } = data;
+  const [discounts, setDiscounts] = useState([]);
+  const [loadingDiscounts, setLoadingDiscounts] = useState(true);
+
+  useEffect(() => {
+    loadDiscounts();
+  }, []);
+
+  const loadDiscounts = async () => {
+    try {
+      setLoadingDiscounts(true);
+      const availableDiscounts = await referralBackendService.getEarnedDiscounts();
+      setDiscounts(availableDiscounts);
+    } catch (error) {
+      console.error('Error loading discounts:', error);
+      setDiscounts([]);
+    } finally {
+      setLoadingDiscounts(false);
+    }
+  };
   
   const renderReferralItem = (referral) => {
     return (
@@ -44,7 +65,7 @@ const ReferralStats = ({ data, theme }) => {
             <View style={styles.rewardBadge}>
               <Ionicons name="checkmark-circle" size={14} color="#4CAF50" />
               <Text style={styles.rewardText}>
-                Reward Applied
+                50% Off Applied
               </Text>
             </View>
           )}
@@ -89,10 +110,53 @@ const ReferralStats = ({ data, theme }) => {
           </View>
           
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{stats.earned}</Text>
-            <Text style={styles.statLabel}>Credits Earned</Text>
+            <Text style={styles.statNumber}>{stats.plansEarned || 0}</Text>
+            <Text style={styles.statLabel}>AI Plans Earned</Text>
+            <Text style={styles.statSubLabel}>50% off</Text>
           </View>
         </View>
+      </View>
+      
+      {/* Available Discounts Section */}
+      <View style={styles.discountsSection}>
+        <View style={styles.discountHeader}>
+          <Ionicons name="ticket" size={20} color="#4CAF50" />
+          <Text style={styles.sectionTitle}>
+            Your 50% Off Discounts
+          </Text>
+        </View>
+        
+        {loadingDiscounts ? (
+          <View style={styles.discountLoading}>
+            <ActivityIndicator size="small" color="#4CAF50" />
+            <Text style={styles.loadingText}>Loading discounts...</Text>
+          </View>
+        ) : discounts.length > 0 ? (
+          <View style={styles.discountContainer}>
+            <View style={styles.discountBadge}>
+              <Text style={styles.discountCount}>{discounts.length}</Text>
+              <Text style={styles.discountLabel}>Available</Text>
+            </View>
+            <View style={styles.discountInfo}>
+              <Text style={styles.discountDescription}>
+                You have {discounts.length} discount{discounts.length !== 1 ? 's' : ''} ready to use!
+              </Text>
+              <Text style={styles.discountSubtext}>
+                50% off your next AI monthly plan{discounts.length > 1 ? 's' : ''}
+              </Text>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.discountEmpty}>
+            <Ionicons name="ticket-outline" size={32} color="#666" />
+            <Text style={styles.discountEmptyText}>
+              No discounts available yet
+            </Text>
+            <Text style={styles.discountEmptySubtext}>
+              Share your referral code to earn 50% off discounts!
+            </Text>
+          </View>
+        )}
       </View>
       
       {/* Referral History */}
@@ -161,6 +225,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#9E9E9E',
   },
+  statSubLabel: {
+    fontSize: 12,
+    color: '#4CAF50',
+    fontWeight: '600',
+    marginTop: 2,
+  },
   historySection: {
     padding: 20,
     marginHorizontal: 16,
@@ -227,6 +297,96 @@ const styles = StyleSheet.create({
     marginTop: 16,
     maxWidth: '80%',
     color: '#9E9E9E',
+  },
+  // Discount Section Styles
+  discountsSection: {
+    marginHorizontal: 16,
+    marginTop: 16,
+    borderRadius: 12,
+    backgroundColor: '#1E1E1E',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+    overflow: 'hidden',
+  },
+  discountHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 8,
+  },
+  discountLoading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  loadingText: {
+    marginLeft: 8,
+    color: '#9E9E9E',
+    fontSize: 14,
+  },
+  discountContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
+    paddingTop: 8,
+  },
+  discountBadge: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#4CAF50',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+    shadowColor: '#4CAF50',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  discountCount: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  discountLabel: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  discountInfo: {
+    flex: 1,
+  },
+  discountDescription: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  discountSubtext: {
+    fontSize: 14,
+    color: '#4CAF50',
+    fontWeight: '500',
+  },
+  discountEmpty: {
+    alignItems: 'center',
+    padding: 30,
+  },
+  discountEmptyText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#9E9E9E',
+    marginTop: 12,
+    textAlign: 'center',
+  },
+  discountEmptySubtext: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 4,
+    textAlign: 'center',
   },
 });
 

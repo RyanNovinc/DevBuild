@@ -54,7 +54,7 @@ const GOAL_BREAKDOWN_RESEARCH_STATS = [
 export const USA_GOAL_STATS = {
   // Domain: Career & Work
   "Career & Work": {
-    "Skill Development": {
+    "Master Work-Life Balance": {
       title: "Remote Workers Command 20% Higher Pay While Boosting Company Productivity by 8%",
       figure: "20%",
       description: "American professionals who secure flexible remote work arrangements command significantly higher salaries while delivering measurable productivity gains for their employers. With 87% of workers preferring remote flexibility over higher office-based pay, skilled professionals can leverage this preference into competitive advantage in today's tight labor market, especially valuable for managing student debt and healthcare costs.",
@@ -69,7 +69,7 @@ export const USA_GOAL_STATS = {
         link: "https://www.bls.gov/productivity/notices/2024/productivity-and-remote-work.htm"
       }
     },
-    "Career Advancement": {
+    "Build Career-Advancing Skills": {
       title: "Management Promotions Deliver 57% Higher Internal Mobility and $50,000+ Salary Jumps",
       figure: "57%",
       description: "American professionals who secure management promotions experience dramatically accelerated career advancement opportunities and substantial compensation increases. Companies with strong leadership development programs see 57% higher internal mobility rates, while management promotions typically deliver $50,000+ salary increases. This creates exponential career growth potential crucial for competing in America's high-cost environment.",
@@ -84,7 +84,7 @@ export const USA_GOAL_STATS = {
         link: "https://learning.linkedin.com/content/dam/me/business/en-us/amp/learning-solutions/images/wlr-2024/LinkedIn-Workplace-Learning-Report-2024.pdf"
       }
     },
-    "Work-Life Balance": {
+    "Find Purpose-Driven Work": {
       title: "Americans with Good Work-Life Balance Are 18% More Productive",
       figure: "18%",
       description: "American professionals who maintain strong work-life balance report 18% higher productivity levels and significantly better career outcomes. With 68% of American workers experiencing burnout, those who establish clear boundaries achieve better performance, lower turnover rates, and higher job satisfaction in competitive markets.",
@@ -103,7 +103,7 @@ export const USA_GOAL_STATS = {
 
   // Domain: Health & Wellness
   "Health & Wellness": {
-    "Regular Exercise": {
+    "Master Quality Sleep": {
       title: "Regular Exercise Increases Productivity and Earnings by $3,000+ Per Year",
       figure: "$3,000",
       description: "CDC workplace wellness studies show exercise programs deliver $3-6 return for every dollar invested, with significant productivity gains. Harvard Business Review research demonstrates exercise directly improves cognitive performance and workplace decision-making, giving professionals competitive advantages over sedentary peers in America's knowledge economy.",
@@ -118,7 +118,7 @@ export const USA_GOAL_STATS = {
         link: "https://hbr.org/2014/10/regular-exercise-is-part-of-your-job"
       }
     },
-    "Better Sleep Habits": {
+    "Build Fitness Routine": {
       title: "Poor Sleep Costs Professionals $1,967 Annually in Lost Productivity",
       figure: "$1,967",
       description: "National Institutes of Health research shows sleep-deprived employees cost employers $1,967 annually in productivity losses, while good sleep improves performance by 116%. For ambitious professionals managing student debt and building careers, quality sleep delivers measurable workplace advantages and protects against the $136.4 billion national cost of workplace fatigue.",
@@ -133,7 +133,7 @@ export const USA_GOAL_STATS = {
         link: "https://pubmed.ncbi.nlm.nih.gov/20042880/"
       }
     },
-    "Improved Nutrition": {
+    "Get Regular Mental Health Support": {
       title: "Healthy Eating Reduces Productivity Loss by 66% and Healthcare Costs",
       figure: "66%",
       description: "Journal of Occupational and Environmental Medicine research shows employees with unhealthy diets are 66% more likely to experience productivity loss. Workplace nutrition programs increase productivity by 2%+ while reducing healthcare expenses. For professionals managing high student debt and building wealth, proper nutrition delivers immediate workplace performance gains.",
@@ -152,7 +152,7 @@ export const USA_GOAL_STATS = {
 
   // Domain: Relationships
   "Relationships": {
-    "Strengthen Romantic Partnership": {
+    "Build Strong Friendships": {
       title: "Harvard 85-Year Study Reveals Relationships Predict Career Success Better Than Cholesterol",
       figure: "50%",
       description: "Harvard's landmark Adult Development Study found that relationship satisfaction at age 50 was a better predictor of physical health and career longevity than cholesterol levels. Men in strong romantic partnerships demonstrate higher earning potential and greater financial success throughout their careers than single counterparts.",
@@ -167,7 +167,7 @@ export const USA_GOAL_STATS = {
         link: "https://news.harvard.edu/gazette/story/2023/02/work-out-daily-ok-but-how-socially-fit-are-you/"
       }
     },
-    "Build Stronger Family Connections": {
+    "Find Long-Term Partner": {
       title: "High Family Functioning Increases Workplace Success and Coworker Satisfaction",
       figure: "Significant positive correlation",
       description: "Research demonstrates that professionals with strong family relationships achieve better work-family balance, leading to increased organizational citizenship behavior and higher coworker job satisfaction. Family stability provides resources that directly transfer to workplace success and career advancement opportunities.",
@@ -182,7 +182,7 @@ export const USA_GOAL_STATS = {
         link: "https://kellercenter.hankamer.baylor.edu/news/story/2021/how-work-family-balance-impacts-workplace-success"
       }
     },
-    "Expand Professional Network": {
+    "Strengthen Family Relationships": {
       title: "85% of Jobs Filled Through Networking, Passive Candidates 7x More Likely to Find Opportunities",
       figure: "85%",
       description: "Professional networking represents the primary pathway to career advancement for American professionals, with passive candidates being 7 times more likely to find their next job through networking than through direct applications. Strong professional networks provide access to the hidden job market and accelerated career progression.",
@@ -201,7 +201,7 @@ export const USA_GOAL_STATS = {
 
   // Domain: Personal Growth
   "Personal Growth": {
-    "Develop New Professional Skills": {
+    "Learn Data Analytics": {
       title: "Companies with Comprehensive Skills Training See 218% Higher Income Per Employee",
       figure: "218%",
       description: "Organizations offering comprehensive professional development programs generate significantly higher revenue per employee compared to companies without formalized training. Workers who engage in over 100 hours of professional training see average salary increases of $15,000 annually, demonstrating clear ROI for skill development investments.",
@@ -216,7 +216,7 @@ export const USA_GOAL_STATS = {
         link: "https://www.shiftelearning.com/blog/statistics-value-of-employee-training-and-development"
       }
     },
-    "Read More for Knowledge and Growth": {
+    "Start Creative Side Hustle": {
       title: "57% of Americans Say Career Enjoyment is Essential for Fulfilling Life",
       figure: "57%",
       description: "Harvard Business Review research confirms that continuous learning through reading directly correlates with leadership success and career advancement. American professionals who prioritize knowledge acquisition through reading report higher career satisfaction and demonstrate increased leadership capabilities in competitive workplace environments.",
@@ -231,7 +231,7 @@ export const USA_GOAL_STATS = {
         link: "https://hbr.org/2012/08/for-those-who-want-to-lead-rea"
       }
     },
-    "Practice Mindfulness and Mental Wellness": {
+    "Learn AI/Machine Learning": {
       title: "69% Less Likely to Job Search When Employers Support Wellbeing",
       figure: "69%",
       description: "American employees who strongly agree their employer cares about their overall wellbeing are 69% less likely to actively search for new jobs. Workplace mental health support directly correlates with increased productivity, reduced absenteeism, and higher engagement levels among American male professionals.",
@@ -250,7 +250,7 @@ export const USA_GOAL_STATS = {
 
   // Domain: Financial Security
   "Financial Security": {
-    "Build Emergency Fund (3-6 months expenses)": {
+    "Build 6-Month Emergency Fund": {
       title: "Only 48% of Americans Have Emergency Savings - Creates Massive Competitive Advantage",
       figure: "48%",
       description: "Federal Reserve data shows only 48% of Americans have 3-month emergency funds, while 37% cannot cover a $400 expense without borrowing. For professionals with $33,260 average student debt, building emergency savings provides crucial financial stability and competitive advantage over peers who face financial stress that impacts workplace performance.",
@@ -265,7 +265,7 @@ export const USA_GOAL_STATS = {
         link: "https://www.federalreserve.gov/publications/2017-economic-well-being-of-us-households-in-2016-economic-preparedness.htm"
       }
     },
-    "Eliminate High-Interest Debt": {
+    "Pay Off High-Interest Debt": {
       title: "Americans Pay $106+ Monthly in Credit Card Interest at 24% Average Rates",
       figure: "24.35%",
       description: "Credit card debt reached $1.18 trillion with average rates at 24.35%, costing typical borrowers $106+ monthly in interest alone. Federal Reserve research shows middle income professionals most vulnerable to high-interest debt. Eliminating this debt frees thousands annually for wealth building and provides psychological benefits that improve workplace performance.",
@@ -280,7 +280,7 @@ export const USA_GOAL_STATS = {
         link: "https://www.lendingtree.com/credit-cards/study/credit-card-debt-statistics/"
       }
     },
-    "Start Investing for Long-term Wealth": {
+    "Start Long-Term Investing": {
       title: "Early Investors Gain 40+ Years of Compound Growth Worth Millions",
       figure: "$1+ million",
       description: "Vanguard research shows professionals starting retirement investing at 25 versus 35 gain massive compound growth advantages worth $1+ million by retirement. With only 54% of Americans having retirement accounts and student debt delaying wealth building, early investing provides enormous competitive advantage through tax benefits and decades of market growth.",
@@ -299,7 +299,7 @@ export const USA_GOAL_STATS = {
 
   // Domain: Recreation & Leisure
   "Recreation & Leisure": {
-    "Pursue Meaningful Hobbies": {
+    "Plan Solo Adventure Travel": {
       title: "Professional Leaders with Creative Hobbies Show 23% Higher Work Performance",
       figure: "23%",
       description: "A Journal of Occupational and Organizational Psychology study of 400 employees found that professionals with creative hobbies demonstrate significantly better work performance, enhanced creativity on projects, and superior job attitudes. Mark Zuckerberg actively uses hobby engagement as a hiring criterion at Facebook, noting it demonstrates passion and drive.",
@@ -314,7 +314,7 @@ export const USA_GOAL_STATS = {
         link: "https://www.cnbc.com/2017/08/02/3-science-backed-reasons-having-a-hobby-will-help-your-career.html"
       }
     },
-    "Plan Regular Travel and Adventures": {
+    "Explore Wellness Activities": {
       title: "Business Travelers Report 71% Higher Job Satisfaction and Career Development",
       figure: "71%",
       description: "American Express research shows business travel significantly enhances professional satisfaction and career progression. The study found that 93% of companies attribute business growth to in-person meetings, while travelers gain expanded networks, cultural competency, and leadership exposure that accelerates career advancement in competitive markets.",
@@ -329,7 +329,7 @@ export const USA_GOAL_STATS = {
         link: "https://retail-insider.com/retail-insider/2025/06/american-express-survey-71-of-business-travelers-see-travel-as-positive/"
       }
     },
-    "Engage in Creative Expression": {
+    "Explore Local Culture": {
       title: "Stanford Research: Walking Creativity Increases Innovative Output by 60%",
       figure: "60%",
       description: "Stanford's Applied Behavioral Analytics Lab demonstrates that creative expression through activities like walking significantly enhances professional innovation capacity. The research shows consistent creative performance improvements regardless of IQ, suggesting creative practices provide universal competitive advantages in knowledge work and leadership roles.",
@@ -348,7 +348,7 @@ export const USA_GOAL_STATS = {
 
   // Domain: Purpose & Meaning
   "Purpose & Meaning": {
-    "Clarify Life Values and Direction": {
+    "Volunteer in Community": {
       title: "Purpose-Driven Leaders Generate 15% Higher Revenue Growth Rates",
       figure: "15%",
       description: "Harvard Business Review's 8-year global study revealed that companies with purpose-driven leadership significantly outperform competitors in growth metrics. Leaders who clarify personal values and organizational direction create stronger team engagement, more effective decision-making, and measurable competitive advantages in rapidly changing markets.",
@@ -363,7 +363,7 @@ export const USA_GOAL_STATS = {
         link: "https://hbr.org/2019/09/put-purpose-at-the-core-of-your-strategy"
       }
     },
-    "Contribute to Community/Volunteer": {
+    "Align Work with Values": {
       title: "Volunteers Have 27% Better Hiring Success Rate Than Non-Volunteers",
       figure: "27%",
       description: "Corporation for National Service research demonstrates that professionals who volunteer gain significant career advantages through expanded networks, skill development, and enhanced leadership credibility. LinkedIn surveys show 41% of hiring managers view volunteer work as equivalent to paid experience, while 81% value volunteer experience in candidates.",
@@ -378,7 +378,7 @@ export const USA_GOAL_STATS = {
         link: "https://www.pointsoflight.org/blog/five-ways-volunteering-can-help-your-career/"
       }
     },
-    "Explore Spiritual/Philosophical Growth": {
+    "Live More Sustainably": {
       title: "Spiritual Leadership Practices Increase Employee Performance by 21%",
       figure: "21%",
       description: "Research published in Frontiers in Psychology shows that professionals who engage in spiritual/philosophical development demonstrate superior leadership effectiveness and team performance. Organizations with spiritually-developed leaders report higher employee engagement, reduced turnover, and enhanced organizational commitment - creating competitive advantages in talent retention.",
@@ -397,7 +397,7 @@ export const USA_GOAL_STATS = {
 
   // Domain: Environment & Organization
   "Environment & Organization": {
-    "Create Organized, Productive Spaces": {
+    "Buy First Home": {
       title: "Organized Workspaces Drive $355 Million in Productivity Gains for Major Companies",
       figure: "$355 million",
       description: "McKinsey research reveals that employee disengagement costs median S&P 500 companies up to $355 million annually in lost productivity. Well-organized workspaces directly combat this by improving focus and reducing stress. Additional studies show 10-21% productivity improvements through workplace optimization interventions.",
@@ -412,7 +412,7 @@ export const USA_GOAL_STATS = {
         link: "https://www.mckinsey.com/capabilities/people-and-organizational-performance/our-insights/some-employees-are-destroying-value-others-are-building-it-do-you-know-the-difference"
       }
     },
-    "Establish Effective Daily Routines": {
+    "Organize Living Space": {
       title: "Harvard Research Shows 92% of Top Performers Follow Structured Daily Routines",
       figure: "92%",
       description: "Harvard Business Review research demonstrates that 92% of highly productive people follow planned morning routines, with structured daily systems being named the most effective productivity strategy. Routine implementation leads to measurably higher performance and competitive advantage in professional settings.",
@@ -427,7 +427,7 @@ export const USA_GOAL_STATS = {
         link: "https://hbr.org/2024/04/the-research-backed-benefits-of-daily-rituals"
       }
     },
-    "Reduce Environmental Impact": {
+    "Create Eco-Friendly Home": {
       title: "LEED Green Buildings Generate $167.4 Billion in Economic Value While Boosting Productivity",
       figure: "$167.4 billion",
       description: "US Green Building Council research shows green construction generated $167.4 billion in GDP from 2011-2014, while LEED-certified employees report significantly higher productivity, health, and job satisfaction. Environmental workplace improvements create measurable competitive advantages for American professionals.",
@@ -453,100 +453,8 @@ export const USA_GOAL_STATS = {
 const mapGoalNameToStatKey = (goalName) => {
   if (!goalName) return null;
   
-  const goalLower = goalName.toLowerCase();
-  
-  // Career & Work domain mappings
-  if (goalLower.includes('skill') && goalLower.includes('development')) {
-    return 'Skill Development';
-  }
-  if (goalLower.includes('flexible') || goalLower.includes('new skills')) {
-    return 'Skill Development';
-  }
-  if (goalLower.includes('advance') || goalLower.includes('promotion') || goalLower.includes('leadership')) {
-    return 'Career Advancement';
-  }
-  if (goalLower.includes('work-life') || goalLower.includes('balance')) {
-    return 'Work-Life Balance';
-  }
-  
-  // Health & Wellness domain mappings
-  if (goalLower.includes('exercise') || goalLower.includes('fitness') || goalLower.includes('active')) {
-    return 'Regular Exercise';
-  }
-  if (goalLower.includes('sleep')) {
-    return 'Better Sleep Habits';
-  }
-  if (goalLower.includes('nutrition') || goalLower.includes('diet') || goalLower.includes('eating')) {
-    return 'Improved Nutrition';
-  }
-  
-  // Relationships domain mappings
-  if (goalLower.includes('romantic') || goalLower.includes('partner') || goalLower.includes('relationship')) {
-    return 'Strengthen Romantic Partnership';
-  }
-  if (goalLower.includes('family')) {
-    return 'Build Stronger Family Connections';
-  }
-  if (goalLower.includes('network') || goalLower.includes('professional connections')) {
-    return 'Expand Professional Network';
-  }
-  
-  // Personal Growth domain mappings
-  if (goalLower.includes('professional skills') || goalLower.includes('new professional')) {
-    return 'Develop New Professional Skills';
-  }
-  if (goalLower.includes('read') || goalLower.includes('knowledge')) {
-    return 'Read More for Knowledge and Growth';
-  }
-  if (goalLower.includes('mindfulness') || goalLower.includes('mental wellness')) {
-    return 'Practice Mindfulness and Mental Wellness';
-  }
-  
-  // Financial Security domain mappings
-  if (goalLower.includes('emergency') || goalLower.includes('fund')) {
-    return 'Build Emergency Fund (3-6 months expenses)';
-  }
-  if (goalLower.includes('debt') || goalLower.includes('eliminate')) {
-    return 'Eliminate High-Interest Debt';
-  }
-  if (goalLower.includes('invest') || goalLower.includes('wealth')) {
-    return 'Start Investing for Long-term Wealth';
-  }
-  
-  // Recreation & Leisure domain mappings
-  if (goalLower.includes('hobbies')) {
-    return 'Pursue Meaningful Hobbies';
-  }
-  if (goalLower.includes('travel') || goalLower.includes('adventure')) {
-    return 'Plan Regular Travel and Adventures';
-  }
-  if (goalLower.includes('creative') || goalLower.includes('expression')) {
-    return 'Engage in Creative Expression';
-  }
-  
-  // Purpose & Meaning domain mappings
-  if (goalLower.includes('values') || goalLower.includes('direction') || goalLower.includes('clarify')) {
-    return 'Clarify Life Values and Direction';
-  }
-  if (goalLower.includes('community') || goalLower.includes('volunteer')) {
-    return 'Contribute to Community/Volunteer';
-  }
-  if (goalLower.includes('spiritual') || goalLower.includes('philosophical')) {
-    return 'Explore Spiritual/Philosophical Growth';
-  }
-  
-  // Environment & Organization domain mappings
-  if (goalLower.includes('organized') || goalLower.includes('productive spaces') || goalLower.includes('space')) {
-    return 'Create Organized, Productive Spaces';
-  }
-  if (goalLower.includes('routine') || goalLower.includes('daily')) {
-    return 'Establish Effective Daily Routines';
-  }
-  if (goalLower.includes('environmental') || goalLower.includes('impact') || goalLower.includes('sustainable')) {
-    return 'Reduce Environmental Impact';
-  }
-  
-  // If no mapping found, return the original goal name (exact match attempt)
+  // With exact goal name alignment, we no longer need mapping logic
+  // Goals in country definitions now match research stats exactly
   return goalName;
 };
 

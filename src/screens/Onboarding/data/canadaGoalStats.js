@@ -54,7 +54,7 @@ const GOAL_BREAKDOWN_RESEARCH_STATS = [
 export const CANADA_GOAL_STATS = {
   // Domain: Career & Work
   "Career & Work": {
-    "Skill Development": {
+    "Master In-Demand Tech Skills": {
       title: "Canadian Hybrid Work Surge Triples Opportunities",
       figure: "29%",
       description: "Canadian employers are creating nearly three times more hybrid positions since 2023, with 29% of new jobs offering hybrid arrangements versus only 12% fully remote. This represents a massive shift from 84% in-office jobs in Q1 2023 to just 59% by Q1 2025, solidifying flexible work as permanent.",
@@ -69,7 +69,7 @@ export const CANADA_GOAL_STATS = {
         link: "https://www.roberthalf.com/ca/en/insights/research/canadian-remote-work-statistics-and-trends"
       }
     },
-    "Career Advancement": {
+    "Achieve 3.5%+ Salary Increase": {
       title: "Canadian Professionals Earn 10-20% Salary Boost with Management Promotions",
       figure: "20%",
       description: "Canadian professionals typically receive 10-15% salary increases for internal management promotions, with some achieving up to 20% for significant role changes. The average manager salary in Canada is CAD $86,329, with experienced managers (10+ years) earning CAD $255,000+.",
@@ -84,7 +84,7 @@ export const CANADA_GOAL_STATS = {
         link: "https://worldsalaries.com/average-manager-salary-in-canada/"
       }
     },
-    "Work-Life Balance": {
+    "Secure Flexible Work Arrangement": {
       title: "Canadians with Good Work-Life Balance Are 28% More Likely to Stay with Employers",
       figure: "28%",
       description: "Canadian employees with strong work-life balance are 28% more likely to remain with their current employers and report significantly higher job satisfaction. With 47% of Canadian workers experiencing burnout, those who establish effective boundaries achieve better performance and career longevity.",
@@ -103,7 +103,7 @@ export const CANADA_GOAL_STATS = {
 
   // Domain: Health & Wellness
   "Health & Wellness": {
-    "Regular Exercise": {
+    "Develop Sustainable Mental Health Practices": {
       title: "Physical Activity Increases Canadian Professional Earnings",
       figure: "10%",
       description: "Regular participation in physical activity has been attributed to a 6% to 10% increase in earnings among Canadians. This earning advantage is particularly relevant for professionals, as those in higher-skill occupations show greater activity levels and benefit more from cognitive and productivity improvements.",
@@ -118,7 +118,7 @@ export const CANADA_GOAL_STATS = {
         link: "https://www.participaction.com/the-science/key-facts-and-stats/"
       }
     },
-    "Better Sleep Habits": {
+    "Build Functional Strength and Mobility": {
       title: "Poor Sleep Costs Canadian Economy $502 Million Annually",
       figure: "23%",
       description: "Canadian research shows that insufficient sleep duration costs the economy $502 million annually in direct and indirect costs. Workers experiencing sleep problems miss 14 days of work per year and spend another 30 days at work but not fully productive.",
@@ -133,7 +133,7 @@ export const CANADA_GOAL_STATS = {
         link: "https://www150.statcan.gc.ca/n1/pub/82-003-x/2022003/article/00001-eng.htm"
       }
     },
-    "Improved Nutrition": {
+    "Establish Preventive Health Optimization": {
       title: "Healthy Eating Increases Canadian Workplace Productivity by 34%",
       figure: "34%",
       description: "Recent research on Canadian office workers demonstrates that those maintaining healthy eating habits show 34% higher productivity levels compared to colleagues with poor nutritional choices. This productivity advantage is particularly important for Canadian professionals dealing with long winter months.",
@@ -152,7 +152,7 @@ export const CANADA_GOAL_STATS = {
 
   // Domain: Relationships
   "Relationships": {
-    "Strengthen Romantic Partnership": {
+    "Master Textual Chemistry": {
       title: "Canadian Professionals with Strong Partnerships Show Better Work-Life Balance",
       figure: "68%",
       description: "Statistics Canada's 2023 Social Survey reveals that Canadian professionals who maintain strong romantic partnerships experience significantly better work-life integration. This correlation is particularly pronounced in expensive cities like Toronto and Vancouver where dual-income support becomes essential.",
@@ -167,7 +167,7 @@ export const CANADA_GOAL_STATS = {
         link: "https://www.statcan.gc.ca/o1/en/plus/3640-are-canadians-feeling-connected-some-insight-satisfaction-personal-relationships"
       }
     },
-    "Build Stronger Family Connections": {
+    "Build Budget-Friendly Romance": {
       title: "Family Connections Impact Canadian Workplace Performance",
       figure: "49%",
       description: "Canadian workplace research reveals that family relationship quality directly impacts professional performance. The Canadian Mental Health Association emphasizes that 86% of employees believe company culture should actively support mental health, with family connections being primary.",
@@ -182,7 +182,7 @@ export const CANADA_GOAL_STATS = {
         link: "https://cmha.ca/news/how-to-foster-a-healthy-workplace/"
       }
     },
-    "Expand Professional Network": {
+    "Beat the Loneliness Epidemic": {
       title: "Canadian Job Seekers Achieve Major Salary Gains Through Networking",
       figure: "60%",
       description: "Hays Canada research from 5,495 professionals shows that networking and strategic job movement lead to significant compensation gains. With 58% of employees expecting raises over 5% but only 20% of employers willing to provide them, strong professional networks become essential.",
@@ -201,7 +201,7 @@ export const CANADA_GOAL_STATS = {
 
   // Domain: Personal Growth
   "Personal Growth": {
-    "Develop New Professional Skills": {
+    "Master Digital Literacy and AI Tools": {
       title: "Canadian Professionals Who Upskill Earn $40,000+ More Annually",
       figure: "$40,000",
       description: "A Queen's University MMAI program graduate reported a salary increase of over $40,000 after completing AI/ML upskilling. With 43% enrollment increases in machine learning programs across Canadian universities, professionals who continuously develop skills position themselves for substantial advancement.",
@@ -216,7 +216,7 @@ export const CANADA_GOAL_STATS = {
         link: "https://www.theglobeandmail.com/investing/personal-finance/household-finances/article-does-upskilling-in-ai-lead-to-roi/"
       }
     },
-    "Read More for Knowledge and Growth": {
+    "Achieve French Language Proficiency": {
       title: "Canadian Professionals with Strong Literacy Skills Have Employment Advantage",
       figure: "2x",
       description: "Statistics Canada data shows that adults with low literacy skills are twice as likely to be unemployed compared to those with medium-to-high skills. Conference Board research indicates that improving literacy by 1% could increase Canada's GDP by 3%, or $54 billion annually.",
@@ -231,7 +231,7 @@ export const CANADA_GOAL_STATS = {
         link: "https://abclifeliteracy.ca/news/1-in-6-cannot-pass-basic-literacy-tests-the-economic-impact-of-canadians-literacy-skills/"
       }
     },
-    "Practice Mindfulness and Mental Wellness": {
+    "Obtain Professional Certifications": {
       title: "Canadian Companies See $2.18 Return for Every Dollar Invested in Mental Health",
       figure: "$2.18",
       description: "Deloitte Canada's study of seven major Canadian companies found that those with mental health programs in place for three or more years achieved a median annual ROI of $2.18 for every dollar invested, with Bell Canada achieving $4.10 ROI.",
@@ -250,7 +250,7 @@ export const CANADA_GOAL_STATS = {
 
   // Domain: Financial Security
   "Financial Security": {
-    "Build Emergency Fund (3-6 months expenses)": {
+    "Build $15,000 Emergency Fund": {
       title: "Canadian Professionals with Emergency Funds Show 56% Better Productivity",
       figure: "56%",
       description: "Financial Consumer Agency data shows that 65% of budgeters have emergency savings versus only 39% of non-budgeters. Financial stress causes productivity loss of $3,500 per employee per year, while 27% of Canadian households live paycheque-to-paycheque.",
@@ -265,7 +265,7 @@ export const CANADA_GOAL_STATS = {
         link: "https://www.canada.ca/en/financial-consumer-agency/programs/research/canadian-financial-capability-survey-2019.html"
       }
     },
-    "Eliminate High-Interest Debt": {
+    "Save $25,000 Down Payment for Home": {
       title: "Debt-Free Canadian Professionals Access Better Career Opportunities",
       figure: "67%",
       description: "Statistics Canada data reveals household debt represents 173.9% of disposable income in 2025. Young professionals aged 25-35 are particularly affected: 36% of 25-29 year olds and 21% of 30-34 year olds carry student loans.",
@@ -280,7 +280,7 @@ export const CANADA_GOAL_STATS = {
         link: "https://www150.statcan.gc.ca/n1/daily-quotidien/250612/dq250612a-eng.htm"
       }
     },
-    "Start Investing for Long-term Wealth": {
+    "Pay Off $10,000 Student Debt": {
       title: "Young Canadian Investors Build 179% More Net Worth by Age 35",
       figure: "$159,100",
       description: "Statistics Canada's 2023 Survey shows dramatic wealth building among young Canadian investors. The average 35-year-old Canadian has $15,186 in TFSA and $82,100 in RRSP savings. Early investing leverages compound growth advantages.",
@@ -299,7 +299,7 @@ export const CANADA_GOAL_STATS = {
 
   // Domain: Recreation & Leisure
   "Recreation & Leisure": {
-    "Pursue Meaningful Hobbies": {
+    "Explore Canada Through Epic Adventures": {
       title: "Canadian Active Leisure Participation Enhances Professional Performance",
       figure: "24.3%",
       description: "Statistics Canada shows university-educated Canadian professionals have 1.5x higher odds of active leisure participation. University-educated professionals show significantly higher participation rates in meaningful hobbies, correlating with enhanced problem-solving skills.",
@@ -314,7 +314,7 @@ export const CANADA_GOAL_STATS = {
         link: "https://www150.statcan.gc.ca/n1/pub/11-008-x/2009001/article/10690-eng.htm"
       }
     },
-    "Plan Regular Travel and Adventures": {
+    "Master Four-Season Outdoor Activities": {
       title: "Canadian Vacation Deprivation Affects Professional Development",
       figure: "57%",
       description: "Despite Canada's tourism sector contributing $129.7 billion to the economy in 2024, over half of Canadian professionals don't utilize their full vacation entitlement. Research indicates travel-engaged professionals demonstrate enhanced leadership skills.",
@@ -329,7 +329,7 @@ export const CANADA_GOAL_STATS = {
         link: "https://vacationtracker.io/blog/pto-statistics-for-canada/"
       }
     },
-    "Engage in Creative Expression": {
+    "Create Through Hobby Renaissance": {
       title: "Canadian Creative Industries Drive Professional Innovation",
       figure: "$55.5 billion",
       description: "Canadian Heritage data reveals massive economic impact of creative industries, with professionals who engage in creative expression demonstrating superior problem-solving abilities. The sector provides 600,550+ jobs and rapid growth opportunities.",
@@ -348,7 +348,7 @@ export const CANADA_GOAL_STATS = {
 
   // Domain: Purpose & Meaning
   "Purpose & Meaning": {
-    "Clarify Life Values and Direction": {
+    "Lead Climate Action Initiative": {
       title: "Canadian Professionals with Clear Values Show 44% Higher Career Satisfaction",
       figure: "44%",
       description: "Research involving 240 Canadian employees found that Career Success Criteria Clarity is positively correlated with career satisfaction. Canadian professionals who have clarity on their career values demonstrate significantly higher job satisfaction and person-job fit.",
@@ -363,7 +363,7 @@ export const CANADA_GOAL_STATS = {
         link: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7176933/"
       }
     },
-    "Contribute to Community/Volunteer": {
+    "Build Purpose-Driven Side Business": {
       title: "Canadian Corporate Volunteers Are 52% Less Likely to Leave",
       figure: "52%",
       description: "Employees who participate in corporate volunteering programs in Canada are 52% less likely to leave their company. With 94% of Canadian companies running volunteering initiatives and 57% year-over-year increase in participation, volunteering drives professional development.",
@@ -378,7 +378,7 @@ export const CANADA_GOAL_STATS = {
         link: "https://benevity.com/en-gb/state-of-volunteering-2024"
       }
     },
-    "Explore Spiritual/Philosophical Growth": {
+    "Volunteer Community Leadership": {
       title: "Canadian Professionals Practicing Meditation Report 73% Better Balance",
       figure: "73%",
       description: "A survey of 8,500+ Canadians revealed that 73% believe regular meditation practice improves work-life balance. Among millennials and Gen Z professionals (25-35), 30% are likely to participate in employer-offered meditation sessions.",
@@ -397,7 +397,7 @@ export const CANADA_GOAL_STATS = {
 
   // Domain: Environment & Organization
   "Environment & Organization": {
-    "Create Organized, Productive Spaces": {
+    "Find Inspiring Housemates": {
       title: "Canadian Home Office Setup Drives 90% Productivity Success Rate",
       figure: "90%",
       description: "Statistics Canada's 2021 study found that 90% of teleworkers accomplished at least as much work per hour at home as in traditional offices, with 32% reporting increased productivity. However, 10% of those with inadequate physical workspaces saw decreased productivity, highlighting the critical importance of organized home office setups.",
@@ -412,7 +412,7 @@ export const CANADA_GOAL_STATS = {
         link: "https://www150.statcan.gc.ca/n1/pub/45-28-0001/2021001/article/00012-eng.htm"
       }
     },
-    "Establish Effective Daily Routines": {
+    "Transition to Climate-Friendly Living": {
       title: "Canadian Winter Productivity Challenge: 22.8% Task Completion Rate",
       figure: "22.8%",
       description: "Research shows Canadian workplace productivity decreases significantly during winter months due to reduced sunlight and Seasonal Affective Disorder (SAD). Establishing consistent daily routines becomes critical for Canadian professionals to maintain productivity through Canada's long winter season.",
@@ -427,7 +427,7 @@ export const CANADA_GOAL_STATS = {
         link: "https://www.hrvisionevent.com/content-hub/hr-strategies-for-winter-workplace-productivity/"
       }
     },
-    "Reduce Environmental Impact": {
+    "Master Time Management System": {
       title: "Canada's Greenest Employers Attract Top Talent in 2024",
       figure: "69%",
       description: "Canada's Greenest Employers competition, now in its 18th year, recognizes organizations that create environmental awareness cultures. Companies like RONA, BCIT, and major Canadian banks use environmental initiatives to attract talent, particularly appealing to younger professionals who prioritize sustainability.",
@@ -453,100 +453,8 @@ export const CANADA_GOAL_STATS = {
 const mapGoalNameToStatKey = (goalName) => {
   if (!goalName) return null;
   
-  const goalLower = goalName.toLowerCase();
-  
-  // Career & Work domain mappings
-  if (goalLower.includes('skill') && goalLower.includes('development')) {
-    return 'Skill Development';
-  }
-  if (goalLower.includes('flexible') || goalLower.includes('new skills')) {
-    return 'Skill Development';
-  }
-  if (goalLower.includes('advance') || goalLower.includes('promotion') || goalLower.includes('leadership')) {
-    return 'Career Advancement';
-  }
-  if (goalLower.includes('work-life') || goalLower.includes('balance')) {
-    return 'Work-Life Balance';
-  }
-  
-  // Health & Wellness domain mappings
-  if (goalLower.includes('exercise') || goalLower.includes('fitness') || goalLower.includes('active')) {
-    return 'Regular Exercise';
-  }
-  if (goalLower.includes('sleep')) {
-    return 'Better Sleep Habits';
-  }
-  if (goalLower.includes('nutrition') || goalLower.includes('diet') || goalLower.includes('eating')) {
-    return 'Improved Nutrition';
-  }
-  
-  // Relationships domain mappings
-  if (goalLower.includes('romantic') || goalLower.includes('partner') || goalLower.includes('relationship')) {
-    return 'Strengthen Romantic Partnership';
-  }
-  if (goalLower.includes('family')) {
-    return 'Build Stronger Family Connections';
-  }
-  if (goalLower.includes('network') || goalLower.includes('professional connections')) {
-    return 'Expand Professional Network';
-  }
-  
-  // Personal Growth domain mappings
-  if (goalLower.includes('professional skills') || goalLower.includes('new professional')) {
-    return 'Develop New Professional Skills';
-  }
-  if (goalLower.includes('read') || goalLower.includes('knowledge')) {
-    return 'Read More for Knowledge and Growth';
-  }
-  if (goalLower.includes('mindfulness') || goalLower.includes('mental wellness')) {
-    return 'Practice Mindfulness and Mental Wellness';
-  }
-  
-  // Financial Security domain mappings
-  if (goalLower.includes('emergency') || goalLower.includes('fund')) {
-    return 'Build Emergency Fund (3-6 months expenses)';
-  }
-  if (goalLower.includes('debt') || goalLower.includes('eliminate')) {
-    return 'Eliminate High-Interest Debt';
-  }
-  if (goalLower.includes('invest') || goalLower.includes('wealth')) {
-    return 'Start Investing for Long-term Wealth';
-  }
-  
-  // Recreation & Leisure domain mappings
-  if (goalLower.includes('hobbies')) {
-    return 'Pursue Meaningful Hobbies';
-  }
-  if (goalLower.includes('travel') || goalLower.includes('adventure')) {
-    return 'Plan Regular Travel and Adventures';
-  }
-  if (goalLower.includes('creative') || goalLower.includes('expression')) {
-    return 'Engage in Creative Expression';
-  }
-  
-  // Purpose & Meaning domain mappings
-  if (goalLower.includes('values') || goalLower.includes('direction') || goalLower.includes('clarify')) {
-    return 'Clarify Life Values and Direction';
-  }
-  if (goalLower.includes('community') || goalLower.includes('volunteer')) {
-    return 'Contribute to Community/Volunteer';
-  }
-  if (goalLower.includes('spiritual') || goalLower.includes('philosophical')) {
-    return 'Explore Spiritual/Philosophical Growth';
-  }
-  
-  // Environment & Organization domain mappings
-  if (goalLower.includes('organized') || goalLower.includes('productive spaces') || goalLower.includes('space')) {
-    return 'Create Organized, Productive Spaces';
-  }
-  if (goalLower.includes('routine') || goalLower.includes('daily')) {
-    return 'Establish Effective Daily Routines';
-  }
-  if (goalLower.includes('environmental') || goalLower.includes('impact') || goalLower.includes('sustainable')) {
-    return 'Reduce Environmental Impact';
-  }
-  
-  // If no mapping found, return the original goal name (exact match attempt)
+  // With exact goal name alignment, we no longer need mapping logic
+  // Goals in country definitions now match research stats exactly
   return goalName;
 };
 

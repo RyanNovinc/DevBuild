@@ -51,29 +51,31 @@ const COMPONENT_TYPES = {
 const DASHBOARD_COMPONENTS = {
   [COMPONENT_TYPES.STREAK_COUNTER]: {
     id: COMPONENT_TYPES.STREAK_COUNTER,
-    title: 'Momentum Streak',
+    title: 'Custom Streak',
     icon: 'flame-outline',
-    component: StreakCounter
+    component: StreakCounter,
+    requiresLevel: 2 // Unlock at stage 2
   },
   [COMPONENT_TYPES.RESEARCH_STATS]: {
     id: COMPONENT_TYPES.RESEARCH_STATS,
     title: 'Research Insights',
     icon: 'book-outline',
-    component: ResearchStats
+    component: ResearchStats,
+    requiresLevel: 3 // Unlock at stage 3
   },
   [COMPONENT_TYPES.FOCUS_TIMER]: {
     id: COMPONENT_TYPES.FOCUS_TIMER,
     title: 'Focus Timer',
     icon: 'timer-outline',
     component: FocusTimer,
-    requiresLevel: 4 // Unlock at level 4
+    requiresLevel: 4 // Unlock at stage 4
   },
   [COMPONENT_TYPES.FINANCIAL_TRACKER]: {
     id: COMPONENT_TYPES.FINANCIAL_TRACKER,
     title: 'Financial Tracker',
     icon: 'wallet-outline',
     component: FinancialTracker,
-    isPremium: true // Mark this component as premium
+    requiresLevel: 5 // Unlock at stage 5
   }
 };
 
@@ -82,9 +84,24 @@ const CustomizableDashboard = ({ theme, navigation }) => {
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [removingMode, setRemovingMode] = useState(false);
   const [shakeAnimations, setShakeAnimations] = useState({});
+  // Custom Streak unlock state
+  const [showCustomStreakCongrats, setShowCustomStreakCongrats] = useState(false);
+  const [customStreakUnlockState, setCustomStreakUnlockState] = useState('locked'); // 'locked', 'unlocked', 'seen'
+  const [fallingFlameAnimations, setFallingFlameAnimations] = useState([]);
+  
+  // Research Stats unlock state
+  const [showResearchStatsCongrats, setShowResearchStatsCongrats] = useState(false);
+  const [researchStatsUnlockState, setResearchStatsUnlockState] = useState('locked'); // 'locked', 'unlocked', 'seen'
+  const [fallingBookAnimations, setFallingBookAnimations] = useState([]);
+  
   const [showFocusTimerCongrats, setShowFocusTimerCongrats] = useState(false);
   const [focusTimerUnlockState, setFocusTimerUnlockState] = useState('locked'); // 'locked', 'unlocked', 'seen'
   const [fallingClockAnimations, setFallingClockAnimations] = useState([]);
+  
+  // Financial Tracker unlock state
+  const [showFinancialTrackerCongrats, setShowFinancialTrackerCongrats] = useState(false);
+  const [financialTrackerUnlockState, setFinancialTrackerUnlockState] = useState('locked'); // 'locked', 'unlocked', 'seen'
+  const [fallingWalletAnimations, setFallingWalletAnimations] = useState([]);
   
   // Add state for upgrade modal (like in GoalsScreen)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -176,6 +193,42 @@ const CustomizableDashboard = ({ theme, navigation }) => {
     }
   };
 
+  // Check Custom Streak unlock state
+  useEffect(() => {
+    const checkCustomStreakUnlockState = async () => {
+      if (userLevel >= 2) {
+        const hasSeenCongrats = await AsyncStorage.getItem('customStreakCongratsShown');
+        if (!hasSeenCongrats) {
+          setCustomStreakUnlockState('unlocked'); // Just unlocked, show "Unlock" state
+        } else {
+          setCustomStreakUnlockState('seen'); // Already seen congratulations
+        }
+      } else {
+        setCustomStreakUnlockState('locked'); // Still locked
+      }
+    };
+    
+    checkCustomStreakUnlockState();
+  }, [userLevel]);
+
+  // Check Research Stats unlock state
+  useEffect(() => {
+    const checkResearchStatsUnlockState = async () => {
+      if (userLevel >= 3) {
+        const hasSeenCongrats = await AsyncStorage.getItem('researchStatsCongratsShown');
+        if (!hasSeenCongrats) {
+          setResearchStatsUnlockState('unlocked'); // Just unlocked, show "Unlock" state
+        } else {
+          setResearchStatsUnlockState('seen'); // Already seen congratulations
+        }
+      } else {
+        setResearchStatsUnlockState('locked'); // Still locked
+      }
+    };
+    
+    checkResearchStatsUnlockState();
+  }, [userLevel]);
+
   // Check Focus Timer unlock state
   useEffect(() => {
     const checkFocusTimerUnlockState = async () => {
@@ -192,6 +245,24 @@ const CustomizableDashboard = ({ theme, navigation }) => {
     };
     
     checkFocusTimerUnlockState();
+  }, [userLevel]);
+  
+  // Check Financial Tracker unlock state
+  useEffect(() => {
+    const checkFinancialTrackerUnlockState = async () => {
+      if (userLevel >= 5) {
+        const hasSeenCongrats = await AsyncStorage.getItem('financialTrackerCongratsShown');
+        if (!hasSeenCongrats) {
+          setFinancialTrackerUnlockState('unlocked'); // Just unlocked, show "Unlock" state
+        } else {
+          setFinancialTrackerUnlockState('seen'); // Already seen congratulations
+        }
+      } else {
+        setFinancialTrackerUnlockState('locked'); // Still locked
+      }
+    };
+    
+    checkFinancialTrackerUnlockState();
   }, [userLevel]);
   
   // Load dashboard configuration on component mount
@@ -253,7 +324,145 @@ const CustomizableDashboard = ({ theme, navigation }) => {
     ]).start();
   };
 
-  // Create falling clock animations
+  // Create falling flame animations (Custom Streak)
+  const createFallingFlameAnimations = () => {
+    const numberOfFlames = 8;
+    const animations = [];
+    
+    for (let i = 0; i < numberOfFlames; i++) {
+      const animatedValue = new Animated.Value(-50); // Start above screen
+      const horizontalPosition = Math.random() * (width - 40); // Random horizontal position
+      const delay = Math.random() * 2000; // Random delay up to 2 seconds
+      const duration = 3000 + Math.random() * 2000; // Duration between 3-5 seconds
+      
+      animations.push({
+        id: i,
+        animatedValue,
+        horizontalPosition,
+        delay,
+        duration,
+        rotation: new Animated.Value(0),
+      });
+    }
+    
+    setFallingFlameAnimations(animations);
+    
+    // Start animations with a slight delay to ensure modal is rendered
+    setTimeout(() => {
+      animations.forEach((flame) => {
+        // Falling animation
+        Animated.timing(flame.animatedValue, {
+          toValue: height + 50, // Fall past bottom of screen
+          duration: flame.duration,
+          delay: flame.delay,
+          useNativeDriver: true,
+        }).start();
+        
+        // Rotation animation
+        Animated.loop(
+          Animated.timing(flame.rotation, {
+            toValue: 1,
+            duration: 2000,
+            useNativeDriver: true,
+          })
+        ).start();
+      });
+    }, 100);
+  };
+
+  // Create falling book animations (Research Insights)
+  const createFallingBookAnimations = () => {
+    const numberOfBooks = 8;
+    const animations = [];
+    
+    for (let i = 0; i < numberOfBooks; i++) {
+      const animatedValue = new Animated.Value(-50); // Start above screen
+      const horizontalPosition = Math.random() * (width - 40); // Random horizontal position
+      const delay = Math.random() * 2000; // Random delay up to 2 seconds
+      const duration = 3000 + Math.random() * 2000; // Duration between 3-5 seconds
+      
+      animations.push({
+        id: i,
+        animatedValue,
+        horizontalPosition,
+        delay,
+        duration,
+        rotation: new Animated.Value(0),
+      });
+    }
+    
+    setFallingBookAnimations(animations);
+    
+    // Start animations with a slight delay to ensure modal is rendered
+    setTimeout(() => {
+      animations.forEach((book) => {
+        // Falling animation
+        Animated.timing(book.animatedValue, {
+          toValue: height + 50, // Fall past bottom of screen
+          duration: book.duration,
+          delay: book.delay,
+          useNativeDriver: true,
+        }).start();
+        
+        // Rotation animation
+        Animated.loop(
+          Animated.timing(book.rotation, {
+            toValue: 1,
+            duration: 2000,
+            useNativeDriver: true,
+          })
+        ).start();
+      });
+    }, 100);
+  };
+
+  // Create falling wallet animations (Financial Tracker)
+  const createFallingWalletAnimations = () => {
+    const numberOfWallets = 8;
+    const animations = [];
+    
+    for (let i = 0; i < numberOfWallets; i++) {
+      const animatedValue = new Animated.Value(-50); // Start above screen
+      const horizontalPosition = Math.random() * (width - 40); // Random horizontal position
+      const delay = Math.random() * 2000; // Random delay up to 2 seconds
+      const duration = 3000 + Math.random() * 2000; // Duration between 3-5 seconds
+      
+      animations.push({
+        id: i,
+        animatedValue,
+        horizontalPosition,
+        delay,
+        duration,
+        rotation: new Animated.Value(0),
+      });
+    }
+    
+    setFallingWalletAnimations(animations);
+    
+    // Start animations with a slight delay to ensure modal is rendered
+    setTimeout(() => {
+      animations.forEach((wallet) => {
+        // Falling animation
+        Animated.timing(wallet.animatedValue, {
+          toValue: height + 50, // Fall past bottom of screen
+          duration: wallet.duration,
+          delay: wallet.delay,
+          useNativeDriver: true,
+        }).start();
+        
+        // Rotation animation
+        Animated.loop(
+          Animated.timing(wallet.rotation, {
+            toValue: 1,
+            duration: 2000,
+            useNativeDriver: true,
+          })
+        ).start();
+      });
+    }, 100);
+  };
+
+  // Create falling clock animations (Focus Timer)
   const createFallingClockAnimations = () => {
     const numberOfClocks = 8;
     const animations = [];
@@ -276,25 +485,27 @@ const CustomizableDashboard = ({ theme, navigation }) => {
     
     setFallingClockAnimations(animations);
     
-    // Start animations
-    animations.forEach((clock) => {
-      // Falling animation
-      Animated.timing(clock.animatedValue, {
-        toValue: height + 50, // Fall past bottom of screen
-        duration: clock.duration,
-        delay: clock.delay,
-        useNativeDriver: true,
-      }).start();
-      
-      // Rotation animation
-      Animated.loop(
-        Animated.timing(clock.rotation, {
-          toValue: 1,
-          duration: 2000,
+    // Start animations with a slight delay to ensure modal is rendered
+    setTimeout(() => {
+      animations.forEach((clock) => {
+        // Falling animation
+        Animated.timing(clock.animatedValue, {
+          toValue: height + 50, // Fall past bottom of screen
+          duration: clock.duration,
+          delay: clock.delay,
           useNativeDriver: true,
-        })
-      ).start();
-    });
+        }).start();
+        
+        // Rotation animation
+        Animated.loop(
+          Animated.timing(clock.rotation, {
+            toValue: 1,
+            duration: 2000,
+            useNativeDriver: true,
+          })
+        ).start();
+      });
+    }, 100);
   };
   
   // Load dashboard configuration from storage
@@ -404,26 +615,54 @@ const CustomizableDashboard = ({ theme, navigation }) => {
       return;
     }
     
-    // Check if this is the Focus Timer and user just unlocked it
-    if (componentType === COMPONENT_TYPES.FOCUS_TIMER) {
-      console.log('This is Focus Timer, checking conditions...');
-      console.log('Has level requirement:', !!component.requiresLevel);
-      console.log('User level meets requirement:', userLevel >= component.requiresLevel);
+    // Check if this is a newly unlocked widget and show celebration
+    if (component.requiresLevel && userLevel >= component.requiresLevel) {
+      let congratsKey = '';
+      let showCongratsFunc = null;
+      let createAnimationFunc = null;
+      let setUnlockStateFunc = null;
       
-      if (component.requiresLevel && userLevel >= component.requiresLevel) {
-        const hasSeenCongrats = await AsyncStorage.getItem('focusTimerCongratsShown');
-        console.log('Has seen congrats before:', hasSeenCongrats);
+      // Determine which celebration to show based on component type
+      switch (componentType) {
+        case COMPONENT_TYPES.STREAK_COUNTER:
+          congratsKey = 'customStreakCongratsShown';
+          showCongratsFunc = setShowCustomStreakCongrats;
+          createAnimationFunc = createFallingFlameAnimations;
+          setUnlockStateFunc = setCustomStreakUnlockState;
+          break;
+        case COMPONENT_TYPES.RESEARCH_STATS:
+          congratsKey = 'researchStatsCongratsShown';
+          showCongratsFunc = setShowResearchStatsCongrats;
+          createAnimationFunc = createFallingBookAnimations;
+          setUnlockStateFunc = setResearchStatsUnlockState;
+          break;
+        case COMPONENT_TYPES.FOCUS_TIMER:
+          congratsKey = 'focusTimerCongratsShown';
+          showCongratsFunc = setShowFocusTimerCongrats;
+          createAnimationFunc = createFallingClockAnimations;
+          setUnlockStateFunc = setFocusTimerUnlockState;
+          break;
+        case COMPONENT_TYPES.FINANCIAL_TRACKER:
+          congratsKey = 'financialTrackerCongratsShown';
+          showCongratsFunc = setShowFinancialTrackerCongrats;
+          createAnimationFunc = createFallingWalletAnimations;
+          setUnlockStateFunc = setFinancialTrackerUnlockState;
+          break;
+      }
+      
+      if (congratsKey && showCongratsFunc && createAnimationFunc && setUnlockStateFunc) {
+        const hasSeenCongrats = await AsyncStorage.getItem(congratsKey);
         
         if (!hasSeenCongrats) {
-          console.log('Showing congratulations popup!');
+          console.log(`Showing congratulations popup for ${componentType}!`);
           // Show congratulations popup
           setIsAddModalVisible(false);
-          setShowFocusTimerCongrats(true);
-          // Start falling clock animation
-          createFallingClockAnimations();
+          showCongratsFunc(true);
+          // Start falling animation
+          createAnimationFunc();
           // Mark as seen and update unlock state
-          await AsyncStorage.setItem('focusTimerCongratsShown', 'true');
-          setFocusTimerUnlockState('seen');
+          await AsyncStorage.setItem(congratsKey, 'true');
+          setUnlockStateFunc('seen');
           // Add the component after showing congrats
           const newWidget = createWidgetInstance(componentType);
           const updatedItems = [...dashboardItems, newWidget];
@@ -431,7 +670,7 @@ const CustomizableDashboard = ({ theme, navigation }) => {
           saveDashboardConfig(updatedItems);
           return;
         } else {
-          console.log('User has already seen congrats, proceeding normally');
+          console.log(`User has already seen congrats for ${componentType}, proceeding normally`);
         }
       }
     }
@@ -695,12 +934,66 @@ const CustomizableDashboard = ({ theme, navigation }) => {
                         maxFontSizeMultiplier={1.3}
                         numberOfLines={1}
                       >
-                        Unlock at level {component.requiresLevel}
+                        Unlock at stage {component.requiresLevel}
                       </Text>
                     )}
                     
+                    {/* Show "Unlock" text for newly unlocked Custom Streak */}
+                    {component.id === COMPONENT_TYPES.STREAK_COUNTER && customStreakUnlockState === 'unlocked' && (
+                      <Text 
+                        style={[
+                          styles.unlockLabel, 
+                          { 
+                            color: '#4CAF50',
+                            fontSize: scaleFontSize(12),
+                            fontWeight: '600'
+                          }
+                        ]}
+                        maxFontSizeMultiplier={1.3}
+                        numberOfLines={1}
+                      >
+                        Unlock
+                      </Text>
+                    )}
+                    
+                    {/* Show "Unlock" text for newly unlocked Research Stats */}
+                    {component.id === COMPONENT_TYPES.RESEARCH_STATS && researchStatsUnlockState === 'unlocked' && (
+                      <Text 
+                        style={[
+                          styles.unlockLabel, 
+                          { 
+                            color: '#4CAF50',
+                            fontSize: scaleFontSize(12),
+                            fontWeight: '600'
+                          }
+                        ]}
+                        maxFontSizeMultiplier={1.3}
+                        numberOfLines={1}
+                      >
+                        Unlock
+                      </Text>
+                    )}
+
                     {/* Show "Unlock" text for newly unlocked Focus Timer */}
                     {component.id === COMPONENT_TYPES.FOCUS_TIMER && focusTimerUnlockState === 'unlocked' && (
+                      <Text 
+                        style={[
+                          styles.unlockLabel, 
+                          { 
+                            color: '#4CAF50',
+                            fontSize: scaleFontSize(12),
+                            fontWeight: '600'
+                          }
+                        ]}
+                        maxFontSizeMultiplier={1.3}
+                        numberOfLines={1}
+                      >
+                        Unlock
+                      </Text>
+                    )}
+                    
+                    {/* Show "Unlock" text for newly unlocked Financial Tracker */}
+                    {component.id === COMPONENT_TYPES.FINANCIAL_TRACKER && financialTrackerUnlockState === 'unlocked' && (
                       <Text 
                         style={[
                           styles.unlockLabel, 
@@ -727,8 +1020,17 @@ const CustomizableDashboard = ({ theme, navigation }) => {
                       // Level locked
                       : (component.requiresLevel && userLevel < component.requiresLevel)
                         ? "lock-closed"
+                      // Custom Streak newly unlocked
+                      : (component.id === COMPONENT_TYPES.STREAK_COUNTER && customStreakUnlockState === 'unlocked')
+                        ? "lock-open"
+                      // Research Stats newly unlocked
+                      : (component.id === COMPONENT_TYPES.RESEARCH_STATS && researchStatsUnlockState === 'unlocked')
+                        ? "lock-open"
                       // Focus Timer newly unlocked
                       : (component.id === COMPONENT_TYPES.FOCUS_TIMER && focusTimerUnlockState === 'unlocked')
+                        ? "lock-open"
+                      // Financial Tracker newly unlocked
+                      : (component.id === COMPONENT_TYPES.FINANCIAL_TRACKER && financialTrackerUnlockState === 'unlocked')
                         ? "lock-open"
                       // Default add icon
                       : "add-circle"
@@ -741,8 +1043,17 @@ const CustomizableDashboard = ({ theme, navigation }) => {
                       // Level locked  
                       : (component.requiresLevel && userLevel < component.requiresLevel)
                         ? '#FF9500'
+                      // Custom Streak newly unlocked
+                      : (component.id === COMPONENT_TYPES.STREAK_COUNTER && customStreakUnlockState === 'unlocked')
+                        ? '#4CAF50'
+                      // Research Stats newly unlocked
+                      : (component.id === COMPONENT_TYPES.RESEARCH_STATS && researchStatsUnlockState === 'unlocked')
+                        ? '#4CAF50'
                       // Focus Timer newly unlocked
                       : (component.id === COMPONENT_TYPES.FOCUS_TIMER && focusTimerUnlockState === 'unlocked')
+                        ? '#4CAF50'
+                      // Financial Tracker newly unlocked
+                      : (component.id === COMPONENT_TYPES.FINANCIAL_TRACKER && financialTrackerUnlockState === 'unlocked')
                         ? '#4CAF50'
                       // Default add color
                       : theme.primary
@@ -995,6 +1306,286 @@ const CustomizableDashboard = ({ theme, navigation }) => {
     );
   };
   
+  // Render Custom Streak congratulations modal
+  const renderCustomStreakCongratsModal = () => {
+    return (
+      <Modal
+        visible={showCustomStreakCongrats}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowCustomStreakCongrats(false)}
+      >
+        <View style={styles.modalOverlay}>
+          {/* Falling Flame Icons */}
+          {fallingFlameAnimations.map((flame) => (
+            <Animated.View
+              key={flame.id}
+              style={[
+                styles.fallingClock,
+                {
+                  left: flame.horizontalPosition,
+                  transform: [
+                    {
+                      translateY: flame.animatedValue
+                    },
+                    {
+                      rotate: flame.rotation.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ['0deg', '360deg']
+                      })
+                    }
+                  ]
+                }
+              ]}
+              pointerEvents="none"
+            >
+              <Ionicons 
+                name="flame-outline" 
+                size={scaleWidth(24)} 
+                color="#FF4500" 
+                style={styles.fallingClockIcon}
+              />
+            </Animated.View>
+          ))}
+          
+          <View style={[
+            styles.congratsModalContent,
+            {
+              backgroundColor: isDarkMode ? '#121214' : '#F5F5F7',
+              borderColor: theme.border,
+              maxWidth: 400,
+              width: isLandscape ? '60%' : '90%',
+              borderRadius: scaleWidth(20),
+              borderWidth: 1,
+              padding: scaleWidth(24),
+            }
+          ]}>
+            {/* Celebration Icon */}
+            <View style={[
+              styles.congratsIconContainer,
+              {
+                backgroundColor: '#FF4500',
+                width: scaleWidth(80),
+                height: scaleWidth(80),
+                borderRadius: scaleWidth(40),
+                marginBottom: scaleHeight(16),
+              }
+            ]}>
+              <Ionicons name="flame" size={scaleWidth(40)} color="#FFFFFF" />
+            </View>
+            
+            <Text style={[
+              styles.congratsTitle,
+              {
+                color: theme.text,
+                fontSize: scaleFontSize(22),
+                fontWeight: 'bold',
+                textAlign: 'center',
+                marginBottom: scaleHeight(12)
+              }
+            ]}>
+              🎉 Level 2 Unlocked!
+            </Text>
+            
+            <Text style={[
+              styles.congratsSubtitle,
+              {
+                color: '#FF4500',
+                fontSize: scaleFontSize(18),
+                fontWeight: '600',
+                textAlign: 'center',
+                marginBottom: scaleHeight(16)
+              }
+            ]}>
+              Custom Streak Tracker
+            </Text>
+            
+            <Text style={[
+              styles.congratsDescription,
+              {
+                color: theme.text,
+                fontSize: scaleFontSize(16),
+                lineHeight: scaleFontSize(22),
+                textAlign: 'center',
+                marginBottom: scaleHeight(24)
+              }
+            ]}>
+              Track any streak in your life! View your progress on a calendar, create checklists to complete each day, and watch your consistency grow.
+            </Text>
+            
+            {/* Get Started Button */}
+            <TouchableOpacity
+              style={[
+                styles.congratsButton,
+                {
+                  backgroundColor: '#FF4500',
+                  paddingVertical: scaleHeight(14),
+                  borderRadius: scaleWidth(12),
+                  marginTop: scaleHeight(8)
+                }
+              ]}
+              onPress={() => setShowCustomStreakCongrats(false)}
+            >
+              <Text 
+                style={[
+                  styles.congratsButtonText,
+                  {
+                    color: '#FFFFFF',
+                    fontSize: scaleFontSize(16),
+                    fontWeight: 'bold',
+                    textAlign: 'center'
+                  }
+                ]}
+              >
+                Start Tracking! 🔥
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
+  // Render Research Stats congratulations modal
+  const renderResearchStatsCongratsModal = () => {
+    return (
+      <Modal
+        visible={showResearchStatsCongrats}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowResearchStatsCongrats(false)}
+      >
+        <View style={styles.modalOverlay}>
+          {/* Falling Book Icons */}
+          {fallingBookAnimations.map((book) => (
+            <Animated.View
+              key={book.id}
+              style={[
+                styles.fallingClock,
+                {
+                  left: book.horizontalPosition,
+                  transform: [
+                    {
+                      translateY: book.animatedValue
+                    },
+                    {
+                      rotate: book.rotation.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ['0deg', '360deg']
+                      })
+                    }
+                  ]
+                }
+              ]}
+              pointerEvents="none"
+            >
+              <Ionicons 
+                name="book-outline" 
+                size={scaleWidth(24)} 
+                color="#4CAF50" 
+                style={styles.fallingClockIcon}
+              />
+            </Animated.View>
+          ))}
+          
+          <View style={[
+            styles.congratsModalContent,
+            {
+              backgroundColor: isDarkMode ? '#121214' : '#F5F5F7',
+              borderColor: theme.border,
+              maxWidth: 400,
+              width: isLandscape ? '60%' : '90%',
+              borderRadius: scaleWidth(20),
+              borderWidth: 1,
+              padding: scaleWidth(24),
+            }
+          ]}>
+            {/* Celebration Icon */}
+            <View style={[
+              styles.congratsIconContainer,
+              {
+                backgroundColor: '#4CAF50',
+                width: scaleWidth(80),
+                height: scaleWidth(80),
+                borderRadius: scaleWidth(40),
+                marginBottom: scaleHeight(16),
+              }
+            ]}>
+              <Ionicons name="book" size={scaleWidth(40)} color="#FFFFFF" />
+            </View>
+            
+            <Text style={[
+              styles.congratsTitle,
+              {
+                color: theme.text,
+                fontSize: scaleFontSize(22),
+                fontWeight: 'bold',
+                textAlign: 'center',
+                marginBottom: scaleHeight(12)
+              }
+            ]}>
+              🎉 Level 3 Unlocked!
+            </Text>
+            
+            <Text style={[
+              styles.congratsSubtitle,
+              {
+                color: '#4CAF50',
+                fontSize: scaleFontSize(18),
+                fontWeight: '600',
+                textAlign: 'center',
+                marginBottom: scaleHeight(16)
+              }
+            ]}>
+              Research Insights
+            </Text>
+            
+            <Text style={[
+              styles.congratsDescription,
+              {
+                color: theme.text,
+                fontSize: scaleFontSize(16),
+                lineHeight: scaleFontSize(22),
+                textAlign: 'center',
+                marginBottom: scaleHeight(24)
+              }
+            ]}>
+              Access inspiring research about goal setting and life domains! Read evidence-based insights that will motivate and guide your journey to success.
+            </Text>
+            
+            {/* Get Started Button */}
+            <TouchableOpacity
+              style={[
+                styles.congratsButton,
+                {
+                  backgroundColor: '#4CAF50',
+                  paddingVertical: scaleHeight(14),
+                  borderRadius: scaleWidth(12),
+                  marginTop: scaleHeight(8)
+                }
+              ]}
+              onPress={() => setShowResearchStatsCongrats(false)}
+            >
+              <Text 
+                style={[
+                  styles.congratsButtonText,
+                  {
+                    color: '#FFFFFF',
+                    fontSize: scaleFontSize(16),
+                    fontWeight: 'bold',
+                    textAlign: 'center'
+                  }
+                ]}
+              >
+                Get Inspired! 📚
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
   // Render Focus Timer congratulations modal
   const renderFocusTimerCongratsModal = () => {
     return (
@@ -1197,6 +1788,146 @@ const CustomizableDashboard = ({ theme, navigation }) => {
       </Modal>
     );
   };
+
+  // Render Financial Tracker congratulations modal
+  const renderFinancialTrackerCongratsModal = () => {
+    return (
+      <Modal
+        visible={showFinancialTrackerCongrats}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowFinancialTrackerCongrats(false)}
+      >
+        <View style={styles.modalOverlay}>
+          {/* Falling Wallet Icons */}
+          {fallingWalletAnimations.map((wallet) => (
+            <Animated.View
+              key={wallet.id}
+              style={[
+                styles.fallingClock,
+                {
+                  left: wallet.horizontalPosition,
+                  transform: [
+                    {
+                      translateY: wallet.animatedValue
+                    },
+                    {
+                      rotate: wallet.rotation.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ['0deg', '360deg']
+                      })
+                    }
+                  ]
+                }
+              ]}
+              pointerEvents="none"
+            >
+              <Ionicons 
+                name="wallet-outline" 
+                size={scaleWidth(24)} 
+                color="#FFD700" 
+                style={styles.fallingClockIcon}
+              />
+            </Animated.View>
+          ))}
+          
+          <View style={[
+            styles.congratsModalContent,
+            {
+              backgroundColor: isDarkMode ? '#121214' : '#F5F5F7',
+              borderColor: theme.border,
+              maxWidth: 400,
+              width: isLandscape ? '60%' : '90%',
+              borderRadius: scaleWidth(20),
+              borderWidth: 1,
+              padding: scaleWidth(24),
+            }
+          ]}>
+            {/* Celebration Icon */}
+            <View style={[
+              styles.congratsIconContainer,
+              {
+                backgroundColor: '#FFD700',
+                width: scaleWidth(80),
+                height: scaleWidth(80),
+                borderRadius: scaleWidth(40),
+                marginBottom: scaleHeight(16),
+              }
+            ]}>
+              <Ionicons name="wallet" size={scaleWidth(40)} color="#000000" />
+            </View>
+            
+            <Text style={[
+              styles.congratsTitle,
+              {
+                color: theme.text,
+                fontSize: scaleFontSize(22),
+                fontWeight: 'bold',
+                textAlign: 'center',
+                marginBottom: scaleHeight(12)
+              }
+            ]}>
+              🎉 Level 5 Unlocked!
+            </Text>
+            
+            <Text style={[
+              styles.congratsSubtitle,
+              {
+                color: '#FFD700',
+                fontSize: scaleFontSize(18),
+                fontWeight: '600',
+                textAlign: 'center',
+                marginBottom: scaleHeight(16)
+              }
+            ]}>
+              Financial Tracker
+            </Text>
+            
+            <Text style={[
+              styles.congratsDescription,
+              {
+                color: theme.text,
+                fontSize: scaleFontSize(16),
+                lineHeight: scaleFontSize(22),
+                textAlign: 'center',
+                marginBottom: scaleHeight(24)
+              }
+            ]}>
+              Master your financial future! Track income, expenses, savings, and debt. Set financial goals and monitor your progress towards financial freedom.
+            </Text>
+            
+            {/* Get Started Button */}
+            <TouchableOpacity
+              style={[
+                styles.congratsButton,
+                {
+                  backgroundColor: '#FFD700',
+                  paddingVertical: scaleHeight(14),
+                  borderRadius: scaleWidth(12),
+                  marginTop: scaleHeight(8)
+                }
+              ]}
+              onPress={() => setShowFinancialTrackerCongrats(false)}
+            >
+              <Text 
+                style={[
+                  styles.congratsButtonText,
+                  {
+                    color: '#000000',
+                    fontSize: scaleFontSize(16),
+                    fontWeight: 'bold',
+                    textAlign: 'center'
+                  }
+                ]}
+              >
+                Build Wealth! 💰
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
   
   return (
     <View style={[
@@ -1224,6 +1955,55 @@ const CustomizableDashboard = ({ theme, navigation }) => {
         </View>
         
         <View style={styles.headerActions}>
+          
+          {/* Dev Tool - Reset Celebrations */}
+          {__DEV__ && (
+            <TouchableOpacity
+              style={[
+                styles.devButton, 
+                { 
+                  backgroundColor: 'rgba(255,0,0,0.15)',
+                  width: scaleWidth(32),
+                  height: scaleWidth(32),
+                  borderRadius: scaleWidth(16),
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  marginRight: scaleWidth(8)
+                }
+              ]}
+              onPress={async () => {
+                try {
+                  // Clear all celebration flags
+                  await AsyncStorage.removeItem('customStreakCongratsShown');
+                  await AsyncStorage.removeItem('researchStatsCongratsShown');
+                  await AsyncStorage.removeItem('focusTimerCongratsShown');
+                  await AsyncStorage.removeItem('financialTrackerCongratsShown');
+                  
+                  // Reset all unlock states to allow celebrations again
+                  setCustomStreakUnlockState('unlocked');
+                  setResearchStatsUnlockState('unlocked');
+                  setFocusTimerUnlockState('unlocked');
+                  setFinancialTrackerUnlockState('unlocked');
+                  
+                  console.log('🎉 All celebration animations reset - ready to test again!');
+                  // Optional: Show a quick feedback
+                  if (showSuccess) {
+                    showSuccess('Celebrations reset! 🎉');
+                  }
+                } catch (error) {
+                  console.error('Error resetting celebrations:', error);
+                }
+              }}
+              accessibilityLabel="Reset celebrations"
+              accessibilityHint="Clear celebration flags for testing"
+            >
+              <Ionicons 
+                name="refresh-circle" 
+                size={scaleWidth(16)} 
+                color="#FF0000" 
+              />
+            </TouchableOpacity>
+          )}
           
           {dashboardItems.length > 0 && (
             <TouchableOpacity
@@ -1328,7 +2108,10 @@ const CustomizableDashboard = ({ theme, navigation }) => {
       
       {renderAddComponentModal()}
       {renderUpgradeModal()}
+      {renderCustomStreakCongratsModal()}
+      {renderResearchStatsCongratsModal()}
       {renderFocusTimerCongratsModal()}
+      {renderFinancialTrackerCongratsModal()}
     </View>
   );
 };
@@ -1600,7 +2383,17 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   congratsButtonText: {},
-  // Falling clock animation styles
+  // Falling animation styles
+  fallingIcon: {
+    position: 'absolute',
+    top: 0,
+    zIndex: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
   fallingClock: {
     position: 'absolute',
     top: 0,

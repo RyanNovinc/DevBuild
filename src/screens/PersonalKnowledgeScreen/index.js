@@ -80,6 +80,7 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
   const [isEnabled, setIsEnabled] = useState(true);
   const [appContextEnabled, setAppContextEnabled] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAppContextReady, setIsAppContextReady] = useState(false);
   const [storageUsedBytes, setStorageUsedBytes] = useState(0);
   const [infoModalVisible, setInfoModalVisible] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState(null);
@@ -88,6 +89,15 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [errorMessage, setErrorMessage] = useState(null);
   const [pendingFileName, setPendingFileName] = useState('');
+  
+  // Track when app context is ready
+  useEffect(() => {
+    if (!appContext.isLoading && appContext.goals !== undefined && appContext.projects !== undefined && appContext.tasks !== undefined) {
+      setIsAppContextReady(true);
+    } else {
+      setIsAppContextReady(false);
+    }
+  }, [appContext.isLoading, appContext.goals, appContext.projects, appContext.tasks]);
   
   // Load documents and settings
   useEffect(() => {
@@ -813,7 +823,7 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
           paddingHorizontal: spacing.m 
         }
       ]}>
-        {isLoading ? (
+        {(isLoading || appContext.isLoading || !isAppContextReady) ? (
           <View style={[
             styles.loadingContainer,
             {
@@ -834,7 +844,11 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
               ]}
               maxFontSizeMultiplier={1.3}
             >
-              Loading your Personal Knowledge data...
+              {appContext.isLoading 
+                ? 'Loading app context...' 
+                : !isAppContextReady 
+                  ? 'Preparing app context...'
+                  : 'Loading your Personal Knowledge data...'}
             </Text>
           </View>
         ) : (

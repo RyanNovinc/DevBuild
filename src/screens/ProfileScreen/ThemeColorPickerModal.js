@@ -21,6 +21,8 @@ import { log } from '../../utils/LoggerUtility'; // Import logger utility
 import { FeatureLimitBanner } from '../../components/subscription/SubscriptionUI'; // Import the Pro modal
 import { useAchievements } from '../../context/AchievementContext'; // Import achievements context
 import LevelService from '../../services/LevelService'; // Import level service
+import ColorWheel from '../../components/ColorWheel'; // Import our color wheel component
+import CustomThemeService from '../../services/CustomThemeService'; // Import custom theme service
 import {
   useSafeSpacing,
   meetsContrastRequirements,
@@ -46,14 +48,12 @@ const THEME_COLORS = [
 ];
 
 // Level-based color unlocking system
-// Level 1 (default): Deep Navy Blue (always available)
-// Level 3: Unlocks Charcoal 
-// Level 5: Unlocks Forest Green
-// Pro: Unlocks all remaining colors
+// Level 1 (default): Deep Navy Blue + Slate Blue (always available)
+// Level 3: Unlocks Forest Green
+// Pro: Unlocks all remaining colors including Charcoal
 const LEVEL_COLOR_UNLOCKS = {
-  1: ['#1e3a8a'], // Deep Navy Blue - always free
-  3: ['#1e3a8a', '#1f2937'], // + Charcoal
-  5: ['#1e3a8a', '#1f2937', '#059669'], // + Forest Green
+  1: ['#1e3a8a', '#3b82f6'], // Deep Navy Blue + Slate Blue - always free
+  3: ['#1e3a8a', '#3b82f6', '#059669'], // + Forest Green
 };
 
 // Simple color names for reference
@@ -80,8 +80,9 @@ const ThemeColorPickerModal = ({
   navigation
 }) => {
   // Get notification context for success messages
-  const { showSuccess } = useNotification() || { 
-    showSuccess: (msg) => console.log(msg) 
+  const { showSuccess, showError } = useNotification() || { 
+    showSuccess: (msg) => console.log(msg),
+    showError: (msg) => console.error(msg) 
   };
 
   // Get app context to check if user is a lifetime member
@@ -154,7 +155,7 @@ const ThemeColorPickerModal = ({
     })
   ).current;
   
-  // Log initialization info and refresh when modal opens
+  // Load custom themes when modal opens
   React.useEffect(() => {
     if (visible) {
       log('UI', 'THEME INIT: ThemeColorPickerModal opened/refreshed');
@@ -165,6 +166,11 @@ const ThemeColorPickerModal = ({
       log('UI', 'THEME INIT: Total theme colors:', THEME_COLORS.length);
       log('UI', 'THEME INIT: Shake animations created:', shakeAnims.length);
       log('UI', 'THEME INIT: Refresh trigger:', refreshTrigger);
+      
+      // Load custom themes for Pro users
+      if (isPro) {
+        loadCustomThemes();
+      }
     }
   }, [visible, isPro, appContext?.userSubscriptionStatus, availableColors, userLevel, refreshTrigger]);
   
@@ -176,20 +182,11 @@ const ThemeColorPickerModal = ({
   // Check color unlock states when level changes
   useEffect(() => {
     const checkColorUnlockStates = async () => {
-      // Check Charcoal unlock (level 3)
-      if (userLevel >= 3) {
-        const hasSeenCharcoalCongrats = await AsyncStorage.getItem('charcoalColorCongratsShown');
-        if (!hasSeenCharcoalCongrats) {
-          setCharcoalUnlockState('unlocked'); // Just unlocked, show "Unlock" state
-        } else {
-          setCharcoalUnlockState('seen'); // Already seen congratulations
-        }
-      } else {
-        setCharcoalUnlockState('locked'); // Still locked
-      }
+      // Charcoal now requires Pro subscription (no level unlock)
+      setCharcoalUnlockState('locked'); // Always locked for free users
       
-      // Check Forest Green unlock (level 5)
-      if (userLevel >= 5) {
+      // Check Forest Green unlock (level 3)
+      if (userLevel >= 3) {
         const hasSeenForestGreenCongrats = await AsyncStorage.getItem('forestGreenColorCongratsShown');
         if (!hasSeenForestGreenCongrats) {
           setForestGreenUnlockState('unlocked'); // Just unlocked, show "Unlock" state
@@ -217,6 +214,12 @@ const ThemeColorPickerModal = ({
       useNativeDriver: true,
       listener: (event) => {
         const { translationY } = event.nativeEvent;
+        
+        // Disable swipe-to-dismiss when color wheel is open
+        if (activeTab === 'custom' && isPro && showColorWheel) {
+          return; // Don't allow dismissal when using color wheel
+        }
+        
         // Only allow downward movement (dismissal)
         if (translationY > 0) {
           // Background opacity fades to 0 as modal approaches bottom
@@ -230,6 +233,26 @@ const ThemeColorPickerModal = ({
 
   const handleGestureEnd = (event) => {
     const { translationY, velocityY } = event.nativeEvent;
+    
+    // Disable swipe-to-dismiss when color wheel is open
+    if (activeTab === 'custom' && isPro && showColorWheel) {
+      // Snap back to original position
+      Animated.parallel([
+        Animated.spring(translateY, {
+          toValue: 0,
+          tension: 150,
+          friction: 8,
+          useNativeDriver: true
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+          easing: Easing.out(Easing.cubic)
+        })
+      ]).start();
+      return;
+    }
     
     // Dismissal logic: lower threshold + velocity consideration
     const dismissThreshold = screenHeight * 0.2; // 20% of screen height
@@ -322,6 +345,19 @@ const ThemeColorPickerModal = ({
   
   // Add state for showing the Pro upgrade modal
   const [showProModal, setShowProModal] = useState(false);
+  
+  // Tab state for switching between preset colors and custom color wheel
+  const [activeTab, setActiveTab] = useState('preset'); // 'preset' or 'custom'
+  
+  // Custom themes state
+  const [customThemes, setCustomThemes] = useState([]);
+  const [customWheelColor, setCustomWheelColor] = useState(themeColor || '#3b82f6');
+  const [savingCustomTheme, setSavingCustomTheme] = useState(false);
+  const [showColorWheel, setShowColorWheel] = useState(false);
+  const [editingTheme, setEditingTheme] = useState(null); // Track which theme is being edited
+  const [lastSelectedCustomTheme, setLastSelectedCustomTheme] = useState(null); // Track last selected for edit detection
+  const [selectedSlotIndex, setSelectedSlotIndex] = useState(null); // Track which slot user clicked for saving
+  const [isEditMode, setIsEditMode] = useState(false); // Track if we're in delete/edit mode
   
   // Color unlock congratulations states
   const [showCharcoalCongrats, setShowCharcoalCongrats] = useState(false);
@@ -528,10 +564,215 @@ const ThemeColorPickerModal = ({
   const handleClose = () => {
     // Only trigger onClose if we're not already closing
     if (modalVisible && visible) {
-      // Reset locked color clicks counter and close Pro modal when closing
+      // Reset all modal states when closing
       setLockedColorClicks(0);
       setShowProModal(false);
+      setShowColorWheel(false);
+      setEditingTheme(null);
+      setLastSelectedCustomTheme(null);
+      setSelectedSlotIndex(null);
       onClose();
+    }
+  };
+  
+  // Load custom themes from storage
+  const loadCustomThemes = async () => {
+    try {
+      const themes = await CustomThemeService.getCustomThemesWithPositions();
+      setCustomThemes(themes);
+    } catch (error) {
+      console.error('Error loading custom themes:', error);
+    }
+  };
+  
+  // Handle tab switch
+  const handleTabSwitch = (tabName) => {
+    setActiveTab(tabName);
+    
+    // Reset any modal states when switching tabs
+    setShowProModal(false);
+    setLockedColorClicks(0);
+    setShowColorWheel(false); // Close color wheel when switching tabs
+    setEditingTheme(null); // Clear edit mode when switching tabs
+    setLastSelectedCustomTheme(null); // Reset selection tracking
+    setSelectedSlotIndex(null); // Reset slot selection when switching tabs
+  };
+  
+  // Handle tab swipe gesture
+  const handleTabSwipeGesture = (event) => {
+    const { state, translationX } = event.nativeEvent;
+    
+    // Only handle gesture end state
+    if (state === State.END) {
+      const swipeThreshold = 50; // Minimum distance to trigger tab switch
+      
+      if (Math.abs(translationX) > swipeThreshold) {
+        if (translationX > 0) {
+          // Swipe right - go to preset tab
+          if (activeTab === 'custom') {
+            handleTabSwitch('preset');
+          }
+        } else {
+          // Swipe left - go to custom tab
+          if (activeTab === 'preset') {
+            handleTabSwitch('custom');
+          }
+        }
+      }
+    }
+  };
+  
+  // Handle color wheel change
+  const handleColorWheelChange = (color) => {
+    setCustomWheelColor(color);
+  };
+  
+  // Save custom theme from color wheel
+  const handleSaveCustomTheme = async () => {
+    if (!isPro) {
+      setShowProModal(true);
+      return;
+    }
+    
+    setSavingCustomTheme(true);
+    
+    try {
+      let result;
+      
+      // Debug logging
+      console.log('handleSaveCustomTheme - editingTheme:', editingTheme);
+      console.log('handleSaveCustomTheme - selectedSlotIndex:', selectedSlotIndex);
+      
+      // If selectedSlotIndex is set, force new theme creation (clicked empty slot)
+      if (editingTheme && selectedSlotIndex === null) {
+        // Editing existing theme - update with new color but keep the same name and position
+        result = await CustomThemeService.saveCustomThemeAtPosition(editingTheme.name, customWheelColor, editingTheme.position);
+        
+        if (result.success) {
+          showSuccess(`Theme "${editingTheme.name}" updated successfully!`);
+        }
+      } else {
+        // Creating new theme - generate a unique name and save to selected slot
+        const now = new Date();
+        const timestamp = now.toLocaleString('en-US', { 
+          month: 'short', 
+          day: 'numeric', 
+          hour: 'numeric', 
+          minute: '2-digit',
+          second: '2-digit'
+        });
+        // Add milliseconds to ensure uniqueness even for rapid saves
+        const themeName = `Custom ${timestamp}.${now.getMilliseconds()}`;
+        
+        // Use selectedSlotIndex if available, otherwise let service handle positioning
+        console.log('Saving custom theme:', { themeName, customWheelColor, selectedSlotIndex });
+        result = await CustomThemeService.saveCustomThemeAtPosition(themeName, customWheelColor, selectedSlotIndex);
+        console.log('Save result:', result);
+        
+        if (result.success) {
+          showSuccess(`Theme "${themeName}" saved successfully!`);
+          
+          // Track theme creation for achievements (only for new themes and if it's actually different)
+          if (customWheelColor !== themeColor) {
+            try {
+              await FeatureExplorerTracker.trackThemeColorChange(customWheelColor, showSuccess);
+            } catch (error) {
+              console.error('Error tracking custom theme creation:', error);
+            }
+          }
+        }
+      }
+      
+      if (result.success) {
+        // Clear all editing states immediately to prevent race conditions
+        setEditingTheme(null);
+        setSelectedSlotIndex(null);
+        setLastSelectedCustomTheme(null);
+        
+        // Refresh custom themes list
+        await loadCustomThemes();
+        
+        // Apply the theme
+        onSelectColor(customWheelColor);
+        
+        // Close the color wheel and return to saved themes view
+        setShowColorWheel(false);
+      } else {
+        showError(result.error || 'Failed to save custom theme');
+      }
+    } catch (error) {
+      console.error('Error saving custom theme:', error);
+      showError('Failed to save custom theme');
+    } finally {
+      setSavingCustomTheme(false);
+      // Ensure editing states are fully cleared after any save attempt
+      setEditingTheme(null);
+      setSelectedSlotIndex(null);
+    }
+  };
+  
+  // Handle selecting a custom theme
+  const handleSelectCustomTheme = (theme) => {
+    // Check if this theme is currently the active theme color (already selected)
+    if (theme.color === themeColor) {
+      // User clicked on the currently selected theme - enter edit mode
+      setEditingTheme(theme);
+      setCustomWheelColor(theme.color);
+      setShowColorWheel(true);
+      setLastSelectedCustomTheme(null); // Reset selection tracking
+    } else {
+      // User clicked on a different theme - select it as the new color
+      setCustomWheelColor(theme.color);
+      onSelectColor(theme.color);
+      setLastSelectedCustomTheme(theme); // Track this selection for potential future edit
+    }
+  };
+  
+  // Handle deleting a custom theme
+  const handleDeleteCustomTheme = async (themeId, themeName) => {
+    Alert.alert(
+      'Delete Custom Theme',
+      `Are you sure you want to delete "${themeName}"? This action cannot be undone.`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel'
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const result = await CustomThemeService.deleteCustomTheme(themeId);
+              if (result.success) {
+                await loadCustomThemes();
+                showSuccess(`Theme "${themeName}" deleted`);
+              } else {
+                showError(result.error || 'Failed to delete theme');
+              }
+            } catch (error) {
+              console.error('Error deleting custom theme:', error);
+              showError('Failed to delete theme');
+            }
+          }
+        }
+      ]
+    );
+  };
+  
+  // Handle deleting a custom theme at a specific position
+  const handleDeleteCustomThemeAtPosition = async (position, themeName) => {
+    try {
+      const result = await CustomThemeService.deleteCustomThemeAtPosition(position);
+      if (result.success) {
+        await loadCustomThemes();
+        showSuccess(`Theme "${themeName}" deleted`);
+      } else {
+        showError(result.error || 'Failed to delete theme');
+      }
+    } catch (error) {
+      console.error('Error deleting custom theme:', error);
+      showError('Failed to delete theme');
     }
   };
   
@@ -573,11 +814,13 @@ const ThemeColorPickerModal = ({
     // Call the original onSelectColor prop function
     onSelectColor(color);
     
-    // Track the theme color change for the achievement
-    try {
-      await FeatureExplorerTracker.trackThemeColorChange(color, showSuccess);
-    } catch (error) {
-      console.error('Error tracking theme color change:', error);
+    // Track the theme color change for the achievement ONLY if it's actually a different color
+    if (color !== themeColor) {
+      try {
+        await FeatureExplorerTracker.trackThemeColorChange(color, showSuccess);
+      } catch (error) {
+        console.error('Error tracking theme color change:', error);
+      }
     }
   };
   
@@ -634,22 +877,6 @@ const ThemeColorPickerModal = ({
     }
   };
   
-  // Handle navigation to feedback screen for color request
-  const handleRequestNewColor = () => {
-    if (isPro) {
-      handleClose();
-      // Navigate to feedback screen with specific parameters
-      navigation.navigate('FeedbackScreen', { 
-        feedbackType: 'feature',
-        feedbackTarget: 'app',
-        fromThemePicker: true // Special flag for theme color requests
-      });
-    } else {
-      // For free users, navigate to pricing screen
-      handleClose();
-      navigation.navigate('PricingScreen');
-    }
-  };
 
   // Helper to determine text color based on background
   const getContrastColor = (hexColor) => {
@@ -704,6 +931,7 @@ const ThemeColorPickerModal = ({
               handleGestureEnd(event);
             }
           }}
+          enabled={!(activeTab === 'custom' && isPro && showColorWheel)} // Disable when color wheel is open
         >
           <Animated.View 
             style={[
@@ -746,15 +974,64 @@ const ThemeColorPickerModal = ({
           </View>
           
           <View style={styles.colorPickerBody}>
-            <View style={styles.colorGridContainer}>
-              <Text 
-                style={[styles.sectionLabel, { color: textColor }]}
-                maxFontSizeMultiplier={1.3}
-                accessible={true}
-                accessibilityRole="text"
+            {/* Tab Navigation - Only show for Pro users */}
+            {isPro && (
+              <PanGestureHandler
+                onHandlerStateChange={handleTabSwipeGesture}
+                activeOffsetX={[-50, 50]} // Require 50px horizontal movement to trigger
+                failOffsetY={[-20, 20]} // Fail if more than 20px vertical movement
               >
-                Select Theme Color
-              </Text>
+                <View style={styles.tabContainer}>
+                  <TouchableOpacity
+                    style={[
+                      styles.tab,
+                      activeTab === 'preset' && [styles.activeTab, { backgroundColor: theme.primary }]
+                    ]}
+                    onPress={() => handleTabSwitch('preset')}
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: activeTab === 'preset' }}
+                  >
+                    <Text style={[
+                      styles.tabText,
+                      { color: activeTab === 'preset' ? '#fff' : theme.primary }
+                    ]}>
+                      Preset Colors
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={[
+                      styles.tab,
+                      activeTab === 'custom' && [styles.activeTab, { backgroundColor: theme.primary }]
+                    ]}
+                    onPress={() => handleTabSwitch('custom')}
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: activeTab === 'custom' }}
+                  >
+                    <Text style={[
+                      styles.tabText,
+                      { color: activeTab === 'custom' ? '#fff' : theme.primary }
+                    ]}>
+                      Custom Colors
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </PanGestureHandler>
+            )}
+            
+            {/* Preset Colors Tab Content */}
+            {activeTab === 'preset' && (
+              <View style={styles.colorGridContainer}>
+                <Text 
+                  style={[styles.sectionLabel, { color: textColor }]}
+                  maxFontSizeMultiplier={1.3}
+                  accessible={true}
+                  accessibilityRole="text"
+                >
+                  Select Theme Color
+                </Text>
               
               {!isPro && (
                 <View style={[styles.proMessageContainer, { borderColor: theme.border }]}>
@@ -899,7 +1176,7 @@ const ThemeColorPickerModal = ({
                                         textAlign: 'center'
                                       }}
                                     >
-                                      LVL {requirement}
+                                      STG {requirement}
                                     </Text>
                                   );
                                 }
@@ -956,59 +1233,249 @@ const ThemeColorPickerModal = ({
                   </Text>
                 )}
               </View>
-            </View>
-            
-            {/* "Request a Color" button - different versions for Pro vs Free users */}
-            <TouchableOpacity 
-              style={[
-                styles.requestButton, 
-                { 
-                  backgroundColor: isPro ? theme.card : 'rgba(63, 81, 181, 0.08)',
-                  borderColor: isPro ? theme.border : 'rgba(63, 81, 181, 0.3)',
-                  borderWidth: 1
-                }
-              ]}
-              onPress={handleRequestNewColor}
-              accessible={true}
-              accessibilityRole="button"
-              accessibilityLabel={isPro ? "Request a custom color" : "Custom colors limited to Lifetime Members"}
-              accessibilityHint={isPro ? 
-                "Navigate to the feedback form to request a custom theme color" : 
-                "Upgrade to Pro to unlock custom color requests"}
-            >
-              <Ionicons 
-                name={isPro ? "color-palette-outline" : "lock-closed-outline"} 
-                size={20} 
-                color={isPro ? theme.primary : '#3F51B5'} 
-              />
+              
+              {/* Scientific info text - only for preset colors */}
               <Text 
-                style={[
-                  styles.requestButtonText, 
-                  { 
-                    color: isPro ? textColor : '#3F51B5',
-                    fontWeight: isPro ? '400' : '500'
-                  }
-                ]}
+                style={[styles.infoText, { color: secondaryTextColor }]}
                 maxFontSizeMultiplier={1.3}
+                accessible={true}
+                accessibilityRole="text"
               >
-                {isPro ? 
-                  "Request a custom color (#FFFFFF)" : 
-                  "Custom colors (Lifetime Members only)"}
+                These colors are scientifically selected to enhance focus and productivity.
               </Text>
-              <Ionicons 
-                name={isPro ? "chevron-forward" : "star"} 
-                size={18} 
-                color={isPro ? theme.primary : '#3F51B5'} 
-              />
-            </TouchableOpacity>
+              </View>
+            )}
+            
+            {/* Custom Colors Tab Content - Only for Pro users */}
+            {activeTab === 'custom' && isPro && (
+              <View style={styles.customColorContainer}>
+                {showColorWheel ? (
+                  // Color Wheel View
+                  <View style={styles.colorWheelView}>
+                    {/* Show edit mode header if editing */}
+                    {editingTheme && (
+                      <View style={styles.editModeHeader}>
+                        <Ionicons name="create-outline" size={20} color={theme.primary} />
+                        <Text style={[styles.editModeText, { color: theme.primary }]}>
+                          Editing
+                        </Text>
+                      </View>
+                    )}
+                    
+                    <ColorWheel
+                      onColorChange={handleColorWheelChange}
+                      selectedColor={customWheelColor}
+                      theme={theme}
+                    />
+                    
+                    {/* Save and Cancel Buttons */}
+                    <View style={styles.colorWheelButtons}>
+                      <TouchableOpacity
+                        style={[styles.cancelButton, { borderColor: theme.border }]}
+                        onPress={() => {
+                          setShowColorWheel(false);
+                          setEditingTheme(null); // Clear edit mode on cancel
+                        }}
+                        accessible={true}
+                        accessibilityRole="button"
+                        accessibilityLabel="Cancel color selection"
+                      >
+                        <Text style={[styles.cancelButtonText, { color: textColor }]}>
+                          Cancel
+                        </Text>
+                      </TouchableOpacity>
+                      
+                      <TouchableOpacity
+                        style={[styles.saveThemeButton, { backgroundColor: customWheelColor }]}
+                        onPress={handleSaveCustomTheme}
+                        disabled={savingCustomTheme}
+                        accessible={true}
+                        accessibilityRole="button"
+                        accessibilityLabel={editingTheme ? "Update custom theme" : "Save custom theme"}
+                      >
+                        <Ionicons 
+                          name={savingCustomTheme ? "hourglass-outline" : (editingTheme ? "checkmark-outline" : "bookmark-outline")} 
+                          size={20} 
+                          color="#fff" 
+                        />
+                        <Text style={[styles.saveThemeButtonText, { color: '#fff' }]}>
+                          {savingCustomTheme ? 'Saving...' : (editingTheme ? 'Update' : 'Save')}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ) : (
+                  // Saved Themes Grid View (like preset colors)
+                  <View style={styles.customThemesGrid}>
+                    {/* Header with title and edit button */}
+                    <View style={styles.customColorsHeader}>
+                      <Text 
+                        style={[styles.sectionLabel, { color: textColor }]}
+                        maxFontSizeMultiplier={1.3}
+                        accessible={true}
+                        accessibilityRole="text"
+                      >
+                        Custom Colors ({customThemes.filter(t => t !== null).length}/{CustomThemeService.MAX_CUSTOM_THEMES})
+                      </Text>
+                      
+                      {/* Edit button - only show if there are custom themes */}
+                      {customThemes.filter(t => t !== null).length > 0 && (
+                        <TouchableOpacity
+                          style={[styles.editIconButton, { 
+                            backgroundColor: isEditMode ? '#ff4444' : 'transparent',
+                          }]}
+                          onPress={() => setIsEditMode(!isEditMode)}
+                          accessible={true}
+                          accessibilityRole="button"
+                          accessibilityLabel={isEditMode ? 'Exit edit mode' : 'Enter edit mode'}
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        >
+                          <Ionicons 
+                            name={isEditMode ? 'checkmark-outline' : 'pencil-outline'} 
+                            size={18} 
+                            color={isEditMode ? '#fff' : theme.text} 
+                          />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                    
+                    {/* Hint text */}
+                    {customThemes.filter(t => t !== null).length > 0 && (
+                      <View style={styles.hintContainer}>
+                        {!isEditMode && (
+                          <Text style={[styles.editHintText, { color: secondaryTextColor }]}>
+                            Tap selected color again to edit
+                          </Text>
+                        )}
+                        
+                        {isEditMode && (
+                          <Text style={[styles.editHintText, { color: secondaryTextColor }]}>
+                            Tap × to delete themes
+                          </Text>
+                        )}
+                      </View>
+                    )}
+                    
+                    {/* Custom Themes Grid */}
+                    <View style={styles.customColorGrid}>
+                      {/* Render all slots (saved themes + empty placeholders) */}
+                      {Array.from({ length: CustomThemeService.MAX_CUSTOM_THEMES }, (_, index) => {
+                        const customTheme = customThemes[index];
+                        
+                        if (customTheme) {
+                          // Saved Custom Theme
+                          return (
+                            <View key={customTheme.id} style={styles.customThemeContainer}>
+                              <TouchableOpacity
+                                style={[
+                                  styles.colorOption,
+                                  {
+                                    width: width * 0.145,
+                                    height: width * 0.145,
+                                    borderRadius: 16,
+                                    margin: 5,
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    shadowColor: '#000',
+                                    shadowOffset: { width: 0, height: 2 },
+                                    shadowOpacity: 0.3,
+                                    shadowRadius: 4,
+                                    elevation: 5,
+                                    backgroundColor: customTheme.color,
+                                    borderWidth: customTheme.color === themeColor ? 3 : 0,
+                                    borderColor: '#FFFFFF',
+                                  }
+                                ]}
+                                onPress={() => {
+                                  if (isEditMode) {
+                                    handleDeleteCustomThemeAtPosition(index, customTheme.name);
+                                  } else {
+                                    handleSelectCustomTheme({...customTheme, position: index});
+                                  }
+                                }}
+                                accessible={true}
+                                accessibilityRole="button"
+                                accessibilityLabel={`Custom theme ${customTheme.name}${customTheme.color === themeColor ? ', selected' : ''}`}
+                                accessibilityHint={isEditMode ? 'Tap to delete this custom theme' : 'Tap to select theme'}
+                              >
+                                {!isEditMode && customTheme.color === themeColor && (
+                                  <Ionicons 
+                                    name="checkmark-sharp" 
+                                    size={24} 
+                                    color={getContrastColor(customTheme.color)} 
+                                  />
+                                )}
+                                
+                                {isEditMode && (
+                                  <View style={styles.deleteIndicator}>
+                                    <Ionicons 
+                                      name="close" 
+                                      size={16} 
+                                      color="#fff" 
+                                    />
+                                  </View>
+                                )}
+                              </TouchableOpacity>
+                            </View>
+                          );
+                        } else {
+                          // Empty Placeholder Slot
+                          return (
+                            <TouchableOpacity
+                              key={`empty-${index}`}
+                              style={[styles.emptyColorSlot, { 
+                                borderColor: theme.border,
+                                backgroundColor: theme.background 
+                              }]}
+                              onPress={() => {
+                                console.log('Empty slot clicked - index:', index);
+                                console.log('Before clearing - editingTheme:', editingTheme, 'lastSelectedCustomTheme:', lastSelectedCustomTheme);
+                                
+                                // Clear ALL editing states when creating new theme to prevent conflicts
+                                setEditingTheme(null);
+                                setLastSelectedCustomTheme(null);
+                                setSelectedSlotIndex(index);
+                                // Reset to default color for new theme creation
+                                setCustomWheelColor('#3b82f6');
+                                setShowColorWheel(true);
+                                
+                                console.log('After setting - selectedSlotIndex should be:', index);
+                              }}
+                              accessible={true}
+                              accessibilityRole="button"
+                              accessibilityLabel={`Empty custom color slot ${index + 1}`}
+                              accessibilityHint="Tap to create a new custom theme"
+                            >
+                              <Ionicons 
+                                name="add" 
+                                size={24} 
+                                color={theme.textSecondary} 
+                                style={{ opacity: 0.5 }}
+                              />
+                            </TouchableOpacity>
+                          );
+                        }
+                      })}
+                    </View>
+                  </View>
+                )}
+              </View>
+            )}
+            
             
             
 
             <TouchableOpacity
               style={[styles.applyButton, { 
-                backgroundColor: themeColor || theme.primary,
+                backgroundColor: activeTab === 'custom' && isPro ? customWheelColor : (themeColor || theme.primary),
               }]}
-              onPress={handleClose}
+              onPress={() => {
+                // Apply the current color based on active tab
+                if (activeTab === 'custom' && isPro) {
+                  onSelectColor(customWheelColor);
+                }
+                handleClose();
+              }}
               accessible={true}
               accessibilityRole="button"
               accessibilityLabel="Apply theme"
@@ -1016,22 +1483,13 @@ const ThemeColorPickerModal = ({
             >
               <Text 
                 style={[styles.applyButtonText, { 
-                  color: getContrastColor(themeColor || theme.primary)
+                  color: getContrastColor(activeTab === 'custom' && isPro ? customWheelColor : (themeColor || theme.primary))
                 }]}
                 maxFontSizeMultiplier={1.3}
               >
                 Apply Theme
               </Text>
             </TouchableOpacity>
-            
-            <Text 
-              style={[styles.infoText, { color: secondaryTextColor }]}
-              maxFontSizeMultiplier={1.3}
-              accessible={true}
-              accessibilityRole="text"
-            >
-              These colors are scientifically selected to enhance focus and productivity.
-            </Text>
           </View>
         </Animated.View>
         </PanGestureHandler>
@@ -1118,7 +1576,7 @@ const ThemeColorPickerModal = ({
             </Text>
             
             <Text style={[styles.congratsDescription, { color: textColor }]}>
-              You've reached Level 3 and unlocked the sophisticated Charcoal theme color! This premium dark shade enhances focus and provides a professional, sleek appearance.
+              You've upgraded to Pro and unlocked the sophisticated Charcoal theme color! This premium dark shade enhances focus and provides a professional, sleek appearance.
             </Text>
             
             <TouchableOpacity
@@ -1199,7 +1657,7 @@ const ThemeColorPickerModal = ({
             </Text>
             
             <Text style={[styles.congratsDescription, { color: textColor }]}>
-              You've reached Level 5 and unlocked the natural Forest Green theme color! This color promotes balance, growth, and sustainable productivity while reducing eye strain.
+              You've reached Level 3 and unlocked the natural Forest Green theme color! This color promotes balance, growth, and sustainable productivity while reducing eye strain.
             </Text>
             
             <TouchableOpacity
@@ -1290,6 +1748,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 8,
   },
+  customColorGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+    marginBottom: 8,
+  },
   colorOption: {
     // Base styles for color options
   },
@@ -1320,22 +1784,6 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   
-  // Request a color button
-  requestButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    marginBottom: 24,
-  },
-  requestButtonText: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '500',
-    marginHorizontal: 8,
-  },
   
   // Apply button
   applyButton: {
@@ -1359,6 +1807,145 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
     opacity: 0.8,
+  },
+  
+  // Tab styles
+  tabContainer: {
+    flexDirection: 'row',
+    marginBottom: 20,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 12,
+    padding: 4,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activeTab: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  
+  // Custom color wheel styles
+  customColorContainer: {
+    paddingVertical: 10,
+  },
+  colorWheelView: {
+    alignItems: 'center',
+  },
+  editModeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    borderRadius: 20,
+  },
+  editModeText: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  editHintText: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: -8,
+    marginBottom: 12,
+    opacity: 0.7,
+  },
+  colorWheelButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 20,
+    marginTop: 20,
+  },
+  cancelButton: {
+    flex: 1,
+    marginRight: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  saveThemeButton: {
+    flex: 1,
+    marginLeft: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  saveThemeButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  
+  // Custom themes grid styles
+  customThemesGrid: {
+    paddingHorizontal: 4,
+  },
+  addColorButton: {
+    width: width * 0.145,
+    height: width * 0.145,
+    borderRadius: 16,
+    margin: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  emptyColorSlot: {
+    width: width * 0.145,
+    height: width * 0.145,
+    borderRadius: 16,
+    margin: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    opacity: 0.6,
+  },
+  emptyStateText: {
+    textAlign: 'center',
+    fontSize: 14,
+    fontStyle: 'italic',
+    marginTop: 20,
+    paddingHorizontal: 20,
+    lineHeight: 20,
   },
   
   // Congratulations modal styles
@@ -1438,6 +2025,46 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 4,
+  },
+  
+  // Edit mode styles
+  customColorsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  editIconButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 12,
+  },
+  hintContainer: {
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  customThemeContainer: {
+    position: 'relative',
+  },
+  deleteIndicator: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#ff4444',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+    pointerEvents: 'none',
   },
 });
 
