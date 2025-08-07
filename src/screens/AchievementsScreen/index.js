@@ -12,10 +12,12 @@ import {
   Platform,
   Dimensions
 } from 'react-native';
+import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import Svg, { Circle } from 'react-native-svg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -129,8 +131,14 @@ const AchievementsScreen = ({ navigation, route }) => {
     console.log('Error accessing app context:', error);
   }
   
-  // Tab state
-  const [activeTab, setActiveTab] = useState('progress');
+  // TabView state
+  const [navigationState, setNavigationState] = useState({
+    index: 0,
+    routes: [
+      { key: 'progress', title: 'Progress' },
+      { key: 'achievements', title: 'Achievements' },
+    ],
+  });
   
   // Filter state
   const [activeFilter, setActiveFilter] = useState('all'); // 'all', 'unlocked', 'locked'
@@ -162,12 +170,12 @@ const AchievementsScreen = ({ navigation, route }) => {
     totalUnlocked: 0,
     percentComplete: 0,
     totalPoints: 0,
-    level: 1,
-    levelTitle: "Beginner",
-    currentLevelThreshold: 0,
-    nextLevelThreshold: 50,
+    stage: 1,
+    stageTitle: "Explorer",
+    currentStageThreshold: 0,
+    nextStageThreshold: 50,
     progressPercent: 0,
-    pointsForNextLevel: 50
+    scoreForNextStage: 50
   });
   const [isLoading, setIsLoading] = useState(true);
   
@@ -179,16 +187,15 @@ const AchievementsScreen = ({ navigation, route }) => {
   const [totalPremiumAchievements, setTotalPremiumAchievements] = useState(0);
   const [unlockedPremiumAchievements, setUnlockedPremiumAchievements] = useState(0);
   
-  // Level system state
-  const [previousLevel, setPreviousLevel] = useState(1);
-  const [isLevelingUp, setIsLevelingUp] = useState(false);
-  const [levelAnimationComplete, setLevelAnimationComplete] = useState(true);
+  // Stage system state
+  const [previousStage, setPreviousStage] = useState(1);
+  const [isStagingUp, setIsStagingUp] = useState(false);
+  const [stageAnimationComplete, setStageAnimationComplete] = useState(true);
   const [testMode, setTestMode] = useState(false);
   const [testStats, setTestStats] = useState(null);
   
   // Animation
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const tabIndicatorAnim = useRef(new Animated.Value(0)).current;
   
   // Track processing state and loading history
   const isProcessingGoals = useRef(false);
@@ -357,7 +364,7 @@ const AchievementsScreen = ({ navigation, route }) => {
     if (route?.params?.activeTab === 'achievements') {
       // Use small delay to ensure UI is ready
       setTimeout(() => {
-        handleTabChange('achievements');
+        setNavigationState(prevState => ({ ...prevState, index: 1 }));
       }, 50);
     }
     
@@ -371,7 +378,7 @@ const AchievementsScreen = ({ navigation, route }) => {
       // Switch to achievements tab if not already there
       if (route?.params?.activeTab === 'achievements') {
         setTimeout(() => {
-          handleTabChange('achievements');
+          setNavigationState(prevState => ({ ...prevState, index: 1 }));
         }, 50);
       }
       
@@ -470,19 +477,19 @@ const AchievementsScreen = ({ navigation, route }) => {
               
               if (storedTestMode === 'true' && storedTestLevel && !testMode) {
                 // Restore test mode if it was persisted but not in current state
-                const testLevel = parseInt(storedTestLevel);
-                console.log(`Restoring test level ${testLevel} on focus`);
+                const testStage = parseInt(storedTestLevel);
+                console.log(`Restoring test stage ${testStage} on focus`);
                 
-                const testLevelPoints = LevelService.getLevelThreshold(testLevel);
+                const testStagePoints = LevelService.getStageThreshold(testStage);
                 const newTestStats = {
                   totalUnlocked: stats.totalUnlocked || 0,
                   percentComplete: stats.percentComplete || 0,
-                  totalPoints: testLevelPoints,
-                  level: testLevel,
-                  levelTitle: LevelService.getLevelTitle(testLevel),
-                  currentLevelThreshold: LevelService.getLevelThreshold(testLevel),
-                  nextLevelThreshold: LevelService.getLevelThreshold(testLevel + 1),
-                  pointsForNextLevel: LevelService.getLevelThreshold(testLevel + 1) - testLevelPoints,
+                  totalPoints: testStagePoints,
+                  stage: testStage,
+                  stageTitle: LevelService.getStageTitle(testStage),
+                  currentStageThreshold: LevelService.getStageThreshold(testStage),
+                  nextStageThreshold: LevelService.getStageThreshold(testStage + 1),
+                  scoreForNextStage: LevelService.getStageThreshold(testStage + 1) - testStagePoints,
                   progressPercent: 0
                 };
                 
@@ -547,30 +554,30 @@ const AchievementsScreen = ({ navigation, route }) => {
     setCurrentToastAchievement(null);
   };
   
-  // Handle level-up animation completion
-  const handleLevelUpAnimationComplete = () => {
-    setIsLevelingUp(false);
-    setLevelAnimationComplete(true);
+  // Handle stage-up animation completion
+  const handleStageUpAnimationComplete = () => {
+    setIsStagingUp(false);
+    setStageAnimationComplete(true);
   };
   
-  // Function to handle level up for testing
-  const handleLevelUp = async (newLevel) => {
-    // Make sure animations are completed and new level is valid
-    if (!levelAnimationComplete) return;
+  // Function to handle stage up for testing
+  const handleStageUp = async (newStage) => {
+    // Make sure animations are completed and new stage is valid
+    if (!stageAnimationComplete) return;
     
-    // Store current level
-    const currentLevel = stats.level;
+    // Store current stage
+    const currentStage = stats.stage;
     
-    // Validate and cap the new level
-    const nextLevel = Math.min(Math.max(1, newLevel), 12);
+    // Validate and cap the new stage
+    const nextStage = Math.min(Math.max(1, newStage), 12);
     
-    if (nextLevel > currentLevel) {
-      // Calculate the points needed for this level
-      const nextLevelPoints = LevelService.getLevelThreshold(nextLevel);
+    if (nextStage > currentStage) {
+      // Calculate the points needed for this stage
+      const nextStagePoints = LevelService.getStageThreshold(nextStage);
       const currentPoints = getTotalPoints();
-      const pointsNeeded = nextLevelPoints - currentPoints;
+      const pointsNeeded = nextStagePoints - currentPoints;
       
-      console.log(`Level up: Need ${pointsNeeded} more points to reach level ${nextLevel}`);
+      console.log(`Stage up: Need ${pointsNeeded} more points to reach stage ${nextStage}`);
       
       // Create fake test achievements to reach the required points
       if (pointsNeeded > 0) {
@@ -619,30 +626,30 @@ const AchievementsScreen = ({ navigation, route }) => {
       const newTestStats = {
         totalUnlocked: stats.totalUnlocked || 0,
         percentComplete: stats.percentComplete || 0,
-        totalPoints: nextLevelPoints,
-        level: nextLevel,
-        levelTitle: LevelService.getLevelTitle(nextLevel),
-        currentLevelThreshold: LevelService.getLevelThreshold(nextLevel),
-        nextLevelThreshold: LevelService.getLevelThreshold(nextLevel + 1),
-        pointsForNextLevel: LevelService.getLevelThreshold(nextLevel + 1) - nextLevelPoints,
+        totalPoints: nextStagePoints,
+        stage: nextStage,
+        stageTitle: LevelService.getStageTitle(nextStage),
+        currentStageThreshold: LevelService.getStageThreshold(nextStage),
+        nextStageThreshold: LevelService.getStageThreshold(nextStage + 1),
+        scoreForNextStage: LevelService.getStageThreshold(nextStage + 1) - nextStagePoints,
         progressPercent: 0 // Reset progress percentage
       };
       
-      // Save test level to AsyncStorage so it persists
-      await AsyncStorage.setItem('testLevel', nextLevel.toString());
+      // Save test stage to AsyncStorage so it persists
+      await AsyncStorage.setItem('testLevel', nextStage.toString());
       await AsyncStorage.setItem('testMode', 'true');
       
       // Set everything in one batch to prevent visual flicker
-      // Set the previous level for the animation
-      setPreviousLevel(currentLevel);
+      // Set the previous stage for the animation
+      setPreviousStage(currentStage);
       // Enable test mode and store test stats (this prevents calculateStats from overwriting)
       setTestMode(true);
       setTestStats(newTestStats);
       // Update stats immediately now that we're protected from overwrites
       setStats(newTestStats);
       // Start animation states
-      setLevelAnimationComplete(false);
-      setIsLevelingUp(true);
+      setStageAnimationComplete(false);
+      setIsStagingUp(true);
     }
   };
   
@@ -655,27 +662,27 @@ const AchievementsScreen = ({ navigation, route }) => {
         const storedTestLevel = await AsyncStorage.getItem('testLevel');
         
         if (storedTestMode === 'true' && storedTestLevel) {
-          const testLevel = parseInt(storedTestLevel);
-          console.log(`Loading persisted test level: ${testLevel}`);
+          const testStage = parseInt(storedTestLevel);
+          console.log(`Loading persisted test stage: ${testStage}`);
           
-          // Create test stats for the persisted level
-          const testLevelPoints = LevelService.getLevelThreshold(testLevel);
+          // Create test stats for the persisted stage
+          const testStagePoints = LevelService.getStageThreshold(testStage);
           const newTestStats = {
             totalUnlocked: 0, // Will be calculated later
             percentComplete: 0, // Will be calculated later
-            totalPoints: testLevelPoints,
-            level: testLevel,
-            levelTitle: LevelService.getLevelTitle(testLevel),
-            currentLevelThreshold: LevelService.getLevelThreshold(testLevel),
-            nextLevelThreshold: LevelService.getLevelThreshold(testLevel + 1),
-            pointsForNextLevel: LevelService.getLevelThreshold(testLevel + 1) - testLevelPoints,
+            totalPoints: testStagePoints,
+            stage: testStage,
+            stageTitle: LevelService.getStageTitle(testStage),
+            currentStageThreshold: LevelService.getStageThreshold(testStage),
+            nextStageThreshold: LevelService.getStageThreshold(testStage + 1),
+            scoreForNextStage: LevelService.getStageThreshold(testStage + 1) - testStagePoints,
             progressPercent: 0
           };
           
           setTestMode(true);
           setTestStats(newTestStats);
           setStats(newTestStats);
-          setPreviousLevel(testLevel);
+          setPreviousStage(testStage);
         }
         
         // First, directly check if goal-pioneer is unlocked
@@ -746,36 +753,36 @@ const AchievementsScreen = ({ navigation, route }) => {
       // Calculate total points
       const totalPoints = getTotalPoints();
       
-      // Use LevelService to get level info
-      const levelInfo = LevelService.getLevelInfo(totalPoints);
+      // Use LevelService to get stage info
+      const stageInfo = LevelService.getStageInfo(totalPoints);
       
-      // Check for level up
-      const currentLevel = levelInfo.level;
-      if (currentLevel > previousLevel && previousLevel > 0) {
+      // Check for stage up
+      const currentStage = stageInfo.stage;
+      if (currentStage > previousStage && previousStage > 0) {
         // Play haptic feedback
         if (Platform.OS !== 'web') {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
         
-        // Trigger level up celebration
-        setIsLevelingUp(true);
-        setLevelAnimationComplete(false);
+        // Trigger stage up celebration
+        setIsStagingUp(true);
+        setStageAnimationComplete(false);
       }
       
-      // Update previous level state
-      setPreviousLevel(currentLevel);
+      // Update previous stage state
+      setPreviousStage(currentStage);
       
       // Set the calculated stats
       const statsToSet = {
         totalUnlocked,
         percentComplete,
         totalPoints,
-        level: levelInfo.level,
-        levelTitle: levelInfo.title,
-        currentLevelThreshold: levelInfo.currentLevelThreshold,
-        nextLevelThreshold: levelInfo.nextLevelThreshold,
-        progressPercent: levelInfo.progressPercent,
-        pointsForNextLevel: levelInfo.pointsForNextLevel
+        stage: stageInfo.stage,
+        stageTitle: stageInfo.title,
+        currentStageThreshold: stageInfo.currentStageThreshold,
+        nextStageThreshold: stageInfo.nextStageThreshold,
+        progressPercent: stageInfo.progressPercent,
+        scoreForNextStage: stageInfo.scoreForNextStage
       };
       
       setStats(statsToSet);
@@ -804,24 +811,14 @@ const AchievementsScreen = ({ navigation, route }) => {
     }
   };
   
-  // Handle tab change with animation
-  const handleTabChange = (tab) => {
+  // Handle tab index change
+  const handleIndexChange = (index) => {
     try {
-      if (tab !== activeTab) {
-        setActiveTab(tab);
-        
-        // Animate tab indicator
-        Animated.spring(tabIndicatorAnim, {
-          toValue: tab === 'progress' ? 0 : 1,
-          friction: 8,
-          tension: 50,
-          useNativeDriver: true
-        }).start();
-        
-        // Provide haptic feedback
-        if (Platform.OS !== 'web') {
-          Haptics.selectionAsync();
-        }
+      setNavigationState({ ...navigationState, index });
+      
+      // Provide haptic feedback
+      if (Platform.OS !== 'web') {
+        Haptics.selectionAsync();
       }
     } catch (error) {
       console.error('Error changing tab:', error);
@@ -1028,10 +1025,10 @@ const AchievementsScreen = ({ navigation, route }) => {
             useNativeDriver: true
           }).start();
           
-          // Reset level system
-          setPreviousLevel(1);
-          setIsLevelingUp(false);
-          setLevelAnimationComplete(true);
+          // Reset stage system
+          setPreviousStage(1);
+          setIsStagingUp(false);
+          setStageAnimationComplete(true);
           
           // End loading state
           setIsLoading(false);
@@ -1064,16 +1061,13 @@ const AchievementsScreen = ({ navigation, route }) => {
     markAchievementsAsSeen(achievementIds);
   };
   
-  // Tab indicator animation
-  const translateX = tabIndicatorAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, width / 2 - 8]
-  });
+  // Get current active tab key
+  const activeTabKey = navigationState.routes[navigationState.index].key;
 
-  // Calculate responsive dimensions
-  const progressRingSize = Math.min(width * 0.55, 220);
-  const progressRingStrokeWidth = progressRingSize * 0.08;
-  const levelBadgeSize = progressRingSize * 0.32;
+  // Calculate responsive dimensions - much bigger circle
+  const progressRingSize = Math.min(width * 0.85, 320);
+  const progressRingStrokeWidth = progressRingSize * 0.06;
+  const levelBadgeSize = progressRingSize * 0.28;
   
   // Render the Progress Tab
   const renderProgressTab = () => {
@@ -1083,206 +1077,169 @@ const AchievementsScreen = ({ navigation, route }) => {
         contentContainerStyle={styles.progressTabContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.progressTabContainer}>
-          {/* Progress Ring with Level Trophy */}
-          <View style={styles.progressRingWrapper}>
-            <ProgressRing 
-              progress={stats.progressPercent}
-              level={stats.level}
-              currentLevelPoints={stats.totalPoints}
-              nextLevelThreshold={stats.nextLevelThreshold}
-              size={progressRingSize}
-              strokeWidth={progressRingStrokeWidth}
-              theme={theme}
-              animate={levelAnimationComplete}
-              onAnimationComplete={() => setLevelAnimationComplete(true)}
-            />
-            
-            {/* Level Trophy in the center */}
+        <View style={[styles.progressTabContainer, { paddingTop: 40 }]}>
+          {/* Redesigned Progress Circle with Integrated Score and Icon */}
+          <View style={[styles.progressRingWrapper, { marginVertical: 40 }]}>
+            {/* Background Circle */}
             <View style={[
-              styles.levelBadgeContainer,
-              { 
-                top: '50%',
-                left: '50%',
-                marginLeft: -levelBadgeSize / 2,
-                marginTop: -levelBadgeSize / 2,
-                width: levelBadgeSize,
-                height: levelBadgeSize,
+              styles.progressCircle,
+              {
+                width: progressRingSize,
+                height: progressRingSize,
+                borderRadius: progressRingSize / 2,
+                borderWidth: progressRingStrokeWidth,
+                borderColor: theme.border + '30',
+                justifyContent: 'center',
+                alignItems: 'center',
+                backgroundColor: theme.card + '40',
               }
             ]}>
-              <LevelTrophy 
-                level={stats.level} 
-                size={levelBadgeSize} 
-                animate={!levelAnimationComplete}
-              />
-            </View>
-          </View>
-          
-          {/* Level Title and Points */}
-          <Text 
-            style={[
-              styles.levelTitle, 
-              { 
-                color: theme.text,
-                marginTop: 16,
-              }
-            ]}
-            maxFontSizeMultiplier={1.3}
-          >
-            {stats.levelTitle} Explorer
-          </Text>
-          
-          {/* Points Badge */}
-          <View style={styles.pointsDisplay}>
-            <LinearGradient
-              colors={['#3b82f6', '#1d4ed8']}
-              style={styles.pointsBadge}
-            >
-              <Text 
-                style={styles.pointsText}
-                maxFontSizeMultiplier={1.3}
-              >
-                {stats.totalPoints} Achievement Points
-              </Text>
-            </LinearGradient>
-          </View>
-          
-          {/* Next Level Information */}
-          {stats.pointsForNextLevel > 0 && (
-            <Text 
-              style={[styles.nextLevelText, { color: theme.textSecondary }]}
-              maxFontSizeMultiplier={1.3}
-            >
-              {stats.pointsForNextLevel} points until Level {stats.level + 1}: {LevelService.getLevelTitle(stats.level + 1)}
-            </Text>
-          )}
-          
-          {/* Developer Mode - Level Testing Buttons */}
-          {__DEV__ && (
-            <View style={{ flexDirection: 'column', width: '100%', marginBottom: 16 }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginBottom: 8 }}>
-                <TouchableOpacity
-                  style={[
-                    styles.devButton,
-                    { 
-                      backgroundColor: 'rgba(0,255,0,0.15)', 
-                      flex: 1, 
-                      marginRight: 8, 
-                      justifyContent: 'center', 
-                      alignItems: 'center',
-                      opacity: levelAnimationComplete ? 1 : 0.5 
-                    }
-                  ]}
-                  onPress={() => handleLevelUp(stats.level + 1)}
-                  disabled={!levelAnimationComplete}
-                >
-                  <Text style={[styles.devButtonText, { color: '#00CC00' }]}>
-                    Level Up +1
-                  </Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity
-                  style={[
-                    styles.devButton,
-                    { 
-                      backgroundColor: 'rgba(255,165,0,0.15)', 
-                      flex: 1, 
-                      justifyContent: 'center', 
-                      alignItems: 'center',
-                      opacity: levelAnimationComplete ? 1 : 0.5 
-                    }
-                  ]}
-                  onPress={() => {
-                    // Only trigger animation if not already animating
-                    if (levelAnimationComplete) {
-                      setLevelAnimationComplete(false);
-                      setIsLevelingUp(true);
-                    }
-                  }}
-                  disabled={!levelAnimationComplete}
-                >
-                  <Text style={[styles.devButtonText, { color: '#FF8C00' }]}>
-                    Test Animation
-                </Text>
-              </TouchableOpacity>
-            </View>
-            
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%' }}>
-              <TouchableOpacity
-                style={[
-                  styles.devButton,
-                  { 
-                    backgroundColor: 'rgba(255,0,0,0.15)', 
-                    flex: 1, 
-                    marginRight: 8,
-                    justifyContent: 'center', 
-                    alignItems: 'center'
-                  }
-                ]}
-                onPress={async () => {
-                  // Reset animation state and test mode
-                  setLevelAnimationComplete(true);
-                  setIsLevelingUp(false);
-                  setTestMode(false);
-                  setTestStats(null);
-                  
-                  // Clear persisted test data
-                  await AsyncStorage.removeItem('testLevel');
-                  await AsyncStorage.removeItem('testMode');
-                  
-                  // Trigger stats recalculation to restore real stats
-                  setTimeout(() => {
-                    calculateStats();
-                    calculatePremiumStats();
-                  }, 100);
-                }}
-              >
-                <Text style={[styles.devButtonText, { color: '#FF0000' }]}>
-                  Reset Animation
-                </Text>
-              </TouchableOpacity>
               
-              <TouchableOpacity
-                style={[
-                  styles.devButton,
+              {/* Stage Icon on Right Side */}
+              <View style={[
+                styles.stageIconContainer,
+                {
+                  position: 'absolute',
+                  right: -levelBadgeSize / 2,
+                  top: '50%',
+                  marginTop: -levelBadgeSize / 2,
+                  width: levelBadgeSize,
+                  height: levelBadgeSize,
+                }
+              ]}>
+                <LevelTrophy 
+                  level={stats.stage} 
+                  size={levelBadgeSize} 
+                  animate={!stageAnimationComplete}
+                />
+              </View>
+              
+              {/* Score Display in Center */}
+              <View style={styles.scoreContainer}>
+                <Text style={[
+                  styles.mainScoreText,
                   { 
-                    backgroundColor: 'rgba(128,0,128,0.15)', 
-                    flex: 1,
-                    justifyContent: 'center', 
-                    alignItems: 'center'
+                    color: theme.text,
+                    fontSize: progressRingSize * 0.25,
+                    fontWeight: 'bold',
                   }
-                ]}
-                onPress={() => {
-                  // Show debug info
-                  alert(`Animation Complete: ${levelAnimationComplete}\nIs Leveling Up: ${isLevelingUp}\nCurrent Level: ${stats.level}\nTest Mode: ${testMode}\nLevel Title: ${stats.levelTitle}`);
-                }}
-              >
-                <Text style={[styles.devButtonText, { color: '#800080' }]}>
-                  Debug Info
+                ]}>
+                  {stats.totalPoints}
                 </Text>
-              </TouchableOpacity>
+              </View>
+              
+              {/* Stage Progress at Bottom */}
+              {stats.scoreForNextStage > 0 && (
+                <View style={[
+                  styles.progressTextContainer,
+                  {
+                    position: 'absolute',
+                    bottom: 20,
+                  }
+                ]}>
+                  <Text style={[
+                    styles.progressText,
+                    { 
+                      color: theme.textSecondary,
+                      fontSize: progressRingSize * 0.04,
+                      textAlign: 'center',
+                    }
+                  ]}>
+                    {stats.scoreForNextStage} to Stage {stats.stage + 1}
+                  </Text>
+                  <Text style={[
+                    styles.stageTitle,
+                    { 
+                      color: theme.primary,
+                      fontSize: progressRingSize * 0.045,
+                      textAlign: 'center',
+                      fontWeight: '600',
+                      marginTop: 2,
+                    }
+                  ]}>
+                    {LevelService.getStageTitle(stats.stage + 1)}
+                  </Text>
+                </View>
+              )}
+              
+              {/* Circular Progress Bar */}
+              <Svg 
+                style={{ position: 'absolute' }}
+                width={progressRingSize} 
+                height={progressRingSize}
+              >
+                <Circle
+                  cx={progressRingSize / 2}
+                  cy={progressRingSize / 2}
+                  r={(progressRingSize - progressRingStrokeWidth) / 2}
+                  stroke={theme.primary}
+                  strokeWidth={progressRingStrokeWidth}
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeDasharray={`${((progressRingSize - progressRingStrokeWidth) * Math.PI * (stats.progressPercent / 100))}, ${((progressRingSize - progressRingStrokeWidth) * Math.PI)}`}
+                  transform={`rotate(-90 ${progressRingSize / 2} ${progressRingSize / 2})`}
+                />
+              </Svg>
             </View>
           </View>
-          )}
           
-          {/* Developer Mode - Reset Achievements Button */}
-          {__DEV__ && (
+          
+          
+          
+          
+          
+          
+          {/* Premium Banner for free users */}
+          {userSubscriptionStatus === 'free' && (
             <TouchableOpacity
               style={[
-                styles.devButton,
-                { backgroundColor: 'rgba(255,0,0,0.15)' }
+                styles.premiumBanner,
+                { marginTop: 48, marginBottom: 24 }
               ]}
-              onPress={handleResetAchievements}
+              onPress={handleUpgradePress}
+              activeOpacity={0.8}
             >
-              <Ionicons name="refresh" size={20} color="#FF3B30" />
-              <Text style={styles.devButtonText}>
-                Reset All Achievements (Dev Only)
-              </Text>
+              <LinearGradient
+                colors={['#FFD700', '#FFA500']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.premiumBannerGradient}
+              />
+              <View style={styles.premiumBannerContent}>
+                <Ionicons name="lock-open" size={24} color="#FFFFFF" />
+                <View style={styles.premiumBannerTextContainer}>
+                  <Text 
+                    style={styles.premiumBannerTitle}
+                    maxFontSizeMultiplier={1.3}
+                  >
+                    Access Premium Achievements
+                  </Text>
+                  <Text 
+                    style={styles.premiumBannerSubtitle}
+                    maxFontSizeMultiplier={1.3}
+                  >
+                    {`${unlockedPremiumAchievements}/${totalPremiumAchievements} Premium Achievements Unlocked`}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.premiumButtonContainer}>
+                <LinearGradient
+                  colors={['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.5)']}
+                  style={styles.premiumButton}
+                >
+                  <Text 
+                    style={styles.premiumButtonText}
+                    maxFontSizeMultiplier={1.3}
+                  >
+                    Upgrade
+                  </Text>
+                </LinearGradient>
+              </View>
             </TouchableOpacity>
           )}
           
-          {/* Stats Cards */}
-          <View style={styles.statsCardsContainer}>
+          {/* Stats Cards at Bottom */}
+          <View style={[styles.statsCardsContainer, { marginTop: 48, marginBottom: 24 }]}>
             {/* Unlocked Card */}
             <View style={[styles.statsCard, { backgroundColor: theme.card }]}>
               <View style={[styles.statsIconContainer, { backgroundColor: '#4ade80' }]}>
@@ -1341,128 +1298,231 @@ const AchievementsScreen = ({ navigation, route }) => {
             </View>
           </View>
           
-          {/* Category Progress Section */}
-          <Text 
-            style={[
-              styles.sectionTitle, 
-              { 
-                color: theme.text,
-                alignSelf: 'flex-start',
-                marginTop: 32,
-                marginBottom: 16,
-              }
-            ]}
-            maxFontSizeMultiplier={1.3}
-          >
-            Category Progress
-          </Text>
-          
-          <View style={styles.categoryProgressContainer}>
-            {CATEGORIES.map(category => {
-              // Calculate progress for this category
-              const categoryAchievements = Object.values(ACHIEVEMENTS).filter(
-                a => a.category === category.id
-              );
+          {/* Developer Mode - All Developer Buttons */}
+          {__DEV__ && (
+            <View style={{ width: '100%', marginTop: 32, paddingTop: 16, borderTopWidth: 1, borderTopColor: theme.border + '30' }}>
+              <Text 
+                style={[
+                  styles.sectionTitle, 
+                  { 
+                    color: theme.text,
+                    textAlign: 'center',
+                    marginBottom: 16,
+                    fontSize: 16,
+                    opacity: 0.7
+                  }
+                ]}
+                maxFontSizeMultiplier={1.3}
+              >
+                Developer Tools
+              </Text>
               
-              const unlockedInCategory = categoryAchievements.filter(
-                a => isAchievementUnlocked(a.id)
-              ).length;
-              
-              const categoryPercent = Math.round((unlockedInCategory / categoryAchievements.length) * 100);
-              
-              return (
-                <View key={category.id} style={styles.categoryProgressItem}>
-                  <View style={styles.categoryProgressHeader}>
-                    <View style={[
-                      styles.categoryIcon,
-                      { backgroundColor: `${category.color}20` }
-                    ]}>
-                      <Ionicons name={category.icon} size={20} color={category.color} />
-                    </View>
-                    <Text 
-                      style={[styles.categoryName, { color: theme.text }]}
-                      maxFontSizeMultiplier={1.3}
-                    >
-                      {category.title}
-                    </Text>
-                    <Text 
-                      style={[styles.categoryPercent, { color: theme.textSecondary }]}
-                      maxFontSizeMultiplier={1.3}
-                    >
-                      {categoryPercent}%
-                    </Text>
-                  </View>
-                  
-                  <View style={[styles.progressBarBg, { backgroundColor: `${category.color}25` }]}>
-                    <LinearGradient
-                      colors={[`${category.color}70`, category.color]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={[
-                        styles.progressBarFill,
-                        { width: `${categoryPercent}%` }
-                      ]}
-                    />
-                  </View>
-                  
-                  <Text 
-                    style={[styles.categoryProgressText, { color: theme.textSecondary }]}
-                    maxFontSizeMultiplier={1.3}
+              {/* Stage Testing Buttons */}
+              <View style={{ flexDirection: 'column', width: '100%', marginBottom: 16 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginBottom: 8 }}>
+                  <TouchableOpacity
+                    style={[
+                      styles.devButton,
+                      { 
+                        backgroundColor: 'rgba(0,255,0,0.15)', 
+                        flex: 1, 
+                        marginRight: 8, 
+                        justifyContent: 'center', 
+                        alignItems: 'center',
+                        opacity: stageAnimationComplete ? 1 : 0.5 
+                      }
+                    ]}
+                    onPress={() => handleStageUp(stats.stage + 1)}
+                    disabled={!stageAnimationComplete}
                   >
-                    {unlockedInCategory} of {categoryAchievements.length} unlocked
-                  </Text>
+                    <Text style={[styles.devButtonText, { color: '#00CC00' }]}>
+                      Stage Up +1
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={[
+                      styles.devButton,
+                      { 
+                        backgroundColor: 'rgba(255,165,0,0.15)', 
+                        flex: 1, 
+                        justifyContent: 'center', 
+                        alignItems: 'center',
+                        opacity: stageAnimationComplete ? 1 : 0.5 
+                      }
+                    ]}
+                    onPress={() => {
+                      // Only trigger animation if not already animating
+                      if (stageAnimationComplete) {
+                        setStageAnimationComplete(false);
+                        setIsStagingUp(true);
+                      }
+                    }}
+                    disabled={!stageAnimationComplete}
+                  >
+                    <Text style={[styles.devButtonText, { color: '#FF8C00' }]}>
+                      Test Animation
+                    </Text>
+                  </TouchableOpacity>
                 </View>
-              );
-            })}
-          </View>
-          
-          {/* Premium Banner for free users */}
-          {userSubscriptionStatus === 'free' && (
-            <TouchableOpacity
-              style={[
-                styles.premiumBanner,
-                { marginTop: 32 }
-              ]}
-              onPress={handleUpgradePress}
-              activeOpacity={0.8}
-            >
-              <LinearGradient
-                colors={['#FFD700', '#FFA500']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.premiumBannerGradient}
-              />
-              <View style={styles.premiumBannerContent}>
-                <Ionicons name="lock-open" size={24} color="#FFFFFF" />
-                <View style={styles.premiumBannerTextContainer}>
-                  <Text 
-                    style={styles.premiumBannerTitle}
-                    maxFontSizeMultiplier={1.3}
+                
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginBottom: 8 }}>
+                  <TouchableOpacity
+                    style={[
+                      styles.devButton,
+                      { 
+                        backgroundColor: 'rgba(255,0,0,0.15)', 
+                        flex: 1, 
+                        marginRight: 8,
+                        justifyContent: 'center', 
+                        alignItems: 'center'
+                      }
+                    ]}
+                    onPress={async () => {
+                      // Reset animation state and test mode
+                      setStageAnimationComplete(true);
+                      setIsStagingUp(false);
+                      setTestMode(false);
+                      setTestStats(null);
+                      
+                      // Clear persisted test data
+                      await AsyncStorage.removeItem('testLevel');
+                      await AsyncStorage.removeItem('testMode');
+                      
+                      // Trigger stats recalculation to restore real stats
+                      setTimeout(() => {
+                        calculateStats();
+                        calculatePremiumStats();
+                      }, 100);
+                    }}
                   >
-                    Unlock All Premium Achievements
-                  </Text>
-                  <Text 
-                    style={styles.premiumBannerSubtitle}
-                    maxFontSizeMultiplier={1.3}
+                    <Text style={[styles.devButtonText, { color: '#FF0000' }]}>
+                      Reset Animation
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={[
+                      styles.devButton,
+                      { 
+                        backgroundColor: 'rgba(128,0,128,0.15)', 
+                        flex: 1,
+                        justifyContent: 'center', 
+                        alignItems: 'center'
+                      }
+                    ]}
+                    onPress={() => {
+                      // Show debug info
+                      alert(`Animation Complete: ${stageAnimationComplete}\nIs Staging Up: ${isStagingUp}\nCurrent Stage: ${stats.stage}\nTest Mode: ${testMode}\nStage Title: ${stats.stageTitle}`);
+                    }}
                   >
-                    {`${unlockedPremiumAchievements}/${totalPremiumAchievements} Premium Achievements Unlocked`}
-                  </Text>
+                    <Text style={[styles.devButtonText, { color: '#800080' }]}>
+                      Debug Info
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                
+                <View style={{ flexDirection: 'row', justifyContent: 'center', width: '100%', marginBottom: 16 }}>
+                  <TouchableOpacity
+                    style={[
+                      styles.devButton,
+                      { 
+                        backgroundColor: 'rgba(255,69,0,0.15)', 
+                        flex: 1,
+                        justifyContent: 'center', 
+                        alignItems: 'center'
+                      }
+                    ]}
+                    onPress={async () => {
+                      // Reset user stage back to Stage 1
+                      setStageAnimationComplete(true);
+                      setIsStagingUp(false);
+                      setTestMode(false);
+                      setTestStats(null);
+                      
+                      // Clear persisted test data
+                      await AsyncStorage.removeItem('testLevel');
+                      await AsyncStorage.removeItem('testMode');
+                      
+                      // Set stage back to 1 by clearing all fake achievements and resetting stats
+                      try {
+                        // Remove any test achievements that were added
+                        const currentAchievements = await AsyncStorage.getItem('unlockedAchievements');
+                        if (currentAchievements) {
+                          const parsedAchievements = JSON.parse(currentAchievements);
+                          
+                          // Remove test achievements
+                          const testAchievementIds = [
+                            'test-achievement-1',
+                            'test-achievement-2', 
+                            'test-achievement-3',
+                            'test-achievement-4',
+                            'test-achievement-5'
+                          ];
+                          
+                          testAchievementIds.forEach(id => {
+                            if (parsedAchievements[id]) {
+                              delete parsedAchievements[id];
+                            }
+                          });
+                          
+                          await AsyncStorage.setItem('unlockedAchievements', JSON.stringify(parsedAchievements));
+                        }
+                        
+                        // Force refresh achievements context
+                        if (refreshAchievements) {
+                          refreshAchievements();
+                        }
+                        
+                        // Reset to stage 1 stats
+                        const resetStats = {
+                          totalUnlocked: stats.totalUnlocked || 0,
+                          percentComplete: stats.percentComplete || 0,
+                          totalPoints: 0,
+                          stage: 1,
+                          stageTitle: LevelService.getStageTitle(1),
+                          currentStageThreshold: 0,
+                          nextStageThreshold: 50,
+                          scoreForNextStage: 50,
+                          progressPercent: 0
+                        };
+                        
+                        setStats(resetStats);
+                        setPreviousStage(1);
+                        
+                        showSuccess('User stage reset to Stage 1');
+                      } catch (error) {
+                        console.error('Error resetting user stage:', error);
+                        showError('Error resetting user stage');
+                      }
+                    }}
+                  >
+                    <Text style={[styles.devButtonText, { color: '#FF4500' }]}>
+                      Reset User Stage
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </View>
-              <View style={styles.premiumButtonContainer}>
-                <LinearGradient
-                  colors={['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.5)']}
-                  style={styles.premiumButton}
-                >
-                  <Text 
-                    style={styles.premiumButtonText}
-                    maxFontSizeMultiplier={1.3}
-                  >
-                    Upgrade
-                  </Text>
-                </LinearGradient>
-              </View>
-            </TouchableOpacity>
+              
+              {/* Reset Achievements Button */}
+              <TouchableOpacity
+                style={[
+                  styles.devButton,
+                  { 
+                    backgroundColor: 'rgba(255,0,0,0.15)',
+                    width: '100%',
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                  }
+                ]}
+                onPress={handleResetAchievements}
+              >
+                <Ionicons name="refresh" size={20} color="#FF3B30" />
+                <Text style={styles.devButtonText}>
+                  Reset All Achievements (Dev Only)
+                </Text>
+              </TouchableOpacity>
+            </View>
           )}
           
           {/* Bottom padding */}
@@ -1584,11 +1644,117 @@ const AchievementsScreen = ({ navigation, route }) => {
     );
   };
   
-  // Animate tab indicator
-  const tabIndicatorTranslateX = tabIndicatorAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [4, width / 2 - 4]
+  // Create scenes for TabView
+  const renderScene = SceneMap({
+    progress: renderProgressTab,
+    achievements: renderAchievementsTab,
   });
+  
+  // Custom TabBar component with header integration
+  const renderTabBar = (props) => {
+    return (
+      <View>
+        {/* Animated TabBar at Top */}
+        <View style={[
+          styles.header,
+          {
+            paddingHorizontal: 16,
+            height: 56,
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }
+        ]}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+            accessibilityHint="Returns to previous screen"
+          >
+            <Ionicons 
+              name="arrow-back" 
+              size={24} 
+              color={theme.text} 
+            />
+          </TouchableOpacity>
+          
+          {/* Centered TabBar */}
+          <View style={{ flex: 1, marginHorizontal: 16 }}>
+            <TabBar
+              {...props}
+              style={{
+                backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+                elevation: 0,
+                shadowOpacity: 0,
+                borderRadius: 20,
+                height: 40,
+                paddingHorizontal: 3,
+              }}
+              indicatorStyle={{
+                backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : theme.primary + '15',
+                height: 34,
+                borderRadius: 17,
+                marginBottom: 3,
+                marginTop: 3,
+                marginHorizontal: 0,
+                width: '48%',
+                left: '1%',
+              }}
+              activeColor={theme.primary}
+              inactiveColor={theme.textSecondary}
+              labelStyle={{
+                fontSize: 14,
+                fontWeight: '600',
+                textTransform: 'none',
+                margin: 0,
+                padding: 0,
+              }}
+              tabStyle={{
+                paddingHorizontal: 0,
+                paddingVertical: 0,
+              }}
+              renderLabel={({ route, focused, color }) => {
+                const iconName = route.key === 'progress' ? 'stats-chart' : 'trophy';
+                const label = route.key === 'progress' ? 'Progress' : 'Achievements';
+                
+                return (
+                  <View style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: 34,
+                    width: '100%',
+                    marginTop: -4,
+                  }}>
+                    <Ionicons
+                      name={iconName}
+                      size={18}
+                      color={color}
+                      style={{ marginRight: 6 }}
+                    />
+                    <Text 
+                      style={{
+                        color,
+                        fontSize: 14,
+                        fontWeight: '600',
+                      }}
+                      maxFontSizeMultiplier={1.3}
+                    >
+                      {label}
+                    </Text>
+                  </View>
+                );
+              }}
+            />
+          </View>
+          
+          <View style={{ width: 40, height: 40 }} />
+        </View>
+      </View>
+    );
+  };
   
   return (
     <SafeAreaView 
@@ -1607,160 +1773,17 @@ const AchievementsScreen = ({ navigation, route }) => {
         barStyle={isDarkMode ? 'light-content' : 'dark-content'} 
       />
       
-      {/* Header */}
-      <View style={[
-        styles.header,
-        {
-          paddingHorizontal: 16,
-          height: 56,
-        }
-      ]}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          accessible={true}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-          accessibilityHint="Returns to previous screen"
-        >
-          <Ionicons 
-            name="arrow-back" 
-            size={24} 
-            color={theme.text} 
-          />
-        </TouchableOpacity>
-        
-        <Text 
-          style={[
-            styles.headerTitle, 
-            { 
-              color: theme.text,
-              fontSize: 20,
-            }
-          ]}
-          maxFontSizeMultiplier={1.3}
-        >
-          Achievements
-        </Text>
-        
-        {/* Reset button now moved to the Progress tab */}
-        <View style={{ width: 40, height: 40 }} />
-      </View>
-      
-      {/* Tab Navigation */}
-      <View style={[
-        styles.tabContainer,
-        {
-          paddingHorizontal: 16,
-          marginBottom: 16
-        }
-      ]}>
-        <View style={[
-          styles.tabBar,
-          {
-            height: 48,
-            backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-            borderRadius: 24,
-            padding: 4,
-          }
-        ]}>
-          <TouchableOpacity
-            style={[
-              styles.tab,
-              {
-                flex: 1,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: 20,
-              },
-              activeTab === 'progress' && styles.activeTab
-            ]}
-            onPress={() => handleTabChange('progress')}
-            accessible={true}
-            accessibilityRole="tab"
-            accessibilityLabel="Progress tab"
-            accessibilityState={{ selected: activeTab === 'progress' }}
-          >
-            <Ionicons 
-              name="stats-chart" 
-              size={20} 
-              color={activeTab === 'progress' ? theme.primary : theme.textSecondary} 
-            />
-            <Text 
-              style={[
-                styles.tabText, 
-                { 
-                  color: activeTab === 'progress' ? theme.primary : theme.textSecondary,
-                  marginLeft: 8,
-                  fontWeight: '600',
-                }
-              ]}
-              maxFontSizeMultiplier={1.3}
-            >
-              Progress
-            </Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[
-              styles.tab,
-              {
-                flex: 1,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: 20,
-              },
-              activeTab === 'achievements' && styles.activeTab
-            ]}
-            onPress={() => handleTabChange('achievements')}
-            accessible={true}
-            accessibilityRole="tab"
-            accessibilityLabel="Achievements tab"
-            accessibilityState={{ selected: activeTab === 'achievements' }}
-          >
-            <Ionicons 
-              name="trophy" 
-              size={20} 
-              color={activeTab === 'achievements' ? theme.primary : theme.textSecondary} 
-            />
-            <Text 
-              style={[
-                styles.tabText, 
-                { 
-                  color: activeTab === 'achievements' ? theme.primary : theme.textSecondary,
-                  marginLeft: 8,
-                  fontWeight: '600',
-                }
-              ]}
-              maxFontSizeMultiplier={1.3}
-            >
-              Achievements
-            </Text>
-          </TouchableOpacity>
-          
-          {/* Animated Tab Indicator */}
-          <Animated.View 
-            style={[
-              styles.tabIndicator, 
-              { 
-                position: 'absolute',
-                height: 40,
-                width: '48%',
-                borderRadius: 20,
-                backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : theme.primary + '15',
-                transform: [{ translateX: tabIndicatorTranslateX }],
-                bottom: 4,
-              }
-            ]} 
-          />
-        </View>
-      </View>
-      
-      {/* Tab Content */}
-      {activeTab === 'progress' ? renderProgressTab() : renderAchievementsTab()}
+      {/* TabView with Swipe Gestures */}
+      <TabView
+        navigationState={navigationState}
+        renderScene={renderScene}
+        renderTabBar={renderTabBar}
+        onIndexChange={handleIndexChange}
+        initialLayout={{ width }}
+        swipeEnabled={true}
+        lazy={true}
+        lazyPreloadDistance={1}
+      />
       
       {/* New Achievements Popup */}
       <NewAchievementsPopup
@@ -1793,12 +1816,12 @@ const AchievementsScreen = ({ navigation, route }) => {
         theme={theme}
       />
 
-      {/* Level Up Celebration */}
+      {/* Stage Up Celebration */}
       <LevelUpCelebration
-        visible={isLevelingUp}
-        level={stats.level}
-        previousLevel={previousLevel}
-        onAnimationComplete={handleLevelUpAnimationComplete}
+        visible={isStagingUp}
+        level={stats.stage}
+        previousLevel={previousStage}
+        onAnimationComplete={handleStageUpAnimationComplete}
       />
     </SafeAreaView>
   );
@@ -1878,19 +1901,43 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 8,
   },
-  pointsDisplay: {
+  scoreDisplay: {
     marginVertical: 16,
   },
-  pointsBadge: {
+  scoreBadge: {
     paddingVertical: 8,
     paddingHorizontal: 20,
     borderRadius: 20,
   },
-  pointsText: {
+  scoreText: {
     color: '#FFFFFF',
     fontWeight: 'bold',
     fontSize: 16,
   },
+  // New styles for redesigned progress circle
+  progressCircle: {
+    position: 'relative',
+  },
+  stageIconContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scoreContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mainScoreText: {
+    textAlign: 'center',
+  },
+  scoreLabel: {
+    textAlign: 'center',
+  },
+  progressTextContainer: {
+    alignItems: 'center',
+  },
+  progressText: {},
+  stageTitle: {},
+  progressRingOverlay: {},
   nextLevelText: {
     fontSize: 14,
     marginBottom: 16,

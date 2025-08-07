@@ -3,14 +3,14 @@
 export const DOMAIN_DEFINITIONS = [
   {
     name: "Career & Work",
-    icon: "briefcase-outline",
+    icon: "briefcase",
     color: "#3b82f6", // Blue
     description: "Professional advancement, workplace goals, career development",
     goals: [
       {
         name: "Get Significant Salary Increase",
         description: "Achieve 15-20% salary increase through strategic career moves and negotiations",
-        icon: "trending-up-outline",
+        icon: "trending-up",
         explanation: "75% of UK professionals seek new jobs with better pay being the #1 reason (51%). Job switchers receive average 8% increases, making 15-20% achievable through strategic moves.",
         projects: [
           {
@@ -60,7 +60,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Secure Flexible Work Arrangement",
         description: "Negotiate hybrid working or four-day week for better work-life balance",
-        icon: "calendar-outline",
+        icon: "calendar",
         explanation: "78% of UK employees favor four-day work weeks, while 85% of remote workers want hybrid models. Work-life balance jumped from 8th to 1st priority for job seekers since 2012.",
         projects: [
           {
@@ -110,7 +110,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Build High-Value Digital Skills",
         description: "Develop in-demand technical skills for career advancement and higher earnings",
-        icon: "laptop-outline",
+        icon: "laptop",
         explanation: "75% of employers can't find right technical skills, while AI skills earn workers 21% more. With 71% of organizations expecting to use AI but only 25% having needed skills, this represents massive opportunity.",
         needsClarification: true,
         clarificationOptions: [
@@ -270,12 +270,16 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Research and enroll in certification program for chosen digital skill",
+                summary: "Research cert",
                 explanation: "Industry-recognized certifications provide credible evidence of technical skills to UK employers. Research helps identify which programs offer best ROI for career advancement and salary increases.",
+                timeframe: "2 weeks",
                 completed: false
               },
               {
                 name: "Complete certification and add credential to professional profiles",
+                summary: "Complete cert",
                 explanation: "Completed certifications increase visibility to recruiters and justify higher salary expectations. Adding credentials to LinkedIn and CV signals professional development and technical competency.",
+                timeframe: "6-12 months",
                 completed: false
               }
             ]
@@ -287,12 +291,16 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Identify opportunities to apply new skills in current role or side projects",
+                summary: "Apply skills",
                 explanation: "Practical application of new skills demonstrates value to current employer while building portfolio for future opportunities. Side projects provide creative outlet for skill development.",
+                timeframe: "1 month",
                 completed: false
               },
               {
                 name: "Showcase digital expertise through presentations, projects, or mentoring colleagues",
+                summary: "Showcase skills",
                 explanation: "Visibility of expertise leads to promotion opportunities and establishes professional reputation. Teaching others reinforces your own knowledge while building valuable workplace relationships.",
+                timeframe: "Ongoing",
                 completed: false
               }
             ]
@@ -303,14 +311,14 @@ export const DOMAIN_DEFINITIONS = [
   },
   {
     name: "Financial Security",
-    icon: "cash-outline",
+    icon: "cash",
     color: "#10b981", // Green
     description: "Building wealth, managing expenses, and achieving financial goals",
     goals: [
       {
         name: "Save for House Deposit",
         description: "Build £15,000-25,000 first-time buyer deposit using government schemes",
-        icon: "home-outline",
+        icon: "home",
         explanation: "54% of UK mortgages go to first-time buyers, with 341,068 achieving this in 2024 (+19%). Using LISA's 25% government bonus makes this achievable despite high deposit requirements.",
         projects: [
           {
@@ -320,11 +328,13 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Open Lifetime ISA and set up maximum £4,000 annual contributions for 25% government bonus",
+                summary: "Open LISA",
                 explanation: "LISA provides 25% government bonus on contributions up to £4,000 annually, effectively giving you £1,000 free money each year toward house deposit. This makes homeownership significantly more achievable.",
                 completed: false
               },
               {
                 name: "Research target areas and calculate realistic deposit needed based on location preferences",
+                summary: "Research areas",
                 explanation: "UK house prices vary dramatically by region - from £26,769 in North East to £108,848 in London. Strategic location research helps identify affordable areas with good prospects.",
                 completed: false
               }
@@ -337,11 +347,13 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Research Help to Buy schemes and first-time buyer programs in target areas",
+                summary: "Research schemes",
                 explanation: "Government schemes like Help to Buy and shared ownership can reduce deposit requirements and make homeownership accessible. Each region offers different programs with varying benefits.",
                 completed: false
               },
               {
                 name: "Get mortgage pre-approval to understand borrowing capacity and requirements",
+                summary: "Mortgage pre-approval",
                 explanation: "Pre-approval provides realistic budget for house hunting and demonstrates seriousness to sellers. Understanding borrowing capacity helps set appropriate savings targets and timeline.",
                 completed: false
               }
@@ -352,7 +364,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Build Emergency Fund",
         description: "Establish £4,500-6,000 emergency fund covering 3-4 months expenses",
-        icon: "shield-outline",
+        icon: "shield",
         explanation: "44% struggle financially, with 25% having under £100 saved. This goal provides crucial buffer against job loss or unexpected expenses, covering average UK living costs.",
         projects: [
           {
@@ -362,10 +374,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Calculate 3-4 months of essential UK expenses (rent, council tax, utilities, food)",
+                summary: "Calculate expenses",
                 completed: false
               },
               {
                 name: "Open high-interest savings account and set up automatic monthly transfers",
+                summary: "Open savings",
                 completed: false
               }
             ]
@@ -377,10 +391,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Track monthly expenses and adjust emergency fund target as living costs change",
+                summary: "Track expenses",
                 completed: false
               },
               {
                 name: "Avoid touching emergency fund except for true emergencies, rebuilding if used",
+                summary: "Protect fund",
                 completed: false
               }
             ]
@@ -390,7 +406,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Maximize ISA Savings",
         description: "Fully utilize £20,000 annual ISA allowance for tax-free wealth building",
-        icon: "trending-up-outline",
+        icon: "trending-up",
         explanation: "42% of UK adults have ISAs with average value £33,278. Tax-free growth becomes crucial as more pushed into higher brackets. Flexible between cash ISA and stocks & shares ISA.",
         projects: [
           {
@@ -400,10 +416,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Research and choose between cash ISA (short-term) and stocks & shares ISA (long-term)",
+                summary: "Choose ISA",
                 completed: false
               },
               {
                 name: "Set up automatic monthly ISA contributions to reach £20,000 annual allowance",
+                summary: "Auto ISA",
                 completed: false
               }
             ]
@@ -415,10 +433,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Plan ISA contributions around bonuses, pay rises, and windfalls to maximize allowance",
+                summary: "Plan ISA",
                 completed: false
               },
               {
                 name: "Review and optimize ISA portfolio annually for best returns and risk balance",
+                summary: "Review ISA",
                 completed: false
               }
             ]
@@ -429,14 +449,14 @@ export const DOMAIN_DEFINITIONS = [
   },
   {
     name: "Health & Wellness",
-    icon: "fitness-outline",
+    icon: "fitness",
     color: "#06b6d4", // Cyan
     description: "Physical fitness, mental health, nutrition, and overall wellbeing",
     goals: [
       {
         name: "Complete First 5K Run",
         description: "Train for and complete first 5K run within 12 months using community support",
-        icon: "walk-outline",
+        icon: "walk",
         explanation: "Running is UK's most popular activity (15% participation), with Parkrun's 197,000+ weekly participants providing free community support. Appeals to 45%+ seeking fitness goals.",
         projects: [
           {
@@ -446,10 +466,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Download NHS Couch to 5K app and commit to 3 weekly training sessions",
+                summary: "Couch to 5K",
                 completed: false
               },
               {
                 name: "Find local running group or Parkrun event for community support and motivation",
+                summary: "Join running",
                 completed: false
               }
             ]
@@ -461,10 +483,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Register for and complete first official 5K run or Parkrun event",
+                summary: "Complete 5K",
                 completed: false
               },
               {
                 name: "Set next running goal (10K, faster 5K time) to maintain momentum and fitness",
+                summary: "Next goal",
                 completed: false
               }
             ]
@@ -474,7 +498,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Master Quality Sleep",
         description: "Achieve consistent 7+ hours quality sleep nightly for better health and productivity",
-        icon: "moon-outline",
+        icon: "moon",
         explanation: "80% aim for 8+ hours but only 19% achieve it, with 41% getting ≤6 hours. Direct impact on productivity crucial for professionals, with 38% rarely feeling well-rested.",
         projects: [
           {
@@ -484,10 +508,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Establish consistent bedtime routine and sleep schedule aiming for 7-8 hours nightly",
+                summary: "Sleep routine",
                 completed: false
               },
               {
                 name: "Optimize bedroom environment (temperature, lighting, electronics) for better sleep quality",
+                summary: "Optimize bedroom",
                 completed: false
               }
             ]
@@ -499,10 +525,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Use sleep tracking app or device to monitor sleep patterns and quality",
+                summary: "Track sleep",
                 completed: false
               },
               {
                 name: "Identify and address sleep disruptors (stress, caffeine, screen time) systematically",
+                summary: "Fix disruptors",
                 completed: false
               }
             ]
@@ -512,7 +540,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Reduce Alcohol Consumption",
         description: "Cut alcohol intake by 50% or complete structured challenges like Dry January",
-        icon: "wine-outline",
+        icon: "wine",
         explanation: "30% of men and 26% of women want to reduce alcohol, with 15.5 million planning alcohol-free January 2025. Multiple motivations: save money (24%), better sleep (18%), fitness (16%).",
         projects: [
           {
@@ -522,10 +550,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Track current alcohol consumption and set specific reduction targets (50% or alcohol-free days)",
+                summary: "Track alcohol",
                 completed: false
               },
               {
                 name: "Find alcohol-free alternatives and social activities that don't center around drinking",
+                summary: "Find alternatives",
                 completed: false
               }
             ]
@@ -537,10 +567,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Complete Dry January or similar alcohol-free challenge with tracking and support",
+                summary: "Dry January",
                 completed: false
               },
               {
                 name: "Maintain reduced alcohol consumption and track improvements in sleep, fitness, and savings",
+                summary: "Maintain reduction",
                 completed: false
               }
             ]
@@ -551,14 +583,14 @@ export const DOMAIN_DEFINITIONS = [
   },
   {
     name: "Relationships",
-    icon: "people-outline",
+    icon: "people",
     color: "#ec4899", // Pink
     description: "Building and maintaining meaningful personal connections",
     goals: [
       {
         name: "Move in with Partner",
         description: "Establish cohabitation partnership within 18 months as modern relationship milestone",
-        icon: "home-heart-outline",
+        icon: "heart",
         explanation: "90% of UK couples now cohabitate before marriage (record high). With marriage rates below 50% for first time, cohabitation represents modern relationship milestone.",
         projects: [
           {
@@ -568,10 +600,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Have open conversations about expectations, finances, and future goals with partner",
+                summary: "Talk partner",
                 completed: false
               },
               {
                 name: "Spend extended time together (weekends, holidays) to test compatibility",
+                summary: "Test compatibility",
                 completed: false
               }
             ]
@@ -583,10 +617,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Find suitable shared accommodation and plan moving logistics together",
+                summary: "Find home",
                 completed: false
               },
               {
                 name: "Establish household routines, shared expenses, and conflict resolution systems",
+                summary: "Setup routines",
                 completed: false
               }
             ]
@@ -596,7 +632,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Build Strong Friendships",
         description: "Create core friend circle of 3-5 close connections for support and companionship",
-        icon: "people-outline",
+        icon: "people",
         explanation: "51% find making friends difficult, with 25-34 showing highest loneliness rates (9% often/always lonely). Intentional friendship building addresses post-pandemic social recovery needs.",
         projects: [
           {
@@ -606,10 +642,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Join clubs, classes, or groups aligned with your interests to meet like-minded people",
+                summary: "Join groups",
                 completed: false
               },
               {
                 name: "Use friendship apps (Bumble BFF) or attend meetup events to expand social circle",
+                summary: "Use apps",
                 completed: false
               }
             ]
@@ -621,10 +659,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Schedule regular activities with friends and maintain consistent contact",
+                summary: "Schedule activities",
                 completed: false
               },
               {
                 name: "Be vulnerable and authentic in friendships to create deeper, more meaningful connections",
+                summary: "Be authentic",
                 completed: false
               }
             ]
@@ -634,7 +674,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Find Quality Romantic Connection",
         description: "Master 'slow dating' approach for meaningful relationships over casual encounters",
-        icon: "heart-outline",
+        icon: "heart",
         explanation: "Dating app fatigue drives shift to quality over quantity. UK dating costs (£1,900 to find partner) make strategic approach essential for meaningful connections.",
         projects: [
           {
@@ -644,10 +684,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Define relationship values and what you're looking for in a long-term partner",
+                summary: "Define values",
                 completed: false
               },
               {
                 name: "Choose dating platforms and events that attract people seeking serious relationships",
+                summary: "Choose platforms",
                 completed: false
               }
             ]
@@ -659,10 +701,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Practice authentic communication and take time to really get to know potential partners",
+                summary: "Authentic dating",
                 completed: false
               },
               {
                 name: "Attend dating events, activities, or social gatherings that enable natural conversation",
+                summary: "Dating events",
                 completed: false
               }
             ]
@@ -673,14 +717,14 @@ export const DOMAIN_DEFINITIONS = [
   },
   {
     name: "Personal Growth",
-    icon: "school-outline",
+    icon: "school",
     color: "#8b5cf6", // Purple
     description: "Learning, self-improvement, and developing new capabilities",
     goals: [
       {
         name: "Learn New Language",
         description: "Achieve conversational fluency in chosen language within 18 months",
-        icon: "chatbubble-outline",
+        icon: "chatbubble",
         explanation: "UK ranks #2 globally for multilingual learning. Post-Brexit context reignites interest in European languages for cultural/family reasons beyond career benefits.",
         needsClarification: true,
         clarificationOptions: [
@@ -696,10 +740,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Complete Duolingo or Babbel course reaching A2 level in chosen European language",
+                    summary: "Learn European",
                     completed: false
                   },
                   {
                     name: "Practice daily with native content (news, podcasts, films) for 20-30 minutes",
+                    summary: "Daily practice",
                     completed: false
                   }
                 ]
@@ -711,10 +757,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Join local European language meetup or find conversation exchange partner",
+                    summary: "Join meetup",
                     completed: false
                   },
                   {
                     name: "Plan trip to European country and navigate key interactions in target language",
+                    summary: "Europe trip",
                     completed: false
                   }
                 ]
@@ -733,10 +781,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Complete Python for Everybody or JavaScript fundamentals course on Coursera/freeCodeCamp",
+                    summary: "Programming course",
                     completed: false
                   },
                   {
                     name: "Build 3 small projects demonstrating variables, functions, loops, and data structures",
+                    summary: "Build projects",
                     completed: false
                   }
                 ]
@@ -748,10 +798,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Build web application or automation script solving real problem you face",
+                    summary: "Build app",
                     completed: false
                   },
                   {
                     name: "Share code on GitHub and present project to demonstrate technical communication",
+                    summary: "Share GitHub",
                     completed: false
                   }
                 ]
@@ -770,10 +822,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Complete BSL Level 1 course through local college or online provider like SignHealth",
+                    summary: "BSL Level 1 course",
                     completed: false
                   },
                   {
                     name: "Practice fingerspelling alphabet and numbers until fluent (30+ words/minute)",
+                    summary: "Fingerspelling",
                     completed: false
                   }
                 ]
@@ -785,10 +839,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Attend local Deaf community events or BSL practice groups for conversation",
+                    summary: "Deaf events",
                     completed: false
                   },
                   {
                     name: "Volunteer with deaf organizations to practice BSL while supporting accessibility",
+                    summary: "Volunteer deaf",
                     completed: false
                   }
                 ]
@@ -804,10 +860,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Choose learning method (app, classes, tutor) and commit to daily 20-30 minute practice",
+                summary: "Choose method",
                 completed: false
               },
               {
                 name: "Set monthly milestones and track progress toward conversational fluency (B1 level)",
+                summary: "Track progress",
                 completed: false
               }
             ]
@@ -819,10 +877,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Find conversation partners, language exchange groups, or online speaking practice",
+                summary: "Find partners",
                 completed: false
               },
               {
                 name: "Use language in practical contexts (travel, media consumption, cultural events)",
+                summary: "Use practically",
                 completed: false
               }
             ]
@@ -832,7 +892,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Master Public Speaking",
         description: "Develop confident public speaking skills for personal and professional growth",
-        icon: "megaphone-outline",
+        icon: "megaphone",
         explanation: "High demand across UK cities with multiple established providers. 65% of workers participated in learning, with communication skills top priority. Builds confidence beyond work contexts.",
         projects: [
           {
@@ -842,10 +902,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Enroll in public speaking course or join local Toastmasters chapter",
+                summary: "Join speaking",
                 completed: false
               },
               {
                 name: "Practice regularly through prepared speeches and impromptu speaking exercises",
+                summary: "Practice speaking",
                 completed: false
               }
             ]
@@ -857,10 +919,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Volunteer for speaking opportunities at work, community groups, or social events",
+                summary: "Volunteer speak",
                 completed: false
               },
               {
                 name: "Deliver confident 15-20 minute presentation to demonstrate mastery",
+                summary: "Deliver presentation",
                 completed: false
               }
             ]
@@ -870,7 +934,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Build Financial Knowledge",
         description: "Achieve practical financial literacy for better money management and life decisions",
-        icon: "calculator-outline",
+        icon: "calculator",
         explanation: "Only 49% pass basic financial literacy tests, with 60% believing this should be taught in schools. Reduces financial stress affecting 35% of adults.",
         projects: [
           {
@@ -880,10 +944,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Complete comprehensive financial literacy course covering budgeting, investing, and planning",
+                summary: "Financial course",
                 completed: false
               },
               {
                 name: "Read financial education books and follow reputable UK financial advice sources",
+                summary: "Read finance",
                 completed: false
               }
             ]
@@ -895,10 +961,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Create comprehensive budget and investment plan using newfound knowledge",
+                summary: "Create budget",
                 completed: false
               },
               {
                 name: "Make informed financial decisions about ISAs, pensions, insurance, and major purchases",
+                summary: "Financial decisions",
                 completed: false
               }
             ]
@@ -909,14 +977,14 @@ export const DOMAIN_DEFINITIONS = [
   },
   {
     name: "Recreation & Leisure",
-    icon: "bicycle-outline",
+    icon: "bicycle",
     color: "#f59e0b", // Orange
     description: "Hobbies, entertainment, travel, and lifestyle enjoyment",
     goals: [
       {
         name: "Complete Active Challenge Events",
         description: "Participate in 3 active challenge events (5K, 10K, obstacle races) within 12 months",
-        icon: "trophy-outline",
+        icon: "trophy",
         explanation: "31% increase in active event participation with 17% higher spending intentions. Combines fitness with achievement milestones. Entry fees (£15-50) make it accessible.",
         projects: [
           {
@@ -926,10 +994,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Research and register for 3 different active events (5K, 10K, obstacle race, charity run)",
+                summary: "Register events",
                 completed: false
               },
               {
                 name: "Create training schedule that prepares you for each event with adequate rest between",
+                summary: "Training schedule",
                 completed: false
               }
             ]
@@ -941,10 +1011,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Complete all 3 registered events and track improvement in times/performance",
+                summary: "Complete events",
                 completed: false
               },
               {
                 name: "Celebrate achievements and plan next year's challenge events to maintain momentum",
+                summary: "Plan next",
                 completed: false
               }
             ]
@@ -954,7 +1026,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Explore UK Heritage Sites",
         description: "Visit 12 UK heritage sites using annual leave strategically throughout the year",
-        icon: "castle-outline",
+        icon: "business",
         explanation: "64% took domestic holidays (up from 60%). National Trust's 5.46M members show appetite. Encourages using full annual leave (60% don't use all their days).",
         projects: [
           {
@@ -964,10 +1036,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Get National Trust membership and create list of 12 heritage sites to visit throughout year",
+                summary: "National Trust",
                 completed: false
               },
               {
                 name: "Plan heritage visits around long weekends and annual leave for maximum exploration time",
+                summary: "Plan visits",
                 completed: false
               }
             ]
@@ -979,10 +1053,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Research history of each site before visiting and take guided tours where available",
+                summary: "Research history",
                 completed: false
               },
               {
                 name: "Document visits with photos and journal entries to remember experiences and share with others",
+                summary: "Document visits",
                 completed: false
               }
             ]
@@ -992,7 +1068,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Develop Creative Hobby",
         description: "Build creative skills with monthly progression goals in chosen artistic pursuit",
-        icon: "palette-outline",
+        icon: "color-palette",
         explanation: "Photography most desired (33% would try if money no object). Under-35s most likely to engage creatively. Provides stress relief separate from work achievements.",
         needsClarification: true,
         clarificationOptions: [
@@ -1008,10 +1084,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Learn composition basics (rule of thirds, lighting, framing) through daily photo practice",
+                    summary: "Learn composition",
                     completed: false
                   },
                   {
                     name: "Complete online photography course and practice manual camera settings",
+                    summary: "Photo course",
                     completed: false
                   }
                 ]
@@ -1023,10 +1101,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Create themed photography project (portraits, landscapes, street) with 20+ images",
+                    summary: "Photo project",
                     completed: false
                   },
                   {
                     name: "Share work on Instagram/portfolio site and join local photography meetups",
+                    summary: "Share photos",
                     completed: false
                   }
                 ]
@@ -1045,10 +1125,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Take beginner workshop in chosen craft (pottery, woodwork, textiles) to learn basics",
+                    summary: "Craft workshop",
                     completed: false
                   },
                   {
                     name: "Practice at home or studio space weekly, completing 2-3 pieces monthly",
+                    summary: "Practice craft",
                     completed: false
                   }
                 ]
@@ -1060,10 +1142,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Complete intermediate course or mentorship to develop signature style/technique",
+                    summary: "Intermediate craft",
                     completed: false
                   },
                   {
                     name: "Display work at local market, craft fair, or gift pieces to demonstrate skill level",
+                    summary: "Display craft",
                     completed: false
                   }
                 ]
@@ -1082,10 +1166,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Choose instrument and complete beginner course or weekly lessons for 3 months",
+                    summary: "Learn instrument",
                     completed: false
                   },
                   {
                     name: "Practice 30 minutes daily and learn 5 songs you can perform confidently",
+                    summary: "Practice music",
                     completed: false
                   }
                 ]
@@ -1097,10 +1183,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Perform at open mic night, join local band/choir, or busker license for street performance",
+                    summary: "Perform music",
                     completed: false
                   },
                   {
                     name: "Record and share 2-3 songs to demonstrate musical progress and confidence",
+                    summary: "Record songs",
                     completed: false
                   }
                 ]
@@ -1116,10 +1204,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Choose creative hobby and invest in basic equipment or materials needed to start",
+                summary: "Choose hobby",
                 completed: false
               },
               {
                 name: "Set up regular practice schedule and monthly skill-building goals",
+                summary: "Practice schedule",
                 completed: false
               }
             ]
@@ -1131,10 +1221,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Complete first major creative project and share with friends or online community",
+                summary: "Creative project",
                 completed: false
               },
               {
                 name: "Join local creative groups or classes to learn from others and gain inspiration",
+                summary: "Join creative",
                 completed: false
               }
             ]
@@ -1145,14 +1237,14 @@ export const DOMAIN_DEFINITIONS = [
   },
   {
     name: "Purpose & Meaning",
-    icon: "compass-outline",
+    icon: "compass",
     color: "#ef4444", // Red
     description: "Finding fulfillment, contributing to causes, and living with intention",
     goals: [
       {
         name: "Volunteer Using Professional Skills",
         description: "Commit to monthly skills-based volunteering (4-8 hours) for meaningful community impact",
-        icon: "heart-outline",
+        icon: "heart",
         explanation: "Only 10% of 25-34s volunteer monthly (lowest of all ages), yet 52% of non-volunteers interested if using existing skills. Addresses social consciousness practically.",
         projects: [
           {
@@ -1162,10 +1254,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Research charities and causes that could benefit from your professional skills",
+                summary: "Research charities",
                 completed: false
               },
               {
                 name: "Contact chosen organization and establish regular monthly volunteering commitment",
+                summary: "Contact org",
                 completed: false
               }
             ]
@@ -1177,10 +1271,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Complete first 6 months of regular volunteering and assess impact created",
+                summary: "6 months volunteer",
                 completed: false
               },
               {
                 name: "Take on additional responsibility or project leadership role within volunteer organization",
+                summary: "Leadership role",
                 completed: false
               }
             ]
@@ -1190,7 +1286,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Reduce Environmental Impact",
         description: "Take personal action on climate change while engaging in community environmental efforts",
-        icon: "leaf-outline",
+        icon: "leaf",
         explanation: "70% of Gen Z see climate change as biggest threat. Combines personal behavior change with collective action, avoiding individual guilt while enabling impact.",
         needsClarification: true,
         clarificationOptions: [
@@ -1206,10 +1302,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Use carbon calculator to measure current footprint and identify top 3 emission sources",
+                    summary: "Carbon calc",
                     completed: false
                   },
                   {
                     name: "Implement transport changes (cycling, public transport, reduced flights) to cut emissions 30%",
+                    summary: "Transport changes",
                     completed: false
                   }
                 ]
@@ -1221,10 +1319,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Reduce meat consumption 50% and switch to renewable energy provider",
+                    summary: "Diet energy",
                     completed: false
                   },
                   {
                     name: "Track monthly carbon savings and share progress to inspire others",
+                    summary: "Track carbon",
                     completed: false
                   }
                 ]
@@ -1243,10 +1343,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Audit household waste and implement refuse/reduce strategies for single-use items",
+                    summary: "Audit waste",
                     completed: false
                   },
                   {
                     name: "Set up comprehensive home systems for reuse, recycling, and composting",
+                    summary: "Setup systems",
                     completed: false
                   }
                 ]
@@ -1258,10 +1360,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Replace household products with sustainable alternatives and eliminate single-use items",
+                    summary: "Replace products",
                     completed: false
                   },
                   {
                     name: "Document 6-month zero-waste journey and share tips with community",
+                    summary: "Document journey",
                     completed: false
                   }
                 ]
@@ -1280,10 +1384,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Join local environmental group (Friends of the Earth, Transition Towns, etc.) and attend meetings",
+                    summary: "Join env group",
                     completed: false
                   },
                   {
                     name: "Participate in 2 community environmental campaigns or initiatives (tree planting, cleanup, advocacy)",
+                    summary: "Env campaigns",
                     completed: false
                   }
                 ]
@@ -1295,10 +1401,12 @@ export const DOMAIN_DEFINITIONS = [
                 tasks: [
                   {
                     name: "Organize neighborhood environmental initiative (community garden, solar co-op, repair cafe)",
+                    summary: "Organize initiative",
                     completed: false
                   },
                   {
                     name: "Engage with local council on environmental policies and track community impact",
+                    summary: "Council engage",
                     completed: false
                   }
                 ]
@@ -1314,10 +1422,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Calculate personal carbon footprint and identify top 3 areas for reduction",
+                summary: "Calc footprint",
                 completed: false
               },
               {
                 name: "Implement sustainable lifestyle changes in transport, diet, and consumption habits",
+                summary: "Lifestyle changes",
                 completed: false
               }
             ]
@@ -1329,10 +1439,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Join local environmental group or participate in community climate action initiatives",
+                summary: "Join climate",
                 completed: false
               },
               {
                 name: "Track environmental impact reduction and share sustainable living tips with others",
+                summary: "Track impact",
                 completed: false
               }
             ]
@@ -1342,7 +1454,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Take Community Leadership Role",
         description: "Assume local leadership position in community organization or local government",
-        icon: "people-outline",
+        icon: "people",
         explanation: "Only 5% from deprived areas take leadership roles versus 13% from affluent areas. Addresses representation while developing leadership skills.",
         projects: [
           {
@@ -1352,10 +1464,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Research local community organizations and identify leadership opportunities that align with interests",
+                summary: "Research orgs",
                 completed: false
               },
               {
                 name: "Complete trustee training or community leadership course to build relevant skills",
+                summary: "Leadership training",
                 completed: false
               }
             ]
@@ -1367,10 +1481,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Apply for and secure leadership role on community board, council, or organization",
+                summary: "Secure role",
                 completed: false
               },
               {
                 name: "Lead specific project or initiative that creates measurable positive community impact",
+                summary: "Lead project",
                 completed: false
               }
             ]
@@ -1381,14 +1497,14 @@ export const DOMAIN_DEFINITIONS = [
   },
   {
     name: "Environment & Organization",
-    icon: "home-outline",
+    icon: "home",
     color: "#6366f1", // Indigo
     description: "Creating organized, comfortable living and working spaces",
     goals: [
       {
         name: "Create Home Office Setup",
         description: "Establish dedicated work-from-home space for productivity and work-life balance",
-        icon: "desktop-outline",
+        icon: "desktop",
         explanation: "81% work from home weekly, yet only 11% have dedicated office space. 39% work from dining tables, 23% from sofas. Directly improves productivity and work-life balance.",
         projects: [
           {
@@ -1398,10 +1514,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Designate specific area for work and invest in essential office furniture (desk, chair, lighting)",
+                summary: "Setup office",
                 completed: false
               },
               {
                 name: "Set up technology infrastructure (monitor, webcam, internet) for effective remote work",
+                summary: "Setup tech",
                 completed: false
               }
             ]
@@ -1413,10 +1531,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Establish work hours and routines that use office space to signal start/end of workday",
+                summary: "Work routines",
                 completed: false
               },
               {
                 name: "Optimize home office for comfort during long work sessions (ergonomics, air quality, organization)",
+                summary: "Optimize comfort",
                 completed: false
               }
             ]
@@ -1426,7 +1546,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Improve Home Energy Efficiency",
         description: "Achieve energy rating C+ and reduce utility bills through efficiency improvements",
-        icon: "flash-outline",
+        icon: "flash",
         explanation: "70% want more efficient homes, with only 52% currently rated C+. Reduces bills by 15-25% amid energy crisis. Government target for 2035 creates momentum.",
         projects: [
           {
@@ -1436,10 +1556,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Get home energy assessment and research available grants for efficiency improvements",
+                summary: "Energy assessment",
                 completed: false
               },
               {
                 name: "Implement renter-friendly efficiency measures (LED bulbs, smart thermostat, draught proofing)",
+                summary: "Efficiency measures",
                 completed: false
               }
             ]
@@ -1451,10 +1573,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Plan major efficiency improvements (insulation, windows, heating) if homeowner",
+                summary: "Plan improvements",
                 completed: false
               },
               {
                 name: "Track energy usage and bills to measure improvement and celebrate savings achieved",
+                summary: "Track energy",
                 completed: false
               }
             ]
@@ -1464,7 +1588,7 @@ export const DOMAIN_DEFINITIONS = [
       {
         name: "Live Zero-Waste Lifestyle",
         description: "Implement comprehensive zero-waste system to minimize household waste and environmental impact",
-        icon: "leaf-outline",
+        icon: "leaf",
         explanation: "Addresses UK's 222M tonnes annual waste. Food waste reduction alone saves £1,000/year. Growing Zero Waste movement with annual campaigns provides support.",
         projects: [
           {
@@ -1474,10 +1598,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Audit current household waste and implement zero-waste practices in daily routines",
+                summary: "Audit household",
                 completed: false
               },
               {
                 name: "Set up comprehensive recycling, composting, and reuse systems at home",
+                summary: "Setup recycling",
                 completed: false
               }
             ]
@@ -1489,10 +1615,12 @@ export const DOMAIN_DEFINITIONS = [
             tasks: [
               {
                 name: "Choose sustainable alternatives for household products and eliminate single-use items",
+                summary: "Choose sustainable",
                 completed: false
               },
               {
                 name: "Track waste reduction progress and share zero-waste tips with friends and community",
+                summary: "Track waste",
                 completed: false
               }
             ]

@@ -1,5 +1,5 @@
 // src/components/KanbanBoard.js
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -44,6 +44,22 @@ const KanbanBoard = ({
   allGoals = [] // All goals for color inheritance
 }) => {
   const [draggingItem, setDraggingItem] = useState(null);
+  
+  // Refs for scroll views to maintain scroll positions
+  const horizontalScrollRef = useRef(null);
+  const columnScrollRefs = useRef({
+    todo: null,
+    in_progress: null,
+    done: null
+  });
+  
+  // Track scroll positions
+  const scrollPositions = useRef({
+    horizontal: 0,
+    todo: 0,
+    in_progress: 0,
+    done: 0
+  });
   
   // Function to get the color for a task based on its project's goal's color
   const getTaskColor = (task) => {
@@ -90,6 +106,43 @@ const KanbanBoard = ({
     }
   };
   
+  // Scroll event handlers to track positions
+  const handleHorizontalScroll = useCallback((event) => {
+    scrollPositions.current.horizontal = event.nativeEvent.contentOffset.x;
+  }, []);
+
+  const handleColumnScroll = useCallback((status, event) => {
+    scrollPositions.current[status] = event.nativeEvent.contentOffset.y;
+  }, []);
+
+  // Restore scroll positions after a short delay
+  const restoreScrollPositions = useCallback(() => {
+    // Use requestAnimationFrame to ensure the UI has updated
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        // Restore horizontal scroll position
+        if (horizontalScrollRef.current && scrollPositions.current.horizontal > 0) {
+          horizontalScrollRef.current.scrollTo({
+            x: scrollPositions.current.horizontal,
+            animated: false
+          });
+        }
+        
+        // Restore column scroll positions
+        Object.keys(columnScrollRefs.current).forEach(status => {
+          const ref = columnScrollRefs.current[status];
+          const scrollY = scrollPositions.current[status];
+          if (ref && scrollY > 0) {
+            ref.scrollTo({
+              y: scrollY,
+              animated: false
+            });
+          }
+        });
+      }, 50); // Small delay to ensure re-render is complete
+    });
+  }, []);
+
   // Handle moving a project to a different status
   const handleMoveProject = (project, newStatus) => {
     if (!onUpdateProjectProgress) return;
@@ -105,6 +158,9 @@ const KanbanBoard = ({
     
     // Call the update function from props with the status indicator
     onUpdateProjectProgress(project.id, statusIndicator);
+    
+    // Restore scroll positions after the state update
+    restoreScrollPositions();
   };
   
   // Handle moving a task to a different status
@@ -113,6 +169,9 @@ const KanbanBoard = ({
     
     // Call the update function from props
     onUpdateTaskStatus(task.id, newStatus);
+    
+    // Restore scroll positions after the state update
+    restoreScrollPositions();
   };
   
   // Function to render a column
@@ -156,8 +215,11 @@ const KanbanBoard = ({
         </View>
         
         <ScrollView 
+          ref={(ref) => { columnScrollRefs.current[status] = ref; }}
           style={styles.columnContent}
           showsVerticalScrollIndicator={false}
+          onScroll={(event) => handleColumnScroll(status, event)}
+          scrollEventThrottle={16}
         >
           {items.length > 0 ? (
             items.map((item, index) => (
@@ -435,10 +497,13 @@ const KanbanBoard = ({
       containerStyle
     ]}>
       <ScrollView 
+        ref={horizontalScrollRef}
         horizontal
         showsHorizontalScrollIndicator={false}
         style={styles.boardScroll}
         contentContainerStyle={styles.boardContent}
+        onScroll={handleHorizontalScroll}
+        scrollEventThrottle={16}
       >
         {renderColumn('To Do', 'todo', '#F5F5F5')}
         {renderColumn('In Progress', 'in_progress', '#64B5F6')}

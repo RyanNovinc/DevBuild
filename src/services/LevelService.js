@@ -1,144 +1,155 @@
 // src/services/LevelService.js
 
 /**
- * Level threshold definitions
- * Each level requires the specified number of points to reach
+ * Stage threshold definitions
+ * Each stage requires the specified number of points to reach
  */
-const LEVEL_THRESHOLDS = [
-  0,      // Level 1 starts at 0
-  50,     // Level 2 starts at 50
-  100,    // Level 3 starts at 100
-  175,    // Level 4 starts at 175
-  250,    // Level 5 starts at 250
-  350,    // Level 6 starts at 350
-  450,    // Level 7 starts at 450
-  550,    // Level 8 starts at 550
-  650,    // Level 9 starts at 650
-  730,    // Level 10 starts at 730
-  830,    // Level 11 starts at 830
-  1030    // Level 12 starts at 1030
+const STAGE_THRESHOLDS = [
+  0,      // Stage 1 starts at 0
+  50,     // Stage 2 starts at 50
+  100,    // Stage 3 starts at 100
+  175,    // Stage 4 starts at 175
+  250,    // Stage 5 starts at 250
+  350,    // Stage 6 starts at 350
+  450,    // Stage 7 starts at 450
+  550,    // Stage 8 starts at 550
+  650,    // Stage 9 starts at 650
+  730,    // Stage 10 starts at 730
+  830,    // Stage 11 starts at 830
+  1030    // Stage 12 starts at 1030
 ];
 
 /**
- * Level titles corresponding to each level
+ * Stage titles corresponding to each stage
  */
-const LEVEL_TITLES = [
-  'Beginner',
-  'Intermediate',
+const STAGE_TITLES = [
+  'Explorer',
+  'Achiever',
+  'Contributor',
+  'Specialist',
+  'Practitioner',
   'Professional',
-  'Expert',
-  'Master',
-  'Grand Master',
-  'Champion',
-  'Legend',
-  'Hero',
-  'Immortal',
-  'Ascendant',
-  'Eternal'
+  'Innovator',
+  'Leader',
+  'Strategist',
+  'Visionary',
+  'Pioneer',
+  'Trailblazer'
 ];
 
 /**
- * Calculates level based on points
- * @param {number} points - Total achievement points
- * @returns {number} Current level
+ * Calculates stage based on score
+ * @param {number} points - Total achievement score
+ * @returns {number} Current stage
  */
-function calculateLevel(points) {
-  let level = 1;
+function calculateStage(points) {
+  let stage = 1;
   
-  for (let i = 1; i < LEVEL_THRESHOLDS.length; i++) {
-    if (points >= LEVEL_THRESHOLDS[i]) {
-      level = i + 1;
+  for (let i = 1; i < STAGE_THRESHOLDS.length; i++) {
+    if (points >= STAGE_THRESHOLDS[i]) {
+      stage = i + 1;
     } else {
       break;
     }
   }
   
-  return level;
+  return stage;
 }
 
 /**
- * Gets the level title for a given level
- * @param {number} level - The level number
- * @returns {string} The title for the level
+ * Gets the stage title for a given stage
+ * @param {number} stage - The stage number
+ * @returns {string} The title for the stage
  */
-function getLevelTitle(level) {
-  const index = Math.min(Math.max(0, level - 1), LEVEL_TITLES.length - 1);
-  return LEVEL_TITLES[index];
+function getStageTitle(stage) {
+  const index = Math.min(Math.max(0, stage - 1), STAGE_TITLES.length - 1);
+  return STAGE_TITLES[index];
 }
 
 /**
- * Gets the threshold points required to reach a specific level
- * @param {number} level - The level to get the threshold for
- * @returns {number} Points needed to reach the level
+ * Gets the threshold score required to reach a specific stage
+ * @param {number} stage - The stage to get the threshold for
+ * @returns {number} Score needed to reach the stage
  */
-function getLevelThreshold(level) {
-  const index = Math.min(Math.max(0, level - 1), LEVEL_THRESHOLDS.length - 1);
-  return LEVEL_THRESHOLDS[index];
+function getStageThreshold(stage) {
+  const index = Math.min(Math.max(0, stage - 1), STAGE_THRESHOLDS.length - 1);
+  return STAGE_THRESHOLDS[index];
 }
 
 /**
- * Gets the points needed for the next level
- * @param {number} currentPoints - Current total points
- * @returns {number} Points needed for the next level
+ * Gets the score needed for the next stage
+ * @param {number} currentPoints - Current total score
+ * @returns {number} Score needed for the next stage
  */
-function getPointsForNextLevel(currentPoints) {
-  const currentLevel = calculateLevel(currentPoints);
+function getPointsForNextStage(currentPoints) {
+  const currentStage = calculateStage(currentPoints);
   
-  // If at max level, return 0
-  if (currentLevel >= LEVEL_THRESHOLDS.length) {
+  // If at max stage, return 0
+  if (currentStage >= STAGE_THRESHOLDS.length) {
     return 0;
   }
   
-  const nextLevelThreshold = LEVEL_THRESHOLDS[currentLevel];
-  return nextLevelThreshold - currentPoints;
+  const nextStageThreshold = STAGE_THRESHOLDS[currentStage];
+  return nextStageThreshold - currentPoints;
 }
 
 /**
- * Gets all level information based on current points
- * @param {number} points - Total achievement points
- * @returns {Object} Level information
+ * Gets all stage information based on current score
+ * @param {number} points - Total achievement score
+ * @returns {Object} Stage information
  */
-function getLevelInfo(points) {
-  const level = calculateLevel(points);
-  const title = getLevelTitle(level);
-  const currentLevelThreshold = getLevelThreshold(level);
-  const nextLevelThreshold = level < LEVEL_THRESHOLDS.length ? getLevelThreshold(level + 1) : currentLevelThreshold;
-  const pointsForNextLevel = getPointsForNextLevel(points);
-  const progressPercent = currentLevelThreshold === nextLevelThreshold ? 100 : 
-    Math.round(((points - currentLevelThreshold) / (nextLevelThreshold - currentLevelThreshold)) * 100);
+function getStageInfo(points) {
+  const stage = calculateStage(points);
+  const title = getStageTitle(stage);
+  const currentStageThreshold = getStageThreshold(stage);
+  const nextStageThreshold = stage < STAGE_THRESHOLDS.length ? getStageThreshold(stage + 1) : currentStageThreshold;
+  const scoreForNextStage = getPointsForNextStage(points);
+  const progressPercent = currentStageThreshold === nextStageThreshold ? 100 : 
+    Math.round(((points - currentStageThreshold) / (nextStageThreshold - currentStageThreshold)) * 100);
   
   return {
-    level,
+    stage,
     title,
-    currentLevelThreshold,
-    nextLevelThreshold,
-    pointsForNextLevel,
+    currentStageThreshold,
+    nextStageThreshold,
+    scoreForNextStage,
     progressPercent,
-    totalPoints: points
+    totalScore: points
   };
 }
 
 /**
- * Check if user has enough points for premium features
- * Useful for teasing premium features at specific levels
- * @param {number} points - Total achievement points
+ * Check if user has enough score for premium features
+ * Useful for teasing premium features at specific stages
+ * @param {number} points - Total achievement score
  * @returns {boolean} Whether user has reached premium feature threshold
  */
-function hasReachedPremiumFeatureLevel(points) {
-  // Assuming we want to tease premium features at level 4
-  return calculateLevel(points) >= 4;
+function hasReachedPremiumFeatureStage(points) {
+  // Assuming we want to tease premium features at stage 4
+  return calculateStage(points) >= 4;
 }
 
 /**
  * Export the public API
  */
 export default {
-  calculateLevel,
-  getLevelTitle,
-  getLevelThreshold,
-  getPointsForNextLevel,
-  getLevelInfo,
-  hasReachedPremiumFeatureLevel,
-  LEVEL_THRESHOLDS,
-  LEVEL_TITLES
+  // New stage-based API
+  calculateStage,
+  getStageTitle,
+  getStageThreshold,
+  getPointsForNextStage,
+  getStageInfo,
+  hasReachedPremiumFeatureStage,
+  STAGE_THRESHOLDS,
+  STAGE_TITLES,
+  
+  // Backwards compatibility - alias old methods to new ones
+  calculateLevel: calculateStage,
+  getLevelTitle: getStageTitle,
+  getLevelThreshold: getStageThreshold,
+  getPointsForNextLevel: getPointsForNextStage,
+  getLevelInfo: getStageInfo,
+  hasReachedPremiumFeatureLevel: hasReachedPremiumFeatureStage,
+  LEVEL_THRESHOLDS: STAGE_THRESHOLDS,
+  LEVEL_TITLES: STAGE_TITLES
 };

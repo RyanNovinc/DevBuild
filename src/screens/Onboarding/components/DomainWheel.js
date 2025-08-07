@@ -10,7 +10,7 @@ import { getTranslatedDomainName } from '../data/domainTranslations';
 const { width } = Dimensions.get('window');
 
 // Simple pulsing icon component
-const PulsingIcon = ({ iconName, iconX, iconY, shouldPulse }) => {
+const PulsingIcon = ({ iconName, iconX, iconY, shouldPulse, opacity = 1, animatedOpacity, animatedScale }) => {
   const scale = useRef(new Animated.Value(1)).current;
   const ICON_SIZE = 24;
 
@@ -35,6 +35,9 @@ const PulsingIcon = ({ iconName, iconX, iconY, shouldPulse }) => {
     }
   }, [shouldPulse]);
 
+  // Combine opacities if both are provided
+  const finalOpacity = animatedOpacity ? Animated.multiply(animatedOpacity, opacity) : opacity;
+  
   return (
     <Animated.View
       style={{
@@ -47,7 +50,8 @@ const PulsingIcon = ({ iconName, iconX, iconY, shouldPulse }) => {
         justifyContent: 'center',
         backgroundColor: 'transparent',
         zIndex: 5,
-        transform: [{ scale }]
+        opacity: finalOpacity,
+        transform: animatedScale ? [{ scale: Animated.multiply(scale, animatedScale) }] : [{ scale }]
       }}
     >
       <Ionicons 
@@ -59,7 +63,16 @@ const PulsingIcon = ({ iconName, iconX, iconY, shouldPulse }) => {
   );
 };
 
-const DomainWheel = ({ domains, onDomainSelected, selectedDomain, onCenterButtonPress }) => {
+const DomainWheel = ({ 
+  domains, 
+  onDomainSelected, 
+  selectedDomain, 
+  onCenterButtonPress, 
+  guidedMode = false,
+  segmentsRevealed = false,
+  revealedSegments = [],
+  textRevealed = false
+}) => {
   // Get translation function and current language
   const { t, currentLanguage } = useI18n();
   
@@ -70,6 +83,17 @@ const DomainWheel = ({ domains, onDomainSelected, selectedDomain, onCenterButton
   
   // Simple state for triggering pulse animation
   const [shouldPulse, setShouldPulse] = useState(false);
+  
+  // Animation values for segment reveal - create refs for each domain
+  const segmentAnimations = useRef(
+    domains.map(() => ({
+      opacity: new Animated.Value(0),
+      scale: new Animated.Value(0.3)
+    }))
+  ).current;
+  
+  // Animation value for text layer fade-in
+  const textLayerOpacity = useRef(new Animated.Value(0)).current;
   
   // Calculate wheel dimensions
   const WHEEL_SIZE = Math.min(width * 0.85, 340);
@@ -237,6 +261,43 @@ const DomainWheel = ({ domains, onDomainSelected, selectedDomain, onCenterButton
     }
   };
   
+  // Animate segment reveals
+  useEffect(() => {
+    revealedSegments.forEach(segmentIndex => {
+      if (segmentIndex < segmentAnimations.length) {
+        // Animate segment pop-in
+        Animated.parallel([
+          Animated.spring(segmentAnimations[segmentIndex].opacity, {
+            toValue: 1,
+            friction: 8,
+            tension: 100,
+            useNativeDriver: true,
+          }),
+          Animated.spring(segmentAnimations[segmentIndex].scale, {
+            toValue: 1,
+            friction: 6,
+            tension: 80,
+            useNativeDriver: true,
+          })
+        ]).start();
+      }
+    });
+  }, [revealedSegments]);
+  
+  // Animate text layer fade-in
+  useEffect(() => {
+    if (textRevealed) {
+      Animated.timing(textLayerOpacity, {
+        toValue: 1,
+        duration: 600,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      }).start();
+    } else {
+      textLayerOpacity.setValue(0);
+    }
+  }, [textRevealed]);
+  
   return (
     <View style={styles.container}>
       <View style={styles.wheelContainer}>
@@ -248,6 +309,10 @@ const DomainWheel = ({ domains, onDomainSelected, selectedDomain, onCenterButton
         >
           {/* Domain slices */}
           {wheelSlices.map((slice, index) => {
+            // Check if this segment should be visible (either all revealed or this specific segment is revealed)
+            const isSegmentRevealed = segmentsRevealed || revealedSegments.includes(index);
+            if (!isSegmentRevealed) return null;
+            
             // Determine if this is on the bottom half of the wheel
             const isBottomHalf = slice.midAngle > 90 && slice.midAngle < 270;
             
@@ -274,6 +339,9 @@ const DomainWheel = ({ domains, onDomainSelected, selectedDomain, onCenterButton
               labelText = slice.domain.name === 'Personal Growth' ? 'Growth' : translatedDomainName.split(' ')[0];
             }
             
+            // Get animation values for this segment
+            const segmentAnim = segmentAnimations[index] || { opacity: new Animated.Value(1), scale: new Animated.Value(1) };
+            
             return (
               <G key={`slice-${index}`}>
                 {/* Main slice with solid color fill - now touchable */}
@@ -282,34 +350,10 @@ const DomainWheel = ({ domains, onDomainSelected, selectedDomain, onCenterButton
                   fill={slice.domain.color}
                   stroke="rgba(255,255,255,0.2)"
                   strokeWidth={0.5}
-                  opacity={isSelected ? 1 : 0.7}
+                  opacity={guidedMode ? (isSelected ? 1 : 0.3) : (isSelected ? 1 : 0.7)}
                   onPress={() => onDomainSelected(slice.domain)}
                 />
                 
-                {/* Domain label outside wheel */}
-                <G>
-                  {/* Add a small line from segment to label */}
-                  <Path
-                    d={`M ${(WHEEL_SIZE/2 - 5) * Math.cos((slice.midAngle - 90) * Math.PI / 180)} ${(WHEEL_SIZE/2 - 5) * Math.sin((slice.midAngle - 90) * Math.PI / 180)} 
-                        L ${(WHEEL_SIZE/2 + 10) * Math.cos((slice.midAngle - 90) * Math.PI / 180)} ${(WHEEL_SIZE/2 + 10) * Math.sin((slice.midAngle - 90) * Math.PI / 180)}`}
-                    stroke="rgba(255,255,255,0.3)"
-                    strokeWidth={1}
-                  />
-                  
-                  {/* Position text radially outward - but adjust rotation for bottom labels */}
-                  <SvgText
-                    x={labelX}
-                    y={labelY}
-                    textAnchor="middle"
-                    fontSize={12}
-                    fontWeight={isSelected ? 'bold' : 'normal'}
-                    fill={isSelected ? '#FFFFFF' : 'rgba(255,255,255,0.8)'}
-                    rotation={isBottomHalf ? slice.midAngle + 180 : slice.midAngle}
-                    origin={`${labelX},${labelY}`}
-                  >
-                    {labelText}
-                  </SvgText>
-                </G>
                 
                 {/* Circle background for icon - also clickable */}
                 <Circle
@@ -319,6 +363,7 @@ const DomainWheel = ({ domains, onDomainSelected, selectedDomain, onCenterButton
                   fill={isSelected ? slice.domain.color : 'rgba(255,255,255,0.15)'}
                   stroke={isSelected ? '#FFFFFF' : 'rgba(255,255,255,0.3)'}
                   strokeWidth={isSelected ? 2 : 1}
+                  opacity={guidedMode ? (isSelected ? 1 : 0.3) : 1}
                   onPress={() => onDomainSelected(slice.domain)}
                 />
               </G>
@@ -390,6 +435,10 @@ const DomainWheel = ({ domains, onDomainSelected, selectedDomain, onCenterButton
         {/* Position icons using manual calculation */}
         <View style={styles.iconsOverlay} pointerEvents="none">
           {wheelSlices.map((slice, index) => {
+            // Check if this segment should be visible (either all revealed or this specific segment is revealed)
+            const isSegmentRevealed = segmentsRevealed || revealedSegments.includes(index);
+            if (!isSegmentRevealed) return null;
+            
             const isSelected = selectedDomain?.name === slice.domain.name;
             
             // Calculate the absolute position based on the SVG viewBox and center
@@ -400,6 +449,9 @@ const DomainWheel = ({ domains, onDomainSelected, selectedDomain, onCenterButton
             const iconX = centerX + slice.iconX - ICON_SIZE / 2;
             const iconY = centerY + slice.iconY - ICON_SIZE / 2;
             
+            // Get animation values for this segment
+            const segmentAnim = segmentAnimations[index] || { opacity: new Animated.Value(1), scale: new Animated.Value(1) };
+            
             return (
               <PulsingIcon
                 key={`icon-${index}`}
@@ -407,10 +459,74 @@ const DomainWheel = ({ domains, onDomainSelected, selectedDomain, onCenterButton
                 iconX={iconX}
                 iconY={iconY}
                 shouldPulse={shouldPulse}
+                opacity={guidedMode ? (isSelected ? 1 : 0.3) : 1}
+                animatedOpacity={segmentAnim.opacity}
+                animatedScale={segmentAnim.scale}
               />
             );
           })}
         </View>
+        
+        {/* Animated text labels and connecting lines */}
+        <Animated.View style={[styles.textOverlay, { opacity: textLayerOpacity }]} pointerEvents="none">
+          <Svg
+            width={SVG_CONTAINER_SIZE}
+            height={SVG_CONTAINER_SIZE}
+            viewBox={`${-SVG_CONTAINER_SIZE/2} ${-SVG_CONTAINER_SIZE/2} ${SVG_CONTAINER_SIZE} ${SVG_CONTAINER_SIZE}`}
+          >
+          {wheelSlices.map((slice, index) => {
+            // Check if this segment should be visible
+            const isSegmentRevealed = segmentsRevealed || revealedSegments.includes(index);
+            if (!isSegmentRevealed) return null;
+            
+            const isSelected = selectedDomain?.name === slice.domain.name;
+            
+            // Calculate positions (same as SVG text positioning)
+            const isBottomHalf = slice.midAngle > 90 && slice.midAngle < 270;
+            const labelRadius = WHEEL_SIZE / 2 + (isBottomHalf ? 30 : 25);
+            const labelX = labelRadius * Math.cos((slice.midAngle - 90) * Math.PI / 180);
+            const labelY = labelRadius * Math.sin((slice.midAngle - 90) * Math.PI / 180);
+            
+            // Get translated domain name and label text
+            const translatedDomainName = getTranslatedDomainName(slice.domain.name, currentLanguage);
+            let labelText;
+            if (currentLanguage === 'ja') {
+              labelText = translatedDomainName.slice(0, 2);
+            } else {
+              labelText = slice.domain.name === 'Personal Growth' ? 'Growth' : translatedDomainName.split(' ')[0];
+            }
+            
+            
+            return (
+              <G key={`animated-text-${index}`}>
+                {/* Connecting line - fades in with text */}
+                <Path
+                  d={`M ${(WHEEL_SIZE/2 - 5) * Math.cos((slice.midAngle - 90) * Math.PI / 180)} ${(WHEEL_SIZE/2 - 5) * Math.sin((slice.midAngle - 90) * Math.PI / 180)} 
+                      L ${(WHEEL_SIZE/2 + 10) * Math.cos((slice.midAngle - 90) * Math.PI / 180)} ${(WHEEL_SIZE/2 + 10) * Math.sin((slice.midAngle - 90) * Math.PI / 180)}`}
+                  stroke={guidedMode ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.3)"}
+                  strokeWidth={1}
+                  opacity={guidedMode ? (isSelected ? 1 : 0.3) : 1}
+                />
+                
+                {/* Text label - fades in with textRevealed */}
+                <SvgText
+                  x={labelX}
+                  y={labelY}
+                  textAnchor="middle"
+                  fontSize={12}
+                  fontWeight={isSelected ? 'bold' : 'normal'}
+                  fill={isSelected ? '#FFFFFF' : (guidedMode ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.8)')}
+                  opacity={guidedMode ? (isSelected ? 1 : 0.3) : 1}
+                  rotation={isBottomHalf ? slice.midAngle + 180 : slice.midAngle}
+                  origin={`${labelX},${labelY}`}
+                >
+                  {labelText}
+                </SvgText>
+              </G>
+            );
+          })}
+          </Svg>
+        </Animated.View>
         
         {/* Simplified approach - just center button touch area */}
         <View style={styles.touchableOverlays}>
@@ -477,6 +593,27 @@ const styles = StyleSheet.create({
     height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  textOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  textLabel: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  textLabelText: {
+    fontSize: 12,
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   iconView: {
     position: 'absolute',

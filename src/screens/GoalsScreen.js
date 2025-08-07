@@ -1267,8 +1267,8 @@ const GoalsScreen = ({ navigation, route, tabMode }) => {
           </Animated.View>
         )}
 
-        {/* Floating Add Button - only show for goals tabs */}
-        {!isLoading && (tabMode === 'active' || tabMode === 'completed') && (
+        {/* Floating Add Button - only show for active goals tab */}
+        {!isLoading && tabMode === 'active' && (
           <Animated.View 
             style={[
               styles.floatingAddButton,

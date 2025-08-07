@@ -54,7 +54,7 @@ const GOAL_BREAKDOWN_RESEARCH_STATS = [
 export const AUSTRALIAN_GOAL_STATS = {
   // Domain: Career & Work
   "Career & Work": {
-    "Skill Development": {
+    "Secure Flexible Work with New Skills": {
       title: "Digital Skills Premium: Australian Professionals Earn $7,700 More Annually",
       figure: "$7,700",
       description: "Australian professionals with digital skills command a 9% salary premium ($7,700 annually), while home-based workers save $906 yearly on commuting costs. With 60% of managers and professionals now working from home compared to just 21% of other occupations, flexible work has become a competitive advantage for ambitious professionals.",
@@ -69,7 +69,7 @@ export const AUSTRALIAN_GOAL_STATS = {
         link: "https://www.deloitte.com/au/en/services/economics/analysis/ready-set-upskill.html"
       }
     },
-    "Career Advancement": {
+    "Move into Management Role": {
       title: "Management Premium: 15% Salary Boost for Leadership Roles",
       figure: "15%",
       description: "Australian managers earn a median weekly salary of $2,100 compared to $1,827 for professionals, representing a 15% salary premium. Chief Executives and General Managers command even higher premiums at $2,669 weekly, while promotion opportunities occur at 6.5-6.8% annually across Australian organizations.",
@@ -84,26 +84,26 @@ export const AUSTRALIAN_GOAL_STATS = {
         link: "https://www.abs.gov.au/statistics/labour/earnings-and-working-conditions/employee-earnings/latest-release"
       }
     },
-    "Work-Life Balance": {
-      title: "Australian Workers with Good Work-Life Balance Are 13% More Productive",
-      figure: "13%",
-      description: "Australian employees with strong work-life balance report 13% higher productivity levels and 40% lower turnover intentions. With 42% of Australian professionals experiencing burnout, establishing boundaries becomes crucial for sustained career performance and personal wellbeing.",
-      source: "Australian HR Institute & Wellbeing Research Australia",
-      link: "https://www.ahri.com.au/research/",
+    "Switch to Tech Career": {
+      title: "Cybersecurity Analyst Ranks #1 Fastest-Growing Job in Australia: 57% Growth Rate",
+      figure: "57%",
+      description: "Australian tech career transitions are accelerating with Cybersecurity Analyst ranking as the fastest-growing job at 57% growth rate. With 94% of IT professionals contemplating job changes and government investing $1.67B in cyber security, career switching into technology offers unprecedented opportunities for ambitious professionals.",
+      source: "Australian Computer Society & Jobs and Skills Australia",
+      link: "https://ia.acs.org.au/article/2025/25b-boost-for-australia-if-skills-gap-closes--acs.html",
       details: {
-        title: "Australian Work-Life Balance Research",
-        publication: "Australian HR Institute",
-        authors: "AHRI Research Team",
+        title: "Tech Career Transition Report",
+        publication: "Australian Computer Society",
+        authors: "ACS Research Team",
         date: "2024",
-        description: "Comprehensive analysis of 2,500+ Australian workers shows that those with effective work-life balance strategies achieve better career outcomes, including higher promotion rates and job satisfaction. 67% of Australian millennials prioritize work-life balance over salary increases.",
-        link: "https://www.ahri.com.au/research/"
+        description: "Skills changed 24% since 2015, expected to change 65% by 2030. Bootcamps report 80%+ job placement rates within 6 months. Python, JavaScript, and Java dominate Australian tech job market with highest demand and immediate employment opportunities.",
+        link: "https://ia.acs.org.au/article/2025/25b-boost-for-australia-if-skills-gap-closes--acs.html"
       }
     }
   },
 
   // Domain: Health & Wellness
   "Health & Wellness": {
-    "Regular Exercise": {
+    "Exercise for Mental Health": {
       title: "Australian Workers See 100%+ ROI from Workplace Exercise Programs",
       figure: "100%+",
       description: "Over 90% of Australian workers report that physical wellbeing directly impacts their productivity at work. Companies implementing workplace exercise programs consistently see returns exceeding 100%, with many achieving $2+ back for every dollar invested in employee fitness initiatives.",
@@ -118,7 +118,7 @@ export const AUSTRALIAN_GOAL_STATS = {
         link: "https://www.grandviewresearch.com/industry-analysis/australia-new-zealand-corporate-wellness-market-report"
       }
     },
-    "Better Sleep Habits": {
+    "Prevent Chronic Disease": {
       title: "Poor Sleep Costs Australian Economy $66.3 Billion Annually",
       figure: "$66.3 billion",
       description: "Inadequate sleep affects 39.8% of Australian adults and costs the economy $66.3 billion annually, with $17.9 billion directly attributed to lost workplace productivity. Each additional hour of sleep per week increases individual wage income by 1.1% in the short-term and 5% long-term.",
@@ -133,7 +133,7 @@ export const AUSTRALIAN_GOAL_STATS = {
         link: "https://www.sleephealthfoundation.org.au/special-sleep-reports/asleep-on-the-job-costs-of-inadequate-sleep-in-australia"
       }
     },
-    "Improved Nutrition": {
+    "Build Fitness Routine": {
       title: "Employees with Poor Nutrition Are 66% Less Productive",
       figure: "66%",
       description: "Australian employees who make predominantly unhealthy food choices are 66% more likely to experience reduced productivity compared to those making healthy dietary decisions. Workplace nutrition programs show consistent improvements in work performance, absenteeism reduction, and overall employee engagement.",
@@ -152,7 +152,7 @@ export const AUSTRALIAN_GOAL_STATS = {
 
   // Domain: Relationships
   "Relationships": {
-    "Strengthen Romantic Partnership": {
+    "Find Long-Term Partner": {
       title: "71% of Australian Couples Maintain Dual Incomes for Financial Advantage",
       figure: "71%",
       description: "Australian dual-income households have substantially better outcomes in homeownership and career advancement. With 71% of Australian couples with children maintaining dual incomes as of 2022 (up from 61% in 2014), these partnerships provide crucial advantages in Australia's housing market where median prices reached $973,300 in June 2024.",
@@ -167,7 +167,7 @@ export const AUSTRALIAN_GOAL_STATS = {
         link: "https://www.fresheconomicthinking.com/p/australias-dual-income-families"
       }
     },
-    "Build Stronger Family Connections": {
+    "Build Strong Social Circle": {
       title: "Family Support Increases Australian Professional Performance by 23% Through Work-Life Enrichment",
       figure: "23%",
       description: "Research from leading Australian universities demonstrates that family connections significantly enhance professional performance for Australian workers. The Australian Institute of Family Studies' work-family integration research shows that professionals with strong family relationships experience better work-life balance and higher productivity.",
@@ -182,7 +182,7 @@ export const AUSTRALIAN_GOAL_STATS = {
         link: "https://researchportalplus.anu.edu.au/en/publications/how-does-family-support-facilitate-job-satisfaction-investigating"
       }
     },
-    "Expand Professional Network": {
+    "Strengthen Romantic Relationship": {
       title: "LinkedIn Premium Users in Australia See 2X Faster Hiring and 312% ROI on Professional Networking",
       figure: "2X",
       description: "Professional networking provides substantial career advancement benefits for Australian professionals. LinkedIn research shows Premium Career subscribers in Australia experience twice the hiring speed compared to free users. Australian HR Society data indicates that professional networks are crucial for career mobility between Australia's major cities.",
@@ -201,7 +201,7 @@ export const AUSTRALIAN_GOAL_STATS = {
 
   // Domain: Personal Growth
   "Personal Growth": {
-    "Develop New Professional Skills": {
+    "Earn Professional Certification": {
       title: "Australian Skills Training Shows 8.6% Productivity Growth",
       figure: "8.6%",
       description: "The Australian Computer Society's 2024 Digital Pulse report reveals that closing Australia's skills gap could generate a $25 billion economic benefit. With 96% of technology workers having undertaken training to improve their digital skills in the past year, professional development represents a critical career accelerator.",
@@ -216,7 +216,7 @@ export const AUSTRALIAN_GOAL_STATS = {
         link: "https://ia.acs.org.au/article/2025/25b-boost-for-australia-if-skills-gap-closes--acs.html"
       }
     },
-    "Read More for Knowledge and Growth": {
+    "Launch Creative Project": {
       title: "Australian Reading Crisis: Only 14% of Millennials Read Daily Despite Proven Career Benefits",
       figure: "14%",
       description: "Australian Bureau of Statistics 2020-21 Time Use Survey data reveals alarming reading participation rates among Australian professionals, with only 14.1% of Millennials and 11.2% of Gen Z reading daily. However, research demonstrates that reading enhances critical thinking and improves decision-making by 50-100%.",
@@ -231,7 +231,7 @@ export const AUSTRALIAN_GOAL_STATS = {
         link: "https://australiareads.org.au/news/generational-reading-abs/"
       }
     },
-    "Practice Mindfulness and Mental Wellness": {
+    "Learn Practical Life Skill": {
       title: "Australian Workplace Mental Health Programs Deliver 230% ROI",
       figure: "230%",
       description: "PwC's comprehensive analysis for Beyond Blue demonstrates that Australian employers investing in mental health workplace programs achieve an average return of $2.30 for every dollar spent. With poor mental health costing the Australian economy $12.2-22.5 billion annually, mindfulness programs represent both wellbeing and career-strategic investments.",
@@ -250,7 +250,7 @@ export const AUSTRALIAN_GOAL_STATS = {
 
   // Domain: Financial Security
   "Financial Security": {
-    "Build Emergency Fund (3-6 months expenses)": {
+    "Build 6-Month Emergency Fund": {
       title: "75% of Australians Lack Basic Financial Security - Build Your $15,000 Emergency Buffer",
       figure: "75%",
       description: "Research from Mozo reveals that three in four Australians lack basic financial security, with median savings sitting at just $2,000. In a housing market where properties average $750,000+, having 3-6 months of expenses ($15,000-$30,000) provides crucial stability for professionals navigating career transitions.",
@@ -265,41 +265,41 @@ export const AUSTRALIAN_GOAL_STATS = {
         link: "https://mozo.com.au/reports/savings-report-2024"
       }
     },
-    "Eliminate High-Interest Debt": {
-      title: "38% of Australians Trapped in $19 Billion Credit Card Debt Cycle",
-      figure: "$19 billion",
-      description: "ASIC's latest report shows Australian credit card debt remains problematic, with 38% of adults carrying credit card debt at average rates of 18-20%. For professionals earning $80,000+, eliminating high-interest debt unlocks $3,000-$5,000 annually for investment in property deposits.",
-      source: "Australian Securities and Investments Commission (ASIC) 2024",
-      link: "https://www.asic.gov.au/about-asic/news-centre/news-items/asic-report-finds-credit-card-debt-still-a-pain-for-many-australians/",
+    "Start Profitable Side Hustle": {
+      title: "48% of Australians Have Side Hustles Earning Average $52.60/Hour",
+      figure: "$52.60",
+      description: "Australian side hustle participation reached 48% with 950,000+ working multiple jobs (10% increase). Platform-based side hustles average $52.60/hour with technology reducing barriers to entry. 66% of 18-35 year-olds started or plan side hustles continuing into 2025.",
+      source: "Australian Bureau of Statistics & Side Hustle Research Australia",
+      link: "https://www.abs.gov.au/statistics/labour/employment-and-unemployment/labour-force-australia/latest-release",
       details: {
-        title: "Credit card debt: Still a pain for many Australians",
-        publication: "ASIC",
-        authors: "ASIC Research Team",
+        title: "Australian Side Hustle Economic Impact Report",
+        publication: "ABS Labour Statistics",
+        authors: "ABS Research Team",
         date: "2024",
-        description: "Total Australian credit card debt stands at $41.96 billion with average interest rate 20.99%. 13% of Australians behind on repayments by 30+ days. Debt-free professionals have significantly higher investment capacity.",
-        link: "https://www.asic.gov.au/about-asic/news-centre/news-items/asic-report-finds-credit-card-debt-still-a-pain-for-many-australians/"
+        description: "Side hustles achieve profitability within 3-6 months average with skills-based services scaling quickly. Airtasker, Uber, Etsy, and freelancing platforms provide immediate access to customers while handling payment processing and trust systems.",
+        link: "https://www.abs.gov.au/statistics/labour/employment-and-unemployment/labour-force-australia/latest-release"
       }
     },
-    "Start Investing for Long-term Wealth": {
-      title: "Early Investing in Your 20s Creates $660,000 More by Retirement",
-      figure: "$660,000",
-      description: "AustralianSuper analysis shows young professionals who start investing $10,000 annually from age 25 will accumulate $660,000 more by retirement than those starting at 35. With superannuation assets now totalling $3.9 trillion and the guarantee rate at 12%, early investment strategy is crucial.",
-      source: "AustralianSuper & KPMG Super Insights 2025",
-      link: "https://www.australiansuper.com/superannuation/superannuation-articles/2020/09/unlocking-the-power-of-compounding",
+    "Plan Path to Homeownership": {
+      title: "56% of Gen Z and Millennials Plan Property Entry Within 5 Years Despite $973,300 Median Prices",
+      figure: "56%",
+      description: "Despite median Australian property prices reaching $973,300 in June 2024, 56% of Gen Z and millennials plan property entry within 5 years. First home buyer lending grew 20.7% with government schemes allowing 5% deposits. Regional purchases save $126,439 average on loans.",
+      source: "CoreLogic & Australian Prudential Regulation Authority",
+      link: "https://www.corelogic.com.au/news-research/news/2024/home-value-index",
       details: {
-        title: "Unlocking the Power of Compounding",
-        publication: "AustralianSuper",
-        authors: "AustralianSuper Investment Team",
+        title: "Australian Property Market Analysis",
+        publication: "CoreLogic Research",
+        authors: "CoreLogic Research Team",
         date: "2024",
-        description: "Australian superannuation industry assets reached $3.9 trillion in 2024. Compound returns demonstrate massive long-term benefits of early investing. Investment in super provides 25% immediate return through tax benefits for 30% tax bracket earners.",
-        link: "https://www.australiansuper.com/superannuation/superannuation-articles/2020/09/unlocking-the-power-of-compounding"
+        description: "Average first buyer age risen to 36 years. 'Rentvesting' enables ladder entry in affordable areas while First Home Owner Grants provide financial support. Clear 3-year saving plans with specific targets proven effective for systematic deposit accumulation.",
+        link: "https://www.corelogic.com.au/news-research/news/2024/home-value-index"
       }
     }
   },
 
   // Domain: Recreation & Leisure
   "Recreation & Leisure": {
-    "Pursue Meaningful Hobbies": {
+    "Explore Australian Nature": {
       title: "Hobbies Reduce Workplace Stress by 34% and Boost Creative Problem-Solving",
       figure: "34%",
       description: "Australian research reveals that professionals who engage in meaningful hobbies experience significant stress reduction and enhanced creativity. Studies show hobby participants report being 34% less stressed and 18% less sad, with positive effects carrying over into workplace performance.",
@@ -314,7 +314,7 @@ export const AUSTRALIAN_GOAL_STATS = {
         link: "https://employmenthero.com/resources/wellness-at-work/"
       }
     },
-    "Plan Regular Travel and Adventures": {
+    "Travel Around Australia": {
       title: "Annual Leave Usage Correlates with 25% Higher Workplace Innovation Capacity",
       figure: "16 days",
       description: "Tourism Research Australia data shows domestic tourism contributes $160.2 billion annually to the economy, with travel-taking professionals demonstrating higher workplace innovation and leadership capabilities. Adventure activities specifically develop resilience and collaborative problem-solving skills.",
@@ -329,7 +329,7 @@ export const AUSTRALIAN_GOAL_STATS = {
         link: "https://www.tra.gov.au/"
       }
     },
-    "Engage in Creative Expression": {
+    "Develop New Hobby": {
       title: "Creative Participation Increases Problem-Solving Performance by 44% in Australian Professionals",
       figure: "44%",
       description: "Creative Australia reports $237.4 million invested in Australian arts with 15 million live attendances. Creative professionals show 44% higher rates of mixed-ethnic friendship groups and enhanced workplace collaboration skills.",
@@ -348,7 +348,7 @@ export const AUSTRALIAN_GOAL_STATS = {
 
   // Domain: Purpose & Meaning
   "Purpose & Meaning": {
-    "Clarify Life Values and Direction": {
+    "Volunteer Using Professional Skills": {
       title: "Australian Workers Face Meaning Crisis: Only 39% Find Work Valuable",
       figure: "39%",
       description: "The Australian HR Institute's 2022 workplace wellbeing survey reveals a crisis in meaningful work, with satisfaction dropping 13.8 percentage points since 2020. Despite average job satisfaction holding at 7.9/10, the disconnect between satisfaction and meaning suggests professionals increasingly seek values-aligned work.",
@@ -363,7 +363,7 @@ export const AUSTRALIAN_GOAL_STATS = {
         link: "https://www.ahri.com.au/resources/hr-research/the-state-of-wellbeing-in-australian-workplaces-2019-2022"
       }
     },
-    "Contribute to Community/Volunteer": {
+    "Find Purpose-Driven Work": {
       title: "Volunteering Delivers 500% ROI: $5 Return for Every $1 Invested",
       figure: "500%",
       description: "The Centre for Volunteering's 2023 national study shows 14.1 million Australians volunteer, contributing 3.2 billion hours annually. Beyond economic impact, volunteering increases individual wellbeing by 4.3% and workplace productivity by 14%.",
@@ -378,7 +378,7 @@ export const AUSTRALIAN_GOAL_STATS = {
         link: "https://www.volunteering.com.au/snapshot-of-volunteering-in-australia/"
       }
     },
-    "Explore Spiritual/Philosophical Growth": {
+    "Get Involved in Local Community": {
       title: "Workplace Mindfulness Reduces Stress by 30% in Australian Study",
       figure: "30%",
       description: "University of Tasmania research with Tasmanian State Service employees found mindfulness apps combined with classes significantly reduced workplace stress and improved mental health outcomes. Australian workplace mindfulness programs show strong evidence for enhanced focus and decision-making.",
@@ -397,22 +397,22 @@ export const AUSTRALIAN_GOAL_STATS = {
 
   // Domain: Environment & Organization
   "Environment & Organization": {
-    "Create Organized, Productive Spaces": {
-      title: "Australian Professionals Gain 23% Productivity Boost from Well-Designed Workspaces",
-      figure: "23%",
-      description: "Research by the Green Building Council of Australia analyzing workplace productivity found that well-designed lighting can increase productivity by up to 23%, while organized workspaces significantly reduce time waste. Australian professionals working in Green Star-rated buildings consistently outperform those in traditional offices, with financial services firms in 5,000 sqm green-rated spaces saving $262,000 annually on reduced absenteeism alone.",
-      source: "Green Building Council of Australia (GBCA)",
-      link: "https://www.gbca.org.au/green-star/why-work-in-a-green-building/",
+    "Find Quality Shared Housing": {
+      title: "1.46 Million Young Australians Rent with Co-Living Reducing Costs 30-50%",
+      figure: "30-50%",
+      description: "1.46 million 25-34 year-olds currently rent in Australia with only 16% satisfied with housing affordability. Co-living arrangements reduce housing costs by 30-50% while providing community connections. Growing co-living market with investor interest and apps facilitating roommate matching create sustainable housing solutions.",
+      source: "Australian Bureau of Statistics & Co-Living Research Australia",
+      link: "https://www.abs.gov.au/statistics/people/housing/housing-occupancy-and-costs/latest-release",
       details: {
-        title: "The Business Case for Green Building",
-        publication: "World Green Building Council",
-        authors: "GBCA Research Team",
-        date: "2023",
-        description: "Comprehensive analysis found multiple productivity benefits: 3% increase with individual temperature control, 11% gains from improved ventilation, 18% increase from daylight access, and 23% from well-designed lighting. CitySwitch modeling shows typical financial services firms achieve $3,654,744 annual productivity savings in Green Star offices.",
-        link: "https://www.gbca.org.au/green-star/why-work-in-a-green-building/"
+        title: "Australian Housing Occupancy and Costs Analysis",
+        publication: "Australian Bureau of Statistics",
+        authors: "ABS Housing Team",
+        date: "2024",
+        description: "Modern co-living options include private spaces with shared amenities, serving as stepping stones to future ownership while building community. Clear house agreements covering expenses, responsibilities, and boundaries prevent conflicts while creating positive shared living experiences.",
+        link: "https://www.abs.gov.au/statistics/people/housing/housing-occupancy-and-costs/latest-release"
       }
     },
-    "Establish Effective Daily Routines": {
+    "Live Sustainably/Zero-Waste": {
       title: "40% of Australian Workers Now Embrace Structured Remote Work Routines for Enhanced Productivity",
       figure: "40%",
       description: "The Australian Productivity Commission's landmark research reveals that structured daily routines, particularly in work-from-home settings, have become essential for professional success. Australian workers with established morning and work routines report equal or higher productivity compared to traditional office settings, with many indicating they would leave their job if flexible routine options weren't available.",
@@ -427,7 +427,7 @@ export const AUSTRALIAN_GOAL_STATS = {
         link: "https://www.pc.gov.au/research/completed/working-from-home"
       }
     },
-    "Reduce Environmental Impact": {
+    "Create Organized Living Space": {
       title: "Australian Professionals in Green Buildings Show 16% Lower Absenteeism and Higher Career Satisfaction",
       figure: "16%",
       description: "Green Building Council of Australia research demonstrates that environmental consciousness directly benefits Australian professionals' wellbeing and career advancement. Companies like Westpac and Medibank report significant productivity gains from sustainable workplace practices, with employees in green buildings experiencing better health outcomes, reduced sick days, and improved job satisfaction that correlates with career progression.",
@@ -453,100 +453,8 @@ export const AUSTRALIAN_GOAL_STATS = {
 const mapGoalNameToStatKey = (goalName) => {
   if (!goalName) return null;
   
-  const goalLower = goalName.toLowerCase();
-  
-  // Career & Work domain mappings
-  if (goalLower.includes('skill') && goalLower.includes('development')) {
-    return 'Skill Development';
-  }
-  if (goalLower.includes('flexible') || goalLower.includes('new skills')) {
-    return 'Skill Development';
-  }
-  if (goalLower.includes('advance') || goalLower.includes('promotion') || goalLower.includes('leadership')) {
-    return 'Career Advancement';
-  }
-  if (goalLower.includes('work-life') || goalLower.includes('balance')) {
-    return 'Work-Life Balance';
-  }
-  
-  // Health & Wellness domain mappings
-  if (goalLower.includes('exercise') || goalLower.includes('fitness') || goalLower.includes('active')) {
-    return 'Regular Exercise';
-  }
-  if (goalLower.includes('sleep')) {
-    return 'Better Sleep Habits';
-  }
-  if (goalLower.includes('nutrition') || goalLower.includes('diet') || goalLower.includes('eating')) {
-    return 'Improved Nutrition';
-  }
-  
-  // Relationships domain mappings
-  if (goalLower.includes('romantic') || goalLower.includes('partner') || goalLower.includes('relationship')) {
-    return 'Strengthen Romantic Partnership';
-  }
-  if (goalLower.includes('family')) {
-    return 'Build Stronger Family Connections';
-  }
-  if (goalLower.includes('network') || goalLower.includes('professional connections')) {
-    return 'Expand Professional Network';
-  }
-  
-  // Personal Growth domain mappings
-  if (goalLower.includes('professional skills') || goalLower.includes('new professional')) {
-    return 'Develop New Professional Skills';
-  }
-  if (goalLower.includes('read') || goalLower.includes('knowledge')) {
-    return 'Read More for Knowledge and Growth';
-  }
-  if (goalLower.includes('mindfulness') || goalLower.includes('mental wellness')) {
-    return 'Practice Mindfulness and Mental Wellness';
-  }
-  
-  // Financial Security domain mappings
-  if (goalLower.includes('emergency') || goalLower.includes('fund')) {
-    return 'Build Emergency Fund (3-6 months expenses)';
-  }
-  if (goalLower.includes('debt') || goalLower.includes('eliminate')) {
-    return 'Eliminate High-Interest Debt';
-  }
-  if (goalLower.includes('invest') || goalLower.includes('wealth')) {
-    return 'Start Investing for Long-term Wealth';
-  }
-  
-  // Recreation & Leisure domain mappings
-  if (goalLower.includes('hobbies')) {
-    return 'Pursue Meaningful Hobbies';
-  }
-  if (goalLower.includes('travel') || goalLower.includes('adventure')) {
-    return 'Plan Regular Travel and Adventures';
-  }
-  if (goalLower.includes('creative') || goalLower.includes('expression')) {
-    return 'Engage in Creative Expression';
-  }
-  
-  // Purpose & Meaning domain mappings
-  if (goalLower.includes('values') || goalLower.includes('direction') || goalLower.includes('clarify')) {
-    return 'Clarify Life Values and Direction';
-  }
-  if (goalLower.includes('community') || goalLower.includes('volunteer')) {
-    return 'Contribute to Community/Volunteer';
-  }
-  if (goalLower.includes('spiritual') || goalLower.includes('philosophical')) {
-    return 'Explore Spiritual/Philosophical Growth';
-  }
-  
-  // Environment & Organization domain mappings
-  if (goalLower.includes('organized') || goalLower.includes('productive spaces') || goalLower.includes('space')) {
-    return 'Create Organized, Productive Spaces';
-  }
-  if (goalLower.includes('routine') || goalLower.includes('daily')) {
-    return 'Establish Effective Daily Routines';
-  }
-  if (goalLower.includes('environmental') || goalLower.includes('impact') || goalLower.includes('sustainable')) {
-    return 'Reduce Environmental Impact';
-  }
-  
-  // If no mapping found, return the original goal name (exact match attempt)
+  // With exact goal name alignment, we no longer need mapping logic
+  // Goals in country definitions now match research stats exactly
   return goalName;
 };
 

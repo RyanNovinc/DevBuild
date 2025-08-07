@@ -1,0 +1,295 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'LifeCompass Referral System - AWS Lambda and DynamoDB Infrastructure'
+
+Parameters:
+  AppName:
+    Type: String
+    Default: LifeCompass
+    Description: Name of the application
+  Environment:
+    Type: String
+    Default: prod
+    AllowedValues: [dev, staging, prod]
+    Description: Environment name
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 512
+    Runtime: nodejs18.x
+    Environment:
+      Variables:
+        ENVIRONMENT: !Ref Environment
+        APP_NAME: !Ref AppName
+
+Resources:
+  # DynamoDB Tables
+  AnonymousUsersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${AppName}-AnonymousUsers'
+      AttributeDefinitions:
+        - AttributeName: deviceId
+          AttributeType: S
+        - AttributeName: anonymousUserId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: deviceId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: AnonymousUserIdIndex
+          KeySchema:
+            - AttributeName: anonymousUserId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+
+  ReferralCodesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${AppName}-ReferralCodes'
+      AttributeDefinitions:
+        - AttributeName: code
+          AttributeType: S
+        - AttributeName: ownerId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: code
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: OwnerIdIndex
+          KeySchema:
+            - AttributeName: ownerId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+
+  ReferralStatsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${AppName}-ReferralStats'
+      AttributeDefinitions:
+        - AttributeName: ownerId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: ownerId
+          KeyType: HASH
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+
+  ReferralConversionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${AppName}-ReferralConversions'
+      AttributeDefinitions:
+        - AttributeName: conversionId
+          AttributeType: S
+        - AttributeName: referrerId
+          AttributeType: S
+        - AttributeName: purchaserId
+          AttributeType: S
+        - AttributeName: referralCode
+          AttributeType: S
+      KeySchema:
+        - AttributeName: conversionId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: ReferrerIdIndex
+          KeySchema:
+            - AttributeName: referrerId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+        - IndexName: PurchaserIdIndex
+          KeySchema:
+            - AttributeName: purchaserId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+        - IndexName: ReferralCodeIndex
+          KeySchema:
+            - AttributeName: referralCode
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+
+  DiscountRedemptionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${AppName}-DiscountRedemptions'
+      AttributeDefinitions:
+        - AttributeName: redemptionId
+          AttributeType: S
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: conversionId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: redemptionId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: UserIdIndex
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+        - IndexName: ConversionIdIndex
+          KeySchema:
+            - AttributeName: conversionId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+
+  # Lambda Function
+  ReferralSyncFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub '${AppName}-ReferralSyncHandler'
+      CodeUri: lambda/
+      Handler: referral-sync-handler.handler
+      Events:
+        SyncReferralCode:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ReferralApi
+            Path: /sync-referral-code
+            Method: POST
+        SyncReferralStats:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ReferralApi
+            Path: /sync-referral-stats
+            Method: POST
+        RecordConversion:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ReferralApi
+            Path: /record-conversion
+            Method: POST
+        GetDiscounts:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ReferralApi
+            Path: /get-discounts
+            Method: GET
+        LinkAccount:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ReferralApi
+            Path: /link-account
+            Method: POST
+        RedeemDiscount:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ReferralApi
+            Path: /redeem-discount
+            Method: POST
+        HealthCheck:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ReferralApi
+            Path: /health
+            Method: GET
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AnonymousUsersTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ReferralCodesTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ReferralStatsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ReferralConversionsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DiscountRedemptionsTable
+
+  # API Gateway
+  ReferralApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Sub '${AppName}-ReferralAPI'
+      StageName: !Ref Environment
+      Cors:
+        AllowMethods: "'GET,POST,OPTIONS'"
+        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+        AllowOrigin: "'*'"
+      DefinitionBody:
+        swagger: '2.0'
+        info:
+          title: !Sub '${AppName} Referral API'
+          version: '1.0'
+        paths:
+          /health:
+            get:
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws_proxy
+                uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ReferralSyncFunction.Arn}/invocations'
+              responses:
+                '200':
+                  description: 'Health check response'
+
+Outputs:
+  ApiGatewayUrl:
+    Description: 'API Gateway endpoint URL'
+    Value: !Sub 'https://${ReferralApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}'
+    Export:
+      Name: !Sub '${AppName}-ReferralApiUrl'
+
+  ReferralSyncFunctionArn:
+    Description: 'Referral Sync Lambda Function ARN'
+    Value: !GetAtt ReferralSyncFunction.Arn
+    Export:
+      Name: !Sub '${AppName}-ReferralSyncFunctionArn'
+
+  AnonymousUsersTableName:
+    Description: 'DynamoDB Anonymous Users Table Name'
+    Value: !Ref AnonymousUsersTable
+    Export:
+      Name: !Sub '${AppName}-AnonymousUsersTable'
+
+  ReferralCodesTableName:
+    Description: 'DynamoDB Referral Codes Table Name'
+    Value: !Ref ReferralCodesTable
+    Export:
+      Name: !Sub '${AppName}-ReferralCodesTable'

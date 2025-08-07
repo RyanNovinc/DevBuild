@@ -46,6 +46,9 @@ import { generateReferralCode, getMonthlyRate } from './utils';
 import FounderCheckpoint from './utils/FounderCheckpoint';
 import FounderMessaging from './utils/FounderMessaging';
 
+// Import referral backend service
+import referralBackendService from '../../services/ReferralBackendService';
+
 // Component imports
 import ViewToggle from './components/ViewToggle';
 import TestModeToggles from './components/TestModeToggles';
@@ -364,11 +367,32 @@ const PricingScreen = ({ navigation, route }) => {
     }
   };
   
+  // Check for available referral discounts
+  const checkAvailableDiscounts = async () => {
+    try {
+      const discounts = await referralBackendService.getEarnedDiscounts();
+      return discounts.filter(discount => 
+        discount.validForPurchaseType === 'AI_MONTHLY' && !discount.isRedeemed
+      );
+    } catch (error) {
+      console.error('Error checking discounts:', error);
+      return [];
+    }
+  };
+
   // Handle purchase with achievement recognition for founders
   const handlePurchase = async (plan) => {
     if (plan === 'free') return;
     
     try {
+      // Check for available discounts for AI plans
+      let availableDiscounts = [];
+      let hasDiscount = false;
+      
+      if (plan !== 'founding') {
+        availableDiscounts = await checkAvailableDiscounts();
+        hasDiscount = availableDiscounts.length > 0;
+      }
       let confirmMessage = "";
       let planName = "";
       let price = "";
@@ -386,24 +410,24 @@ const PricingScreen = ({ navigation, route }) => {
           break;
         case 'starter':
           planName = "Guide AI";
-          price = isFromReferral ? 
+          price = (hasDiscount || isFromReferral) ? 
             `$${getMonthlyRate('starter', isLifetimeMember, selectedSubscription, true)}/${selectedSubscription === 'monthly' ? 'month' : 'month, billed annually'} (50% off first month)` : 
             `$${getMonthlyRate('starter', isLifetimeMember, selectedSubscription)}/${selectedSubscription === 'monthly' ? 'month' : 'month, billed annually'}`;
-          confirmMessage = `Subscribe to the Guide AI plan for ${price}?\n\nYou'll get standard monthly capacity for AI assistance and access to all AI models. Your monthly capacity refreshes with each billing cycle.${!isLifetimeMember ? "\n\nThis subscription will also include all premium app features while your subscription is active." : ""}`;
+          confirmMessage = `Subscribe to the Guide AI plan for ${price}?\n\nYou'll get standard monthly capacity for AI assistance and access to all AI models. Your monthly capacity refreshes with each billing cycle.${!isLifetimeMember ? "\n\nThis subscription will also include all premium app features while your subscription is active." : ""}${hasDiscount ? "\n\n🎉 Referral discount will be automatically applied!" : ""}`;
           break;
         case 'professional':
           planName = "Navigator AI";
-          price = isFromReferral ? 
+          price = (hasDiscount || isFromReferral) ? 
             `$${getMonthlyRate('professional', isLifetimeMember, selectedSubscription, true)}/${selectedSubscription === 'monthly' ? 'month' : 'month, billed annually'} (50% off first month)` : 
             `$${getMonthlyRate('professional', isLifetimeMember, selectedSubscription)}/${selectedSubscription === 'monthly' ? 'month' : 'month, billed annually'}`;
-          confirmMessage = `Subscribe to the Navigator AI plan for ${price}?\n\nYou'll get enhanced monthly capacity (3x the standard plan) for AI assistance and access to all AI models. Your monthly capacity refreshes with each billing cycle.${!isLifetimeMember ? "\n\nThis subscription will also include all premium app features while your subscription is active." : ""}`;
+          confirmMessage = `Subscribe to the Navigator AI plan for ${price}?\n\nYou'll get enhanced monthly capacity (3x the standard plan) for AI assistance and access to all AI models. Your monthly capacity refreshes with each billing cycle.${!isLifetimeMember ? "\n\nThis subscription will also include all premium app features while your subscription is active." : ""}${hasDiscount ? "\n\n🎉 Referral discount will be automatically applied!" : ""}`;
           break;
         case 'business':
           planName = "Compass AI";
-          price = isFromReferral ? 
+          price = (hasDiscount || isFromReferral) ? 
             `$${getMonthlyRate('business', isLifetimeMember, selectedSubscription, true)}/${selectedSubscription === 'monthly' ? 'month' : 'month, billed annually'} (50% off first month)` : 
             `$${getMonthlyRate('business', isLifetimeMember, selectedSubscription)}/${selectedSubscription === 'monthly' ? 'month' : 'month, billed annually'}`;
-          confirmMessage = `Subscribe to the Compass AI plan for ${price}?\n\nYou'll get our highest monthly capacity (7x the standard plan) for AI assistance and access to all AI models. Your monthly capacity refreshes with each billing cycle.${!isLifetimeMember ? "\n\nThis subscription will also include all premium app features while your subscription is active." : ""}`;
+          confirmMessage = `Subscribe to the Compass AI plan for ${price}?\n\nYou'll get our highest monthly capacity (7x the standard plan) for AI assistance and access to all AI models. Your monthly capacity refreshes with each billing cycle.${!isLifetimeMember ? "\n\nThis subscription will also include all premium app features while your subscription is active." : ""}${hasDiscount ? "\n\n🎉 Referral discount will be automatically applied!" : ""}`;
           break;
         default:
           confirmMessage = "Confirm your selection?";
@@ -429,6 +453,27 @@ const PricingScreen = ({ navigation, route }) => {
                 // Handle AI plan purchases
                 await AsyncStorage.setItem('aiPlan', plan);
                 
+                // Redeem discount if available
+                if (hasDiscount && availableDiscounts.length > 0) {
+                  try {
+                    const discount = availableDiscounts[0]; // Use the first available discount
+                    const originalPrice = getMonthlyRate(plan, isLifetimeMember, selectedSubscription);
+                    const redemptionResult = await referralBackendService.redeemDiscount(
+                      discount.conversionId,
+                      null, // userId (optional)
+                      selectedSubscription,
+                      originalPrice
+                    );
+                    
+                    if (redemptionResult) {
+                      console.log('Discount redeemed successfully:', redemptionResult);
+                    }
+                  } catch (discountError) {
+                    console.error('Error redeeming discount:', discountError);
+                    // Don't fail the purchase if discount redemption fails
+                  }
+                }
+                
                 if (isFromReferral) {
                   await AsyncStorage.removeItem('referralSource');
                   setIsFromReferral(false);
@@ -436,15 +481,17 @@ const PricingScreen = ({ navigation, route }) => {
                 
                 // Show success message
                 let successMessage = "";
+                const discountAppliedText = hasDiscount ? " 🎉 Your 50% referral discount has been applied!" : "";
+                
                 switch(plan) {
                   case 'starter':
-                    successMessage = `You've successfully subscribed to the Guide AI plan! Your ${selectedSubscription} subscription gives you standard monthly capacity for AI assistance with access to all AI models.`;
+                    successMessage = `You've successfully subscribed to the Guide AI plan! Your ${selectedSubscription} subscription gives you standard monthly capacity for AI assistance with access to all AI models.${discountAppliedText}`;
                     break;
                   case 'professional':
-                    successMessage = `You've successfully subscribed to the Navigator AI plan! Your ${selectedSubscription} subscription provides enhanced monthly capacity (3x standard) for AI assistance with access to all AI models.`;
+                    successMessage = `You've successfully subscribed to the Navigator AI plan! Your ${selectedSubscription} subscription provides enhanced monthly capacity (3x standard) for AI assistance with access to all AI models.${discountAppliedText}`;
                     break;
                   case 'business':
-                    successMessage = `You've successfully subscribed to the Compass AI plan! Your ${selectedSubscription} subscription delivers our highest monthly capacity (7x standard) for AI assistance with access to all AI models.`;
+                    successMessage = `You've successfully subscribed to the Compass AI plan! Your ${selectedSubscription} subscription delivers our highest monthly capacity (7x standard) for AI assistance with access to all AI models.${discountAppliedText}`;
                     break;
                 }
                 

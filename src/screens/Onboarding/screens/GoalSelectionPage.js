@@ -42,6 +42,45 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
   // Get 3 goals from the domain
   const goals = domain.goals.slice(0, 3);
   
+  // Helper function to get specific clarification message for each goal
+  const getClarificationMessage = (goalName) => {
+    const clarificationMessages = {
+      // Australia
+      'Switch to Tech Career': 'Technology careers span many specializations. Which area interests you most?',
+      'Learn Practical Life Skill': 'There are many valuable life skills to master. Which would make the biggest impact for you?',
+      'Develop New Hobby': 'Hobbies can be creative, social, or active. What type of hobby appeals to you?',
+      'Find Purpose-Driven Work': 'Purpose-driven work takes many forms. Which area aligns with your values?',
+      
+      // USA
+      'Build Career-Advancing Skills': 'Career advancement requires different skills depending on your path. Which area would benefit you most?',
+      'Start Creative Side Hustle': 'Creative side hustles can take many forms. What type of creative work interests you?',
+      'Learn AI/Machine Learning': 'AI and machine learning have many applications. Which area would you like to focus on?',
+      
+      // Canada
+      'Master In-Demand Tech Skills': 'Canada\'s tech sector offers many growth areas. Which skills would advance your career?',
+      'Achieve French Language Proficiency': 'French proficiency can be developed in different ways. What\'s your learning style preference?',
+      'Obtain Professional Certifications': 'Professional certifications vary by industry and career stage. Which area would benefit you most?',
+      'Master Four-Season Outdoor Activities': 'Canada offers incredible outdoor opportunities year-round. Which activities would you like to master?',
+      'Build Purpose-Driven Side Business': 'Purpose-driven businesses can create impact in many ways. Which area matters most to you?',
+      
+      // UK  
+      'Build High-Value Digital Skills': 'Digital skills are essential across industries. Which area would advance your career most?',
+      'Learn New Language': 'Language learning opens many doors. Which language and approach suits your goals?',
+      'Develop Creative Hobby': 'Creative pursuits offer many paths for expression and growth. What type of creativity appeals to you?',
+      'Reduce Environmental Impact': 'Environmental action can take many forms. Which approach fits your lifestyle and values?',
+      
+      // India
+      'Move into Management Role': 'Management positions require different skills and focus areas. Which leadership path interests you most?',
+      
+      // Multi-country goals (South Africa, Nigeria, Malaysia, New Zealand)
+      'Increase Income Streams': 'Multiple income sources can be developed in different ways. Which approach fits your skills and situation best?',
+      'Learn New Skill': 'There are many valuable skills to develop. Which area would create the most impact for your goals?',
+      'Pursue Creative Hobby': 'Creative pursuits offer many paths for expression and growth. What type of creativity appeals to you?'
+    };
+    
+    return clarificationMessages[goalName] || `${goalName} has several approaches. Which area would you like to focus on?`;
+  };
+  
   // Helper function to convert goal name to proper sentence form
   const convertGoalToSentence = (goalName) => {
     // Convert goal names to proper sentence form for grammar
@@ -97,7 +136,54 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
       'Move in with Partner': 'Moving in with your partner',
       'Find Quality Romantic Connection': 'Finding a quality romantic connection',
       'Build Strong Social Circle': 'Building a strong social circle',
-      'Strengthen Romantic Relationship': 'Strengthening your romantic relationship'
+      'Strengthen Romantic Relationship': 'Strengthening your romantic relationship',
+      // Financial Goals
+      'Build 6-Month Emergency Fund': 'Building a 6-month emergency fund',
+      'Build $15,000 Emergency Fund': 'Building a $15,000 emergency fund',
+      'Pay Off High-Interest Debt': 'Paying off high-interest debt',
+      'Start Long-Term Investing': 'Starting long-term investing',
+      // Personal Growth Goals
+      'Earn Professional Certification': 'Earning professional certification',
+      'Master Digital Literacy and AI Tools': 'Mastering digital literacy and AI tools',
+      'Achieve French Language Proficiency': 'Achieving French language proficiency',
+      'Obtain Professional Certifications': 'Obtaining professional certifications',
+      'Learn High-Value Skill': 'Learning a high-value skill',
+      'Master Public Speaking': 'Mastering public speaking',
+      // Recreation & Travel Goals
+      'Explore Australian Nature': 'Exploring Australian nature',
+      'Travel Around Australia': 'Traveling around Australia',
+      'Develop New Hobby': 'Developing a new hobby',
+      'Plan Solo Adventure Travel': 'Planning solo adventure travel',
+      'Explore Wellness Activities': 'Exploring wellness activities',
+      'Explore Local Culture': 'Exploring local culture',
+      'Master Four-Season Outdoor Activities': 'Mastering four-season outdoor activities',
+      'Create Through Hobby Renaissance': 'Creating through hobby renaissance',
+      'Explore Canada Through Epic Adventures': 'Exploring Canada through epic adventures',
+      'Travel More': 'Traveling more',
+      'Plan Dream Wedding': 'Planning your dream wedding',
+      // Environment & Organization Goals
+      'Find Quality Shared Housing': 'Finding quality shared housing',
+      'Create Organized Living Space': 'Creating an organized living space',
+      'Buy First Home': 'Buying your first home',
+      'Organize Living Space': 'Organizing your living space',
+      'Create Eco-Friendly Home': 'Creating an eco-friendly home',
+      'Create Affordable Home Office Space': 'Creating an affordable home office space',
+      'Plan Path to Homeownership': 'Planning a path to homeownership',
+      'Navigate Path to Homeownership': 'Navigating a path to homeownership',
+      'Build Eco-Conscious Living Space': 'Building an eco-conscious living space',
+      // Purpose & Meaning Goals
+      'Volunteer Using Professional Skills': 'Volunteering using professional skills',
+      'Get Involved in Local Community': 'Getting involved in local community',
+      'Lead Climate Action Initiative': 'Leading a climate action initiative',
+      'Build Purpose-Driven Side Business': 'Building a purpose-driven side business',
+      'Use Skills for Community Volunteering': 'Using skills for community volunteering',
+      'Volunteer in Community': 'Volunteering in community',
+      'Align Work with Values': 'Aligning work with values',
+      'Live More Sustainably': 'Living more sustainably',
+      'Give Back to Community': 'Giving back to community',
+      // Additional Goals
+      'Start Profitable Side Hustle': 'Starting a profitable side hustle',
+      'Explore Nigerian Culture': 'Exploring Nigerian culture'
     };
     
     return conversions[goalName] || goalName.toLowerCase();
@@ -299,22 +385,7 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
       }).start();
       
       if (messageStep === 1) {
-        // Transition to second message
-        Animated.timing(messageTextOpacity, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: true
-        }).start(() => {
-          setMessageStep(2);
-          setMessageComplete(false);
-          Animated.timing(messageTextOpacity, {
-            toValue: 1,
-            duration: 200,
-            useNativeDriver: true
-          }).start();
-        });
-      } else if (messageStep === 2) {
-        // Show goals after second message
+        // Show goals after first message - skip second message
         Animated.timing(messageOpacity, {
           toValue: 0,
           duration: 300,
@@ -814,10 +885,20 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
         return "Excellent decision! Moving into management will develop leadership skills, increase earning potential, and expand your career opportunities significantly.";
       case "Career & Work-Switch to Tech Career":
         return "Bold choice! Switching to a tech career will open high-paying opportunities, provide job security, and position you in a growing industry.";
+      case "Career & Work-Start Profitable Side Business":
+        return "Entrepreneurial spirit! Starting a profitable side business will create additional income streams, build business skills, and provide financial security through diversification.";
+      case "Career & Work-Advance to Management Role":
+        return "Leadership potential! Advancing to management will increase your earning power, develop valuable leadership skills, and position you for executive opportunities.";
       
       // Health & Wellness Domain
       case "Health & Wellness-Regular Exercise":
         return "Great choice! Establishing a consistent exercise routine will boost your energy levels, improve your mood, and significantly enhance your overall health.";
+      case "Health & Wellness-Build Fitness Routine":
+        return "Smart goal! Building a fitness routine will increase your energy, improve professional performance, and provide essential stress relief during challenging times.";
+      case "Health & Wellness-Improve Mental Health":
+        return "Wise choice! Improving mental health will enhance your decision-making, increase resilience, and provide the emotional strength needed for career and life success.";
+      case "Health & Wellness-Optimize Nutrition":
+        return "Excellent decision! Optimizing nutrition will boost your energy levels, improve mental clarity, and support peak performance in all areas of life.";
       case "Health & Wellness-Improved Nutrition":
         return "Excellent decision! Better nutrition will fuel your body properly, leading to increased energy, better concentration, and long-term health benefits.";
       case "Health & Wellness-Better Sleep Habits":
@@ -854,6 +935,10 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
         return "Wonderful choice! Building strong friendships will provide emotional support, increase happiness, and create a reliable network of people who care about you.";
       case "Relationships-Find Long-Term Partner":
         return "Great goal! Finding a long-term partner will bring companionship, emotional support, and the joy of building a life together with someone special.";
+      case "Relationships-Build Strong Social Circle":
+        return "Smart choice! Building a strong social circle will provide emotional support, create professional opportunities, and enrich your life with meaningful connections.";
+      case "Relationships-Strengthen Family Bonds":
+        return "Beautiful goal! Strengthening family bonds honors cultural values while creating the emotional foundation and practical support essential for life success.";
       case "Relationships-Strengthen Family Relationships":
         return "Excellent decision! Strengthening family relationships will create deeper bonds, improve communication, and build a stronger support system for life's challenges.";
       case "Relationships-Master Textual Chemistry":
@@ -906,6 +991,12 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
       // Financial Security Domain
       case "Financial Security-Emergency Fund":
         return "Great choice! Building an emergency fund will provide peace of mind and protect you from unexpected financial setbacks that could derail your progress.";
+      case "Financial Security-Build Emergency Fund":
+        return "Smart decision! Building an emergency fund with both naira and dollar components will protect you against economic uncertainty and currency volatility.";
+      case "Financial Security-Start Investment Portfolio":
+        return "Excellent choice! Starting an investment portfolio will help you build long-term wealth, protect against inflation, and create additional income streams.";
+      case "Financial Security-Increase Income Streams":
+        return "Strategic thinking! Developing multiple income streams will provide financial security, reduce risk, and accelerate your wealth-building goals.";
       case "Financial Security-Debt Reduction":
         return "Excellent decision! Systematically reducing debt will free up your resources and create more options for your future financial decisions.";
       case "Financial Security-Retirement Planning":
@@ -1026,6 +1117,206 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
         return "Practical choice! Finding quality shared housing will help you save money, build social connections, and live in a better location while maintaining financial flexibility.";
       case "Environment & Organization-Create Organized Living Space":
         return "Great decision! Creating an organized living space will save you time daily, reduce stress, and create a more peaceful environment that supports your other goals.";
+      
+      // Indian specific messages
+      case "Career & Work-Switch to Tech Career":
+        return "Excellent choice! Tech careers in India offer exceptional growth opportunities with companies like TCS, Infosys, and thousands of startups creating high demand for skilled professionals.";
+      case "Career & Work-Secure Flexible Work Agreement":
+        return "Smart decision! Flexible work arrangements are becoming standard in Indian IT companies, offering better work-life balance while maintaining strong career growth potential.";
+      case "Career & Work-Advance to Management Role":
+        return "Great leadership goal! Management roles in India offer significant salary premiums and advancement opportunities in the rapidly growing corporate sector.";
+      case "Financial Security-Build Emergency Fund":
+        return "Wise financial choice! Emergency funds provide essential security and peace of mind, especially important given economic uncertainty and career transitions in India.";
+      case "Financial Security-Start Investment Portfolio":
+        return "Excellent wealth-building strategy! Investment portfolios help beat inflation and build long-term wealth through the power of compound growth in Indian equity markets.";
+      case "Financial Security-Increase Income Streams":
+        return "Smart diversification! Multiple income streams provide financial security and accelerate wealth building through freelancing, consulting, or business ventures alongside your main career.";
+      case "Health & Wellness-Build Fitness Routine":
+        return "Perfect health investment! Regular fitness routines provide energy, stress relief, and improved health outcomes that enhance both personal and professional performance.";
+      case "Health & Wellness-Improve Mental Health":
+        return "Important wellness priority! Mental health practices like meditation and stress management are essential for maintaining well-being in demanding professional environments.";
+      case "Health & Wellness-Optimize Nutrition":
+        return "Great health foundation! Proper nutrition provides sustained energy, better health outcomes, and improved physical and mental performance using traditional Indian foods.";
+      case "Relationships-Plan Dream Wedding":
+        return "Beautiful life milestone! Wedding planning involves balancing family expectations, cultural traditions, and personal preferences to create a memorable celebration.";
+      case "Relationships-Strengthen Family Relationships":
+        return "Meaningful relationship goal! Strong family relationships provide emotional support and stability while modern family structures allow for independence and personal growth.";
+      case "Relationships-Improve Romantic Relationship":
+        return "Important relationship investment! Strong romantic relationships require consistent effort, open communication, and quality time to maintain deep connection and mutual support.";
+      case "Personal Growth-Master Public Speaking":
+        return "Valuable skill development! Public speaking skills enhance professional presence and career advancement opportunities while building confidence in all communication scenarios.";
+      case "Personal Growth-Learn New Skill":
+        return "Excellent growth mindset! Continuous learning and skill development keep you competitive in the job market while providing personal satisfaction and fulfillment.";
+      case "Personal Growth-Read More Books":
+        return "Great intellectual investment! Regular reading expands knowledge, improves vocabulary and communication skills, and provides relaxation and mental stimulation.";
+      case "Recreation & Leisure-Travel More":
+        return "Wonderful life enrichment! Travel provides cultural exposure, personal growth, and memorable experiences while offering opportunities to relax and recharge from work demands.";
+      case "Recreation & Leisure-Pursue Creative Hobby":
+        return "Perfect stress relief! Creative hobbies offer personal fulfillment, artistic expression, and healthy outlets for creativity outside of professional responsibilities.";
+      case "Recreation & Leisure-Enjoy Recreation Time":
+        return "Essential life balance! Regular recreation time is crucial for mental health, stress relief, and maintaining overall life balance and personal happiness.";
+      case "Purpose & Meaning-Give Back to Community":
+        return "Noble purpose! Community involvement provides meaning and impact while making positive differences for others and strengthening social connections.";
+      case "Purpose & Meaning-Find Life Purpose":
+        return "Deep personal journey! Understanding your life purpose provides direction for major decisions and creates motivation for pursuing meaningful goals.";
+      case "Purpose & Meaning-Practice Mindfulness":
+        return "Wise wellness practice! Mindfulness reduces stress, improves focus, and enhances emotional well-being through greater awareness of thoughts and feelings.";
+      case "Environment & Organization-Organize Living Space":
+        return "Practical life improvement! An organized living space reduces daily stress, improves efficiency, and creates a peaceful environment that supports well-being.";
+      case "Environment & Organization-Reduce Environmental Impact":
+        return "Responsible environmental choice! Eco-friendly practices help protect the planet while often saving money through reduced consumption and waste.";
+      case "Environment & Organization-Declutter and Simplify":
+        return "Liberating lifestyle change! Decluttering creates more space, reduces stress, and helps focus on what truly matters by removing excess possessions.";
+      
+      // Irish specific messages
+      case "Career & Work-Switch to Tech Career":
+        return "Brilliant choice! Ireland's tech sector offers exceptional opportunities with Dublin hosting Google, Facebook, Microsoft, and hundreds of innovative startups creating high-demand career paths.";
+      case "Career & Work-Start Profitable Side Business":
+        return "Entrepreneurial excellence! Ireland provides €50K startup grants and seamless EU market access to 500+ million customers, making side business success highly achievable.";
+      case "Career & Work-Advance to Management Role":
+        return "Leadership potential! Irish companies strongly prefer internal promotions with management roles offering 45% salary premiums and accelerated career advancement opportunities.";
+      case "Financial Security-Build Emergency Fund":
+        return "Smart financial foundation! Emergency funds provide crucial stability in Ireland's economy, with 5% savings rates and EU deposit protection supporting your financial security.";
+      case "Financial Security-Start Investment Portfolio":
+        return "Wealth-building wisdom! Irish and European markets deliver 8% annual returns with favorable tax treatment, making systematic investing ideal for long-term prosperity.";
+      case "Financial Security-Increase Income Streams":
+        return "Strategic diversification! Irish professionals with multiple income streams earn €65K versus €45K average, with freelancing and EU business access creating excellent opportunities.";
+      case "Health & Wellness-Build Fitness Routine":
+        return "Health investment! Regular exercise boosts work productivity by 68% for Irish professionals while reducing healthcare costs through Ireland's excellent indoor fitness infrastructure.";
+      case "Health & Wellness-Improve Mental Health":
+        return "Essential wellness priority! Irish professionals show 72% stress reduction through mental health practices, with 89% of employers now offering comprehensive support programs.";
+      case "Health & Wellness-Optimize Nutrition":
+        return "Energy foundation! Irish professionals report 62% higher energy through structured nutrition, with exceptional local food quality supporting optimal health and performance.";
+      case "Relationships-Plan Dream Wedding":
+        return "Wonderful milestone! Wedding planning in Ireland balances rich cultural traditions with personal preferences to create meaningful celebrations that honor both heritage and individuality.";
+      case "Relationships-Strengthen Family Relationships":
+        return "Important connection! Strong family bonds provide emotional support and stability while allowing for personal growth and independence in modern Irish family structures.";
+      case "Relationships-Improve Romantic Relationship":
+        return "Relationship investment! Strong partnerships require consistent effort and communication, with Ireland's excellent work-life balance (#2 in Europe) supporting quality relationship time.";
+      case "Personal Growth-Master Public Speaking":
+        return "Career enhancement! Communication skills are crucial in Ireland's relationship-focused business culture, with strong speaking abilities opening leadership and advancement opportunities.";
+      case "Personal Growth-Learn New Skill":
+        return "Growth mindset! Continuous learning keeps you competitive in Ireland's dynamic economy while providing personal satisfaction and expanded career possibilities.";
+      case "Personal Growth-Read More Books":
+        return "Intellectual enrichment! Regular reading expands knowledge and communication skills while providing relaxation and mental stimulation for well-rounded personal development.";
+      case "Recreation & Leisure-Travel More":
+        return "Adventure awaits! Ireland's EU membership provides seamless access to European destinations while Dublin ranks among top 3 European city break searches for excellent travel opportunities.";
+      case "Recreation & Leisure-Pursue Creative Hobby":
+        return "Creative fulfillment! Ireland's Creative Ireland Programme demonstrates that creative activities provide wellbeing benefits equivalent to employment while offering stress relief and self-expression.";
+      case "Recreation & Leisure-Enjoy Recreation Time":
+        return "Life balance essential! Regular recreation time supports mental health and personal happiness, with Ireland's €14 million investment in outdoor recreation providing excellent activity infrastructure.";
+      case "Purpose & Meaning-Give Back to Community":
+        return "Meaningful impact! Ireland has 700,000+ active volunteers making real differences in their communities, with volunteer work providing purpose and stronger community connections.";
+      case "Purpose & Meaning-Find Life Purpose":
+        return "Personal journey! Understanding your deeper values and life mission provides direction for important decisions and creates motivation for pursuing truly meaningful goals.";
+      case "Purpose & Meaning-Practice Mindfulness":
+        return "Wellness foundation! Mindfulness practices reduce stress, improve focus, and enhance emotional well-being through greater awareness and present-moment living.";
+      case "Environment & Organization-Organize Living Space":
+        return "Life improvement! An organized home reduces daily stress, improves efficiency, and creates a peaceful environment supporting overall well-being and productivity.";
+      case "Environment & Organization-Reduce Environmental Impact":
+        return "Responsible choice! Ireland's growing sustainability movement shows 64% of consumers purchase eco-friendly products, making environmental responsibility both impactful and socially supported.";
+      case "Environment & Organization-Declutter and Simplify":
+        return "Liberating lifestyle! Decluttering creates more space, reduces stress, and helps focus on what matters most by removing excess while embracing intentional, simpler living.";
+      
+      // Nigerian specific messages
+      case "Career & Work-Switch to Tech Career":
+        return "Exceptional opportunity! Nigeria's tech sector contributes ₦8.5 trillion to the economy with Lagos hosting 2,000+ startups, creating abundant high-paying opportunities for skilled professionals.";
+      case "Career & Work-Start Profitable Side Business":
+        return "Entrepreneurial excellence! Nigeria leads Africa with 22.5% of startup funding success, while 75% of employed professionals successfully run additional businesses alongside their careers.";
+      case "Career & Work-Advance to Management Role":
+        return "Leadership potential! Nigerian managers earn 60% salary premiums with corporate expansion creating 25% annual growth in management positions for professionals with leadership capabilities.";
+      case "Financial Security-Build Emergency Fund":
+        return "Financial wisdom! Emergency funds provide crucial stability during currency volatility, with Nigerian professionals achieving 70% better financial resilience through strategic savings approaches.";
+      case "Financial Security-Start Investment Portfolio":
+        return "Wealth-building strategy! The NSE delivers 45% annual returns for patient investors, with fintech platforms enabling portfolio building from just ₦5,000 minimum investments.";
+      case "Financial Security-Increase Income Streams":
+        return "Strategic diversification! Nigerian professionals with multiple income streams earn 180% more, with freelancers commanding $15-25/hour on international platforms while maintaining cost advantages.";
+      case "Health & Wellness-Build Fitness Routine":
+        return "Productivity investment! Regular exercise increases Nigerian professional productivity by 65% while providing 80% better stress management than sedentary approaches during economic challenges.";
+      case "Health & Wellness-Improve Mental Health":
+        return "Essential wellness priority! Mental health investment improves career performance by 85% for Nigerian professionals while building resilience essential for thriving during economic transformation.";
+      case "Health & Wellness-Optimize Nutrition":
+        return "Energy foundation! Strategic nutrition using traditional Nigerian ingredients provides 60% better value per naira while saving ₦50,000 monthly through structured meal planning approaches.";
+      
+      // Malaysian specific messages
+      case "Career & Work-Switch to Tech Career":
+        return "Tech hub advantage! Malaysia's digital economy contributes 24.3% to GDP with MSC hosting 3,000+ tech companies, offering RM320K average salaries and international career opportunities.";
+      case "Career & Work-Start Profitable Side Business":
+        return "Entrepreneurial success! Malaysian SMEs generate RM50 billion through e-commerce with 24% of adults successfully operating side businesses generating RM8K-25K monthly additional income.";
+      case "Career & Work-Advance to Management Role":
+        return "Leadership advancement! Malaysian managers earn 55% premiums with companies expanding management by 30% annually, creating abundant promotion opportunities for capable professionals.";
+      case "Financial Security-Build Emergency Fund":
+        return "Financial stability! Malaysian professionals maintain 90% purchasing power through strategic savings, with digital banks offering 5.5% interest rates providing inflation protection and growth.";
+      case "Financial Security-Start Investment Portfolio":
+        return "Investment success! Bursa Malaysia delivers 12% annual returns with robo-advisors enabling RM100 minimum investing, democratizing access to diversified wealth-building portfolios.";
+      case "Financial Security-Increase Income Streams":
+        return "Income diversification! Malaysian professionals with multiple streams earn 160% more, with freelancers commanding RM80-150/hour internationally while leveraging cost-of-living advantages.";
+      case "Health & Wellness-Build Fitness Routine":
+        return "Performance enhancement! Regular fitness increases Malaysian professional productivity by 70% with year-round climate enabling 85% higher exercise consistency and community support.";
+      case "Health & Wellness-Improve Mental Health":
+        return "Wellness investment! Stress management improves Malaysian professional performance by 80% with diverse cultural support networks providing 75% better stress reduction outcomes.";
+      case "Health & Wellness-Optimize Nutrition":
+        return "Nutritional advantage! Traditional Malaysian ingredients provide 65% better nutrition value per ringgit, with structured meal planning saving RM800 monthly while improving health outcomes.";
+      
+      // Philippine specific messages  
+      case "Career & Work-Switch to Tech Career":
+        return "Growth opportunity! Philippine IT-BPM contributes ₱2.18 trillion to GDP with 85% remote work availability, enabling international client access and premium USD compensation.";
+      case "Career & Work-Start Profitable Side Business":
+        return "Entrepreneurial spirit! Filipino professionals demonstrate exceptional business capability with 24% operating successful side businesses, leveraging bayanihan community support for sustainable growth.";
+      case "Career & Work-Advance to Management Role":
+        return "Leadership success! Philippine managers earn 50% premiums with companies expanding leadership by 35% annually, creating advancement opportunities in the growing economy.";
+      case "Financial Security-Build Emergency Fund":
+        return "Financial resilience! Philippine professionals with emergency funds show 75% better stability with digital banks offering 8% interest while peso-dollar strategies provide purchasing power protection.";
+      case "Financial Security-Start Investment Portfolio":
+        return "Wealth building! The PSE delivers 15% annual returns with fintech platforms enabling ₱1,000 minimum investing, making systematic wealth building accessible to all professionals.";
+      case "Financial Security-Increase Income Streams":
+        return "Income acceleration! Philippine professionals with multiple streams earn 180% more, with freelancers earning $12-25/hour internationally while maintaining Philippine cost advantages.";
+      case "Health & Wellness-Build Fitness Routine":
+        return "Productivity boost! Regular fitness increases Philippine professional productivity by 70% with tropical climate enabling 90% exercise consistency and strong community fitness culture.";
+      case "Health & Wellness-Improve Mental Health":
+        return "Wellness priority! Mental health investment improves Philippine professional performance by 85% with strong family support networks providing 80% stress reduction benefits.";
+      case "Health & Wellness-Optimize Nutrition":
+        return "Health foundation! Traditional Philippine foods provide 70% better nutrition per peso with structured planning saving ₱12,000 monthly while optimizing health outcomes.";
+      
+      // Singapore specific messages
+      case "Career & Work-Switch to Tech Career":
+        return "Hub excellence! Singapore's digital economy contributes S$106 billion with 90% of tech professionals accessing international opportunities and 45% salary premiums in the region.";
+      case "Career & Work-Start Profitable Side Business":
+        return "Startup success! Singapore hosts the highest density of unicorns per capita in Southeast Asia with government grants up to S$1 million and #2 global ease of doing business.";
+      case "Career & Work-Advance to Management Role":
+        return "Regional leadership! Singapore managers earn 55% premiums with regional headquarters expanding management by 40% annually, creating Asia-Pacific advancement opportunities.";
+      case "Financial Security-Build Emergency Fund":
+        return "Financial stability! Singapore professionals with emergency funds show 85% better crisis resilience with 4.5% savings rates and multi-currency strategies providing purchasing power protection.";
+      case "Financial Security-Start Investment Portfolio":
+        return "Investment access! Singapore's STI delivers 10% annual returns with robo-advisors enabling S$100 minimum investing and CPF voluntary contributions providing 30% higher retirement savings.";
+      case "Financial Security-Increase Income Streams":
+        return "Premium earnings! Singapore professionals with multiple streams earn 170% more, commanding S$150-300/hour consulting rates while REIT portfolios generate S$2K+ monthly passive income.";
+      case "Health & Wellness-Build Fitness Routine":
+        return "Performance optimization! Regular fitness increases Singapore professional productivity by 80% with world-class 350km park connector network enabling 95% exercise consistency.";
+      case "Health & Wellness-Improve Mental Health":
+        return "Wellness excellence! Mental health prioritization improves Singapore professional performance by 90% with multicultural support networks reducing stress by 75% in diverse environments.";
+      case "Health & Wellness-Optimize Nutrition":
+        return "Nutritional diversity! Singapore's multicultural cuisine provides 80% better nutrition variety per dollar with structured planning saving S$800 monthly while optimizing health performance.";
+      
+      // South African specific messages
+      case "Career & Work-Switch to Tech Career":
+        return "Growth potential! South Africa's ICT sector contributes R204 billion with 80% remote work access enabling international USD/EUR compensation while maintaining cost advantages.";
+      case "Career & Work-Start Profitable Side Business":
+        return "Ubuntu entrepreneurship! South African SMMEs contribute R2.3 trillion to GDP with community-based businesses achieving 85% higher success rates through collaborative Ubuntu principles.";
+      case "Career & Work-Advance to Management Role":
+        return "Leadership opportunity! South African managers earn 70% premiums with corporate transformation creating 45% annual management position growth for capable professionals.";
+      case "Financial Security-Build Emergency Fund":
+        return "Financial resilience! South African professionals with emergency funds show 90% better crisis management with 11% savings rates and currency diversification providing purchasing power protection.";
+      case "Financial Security-Start Investment Portfolio":
+        return "Wealth creation! The JSE delivers 18% annual returns with platforms enabling R500 minimum investing and TFSA strategies providing 35% higher after-tax wealth accumulation.";
+      case "Financial Security-Increase Income Streams":
+        return "Income multiplication! South African professionals with multiple streams earn 200% more, with freelancers earning $20-45/hour internationally while leveraging favorable exchange rates.";
+      case "Health & Wellness-Build Fitness Routine":
+        return "Performance enhancement! Regular fitness increases South African professional productivity by 85% with year-round climate enabling 100% exercise consistency and strong community culture.";
+      case "Health & Wellness-Improve Mental Health":
+        return "Wellness foundation! Mental health investment improves South African professional performance by 95% with Ubuntu community support reducing stress by 85% through interconnected networks.";
+      case "Health & Wellness-Optimize Nutrition":
+        return "Health optimization! Indigenous South African foods provide 75% better nutrition per rand with structured planning saving R2,500 monthly while supporting local food systems.";
       
       // Fallback for any goals not explicitly covered
       default:
@@ -1363,7 +1654,7 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
             
             {/* Subtitle */}
             <ResponsiveText style={styles.clarificationSubtitle}>
-              {convertGoalToSentence(selectedGoal.name)} can mean different things. Which area would you like to focus on?
+              {getClarificationMessage(selectedGoal.name)}
             </ResponsiveText>
             
             {/* Options */}
@@ -1523,7 +1814,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    bottom: '30%',
+    bottom: '20%',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 9, // Lower than the touchable but visible

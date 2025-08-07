@@ -36,7 +36,7 @@ import {
   meetsContrastRequirements
 } from '../utils/responsive';
 
-const LifePlanOverviewScreen = ({ navigation, hideBackButton = false }) => {
+const LifePlanOverviewScreen = ({ navigation, hideBackButton = false, onFullScreenToggle }) => {
   // Determine if we're embedded in a tab (Goals tab) or standalone (from ProfileTab)
   const isEmbeddedInTab = hideBackButton;
   const { theme } = useTheme();
@@ -811,6 +811,7 @@ const saveDirection = async () => {
             </TouchableOpacity>
           )}
           
+
           {/* Collapse/Expand button */}
           <TouchableOpacity 
             style={[
@@ -1877,6 +1878,46 @@ const saveDirection = async () => {
         </View>
       </ScrollView>
       
+      {/* Full-screen button (only shown when in tab mode) - Positioned at screen bottom left */}
+      {isEmbeddedInTab && onFullScreenToggle && (
+        <TouchableOpacity 
+          style={[
+            styles.fullscreenButtonOverlay,
+            {
+              position: 'absolute',
+              bottom: insets.bottom + spacing.m,
+              left: spacing.m,
+              zIndex: 1000,
+              borderRadius: scaleWidth(20)
+            }
+          ]}
+          onPress={onFullScreenToggle}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel="Toggle full screen"
+          accessibilityHint="Expands the overview to full screen"
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <View style={[
+            styles.iconBackground,
+            {
+              backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+              width: scaleWidth(36),
+              height: scaleWidth(36),
+              borderRadius: scaleWidth(18),
+              alignItems: 'center',
+              justifyContent: 'center'
+            }
+          ]}>
+            <Ionicons 
+              name="expand-outline" 
+              size={scaleWidth(20)} 
+              color={isDarkMode ? '#FFFFFF' : '#000000'} 
+            />
+          </View>
+        </TouchableOpacity>
+      )}
+      
       {/* Strategic Direction Edit Modal - MODIFIED TO HANDLE KEYBOARD */}
       <Modal
         visible={directionModalVisible}
@@ -2421,6 +2462,7 @@ const styles = StyleSheet.create({
   },
   backButtonOverlay: {},
   collapseButtonOverlay: {},
+  fullscreenButtonOverlay: {},
   infoButtonOverlay: {},
   iconBackground: {},
   scrollView: {},

@@ -133,7 +133,7 @@ const founderCodeService = {
           return founderCodeService.assignCodeWithDeviceId(options.isTestMode);
           
         case SERVICE_MODES.RECEIPT:
-          return founderCodeService.assignCodeWithReceipt();
+          return founderCodeService.assignCodeWithReceipt(options.receiptData);
           
         default:
           throw new Error(`Unknown service mode: ${mode}`);
@@ -220,15 +220,77 @@ const founderCodeService = {
   
   /**
    * Assigns a founder code using purchase receipt (for production)
+   * @param {string} receiptData - Base64 encoded App Store receipt
    * @returns {Promise<{success: boolean, code?: string, error?: string, alreadyAssigned?: boolean}>}
    */
-  assignCodeWithReceipt: async () => {
-    // This will be implemented when we have App Store receipt verification
-    console.warn('Receipt verification not implemented yet');
-    return {
-      success: false,
-      error: 'Receipt verification not implemented yet'
-    };
+  assignCodeWithReceipt: async (receiptData) => {
+    try {
+      console.log('Assigning code with receipt validation...');
+      
+      if (!receiptData) {
+        throw new Error('Receipt data is required for production mode');
+      }
+      
+      // Get device ID for tracking
+      const deviceId = await founderCodeService.getDeviceId();
+      console.log('Device ID:', deviceId);
+      
+      // Call Lambda function with receipt data
+      const response = await fetch(API_ENDPOINTS.ASSIGN_FOUNDER_CODE, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          deviceId,
+          receiptData,
+          isTestMode: false
+        }),
+      });
+      
+      // Check for HTTP errors
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('HTTP error assigning founder code with receipt:', response.status, errorText);
+        return {
+          success: false,
+          error: `API error (${response.status}): ${errorText || 'Unknown error'}`
+        };
+      }
+      
+      // Parse response
+      const data = await response.json();
+      console.log('Lambda response for receipt:', data);
+      
+      if (data.success) {
+        // Store the founder code locally
+        await AsyncStorage.setItem(STORAGE_KEYS.FOUNDER_CODE, data.code);
+        
+        // Track Early Adopter achievement
+        try {
+          await FeatureExplorerTracker.trackEarlyAdopter();
+        } catch (achievementError) {
+          console.error('Error tracking Early Adopter achievement:', achievementError);
+        }
+        
+        return {
+          success: true,
+          code: data.code,
+          alreadyAssigned: data.alreadyAssigned || false,
+        };
+      } else {
+        return {
+          success: false,
+          error: data.message || 'Failed to assign founder code with receipt',
+        };
+      }
+    } catch (error) {
+      console.error('Error assigning code with receipt:', error);
+      return {
+        success: false,
+        error: error.message || 'Network error or receipt validation failed',
+      };
+    }
   },
   
   /**

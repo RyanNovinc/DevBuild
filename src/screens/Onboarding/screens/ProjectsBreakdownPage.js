@@ -24,7 +24,7 @@ const { width, height } = Dimensions.get('window');
 /**
  * ProjectsBreakdownPage - New streamlined onboarding experience
  */
-const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, isNavigating = false }) => {
+const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, onConfettiStart, isNavigating = false }) => {
   // Get translation function from I18n context
   const { t, currentLanguage } = useI18n();
   
@@ -46,6 +46,9 @@ const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, isNavigating 
     
     // For very long goal names, format them nicely for 2-line display
     let goalName = goal.name;
+    
+    // Remove bracketed descriptions from goal names
+    goalName = goalName.replace(/\s*\([^)]*\)/g, '');
     
     // Shorten some common long goal names for better display
     const abbreviations = {
@@ -221,6 +224,9 @@ const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, isNavigating 
         // Trigger confetti after hierarchy animation starts
         setTimeout(() => {
           setShowConfetti(true);
+          if (onConfettiStart) {
+            onConfettiStart(); // Trigger 100% progress
+          }
         }, 500);
       });
     }
@@ -321,25 +327,8 @@ const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, isNavigating 
         useNativeDriver: true
       }).start();
       
-      if (messageStep < 2) {
-        // Transition to next message
-        Animated.timing(messageTextOpacity, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: true
-        }).start(() => {
-          setMessageStep(messageStep + 1);
-          setMessageComplete(false);
-          setShowTapToContinue(false);
-          
-          Animated.timing(messageTextOpacity, {
-            toValue: 1,
-            duration: 200,
-            useNativeDriver: true
-          }).start();
-        });
-      } else if (messageStep === 2) {
-        // If second message is complete, proceed to hierarchy view
+      if (messageStep === 1) {
+        // If first message is complete, proceed directly to hierarchy view
         // Hide tap prompt
         Animated.timing(tapPromptOpacity, {
           toValue: 0,
@@ -924,7 +913,7 @@ const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, isNavigating 
               disabled={isNavigating}
             >
               <ResponsiveText style={styles.continueButtonText}>
-                {translate('common', 'looksGood')}
+                Create in My App
               </ResponsiveText>
               <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
             </TouchableOpacity>
@@ -1178,7 +1167,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    bottom: '30%',
+    bottom: '20%',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 9, // Lower than the touchable but visible

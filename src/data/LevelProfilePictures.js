@@ -95,7 +95,7 @@ export const LEVEL_PROFILE_PICTURES = {
     }
   },
   
-  2: { // Intermediate - Getting more sophisticated  
+  2: { // Intermediate - Getting more sophisticated + Custom Photos
     requiredLevel: 2,
     title: 'Intermediate',
     picture: {
@@ -103,7 +103,7 @@ export const LEVEL_PROFILE_PICTURES = {
       name: 'Goal Seeker',
       icon: 'flag-outline',
       colorScheme: LEVEL_COLOR_SCHEMES[2],
-      description: 'Level 2: Focused on achieving your goals'
+      description: 'Level 2: Focused on goals + Custom photo upload unlocked!'
     }
   },
   
@@ -167,16 +167,15 @@ export const LEVEL_PROFILE_PICTURES = {
     }
   },
   
-  8: { // Legend - Custom Photo Access
+  8: { // Legend - Legendary Status
     requiredLevel: 8,
     title: 'Legend',
     picture: {
-      id: 'legend_custom_photo',
+      id: 'legend_flame',
       name: 'Personal Legend',
-      icon: 'camera-outline',
+      icon: 'flame-outline',
       colorScheme: LEVEL_COLOR_SCHEMES[8],
-      description: 'Level 8: Upload your own legendary photo',
-      isCustom: true // This level unlocks custom photo capability
+      description: 'Level 8: Achieved legendary status in life mastery'
     }
   },
   
@@ -266,7 +265,7 @@ export const getLockedProfilePictures = (userLevel) => {
 
 // Function to check if user can use custom photos
 export const canUseCustomPhotos = (userLevel) => {
-  return userLevel >= 8; // Legend level (when custom photo picture is unlocked)
+  return userLevel >= 2; // Intermediate level (when custom photo feature is unlocked)
 };
 
 // Function to get the next unlock level for motivation

@@ -1,0 +1,528 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'LifeCompass Referral System API - Lambda functions and API Gateway'
+
+Resources:
+  # IAM Role for Lambda functions
+  ReferralLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                Resource:
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/LifeCompass-*'
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/LifeCompassFounderCodes'
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/LifeCompass-*/index/*'
+
+  # Lambda Functions
+  CreateReferralCodeFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: LifeCompass-CreateReferralCode
+      Runtime: nodejs18.x
+      Handler: index.handler
+      Role: !GetAtt ReferralLambdaRole.Arn
+      Timeout: 30
+      Code:
+        ZipFile: |
+          const AWS = require('aws-sdk');
+          const dynamoDB = new AWS.DynamoDB.DocumentClient();
+
+          exports.handler = async (event) => {
+            try {
+              const body = JSON.parse(event.body || '{}');
+              const { founderCode, deviceId } = body;
+              
+              console.log('Creating referral code for founder:', founderCode);
+              
+              if (!founderCode || !deviceId) {
+                return {
+                  statusCode: 400,
+                  headers: { 
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "POST, OPTIONS",
+                    "Access-Control-Allow-Headers": "Content-Type"
+                  },
+                  body: JSON.stringify({
+                    success: false,
+                    error: 'founderCode and deviceId are required'
+                  })
+                };
+              }
+              
+              // Verify the founder code exists and is assigned
+              const founderParams = {
+                TableName: 'LifeCompassFounderCodes',
+                Key: { code: founderCode }
+              };
+              
+              const founderResult = await dynamoDB.get(founderParams).promise();
+              
+              if (!founderResult.Item || founderResult.Item.status !== 'assigned') {
+                return {
+                  statusCode: 404,
+                  headers: { 
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Origin": "*" 
+                  },
+                  body: JSON.stringify({
+                    success: false,
+                    error: 'Invalid or unassigned founder code'
+                  })
+                };
+              }
+              
+              // Generate referral code from founder code
+              const founderNumber = founderCode.replace('LC-', '');
+              const referralCode = `REF-LC-${founderNumber}`;
+              
+              // Check if referral code already exists
+              const existingParams = {
+                TableName: 'LifeCompass-ReferralCodes',
+                Key: { referralCode: referralCode }
+              };
+              
+              const existingResult = await dynamoDB.get(existingParams).promise();
+              
+              if (existingResult.Item) {
+                return {
+                  statusCode: 200,
+                  headers: { 
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Origin": "*" 
+                  },
+                  body: JSON.stringify({
+                    success: true,
+                    code: referralCode,
+                    message: 'Referral code already exists',
+                    alreadyExists: true
+                  })
+                };
+              }
+              
+              // Create new referral code
+              const referralParams = {
+                TableName: 'LifeCompass-ReferralCodes',
+                Item: {
+                  referralCode: referralCode,
+                  founderCode: founderCode,
+                  deviceId: deviceId,
+                  createdDate: new Date().toISOString(),
+                  totalReferrals: 0,
+                  successfulConversions: 0,
+                  totalRewards: 0,
+                  availableRewards: 0,
+                  status: 'active'
+                }
+              };
+              
+              await dynamoDB.put(referralParams).promise();
+              
+              return {
+                statusCode: 200,
+                headers: { 
+                  "Content-Type": "application/json",
+                  "Access-Control-Allow-Origin": "*" 
+                },
+                body: JSON.stringify({
+                  success: true,
+                  code: referralCode,
+                  message: 'Referral code created successfully',
+                  alreadyExists: false
+                })
+              };
+              
+            } catch (error) {
+              console.error('Error creating referral code:', error);
+              return {
+                statusCode: 500,
+                headers: { 
+                  "Content-Type": "application/json",
+                  "Access-Control-Allow-Origin": "*" 
+                },
+                body: JSON.stringify({
+                  success: false,
+                  error: 'Internal server error'
+                })
+              };
+            }
+          };
+
+  GetReferralStatsFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: LifeCompass-GetReferralStats
+      Runtime: nodejs18.x
+      Handler: index.handler
+      Role: !GetAtt ReferralLambdaRole.Arn
+      Timeout: 30
+      Code:
+        ZipFile: |
+          const AWS = require('aws-sdk');
+          const dynamoDB = new AWS.DynamoDB.DocumentClient();
+
+          exports.handler = async (event) => {
+            try {
+              const body = JSON.parse(event.body || '{}');
+              const { referralCode } = body;
+              
+              console.log('Getting referral stats for:', referralCode);
+              
+              if (!referralCode) {
+                return {
+                  statusCode: 400,
+                  headers: { 
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Origin": "*" 
+                  },
+                  body: JSON.stringify({
+                    success: false,
+                    error: 'referralCode is required'
+                  })
+                };
+              }
+              
+              // Get referral code record
+              const referralParams = {
+                TableName: 'LifeCompass-ReferralCodes',
+                Key: { referralCode: referralCode }
+              };
+              
+              const referralResult = await dynamoDB.get(referralParams).promise();
+              
+              if (!referralResult.Item) {
+                return {
+                  statusCode: 404,
+                  headers: { 
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Origin": "*" 
+                  },
+                  body: JSON.stringify({
+                    success: false,
+                    error: 'Referral code not found'
+                  })
+                };
+              }
+              
+              const referralData = referralResult.Item;
+              
+              // For now, return basic stats with some mock recent referrals
+              // In production, you'd query the conversions table
+              const mockRecentReferrals = [
+                {
+                  name: 'Alex M.',
+                  date: new Date(Date.now() - 86400000).toISOString(),
+                  status: 'converted'
+                },
+                {
+                  name: 'Sarah K.',
+                  date: new Date(Date.now() - 172800000).toISOString(),
+                  status: 'pending'
+                }
+              ];
+              
+              const referralRate = referralData.totalReferrals > 0 
+                ? Math.round((referralData.successfulConversions / referralData.totalReferrals) * 100)
+                : 0;
+              
+              const stats = {
+                totalReferrals: referralData.totalReferrals || 0,
+                successfulConversions: referralData.successfulConversions || 0,
+                pendingReferrals: Math.max(0, (referralData.totalReferrals || 0) - (referralData.successfulConversions || 0)),
+                totalRewards: referralData.totalRewards || 0,
+                availableRewards: referralData.availableRewards || 0,
+                referralRate: `${referralRate}%`,
+                thisMonthReferrals: Math.floor((referralData.totalReferrals || 0) * 0.3),
+                recentReferrals: mockRecentReferrals
+              };
+              
+              return {
+                statusCode: 200,
+                headers: { 
+                  "Content-Type": "application/json",
+                  "Access-Control-Allow-Origin": "*" 
+                },
+                body: JSON.stringify({
+                  success: true,
+                  stats: stats
+                })
+              };
+              
+            } catch (error) {
+              console.error('Error getting referral stats:', error);
+              return {
+                statusCode: 500,
+                headers: { 
+                  "Content-Type": "application/json",
+                  "Access-Control-Allow-Origin": "*" 
+                },
+                body: JSON.stringify({
+                  success: false,
+                  error: 'Internal server error'
+                })
+              };
+            }
+          };
+
+  TrackReferralFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: LifeCompass-TrackReferral
+      Runtime: nodejs18.x
+      Handler: index.handler
+      Role: !GetAtt ReferralLambdaRole.Arn
+      Timeout: 30
+      Code:
+        ZipFile: |
+          const AWS = require('aws-sdk');
+          const dynamoDB = new AWS.DynamoDB.DocumentClient();
+
+          exports.handler = async (event) => {
+            try {
+              const body = JSON.parse(event.body || '{}');
+              const { referralCode, userId, action, userEmail } = body;
+              
+              console.log('Tracking referral:', { referralCode, userId, action });
+              
+              if (!referralCode || !userId || !action) {
+                return {
+                  statusCode: 400,
+                  headers: { 
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Origin": "*" 
+                  },
+                  body: JSON.stringify({
+                    success: false,
+                    error: 'referralCode, userId, and action are required'
+                  })
+                };
+              }
+              
+              const timestamp = new Date().toISOString();
+              const referralId = `ref_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+              
+              // For demo purposes, just update the referral code stats
+              if (action === 'purchase') {
+                const updateParams = {
+                  TableName: 'LifeCompass-ReferralCodes',
+                  Key: { referralCode: referralCode },
+                  UpdateExpression: 'ADD successfulConversions :inc, totalRewards :reward, availableRewards :reward SET lastActivity = :timestamp',
+                  ExpressionAttributeValues: {
+                    ':inc': 1,
+                    ':reward': 50, // 50 cents reward
+                    ':timestamp': timestamp
+                  }
+                };
+                
+                await dynamoDB.update(updateParams).promise();
+              }
+              
+              return {
+                statusCode: 200,
+                headers: { 
+                  "Content-Type": "application/json",
+                  "Access-Control-Allow-Origin": "*" 
+                },
+                body: JSON.stringify({
+                  success: true,
+                  referralId: referralId,
+                  message: `Referral ${action} tracked successfully`
+                })
+              };
+              
+            } catch (error) {
+              console.error('Error tracking referral:', error);
+              return {
+                statusCode: 500,
+                headers: { 
+                  "Content-Type": "application/json",
+                  "Access-Control-Allow-Origin": "*" 
+                },
+                body: JSON.stringify({
+                  success: false,
+                  error: 'Internal server error'
+                })
+              };
+            }
+          };
+
+  # API Gateway
+  ReferralApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: LifeCompass-Referral-API
+      Description: API for LifeCompass referral system
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+
+  # API Gateway Resources
+  CreateReferralCodeResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ReferralApi
+      ParentId: !GetAtt ReferralApi.RootResourceId
+      PathPart: create-referral-code
+
+  GetReferralStatsResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ReferralApi
+      ParentId: !GetAtt ReferralApi.RootResourceId
+      PathPart: referral-stats
+
+  TrackReferralResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ReferralApi
+      ParentId: !GetAtt ReferralApi.RootResourceId
+      PathPart: track-referral
+
+  # API Gateway Methods
+  CreateReferralCodeMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ReferralApi
+      ResourceId: !Ref CreateReferralCodeResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CreateReferralCodeFunction.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseHeaders:
+            Access-Control-Allow-Origin: "'*'"
+
+  GetReferralStatsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ReferralApi
+      ResourceId: !Ref GetReferralStatsResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetReferralStatsFunction.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseHeaders:
+            Access-Control-Allow-Origin: "'*'"
+
+  TrackReferralMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ReferralApi
+      ResourceId: !Ref TrackReferralResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TrackReferralFunction.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseHeaders:
+            Access-Control-Allow-Origin: "'*'"
+
+  # CORS Options Methods
+  CreateReferralCodeOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ReferralApi
+      ResourceId: !Ref CreateReferralCodeResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  # Lambda Permissions
+  CreateReferralCodePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref CreateReferralCodeFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ReferralApi}/*/*/*'
+
+  GetReferralStatsPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref GetReferralStatsFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ReferralApi}/*/*/*'
+
+  TrackReferralPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref TrackReferralFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ReferralApi}/*/*/*'
+
+  # API Gateway Deployment
+  ReferralApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - CreateReferralCodeMethod
+      - GetReferralStatsMethod
+      - TrackReferralMethod
+      - CreateReferralCodeOptionsMethod
+    Properties:
+      RestApiId: !Ref ReferralApi
+      StageName: prod
+
+Outputs:
+  ApiGatewayUrl:
+    Description: 'API Gateway endpoint URL for referral system'
+    Value: !Sub 'https://${ReferralApi}.execute-api.${AWS::Region}.amazonaws.com/prod'
+    Export:
+      Name: !Sub '${AWS::StackName}-ApiUrl'
+
+  CreateReferralCodeEndpoint:
+    Description: 'Endpoint for creating referral codes'
+    Value: !Sub 'https://${ReferralApi}.execute-api.${AWS::Region}.amazonaws.com/prod/create-referral-code'
+
+  GetReferralStatsEndpoint:
+    Description: 'Endpoint for getting referral statistics'
+    Value: !Sub 'https://${ReferralApi}.execute-api.${AWS::Region}.amazonaws.com/prod/referral-stats'
+
+  TrackReferralEndpoint:
+    Description: 'Endpoint for tracking referral events'
+    Value: !Sub 'https://${ReferralApi}.execute-api.${AWS::Region}.amazonaws.com/prod/track-referral'
