@@ -775,7 +775,7 @@ export const ProBadge = ({ theme, style }) => {
         style={styles.proBadgeText}
         maxFontSizeMultiplier={1.2}
       >
-        PRO
+        Pro
       </Text>
     </View>
   );

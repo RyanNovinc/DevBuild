@@ -543,10 +543,10 @@ const ReferralScreen = ({ navigation }) => {
         {/* Hero Content */}
         <View style={styles.heroContent}>
           <Text style={styles.heroTitle}>
-            Give 50% Off, Get 50% Off
+            Give 500 Credits, Get 500 Credits
           </Text>
           <Text style={styles.heroSubtitle}>
-            Share LifeCompass with friends and you'll both get 50% off when purchasing the Pro version
+            Share LifeCompass with friends and you'll both get 500 AI credits when they sign up
           </Text>
         </View>
         
@@ -761,22 +761,22 @@ const ReferralScreen = ({ navigation }) => {
                 <View style={styles.celebrationStat}>
                   <Text style={styles.celebrationStatLabel}>You Earned</Text>
                   <Text style={styles.celebrationStatValue}>
-                    {celebrationData?.newPlansEarned} AI plan{celebrationData?.newPlansEarned !== 1 ? 's' : ''}
+                    {(celebrationData?.newPlansEarned || 0) * 500} credits
                   </Text>
-                  <Text style={styles.celebrationStatSubtext}>50% off</Text>
+                  <Text style={styles.celebrationStatSubtext}>AI Assistant</Text>
                 </View>
                 
                 <View style={styles.celebrationStat}>
                   <Text style={styles.celebrationStatLabel}>You Gifted</Text>
                   <Text style={styles.celebrationStatValue}>
-                    {celebrationData?.newPlansGifted} AI plan{celebrationData?.newPlansGifted !== 1 ? 's' : ''}
+                    {(celebrationData?.newPlansGifted || 0) * 500} credits
                   </Text>
-                  <Text style={styles.celebrationStatSubtext}>50% off</Text>
+                  <Text style={styles.celebrationStatSubtext}>AI Assistant</Text>
                 </View>
               </Animated.View>
               
               <Text style={styles.celebrationMessage}>
-                Keep sharing LifeCompass with friends to earn even more 50% off rewards! 🚀
+                Keep sharing LifeCompass with friends to earn even more AI credits! 🚀
               </Text>
             </View>
             

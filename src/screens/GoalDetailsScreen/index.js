@@ -7,6 +7,7 @@ import {
   Text, 
   Animated, 
   Alert,
+  Modal,
   ScrollView,
   Platform,
   Keyboard,
@@ -125,6 +126,7 @@ const GoalDetailsScreen = ({ route, navigation }) => {
     showDatePicker: false,
     notificationsModal: false,
     showUnsavedChangesModal: false,
+    showDeleteConfirmModal: false,
     isLoading: false,
     saveAttempted: false,
     hasUnsavedChanges: false,
@@ -397,6 +399,11 @@ const GoalDetailsScreen = ({ route, navigation }) => {
       if (route.params?.previousScreen === 'LifePlanOverview') {
         // Navigate directly back to LifePlanOverview
         navigation.navigate('LifePlanOverview');
+      } else if (route.params?.returnToTab) {
+        // Navigate back to Goals screen with specific tab
+        const targetTabIndex = route.params.returnToTab === 'active' ? 1 : 
+                               route.params.returnToTab === 'completed' ? 2 : 0;
+        navigation.navigate('Goals', { targetTabIndex });
       } else {
         navigation.goBack();
       }
@@ -415,6 +422,11 @@ const GoalDetailsScreen = ({ route, navigation }) => {
     if (route.params?.previousScreen === 'LifePlanOverview') {
       // Navigate directly to LifePlanOverview (correct screen name from App.js)
       navigation.navigate('LifePlanOverview');
+    } else if (route.params?.returnToTab) {
+      // Navigate back to Goals screen with specific tab
+      const targetTabIndex = route.params.returnToTab === 'active' ? 1 : 
+                             route.params.returnToTab === 'completed' ? 2 : 0;
+      navigation.navigate('Goals', { targetTabIndex });
     } else {
       navigation.goBack();
     }
@@ -754,7 +766,14 @@ const toggleTargetDate = () => {
             // Use a timeout to ensure state updates before navigation
             saveTimeoutRef.current = setTimeout(() => {
               if (isMounted.current) {
-                navigation.goBack();
+                // Check if we should navigate to a specific tab
+                if (route.params?.returnToTab) {
+                  const targetTabIndex = route.params.returnToTab === 'active' ? 1 : 
+                                         route.params.returnToTab === 'completed' ? 2 : 0;
+                  navigation.navigate('Goals', { targetTabIndex });
+                } else {
+                  navigation.goBack();
+                }
               }
             }, 300);
             
@@ -835,7 +854,14 @@ const toggleTargetDate = () => {
             // Use a timeout to ensure state updates before navigation
             saveTimeoutRef.current = setTimeout(() => {
               if (isMounted.current) {
-                navigation.goBack();
+                // Check if we should navigate to a specific tab
+                if (route.params?.returnToTab) {
+                  const targetTabIndex = route.params.returnToTab === 'active' ? 1 : 
+                                         route.params.returnToTab === 'completed' ? 2 : 0;
+                  navigation.navigate('Goals', { targetTabIndex });
+                } else {
+                  navigation.goBack();
+                }
               }
             }, 300);
           } else {
@@ -887,25 +913,10 @@ const toggleTargetDate = () => {
   
   // Handle delete confirmation with warning about linked projects
   const handleDeleteConfirmation = () => {
-    const linkedProjectsCount = getLinkedProjectsCount();
-    
-    // Create the warning message based on whether there are linked projects
-    const warningMessage = linkedProjectsCount > 0
-      ? `Are you sure you want to delete this goal? This will also delete ${linkedProjectsCount} linked ${linkedProjectsCount === 1 ? 'project' : 'projects'} and all their tasks. This action cannot be undone.`
-      : 'Are you sure you want to delete this goal? This action cannot be undone.';
-    
-    Alert.alert(
-      'Delete Goal',
-      warningMessage,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete',
-          style: 'destructive',
-          onPress: handleDelete
-        }
-      ]
-    );
+    setUiState(prev => ({
+      ...prev,
+      showDeleteConfirmModal: true
+    }));
   };
   
   // Handle delete with more thorough cleanup approach
@@ -1028,7 +1039,14 @@ const toggleTargetDate = () => {
         isLoading: false
       }));
       
-      navigation.goBack();
+      // Check if we should navigate to a specific tab
+      if (route.params?.returnToTab) {
+        const targetTabIndex = route.params.returnToTab === 'active' ? 1 : 
+                               route.params.returnToTab === 'completed' ? 2 : 0;
+        navigation.navigate('Goals', { targetTabIndex });
+      } else {
+        navigation.goBack();
+      }
     } catch (error) {
       console.error('Error deleting goal:', error);
       showError('Failed to delete goal. Please try again.');
@@ -1266,6 +1284,85 @@ const toggleTargetDate = () => {
         }}
       />
       
+      {/* Delete Confirmation Modal */}
+      <Modal
+        visible={uiState.showDeleteConfirmModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setUiState(prev => ({ ...prev, showDeleteConfirmModal: false }))}
+      >
+        <View style={styles.deleteModalOverlay}>
+          <View style={[
+            styles.deleteModalContainer, 
+            { 
+              backgroundColor: theme.surface || theme.background,
+              marginTop: insets.top,
+              marginBottom: insets.bottom,
+              marginLeft: spacing.m,
+              marginRight: spacing.m
+            }
+          ]}>
+            <View style={styles.deleteModalHeader}>
+              <Ionicons name="trash-outline" size={scaleWidth(40)} color={theme.error} />
+              <Text 
+                style={[styles.deleteModalTitle, { color: theme.text }]}
+                maxFontSizeMultiplier={1.3}
+              >
+                Delete Goal
+              </Text>
+            </View>
+            
+            <Text 
+              style={[styles.deleteModalMessage, { color: theme.textSecondary }]}
+              maxFontSizeMultiplier={1.3}
+            >
+              {getLinkedProjectsCount() > 0
+                ? `Are you sure you want to delete this goal? This will also delete ${getLinkedProjectsCount()} linked ${getLinkedProjectsCount() === 1 ? 'project' : 'projects'} and all their tasks. This action cannot be undone.`
+                : 'Are you sure you want to delete this goal? This action cannot be undone.'
+              }
+            </Text>
+            
+            <View style={styles.deleteModalButtons}>
+              <TouchableOpacity
+                style={[
+                  styles.deleteModalButton, 
+                  styles.deleteCancelButton, 
+                  { 
+                    backgroundColor: theme.background,
+                    borderColor: theme.border
+                  }
+                ]}
+                onPress={() => setUiState(prev => ({ ...prev, showDeleteConfirmModal: false }))}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Cancel"
+                accessibilityHint="Cancels the delete operation"
+              >
+                <Text style={[styles.deleteButtonText, { color: theme.text }]}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.deleteModalButton, styles.deleteConfirmButton]}
+                onPress={() => {
+                  setUiState(prev => ({ ...prev, showDeleteConfirmModal: false }));
+                  handleDelete();
+                }}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Delete Goal"
+                accessibilityHint="Permanently deletes this goal"
+              >
+                <Text style={[styles.deleteButtonText, styles.deleteConfirmText]}>
+                  Delete
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {/* Loading Overlay */}
       {renderLoadingOverlay()}
     </SafeAreaView>
@@ -1359,6 +1456,75 @@ const styles = StyleSheet.create({
     marginTop: spacing.s,
     fontSize: fontSizes.m,
     fontWeight: '500',
+  },
+  // Delete Modal Styles (matching logout modal from AISideMenu)
+  deleteModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: spacing.m,
+  },
+  deleteModalContainer: {
+    width: '100%',
+    maxWidth: scaleWidth(320),
+    borderRadius: scaleWidth(16),
+    paddingVertical: spacing.xl,
+    paddingHorizontal: spacing.m,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: scaleHeight(8),
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: scaleWidth(24),
+    elevation: 8,
+  },
+  deleteModalHeader: {
+    alignItems: 'center',
+    marginBottom: spacing.l,
+  },
+  deleteModalTitle: {
+    fontSize: fontSizes.xl,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: spacing.m,
+    letterSpacing: 0.3,
+  },
+  deleteModalMessage: {
+    fontSize: fontSizes.m,
+    textAlign: 'center',
+    marginBottom: spacing.xl,
+    lineHeight: scaleHeight(22),
+    opacity: 0.8,
+    fontWeight: '400',
+  },
+  deleteModalButtons: {
+    flexDirection: 'row',
+    gap: spacing.s,
+  },
+  deleteModalButton: {
+    flex: 1,
+    paddingVertical: spacing.m,
+    borderRadius: scaleWidth(12),
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: accessibility.minTouchTarget,
+  },
+  deleteCancelButton: {
+    borderWidth: 1,
+  },
+  deleteConfirmButton: {
+    backgroundColor: '#FF3B30',
+  },
+  deleteButtonText: {
+    fontSize: fontSizes.m,
+    fontWeight: '500',
+    letterSpacing: 0.2,
+  },
+  deleteConfirmText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
   }
 });
 

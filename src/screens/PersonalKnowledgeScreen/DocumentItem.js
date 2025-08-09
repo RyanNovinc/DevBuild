@@ -1,8 +1,10 @@
 // src/screens/PersonalKnowledgeScreen/DocumentItem.js
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Switch, Alert } from 'react-native';
+import React, { useRef, useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Switch, Alert, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { APP_CONTEXT_DOCUMENT_ID } from '../../services/AppSummaryService';
+import { useProfile } from '../../context/ProfileContext';
+import { useAuth } from '../../context/AuthContext';
 
 /**
  * DocumentItem component for displaying a document in the list
@@ -14,8 +16,71 @@ import { APP_CONTEXT_DOCUMENT_ID } from '../../services/AppSummaryService';
  * @param {Object} props.responsive - Responsive styling props
  * @param {boolean} props.appContextEnabled - Whether app context is enabled
  * @param {Function} props.onToggleAppContext - Callback for toggling app context
+ * @param {Function} props.onToggleDocumentAccess - Callback for toggling individual document AI access
  */
-const DocumentItem = ({ item, theme, onView, onDelete, responsive, appContextEnabled, onToggleAppContext }) => {
+const DocumentItem = ({ item, theme, onView, onDelete, responsive, appContextEnabled, onToggleAppContext, onToggleDocumentAccess, onShowAppContextInfo }) => {
+  // Get user profile and auth context
+  const { profile } = useProfile();
+  const { user } = useAuth();
+  
+  // Animation for spinning icon
+  const spinValue = useRef(new Animated.Value(0)).current;
+  
+  // Animation for success state
+  const successScale = useRef(new Animated.Value(1)).current;
+  const successOpacity = useRef(new Animated.Value(1)).current;
+  
+  // Handle spinning animation for processing state
+  useEffect(() => {
+    let spinAnimation;
+    
+    if (item.isProcessing) {
+      // Start continuous spinning animation
+      spinAnimation = Animated.loop(
+        Animated.timing(spinValue, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        })
+      );
+      spinAnimation.start();
+    } else {
+      // Stop animation and reset
+      spinValue.setValue(0);
+    }
+    
+    return () => {
+      if (spinAnimation) {
+        spinAnimation.stop();
+      }
+    };
+  }, [item.isProcessing, spinValue]);
+  
+  // Handle success animation when document becomes AI ready
+  const [previousProcessingState, setPreviousProcessingState] = useState(item.isProcessing);
+  
+  useEffect(() => {
+    // Check if document just finished processing (was processing, now not processing and has fileId)
+    if (previousProcessingState && !item.isProcessing && item.openaiFileId && !item.processingError) {
+      // Trigger success animation - gentle bounce
+      Animated.sequence([
+        Animated.timing(successScale, {
+          toValue: 1.1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(successScale, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        })
+      ]).start();
+    }
+    
+    // Update previous state
+    setPreviousProcessingState(item.isProcessing);
+  }, [item.isProcessing, item.openaiFileId, item.processingError, previousProcessingState, successScale]);
+  
   // Check if this is the system document
   const isSystemDocument = item.isSystemDocument === true || item.id === APP_CONTEXT_DOCUMENT_ID;
   
@@ -97,9 +162,9 @@ const DocumentItem = ({ item, theme, onView, onDelete, responsive, appContextEna
     if (isSystemDocument) {
       return {
         icon: 'checkmark-circle',
-        color: '#4CD964',
-        text: 'System',
-        backgroundColor: 'rgba(76, 217, 100, 0.1)'
+        color: '#FFFFFF',
+        text: 'AI Ready',
+        backgroundColor: theme.primary
       };
     }
     
@@ -128,9 +193,9 @@ const DocumentItem = ({ item, theme, onView, onDelete, responsive, appContextEna
     if (item.openaiFileId) {
       return {
         icon: 'cloud-done',
-        color: '#4CD964',
+        color: '#FFFFFF',
         text: 'AI Ready',
-        backgroundColor: 'rgba(76, 217, 100, 0.1)'
+        backgroundColor: theme.primary
       };
     }
     
@@ -147,14 +212,20 @@ const DocumentItem = ({ item, theme, onView, onDelete, responsive, appContextEna
     // Default state
     return {
       icon: 'checkmark-circle',
-      color: '#4CD964',
-      text: 'Ready',
-      backgroundColor: 'rgba(76, 217, 100, 0.1)'
+      color: '#FFFFFF',
+      text: 'AI Ready',
+      backgroundColor: theme.primary
     };
   };
 
   // Get status indicator
   const statusIndicator = getStatusIndicator();
+  
+  // Create rotation interpolation for spinning animation
+  const spin = spinValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg']
+  });
 
   // Determine if we should show compression info and size
   const hasCompression = !item.isProcessing && 
@@ -185,289 +256,288 @@ const DocumentItem = ({ item, theme, onView, onDelete, responsive, appContextEna
   };
 
   return (
-    <TouchableOpacity
-      style={[
-        styles.container, 
-        { 
-          backgroundColor: theme.card,
-          // Special styling for system document
-          borderWidth: isSystemDocument ? 1 : 0,
-          borderColor: isSystemDocument ? theme.primary : 'transparent',
-          opacity: isSystemDocument ? 1 : 0.95
-        }
-      ]}
-      onPress={onView}
-      activeOpacity={0.7}
-      accessible={true}
-      accessibilityLabel={`${item.name} document, ${isSystemDocument ? 'system document' : 'tap to view'}`}
-      accessibilityRole="button"
-    >
-      <View style={styles.content}>
-        <View style={[
-          styles.iconContainer,
+    isSystemDocument ? (
+      // Special layout for system document - more like a control card
+      <View
+        style={[
+          styles.systemCard,
           {
-            backgroundColor: isSystemDocument ? theme.primaryLight : theme.card
+            backgroundColor: theme.card,
+            borderWidth: 1,
+            borderColor: theme.primary,
           }
-        ]}>
-          <Ionicons 
-            name={getDocumentIcon()} 
-            size={28} 
-            color={theme.primary} 
-          />
-        </View>
-        
-        <View style={styles.detailsContainer}>
-          <Text 
-            style={[
-              styles.fileName, 
-              { 
-                color: theme.text,
-                fontSize: responsive?.fontSize?.m || 16,
-                fontWeight: isSystemDocument ? 'bold' : '500'
-              }
-            ]} 
-            numberOfLines={1}
-            accessible={true}
-            accessibilityLabel={`Document name: ${item.name}`}
-          >
-            {item.name}
-          </Text>
-          
-          <View style={styles.metadataContainer}>
-            {/* Only show size if document is completed and processed */}
-            {showSize && (
-              <Text style={[
-                styles.metadataText, 
-                { 
-                  color: theme.textSecondary,
-                  fontSize: responsive?.fontSize?.xs || 12
-                }
-              ]}>
-                {formatFileSize(displaySize)}
-              </Text>
-            )}
-            
-            {/* Show compression ratio if available */}
-            {hasCompression && showSize && (
-              <>
-                <Text style={[
-                  styles.metadataDot, 
-                  { 
-                    color: theme.textSecondary,
-                    fontSize: responsive?.fontSize?.xs || 12
-                  }
-                ]}>•</Text>
-                <Text style={[
-                  styles.compressionText, 
-                  { 
-                    color: theme.success || '#4CD964',
-                    fontSize: responsive?.fontSize?.xs || 12,
-                    fontWeight: '500'
-                  }
-                ]}>
-                  {item.compressionRatio || 
-                   ((item.originalSize - item.processedSize) / item.originalSize * 100).toFixed(0) + '% smaller'}
-                </Text>
-              </>
-            )}
-            
-            {/* Always show date with proper separator based on previous content */}
-            {showSize ? (
-              <Text style={[
-                styles.metadataDot, 
-                { 
-                  color: theme.textSecondary,
-                  fontSize: responsive?.fontSize?.xs || 12
-                }
-              ]}>•</Text>
-            ) : null}
-            
-            <Text style={[
-              styles.metadataText, 
-              { 
-                color: theme.textSecondary,
-                fontSize: responsive?.fontSize?.xs || 12
-              }
-            ]}>
-              {isSystemDocument ? 'Auto-updated' : formatDate(item.dateAdded)}
-            </Text>
+        ]}
+      >
+        {/* Header with icon, title, and info button */}
+        <TouchableOpacity
+          style={styles.systemCardHeader}
+          onPress={onView}
+          activeOpacity={0.7}
+          accessible={true}
+          accessibilityLabel={`${item.name} app context document`}
+          accessibilityRole="button"
+        >
+          <View style={[styles.systemIconContainer, { backgroundColor: theme.primary }]}>
+            <Ionicons name="phone-portrait" size={22} color="#FFFFFF" />
           </View>
           
-          <View 
-            style={[
-              styles.statusContainer, 
-              { backgroundColor: statusIndicator.backgroundColor }
-            ]}
+          <View style={styles.systemHeaderText}>
+            <Text style={[styles.systemTitle, { color: theme.text }]}>
+              {`${(profile?.name || user?.displayName || 'Your')}${(profile?.name || user?.displayName) ? "'s" : ''} App Context`}
+            </Text>
+            <View style={[styles.systemStatusBadge, { backgroundColor: theme.primary }]}>
+              <Ionicons name="checkmark-circle" size={12} color="#FFFFFF" />
+              <Text style={styles.systemStatusText}>AI Ready</Text>
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={styles.systemInfoButtonHeader}
+            onPress={onShowAppContextInfo}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="App context information"
           >
-            {statusIndicator.spinning ? (
-              <View style={styles.spinnerContainer}>
-                <Ionicons 
-                  name={statusIndicator.icon} 
-                  size={14} 
-                  color={statusIndicator.color}
-                  style={styles.spinningIcon}
-                />
-              </View>
-            ) : (
-              <Ionicons 
-                name={statusIndicator.icon} 
-                size={14} 
-                color={statusIndicator.color} 
-              />
-            )}
+            <Ionicons 
+              name="information-circle" 
+              size={22} 
+              color="#FFFFFF" 
+            />
+          </TouchableOpacity>
+        </TouchableOpacity>
+
+        {/* Control section */}
+        <View style={styles.systemControlSection}>
+          <TouchableOpacity
+            style={[
+              styles.systemToggleButtonExpanded,
+              {
+                backgroundColor: appContextEnabled ? theme.primary : 'rgba(255, 255, 255, 0.15)',
+                borderColor: appContextEnabled ? theme.primary : 'rgba(255, 255, 255, 0.3)',
+              }
+            ]}
+            onPress={onToggleAppContext}
+            accessible={true}
+            accessibilityRole="switch"
+            accessibilityLabel="Enable app context"
+            accessibilityState={{ checked: appContextEnabled }}
+            activeOpacity={0.8}
+          >
+            <Ionicons 
+              name={appContextEnabled ? "checkmark-circle" : "close-circle"} 
+              size={22} 
+              color="#FFFFFF" 
+            />
+            <Text style={styles.systemToggleText}>
+              {appContextEnabled ? 'Enabled' : 'Disabled'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    ) : (
+      // Regular document layout
+      <TouchableOpacity
+        style={[styles.container, { backgroundColor: theme.card }]}
+        onPress={onView}
+        activeOpacity={0.7}
+        accessible={true}
+        accessibilityLabel={`${item.name} document, tap to view`}
+        accessibilityRole="button"
+      >
+        <View style={styles.regularDocumentContent}>
+          <View style={[styles.regularIconContainer, { backgroundColor: theme.primary }]}>
+            <Ionicons 
+              name={getDocumentIcon()} 
+              size={24} 
+              color="#FFFFFF" 
+            />
+          </View>
+          
+          <View style={styles.regularDetailsContainer}>
             <Text 
               style={[
-                styles.statusText, 
+                styles.regularFileName, 
                 { 
-                  color: statusIndicator.color,
-                  fontSize: responsive?.fontSize?.xs || 12,
-                  fontWeight: '500'
+                  color: theme.text,
+                  fontSize: responsive?.fontSize?.m || 16,
+                  fontWeight: '600',
+                  marginBottom: 6,
+                }
+              ]} 
+              numberOfLines={2}
+            >
+              {item.name}
+            </Text>
+            
+            {/* AI Ready Status under title */}
+            <Animated.View 
+              style={[
+                styles.regularStatusBadge, 
+                { 
+                  backgroundColor: statusIndicator.backgroundColor, 
+                  alignSelf: 'flex-start', 
+                  marginBottom: 8,
+                  transform: [{ scale: successScale }]
                 }
               ]}
             >
-              {statusIndicator.text}
-            </Text>
-          </View>
-          
-          {/* App Context Toggle for System Document */}
-          {isSystemDocument && (
-            <View style={[styles.appContextToggleContainer, { marginTop: spacing.xs || 8 }]}>
-              <View style={styles.toggleRow}>
-                <Text 
-                  style={[
-                    styles.toggleLabel,
-                    { 
-                      color: theme.text,
-                      fontSize: responsive?.fontSize?.xs || 12,
-                      fontWeight: '500',
-                      flex: 1,
-                    }
-                  ]}
-                >
-                  Use app context with AI
-                </Text>
-                
-                <TouchableOpacity
-                  style={[styles.infoButton, { marginLeft: spacing.xxs || 4, marginRight: spacing.xs || 8 }]}
-                  onPress={() => {
-                    Alert.alert(
-                      'App Context Information',
-                      'Turning this on will give the AI knowledge about your goals, projects, and tasks in this app. This helps the AI provide more personalized and relevant responses based on your current app data.\n\nWhen enabled, the AI can reference your:\n• Goals and their progress\n• Projects and tasks\n• Time blocks and schedules\n• App settings and preferences\n\nYou can toggle this off at any time to disable app context sharing.',
-                      [{ text: 'Got It', style: 'default' }]
-                    );
-                  }}
-                  accessible={true}
-                  accessibilityRole="button"
-                  accessibilityLabel="App context information"
-                  accessibilityHint="Shows information about using app context with AI"
-                >
+              {statusIndicator.spinning ? (
+                <Animated.View style={{ transform: [{ rotate: spin }] }}>
                   <Ionicons 
-                    name="information-circle-outline" 
-                    size={16} 
-                    color={theme.textSecondary} 
+                    name={statusIndicator.icon} 
+                    size={12} 
+                    color="#FFFFFF" 
                   />
-                </TouchableOpacity>
-                
-                <Switch
-                  trackColor={{ false: theme.border, true: theme.primaryLight }}
-                  thumbColor={appContextEnabled ? theme.primary : theme.textSecondary}
-                  ios_backgroundColor={theme.border}
-                  onValueChange={onToggleAppContext}
-                  value={appContextEnabled}
-                  style={[styles.toggle, { transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }]}
-                  accessible={true}
-                  accessibilityRole="switch"
-                  accessibilityLabel="Enable app context"
-                  accessibilityState={{ checked: appContextEnabled }}
-                  accessibilityHint="Turning this on will give the AI knowledge about your goals, projects, and tasks in this app"
+                </Animated.View>
+              ) : (
+                <Ionicons 
+                  name={statusIndicator.icon} 
+                  size={12} 
+                  color="#FFFFFF" 
                 />
-              </View>
+              )}
+              <Text 
+                style={[
+                  styles.regularStatusText, 
+                  { 
+                    color: "#FFFFFF",
+                    fontSize: responsive?.fontSize?.xs || 11,
+                    fontWeight: '600'
+                  }
+                ]}
+              >
+                {statusIndicator.text}
+              </Text>
+            </Animated.View>
+
+            {/* Clean Toggle Row with Divider */}
+            <View style={styles.regularToggleRow}>
+              <View style={styles.toggleSpacer} />
+              <TouchableOpacity
+                style={[
+                  styles.regularToggleButton,
+                  {
+                    backgroundColor: (item.aiAccessEnabled !== false) ? theme.primary : 'rgba(255, 255, 255, 0.15)',
+                    borderColor: (item.aiAccessEnabled !== false) ? theme.primary : 'rgba(255, 255, 255, 0.3)',
+                  }
+                ]}
+                onPress={() => {
+                  console.log('Toggle pressed for document:', item.id, 'current state:', item.aiAccessEnabled);
+                  if (onToggleDocumentAccess) {
+                    onToggleDocumentAccess(item.id, !(item.aiAccessEnabled !== false));
+                  }
+                }}
+                accessible={true}
+                accessibilityRole="switch"
+                accessibilityLabel="Toggle AI access for document"
+                accessibilityState={{ checked: item.aiAccessEnabled !== false }}
+                activeOpacity={0.7}
+              >
+                <Ionicons 
+                  name={(item.aiAccessEnabled !== false) ? "checkmark-circle" : "close-circle"} 
+                  size={18} 
+                  color="#FFFFFF" 
+                />
+                <Text style={styles.regularToggleText}>
+                  {(item.aiAccessEnabled !== false) ? 'On' : 'Off'}
+                </Text>
+              </TouchableOpacity>
             </View>
-          )}
+          </View>
         </View>
-        
-        {/* Only show delete button for non-system documents */}
-        {!isSystemDocument && (
-          <TouchableOpacity
-            style={[styles.deleteButton, { backgroundColor: theme.errorLight }]}
-            onPress={() => onDelete(item.id)}
-            hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
-            accessible={true}
-            accessibilityLabel={`Delete ${item.name}`}
-            accessibilityRole="button"
-            accessibilityHint="Deletes this document from your knowledge base"
-          >
-            <Ionicons name="trash-outline" size={18} color={theme.danger} />
-          </TouchableOpacity>
-        )}
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    )
   );
 };
 
 const styles = StyleSheet.create({
+  // Regular document styles - cleaner layout
   container: {
-    borderRadius: 12,
-    marginBottom: 10,
+    borderRadius: 16,
+    marginBottom: 12,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  content: {
+  regularDocumentContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
+    padding: 16,
   },
-  iconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 8,
+  regularIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 3,
   },
-  detailsContainer: {
+  regularDetailsContainer: {
     flex: 1,
   },
-  fileName: {
+  regularFileName: {
     fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 4,
+    fontWeight: '600',
+    lineHeight: 22,
   },
-  metadataContainer: {
+  regularMetadataRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
-    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
-  metadataText: {
-    fontSize: 12,
-  },
-  compressionText: {
+  regularMetadataText: {
     fontSize: 12,
     fontWeight: '500',
   },
-  metadataDot: {
-    marginHorizontal: 4,
-    fontSize: 12,
-  },
-  statusContainer: {
+  regularStatusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 4,
     paddingHorizontal: 8,
     borderRadius: 12,
-    alignSelf: 'flex-start',
   },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '500',
+  regularStatusText: {
+    fontSize: 11,
+    fontWeight: '600',
     marginLeft: 4,
   },
-  deleteButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
+  regularToggleRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-end',
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  toggleSpacer: {
+    flex: 1,
+  },
+  regularToggleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  regularToggleText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
     marginLeft: 8,
   },
   spinnerContainer: {
@@ -496,8 +566,120 @@ const styles = StyleSheet.create({
   infoButton: {
     padding: 4,
   },
-  toggle: {
-    transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }],
+  // New system document card styles - more prominent
+  systemCard: {
+    borderRadius: 20,
+    marginBottom: 20,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  systemCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  systemIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  systemHeaderText: {
+    flex: 1,
+  },
+  systemTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  systemStatusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  systemStatusText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  systemControlSection: {
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    paddingTop: 16,
+  },
+  systemControlRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  systemToggleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderRadius: 28,
+    borderWidth: 2,
+    flex: 1,
+    marginRight: 16,
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  systemToggleButtonExpanded: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderRadius: 28,
+    borderWidth: 2,
+    width: '100%',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  systemInfoButtonHeader: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    marginLeft: 12,
+  },
+  systemToggleText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  systemInfoButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   }
 });
 

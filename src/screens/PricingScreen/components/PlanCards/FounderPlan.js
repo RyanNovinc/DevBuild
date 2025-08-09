@@ -1,6 +1,6 @@
 // src/screens/PricingScreen/components/PlanCards/FounderPlan.js
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, Animated, LayoutAnimation, Platform, UIManager } from 'react-native';
+import { View, Text, TouchableOpacity, Animated, LayoutAnimation, Platform, UIManager, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import styles from '../../styles';
 
@@ -20,40 +20,25 @@ const FounderPlan = ({
   // State for expandable details
   const [showDetails, setShowDetails] = useState(false);
   
-  // Animation values for various effects
+  // Animation values for glow effect only (keep the border glow, remove badge animation)
   const glowAnim = useRef(new Animated.Value(0)).current;
-  const badgeAnim = useRef(new Animated.Value(0)).current;
   
-  // Set up looping animations for visual effects
+  // Set up glow animation only
   useEffect(() => {
-    // Glow effect animation
+    // Glow effect animation - keep this as it works well
     Animated.loop(
       Animated.sequence([
         Animated.timing(glowAnim, {
           toValue: 1,
-          duration: 1500,
-          useNativeDriver: false
+          duration: 2000,
+          useNativeDriver: false,
+          easing: Easing.inOut(Easing.quad)
         }),
         Animated.timing(glowAnim, {
           toValue: 0,
-          duration: 1500,
-          useNativeDriver: false
-        })
-      ])
-    ).start();
-    
-    // Badge animation - slightly offset from glow animation
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(badgeAnim, {
-          toValue: 1,
-          duration: 1200,
-          useNativeDriver: false
-        }),
-        Animated.timing(badgeAnim, {
-          toValue: 0,
-          duration: 1200,
-          useNativeDriver: false
+          duration: 2000,
+          useNativeDriver: false,
+          easing: Easing.inOut(Easing.quad)
         })
       ])
     ).start();
@@ -101,21 +86,14 @@ const FounderPlan = ({
     outputRange: ['#D4AF37', '#FFD700']
   });
   
-  // Badge animation values
-  const badgeScale = badgeAnim.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: [1, 1.08, 1]
-  });
-  
-  // Status badge component
+  // Status badge component - now completely static
   const StatusBadge = () => (
-    <Animated.View style={{
+    <View style={{
       position: 'absolute',
       top: -12,
       left: '50%',
       transform: [
-        { translateX: -90 },
-        { scale: badgeScale }
+        { translateX: -90 }
       ],
       backgroundColor: '#FFD700',
       paddingHorizontal: 12,
@@ -135,7 +113,7 @@ const FounderPlan = ({
       }}>
         EARLY ADOPTER ADVANTAGE
       </Text>
-    </Animated.View>
+    </View>
   );
   
   return (
@@ -240,17 +218,28 @@ const FounderPlan = ({
               textDecorationLine: 'line-through',
               marginBottom: 4
             }}>
-              Regular price: $14.99
+              Regular price: $4.99/month
             </Text>
             
-            <Text style={{
-              fontSize: 32,
-              fontWeight: 'bold',
-              color: textColor,
-              textAlign: 'center'
-            }}>
-              $4.99
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{
+                fontSize: 32,
+                fontWeight: 'bold',
+                color: textColor,
+                textAlign: 'center'
+              }}>
+                $4.99
+              </Text>
+              <Text style={{
+                fontSize: 12,
+                fontWeight: '600',
+                color: textColor,
+                marginLeft: 8,
+                opacity: 0.7
+              }}>
+                One Time Purchase
+              </Text>
+            </View>
             
             <Text style={{
               fontSize: 14,
@@ -284,7 +273,7 @@ const FounderPlan = ({
                 fontSize: 16,
                 flex: 1
               }}>
-                Premium features other users will pay monthly for
+                Pro features other users will pay monthly for
               </Text>
             </View>
             
@@ -326,7 +315,7 @@ const FounderPlan = ({
                 fontSize: 16,
                 flex: 1
               }}>
-                1 month of AI Light free ($4.99 value)
+                1 month of AI Light free ($2.99 value)
               </Text>
             </View>
             

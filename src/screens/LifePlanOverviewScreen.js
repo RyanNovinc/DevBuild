@@ -15,7 +15,9 @@ import {
   TextInput,
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
-  Keyboard
+  Keyboard,
+  Alert,
+  Dimensions
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -33,7 +35,8 @@ import {
   fontSizes,
   useIsLandscape,
   useSafeSpacing,
-  meetsContrastRequirements
+  meetsContrastRequirements,
+  accessibility
 } from '../utils/responsive';
 
 const LifePlanOverviewScreen = ({ navigation, hideBackButton = false, onFullScreenToggle }) => {
@@ -57,7 +60,10 @@ const LifePlanOverviewScreen = ({ navigation, hideBackButton = false, onFullScre
     updateTask,
     updateGoal,
     updateGoalProgress,
-    updateAppSetting
+    updateAppSetting,
+    deleteGoal,
+    deleteProject,
+    deleteTask
   } = appContext;
   
   const lifeDirection = getLifeDirection ? getLifeDirection() : 
@@ -123,6 +129,17 @@ const LifePlanOverviewScreen = ({ navigation, hideBackButton = false, onFullScre
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(scaleHeight(30))).current;
   
+  // Track component mount state and deletion state
+  const isMounted = useRef(true);
+  const isDeletingRef = useRef(false);
+  
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+  
   // Check if dark mode is active
   const isDarkMode = theme.background === '#000000';
   
@@ -131,6 +148,23 @@ const LifePlanOverviewScreen = ({ navigation, hideBackButton = false, onFullScre
   const [directionModalVisible, setDirectionModalVisible] = useState(false);
   const [editedDirection, setEditedDirection] = useState("");
   const [infoModalVisible, setInfoModalVisible] = useState(false);
+  
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState({
+    visible: false,
+    type: null, // 'goal' or 'project'
+    item: null,
+    position: { x: 0, y: 0 }
+  });
+  
+  // Delete modal state (separate from context menu)
+  const [deleteModal, setDeleteModal] = useState({
+    visible: false,
+    type: null, // 'goal', 'project', or 'task'
+    item: null,
+    projectId: null, // needed for task deletion
+    isDeleting: false
+  });
   
   // Confetti state for project completion (falling confetti)
   const [showProjectConfetti, setShowProjectConfetti] = useState(false);
@@ -512,6 +546,300 @@ const saveDirection = async () => {
   const showInfoModal = () => {
     setInfoModalVisible(true);
   };
+
+  // Handle goal long press to show context menu
+  const handleGoalLongPress = (goal, event) => {
+    const { pageX, pageY } = event.nativeEvent;
+    setContextMenu({
+      visible: true,
+      type: 'goal',
+      item: goal,
+      position: { x: pageX, y: pageY }
+    });
+  };
+
+  // Handle project long press to show context menu
+  const handleProjectLongPress = (project, event) => {
+    const { pageX, pageY } = event.nativeEvent;
+    setContextMenu({
+      visible: true,
+      type: 'project',
+      item: project,
+      position: { x: pageX, y: pageY }
+    });
+  };
+
+  // Handle task long press to show context menu
+  const handleTaskLongPress = (task, projectId, event) => {
+    const { pageX, pageY } = event.nativeEvent;
+    setContextMenu({
+      visible: true,
+      type: 'task',
+      item: task,
+      projectId: projectId,
+      position: { x: pageX, y: pageY }
+    });
+  };
+
+  // Close context menu
+  const closeContextMenu = () => {
+    setContextMenu({
+      visible: false,
+      type: null,
+      item: null,
+      position: { x: 0, y: 0 }
+    });
+  };
+
+  // Handle context menu actions
+  const handleContextMenuAction = (action) => {
+    const { type, item } = contextMenu;
+    closeContextMenu();
+
+    if (action === 'open') {
+      if (type === 'goal') {
+        navigateToGoal(item);
+      } else if (type === 'project') {
+        navigateToProject(item);
+      } else if (type === 'task') {
+        navigateToTask(item, contextMenu.projectId);
+      }
+    } else if (action === 'delete') {
+      if (type === 'goal') {
+        handleDeleteGoal(item);
+      } else if (type === 'project') {
+        handleDeleteProject(item);
+      } else if (type === 'task') {
+        handleDeleteTask(item, contextMenu.projectId);
+      }
+    }
+  };
+
+  // Handle goal deletion - show confirmation modal
+  const handleDeleteGoal = (goal) => {
+    closeContextMenu();
+    setDeleteModal({
+      visible: true,
+      type: 'goal',
+      item: goal,
+      isDeleting: false
+    });
+  };
+
+  // Handle project deletion - show confirmation modal
+  const handleDeleteProject = (project) => {
+    closeContextMenu();
+    setDeleteModal({
+      visible: true,
+      type: 'project',
+      item: project,
+      projectId: null,
+      isDeleting: false
+    });
+  };
+
+  // Handle task deletion - show confirmation modal
+  const handleDeleteTask = (task, projectId) => {
+    closeContextMenu();
+    setDeleteModal({
+      visible: true,
+      type: 'task',
+      item: task,
+      projectId: projectId,
+      isDeleting: false
+    });
+  };
+
+  // Actual goal deletion implementation (matching ProjectDetailsScreen pattern)
+  const handleConfirmDeleteGoal = async (goal) => {
+    try {
+      isDeletingRef.current = true;
+      setDeleteModal(prev => ({
+        ...prev,
+        visible: false,
+        isDeleting: true
+      }));
+      
+      const goalIdToDelete = goal.id;
+      
+      // Use setTimeout to ensure smooth modal dismissal (matching ProjectDetailsScreen)
+      setTimeout(async () => {
+        try {
+          if (typeof deleteGoal === 'function') {
+            const success = await deleteGoal(goalIdToDelete);
+            
+            if (isMounted.current) {
+              if (success !== false) {
+                console.log(`Successfully deleted goal ID: ${goalIdToDelete}`);
+                showSuccess('Goal deleted successfully');
+              } else {
+                console.error(`Failed to delete goal ID: ${goalIdToDelete}`);
+                showError('Error deleting goal');
+              }
+            }
+          } else {
+            if (isMounted.current) {
+              showError("Couldn't delete goal");
+            }
+          }
+        } catch (deleteError) {
+          console.error("Error during goal deletion:", deleteError);
+          if (isMounted.current) {
+            showError('Error deleting goal');
+          }
+        } finally {
+          if (isMounted.current) {
+            isDeletingRef.current = false;
+            setDeleteModal(prev => ({
+              ...prev,
+              isDeleting: false
+            }));
+          }
+        }
+      }, 500); // Match ProjectDetailsScreen timeout
+      
+    } catch (error) {
+      console.error("Fatal error in goal delete handling:", error);
+      if (isMounted.current) {
+        showError('Error deleting goal');
+        isDeletingRef.current = false;
+        setDeleteModal(prev => ({
+          ...prev,
+          visible: false,
+          isDeleting: false
+        }));
+      }
+    }
+  };
+
+  // Actual project deletion implementation (matching ProjectDetailsScreen pattern)
+  const handleConfirmDeleteProject = async (project) => {
+    try {
+      isDeletingRef.current = true;
+      setDeleteModal(prev => ({
+        ...prev,
+        visible: false,
+        isDeleting: true
+      }));
+      
+      const projectIdToDelete = project.id;
+      
+      // Use setTimeout to ensure smooth modal dismissal (matching ProjectDetailsScreen)
+      setTimeout(async () => {
+        try {
+          if (typeof deleteProject === 'function') {
+            const success = await deleteProject(projectIdToDelete);
+            
+            if (isMounted.current) {
+              if (success !== false) {
+                console.log(`Successfully deleted project ID: ${projectIdToDelete}`);
+                showSuccess('Project deleted successfully');
+              } else {
+                console.error(`Failed to delete project ID: ${projectIdToDelete}`);
+                showError('Error deleting project');
+              }
+            }
+          } else {
+            if (isMounted.current) {
+              showError("Couldn't delete project");
+            }
+          }
+        } catch (deleteError) {
+          console.error("Error during project deletion:", deleteError);
+          if (isMounted.current) {
+            showError('Error deleting project');
+          }
+        } finally {
+          if (isMounted.current) {
+            isDeletingRef.current = false;
+            setDeleteModal(prev => ({
+              ...prev,
+              isDeleting: false
+            }));
+          }
+        }
+      }, 500); // Match ProjectDetailsScreen timeout
+      
+    } catch (error) {
+      console.error("Fatal error in project delete handling:", error);
+      if (isMounted.current) {
+        showError('Error deleting project');
+        isDeletingRef.current = false;
+        setDeleteModal(prev => ({
+          ...prev,
+          visible: false,
+          isDeleting: false
+        }));
+      }
+    }
+  };
+
+  // Actual task deletion implementation (matching ProjectDetailsScreen pattern)
+  const handleConfirmDeleteTask = async (task, projectId) => {
+    try {
+      isDeletingRef.current = true;
+      setDeleteModal(prev => ({
+        ...prev,
+        visible: false,
+        isDeleting: true
+      }));
+      
+      const taskIdToDelete = task.id;
+      
+      // Use setTimeout to ensure smooth modal dismissal (matching ProjectDetailsScreen)
+      setTimeout(async () => {
+        try {
+          if (typeof deleteTask === 'function') {
+            const success = await deleteTask(projectId, taskIdToDelete);
+            
+            if (isMounted.current) {
+              if (success !== false) {
+                console.log(`Successfully deleted task ID: ${taskIdToDelete}`);
+                showSuccess('Task deleted successfully');
+              } else {
+                console.error(`Failed to delete task ID: ${taskIdToDelete}`);
+                showError('Error deleting task');
+              }
+            }
+          } else {
+            if (isMounted.current) {
+              showError("Couldn't delete task");
+            }
+          }
+        } catch (deleteError) {
+          console.error("Error during task deletion:", deleteError);
+          if (isMounted.current) {
+            showError('Error deleting task');
+          }
+        } finally {
+          if (isMounted.current) {
+            isDeletingRef.current = false;
+            setDeleteModal(prev => ({
+              ...prev,
+              isDeleting: false
+            }));
+          }
+        }
+      }, 500); // Match ProjectDetailsScreen timeout
+      
+    } catch (error) {
+      console.error("Fatal error in task delete handling:", error);
+      if (isMounted.current) {
+        showError('Error deleting task');
+        isDeletingRef.current = false;
+        setDeleteModal(prev => ({
+          ...prev,
+          visible: false,
+          isDeleting: false
+        }));
+      }
+    }
+  };
+
+  // Helper function to get linked projects count for goals
+  const getLinkedProjectsCount = (goalId) => {
+    return projects.filter(project => project.goalId === goalId).length;
+  };
   
   // Navigate to goal details with special navigation params to return to this screen
   const navigateToGoal = (goal) => {
@@ -530,13 +858,13 @@ const saveDirection = async () => {
       previousScreen: isEmbeddedInTab ? 'GoalsTab' : 'LifePlanOverview'
     });
   };
-  
-  // Navigate to task details with special navigation params to return to this screen
+
+  // Navigate to task (via project details)
   const navigateToTask = (task, projectId) => {
     navigation.navigate('ProjectDetails', { 
       projectId: projectId,
+      taskId: task.id, // Pass task ID to highlight/focus the task
       mode: 'edit',
-      initialTaskId: task.id,
       previousScreen: isEmbeddedInTab ? 'GoalsTab' : 'LifePlanOverview'
     });
   };
@@ -1007,12 +1335,12 @@ const saveDirection = async () => {
                     }
                   ]}
                   onPress={() => toggleGoal(goal.id)}
-                  onLongPress={() => navigateToGoal(goal)}
+                  onLongPress={(event) => handleGoalLongPress(goal, event)}
                   activeOpacity={0.9}
                   accessible={true}
                   accessibilityRole="button"
                   accessibilityLabel={`Goal: ${goal.title}, Progress: ${goal.progress || 0} percent`}
-                  accessibilityHint="Tap to expand or collapse. Long press to view details"
+                  accessibilityHint="Tap to expand or collapse. Long press to show options"
                   accessibilityState={{ expanded: expandedGoals[goal.id] }}
                 >
                   <View style={[
@@ -1305,12 +1633,12 @@ const saveDirection = async () => {
                               }
                             ]}
                             onPress={() => toggleProject(project.id)}
-                            onLongPress={() => navigateToProject(project)}
+                            onLongPress={(event) => handleProjectLongPress(project, event)}
                             activeOpacity={0.9}
                             accessible={true}
                             accessibilityRole="button"
                             accessibilityLabel={`Project: ${project.title}, Progress: ${project.progress || 0} percent${project.completed ? ', Completed' : ''}`}
-                            accessibilityHint="Tap to expand or collapse. Long press to view details"
+                            accessibilityHint="Tap to expand or collapse. Long press to show options"
                             accessibilityState={{ 
                               expanded: expandedProjects[project.id],
                               checked: project.completed
@@ -1672,11 +2000,12 @@ const saveDirection = async () => {
                                         console.log('🔍 Visual state:', (task.completed || task.status === 'done'));
                                         handleToggleTask(task.id, project.id);
                                       }}
+                                      onLongPress={(event) => handleTaskLongPress(task, project.id, event)}
                                       activeOpacity={0.7}
                                       accessible={true}
                                       accessibilityRole="button"
                                       accessibilityLabel={`Task: ${task.title}${(task.completed || task.status === 'done') ? ', Completed' : ''}`}
-                                      accessibilityHint="Tap to toggle completion"
+                                      accessibilityHint="Tap to toggle completion. Long press to show options"
                                       accessibilityState={{ checked: (task.completed || task.status === 'done') }}
                                     >
                                       {/* Checkbox visual indicator */}
@@ -2452,6 +2781,296 @@ const saveDirection = async () => {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* Context Menu */}
+      <Modal
+        visible={contextMenu.visible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={closeContextMenu}
+        accessible={true}
+        accessibilityViewIsModal={true}
+        accessibilityLabel="Context menu"
+      >
+        <TouchableWithoutFeedback onPress={closeContextMenu}>
+          <View style={[
+            styles.contextMenuOverlay,
+            {
+              flex: 1,
+              backgroundColor: 'rgba(0, 0, 0, 0.3)',
+              justifyContent: 'flex-start',
+              alignItems: 'flex-start'
+            }
+          ]}>
+            <View style={[
+              styles.contextMenuContainer,
+              { 
+                position: 'absolute',
+                top: Math.max(contextMenu.position.y - 10, 50),
+                left: Math.min(contextMenu.position.x - 10, Dimensions.get('window').width - 150),
+                backgroundColor: theme.card,
+                borderColor: theme.border,
+                borderWidth: 1,
+                borderRadius: scaleWidth(12),
+                shadowColor: isDarkMode ? '#000000' : 'rgba(0,0,0,0.2)',
+                shadowOffset: { width: 0, height: scaleHeight(4) },
+                shadowOpacity: 0.3,
+                shadowRadius: scaleWidth(8),
+                elevation: 8,
+                minWidth: scaleWidth(130),
+                overflow: 'hidden'
+              }
+            ]}>
+              <TouchableOpacity
+                style={[
+                  styles.contextMenuItem,
+                  { 
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    padding: spacing.m,
+                    borderBottomWidth: 1,
+                    borderBottomColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+                  }
+                ]}
+                onPress={() => handleContextMenuAction('open')}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={`Open ${contextMenu.type}`}
+              >
+                <Ionicons 
+                  name="open-outline" 
+                  size={scaleWidth(18)} 
+                  color={theme.primary}
+                  style={{ marginRight: spacing.s }}
+                />
+                <Text 
+                  style={[
+                    styles.contextMenuText,
+                    { 
+                      color: textColor,
+                      fontSize: fontSizes.m,
+                      fontWeight: '500'
+                    }
+                  ]}
+                  maxFontSizeMultiplier={1.3}
+                >
+                  Open
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[
+                  styles.contextMenuItem,
+                  { 
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    padding: spacing.m
+                  }
+                ]}
+                onPress={() => handleContextMenuAction('delete')}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={`Delete ${contextMenu.type}`}
+              >
+                <Ionicons 
+                  name="trash-outline" 
+                  size={scaleWidth(18)} 
+                  color="#FF6B6B"
+                  style={{ marginRight: spacing.s }}
+                />
+                <Text 
+                  style={[
+                    styles.contextMenuText,
+                    { 
+                      color: "#FF6B6B",
+                      fontSize: fontSizes.m,
+                      fontWeight: '500'
+                    }
+                  ]}
+                  maxFontSizeMultiplier={1.3}
+                >
+                  Delete
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        visible={deleteModal.visible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setDeleteModal(prev => ({ ...prev, visible: false }))}
+      >
+        <View style={[
+          styles.deleteModalOverlay,
+          {
+            flex: 1,
+            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+            justifyContent: 'center',
+            alignItems: 'center',
+            paddingHorizontal: spacing.m,
+          }
+        ]}>
+          <View style={[
+            styles.deleteModalContainer, 
+            { 
+              backgroundColor: theme.surface || theme.background,
+              width: '100%',
+              maxWidth: scaleWidth(320),
+              borderRadius: scaleWidth(16),
+              padding: spacing.xl,
+              shadowColor: isDarkMode ? '#000000' : 'rgba(0,0,0,0.3)',
+              shadowOffset: { width: 0, height: scaleHeight(8) },
+              shadowOpacity: 0.4,
+              shadowRadius: scaleWidth(24),
+              elevation: 8,
+            }
+          ]}>
+            <View style={[
+              styles.deleteModalHeader,
+              {
+                alignItems: 'center',
+                marginBottom: spacing.l,
+              }
+            ]}>
+              <Ionicons name="trash-outline" size={scaleWidth(40)} color={theme.error} />
+              <Text 
+                style={[
+                  styles.deleteModalTitle,
+                  { 
+                    color: theme.text,
+                    fontSize: fontSizes.xl,
+                    fontWeight: '600',
+                    textAlign: 'center',
+                    marginTop: spacing.m,
+                    letterSpacing: 0.3,
+                  }
+                ]}
+                maxFontSizeMultiplier={1.3}
+              >
+                Delete {deleteModal.type === 'goal' ? 'Goal' : deleteModal.type === 'project' ? 'Project' : 'Task'}
+              </Text>
+            </View>
+            
+            <Text 
+              style={[
+                styles.deleteModalMessage,
+                { 
+                  color: theme.textSecondary,
+                  fontSize: fontSizes.m,
+                  textAlign: 'center',
+                  marginBottom: spacing.xl,
+                  lineHeight: fontSizes.m * 1.4,
+                  opacity: 0.8,
+                  fontWeight: '400',
+                }
+              ]}
+              maxFontSizeMultiplier={1.3}
+            >
+              {deleteModal.type === 'goal' && deleteModal.item
+                ? getLinkedProjectsCount(deleteModal.item.id) > 0
+                  ? `Delete this goal and ${getLinkedProjectsCount(deleteModal.item.id)} linked ${getLinkedProjectsCount(deleteModal.item.id) === 1 ? 'project' : 'projects'}?`
+                  : 'Delete this goal?'
+                : deleteModal.type === 'project'
+                  ? 'Delete this project and all its tasks?'
+                  : 'Delete this task?'
+              }
+            </Text>
+            
+            <View style={[
+              styles.deleteModalButtons,
+              {
+                flexDirection: 'row',
+                gap: spacing.s,
+              }
+            ]}>
+              <TouchableOpacity
+                style={[
+                  styles.deleteModalButton, 
+                  styles.deleteCancelButton, 
+                  { 
+                    backgroundColor: theme.background,
+                    borderColor: theme.border,
+                    flex: 1,
+                    paddingVertical: spacing.m,
+                    borderRadius: scaleWidth(12),
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minHeight: accessibility.minTouchTarget,
+                    borderWidth: 1,
+                  }
+                ]}
+                onPress={() => setDeleteModal(prev => ({ ...prev, visible: false }))}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Cancel"
+                accessibilityHint="Cancels the delete operation"
+              >
+                <Text style={[
+                  styles.deleteButtonText, 
+                  { 
+                    color: theme.text,
+                    fontSize: fontSizes.m,
+                    fontWeight: '500',
+                    letterSpacing: 0.2,
+                  }
+                ]}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[
+                  styles.deleteModalButton, 
+                  styles.deleteConfirmButton,
+                  {
+                    backgroundColor: deleteModal.isDeleting ? '#FF6B6B' : '#FF3B30',
+                    flex: 1,
+                    paddingVertical: spacing.m,
+                    borderRadius: scaleWidth(12),
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minHeight: accessibility.minTouchTarget,
+                    opacity: deleteModal.isDeleting ? 0.7 : 1,
+                  }
+                ]}
+                onPress={() => {
+                  if (deleteModal.isDeleting) return; // Prevent multiple taps
+                  
+                  if (deleteModal.type === 'goal' && deleteModal.item) {
+                    handleConfirmDeleteGoal(deleteModal.item);
+                  } else if (deleteModal.type === 'project' && deleteModal.item) {
+                    handleConfirmDeleteProject(deleteModal.item);
+                  } else if (deleteModal.type === 'task' && deleteModal.item && deleteModal.projectId) {
+                    handleConfirmDeleteTask(deleteModal.item, deleteModal.projectId);
+                  }
+                }}
+                disabled={deleteModal.isDeleting}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={`Delete ${deleteModal.type === 'goal' ? 'Goal' : deleteModal.type === 'project' ? 'Project' : 'Task'}`}
+                accessibilityHint={`Permanently deletes this ${deleteModal.type === 'goal' ? 'goal' : deleteModal.type === 'project' ? 'project' : 'task'}`}
+              >
+                <Text style={[
+                  styles.deleteButtonText, 
+                  styles.deleteConfirmText,
+                  {
+                    color: '#FFFFFF',
+                    fontSize: fontSizes.m,
+                    fontWeight: '600',
+                    letterSpacing: 0.2,
+                  }
+                ]}>
+                  {deleteModal.isDeleting ? 'Deleting...' : 'Delete'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -2539,6 +3158,22 @@ const styles = StyleSheet.create({
   infoSectionTitle: {},
   exampleBox: {},
   exampleText: {},
+  contextMenuOverlay: {},
+  contextMenuContainer: {},
+  contextMenuItem: {},
+  contextMenuText: {},
+  // Delete Modal Styles (matching GoalDetailsScreen and ProjectDetailsScreen)
+  deleteModalOverlay: {},
+  deleteModalContainer: {},
+  deleteModalHeader: {},
+  deleteModalTitle: {},
+  deleteModalMessage: {},
+  deleteModalButtons: {},
+  deleteModalButton: {},
+  deleteCancelButton: {},
+  deleteConfirmButton: {},
+  deleteButtonText: {},
+  deleteConfirmText: {},
 });
 
 export default LifePlanOverviewScreen;

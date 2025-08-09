@@ -1,5 +1,5 @@
 // src/components/ai/LoginScreen/ForgotPasswordScreen.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,9 @@ import { AuthHeader, AuthInput, AuthButton } from './components';
 const ForgotPasswordScreen = ({ navigation }) => {
   const { theme } = useTheme();
   const { forgotPassword, loading } = useAuth();
+  
+  // Import auth service directly to bypass potential context issues
+  const { authService } = require('./utils/auth-service');
   const { showSuccess, showError } = useNotification ? useNotification() : {
     showError: (msg) => Alert.alert('Error', msg),
     showSuccess: (msg) => Alert.alert('Success', msg)
@@ -28,6 +31,11 @@ const ForgotPasswordScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
   const [localLoading, setLocalLoading] = useState(false);
+  
+  // AWS should already be configured in App.js - no need to reconfigure
+  useEffect(() => {
+    console.log('ForgotPasswordScreen mounted - AWS should already be configured');
+  }, []);
   
   // Get styles
   const style = styles.createStyles(theme);
@@ -54,19 +62,56 @@ const ForgotPasswordScreen = ({ navigation }) => {
     
     try {
       setLocalLoading(true);
-      // Use AWS Cognito to send a reset code
-      const success = await forgotPassword(email);
+      console.log('Attempting to reset password for:', email);
+      
+      // Try using auth service directly first, then fallback to context
+      let success = false;
+      try {
+        console.log('Trying direct authService.forgotPassword...');
+        success = await authService.forgotPassword(email);
+        console.log('Direct authService result:', success);
+      } catch (directError) {
+        console.log('Direct authService failed, trying context method...', directError.message);
+        success = await forgotPassword(email);
+        console.log('Context forgotPassword result:', success);
+      }
       
       if (success) {
-        showSuccess('Password reset code sent to your email');
-        // Navigate to reset password screen
-        navigation.navigate('ResetPassword', { email });
+        showSuccess('✅ Password reset email sent! Please check your inbox and spam folder.');
+        
+        // Navigate to reset password screen after a brief delay
+        setTimeout(() => {
+          navigation.navigate('ResetPassword', { email });
+        }, 2000);
       } else {
         showError('Failed to send reset code. Please try again.');
       }
     } catch (error) {
-      console.error('Forgot password error:', error);
-      showError('Failed to send reset code. Please try again.');
+      console.error('Forgot password error details:', error);
+      console.error('Error message:', error.message);
+      console.error('Error code:', error.code || error.name);
+      
+      // Use the auth service to get user-friendly error messages
+      const { authService } = require('./utils/auth-service');
+      const userFriendlyMessage = authService.getErrorMessage(error);
+      showError(userFriendlyMessage);
+      
+      // Special handling for user not found
+      if (error.code === 'UserNotFoundException') {
+        setTimeout(() => {
+          Alert.alert(
+            'Account Not Found',
+            'No account exists with this email address. Would you like to create a new account?',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { 
+                text: 'Sign Up', 
+                onPress: () => navigation.navigate('Login', { showRegistration: true })
+              }
+            ]
+          );
+        }, 1000);
+      }
     } finally {
       setLocalLoading(false);
     }

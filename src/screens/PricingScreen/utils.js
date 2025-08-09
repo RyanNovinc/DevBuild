@@ -14,7 +14,7 @@ export const generateReferralCode = () => {
 };
 
 /**
- * Gets the base price for AI plans
+ * Gets the base price for AI plans - Updated with new pricing strategy
  * @param {string} plan - The plan identifier: 'starter', 'professional', or 'business'
  * @param {boolean} isMonthly - Whether the plan is monthly or annual
  * @returns {number} The base price in USD
@@ -22,18 +22,18 @@ export const generateReferralCode = () => {
 export const getBasePlanPrice = (plan, isMonthly) => {
   switch(plan) {
     case 'starter':
-      return isMonthly ? 4.99 : 3.99; // $4.99/mo or $3.99/mo annually (20% discount)
+      return isMonthly ? 2.99 : 2.39; // $2.99/mo or $2.39/mo annually (20% discount)
     case 'professional':
-      return isMonthly ? 8.99 : 7.19; // $8.99/mo or $7.19/mo annually (20% discount)
+      return isMonthly ? 4.99 : 3.99; // $4.99/mo or $3.99/mo annually (20% discount)
     case 'business':
-      return isMonthly ? 16.99 : 13.59; // $16.99/mo or $13.59/mo annually (20% discount)
+      return isMonthly ? 9.99 : 7.99; // $9.99/mo or $7.99/mo annually (20% discount)
     default:
       return 0;
   }
 };
 
 /**
- * Gets the exact hardcoded plan price to match what's shown on the cards
+ * Gets the exact hardcoded plan price to match what's shown on the cards - Updated pricing
  * @param {string} plan - The plan identifier
  * @param {boolean} isLifetimeMember - Whether the user is a lifetime member
  * @param {string} selectedSubscription - The subscription type ('monthly' or 'annual')
@@ -45,13 +45,13 @@ export const getExactPlanPrice = (plan, isLifetimeMember, selectedSubscription, 
   let price;
   const isMonthly = selectedSubscription === 'monthly';
   
-  // Regular prices
+  // Updated regular prices
   if (plan === 'starter') {
-    price = isMonthly ? 4.99 : 3.99;
+    price = isMonthly ? 2.99 : 2.39;
   } else if (plan === 'professional') {
-    price = isMonthly ? 8.99 : 7.19;
+    price = isMonthly ? 4.99 : 3.99;
   } else if (plan === 'business') {
-    price = isMonthly ? 16.99 : 13.59;
+    price = isMonthly ? 9.99 : 7.99;
   } else {
     price = 0;
   }
@@ -108,4 +108,17 @@ export const getLifetimeSavings = (plan, selectedSubscription) => {
   const regularPrice = parseFloat(getRegularPrice(plan, selectedSubscription));
   const discountedPrice = parseFloat(getLifetimeDiscountedPrice(plan, selectedSubscription));
   return (regularPrice - discountedPrice).toFixed(2);
+};
+
+/**
+ * Gets the token top-up pricing
+ * @returns {Object} Token top-up pricing information
+ */
+export const getTokenTopUpPricing = () => {
+  return {
+    price: 0.99,
+    credits: 0.15,
+    creditsFormatted: '$0.15',
+    priceFormatted: '$0.99'
+  };
 };

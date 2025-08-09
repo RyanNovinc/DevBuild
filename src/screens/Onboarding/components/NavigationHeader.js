@@ -73,6 +73,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingTop: Platform.OS === 'ios' ? 35 : 15,
     paddingBottom: 15,
@@ -83,7 +84,7 @@ const styles = StyleSheet.create({
   leftContainer: {
     width: 40,
     alignItems: 'flex-start',
-    zIndex: 20, // Higher z-index to be above center container
+    zIndex: 25, // Higher z-index to be above center container
   },
   backButton: {
     width: 40,
@@ -128,6 +129,7 @@ const styles = StyleSheet.create({
   rightContainer: {
     width: 40,
     alignItems: 'flex-end',
+    zIndex: 25,
   }
 });
 

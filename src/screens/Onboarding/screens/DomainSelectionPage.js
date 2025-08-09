@@ -19,6 +19,7 @@ import TypingAnimation from '../components/TypingAnimation';
 import NavigationHeader from '../components/NavigationHeader';
 import DomainWheel from '../components/DomainWheel';
 import CelebrationEffect from '../components/CelebrationEffect';
+import DomainInfoModal from '../components/DomainInfoModal';
 
 const { width, height } = Dimensions.get('window');
 
@@ -100,7 +101,7 @@ const DOMAIN_NAMES = {
     "Financial Security": "Financial Security",
     "Recreation & Leisure": "Recreation & Leisure",
     "Purpose & Meaning": "Purpose & Meaning",
-    "Environment & Organization": "Environment & Organization"
+    "Community & Environment": "Community & Environment"
   },
   ja: {
     "Career & Work": "キャリアと仕事",
@@ -110,7 +111,7 @@ const DOMAIN_NAMES = {
     "Financial Security": "経済的安定",
     "Recreation & Leisure": "レクリエーションと余暇",
     "Purpose & Meaning": "目的と意味",
-    "Environment & Organization": "環境と組織"
+    "Community & Environment": "コミュニティと環境"
   }
 };
 
@@ -157,6 +158,7 @@ const DomainSelectionPage = ({
   const [showCelebration, setShowCelebration] = useState(false);
   const [celebrationType, setCelebrationType] = useState('confetti');
   const [celebrationIndex, setCelebrationIndex] = useState(0);
+  const [showInfoModal, setShowInfoModal] = useState(false);
   
   // Reference to the TypingAnimation component
   const typingRef = useRef(null);
@@ -760,8 +762,8 @@ const DomainSelectionPage = ({
           return "Making time for hobbies, fun activities, relaxation, and travel that bring joy and balance.";
         case "Purpose & Meaning":
           return "Exploring spirituality, contributing to causes you care about, and aligning actions with your values.";
-        case "Environment & Organization":
-          return "Creating order in your physical spaces, developing systems, and optimizing your surroundings.";
+        case "Community & Environment":
+          return "Building community connections, improving your environment, and organizing your spaces for wellbeing.";
         default:
           return domain.description || "Focus on key areas that will help you achieve meaningful progress.";
       }
@@ -783,8 +785,8 @@ const DomainSelectionPage = ({
           return "趣味、楽しい活動、リラクゼーション、旅行などの喜びとバランスをもたらす時間を作ります。";
         case "Purpose & Meaning":
           return "精神性を探求し、あなたが気にかける原因に貢献し、行動をあなたの価値観に合わせます。";
-        case "Environment & Organization":
-          return "物理的な空間に秩序を作り、システムを開発し、周囲を最適化します。";
+        case "Community & Environment":
+          return "コミュニティのつながりを築き、環境を改善し、ウェルビーイングのためのスペースを整理します。";
         default:
           return domain.description || "意味のある進歩を達成するのに役立つ重要な分野に焦点を当てます。";
       }
@@ -871,7 +873,17 @@ const DomainSelectionPage = ({
         title={selectedDomain ? getTranslatedDomainName(selectedDomain.name) : getPageTitle()} 
         iconName={selectedDomain ? selectedDomain.icon : null}
         iconColor={selectedDomain ? selectedDomain.color : null}
-        onBack={onBack} 
+        onBack={onBack}
+        rightComponent={
+          <TouchableOpacity
+            style={styles.infoButton}
+            onPress={() => setShowInfoModal(true)}
+            accessibilityLabel="About these life domains"
+            hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+          >
+            <Ionicons name="information-circle-outline" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+        }
       />
       
       {/* Full-screen touchable overlay - only visible before wheel appears */}
@@ -1077,6 +1089,12 @@ const DomainSelectionPage = ({
           />
         </Animated.View>
       )}
+
+      {/* Domain Research Info Modal */}
+      <DomainInfoModal
+        visible={showInfoModal}
+        onClose={() => setShowInfoModal(false)}
+      />
     </View>
   );
 };
@@ -1311,6 +1329,15 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
+  },
+  infoButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    opacity: 0.8,
   },
 });
 

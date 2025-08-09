@@ -97,7 +97,7 @@ const AddGoalModal = ({
       'Purpose & Meaning': ['purpose', 'meaning', 'spiritual', 'spirituality', 'volunteer', 'cause', 'mission',
                       'values', 'belief', 'faith', 'contribution', 'impact', 'legacy', 'mindfulness',
                       'passion', 'philosophy', 'religion', 'charity', 'community', 'service'],
-      'Environment & Organization': ['environment', 'organization', 'home', 'clean', 'declutter', 'organize',
+      'Community & Environment': ['environment', 'organization', 'home', 'clean', 'declutter', 'organize', 'community',
                          'system', 'structure', 'routine', 'space', 'living', 'decor', 'furniture',
                          'renovation', 'maintenance', 'efficiency', 'productivity'],
       'Other': ['general', 'misc', 'other', 'goal', 'plan', 'project', 'task', 'life', 'direction', 

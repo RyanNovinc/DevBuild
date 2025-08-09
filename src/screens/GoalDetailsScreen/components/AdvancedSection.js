@@ -140,7 +140,7 @@ const AdvancedSection = ({
             accessible={true}
             accessibilityRole="button"
             accessibilityLabel="Detailed Progress Timeline"
-            accessibilityHint={isCreating ? "Available after saving goal" : "View detailed progress timeline"}
+            accessibilityHint={isCreating ? "Save goal first" : "View detailed progress timeline"}
             accessibilityState={{ disabled: isCreating }}
           >
             <View style={styles.optionTitleRow}>
@@ -176,7 +176,7 @@ const AdvancedSection = ({
                 ]}
                 maxFontSizeMultiplier={1.5}
               >
-                {isCreating ? 'Available after save' : 'View'}
+                {isCreating ? 'Save first' : 'View'}
               </Text>
               <Ionicons 
                 name="chevron-forward" 
@@ -209,7 +209,7 @@ const AdvancedSection = ({
             ]}
             onPress={() => {
               if (isCreating) {
-                alert('Please save your goal first to set notification preferences');
+                alert('Save goal first');
                 return;
               }
               setNotificationsModal(true);
@@ -217,7 +217,7 @@ const AdvancedSection = ({
             accessible={true}
             accessibilityRole="button"
             accessibilityLabel="Notification Preferences"
-            accessibilityHint={isCreating ? "Available after saving goal" : `${getActiveNotificationCount() > 0 ? getActiveNotificationCount() + ' notifications set' : 'Set notification preferences'}`}
+            accessibilityHint={isCreating ? "Save goal first" : `${getActiveNotificationCount() > 0 ? getActiveNotificationCount() + ' notifications set' : 'Set notification preferences'}`}
           >
             <View style={styles.optionTitleRow}>
               <Ionicons 
@@ -279,7 +279,7 @@ const AdvancedSection = ({
                   ]}
                   maxFontSizeMultiplier={1.5}
                 >
-                  {isCreating ? 'Available after save' : 'Not set'}
+                  {isCreating ? 'Save first' : 'Not set'}
                 </Text>
               )}
               <Ionicons 
@@ -313,7 +313,7 @@ const AdvancedSection = ({
             ]}
             onPress={() => {
               if (isCreating) {
-                alert('Please save your goal first to share it');
+                alert('Save goal first');
                 return;
               }
               setExpandedSection(expandedSection === 'share' ? null : 'share');
@@ -321,7 +321,7 @@ const AdvancedSection = ({
             accessible={true}
             accessibilityRole="button"
             accessibilityLabel="Share Goal"
-            accessibilityHint={isCreating ? "Available after saving goal" : "Configure sharing options for your goal"}
+            accessibilityHint={isCreating ? "Save goal first" : "Configure sharing options"}
             accessibilityState={{ expanded: expandedSection === 'share' }}
           >
             <View style={styles.optionTitleRow}>
@@ -377,7 +377,7 @@ const AdvancedSection = ({
                 ]}
                 maxFontSizeMultiplier={1.8}
               >
-                Create a shareable version of your goal to send to others
+                Share your goal with others
               </Text>
               
               {/* Share Format Options */}
@@ -513,7 +513,7 @@ const AdvancedSection = ({
                     ]}
                     maxFontSizeMultiplier={1.5}
                   >
-                    No projects linked to this goal
+                    No projects linked
                   </Text>
                 </View>
               ) : (
@@ -536,7 +536,9 @@ const AdvancedSection = ({
                           borderBottomWidth: 1,
                           paddingVertical: spacing.s,
                           paddingHorizontal: spacing.m,
-                          minHeight: minTouchSize
+                          minHeight: minTouchSize,
+                          flexDirection: 'row',
+                          alignItems: 'center'
                         }
                       ]}
                     >
@@ -545,7 +547,8 @@ const AdvancedSection = ({
                           styles.shareProjectTitle, 
                           { 
                             color: theme.text,
-                            fontSize: fontSizes.m
+                            fontSize: fontSizes.m,
+                            flex: 1
                           }
                         ]}
                         maxFontSizeMultiplier={1.5}
@@ -637,7 +640,7 @@ const AdvancedSection = ({
                   ]}
                   maxFontSizeMultiplier={1.8}
                 >
-                  <Text style={{ fontWeight: 'bold' }}>Note:</Text> Deleting this goal will also delete all {getLinkedProjectsCount()} linked {getLinkedProjectsCount() === 1 ? 'project' : 'projects'} and their tasks.
+                  <Text style={{ fontWeight: 'bold' }}>Note:</Text> Will also delete {getLinkedProjectsCount()} linked {getLinkedProjectsCount() === 1 ? 'project' : 'projects'}.
                 </Text>
               )}
             </View>

@@ -19,7 +19,8 @@ export const STORAGE_KEYS = {
   TOMORROW_TODOS: 'tomorrowTodos',
   LATER_TODOS: 'laterTodos',
   // Additional keys
-  PROJECT_GOAL_LINK_MAP: 'projectGoalLinkMap'
+  PROJECT_GOAL_LINK_MAP: 'projectGoalLinkMap',
+  USER_COUNTRY: 'userCountry'
 };
 
 // Default app settings
@@ -35,7 +36,8 @@ export const DEFAULT_SETTINGS = {
     bio: '',
     profileImage: null
   },
-  lifeDirection: ''
+  lifeDirection: '',
+  userCountry: null
 };
 
 // Domain color and icon mappings

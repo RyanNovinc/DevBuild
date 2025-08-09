@@ -46,6 +46,9 @@ import SimpleLaterTab from './components/tabs/SimpleLaterTab';
 import NotesSection from './components/notes/NotesSection';
 import FullScreenNoteModal from './components/notes/FullScreenNoteModal';
 
+// Import achievement tracking
+import FeatureExplorerTracker from '../../services/FeatureExplorerTracker';
+
 const TopTab = createMaterialTopTabNavigator();
 
 /**
@@ -68,9 +71,11 @@ const TodoListScreen = ({ navigation, route }) => {
   const { width, height } = useScreenDimensions();
   const safeSpacing = useSafeSpacing();
 
-  // View mode state (todos vs notes)
-  const [currentView, setCurrentView] = useState('todo');
+  // View mode state (todos vs notes) - initialize from route params
+  const [currentView, setCurrentView] = useState(route?.params?.currentView || 'todo');
   const [activeTab, setActiveTab] = useState('today');
+  const [navigatorKey, setNavigatorKey] = useState('initial');
+  const tabNavigatorRef = useRef(null);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState({});
 
@@ -124,6 +129,29 @@ const TodoListScreen = ({ navigation, route }) => {
       return () => subscription?.remove();
     }, [currentView])
   );
+
+  // Debug activeTab changes
+  React.useEffect(() => {
+    console.log('TodoScreen activeTab changed to:', activeTab);
+  }, [activeTab]);
+
+  // Listen for route parameter changes from bottom tab navigation
+  React.useEffect(() => {
+    if (route?.params?.currentView && route.params.currentView !== currentView) {
+      console.log('TodoScreen: Route params changed, switching view to:', route.params.currentView);
+      setCurrentView(route.params.currentView);
+    }
+  }, [route?.params?.currentView, currentView]);
+  
+  // Force navigator remount to sync tab content with indicator
+  useFocusEffect(
+    React.useCallback(() => {
+      // Force remount of the navigation container to sync state
+      setNavigatorKey(`navigator-${Date.now()}`);
+    }, [])
+  );
+  
+  // No forced reset - let content match whatever tab is selected
 
   // Simple add todo function
   const addTodo = (tab, groupId, text) => {
@@ -235,6 +263,85 @@ const TodoListScreen = ({ navigation, route }) => {
     showSuccess(`Edit mode for: ${todo.title}`);
   };
 
+  // Move incomplete today's todos to tomorrow (triggers todo-organizer achievement)
+  const moveIncompleteTodosToTomorrow = () => {
+    const incompleteTodos = todos.filter(todo => !todo.completed);
+    
+    if (incompleteTodos.length === 0) {
+      showSuccess('No incomplete todos to move', { type: 'warning' });
+      return;
+    }
+    
+    // Check limits for free users
+    if (subscription?.tier !== 'pro' && subscription?.tier !== 'founder') {
+      const currentTomorrowCount = tomorrowTodos.length;
+      const incompleteCount = incompleteTodos.length;
+      
+      if ((currentTomorrowCount + incompleteCount) > 7) { // Tomorrow limit
+        showSuccess(`Moving all items would exceed tomorrow's limit of 7. Upgrade to Pro for unlimited todos.`, { type: 'warning' });
+        return;
+      }
+    }
+    
+    // Move the todos
+    setTomorrowTodos([...tomorrowTodos, ...incompleteTodos]);
+    setTodos(todos.filter(todo => todo.completed));
+    showSuccess(`Today's incomplete to-dos moved to tomorrow`);
+    
+    // Track achievement for batch organization
+    try {
+      FeatureExplorerTracker.trackTodoBatchOrganization(showSuccess);
+    } catch (error) {
+      console.error('Error tracking todo batch organization achievement:', error);
+    }
+  };
+
+  // Move tomorrow's todos to today
+  const moveTomorrowTodosToToday = () => {
+    if (tomorrowTodos.length === 0) {
+      showSuccess('No todos to move', { type: 'warning' });
+      return;
+    }
+    
+    // Check limits for free users
+    if (subscription?.tier !== 'pro' && subscription?.tier !== 'founder') {
+      const currentTodayCount = todos.length;
+      const tomorrowCount = tomorrowTodos.length;
+      
+      if ((currentTodayCount + tomorrowCount) > 10) { // Today limit
+        showSuccess(`Moving all items would exceed today's limit of 10. Upgrade to Pro for unlimited todos.`, { type: 'warning' });
+        return;
+      }
+    }
+    
+    setTodos([...todos, ...tomorrowTodos]);
+    setTomorrowTodos([]);
+    showSuccess(`Tomorrow's to-dos moved to today`);
+  };
+
+  // Move later items to tomorrow
+  const moveLaterItemsToTomorrow = () => {
+    if (laterTodos.length === 0) {
+      showSuccess('No todos to move', { type: 'warning' });
+      return;
+    }
+    
+    // Check limits for free users
+    if (subscription?.tier !== 'pro' && subscription?.tier !== 'founder') {
+      const currentTomorrowCount = tomorrowTodos.length;
+      const laterCount = laterTodos.length;
+      
+      if ((currentTomorrowCount + laterCount) > 7) { // Tomorrow limit
+        showSuccess(`Moving all items would exceed tomorrow's limit of 7. Upgrade to Pro for unlimited todos.`, { type: 'warning' });
+        return;
+      }
+    }
+    
+    setTomorrowTodos([...tomorrowTodos, ...laterTodos]);
+    setLaterTodos([]);
+    showSuccess('Later items moved to Tomorrow');
+  };
+
   // Limit checking function
   const canAddMoreTodos = (tab, isGroup) => {
     if (subscription?.tier === 'pro' || subscription?.tier === 'founder') {
@@ -279,10 +386,20 @@ const TodoListScreen = ({ navigation, route }) => {
     }
   };
 
+  // Sync internal view changes with tab navigator params
+  React.useEffect(() => {
+    // Update route params whenever currentView changes internally
+    const tabNavigator = navigation.getParent();
+    if (tabNavigator) {
+      tabNavigator.setParams({ currentView: currentView });
+    }
+  }, [currentView, navigation]);
+
   // Render Todo Tabs
   const renderTodoTabs = () => (
-    <NavigationContainer independent={true}>
+    <NavigationContainer independent={true} key={`${navigatorKey}-${activeTab}`} ref={tabNavigatorRef}>
       <TopTab.Navigator
+        initialRouteName={activeTab}
         screenOptions={({ route }) => ({
           tabBarActiveTintColor: '#FFFFFF', // White text on active tab for better contrast
           tabBarInactiveTintColor: theme.textSecondary,
@@ -328,7 +445,9 @@ const TodoListScreen = ({ navigation, route }) => {
         onStateChange={(state) => {
           if (state?.index !== undefined) {
             const routes = ['today', 'tomorrow', 'later'];
-            setActiveTab(routes[state.index] || 'today');
+            const newActiveTab = routes[state.index] || 'today';
+            console.log('TodoScreen tab changed to:', newActiveTab, 'state.index:', state.index);
+            setActiveTab(newActiveTab);
           }
         }}
       >
@@ -492,13 +611,16 @@ const TodoListScreen = ({ navigation, route }) => {
         <View style={[styles.header, { backgroundColor: theme.background, borderBottomColor: theme.border }]}>
           <View style={styles.headerContent}>
             <TouchableOpacity
-              style={[styles.viewToggle, { backgroundColor: theme.card, borderColor: theme.border }]}
+              style={[styles.viewToggle, { 
+                backgroundColor: theme.cardElevated,
+                borderColor: theme.primary + '30' // Semi-transparent primary color
+              }]}
               onPress={toggleView}
-              activeOpacity={0.7}
+              activeOpacity={0.8}
             >
               <Ionicons 
                 name={currentView === 'todo' ? 'checkbox-outline' : 'document-text-outline'} 
-                size={20} 
+                size={scaleWidth(22)} 
                 color={theme.primary} 
               />
               <Text style={[styles.viewToggleText, { color: theme.text }]}>
@@ -506,10 +628,11 @@ const TodoListScreen = ({ navigation, route }) => {
               </Text>
               <Ionicons 
                 name="chevron-down" 
-                size={16} 
+                size={scaleWidth(18)} 
                 color={theme.textSecondary} 
               />
             </TouchableOpacity>
+
           </View>
         </View>
 
@@ -527,29 +650,44 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingHorizontal: spacing.m,
-    paddingVertical: spacing.s,
+    paddingHorizontal: scaleWidth(20),
+    paddingVertical: scaleHeight(16),
     borderBottomWidth: 0.5,
+    minHeight: scaleHeight(70),
+    justifyContent: 'center',
   },
   headerContent: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    flex: 1,
   },
   viewToggle: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.m,
-    paddingVertical: spacing.s,
-    borderRadius: 25,
+    paddingHorizontal: scaleWidth(20),
+    paddingVertical: scaleHeight(14),
+    borderRadius: scaleWidth(25),
     borderWidth: 1,
-    minWidth: 120,
+    minWidth: scaleWidth(150),
+    minHeight: scaleHeight(50),
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
   },
   viewToggleText: {
     fontSize: scaleFontSize(16),
     fontWeight: '600',
-    marginLeft: spacing.xs,
-    marginRight: spacing.xs,
+    marginHorizontal: scaleWidth(8),
+    textAlign: 'center',
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
   content: {
     flex: 1,

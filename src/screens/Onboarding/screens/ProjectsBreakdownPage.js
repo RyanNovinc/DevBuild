@@ -52,7 +52,7 @@ const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, onConfettiSta
     
     // Shorten some common long goal names for better display
     const abbreviations = {
-      'Environment & Organization': 'Environment & Org',
+      'Community & Environment': 'Community & Environment',
       'Build 6-Month Emergency Fund': 'Emergency Fund',
       'Pay Off High-Interest Debt': 'Pay Off Debt',
       'Save $25,000 Down Payment for Home': 'Save for Home',
@@ -504,8 +504,8 @@ const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, onConfettiSta
     } else if (projectName.includes("System") || projectName.includes("Automation")) {
       if (domainName === "Financial Security") {
         return "Financial systems reduce the mental load of money management. This approach creates reliable structures that optimize your finances even when you're not actively thinking about them.";
-      } else if (domainName === "Environment & Organization") {
-        return "Organizational systems eliminate the chaos of reactive management. This approach creates reliable structures that maintain order with minimal ongoing effort.";
+      } else if (domainName === "Community & Environment") {
+        return "Community and environmental systems create lasting positive impact. This approach builds connections and sustainable practices that benefit both personal wellbeing and collective good.";
       } else {
         return "Systems eliminate the need for repeated decision-making. This approach creates reliable processes that produce consistent results even when motivation fluctuates.";
       }
@@ -520,8 +520,8 @@ const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, onConfettiSta
     } else if (projectName.includes("Environment") || projectName.includes("Space")) {
       if (domainName === "Health & Wellness") {
         return "Your physical environment dramatically impacts health behaviors. This approach focuses on designing spaces that make healthy choices easier and unhealthy choices harder, reducing reliance on willpower.";
-      } else if (domainName === "Environment & Organization") {
-        return "Environmental design shapes daily experiences and behaviors. This approach creates spaces that naturally support your goals and wellbeing without requiring constant conscious effort.";
+      } else if (domainName === "Community & Environment") {
+        return "Community-centered environmental design shapes daily experiences and behaviors. This approach creates spaces and connections that naturally support your goals and collective wellbeing.";
       } else {
         return "Your environment shapes your behavior more than willpower alone. This approach focuses on designing your surroundings to naturally encourage desired actions and discourage unwanted ones.";
       }
@@ -578,8 +578,8 @@ const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, onConfettiSta
     } else if (projectName.includes("System") || projectName.includes("Automation")) {
       if (domainName === "Financial Security") {
         return "Begin by automating just one financial action (like a small recurring transfer to savings). Document your current bill payment schedule and due dates. Consider using account alerts to stay informed without constant checking.";
-      } else if (domainName === "Environment & Organization") {
-        return "Start by identifying one small area that causes repeated friction or stress. Create a simple 'reset' routine for just this area. Test the system for a week before expanding to other spaces.";
+      } else if (domainName === "Community & Environment") {
+        return "Start by identifying one area where you can create positive community impact or environmental change. Begin with simple actions in your immediate space that can inspire others and create ripple effects.";
       } else {
         return "Begin by documenting your current approach or routine. Identify the biggest friction points or inefficiencies. Test small changes one at a time rather than overhauling everything at once.";
       }

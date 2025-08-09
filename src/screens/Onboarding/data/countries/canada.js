@@ -1702,10 +1702,10 @@ export const DOMAIN_DEFINITIONS = [
     ]
   },
   {
-    name: "Environment & Organization",
+    name: "Community & Environment",
     icon: "home",
     color: "#6366f1", // Indigo
-    description: "Creating organized, comfortable living and working spaces",
+    description: "Building community connections, improving your environment, and organizing your spaces",
     goals: [
       {
         name: "Create Affordable Home Office Space",

@@ -1,8 +1,10 @@
 // src/components/ai/LoginScreen/components/AuthHeader.js
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../context/ThemeContext';
+import { useProfile } from '../../../../context/ProfileContext';
+import { DefaultAvatar } from '../../../../components/AvatarComponents';
 import {
   scaleWidth,
   scaleHeight,
@@ -21,6 +23,20 @@ const AuthHeader = ({ title, subtitle, icon = "star" }) => {
   const isLandscape = useIsLandscape();
   const safeSpacing = useSafeSpacing();
   
+  // Get profile from profile context with defensive checks
+  const { profile: contextProfile } = useProfile();
+  const profile = contextProfile || {};
+  
+  // Debug logging to see what profile data we're getting
+  console.log('AuthHeader - ProfileContext profile:', contextProfile);
+  console.log('AuthHeader - Profile data:', profile);
+  console.log('AuthHeader - Profile name:', profile?.name);
+  console.log('AuthHeader - Profile image:', profile?.profileImage);
+  console.log('AuthHeader - Default avatar:', profile?.defaultAvatar);
+  
+  // Get the user's name for welcome message
+  const userName = profile?.name || 'User';
+  
   // Get responsive logo size based on device
   const logoSize = getByDeviceSize({
     small: 80,
@@ -28,6 +44,97 @@ const AuthHeader = ({ title, subtitle, icon = "star" }) => {
     large: 120,
     tablet: 140
   });
+  
+  // Get user initials for placeholder (matching profile screen logic)
+  const getInitials = () => {
+    if (!profile.name || profile.name.trim() === '') return 'LC'; // LifeCompass initials as default
+    
+    const initials = profile.name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase();
+    
+    // Limit to first 2 characters max (same as profile screen)
+    return initials.substring(0, 2);
+  };
+  
+  // Render the profile image using same logic as ProfileHeader
+  const renderProfileImage = () => {
+    if (profile.profileImage) {
+      // Priority 1: Render actual profile image (custom photo)
+      return (
+        <Image 
+          source={{ uri: profile.profileImage }} 
+          style={[
+            styles.logoCircle, 
+            { 
+              width: logoSize,
+              height: logoSize,
+              borderRadius: logoSize / 2,
+            }
+          ]} 
+          accessible={true}
+          accessibilityLabel="Profile picture"
+          accessibilityRole="image"
+        />
+      );
+    } else if (profile.defaultAvatar) {
+      // Priority 2: Render default avatar
+      return (
+        <View style={[
+          styles.logoCircle,
+          { 
+            width: logoSize,
+            height: logoSize,
+            borderRadius: logoSize / 2,
+            backgroundColor: 'transparent',
+            overflow: 'hidden'
+          }
+        ]}>
+          <DefaultAvatar
+            size={logoSize}
+            colorIndex={profile.defaultAvatar.colorIndex}
+            iconName={profile.defaultAvatar.iconName}
+            initials={getInitials()}
+          />
+        </View>
+      );
+    } else {
+      // Priority 3: Default initials placeholder - black minimal style
+      return (
+        <View 
+          style={[
+            styles.logoCircle, 
+            { 
+              width: logoSize,
+              height: logoSize,
+              borderRadius: logoSize / 2,
+              backgroundColor: 'rgba(255,255,255,0.05)', // Subtle white background
+              borderColor: 'rgba(255,255,255,0.1)',
+              borderWidth: 1,
+              justifyContent: 'center',
+              alignItems: 'center'
+            }
+          ]}
+        >
+          <Text 
+            style={{
+              color: '#FFFFFF',
+              fontWeight: '300', // Lighter weight
+              fontSize: logoSize * 0.3,
+              textAlign: 'center',
+              letterSpacing: 1
+            }}
+            accessible={true}
+            accessibilityLabel={`Profile initials: ${getInitials()}`}
+          >
+            {getInitials()}
+          </Text>
+        </View>
+      );
+    }
+  };
   
   // Ensure contrast requirements are met
   const textColor = meetsContrastRequirements(theme.text, theme.background) 
@@ -57,66 +164,31 @@ const AuthHeader = ({ title, subtitle, icon = "star" }) => {
       accessibilityRole="header"
       accessibilityLabel={`${title || "LifeCompass"} app`}
     >
-      <View 
-        style={[
-          styles.logoCircle, 
-          { 
-            backgroundColor: theme.primary,
-            width: logoSize,
-            height: logoSize,
-            borderRadius: logoSize / 2,
-            marginBottom: spacing.l
-          }
-        ]}
-        accessible={true}
-        accessibilityRole="image"
-        accessibilityLabel={`${icon} icon`}
-      >
-        <Ionicons 
-          name={icon} 
-          size={logoSize * 0.6} 
-          color="#fff" 
-        />
+      <View style={{ marginBottom: spacing.l }}>
+        {renderProfileImage()}
       </View>
       <Text 
         style={[
           styles.appName, 
           { 
-            color: textColor,
+            color: '#FFFFFF',
             fontSize: getByDeviceSize({
-              small: fontSizes.xl,
-              medium: fontSizes.xxl,
-              large: fontSizes.xxl,
-              tablet: fontSizes.xxxl
+              small: 18,
+              medium: 20,
+              large: 22,
+              tablet: 24
             }),
+            fontWeight: '300',
+            letterSpacing: 1,
+            textTransform: 'uppercase',
             marginBottom: spacing.xs
           }
         ]}
         accessible={true}
         accessibilityRole="text"
-        maxFontSizeMultiplier={1.8} // Support for Dynamic Type
+        maxFontSizeMultiplier={1.8}
       >
-        {title || "LifeCompass"}
-      </Text>
-      <Text 
-        style={[
-          styles.appTagline, 
-          { 
-            color: secondaryTextColor,
-            fontSize: getByDeviceSize({
-              small: fontSizes.s,
-              medium: fontSizes.m,
-              large: fontSizes.m,
-              tablet: fontSizes.l
-            }),
-            paddingHorizontal: isLandscape ? spacing.xl : spacing.m
-          }
-        ]}
-        accessible={true}
-        accessibilityRole="text"
-        maxFontSizeMultiplier={2.0} // Support for Dynamic Type
-      >
-        {subtitle || "Achieve balance across all areas of your life"}
+        {profile?.name ? `Welcome back, ${profile.name.split(' ')[0]}` : (title || "LifeCompass")}
       </Text>
     </View>
   );

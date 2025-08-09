@@ -65,9 +65,9 @@ const AuthButton = ({ title, onPress, loading, disabled }) => {
       style={[
         styles.button, 
         { 
-          backgroundColor: theme.primary,
-          height: buttonSize.height,
-          borderRadius: scaleWidth(12)
+          backgroundColor: '#FFFFFF', // White button on black background
+          height: 52,
+          borderRadius: 12
         },
         (loading || disabled) && { opacity: 0.7 }
       ]}
@@ -77,12 +77,18 @@ const AuthButton = ({ title, onPress, loading, disabled }) => {
       {...getAccessibilityProps()}
     >
       {loading ? (
-        <ActivityIndicator color="#fff" size={isTablet ? "large" : "small"} />
+        <ActivityIndicator color="#000000" size="small" />
       ) : (
         <Text 
           style={[
             styles.buttonText,
-            { fontSize: getFontSize() }
+            { 
+              fontSize: 14,
+              color: '#000000', // Black text on white button
+              fontWeight: '600',
+              letterSpacing: 0.5,
+              textTransform: 'uppercase'
+            }
           ]}
           maxFontSizeMultiplier={1.5}
         >
@@ -95,17 +101,20 @@ const AuthButton = ({ title, onPress, loading, disabled }) => {
 
 const styles = StyleSheet.create({
   button: {
-    paddingVertical: 0, // Height is controlled by the container
+    paddingVertical: 0,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.m,
     width: '100%',
-    // Minimum height to ensure proper touch target
     minHeight: accessibility.minTouchTarget,
+    shadowColor: '#FFFFFF',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 2,
   },
   buttonText: {
-    color: '#fff',
-    fontWeight: '600',
+    // Color and styles now handled inline for black minimal theme
   },
 });
 

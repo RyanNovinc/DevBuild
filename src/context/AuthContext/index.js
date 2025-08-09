@@ -3,12 +3,8 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 
-// Import and initialize AWS Amplify immediately - UPDATED PATHS
-import { configureAmplify } from '../../components/ai/LoginScreen/utils/aws-cognito-config';
+// Import auth service - AWS Amplify is already configured in App.js
 import { authService } from '../../components/ai/LoginScreen/utils/auth-service';
-
-// Ensure AWS Amplify is configured before any Auth operations
-let isAmplifyReady = false;
 
 // Context setup
 const AuthContext = createContext({});
@@ -24,29 +20,10 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   
-  // Track Amplify readiness
-  const [amplifyReady, setAmplifyReady] = useState(false);
-  
   // Loading timeout ref
   const loadingTimeoutRef = useRef(null);
   
-  // Initialize AWS Amplify
-  useEffect(() => {
-    const initializeAmplify = async () => {
-      try {
-        console.log('Initializing AWS Amplify...');
-        const success = await configureAmplify();
-        isAmplifyReady = success;
-        setAmplifyReady(success);
-        console.log('AWS Amplify initialization result:', success);
-      } catch (error) {
-        console.error('Error initializing AWS Amplify:', error);
-        setAmplifyReady(false);
-      }
-    };
-    
-    initializeAmplify();
-  }, []);
+  // AWS Amplify is already initialized in App.js - no need to re-initialize
   
   // Safety mechanism to prevent stuck loading state
   useEffect(() => {
@@ -82,6 +59,10 @@ export const AuthProvider = ({ children }) => {
     const checkUserSession = async () => {
       try {
         setLoading(true);
+        
+        // Add a small delay to ensure AWS Amplify is fully initialized
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         const currentUser = await authService.getCurrentUser();
         
         if (currentUser) {
@@ -105,14 +86,9 @@ export const AuthProvider = ({ children }) => {
       }
     };
     
-    // Only check user session when Amplify is ready
-    if (amplifyReady) {
-      checkUserSession();
-    } else {
-      // Make sure loading is false if Amplify isn't ready
-      setLoading(false);
-    }
-  }, [amplifyReady]);
+    // Start checking user session immediately since AWS is configured in App.js
+    checkUserSession();
+  }, []);
   
   // Save device token for push notifications
   const saveDeviceToken = async (userId) => {
@@ -331,6 +307,63 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     }
   };
+
+  // DEVELOPER TESTING: Mock login function
+  const mockLogin = async (userType = 'free') => {
+    try {
+      setLoading(true);
+      
+      // Create mock user data based on user type
+      const mockUsers = {
+        free: {
+          id: 'mock-user-free-123',
+          email: 'test.user@example.com',
+          displayName: 'Test User',
+          phoneNumber: '+1234567890',
+          emailVerified: true,
+          mockUser: true,
+          subscription: 'free'
+        },
+        pro: {
+          id: 'mock-user-pro-456', 
+          email: 'pro.user@example.com',
+          displayName: 'Pro User',
+          phoneNumber: '+1234567890',
+          emailVerified: true,
+          mockUser: true,
+          subscription: 'pro'
+        },
+        unlimited: {
+          id: 'mock-user-unlimited-789',
+          email: 'premium.user@example.com', 
+          displayName: 'Premium User',
+          phoneNumber: '+1234567890',
+          emailVerified: true,
+          mockUser: true,
+          subscription: 'unlimited'
+        }
+      };
+
+      const mockUser = mockUsers[userType] || mockUsers.free;
+      
+      console.log('🧪 MOCK LOGIN: Logging in as', userType, 'user');
+      
+      // Simulate login delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      setUser(mockUser);
+      setIsAuthenticated(true);
+      setError(null);
+      
+      return true;
+    } catch (error) {
+      console.error('Mock login error:', error);
+      setError('Mock login failed');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
   
   // Create the auth context value object
   const authContextValue = {
@@ -338,7 +371,6 @@ export const AuthProvider = ({ children }) => {
     loading,
     error,
     isAuthenticated,
-    isAmplifyReady: amplifyReady,
     login,
     register,
     logout,
@@ -348,6 +380,7 @@ export const AuthProvider = ({ children }) => {
     resendVerificationCode,
     updateUserAttributes,
     changePassword,
+    mockLogin, // DEVELOPER TESTING: Mock login function
   };
   
   // Provide the auth context to children

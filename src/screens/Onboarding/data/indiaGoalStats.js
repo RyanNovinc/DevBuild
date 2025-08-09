@@ -555,8 +555,8 @@ export const INDIAN_GOAL_STATS = {
     }
   },
   
-  // Domain: Environment & Organization
-  "Environment & Organization": {
+  // Domain: Community & Environment
+  "Community & Environment": {
     "Organize Living Space": {
       title: "Organized Indian Workspaces Increase Productivity by 47% Despite Space Constraints",
       figure: "47%",
@@ -837,7 +837,7 @@ const mapGoalNameToStatKey = (goalName) => {
     return 'Explore Spiritual/Philosophical Growth';
   }
   
-  // Environment & Organization domain mappings (new)
+  // Community & Environment domain mappings (new)
   if (goalLower.includes('organized') || goalLower.includes('productive spaces')) {
     return 'Create Organized, Productive Spaces';
   }
@@ -924,26 +924,27 @@ export const getIndiaRelevantStats = (domainName, goalName) => {
     ...otherDomainStats.slice(0, 4) // Take up to 4 from other domains
   ].filter(Boolean);
   
-  // Create the final array starting with goal stat
-  const finalStats = [goalStat].filter(Boolean);
+  // Create the final array with optimal UX ordering
+  const finalStats = [];
   
-  // Randomly insert the 3 goal breakdown research stats throughout the remaining positions
-  const availableStats = [...otherStats];
-  const goalBreakdownStats = [...GOAL_BREAKDOWN_RESEARCH_STATS];
+  // Position 1: User's specific goal (validates their choice)
+  if (goalStat) {
+    finalStats.push(goalStat);
+  }
   
-  // Calculate total positions available (excluding position 1 which is goal-specific)
-  const totalAvailablePositions = availableStats.length + goalBreakdownStats.length;
+  // Positions 2-3: Other goals from same domain (related context)
+  finalStats.push(...domainStats.slice(0, 2));
   
-  // Create array of all non-goal-specific stats and shuffle them together
-  const allOtherStats = [...availableStats, ...goalBreakdownStats].sort(() => Math.random() - 0.5);
+  // Positions 4-6: App benefit stats (validates LifeCompass method)
+  finalStats.push(...GOAL_BREAKDOWN_RESEARCH_STATS);
   
-  // Add the shuffled stats to final array (positions 2+)
-  finalStats.push(...allOtherStats);
+  // Positions 7+: Other domain stats (broader inspiration)
+  finalStats.push(...otherDomainStats.slice(0, 4));
   
   return {
     goalSpecific: goalStat ? [goalStat] : [],
     domainSpecific: domainStats,
-    otherRelevant: [...goalBreakdownStats, ...otherDomainStats],
+    otherRelevant: [...GOAL_BREAKDOWN_RESEARCH_STATS, ...otherDomainStats],
     all: finalStats.slice(0, 10) // Limit to 10 total statistics
   };
 };

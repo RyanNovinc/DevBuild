@@ -10,6 +10,8 @@ config.resolver.assetExts.push('lottie');
 // Disable package.json:exports feature which is causing the issue with Supabase and Expo SDK 53
 config.resolver.unstable_enablePackageExports = false;
 
+// Keep resolver clean - AWS Amplify should work out of the box in dev builds
+
 // Exclude Lambda function files and AWS directory from Metro bundler
 config.resolver.blockList = [
   /lambda-functions\/.*/, // Lambda functions directory  

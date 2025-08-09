@@ -74,96 +74,95 @@ const CommunityTab = ({
       contentContainerStyle={styles.tabContentContainer}
       showsVerticalScrollIndicator={false}
     >
-      {/* Discord Branding */}
-      <View style={styles.discordSection}>
-        <View style={styles.discordLogoContainer}>
-          <View style={styles.discordLogo}>
-            <Ionicons name="logo-discord" size={60} color="#FFFFFF" />
-          </View>
-          <Text style={[styles.discordTitle, { color: theme.text }]}>
-            LifeCompass Community
-          </Text>
-          <Text style={[styles.discordSubtitle, { color: theme.textSecondary }]}>
-            Join our exclusive Discord community
-          </Text>
+      {/* Hero Section */}
+      <View style={styles.heroSection}>
+        <View style={[styles.heroIcon, { backgroundColor: theme.isDark ? 'rgba(88, 101, 242, 0.1)' : 'rgba(88, 101, 242, 0.05)' }]}>
+          <Ionicons name="people" size={32} color={DISCORD_BLUE} />
         </View>
+        <Text style={[styles.heroTitle, { color: theme.text }]}>
+          Join Our Community
+        </Text>
+        <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
+          Connect with achievers worldwide
+        </Text>
       </View>
 
-      {/* Founder Status */}
-      <View style={[styles.statusCard, { 
+      {/* Main Content Card */}
+      <View style={[styles.mainCard, { 
         backgroundColor: theme.card,
         borderColor: theme.border,
-        shadowColor: theme.shadow,
       }]}>
         {isLoading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={theme.primary} />
+            <ActivityIndicator size="large" color={DISCORD_BLUE} />
             <Text style={[styles.loadingText, { color: theme.textSecondary }]}>
-              Checking founder status...
+              Checking status...
             </Text>
           </View>
         ) : founderCode ? (
           <>
-            <View style={styles.founderHeader}>
-              <Ionicons name="star" size={24} color="#FFD700" />
+            {/* Founder Status */}
+            <View style={styles.founderSection}>
+              <View style={[styles.founderIconContainer, { backgroundColor: 'rgba(255, 215, 0, 0.1)' }]}>
+                <Ionicons name="star" size={24} color="#FFD700" />
+              </View>
               <Text style={[styles.founderTitle, { color: theme.text }]}>
-                You're a Founder! 
+                Founder Status
+              </Text>
+              <Text style={[styles.founderSubtitle, { color: theme.textSecondary }]}>
+                Exclusive member #1000
               </Text>
             </View>
-            
-            <Text style={[styles.founderSubtitle, { color: theme.textSecondary }]}>
-              You're one of the exclusive 1,000 LifeCompass Founders
-            </Text>
 
+            {/* Code Display */}
             <TouchableOpacity
-              style={[styles.codeDisplayContainer, { 
-                backgroundColor: theme.isDark ? '#2D1B69' : '#F0F4FF',
-                borderColor: theme.isDark ? '#6366F1' : '#4F46E5',
+              style={[styles.codeCard, { 
+                backgroundColor: theme.isDark ? 'rgba(88, 101, 242, 0.05)' : 'rgba(88, 101, 242, 0.02)',
+                borderColor: theme.isDark ? 'rgba(88, 101, 242, 0.2)' : 'rgba(88, 101, 242, 0.1)',
               }]}
               onPress={onCopyCode}
               activeOpacity={0.7}
             >
-              <View style={styles.codeDisplay}>
-                <Text style={[styles.codeLabel, { color: theme.isDark ? '#FFFFFF' : '#000000' }]}>
-                  Your founder code:
-                </Text>
-                <Animated.Text
-                  style={[
-                    styles.codeValue,
-                    { 
-                      color: theme.isDark ? '#A5B4FC' : '#4F46E5',
-                      transform: [{ scale: codeScale }] 
-                    }
-                  ]}
-                >
-                  {founderCode}
-                </Animated.Text>
-              </View>
-              
-              <View style={styles.copyIcon}>
+              <Text style={[styles.codeLabel, { color: theme.textSecondary }]}>
+                Your code
+              </Text>
+              <Animated.Text
+                style={[
+                  styles.codeValue,
+                  { 
+                    color: DISCORD_BLUE,
+                    transform: [{ scale: codeScale }] 
+                  }
+                ]}
+              >
+                {founderCode}
+              </Animated.Text>
+              <View style={styles.copyIconContainer}>
                 <Ionicons
-                  name={isCopied ? "checkmark-circle" : "copy-outline"}
-                  size={20}
-                  color={isCopied ? "#4CAF50" : (theme.isDark ? '#A5B4FC' : '#6366F1')}
+                  name={isCopied ? "checkmark" : "copy-outline"}
+                  size={16}
+                  color={isCopied ? "#10B981" : theme.textSecondary}
                 />
               </View>
             </TouchableOpacity>
 
             {isVerified && (
-              <View style={styles.verifiedBadge}>
-                <Ionicons name="checkmark-circle" size={18} color="#4CAF50" />
-                <Text style={styles.verifiedText}>Verified in Discord</Text>
+              <View style={styles.verifiedContainer}>
+                <Ionicons name="checkmark-circle" size={16} color="#10B981" />
+                <Text style={[styles.verifiedText, { color: '#10B981' }]}>Verified</Text>
               </View>
             )}
           </>
         ) : (
-          <View style={styles.noCodeContainer}>
-            <Ionicons name="gift-outline" size={48} color={theme.primary} />
-            <Text style={[styles.noCodeTitle, { color: theme.text }]}>
+          <View style={styles.nonFounderSection}>
+            <View style={[styles.giftIconContainer, { backgroundColor: theme.isDark ? 'rgba(88, 101, 242, 0.1)' : 'rgba(88, 101, 242, 0.05)' }]}>
+              <Ionicons name="gift-outline" size={32} color={DISCORD_BLUE} />
+            </View>
+            <Text style={[styles.nonFounderTitle, { color: theme.text }]}>
               Become a Founder
             </Text>
-            <Text style={[styles.noCodeDescription, { color: theme.textSecondary }]}>
-              Purchase LifeCompass to join our exclusive community of 1,000 founders
+            <Text style={[styles.nonFounderDescription, { color: theme.textSecondary }]}>
+              Join 1,000 exclusive members
             </Text>
             
             {error && (
@@ -171,132 +170,83 @@ const CommunityTab = ({
             )}
 
             <TouchableOpacity
-              style={[styles.primaryButton, { backgroundColor: theme.primary }]}
+              style={styles.ctaButton}
               onPress={onAssignCode}
               disabled={isAssigning}
             >
               {isAssigning ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
-                <>
-                  <Ionicons name="star-outline" size={20} color="#FFFFFF" />
-                  <Text style={styles.primaryButtonText}>
-                    Get Founder Code
-                  </Text>
-                </>
+                <Text style={styles.ctaButtonText}>
+                  Get Access
+                </Text>
               )}
             </TouchableOpacity>
           </View>
         )}
       </View>
 
-      {/* Welcome Section */}
-      <View style={[styles.welcomeSection, { 
-        backgroundColor: theme.card,
-        borderColor: theme.border,
-      }]}>
-        <View style={styles.welcomeIcon}>
-          <Ionicons name="heart" size={32} color="#FF6B6B" />
-        </View>
-        <Text style={[styles.welcomeTitle, { color: theme.text }]}>
-          Welcome to LifeCompass Community
+      {/* Features Section */}
+      <View style={styles.featuresSection}>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>
+          What You'll Get
         </Text>
-        <Text style={[styles.welcomeSubtitle, { color: theme.textSecondary }]}>
-          <Text style={{ color: theme.primary, fontWeight: '600' }}>Free for everyone</Text> • Connect with like-minded achievers
-        </Text>
-      </View>
-
-      {/* Community Features */}
-      <View style={styles.featuresGrid}>
-        {[
-          {
-            icon: 'globe',
-            color: '#4CAF50',
-            title: 'Free Community',
-            subtitle: 'Open to all LifeCompass users'
-          },
-          {
-            icon: 'people',
-            color: '#2196F3',
-            title: 'Find Your Tribe',
-            subtitle: 'Connect by shared goals & domains'
-          },
-          {
-            icon: 'chatbubbles',
-            color: '#FF9800',
-            title: '8 Life Domains',
-            subtitle: '24 focused subcommunities'
-          },
-          {
-            icon: 'trophy',
-            color: '#9C27B0',
-            title: 'Achieve Together',
-            subtitle: 'Accountability & support'
-          }
-        ].map((feature, index) => (
-          <View key={index} style={[styles.featureCard, { 
-            backgroundColor: theme.card,
-            borderColor: theme.border,
-          }]}>
-            <View style={[styles.featureIcon, { backgroundColor: `${feature.color}15` }]}>
-              <Ionicons name={feature.icon} size={24} color={feature.color} />
-            </View>
-            <Text style={[styles.featureTitle, { color: theme.text }]}>
-              {feature.title}
-            </Text>
-            <Text style={[styles.featureSubtitle, { color: theme.textSecondary }]}>
-              {feature.subtitle}
-            </Text>
-          </View>
-        ))}
-      </View>
-
-      {/* Benefits */}
-      <View style={[styles.benefitsCard, { 
-        backgroundColor: theme.card,
-        borderColor: theme.border,
-        shadowColor: theme.shadow,
-      }]}>
-        <View style={styles.founderBenefitsHeader}>
-          <Ionicons name="star" size={24} color="#FFD700" />
-          <Text style={[styles.founderBenefitsTitle, { color: theme.text }]}>
-            Founder Perks
-          </Text>
-        </View>
-        <Text style={[styles.founderBenefitsSubtitle, { color: theme.textSecondary }]}>
-          Exclusive benefits for our first 1,000 users
-        </Text>
-        
-        <View style={styles.founderBenefitsGrid}>
+        <View style={styles.featuresList}>
           {[
-            { icon: 'shield-checkmark', title: 'Founder Badge', color: '#FFD700' },
-            { icon: 'chatbubble-ellipses', title: 'Private Channels', color: '#9C27B0' },
-            { icon: 'sparkles', title: 'Early Access', color: '#4CAF50' },
-            { icon: 'people', title: 'Direct Dev Line', color: '#2196F3' }
-          ].map((benefit, index) => (
-            <View key={index} style={[styles.founderBenefitItem, { 
-              backgroundColor: theme.isDark ? '#1A1A1A' : '#FFFBF0',
-              borderColor: benefit.color + '30'
-            }]}>
-              <Ionicons name={benefit.icon} size={20} color={benefit.color} />
-              <Text style={[styles.founderBenefitText, { color: theme.isDark ? '#FFFFFF' : '#000000' }]}>
-                {benefit.title}
+            { icon: 'chatbubble-ellipses', title: 'Live discussions', color: '#10B981' },
+            { icon: 'people', title: 'Accountability partners', color: '#3B82F6' },
+            { icon: 'bulb', title: 'Success strategies', color: '#F59E0B' },
+            { icon: 'trophy', title: 'Achievement sharing', color: '#8B5CF6' }
+          ].map((feature, index) => (
+            <View key={index} style={styles.featureItem}>
+              <View style={[styles.featureIconSmall, { backgroundColor: `${feature.color}15` }]}>
+                <Ionicons name={feature.icon} size={16} color={feature.color} />
+              </View>
+              <Text style={[styles.featureText, { color: theme.text }]}>
+                {feature.title}
               </Text>
             </View>
           ))}
         </View>
       </View>
 
+      {/* Founder Benefits */}
+      {founderCode && (
+        <View style={[styles.benefitsCard, { 
+          backgroundColor: theme.isDark ? 'rgba(255, 215, 0, 0.05)' : 'rgba(255, 215, 0, 0.02)',
+          borderColor: 'rgba(255, 215, 0, 0.1)',
+        }]}>
+          <Text style={[styles.benefitsTitle, { color: theme.text }]}>
+            Founder Benefits
+          </Text>
+          <View style={styles.benefitsList}>
+            {[
+              { icon: 'shield-checkmark', title: 'Exclusive badge', color: '#FFD700' },
+              { icon: 'lock-closed', title: 'Private channels', color: '#8B5CF6' },
+              { icon: 'flash', title: 'Early features', color: '#10B981' },
+              { icon: 'call', title: 'Direct access', color: '#3B82F6' }
+            ].map((benefit, index) => (
+              <View key={index} style={styles.benefitItem}>
+                <Ionicons name={benefit.icon} size={14} color={benefit.color} />
+                <Text style={[styles.benefitText, { color: theme.textSecondary }]}>
+                  {benefit.title}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+
 
       {/* Discord Button */}
       {founderCode && (
         <TouchableOpacity
-          style={[styles.discordButton, { backgroundColor: DISCORD_BLUE }]}
+          style={styles.discordButton}
           onPress={onOpenDiscord}
         >
-          <Ionicons name="logo-discord" size={24} color="#FFFFFF" />
+          <Ionicons name="logo-discord" size={20} color="#FFFFFF" />
           <Text style={styles.discordButtonText}>
-            {isVerified ? "Open Discord Community" : "Join Discord & Verify"}
+            {isVerified ? "Open Community" : "Join Discord"}
           </Text>
         </TouchableOpacity>
       )}
@@ -1168,250 +1118,95 @@ const ReferralManagement = ({ theme }) => {
 
 // Verification Tab Component
 const WhyJoinTab = ({ theme }) => {
-  const [selectedDomain, setSelectedDomain] = useState(null);
-  const [showDomainModal, setShowDomainModal] = useState(false);
-
-  const handleDomainPress = (domain) => {
-    setSelectedDomain(domain);
-    setShowDomainModal(true);
-  };
   return (
     <ScrollView 
       style={[styles.tabContent, { backgroundColor: theme.background }]}
       contentContainerStyle={styles.tabContentContainer}
       showsVerticalScrollIndicator={false}
     >
-      {/* Header */}
-      <View style={[styles.whyJoinHeader, { 
-        backgroundColor: theme.card,
-        borderColor: theme.border,
-      }]}>
-        <Ionicons name="heart" size={28} color="#FF6B6B" />
-        <Text style={[styles.whyJoinTitle, { color: theme.text }]}>
-          Why Join Our Community?
+      {/* Hero Section */}
+      <View style={styles.heroSection}>
+        <View style={[styles.heroIcon, { backgroundColor: theme.isDark ? 'rgba(236, 72, 153, 0.1)' : 'rgba(236, 72, 153, 0.05)' }]}>
+          <Ionicons name="heart" size={32} color="#EC4899" />
+        </View>
+        <Text style={[styles.heroTitle, { color: theme.text }]}>
+          Why Join?
         </Text>
-        <Text style={[styles.whyJoinSubtitle, { color: theme.textSecondary }]}>
-          Transform your life alongside others on the same journey
+        <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
+          Connect with like-minded achievers
         </Text>
       </View>
 
       {/* Main Benefits */}
-      <View style={[styles.whyJoinSection, { 
+      <View style={[styles.mainCard, { 
         backgroundColor: theme.card,
         borderColor: theme.border,
       }]}>
         <Text style={[styles.sectionTitle, { color: theme.text }]}>
-          The Power of Community
+          Community Benefits
         </Text>
         
-        {[
-          {
-            icon: 'trending-up',
-            color: '#4CAF50',
-            title: 'Increase Achievement',
-            desc: 'People who share their goals with others are 65% more likely to achieve them'
-          },
-          {
-            icon: 'people',
-            color: '#2196F3',
-            title: 'Find Accountability Partners',
-            desc: 'Connect with others working on similar goals for mutual support and motivation'
-          },
-          {
-            icon: 'bulb',
-            color: '#FF9800',
-            title: 'Share Knowledge & Tips',
-            desc: 'Learn from others\' experiences and shortcuts to success'
-          },
-          {
-            icon: 'heart',
-            color: '#E91E63',
-            title: 'Emotional Support',
-            desc: 'Get encouragement during tough times and celebrate wins together'
-          }
-        ].map((benefit, index) => (
-          <View key={index} style={styles.whyJoinBenefit}>
-            <View style={[styles.whyJoinIcon, { backgroundColor: `${benefit.color}15` }]}>
-              <Ionicons name={benefit.icon} size={24} color={benefit.color} />
-            </View>
-            <View style={styles.whyJoinBenefitContent}>
-              <Text style={[styles.whyJoinBenefitTitle, { color: theme.text }]}>
+        <View style={styles.featuresList}>
+          {[
+            { icon: 'trending-up', title: '65% higher achievement rate', color: '#10B981' },
+            { icon: 'people', title: 'Find accountability partners', color: '#3B82F6' },
+            { icon: 'bulb', title: 'Share knowledge & tips', color: '#F59E0B' },
+            { icon: 'heart', title: 'Get emotional support', color: '#EC4899' }
+          ].map((benefit, index) => (
+            <View key={index} style={styles.featureItem}>
+              <View style={[styles.featureIconSmall, { backgroundColor: `${benefit.color}15` }]}>
+                <Ionicons name={benefit.icon} size={16} color={benefit.color} />
+              </View>
+              <Text style={[styles.featureText, { color: theme.text }]}>
                 {benefit.title}
               </Text>
-              <Text style={[styles.whyJoinBenefitDesc, { color: theme.textSecondary }]}>
-                {benefit.desc}
-              </Text>
             </View>
-          </View>
-        ))}
+          ))}
+        </View>
       </View>
 
-      {/* Domain Structure */}
-      <View style={[styles.whyJoinSection, { 
-        backgroundColor: theme.card,
-        borderColor: theme.border,
-      }]}>
+      {/* Life Domains */}
+      <View style={styles.featuresSection}>
         <Text style={[styles.sectionTitle, { color: theme.text }]}>
-          Organized by Life Domains
-        </Text>
-        <Text style={[styles.sectionDesc, { color: theme.textSecondary }]}>
-          Our community is structured around the 8 key areas of life, just like your Domain Wheel in LifeCompass.
+          8 Life Domains
         </Text>
         
-        <View style={styles.domainsGrid}>
+        <View style={styles.featuresList}>
           {[
-            { 
-              name: 'Career & Professional Growth', 
-              icon: 'briefcase', 
-              color: '#2563EB',
-              subcommunities: ['Skill Development & Learning', 'Leadership & Management', 'Entrepreneurship & Side Hustles'],
-              fullDesc: 'Focus on your professional development, workplace satisfaction, and career progression. This includes building new skills, advancing in your current role, exploring entrepreneurship, and creating meaningful work that aligns with your values.'
-            },
-            { 
-              name: 'Financial Security & Wealth', 
-              icon: 'wallet', 
-              color: '#10B981',
-              subcommunities: ['Budgeting & Debt Management', 'Investing & Wealth Building', 'Financial Independence & Early Retirement'],
-              fullDesc: 'Develop financial literacy and security through smart money management, strategic investments, and building multiple income streams. Create a sustainable financial foundation that supports your life goals and provides freedom of choice.'
-            },
-            { 
-              name: 'Health & Energy', 
-              icon: 'fitness', 
-              color: '#EF4444',
-              subcommunities: ['Fitness & Exercise', 'Nutrition & Wellness', 'Mental Health & Stress Management'],
-              fullDesc: 'Prioritize your physical and mental wellbeing through regular exercise, proper nutrition, quality sleep, and stress management. Build sustainable habits that increase your energy and vitality for pursuing other life goals.'
-            },
-            { 
-              name: 'Relationships & Connection', 
-              icon: 'people', 
-              color: '#EC4899',
-              subcommunities: ['Family & Parenting', 'Dating & Romance', 'Friendships & Social Life'],
-              fullDesc: 'Strengthen and nurture meaningful connections with family, friends, romantic partners, and your broader community. Develop communication skills, practice empathy, and invest time in relationships that matter most to you.'
-            },
-            { 
-              name: 'Learning & Growth', 
-              icon: 'school', 
-              color: '#8B5CF6',
-              subcommunities: ['Academic & Professional Education', 'Personal Development', 'Creative Skills & Hobbies'],
-              fullDesc: 'Commit to lifelong learning and personal development. Acquire new skills, expand your knowledge, develop emotional intelligence, and engage in activities that challenge you to grow intellectually and personally.'
-            },
-            { 
-              name: 'Purpose & Impact', 
-              icon: 'earth', 
-              color: '#0D9488',
-              subcommunities: ['Volunteering & Community Service', 'Environmental & Sustainability', 'Spiritual & Values Development'],
-              fullDesc: 'Discover and live according to your core values while making a positive impact on the world. Contribute to causes you care about, volunteer your time and skills, and create a meaningful legacy for future generations.'
-            },
-            { 
-              name: 'Digital Wellbeing & Innovation', 
-              icon: 'laptop', 
-              color: '#3B82F6',
-              subcommunities: ['Productivity & Organization', 'Digital Detox & Boundaries', 'Tech Skills & AI Tools'],
-              fullDesc: 'Develop a healthy relationship with technology while leveraging innovation to enhance your productivity. Set digital boundaries, stay current with useful tools and AI, and use technology intentionally to support your goals.'
-            },
-            { 
-              name: 'Recreation & Renewal', 
-              icon: 'happy', 
-              color: '#F59E0B',
-              subcommunities: ['Travel & Adventure', 'Hobbies & Creative Pursuits', 'Entertainment & Social Activities'],
-              fullDesc: 'Make time for activities that bring joy, relaxation, and renewal. Pursue hobbies, travel to new places, enjoy entertainment, and engage in leisure activities that help you recharge and maintain work-life balance.'
-            }
+            { icon: 'briefcase', title: 'Career & Professional', color: '#2563EB' },
+            { icon: 'wallet', title: 'Financial Security', color: '#10B981' },
+            { icon: 'fitness', title: 'Health & Energy', color: '#EF4444' },
+            { icon: 'people', title: 'Relationships', color: '#EC4899' },
+            { icon: 'school', title: 'Learning & Growth', color: '#8B5CF6' },
+            { icon: 'earth', title: 'Purpose & Impact', color: '#0D9488' },
+            { icon: 'laptop', title: 'Digital Wellbeing', color: '#3B82F6' },
+            { icon: 'happy', title: 'Recreation & Renewal', color: '#F59E0B' }
           ].map((domain, index) => (
-            <TouchableOpacity
-              key={index} 
-              style={[styles.domainGridCard, { 
-                backgroundColor: theme.card,
-                borderColor: theme.border,
-              }]}
-              activeOpacity={0.7}
-              onPress={() => handleDomainPress(domain)}
-            >
-              <View style={[styles.domainGridIconContainer, { backgroundColor: `${domain.color}15` }]}>
-                <Ionicons name={domain.icon} size={28} color={domain.color} />
+            <View key={index} style={styles.featureItem}>
+              <View style={[styles.featureIconSmall, { backgroundColor: `${domain.color}15` }]}>
+                <Ionicons name={domain.icon} size={16} color={domain.color} />
               </View>
-              <Text style={[styles.domainGridTitle, { color: theme.text }]}>
-                {domain.name}
+              <Text style={[styles.featureText, { color: theme.text }]}>
+                {domain.title}
               </Text>
-            </TouchableOpacity>
+            </View>
           ))}
         </View>
       </View>
 
       {/* Call to Action */}
-      <View style={[styles.whyJoinCTA, { 
-        backgroundColor: theme.primary + '15',
-        borderColor: theme.primary,
+      <View style={[styles.ctaCard, { 
+        backgroundColor: theme.isDark ? 'rgba(88, 101, 242, 0.05)' : 'rgba(88, 101, 242, 0.02)',
+        borderColor: 'rgba(88, 101, 242, 0.1)',
       }]}>
         <Text style={[styles.ctaTitle, { color: theme.text }]}>
-          Ready to accelerate your growth?
+          Ready to Join?
         </Text>
         <Text style={[styles.ctaDesc, { color: theme.textSecondary }]}>
-          Join a growing community of ambitious individuals committed to personal growth and achievement.
+          Connect with achievers today
         </Text>
       </View>
 
-      {/* Domain Detail Modal */}
-      <Modal
-        visible={showDomainModal}
-        animationType="fade"
-        transparent={true}
-        onRequestClose={() => setShowDomainModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalBackdrop} />
-          <View style={[styles.modalPopup, { backgroundColor: theme.card, borderColor: theme.border }]}>
-            {selectedDomain && (
-              <>
-                <View style={styles.modalPopupHeader}>
-                  <View style={[styles.modalPopupIcon, { backgroundColor: `${selectedDomain.color}15` }]}>
-                    <Ionicons name={selectedDomain.icon} size={32} color={selectedDomain.color} />
-                  </View>
-                  <TouchableOpacity
-                    style={styles.modalPopupClose}
-                    onPress={() => setShowDomainModal(false)}
-                  >
-                    <Ionicons name="close" size={24} color={theme.textSecondary} />
-                  </TouchableOpacity>
-                </View>
-                
-                <Text style={[styles.modalPopupTitle, { color: theme.text }]}>
-                  {selectedDomain.name}
-                </Text>
-                
-                <View style={styles.modalPopupContent}>
-                  <Text style={[styles.modalPopupDesc, { color: theme.text }]}>
-                    {selectedDomain.fullDesc}
-                  </Text>
-                  
-                  <View style={styles.modalPopupCommunities}>
-                    <Text style={[styles.modalPopupCommunitiesTitle, { color: theme.text }]}>
-                      Community Channels:
-                    </Text>
-                    <Text style={[styles.modalPopupCommunitiesSubtitle, { color: theme.textSecondary }]}>
-                      Join focused subcommunities within this domain
-                    </Text>
-                    <View style={styles.modalPopupChannelsContainer}>
-                      {selectedDomain.subcommunities.map((channel, index) => (
-                        <View key={index} style={[styles.modalPopupChannel, { 
-                          backgroundColor: theme.isDark ? '#1A1A1A' : '#F0F4FF',
-                          borderColor: selectedDomain.color + '30'
-                        }]}>
-                          <Ionicons name="people" size={16} color={selectedDomain.color} />
-                          <Text style={[styles.modalPopupChannelText, { 
-                            color: theme.isDark ? '#FFFFFF' : '#1A1A1A'
-                          }]}>
-                            #{channel.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and')}
-                          </Text>
-                        </View>
-                      ))}
-                    </View>
-                  </View>
-                </View>
-              </>
-            )}
-          </View>
-        </View>
-      </Modal>
     </ScrollView>
   );
 };
@@ -1423,187 +1218,92 @@ const VerificationTab = ({ founderCode, theme }) => {
       contentContainerStyle={styles.tabContentContainer}
       showsVerticalScrollIndicator={false}
     >
-      {/* Header */}
-      <View style={styles.verificationHeader}>
-        <View style={[styles.verificationIconContainer, { backgroundColor: `${DISCORD_BLUE}15` }]}>
+      {/* Hero Section */}
+      <View style={styles.heroSection}>
+        <View style={[styles.heroIcon, { backgroundColor: theme.isDark ? 'rgba(88, 101, 242, 0.1)' : 'rgba(88, 101, 242, 0.05)' }]}>
           <Ionicons name="shield-checkmark" size={32} color={DISCORD_BLUE} />
         </View>
-        <Text style={[styles.verificationTitle, { color: theme.text }]}>
-          Founder Verification Guide
+        <Text style={[styles.heroTitle, { color: theme.text }]}>
+          Verification Guide
         </Text>
-        <Text style={[styles.verificationSubtitle, { color: theme.textSecondary }]}>
-          Follow these steps to verify your founder status and access exclusive founder channels
+        <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
+          Get verified in Discord
         </Text>
       </View>
 
       {/* Verification Steps */}
-      <View style={[styles.stepsContainer, { 
-        backgroundColor: theme.card,
-        borderColor: theme.border,
-        shadowColor: theme.shadow,
-      }]}>
-        {/* Step 1 */}
-        <View style={styles.verificationStep}>
-          <View style={[styles.stepNumber, { backgroundColor: DISCORD_BLUE }]}>
-            <Text style={styles.stepNumberText}>1</Text>
-          </View>
-          <View style={styles.stepContent}>
-            <View style={styles.stepHeader}>
-              <Ionicons name="log-in-outline" size={18} color={DISCORD_BLUE} style={{marginRight: 6}} />
-              <Text style={[styles.stepTitle, { color: theme.text }]}>
-                Join our Discord server
-              </Text>
-            </View>
-            <Text style={[styles.stepDescription, { color: theme.textSecondary }]}>
-              Tap the Discord button in the Community tab to join our server
-            </Text>
-            <Text style={[styles.stepDescription, { color: theme.textSecondary }]}>
-              Accept the server invitation when prompted
-            </Text>
-          </View>
-        </View>
-        
-        {/* Step 2 */}
-        <View style={styles.verificationStep}>
-          <View style={[styles.stepNumber, { backgroundColor: DISCORD_BLUE }]}>
-            <Text style={styles.stepNumberText}>2</Text>
-          </View>
-          <View style={styles.stepContent}>
-            <View style={styles.stepHeader}>
-              <Ionicons name="navigate-outline" size={18} color={DISCORD_BLUE} style={{marginRight: 6}} />
-              <Text style={[styles.stepTitle, { color: theme.text }]}>
-                Find the verification channel
-              </Text>
-            </View>
-            <Text style={[styles.stepDescription, { color: theme.textSecondary }]}>
-              Look for the #verify-your-founder-status channel in the server
-            </Text>
-            <Text style={[styles.stepDescription, { color: theme.textSecondary }]}>
-              This channel is specifically for founder verification
-            </Text>
-          </View>
-        </View>
-        
-        {/* Step 3 */}
-        <View style={styles.verificationStep}>
-          <View style={[styles.stepNumber, { backgroundColor: DISCORD_BLUE }]}>
-            <Text style={styles.stepNumberText}>3</Text>
-          </View>
-          <View style={styles.stepContent}>
-            <View style={styles.stepHeader}>
-              <Ionicons name="copy-outline" size={18} color={DISCORD_BLUE} style={{marginRight: 6}} />
-              <Text style={[styles.stepTitle, { color: theme.text }]}>
-                Copy your founder code
-              </Text>
-            </View>
-            <Text style={[styles.stepDescription, { color: theme.textSecondary }]}>
-              Go back to the Community tab and tap your founder code to copy it
-            </Text>
-            
-            {/* Code highlight box */}
-            {founderCode && (
-              <View style={[styles.codeHighlight, {
-                backgroundColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)',
-                borderColor: '#6366F1',
-              }]}>
-                <Text style={[styles.codeHighlightText, { color: theme.text }]}>
-                  {founderCode}
-                </Text>
-                <Ionicons name="copy-outline" size={16} color={theme.textSecondary} />
-              </View>
-            )}
-          </View>
-        </View>
-        
-        {/* Step 4 */}
-        <View style={styles.verificationStep}>
-          <View style={[styles.stepNumber, { backgroundColor: DISCORD_BLUE }]}>
-            <Text style={styles.stepNumberText}>4</Text>
-          </View>
-          <View style={styles.stepContent}>
-            <View style={styles.stepHeader}>
-              <Ionicons name="chatbox-outline" size={18} color={DISCORD_BLUE} style={{marginRight: 6}} />
-              <Text style={[styles.stepTitle, { color: theme.text }]}>
-                Run the verification command
-              </Text>
-            </View>
-            <Text style={[styles.stepDescription, { color: theme.textSecondary }]}>
-              In the verification channel, type the following command:
-            </Text>
-            
-            {/* Command box */}
-            <View style={[styles.commandContainer, {
-              backgroundColor: theme.isDark ? '#2A2A2A' : '#F0F0F0',
-              borderColor: theme.border
-            }]}>
-              <Text style={[styles.commandText, { color: theme.isDark ? '#FFFFFF' : '#000000' }]}>
-                !verify {founderCode || 'YOUR-FOUNDER-CODE'} YourDiscordUsername
-              </Text>
-              <Text style={[styles.commandExample, { color: theme.textSecondary }]}>
-                Example: !verify {founderCode || 'LC-1234'} JohnDoe#1234
-              </Text>
-            </View>
-          </View>
-        </View>
-        
-        {/* Step 5 */}
-        <View style={styles.verificationStep}>
-          <View style={[styles.stepNumber, { backgroundColor: DISCORD_BLUE }]}>
-            <Text style={styles.stepNumberText}>5</Text>
-          </View>
-          <View style={styles.stepContent}>
-            <View style={styles.stepHeader}>
-              <Ionicons name="checkmark-circle-outline" size={18} color={DISCORD_BLUE} style={{marginRight: 6}} />
-              <Text style={[styles.stepTitle, { color: theme.text }]}>
-                Verification complete!
-              </Text>
-            </View>
-            <Text style={[styles.stepDescription, { color: theme.textSecondary }]}>
-              Once verified, you'll automatically receive the Founder role
-            </Text>
-            <Text style={[styles.stepDescription, { color: theme.textSecondary }]}>
-              This gives you access to exclusive #founders-corner channels
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Help Section */}
-      <View style={[styles.helpSection, { 
+      <View style={[styles.mainCard, { 
         backgroundColor: theme.card,
         borderColor: theme.border,
       }]}>
-        <View style={styles.helpHeader}>
-          <Ionicons name="help-circle-outline" size={22} color={theme.primary} />
-          <Text style={[styles.helpTitle, { color: theme.text }]}>
-            Need Help?
-          </Text>
-        </View>
-        <Text style={[styles.helpText, { color: theme.textSecondary }]}>
-          If you encounter issues during verification, you can:
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>
+          How to Verify
         </Text>
-        <View style={styles.helpOption}>
-          <Ionicons name="chatbubble-outline" size={16} color={theme.primary} />
-          <Text style={[styles.helpOptionText, { color: theme.textSecondary }]}>
-            Type <Text style={styles.helpCommand}>!help</Text> in the verification channel
-          </Text>
+        
+        <View style={styles.featuresList}>
+          <View style={styles.featureItem}>
+            <View style={[styles.featureIconSmall, { backgroundColor: 'rgba(88, 101, 242, 0.15)' }]}>
+              <Text style={[styles.stepNumberSmall, { color: DISCORD_BLUE }]}>1</Text>
+            </View>
+            <Text style={[styles.featureText, { color: theme.text }]}>
+              Join Discord server
+            </Text>
+          </View>
+          <View style={styles.featureItem}>
+            <View style={[styles.featureIconSmall, { backgroundColor: 'rgba(88, 101, 242, 0.15)' }]}>
+              <Text style={[styles.stepNumberSmall, { color: DISCORD_BLUE }]}>2</Text>
+            </View>
+            <Text style={[styles.featureText, { color: theme.text }]}>
+              Find #verify-founder-status
+            </Text>
+          </View>
+          <View style={styles.featureItem}>
+            <View style={[styles.featureIconSmall, { backgroundColor: 'rgba(88, 101, 242, 0.15)' }]}>
+              <Text style={[styles.stepNumberSmall, { color: DISCORD_BLUE }]}>3</Text>
+            </View>
+            <Text style={[styles.featureText, { color: theme.text }]}>
+              Copy your founder code
+            </Text>
+          </View>
+          <View style={styles.featureItem}>
+            <View style={[styles.featureIconSmall, { backgroundColor: 'rgba(88, 101, 242, 0.15)' }]}>
+              <Text style={[styles.stepNumberSmall, { color: DISCORD_BLUE }]}>4</Text>
+            </View>
+            <Text style={[styles.featureText, { color: theme.text }]}>
+              Run !verify command
+            </Text>
+          </View>
         </View>
-        <View style={styles.helpOption}>
-          <Ionicons name="person-outline" size={16} color={theme.primary} />
-          <Text style={[styles.helpOptionText, { color: theme.textSecondary }]}>
-            Contact an admin or moderator in Discord
-          </Text>
-        </View>
+        
+        {/* Command Example */}
+        {founderCode && (
+          <View style={[styles.commandCard, {
+            backgroundColor: theme.isDark ? 'rgba(88, 101, 242, 0.05)' : 'rgba(88, 101, 242, 0.02)',
+            borderColor: 'rgba(88, 101, 242, 0.1)',
+          }]}>
+            <Text style={[styles.commandLabel, { color: theme.textSecondary }]}>
+              Command:
+            </Text>
+            <Text style={[styles.commandText, { color: DISCORD_BLUE }]}>
+              !verify {founderCode}
+            </Text>
+          </View>
+        )}
       </View>
 
-      {/* Important Note */}
-      <View style={[styles.noteSection, { 
-        backgroundColor: 'rgba(255, 193, 7, 0.1)',
-        borderColor: '#FFC107',
+      {/* Note */}
+      <View style={[styles.ctaCard, { 
+        backgroundColor: theme.isDark ? 'rgba(255, 193, 7, 0.1)' : 'rgba(255, 193, 7, 0.05)',
+        borderColor: 'rgba(255, 193, 7, 0.3)',
       }]}>
-        <Ionicons name="information-circle-outline" size={20} color="#FFC107" />
-        <Text style={[styles.noteText, { color: theme.text }]}>
-          Each founder code can only be verified once and is permanently linked to your Discord account.
+        <View style={[styles.noteIcon, { backgroundColor: 'rgba(255, 193, 7, 0.1)' }]}>
+          <Ionicons name="information-circle" size={20} color="#FFC107" />
+        </View>
+        <Text style={[styles.noteTitle, { color: theme.text }]}>
+          Important
+        </Text>
+        <Text style={[styles.noteText, { color: theme.textSecondary }]}>
+          Each code can only be used once
         </Text>
       </View>
     </ScrollView>
@@ -2270,30 +1970,250 @@ const styles = StyleSheet.create({
   scrollViewContent: {
     paddingBottom: 120,
   },
-  discordLogoContainer: {
+  // Hero Section Styles
+  heroSection: {
     alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: 20,
+    paddingVertical: 40,
+    paddingHorizontal: 20,
   },
-  discordLogo: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: DISCORD_BLUE,
+  heroIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 5,
-      },
-      android: {
-        elevation: 6,
-      },
-    }),
+    marginBottom: 16,
+  },
+  heroTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    marginBottom: 8,
+    letterSpacing: -0.5,
+  },
+  heroSubtitle: {
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+
+  // Main Card Styles
+  mainCard: {
+    marginHorizontal: 20,
+    borderRadius: 16,
+    padding: 32,
+    alignItems: 'center',
+    borderWidth: 1,
+    marginBottom: 24,
+  },
+
+  // Founder Section Styles
+  founderSection: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  founderIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  founderTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  founderSubtitle: {
+    fontSize: 14,
+    textAlign: 'center',
+  },
+
+  // Code Card Styles
+  codeCard: {
+    width: '100%',
+    borderRadius: 12,
+    padding: 20,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  codeLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  codeValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 1,
+    flex: 1,
+    textAlign: 'center',
+  },
+  copyIconContainer: {
+    padding: 4,
+  },
+
+  // Verified Container
+  verifiedContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  verifiedText: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 6,
+  },
+
+  // Non-Founder Section
+  nonFounderSection: {
+    alignItems: 'center',
+  },
+  giftIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  nonFounderTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  nonFounderDescription: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  ctaButton: {
+    backgroundColor: DISCORD_BLUE,
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  ctaButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+  // Features Section Styles
+  featuresSection: {
+    marginHorizontal: 20,
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 16,
+  },
+  featuresList: {
+    gap: 12,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  featureIconSmall: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  featureText: {
+    fontSize: 16,
+    flex: 1,
+  },
+
+  // Benefits Section Styles
+  benefitsCard: {
+    marginHorizontal: 20,
+    borderRadius: 12,
+    padding: 20,
+    borderWidth: 1,
+    marginBottom: 24,
+  },
+  benefitsTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  benefitsList: {
+    gap: 8,
+  },
+  benefitItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  benefitText: {
+    fontSize: 14,
+  },
+
+  // CTA Card Styles
+  ctaCard: {
+    marginHorizontal: 20,
+    borderRadius: 12,
+    padding: 20,
+    borderWidth: 1,
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  ctaTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  ctaDesc: {
+    fontSize: 14,
+    textAlign: 'center',
+  },
+
+  // Verification Tab Styles
+  stepNumberSmall: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  commandCard: {
+    marginTop: 16,
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  commandLabel: {
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  commandText: {
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
+  noteIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  noteTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  noteText: {
+    fontSize: 14,
+    textAlign: 'center',
   },
   discordText: {
     fontSize: 18,
@@ -3105,24 +3025,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
-    borderRadius: 12,
-    ...Platform.select({
-      ios: {
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 6,
-      },
-      android: {
-        elevation: 6,
-      },
-    }),
+    backgroundColor: DISCORD_BLUE,
+    marginHorizontal: 20,
+    paddingVertical: 14,
+    borderRadius: 8,
+    gap: 8,
   },
   discordButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft: 8,
+    fontWeight: '600',
   },
   
   // Celebration Modal Styles

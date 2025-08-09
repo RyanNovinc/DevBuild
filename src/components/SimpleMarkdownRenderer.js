@@ -63,30 +63,41 @@ const SimpleMarkdownRenderer = ({ content, theme }) => {
   return <View>{elements}</View>;
 };
 
-// Parse inline markdown like **bold**
+// Parse inline markdown like **bold**, *italic*, and `code`
 const parseInlineMarkdown = (text, theme) => {
-  if (!text.includes('**')) {
+  // Debug log to see what text we're processing
+  console.log('Parsing markdown for text:', text.substring(0, 100));
+  
+  // If no markdown patterns, return plain text
+  if (!text.includes('**') && !text.includes('*') && !text.includes('`')) {
     return text;
   }
   
   const parts = [];
-  const regex = /\*\*(.*?)\*\*/g;
+  // Simpler, more robust regex for bold text
+  const boldRegex = /\*\*([^*\n]+?)\*\*/g;
   let lastIndex = 0;
   let match;
   
-  while ((match = regex.exec(text)) !== null) {
+  // First handle bold text
+  while ((match = boldRegex.exec(text)) !== null) {
+    console.log('Found bold match:', match[0], 'content:', match[1]);
+    
     // Add text before the bold part
     if (match.index > lastIndex) {
-      parts.push(
-        <Text key={`text-${lastIndex}`}>
-          {text.substring(lastIndex, match.index)}
-        </Text>
-      );
+      const beforeText = text.substring(lastIndex, match.index);
+      if (beforeText) {
+        parts.push(
+          <Text key={`text-${lastIndex}`} style={{ color: theme.text }}>
+            {beforeText}
+          </Text>
+        );
+      }
     }
     
     // Add the bold text
     parts.push(
-      <Text key={`bold-${match.index}`} style={styles.bold}>
+      <Text key={`bold-${match.index}`} style={[styles.bold, { color: theme.text }]}>
         {match[1]}
       </Text>
     );
@@ -96,14 +107,18 @@ const parseInlineMarkdown = (text, theme) => {
   
   // Add any remaining text
   if (lastIndex < text.length) {
-    parts.push(
-      <Text key={`text-${lastIndex}`}>
-        {text.substring(lastIndex)}
-      </Text>
-    );
+    const remainingText = text.substring(lastIndex);
+    if (remainingText) {
+      parts.push(
+        <Text key={`text-${lastIndex}`} style={{ color: theme.text }}>
+          {remainingText}
+        </Text>
+      );
+    }
   }
   
-  return parts;
+  // If we found matches, return the formatted parts, otherwise return original text
+  return parts.length > 0 ? parts : text;
 };
 
 const styles = StyleSheet.create({
@@ -132,6 +147,16 @@ const styles = StyleSheet.create({
   },
   bold: {
     fontWeight: 'bold',
+  },
+  italic: {
+    fontStyle: 'italic',
+  },
+  code: {
+    fontFamily: 'monospace',
+    fontSize: scaleFontSize(13),
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: 3,
   },
   listItem: {
     flexDirection: 'row',

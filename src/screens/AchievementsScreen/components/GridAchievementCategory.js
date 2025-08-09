@@ -175,7 +175,8 @@ const GridAchievementCategory = ({
       {/* Achievements Grid */}
       {isExpanded && (
         <Animated.View 
-          style={[styles.achievementsContainer, { opacity: fadeAnim }]}
+          style={[styles.achievementsContainer, { opacity: 1 }]}
+          pointerEvents="box-none"
         >
           {achievements.length > 0 ? (
             <FlatList
@@ -186,6 +187,8 @@ const GridAchievementCategory = ({
               scrollEnabled={false}
               contentContainerStyle={styles.gridContainer}
               columnWrapperStyle={styles.gridRow}
+              nestedScrollEnabled={true}
+              removeClippedSubviews={false}
             />
           ) : (
             <View style={[

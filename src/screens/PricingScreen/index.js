@@ -1,5 +1,5 @@
 // src/screens/PricingScreen/index.js - Updated with scarcity implementation
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   ScrollView,
@@ -8,17 +8,21 @@ import {
   Platform,
   Share,
   Animated,
+  Easing,
   TouchableOpacity,
   Text,
   Dimensions,
-  StyleSheet
+  StyleSheet,
+  FlatList
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import CountdownTimer from './components/CountdownTimer';
 import * as Clipboard from 'expo-clipboard';
 import { useTheme } from '../../context/ThemeContext';
 import { useNotification } from '../../context/NotificationContext';
-import PagerView from 'react-native-pager-view';
+import ReferralCodeInputModal from '../../components/ReferralCodeInputModal';
 
 // Import responsive utilities
 import {
@@ -53,12 +57,22 @@ import referralBackendService from '../../services/ReferralBackendService';
 import ViewToggle from './components/ViewToggle';
 import TestModeToggles from './components/TestModeToggles';
 import BillingSelector from './components/BillingSelector';
-import FounderPlan from './components/PlanCards/FounderPlan';
+import MinimalFounderPlan from './components/PlanCards/MinimalFounderPlan';
+import BlackMinimalFounderPlan from './components/PlanCards/BlackMinimalFounderPlan';
+import UnifiedBlackPlan from './components/PlanCards/UnifiedBlackPlan';
 import CompassAIPlan from './components/PlanCards/CompassAIPlan';
 import NavigatorAIPlan from './components/PlanCards/NavigatorAIPlan';
 import GuideAIPlan from './components/PlanCards/GuideAIPlan';
+import BlackMinimalAIPlans from './components/PlanCards/BlackMinimalAIPlans';
+import IsolatedAIPlans from './components/PlanCards/IsolatedAIPlans';
+import StaticAIPlans from './components/PlanCards/StaticAIPlans';
+import UltraMinimalAIPlans from './components/PlanCards/UltraMinimalAIPlans';
+import DumbAIPlans from './components/PlanCards/DumbAIPlans';
+import FinalAIPlans from './components/PlanCards/FinalAIPlans';
 import FeatureComparisonTable from './components/FeatureComparisons/FeatureComparisonTable';
+import MinimalFeatureTable from './components/FeatureComparisons/MinimalFeatureTable';
 import StickyCTA from './components/StickyCTA';
+import MinimalStickyCTA from './components/MinimalStickyCTA';
 import PricingFootnote from './components/PricingFootnote';
 
 // Scarcity component imports
@@ -85,8 +99,27 @@ const PricingScreen = ({ navigation, route }) => {
   
   // State variables - use initialTabFromParams if provided
   const [activeTab, setActiveTab] = useState(initialTabFromParams || 'lifetime');
+  
+  // Navigation state for TabView
+  const [navigationState, setNavigationState] = useState({
+    index: activeTab === 'subscription' ? 1 : 0,
+    routes: [
+      { key: 'lifetime', title: 'Founder Access' },
+      { key: 'subscription', title: 'AI Plans' }
+    ]
+  });
+  
+  // Sync navigationState with activeTab
+  useEffect(() => {
+    const newIndex = activeTab === 'lifetime' ? 0 : 1;
+    if (navigationState.index !== newIndex) {
+      setNavigationState(prev => ({ ...prev, index: newIndex }));
+    }
+  }, [activeTab]);
   const [selectedPlan, setSelectedPlan] = useState('');
   const [selectedSubscription, setSelectedSubscription] = useState('monthly');
+  const [localSubscription, setLocalSubscription] = useState('monthly');
+  const [aiPlansBilling, setAiPlansBilling] = useState('monthly');
   const [isScrolledDown, setIsScrolledDown] = useState(false);
   const [isLifetimeMember, setIsLifetimeMember] = useState(false);
   const [showTestModeToggles, setShowTestModeToggles] = useState(__DEV__);
@@ -97,85 +130,57 @@ const PricingScreen = ({ navigation, route }) => {
   const [founderSpotsRemaining, setFounderSpotsRemaining] = useState(1000);
   const [founderEndDate, setFounderEndDate] = useState("2025-08-15T23:59:59");
   const [viewMode, setViewMode] = useState('cards');
+  const [referralModalVisible, setReferralModalVisible] = useState(false);
+  const [hasEnteredReferralCode, setHasEnteredReferralCode] = useState(false);
   
-  // Add state for countdown
-  const [countdownTime, setCountdownTime] = useState({
-    days: 26,
-    hours: 12,
-    minutes: 45,
-    seconds: 20
-  });
   
-  // Countdown animation ref
-  const countdownPulseAnim = useRef(new Animated.Value(1)).current;
+  // Removed countdown state - now handled by isolated component
   
-  // Refs for scrollable content
+  // Refs to preserve scroll position for each tab
   const lifetimeScrollRef = useRef(null);
   const subscriptionScrollRef = useRef(null);
-  const pagerRef = useRef(null);
+  const lifetimeScrollPosition = useRef(0);
+  const subscriptionScrollPosition = useRef(0);
+  
+  // Removed unused refs
   
   const isDarkMode = theme.dark;
   
-  // Effect to update countdown timer
-  useEffect(() => {
-    // Set up countdown animation
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(countdownPulseAnim, {
-          toValue: 1.03,
-          duration: 1000,
-          useNativeDriver: true
-        }),
-        Animated.timing(countdownPulseAnim, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true
-        })
-      ])
-    ).start();
-    
-    // Simple timer for demo
-    const interval = setInterval(() => {
-      setCountdownTime(prev => {
-        let { days, hours, minutes, seconds } = prev;
-        
-        if (seconds > 0) {
-          seconds--;
-        } else {
-          seconds = 59;
-          if (minutes > 0) {
-            minutes--;
-          } else {
-            minutes = 59;
-            if (hours > 0) {
-              hours--;
-            } else {
-              hours = 23;
-              if (days > 0) {
-                days--;
-              }
-            }
-          }
-        }
-        
-        return { days, hours, minutes, seconds };
-      });
-    }, 1000);
-    
-    return () => clearInterval(interval);
-  }, []);
+  // Benefits data for the carousel
+  const founderBenefits = [
+    {
+      icon: 'flash',
+      text: '1 month of AI Light free ($2.99 value)'
+    },
+    {
+      icon: 'star',
+      text: 'Permanent access to all core features'
+    },
+    {
+      icon: 'gift',
+      text: '600 AI credits included ($0.60 value)'
+    },
+    {
+      icon: 'people',
+      text: 'Refer friends for 500 credits each'
+    },
+    {
+      icon: 'trophy',
+      text: 'Exclusive Founder\'s Badge'
+    },
+    {
+      icon: 'lock-closed',
+      text: 'Limited to first 1,000 members'
+    }
+  ];
+  
+  // Countdown timer now handled by isolated CountdownTimer component
+  // No timer logic needed in main component - prevents scroll interference
   
   // Set up the correct tab based on route params
   useEffect(() => {
-    if (initialTabFromParams && pagerRef.current) {
-      // Set the correct tab based on navigation params
+    if (initialTabFromParams) {
       setActiveTab(initialTabFromParams);
-      
-      // Set the PagerView page
-      const pageIndex = initialTabFromParams === 'lifetime' ? 0 : 1;
-      setTimeout(() => {
-        pagerRef.current.setPage(pageIndex);
-      }, 100);
     }
   }, [initialTabFromParams]);
   
@@ -260,6 +265,10 @@ const PricingScreen = ({ navigation, route }) => {
         if (storedEndDate) {
           setFounderEndDate(storedEndDate);
         }
+        
+        // Check if user has entered a referral code
+        const hasEntered = await AsyncStorage.getItem('hasEnteredReferralCode');
+        setHasEnteredReferralCode(hasEntered === 'true');
       } catch (error) {
         console.error('Error checking membership status:', error);
       }
@@ -310,24 +319,40 @@ const PricingScreen = ({ navigation, route }) => {
     setIsScrolledDown(scrollPosition > scaleHeight(200));
   };
   
-  // Handle page selection from PagerView
-  const onPageSelected = (e) => {
-    const newIndex = e.nativeEvent.position;
-    const newTab = newIndex === 0 ? 'lifetime' : 'subscription';
-    
-    if (newTab !== activeTab) {
-      setActiveTab(newTab);
-      setSelectedPlan('');
-    }
-  };
   
-  // Handle plan selection
+  // Handle tab change
+  const handleTabChange = (newTab) => {
+    setActiveTab(newTab);
+    setSelectedPlan('');
+  };
+
+  // Handle plan selection - preserve scroll position
   const handleSelectPlan = (plan) => {
+    // Get the correct ref and position based on active tab
+    const currentScrollRef = activeTab === 'lifetime' ? lifetimeScrollRef : subscriptionScrollRef;
+    const currentScrollPosition = activeTab === 'lifetime' ? lifetimeScrollPosition : subscriptionScrollPosition;
+    
+    // Store current scroll position before state update
+    if (currentScrollRef.current) {
+      // For React Native ScrollView, we need to get the scroll position differently
+      // The position is already tracked by onScroll, so we don't need to get it here
+    }
+    
     if (selectedPlan === plan) {
       setSelectedPlan('');
     } else {
       setSelectedPlan(plan);
     }
+    
+    // Restore scroll position after state update
+    setTimeout(() => {
+      if (currentScrollRef.current && currentScrollPosition.current > 0) {
+        currentScrollRef.current.scrollTo({
+          y: currentScrollPosition.current,
+          animated: false
+        });
+      }
+    }, 0);
   };
   
   // Handle sharing referral code
@@ -342,7 +367,7 @@ const PricingScreen = ({ navigation, route }) => {
     
     try {
       await Share.share({
-        message: `Join me on LifeCompass and get 50% off your first month of any AI plan! Use my referral code: ${referralCode} when you sign up. https://lifecompass.app/refer?code=${referralCode}`
+        message: `Join me on LifeCompass and get 500 AI credits free (worth $0.50)! Use my referral code: ${referralCode} when you sign up. https://lifecompass.app/refer?code=${referralCode}`
       });
     } catch (error) {
       Alert.alert("Error", "Could not share the referral code");
@@ -385,14 +410,6 @@ const PricingScreen = ({ navigation, route }) => {
     if (plan === 'free') return;
     
     try {
-      // Check for available discounts for AI plans
-      let availableDiscounts = [];
-      let hasDiscount = false;
-      
-      if (plan !== 'founding') {
-        availableDiscounts = await checkAvailableDiscounts();
-        hasDiscount = availableDiscounts.length > 0;
-      }
       let confirmMessage = "";
       let planName = "";
       let price = "";
@@ -406,28 +423,27 @@ const PricingScreen = ({ navigation, route }) => {
         case 'founding':
           planName = "Founder's Lifetime Access";
           price = "$4.99";
-          confirmMessage = "Confirm your one-time purchase of LifeCompass Founder's Lifetime Access for $4.99?\n\nYou'll get:\n• Permanent access to all core productivity features\n• 1 month of Guide AI free ($4.99 value)\n• The ability to refer friends for 50% off their first month\n• Exclusive Founder's Badge\n• Limited to first 1,000 members";
+          confirmMessage = "Confirm your one-time purchase of LifeCompass Founder's Lifetime Access for $4.99?\n\nYou'll get:\n• Permanent access to all core productivity features\n• 600 AI credits free ($0.60 value)\n• The ability to refer friends for 500 credits each\n• Exclusive Founder's Badge\n• Limited to first 1,000 members";
           break;
         case 'starter':
           planName = "Guide AI";
-          price = (hasDiscount || isFromReferral) ? 
-            `$${getMonthlyRate('starter', isLifetimeMember, selectedSubscription, true)}/${selectedSubscription === 'monthly' ? 'month' : 'month, billed annually'} (50% off first month)` : 
-            `$${getMonthlyRate('starter', isLifetimeMember, selectedSubscription)}/${selectedSubscription === 'monthly' ? 'month' : 'month, billed annually'}`;
-          confirmMessage = `Subscribe to the Guide AI plan for ${price}?\n\nYou'll get standard monthly capacity for AI assistance and access to all AI models. Your monthly capacity refreshes with each billing cycle.${!isLifetimeMember ? "\n\nThis subscription will also include all premium app features while your subscription is active." : ""}${hasDiscount ? "\n\n🎉 Referral discount will be automatically applied!" : ""}`;
+          price = `$${getMonthlyRate('starter', isLifetimeMember, selectedSubscription)}/${selectedSubscription === 'monthly' ? 'month' : 'month, billed annually'}`;
+          confirmMessage = `Subscribe to the Guide AI plan for ${price}?\n\nYou'll get $0.60 in AI credits monthly for AI assistance and access to all AI models. Your monthly credits refresh with each billing cycle.${!isLifetimeMember ? "\n\nThis subscription will also include all Pro app features while your subscription is active." : ""}`;
           break;
         case 'professional':
           planName = "Navigator AI";
-          price = (hasDiscount || isFromReferral) ? 
-            `$${getMonthlyRate('professional', isLifetimeMember, selectedSubscription, true)}/${selectedSubscription === 'monthly' ? 'month' : 'month, billed annually'} (50% off first month)` : 
-            `$${getMonthlyRate('professional', isLifetimeMember, selectedSubscription)}/${selectedSubscription === 'monthly' ? 'month' : 'month, billed annually'}`;
-          confirmMessage = `Subscribe to the Navigator AI plan for ${price}?\n\nYou'll get enhanced monthly capacity (3x the standard plan) for AI assistance and access to all AI models. Your monthly capacity refreshes with each billing cycle.${!isLifetimeMember ? "\n\nThis subscription will also include all premium app features while your subscription is active." : ""}${hasDiscount ? "\n\n🎉 Referral discount will be automatically applied!" : ""}`;
+          price = `$${getMonthlyRate('professional', isLifetimeMember, selectedSubscription)}/${selectedSubscription === 'monthly' ? 'month' : 'month, billed annually'}`;
+          confirmMessage = `Subscribe to the Navigator AI plan for ${price}?\n\nYou'll get $1.50 in AI credits monthly (2.5x the Guide plan) for AI assistance and access to all AI models. Your monthly credits refresh with each billing cycle.${!isLifetimeMember ? "\n\nThis subscription will also include all Pro app features while your subscription is active." : ""}`;
           break;
         case 'business':
           planName = "Compass AI";
-          price = (hasDiscount || isFromReferral) ? 
-            `$${getMonthlyRate('business', isLifetimeMember, selectedSubscription, true)}/${selectedSubscription === 'monthly' ? 'month' : 'month, billed annually'} (50% off first month)` : 
-            `$${getMonthlyRate('business', isLifetimeMember, selectedSubscription)}/${selectedSubscription === 'monthly' ? 'month' : 'month, billed annually'}`;
-          confirmMessage = `Subscribe to the Compass AI plan for ${price}?\n\nYou'll get our highest monthly capacity (7x the standard plan) for AI assistance and access to all AI models. Your monthly capacity refreshes with each billing cycle.${!isLifetimeMember ? "\n\nThis subscription will also include all premium app features while your subscription is active." : ""}${hasDiscount ? "\n\n🎉 Referral discount will be automatically applied!" : ""}`;
+          price = `$${getMonthlyRate('business', isLifetimeMember, selectedSubscription)}/${selectedSubscription === 'monthly' ? 'month' : 'month, billed annually'}`;
+          confirmMessage = `Subscribe to the Compass AI plan for ${price}?\n\nYou'll get $5.00 in AI credits monthly (8.3x the Guide plan) for AI assistance and access to all AI models. Your monthly credits refresh with each billing cycle.${!isLifetimeMember ? "\n\nThis subscription will also include all Pro app features while your subscription is active." : ""}`;
+          break;
+        case 'credits':
+          planName = "AI Credits";
+          price = "$0.99";
+          confirmMessage = "Purchase 150 AI credits for $0.99?\n\nOne-time purchase • No subscription required\nPerfect for testing our AI features!";
           break;
         default:
           confirmMessage = "Confirm your selection?";
@@ -453,27 +469,6 @@ const PricingScreen = ({ navigation, route }) => {
                 // Handle AI plan purchases
                 await AsyncStorage.setItem('aiPlan', plan);
                 
-                // Redeem discount if available
-                if (hasDiscount && availableDiscounts.length > 0) {
-                  try {
-                    const discount = availableDiscounts[0]; // Use the first available discount
-                    const originalPrice = getMonthlyRate(plan, isLifetimeMember, selectedSubscription);
-                    const redemptionResult = await referralBackendService.redeemDiscount(
-                      discount.conversionId,
-                      null, // userId (optional)
-                      selectedSubscription,
-                      originalPrice
-                    );
-                    
-                    if (redemptionResult) {
-                      console.log('Discount redeemed successfully:', redemptionResult);
-                    }
-                  } catch (discountError) {
-                    console.error('Error redeeming discount:', discountError);
-                    // Don't fail the purchase if discount redemption fails
-                  }
-                }
-                
                 if (isFromReferral) {
                   await AsyncStorage.removeItem('referralSource');
                   setIsFromReferral(false);
@@ -481,17 +476,19 @@ const PricingScreen = ({ navigation, route }) => {
                 
                 // Show success message
                 let successMessage = "";
-                const discountAppliedText = hasDiscount ? " 🎉 Your 50% referral discount has been applied!" : "";
                 
                 switch(plan) {
                   case 'starter':
-                    successMessage = `You've successfully subscribed to the Guide AI plan! Your ${selectedSubscription} subscription gives you standard monthly capacity for AI assistance with access to all AI models.${discountAppliedText}`;
+                    successMessage = `You've successfully subscribed to the Guide AI plan! Your ${selectedSubscription} subscription gives you $0.60 in AI credits monthly with access to all AI models.`;
                     break;
                   case 'professional':
-                    successMessage = `You've successfully subscribed to the Navigator AI plan! Your ${selectedSubscription} subscription provides enhanced monthly capacity (3x standard) for AI assistance with access to all AI models.${discountAppliedText}`;
+                    successMessage = `You've successfully subscribed to the Navigator AI plan! Your ${selectedSubscription} subscription provides $1.50 in AI credits monthly (2.5x the Guide plan) with access to all AI models.`;
                     break;
                   case 'business':
-                    successMessage = `You've successfully subscribed to the Compass AI plan! Your ${selectedSubscription} subscription delivers our highest monthly capacity (7x standard) for AI assistance with access to all AI models.${discountAppliedText}`;
+                    successMessage = `You've successfully subscribed to the Compass AI plan! Your ${selectedSubscription} subscription delivers $5.00 in AI credits monthly (8.3x the Guide plan) with access to all AI models.`;
+                    break;
+                  case 'credits':
+                    successMessage = "150 AI credits have been added to your account! You can now test all our AI features.";
                     break;
                 }
                 
@@ -508,19 +505,11 @@ const PricingScreen = ({ navigation, route }) => {
     }
   };
 
-  // Handle tab change
-  const handleTabChange = (tab) => {
-    setActiveTab(tab);
-    setSelectedPlan('');
-    
-    if (pagerRef.current) {
-      const pageIndex = tab === 'lifetime' ? 0 : 1;
-      pagerRef.current.setPage(pageIndex);
-    }
-  };
+
+
 
   // Render lifetime tab content
-  const renderLifetimeContent = () => {
+  const renderLifetimeContent = useCallback(() => {
     const horizontalPadding = getByDeviceSize({
       small: spacing.s,
       medium: spacing.m,
@@ -533,197 +522,31 @@ const PricingScreen = ({ navigation, route }) => {
 
     return (
       <>
-        {/* Directly embedded countdown timer */}
-        <Animated.View 
-          style={{
-            width: '90%',
-            alignSelf: 'center',
-            borderRadius: 12,
-            padding: 16,
-            backgroundColor: theme.cardElevated,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 4,
-            elevation: 3,
-            marginTop: 8,
-            marginBottom: 16,
-            transform: [{ scale: countdownPulseAnim }]
-          }}
-        >
-          <Text style={{
-            fontSize: 16,
-            fontWeight: '600',
-            textAlign: 'center',
-            marginBottom: 12,
-            color: theme.text
-          }}>
-            Founder access ends in:
-          </Text>
-          
-          <View style={{
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}>
-            {/* Days */}
-            <View style={{ alignItems: 'center', marginHorizontal: 4 }}>
-              <View style={{
-                width: 44,
-                height: 44,
-                borderRadius: 8,
-                justifyContent: 'center',
-                alignItems: 'center',
-                marginBottom: 4,
-                backgroundColor: theme.primary
-              }}>
-                <Text style={{
-                  fontSize: 20,
-                  fontWeight: 'bold',
-                  color: '#FFFFFF'
-                }}>{countdownTime.days < 10 ? `0${countdownTime.days}` : countdownTime.days}</Text>
-              </View>
-              <Text style={{
-                fontSize: 12,
-                color: theme.textSecondary
-              }}>days</Text>
-            </View>
-            
-            <Text style={{
-              fontSize: 24,
-              fontWeight: 'bold',
-              marginHorizontal: 2,
-              color: theme.primary
-            }}>:</Text>
-            
-            {/* Hours */}
-            <View style={{ alignItems: 'center', marginHorizontal: 4 }}>
-              <View style={{
-                width: 44,
-                height: 44,
-                borderRadius: 8,
-                justifyContent: 'center',
-                alignItems: 'center',
-                marginBottom: 4,
-                backgroundColor: theme.primary
-              }}>
-                <Text style={{
-                  fontSize: 20,
-                  fontWeight: 'bold',
-                  color: '#FFFFFF'
-                }}>{countdownTime.hours < 10 ? `0${countdownTime.hours}` : countdownTime.hours}</Text>
-              </View>
-              <Text style={{
-                fontSize: 12,
-                color: theme.textSecondary
-              }}>hours</Text>
-            </View>
-            
-            <Text style={{
-              fontSize: 24,
-              fontWeight: 'bold',
-              marginHorizontal: 2,
-              color: theme.primary
-            }}>:</Text>
-            
-            {/* Minutes */}
-            <View style={{ alignItems: 'center', marginHorizontal: 4 }}>
-              <View style={{
-                width: 44,
-                height: 44,
-                borderRadius: 8,
-                justifyContent: 'center',
-                alignItems: 'center',
-                marginBottom: 4,
-                backgroundColor: theme.primary
-              }}>
-                <Text style={{
-                  fontSize: 20,
-                  fontWeight: 'bold',
-                  color: '#FFFFFF'
-                }}>{countdownTime.minutes < 10 ? `0${countdownTime.minutes}` : countdownTime.minutes}</Text>
-              </View>
-              <Text style={{
-                fontSize: 12,
-                color: theme.textSecondary
-              }}>min</Text>
-            </View>
-            
-            <Text style={{
-              fontSize: 24,
-              fontWeight: 'bold',
-              marginHorizontal: 2,
-              color: theme.primary
-            }}>:</Text>
-            
-            {/* Seconds */}
-            <View style={{ alignItems: 'center', marginHorizontal: 4 }}>
-              <View style={{
-                width: 44,
-                height: 44,
-                borderRadius: 8,
-                justifyContent: 'center',
-                alignItems: 'center',
-                marginBottom: 4,
-                backgroundColor: theme.primary
-              }}>
-                <Text style={{
-                  fontSize: 20,
-                  fontWeight: 'bold',
-                  color: '#FFFFFF'
-                }}>{countdownTime.seconds < 10 ? `0${countdownTime.seconds}` : countdownTime.seconds}</Text>
-              </View>
-              <Text style={{
-                fontSize: 12,
-                color: theme.textSecondary
-              }}>sec</Text>
-            </View>
-          </View>
-        </Animated.View>
-        
-        {/* View Toggle */}
-        <ViewToggle 
-          theme={theme}
-          viewMode={viewMode}
-          setViewMode={setViewMode}
-          responsive={{
-            fontSize: fontSizes,
-            spacing: spacing,
-            isSmallDevice: isSmallDevice,
-            isTablet: isTablet
-          }}
-        />
-        
-        {/* Cards View */}
+        {/* Cards View - Unified design with timer integrated */}
         {viewMode === 'cards' && (
           <View style={{
             paddingHorizontal: 0,
-            marginTop: spacing.m,
-            alignItems: 'center',
+            marginTop: spacing.s,
             width: '100%'
           }}>
-            {/* Founder's Access Plan */}
-            <FounderPlan 
+            <UnifiedBlackPlan 
               theme={theme}
               selectedPlan={selectedPlan}
               handleSelectPlan={handleSelectPlan}
               isLifetimeMember={isLifetimeMember}
-              handlePurchase={handlePurchase}
+              spotsRemaining={founderSpotsRemaining}
+              initialTime={{
+                days: 26,
+                hours: 12,
+                minutes: 45,
+                seconds: 30
+              }}
               responsive={{
                 fontSize: fontSizes,
                 spacing: spacing,
                 isSmallDevice: isSmallDevice,
-                isTablet: isTablet,
-                width: width * 0.92 // Make founder plan take up 92% of screen width
+                isTablet: isTablet
               }}
-            />
-            
-            {/* Spots Remaining Banner - Below the card */}
-            <FounderSpotsBanner
-              spotsRemaining={founderSpotsRemaining}
-              totalSpots={1000}
-              theme={theme}
-              style={{ marginTop: 16, marginBottom: 12, width: '92%' }}
             />
           </View>
         )}
@@ -732,10 +555,9 @@ const PricingScreen = ({ navigation, route }) => {
         {viewMode === 'table' && (
           <View style={{
             width: '100%',
-            paddingHorizontal: 8,
-            alignItems: 'center'
+            flex: 1,
           }}>
-            <FeatureComparisonTable 
+            <MinimalFeatureTable 
               theme={theme}
               isLifetimeMember={isLifetimeMember}
               responsive={{
@@ -750,217 +572,57 @@ const PricingScreen = ({ navigation, route }) => {
           </View>
         )}
         
-        {/* Context Banner - Moved to the bottom */}
-        <FounderContextBanner 
-          theme={theme}
-          style={{ marginTop: 24, marginBottom: 8 }}
-        />
-        
-        {/* Test Mode Toggles */}
-        {showTestModeToggles && (
-          <TestModeToggles 
+        {/* View Toggle - At bottom of screen */}
+        <View style={{ 
+          position: 'absolute',
+          bottom: 120,
+          left: 0,
+          right: 0,
+          paddingHorizontal: spacing.m,
+        }}>
+          <ViewToggle 
             theme={theme}
-            showTestModeToggles={showTestModeToggles}
-            isLifetimeMember={isLifetimeMember}
-            handleToggleLifetimeMember={handleToggleLifetimeMember}
-            responsive={{
-              fontSize: fontSizes,
-              spacing: spacing,
-              isSmallDevice: isSmallDevice
-            }}
-          />
-        )}
-        
-        {/* Bottom spacing */}
-        <View style={{ height: scaleHeight(100) }} />
-      </>
-    );
-  };
-  
-  // Render subscription tab content
-  const renderSubscriptionContent = () => {
-    const horizontalPadding = getByDeviceSize({
-      small: spacing.s,
-      medium: spacing.m,
-      large: spacing.l,
-      tablet: spacing.xl
-    });
-
-    const tabletLayout = isTablet && {
-      flexDirection: isLandscape ? 'row' : 'column',
-      flexWrap: isLandscape ? 'wrap' : 'nowrap',
-      justifyContent: 'space-between'
-    };
-
-    return (
-      <>
-        {/* Billing cycle selector */}
-        <BillingSelector 
-          theme={theme}
-          selectedSubscription={selectedSubscription}
-          setSelectedSubscription={setSelectedSubscription}
-          responsive={{
-            fontSize: fontSizes,
-            spacing: spacing,
-            isSmallDevice: isSmallDevice,
-            isTablet: isTablet
-          }}
-        />
-        
-        {/* AI Power Plans */}
-        <View style={[
-          styles.planSelectionContainer,
-          {
-            paddingHorizontal: 0,
-            marginTop: spacing.m,
-            ...(tabletLayout || {})
-          }
-        ]}>
-          {/* Compass AI Plan */}
-          <CompassAIPlan 
-            theme={theme}
-            selectedPlan={selectedPlan}
-            handleSelectPlan={handleSelectPlan}
-            isLifetimeMember={isLifetimeMember}
-            isFromReferral={isFromReferral}
-            selectedSubscription={selectedSubscription}
-            handlePurchase={handlePurchase}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            activeTab={activeTab}
             responsive={{
               fontSize: fontSizes,
               spacing: spacing,
               isSmallDevice: isSmallDevice,
-              isTablet: isTablet,
-              isLandscape: isLandscape,
-              width: isTablet && isLandscape ? 
-                (width * 0.3) : // 30% of screen width on tablet landscape
-                width * 0.92 // 92% of screen width otherwise
-            }}
-          />
-          
-          {/* Navigator AI Plan */}
-          <NavigatorAIPlan 
-            theme={theme}
-            selectedPlan={selectedPlan}
-            handleSelectPlan={handleSelectPlan}
-            isLifetimeMember={isLifetimeMember}
-            isFromReferral={isFromReferral}
-            selectedSubscription={selectedSubscription}
-            handlePurchase={handlePurchase}
-            responsive={{
-              fontSize: fontSizes,
-              spacing: spacing,
-              isSmallDevice: isSmallDevice,
-              isTablet: isTablet,
-              isLandscape: isLandscape,
-              width: isTablet && isLandscape ? 
-                (width * 0.3) : // 30% of screen width on tablet landscape
-                width * 0.92 // 92% of screen width otherwise
-            }}
-          />
-          
-          {/* Guide AI Plan */}
-          <GuideAIPlan 
-            theme={theme}
-            selectedPlan={selectedPlan}
-            handleSelectPlan={handleSelectPlan}
-            isLifetimeMember={isLifetimeMember}
-            isFromReferral={isFromReferral}
-            selectedSubscription={selectedSubscription}
-            handlePurchase={handlePurchase}
-            responsive={{
-              fontSize: fontSizes,
-              spacing: spacing,
-              isSmallDevice: isSmallDevice,
-              isTablet: isTablet,
-              isLandscape: isLandscape,
-              width: isTablet && isLandscape ? 
-                (width * 0.3) : // 30% of screen width on tablet landscape
-                width * 0.92 // 92% of screen width otherwise
+              isTablet: isTablet
             }}
           />
         </View>
         
-        {/* Pricing Footnote */}
-        <PricingFootnote 
-          theme={theme}
-          responsive={{
-            fontSize: fontSizes,
-            spacing: spacing,
-            isSmallDevice: isSmallDevice
-          }}
+        {/* Bottom spacing */}
+        <View style={{ height: scaleHeight(100) }} />
+      </>
+    );
+  }, [selectedPlan, handleSelectPlan, isLifetimeMember, founderSpotsRemaining, viewMode, theme, spacing, fontSizes, isSmallDevice, isTablet]);
+  
+  // Render subscription tab content
+  const renderSubscriptionContent = useCallback(() => {
+    return (
+      <>
+        {/* Black Minimal AI Plans - All in one component */}
+        <DumbAIPlans 
+          selectedPlan={selectedPlan}
+          handleSelectPlan={handleSelectPlan}
+          billing={aiPlansBilling}
+          setBilling={setAiPlansBilling}
         />
-        
-        {/* Join Founder's Club Button for non-lifetime members */}
-        {!isLifetimeMember && (
-          <View style={{
-            padding: spacing.l,
-            alignItems: 'center',
-            marginVertical: spacing.m
-          }}>
-            <TouchableOpacity
-              style={[
-                styles.planButton,
-                { 
-                  backgroundColor: '#3F51B5',
-                  width: '90%',
-                  paddingVertical: spacing.m,
-                  borderRadius: scaleWidth(8)
-                }
-              ]}
-              onPress={() => {
-                setActiveTab('lifetime');
-                setSelectedPlan('');
-                if (pagerRef.current) {
-                  pagerRef.current.setPage(0);
-                }
-              }}
-              accessible={true}
-              accessibilityRole="button"
-              accessibilityLabel="Join Founder's Club"
-              accessibilityHint="Switch to the lifetime tab to join the Founder's Club"
-            >
-              <Text 
-                style={[
-                  styles.planButtonText, 
-                  { 
-                    color: '#FFFFFF',
-                    fontWeight: '700',
-                    fontSize: fontSizes.l,
-                  }
-                ]}
-                maxFontSizeMultiplier={1.3}
-              >
-                {FounderMessaging.getCtaText(founderSpotsRemaining)}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
-        
-        {/* Test Mode Toggles */}
-        {showTestModeToggles && (
-          <TestModeToggles 
-            theme={theme}
-            showTestModeToggles={showTestModeToggles}
-            isLifetimeMember={isLifetimeMember}
-            handleToggleLifetimeMember={handleToggleLifetimeMember}
-            responsive={{
-              fontSize: fontSizes,
-              spacing: spacing,
-              isSmallDevice: isSmallDevice
-            }}
-          />
-        )}
         
         {/* Bottom spacing */}
         <View style={{ height: scaleHeight(100) }} />
       </>
     );
-  };
+  }, [selectedPlan, handleSelectPlan]);
+
 
   return (
     <View style={{ 
       flex: 1, 
-      backgroundColor: theme.background 
+      backgroundColor: '#000000' 
     }}>
       {/* Status bar */}
       <StatusBar 
@@ -969,29 +631,26 @@ const PricingScreen = ({ navigation, route }) => {
         translucent={true}
       />
       
-      {/* Fixed Header */}
+      {/* Header with Back Button and Title - Black Minimal */}
       <View style={{
         paddingTop: safeSpacing.top,
-        backgroundColor: theme.background,
-        zIndex: 10,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
+        backgroundColor: '#000000',
       }}>
-        {/* Top Navigation Bar */}
         <View style={{
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
-          height: scaleHeight(56),
-          paddingHorizontal: spacing.m,
+          paddingHorizontal: 20,
+          paddingBottom: 16,
+          paddingTop: 16,
+          height: 64,
         }}>
           <TouchableOpacity
             style={{
-              width: 44,
-              height: 44,
+              width: 40,
+              height: 40,
+              borderRadius: 20,
+              backgroundColor: 'rgba(255,255,255,0.05)',
               justifyContent: 'center',
               alignItems: 'center',
             }}
@@ -999,144 +658,178 @@ const PricingScreen = ({ navigation, route }) => {
           >
             <Ionicons 
               name="arrow-back" 
-              size={24} 
-              color={theme.text}
+              size={20} 
+              color="#FFFFFF"
             />
           </TouchableOpacity>
           
           <Text style={{
-            fontSize: fontSizes.l,
-            fontWeight: '600',
-            color: theme.text,
+            fontSize: 18,
+            fontWeight: '300',
+            color: '#FFFFFF',
+            textAlign: 'center',
+            flex: 1,
+            letterSpacing: 1,
           }}>
-            Pricing
+            PRICING
           </Text>
           
-          <View style={{ width: 44 }} />
-        </View>
-        
-        {/* Modern Segmented Control for Tabs */}
-        <View style={{
-          paddingHorizontal: spacing.l,
-          paddingBottom: spacing.m,
-          paddingTop: spacing.xs,
-        }}>
-          <View style={{
-            flexDirection: 'row',
-            backgroundColor: theme.cardElevated,
-            borderRadius: 12,
-            padding: 4,
-            height: scaleHeight(48),
-          }}>
-            <TouchableOpacity
-              style={{
-                flex: 1,
-                borderRadius: 10,
-                justifyContent: 'center',
-                alignItems: 'center',
-                backgroundColor: activeTab === 'lifetime' ? theme.primary : 'transparent',
-                flexDirection: 'row',
-              }}
-              onPress={() => handleTabChange('lifetime')}
-            >
-              <Ionicons
-                name="trophy" // Changed from phone-portrait-outline to trophy
-                size={18}
-                color={activeTab === 'lifetime' ? '#FFFFFF' : theme.textSecondary}
-                style={{ marginRight: 8 }}
-              />
-              <Text style={{
-                color: activeTab === 'lifetime' ? '#FFFFFF' : theme.textSecondary,
-                fontWeight: '600',
-                fontSize: fontSizes.m,
-              }}>
-                Founder Access
-              </Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={{
-                flex: 1,
-                borderRadius: 10,
-                justifyContent: 'center',
-                alignItems: 'center',
-                backgroundColor: activeTab === 'subscription' ? theme.primary : 'transparent',
-                flexDirection: 'row',
-              }}
-              onPress={() => handleTabChange('subscription')}
-            >
-              <Ionicons
-                name="sparkles" // Changed from sparkles-outline to solid sparkles
-                size={18}
-                color={activeTab === 'subscription' ? '#FFFFFF' : theme.textSecondary}
-                style={{ marginRight: 8 }}
-              />
-              <Text style={{
-                color: activeTab === 'subscription' ? '#FFFFFF' : theme.textSecondary,
-                fontWeight: '600',
-                fontSize: fontSizes.m,
-              }}>
-                AI Plans
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <View style={{ width: 40 }} />
         </View>
       </View>
       
-      {/* Scrollable Content Area with PagerView for swiping */}
-      <PagerView
-        ref={pagerRef}
-        style={{ flex: 1 }}
-        initialPage={activeTab === 'lifetime' ? 0 : 1}
-        onPageSelected={onPageSelected}
-        pageMargin={0}
-      >
-        {/* Lifetime Tab Content */}
-        <View key="0">
-          <ScrollView
-            ref={lifetimeScrollRef}
-            style={{ flex: 1 }}
-            contentContainerStyle={{ 
-              paddingHorizontal: 0,
-              paddingTop: spacing.m,
-              paddingBottom: safeSpacing.bottom + scaleHeight(100),
-              alignItems: 'center',
-            }}
-            showsVerticalScrollIndicator={true}
-            onScroll={handleScroll}
-            scrollEventThrottle={16}
-          >
-            {renderLifetimeContent()}
-          </ScrollView>
-        </View>
-        
-        {/* Subscription Tab Content */}
-        <View key="1">
-          <ScrollView
-            ref={subscriptionScrollRef}
-            style={{ flex: 1 }}
-            contentContainerStyle={{ 
-              paddingHorizontal: 0,
-              paddingTop: spacing.m,
-              paddingBottom: safeSpacing.bottom + scaleHeight(100),
-            }}
-            showsVerticalScrollIndicator={true}
-            onScroll={handleScroll}
-            scrollEventThrottle={16}
-          >
-            {renderSubscriptionContent()}
-          </ScrollView>
-        </View>
-      </PagerView>
+      {/* TabView with Native Real-time Swiping */}
+      <TabView
+        navigationState={navigationState}
+        renderScene={useCallback(({ route }) => {
+          switch (route.key) {
+            case 'lifetime':
+              return (
+                <Animated.View style={{ flex: 1 }}>
+                  <ScrollView
+                    ref={lifetimeScrollRef}
+                    style={{ flex: 1, backgroundColor: '#000000' }}
+                    contentContainerStyle={{
+                      paddingTop: spacing.s,
+                      paddingBottom: safeSpacing.bottom + scaleHeight(100),
+                      alignItems: 'center',
+                    }}
+                    showsVerticalScrollIndicator={false}
+                    bounces={true}
+                    onScroll={(event) => {
+                      lifetimeScrollPosition.current = event.nativeEvent.contentOffset.y;
+                    }}
+                    scrollEventThrottle={16}
+                  >
+                    {renderLifetimeContent()}
+                  </ScrollView>
+                </Animated.View>
+              );
+            case 'subscription':
+              return (
+                <Animated.View style={{ flex: 1 }}>
+                  <ScrollView
+                    ref={subscriptionScrollRef}
+                    style={{ flex: 1, backgroundColor: '#000000' }}
+                    contentContainerStyle={{
+                      paddingTop: spacing.s,
+                      paddingBottom: safeSpacing.bottom + scaleHeight(100),
+                      alignItems: 'center',
+                    }}
+                    showsVerticalScrollIndicator={false}
+                    bounces={true}
+                    onScroll={(event) => {
+                      subscriptionScrollPosition.current = event.nativeEvent.contentOffset.y;
+                    }}
+                    scrollEventThrottle={16}
+                  >
+                    {renderSubscriptionContent()}
+                  </ScrollView>
+                </Animated.View>
+              );
+            default:
+              return null;
+          }
+        }, [renderLifetimeContent, renderSubscriptionContent, spacing, safeSpacing])}
+        onIndexChange={(index) => {
+          const newTab = index === 0 ? 'lifetime' : 'subscription';
+          setActiveTab(newTab);
+          setNavigationState(prev => ({ ...prev, index }));
+          setSelectedPlan('');
+        }}
+        initialLayout={{ width }}
+        renderTabBar={(props) => (
+          <View style={{
+            backgroundColor: '#000000',
+            paddingHorizontal: 16,
+            paddingTop: 16,
+            paddingBottom: 8,
+          }}>
+            <View style={{
+              backgroundColor: '#000000',
+              borderRadius: 12,
+              padding: 4,
+              flexDirection: 'row',
+            }}>
+              <TouchableOpacity
+                style={{
+                  flex: 1,
+                  paddingVertical: 14,
+                  borderRadius: 10,
+                  backgroundColor: activeTab === 'lifetime' ? 'rgba(255,255,255,0.1)' : 'transparent',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                onPress={() => {
+                  setActiveTab('lifetime');
+                  setNavigationState(prev => ({ ...prev, index: 0 }));
+                  setSelectedPlan('');
+                }}
+              >
+                <Ionicons
+                  name="compass"
+                  size={16}
+                  color={activeTab === 'lifetime' ? '#FFFFFF' : 'rgba(255,255,255,0.5)'}
+                  style={{ marginRight: 6 }}
+                />
+                <Text style={{
+                  color: activeTab === 'lifetime' ? '#FFFFFF' : 'rgba(255,255,255,0.5)',
+                  fontSize: 14,
+                  fontWeight: '600',
+                  letterSpacing: 0.5,
+                }}>
+                  PRO ACCESS
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={{
+                  flex: 1,
+                  paddingVertical: 14,
+                  borderRadius: 10,
+                  backgroundColor: activeTab === 'subscription' ? 'rgba(255,255,255,0.1)' : 'transparent',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                onPress={() => {
+                  setActiveTab('subscription');
+                  setNavigationState(prev => ({ ...prev, index: 1 }));
+                  setSelectedPlan('');
+                }}
+              >
+                <Ionicons
+                  name="sparkles"
+                  size={16}
+                  color={activeTab === 'subscription' ? '#FFFFFF' : 'rgba(255,255,255,0.5)'}
+                  style={{ marginRight: 6 }}
+                />
+                <Text style={{
+                  color: activeTab === 'subscription' ? '#FFFFFF' : 'rgba(255,255,255,0.5)',
+                  fontSize: 14,
+                  fontWeight: '600',
+                  letterSpacing: 0.5,
+                }}>
+                  AI PLANS
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+        swipeEnabled={true}
+        lazy={false}
+        pagerStyle={{ flex: 1 }}
+      />
       
-      {/* Sticky CTA */}
-      <StickyCTA 
+      {/* Minimal Sticky CTA */}
+      <MinimalStickyCTA 
         theme={theme}
         selectedPlan={selectedPlan}
         activeTab={activeTab}
-        isFromReferral={isFromReferral}
         isLifetimeMember={isLifetimeMember}
         selectedSubscription={selectedSubscription}
+        aiPlansBilling={aiPlansBilling}
         handlePurchase={handlePurchase}
         responsive={{
           fontSize: fontSizes,
@@ -1144,6 +837,18 @@ const PricingScreen = ({ navigation, route }) => {
           isSmallDevice: isSmallDevice,
           isTablet: isTablet,
           safeSpacing: safeSpacing
+        }}
+      />
+      
+      {/* Referral Code Input Modal */}
+      <ReferralCodeInputModal
+        visible={referralModalVisible}
+        onClose={() => setReferralModalVisible(false)}
+        theme={theme}
+        onSuccess={(referralCode) => {
+          // Update state to hide the referral button
+          setHasEnteredReferralCode(true);
+          setReferralModalVisible(false);
         }}
       />
     </View>

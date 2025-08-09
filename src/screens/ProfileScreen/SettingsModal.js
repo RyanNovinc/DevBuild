@@ -37,7 +37,8 @@ const SettingsModal = ({
   updateAppSetting, // Added this prop to receive the function from parent
   isEdgeSwipeActive,
   edgeSwipeX,
-  onScreenStateUpdate // Add this prop to update parent state
+  onScreenStateUpdate, // Add this prop to update parent state
+  onTriggerGiftSurprise // Add this prop for testing the gift surprise
 }) => {
   const { logout } = useAuth() || {};
   const insets = useSafeAreaInsets();
@@ -46,6 +47,8 @@ const SettingsModal = ({
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const translateX = useRef(new Animated.Value(width)).current; // Start from right edge
   const shakeAnim = useRef(new Animated.Value(0)).current;
+  const referralTextOpacity = useRef(new Animated.Value(1)).current;
+  const proOnlyTextOpacity = useRef(new Animated.Value(0)).current;
   
   // Track actual modal visibility state for closing animations
   const [modalVisible, setModalVisible] = useState(visible);
@@ -53,6 +56,15 @@ const SettingsModal = ({
   
   // Referral code input modal state
   const [referralModalVisible, setReferralModalVisible] = useState(false);
+  
+  // Goal limit modal state
+  const [goalLimitModalVisible, setGoalLimitModalVisible] = useState(false);
+  
+  // Restart onboarding modal state
+  const [restartOnboardingModalVisible, setRestartOnboardingModalVisible] = useState(false);
+  
+  // Referral button text state
+  const [showProOnlyText, setShowProOnlyText] = useState(false);
   
   // Function to trigger shake animation
   const triggerShake = () => {
@@ -67,6 +79,49 @@ const SettingsModal = ({
       Animated.timing(shakeAnim, { toValue: -10, duration: 50, useNativeDriver: true }),
       Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver: true })
     ]).start();
+    
+    // Also trigger the text fade animation
+    triggerTextFade();
+  };
+  
+  // Function to fade text from original to "Pro Members Only" and back
+  const triggerTextFade = () => {
+    // Fade out original text
+    Animated.timing(referralTextOpacity, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true
+    }).start(() => {
+      // Switch text
+      setShowProOnlyText(true);
+      
+      // Fade in "Pro Members Only" text
+      Animated.timing(proOnlyTextOpacity, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true
+      }).start(() => {
+        // Wait a moment
+        setTimeout(() => {
+          // Fade out "Pro Members Only"
+          Animated.timing(proOnlyTextOpacity, {
+            toValue: 0,
+            duration: 200,
+            useNativeDriver: true
+          }).start(() => {
+            // Switch back to original text
+            setShowProOnlyText(false);
+            
+            // Fade in original text
+            Animated.timing(referralTextOpacity, {
+              toValue: 1,
+              duration: 200,
+              useNativeDriver: true
+            }).start();
+          });
+        }, 1500); // Show "Pro Members Only" for 1.5 seconds
+      });
+    });
   };
   
   // Native iOS-style gesture handler for swipe-to-dismiss
@@ -341,7 +396,7 @@ const SettingsModal = ({
                   <View style={[styles.settingIconContainer, { 
                     backgroundColor: '#FFFFFF' 
                   }]}>
-                    <Ionicons name="rocket" size={20} color="#3F51B5" />
+                    <Ionicons name="compass" size={28} color="#2196F3" />
                   </View>
                   <View style={styles.settingTextContainer}>
                     <Text 
@@ -388,7 +443,7 @@ const SettingsModal = ({
                 accessible={true}
                 accessibilityRole="button"
                 accessibilityLabel="Received a referral code?"
-                accessibilityHint="Enter a referral code to get 50% off your first AI plan"
+                accessibilityHint="Enter a referral code to get 500 AI credits"
               >
                 <View style={styles.settingButtonContent}>
                   <View style={[styles.settingIconContainer, { 
@@ -409,7 +464,7 @@ const SettingsModal = ({
                       maxFontSizeMultiplier={1.5}
                       numberOfLines={1}
                     >
-                      Get 50% off your first AI plan
+                      Get 500 AI credits when you sign up
                     </Text>
                   </View>
                 </View>
@@ -501,8 +556,8 @@ const SettingsModal = ({
                 }}
                 accessible={true}
                 accessibilityRole="button"
-                accessibilityLabel="Give 50%, Get 50% Off"
-                accessibilityHint="Share your referral code for mutual discounts"
+                accessibilityLabel="Give 500, Get 500"
+                accessibilityHint="Share your referral code for mutual AI credits"
               >
                 <View style={styles.settingButtonContent}>
                   <View style={[styles.settingIconContainer, { 
@@ -516,14 +571,14 @@ const SettingsModal = ({
                       maxFontSizeMultiplier={1.3}
                       numberOfLines={1}
                     >
-                      Give 50%, Get 50% Off
+                      Give 500, Get 500
                     </Text>
                     <Text 
                       style={[styles.settingButtonSubtext, { color: theme.textSecondary }]}
                       maxFontSizeMultiplier={1.5}
                       numberOfLines={2} // Allow 2 lines for this longer description
                     >
-                      Share code for mutual 50% AI discounts
+                      Share code for mutual 500 AI credits
                     </Text>
                   </View>
                 </View>
@@ -553,7 +608,7 @@ const SettingsModal = ({
                   onPress={triggerShake}
                   accessible={true}
                   accessibilityRole="button"
-                  accessibilityLabel="Give 50%, Get 50% Off - Pro feature"
+                  accessibilityLabel="Give 500, Get 500 - Pro feature"
                   accessibilityHint="This feature is only available to Pro members"
                 >
                   <View style={styles.settingButtonContent}>
@@ -563,19 +618,44 @@ const SettingsModal = ({
                       <Ionicons name="gift-outline" size={20} color="#4CAF50" />
                     </View>
                     <View style={styles.settingTextContainer}>
-                      <Text 
-                        style={[styles.settingButtonText, { color: theme.text }]}
-                        maxFontSizeMultiplier={1.3}
-                        numberOfLines={1}
-                      >
-                        Give 50%, Get 50% Off
-                      </Text>
+                      <View style={{ position: 'relative' }}>
+                        <Animated.Text 
+                          style={[
+                            styles.settingButtonText, 
+                            { 
+                              color: theme.text,
+                              opacity: referralTextOpacity,
+                              position: showProOnlyText ? 'absolute' : 'relative'
+                            }
+                          ]}
+                          maxFontSizeMultiplier={1.3}
+                          numberOfLines={1}
+                        >
+                          Give 500, Get 500
+                        </Animated.Text>
+                        {showProOnlyText && (
+                          <Animated.Text 
+                            style={[
+                              styles.settingButtonText, 
+                              { 
+                                color: '#FF9800',
+                                opacity: proOnlyTextOpacity,
+                                fontWeight: 'bold'
+                              }
+                            ]}
+                            maxFontSizeMultiplier={1.3}
+                            numberOfLines={1}
+                          >
+                            Pro Members Only
+                          </Animated.Text>
+                        )}
+                      </View>
                       <Text 
                         style={[styles.settingButtonSubtext, { color: theme.textSecondary }]}
                         maxFontSizeMultiplier={1.5}
                         numberOfLines={2} // Allow 2 lines for this longer description
                       >
-                        Share code for mutual 50% AI discounts
+                        Share code for mutual 500 AI credits
                       </Text>
                     </View>
                   </View>
@@ -771,29 +851,32 @@ const SettingsModal = ({
                 borderColor: theme.border,
                 marginBottom: 16
               }]}
-              onPress={() => {
-                handleClose();
-                Alert.alert(
-                  "Restart Onboarding",
-                  "Would you like to go through the onboarding process again?",
-                  [
-                    { text: "Cancel", style: "cancel" },
-                    { 
-                      text: "Restart Onboarding", 
-                      style: "destructive",
-                      onPress: async () => {
-                        // Update the app setting to indicate onboarding should be shown again
-                        if (typeof updateAppSetting === 'function') {
-                          await updateAppSetting('onboardingCompleted', false);
-                          // Navigate to the Onboarding screen
-                          navigation.navigate('Onboarding');
-                        } else {
-                          alert("Unable to restart onboarding. Please try again later.");
-                        }
+              onPress={async () => {
+                // Check if user is free and has 2 active goals BEFORE closing the modal
+                if (screenState.userSubscriptionStatus === 'free') {
+                  try {
+                    // Get current goals from AsyncStorage
+                    const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+                    const goalsData = await AsyncStorage.getItem('goals');
+                    
+                    if (goalsData) {
+                      const goals = JSON.parse(goalsData);
+                      const activeGoals = Array.isArray(goals) ? goals.filter(goal => !goal.completed).length : 0;
+                      
+                      // If user has 2 or more active goals, show restriction message immediately
+                      if (activeGoals >= 2) {
+                        setGoalLimitModalVisible(true);
+                        return;
                       }
                     }
-                  ]
-                );
+                  } catch (error) {
+                    console.error('Error checking goals for restart onboarding:', error);
+                    // Continue with onboarding if we can't check goals
+                  }
+                }
+                
+                // Show restart onboarding confirmation modal
+                setRestartOnboardingModalVisible(true);
               }}
               accessible={true}
               accessibilityRole="button"
@@ -917,6 +1000,54 @@ const SettingsModal = ({
                     accessibilityState={{ checked: screenState.userSubscriptionStatus === 'pro' }}
                   />
                 </View>
+                
+                {/* Test Gift Surprise Button */}
+                <TouchableOpacity
+                  style={[styles.settingButton, {
+                    backgroundColor: theme.card,
+                    borderColor: theme.border,
+                    marginTop: 12
+                  }]}
+                  onPress={() => {
+                    if (onTriggerGiftSurprise) {
+                      onTriggerGiftSurprise();
+                      onClose(); // Close the settings modal to see the gift
+                    }
+                  }}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel="Test Pro Gift Surprise"
+                  accessibilityHint="Triggers the Pro member gift surprise for testing"
+                >
+                  <View style={styles.settingButtonContent}>
+                    <View style={[styles.settingIconContainer, {
+                      backgroundColor: '#FFD70020'
+                    }]}>
+                      <Ionicons name="gift" size={20} color="#FFD700" />
+                    </View>
+                    <View style={styles.settingTextContainer}>
+                      <Text 
+                        style={[styles.settingButtonText, { color: theme.text }]}
+                        maxFontSizeMultiplier={1.3}
+                        numberOfLines={1}
+                      >
+                        Test Gift Surprise
+                      </Text>
+                      <Text 
+                        style={[styles.settingButtonSubtext, { color: theme.textSecondary }]}
+                        maxFontSizeMultiplier={1.5}
+                        numberOfLines={1}
+                      >
+                        Show Pro upgrade gift
+                      </Text>
+                    </View>
+                  </View>
+                  <Ionicons 
+                    name="chevron-forward" 
+                    size={18} 
+                    color={theme.textSecondary} 
+                  />
+                </TouchableOpacity>
               </View>
             )}
           </ScrollView>
@@ -936,6 +1067,154 @@ const SettingsModal = ({
             setReferralModalVisible(false);
           }}
         />
+
+        {/* Goal Limit Modal */}
+        <Modal
+          visible={goalLimitModalVisible}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setGoalLimitModalVisible(false)}
+        >
+          <View style={styles.goalLimitOverlay}>
+            <Animated.View 
+              style={[
+                styles.goalLimitModal, 
+                { 
+                  backgroundColor: theme.background,
+                  borderColor: theme.border,
+                  shadowColor: isDarkMode ? '#FFFFFF' : '#000000'
+                }
+              ]}
+            >
+              {/* Icon */}
+              <View style={[styles.goalLimitIcon, { backgroundColor: `${theme.primary}15` }]}>
+                <Ionicons name="flag-outline" size={28} color={theme.primary} />
+              </View>
+              
+              {/* Title */}
+              <Text 
+                style={[styles.goalLimitTitle, { color: theme.text }]}
+                maxFontSizeMultiplier={1.2}
+              >
+                Goal Limit Reached
+              </Text>
+              
+              {/* Message */}
+              <Text 
+                style={[styles.goalLimitMessage, { color: theme.textSecondary }]}
+                maxFontSizeMultiplier={1.3}
+              >
+                Complete or remove active goals before restarting onboarding.
+              </Text>
+              
+              {/* Button */}
+              <TouchableOpacity
+                style={[styles.goalLimitButton, { backgroundColor: theme.primary }]}
+                onPress={() => setGoalLimitModalVisible(false)}
+                activeOpacity={0.8}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Close"
+              >
+                <Text 
+                  style={styles.goalLimitButtonText}
+                  maxFontSizeMultiplier={1.2}
+                >
+                  Got it
+                </Text>
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
+        </Modal>
+
+        {/* Restart Onboarding Confirmation Modal */}
+        <Modal
+          visible={restartOnboardingModalVisible}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setRestartOnboardingModalVisible(false)}
+        >
+          <View style={styles.restartOverlay}>
+            <Animated.View 
+              style={[
+                styles.restartModal, 
+                { 
+                  backgroundColor: theme.background,
+                  borderColor: theme.border,
+                  shadowColor: isDarkMode ? '#FFFFFF' : '#000000'
+                }
+              ]}
+            >
+              {/* Icon */}
+              <View style={[styles.restartIcon, { backgroundColor: `${theme.primary}15` }]}>
+                <Ionicons name="refresh-outline" size={28} color={theme.primary} />
+              </View>
+              
+              {/* Title */}
+              <Text 
+                style={[styles.restartTitle, { color: theme.text }]}
+                maxFontSizeMultiplier={1.2}
+              >
+                Start Fresh?
+              </Text>
+              
+              {/* Message */}
+              <Text 
+                style={[styles.restartMessage, { color: theme.textSecondary }]}
+                maxFontSizeMultiplier={1.3}
+              >
+                This will guide you through setting up your goals again.
+              </Text>
+              
+              {/* Buttons */}
+              <View style={styles.restartButtonContainer}>
+                <TouchableOpacity
+                  style={[styles.restartCancelButton, { borderColor: theme.border }]}
+                  onPress={() => setRestartOnboardingModalVisible(false)}
+                  activeOpacity={0.8}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel="Cancel"
+                >
+                  <Text 
+                    style={[styles.restartCancelText, { color: theme.textSecondary }]}
+                    maxFontSizeMultiplier={1.2}
+                  >
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[styles.restartConfirmButton, { backgroundColor: theme.primary }]}
+                  onPress={async () => {
+                    setRestartOnboardingModalVisible(false);
+                    handleClose();
+                    
+                    // Update the app setting to indicate onboarding should be shown again
+                    if (typeof updateAppSetting === 'function') {
+                      await updateAppSetting('onboardingCompleted', false);
+                      // Navigate to the Onboarding screen
+                      navigation.navigate('Onboarding');
+                    } else {
+                      alert("Unable to restart onboarding. Please try again later.");
+                    }
+                  }}
+                  activeOpacity={0.8}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel="Start Fresh"
+                >
+                  <Text 
+                    style={styles.restartConfirmText}
+                    maxFontSizeMultiplier={1.2}
+                  >
+                    Start Fresh
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </Animated.View>
+          </View>
+        </Modal>
       </View>
     </Modal>
   );
@@ -1090,7 +1369,7 @@ const styles = StyleSheet.create({
     flexShrink: 0, // Prevent shrinking
   },
 
-  // Referral count badge for the "Give 50%, Get 50% Off" button
+  // Referral count badge for the "Give 500, Get 500" button
   referralCountBadge: {
     width: 24,
     height: 24,
@@ -1134,6 +1413,144 @@ const styles = StyleSheet.create({
   warningText: {
     fontSize: 14,
     lineHeight: 20,
+  },
+
+  // Goal Limit Modal styles
+  goalLimitOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  goalLimitModal: {
+    width: '100%',
+    maxWidth: 320,
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 32,
+    alignItems: 'center',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  goalLimitIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  goalLimitTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 12,
+    letterSpacing: -0.2,
+  },
+  goalLimitMessage: {
+    fontSize: 15,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 28,
+    paddingHorizontal: 4,
+  },
+  goalLimitButton: {
+    width: '100%',
+    height: 48,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  goalLimitButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: -0.1,
+  },
+
+  // Restart Onboarding Modal styles
+  restartOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  restartModal: {
+    width: '100%',
+    maxWidth: 340,
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 32,
+    alignItems: 'center',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  restartIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  restartTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 12,
+    letterSpacing: -0.2,
+  },
+  restartMessage: {
+    fontSize: 15,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 32,
+    paddingHorizontal: 4,
+  },
+  restartButtonContainer: {
+    flexDirection: 'row',
+    width: '100%',
+    gap: 12,
+  },
+  restartCancelButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  restartCancelText: {
+    fontSize: 16,
+    fontWeight: '500',
+    letterSpacing: -0.1,
+  },
+  restartConfirmButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  restartConfirmText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: -0.1,
   }
 });
 

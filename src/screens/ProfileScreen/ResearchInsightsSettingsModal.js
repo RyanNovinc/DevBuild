@@ -30,7 +30,7 @@ const DOMAINS = [
   { id: 'Financial Security', name: 'Financial Security', icon: 'wallet-outline' },
   { id: 'Recreation & Leisure', name: 'Recreation & Leisure', icon: 'game-controller-outline' },
   { id: 'Purpose & Meaning', name: 'Purpose & Meaning', icon: 'compass-outline' },
-  { id: 'Environment & Organization', name: 'Environment & Organization', icon: 'home-outline' }
+  { id: 'Community & Environment', name: 'Community & Environment', icon: 'home-outline' }
 ];
 
 const RESEARCH_SCOPE_OPTIONS = [

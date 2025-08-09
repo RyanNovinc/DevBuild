@@ -5,6 +5,12 @@
 // Import PlatformFix at the very top before other imports to ensure Platform is available globally
 import './PlatformFix';
 
+// Import gesture handler polyfill - must be at the top
+import 'react-native-gesture-handler';
+
+// Import URL polyfill for AWS (keep this - it's needed)
+import 'react-native-url-polyfill/auto';
+
 import React, { useEffect, useState, useRef } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -24,7 +30,7 @@ import {
   Animated
 } from 'react-native';
 import PagerView from 'react-native-pager-view';
-import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
+import { TabView, TabBar } from 'react-native-tab-view';
 import { 
   SafeAreaProvider, 
   initialWindowMetrics
@@ -72,32 +78,67 @@ import { I18nProvider } from './src/screens/Onboarding/context/I18nContext';
 // Import the new transition screen for stable onboarding completion
 import OnboardingTransitionScreen from './src/components/OnboardingTransitionScreen';
 
-// Initialize AWS Amplify at the application root
+// Initialize AWS Amplify at the application root - NATIVE BUILD COMPATIBLE
 const initializeAmplify = () => {
   try {
-    console.log('Initializing AWS Amplify at app root with minimal config');
+    console.log('🚀 NATIVE BUILD: Initializing AWS Amplify at app root');
     
-    // Minimal AWS Configuration - only what's needed for basic auth
+    // Comprehensive AWS Configuration for native builds
     const awsConfig = {
       Auth: {
+        // Required: AWS Region
         region: 'ap-southeast-2',
+        
+        // Required: Cognito User Pool ID
         userPoolId: 'ap-southeast-2_DswoUlwql',
+        
+        // Required: Cognito App Client ID
         userPoolWebClientId: 'unr38aneiujkjoptt5p7pg6tp',
-      }
+        
+        // Add explicit configuration for native builds
+        authenticationFlowType: 'USER_SRP_AUTH',
+        
+        // Disable OAuth for native builds to prevent issues
+        oauth: {
+          domain: '',
+          scope: [],
+          redirectSignIn: '',
+          redirectSignOut: '',
+          responseType: 'code',
+          socialProviders: [],
+        }
+      },
+      
+      // Add AWS configuration root-level properties for native builds
+      aws_project_region: 'ap-southeast-2',
+      aws_cognito_region: 'ap-southeast-2',
+      aws_user_pools_id: 'ap-southeast-2_DswoUlwql',
+      aws_user_pools_web_client_id: 'unr38aneiujkjoptt5p7pg6tp',
     };
     
-    // Configure Amplify
+    // Configure Amplify with comprehensive config
     Amplify.configure(awsConfig);
-    console.log('✅ AWS Amplify minimal config successful');
+    console.log('✅ NATIVE BUILD: AWS Amplify configuration successful');
+    
+    // Store configuration globally for reference
+    global.AWS_AMPLIFY_CONFIGURED = true;
+    global.AWS_CONFIG = awsConfig;
+    
     return true;
   } catch (error) {
-    console.error('❌ AWS Amplify initialization error:', error);
+    console.error('❌ NATIVE BUILD: AWS Amplify initialization error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
     return false;
   }
 };
 
-// Call initialization immediately
-initializeAmplify();
+// Call initialization immediately and store result
+const amplifyInitialized = initializeAmplify();
+console.log('🔧 NATIVE BUILD: Amplify initialization result:', amplifyInitialized);
 
 // Global method to control AI button visibility
 if (typeof window !== 'undefined' && !window.setAIButtonVisible) {
@@ -189,8 +230,8 @@ import TimeBlockScreen from './src/screens/TimeBlockScreen';
 import ProjectDetailsScreen from './src/screens/ProjectDetailsScreen';
 import GoalDetailsScreen from './src/screens/GoalDetailsScreen';
 import TodoListScreen from './src/screens/TodoListScreen';
-// UPDATED: Import LoginScreen from new location
-import { LoginScreen } from './src/components/ai/LoginScreen';
+// UPDATED: Import both AuthNavigator and LoginScreen from LoginScreen module
+import AuthNavigator, { LoginScreen } from './src/components/ai/LoginScreen';
 import FeedbackScreen from './src/screens/FeedbackScreen';
 import AdminFeedbackScreen from './src/screens/AdminFeedbackScreen';
 import NotificationTestScreen from './src/screens/NotificationTestScreen';
@@ -210,7 +251,7 @@ import CommunityScreen from './src/screens/CommunityScreen/CommunityScreen'; // 
 import StreakDetailScreen from './src/screens/StreakDetailScreen'; // NEW: Import StreakDetailScreen
 
 // Import AI components that are used as screens
-import AILoginScreen from './src/components/ai/LoginScreen';
+// Removed duplicate: import AILoginScreen from './src/components/ai/LoginScreen';
 
 // Components
 import LoadingScreen from './src/components/LoadingScreen';
@@ -444,7 +485,7 @@ const TabBadge = ({ count, maxCount, isPro }) => {
   );
 };
 
-// Goals Tab Navigator using react-native-tab-view for proper color animations
+// Goals Tab Navigator using TabView
 const GoalsTabNavigator = ({ navigation, route }) => {
   const { theme } = useTheme();
   const { width } = useScreenDimensions();
@@ -459,7 +500,7 @@ const GoalsTabNavigator = ({ navigation, route }) => {
   const activeGoals = goals.filter(goal => !goal.completed);
   const completedGoals = goals.filter(goal => goal.completed);
   
-  // Always start at Overview tab to match content behavior
+  // Navigation state for TabView
   const [navigationState, setNavigationState] = React.useState({
     index: 0,
     routes: [
@@ -468,7 +509,7 @@ const GoalsTabNavigator = ({ navigation, route }) => {
       { key: 'completed', title: 'Done' },
     ],
   });
-  
+
   // Full-screen state for Overview tab
   const [isOverviewFullscreen, setIsOverviewFullscreen] = React.useState(false);
   
@@ -517,26 +558,27 @@ const GoalsTabNavigator = ({ navigation, route }) => {
     };
   }, [isOverviewFullscreen, navigationState?.index]);
   
-  // Force key to remount TabView when returning to screen
-  const [tabViewKey, setTabViewKey] = React.useState(0);
+  // Handle navigation to specific tab when parameters change
+  React.useEffect(() => {
+    if (route.params?.targetTabIndex !== undefined) {
+      // Navigate to specific tab when targetTabIndex is provided
+      setNavigationState(prev => ({
+        ...prev,
+        index: route.params.targetTabIndex
+      }));
+    }
+  }, [route.params?.targetTabIndex]);
 
-  // Reset to Overview tab whenever screen comes into focus
-  useFocusEffect(
-    React.useCallback(() => {
-      setNavigationState({
-        index: 0,
-        routes: [
-          { key: 'overview', title: 'Overview' },
-          { key: 'active', title: 'Goals' },
-          { key: 'completed', title: 'Done' },
-        ],
-      });
-      setTabViewKey(prev => prev + 1); // Force TabView to remount
-    }, [])
-  );
+  // Debug navigationState changes
+  React.useEffect(() => {
+    console.log('GoalsScreen navigationState changed:', navigationState);
+  }, [navigationState]);
   
-  // Render scene function that responds to state changes
+  // No forced reset - let content match whatever tab is selected
+  
+  // Render scene function - content matches selected tab
   const renderScene = ({ route }) => {
+    console.log('GoalsScreen renderScene called for route:', route.key, 'navigationState.index:', navigationState.index);
     switch (route.key) {
       case 'overview':
         return <LifePlanOverviewScreen 
@@ -553,19 +595,6 @@ const GoalsTabNavigator = ({ navigation, route }) => {
     }
   };
   
-  // Early return if navigationState is not properly initialized
-  if (!navigationState || !navigationState.routes || navigationState.routes.length === 0) {
-    return (
-      <View style={{ 
-        flex: 1, 
-        backgroundColor: theme.background,
-        justifyContent: 'center',
-        alignItems: 'center'
-      }}>
-        <Text>Loading...</Text>
-      </View>
-    );
-  }
 
   return (
     <View style={{ 
@@ -574,10 +603,11 @@ const GoalsTabNavigator = ({ navigation, route }) => {
       paddingTop: safeSpacing.top // Match TasksScreen safe area padding
     }}>
       <TabView
-        key={tabViewKey}
+        key={`goals-tabview-${navigationState.index}`}
         navigationState={navigationState}
         renderScene={renderScene}
         onIndexChange={(index) => {
+          console.log('GoalsScreen TabView onIndexChange:', index);
           setNavigationState(prev => ({ ...prev, index }));
         }}
         initialLayout={{ width }}
@@ -822,7 +852,17 @@ const TimeStack = () => {
   );
 };
 
-const TodoStack = () => {
+// Wrapper component to pass tab route params to TodoListScreen
+const TodoStackWrapper = ({ route, navigation }) => {
+  return (
+    <TodoListScreen 
+      route={route} 
+      navigation={navigation}
+    />
+  );
+};
+
+const TodoStack = ({ route, navigation }) => {
   return (
     <Stack.Navigator
       screenOptions={{
@@ -831,9 +871,10 @@ const TodoStack = () => {
     >
       <Stack.Screen 
         name="TodoList" 
-        component={TodoListScreen} 
-        options={{ unmountOnBlur: false }} 
-      />
+        options={{ unmountOnBlur: false }}
+      >
+        {(props) => <TodoStackWrapper {...props} route={route} />}
+      </Stack.Screen>
     </Stack.Navigator>
   );
 };
@@ -1389,7 +1430,7 @@ function AppContent({ navigationRef }) {
           />
           <Stack.Screen name="Diagnostics" component={DiagnosticsScreen} />
           <Stack.Screen name="AchievementsScreen" component={AchievementsScreen} />
-          <Stack.Screen name="AILoginScreen" component={AILoginScreen} />
+          <Stack.Screen name="AILoginScreen" component={AuthNavigator} />
           <Stack.Screen name="WatchAdsScreen" component={WatchAdsScreen} />
           <Stack.Screen name="CommunityScreen" component={CommunityScreen} />
           <Stack.Screen name="StreakDetailScreen" component={StreakDetailScreen} />

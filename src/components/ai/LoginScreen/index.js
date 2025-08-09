@@ -5,6 +5,7 @@ import LoginScreen from './LoginScreen';
 import ForgotPasswordScreen from './ForgotPasswordScreen';
 import ResetPasswordScreen from './ResetPasswordScreen';
 import VerificationScreen from './VerificationScreen';
+import LoginSuccessScreen from './LoginSuccessScreen';
 import { authService } from './utils/auth-service';
 import { awsConfig, configureAmplify } from './utils/aws-cognito-config';
 
@@ -26,6 +27,7 @@ const AuthNavigator = () => {
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
       <Stack.Screen name="Verification" component={VerificationScreen} />
+      <Stack.Screen name="LoginSuccess" component={LoginSuccessScreen} />
     </Stack.Navigator>
   );
 };
@@ -36,6 +38,7 @@ export {
   ForgotPasswordScreen,
   ResetPasswordScreen,
   VerificationScreen,
+  LoginSuccessScreen,
   authService,
   awsConfig,
   configureAmplify

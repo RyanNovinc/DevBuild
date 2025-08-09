@@ -100,7 +100,7 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
     { name: "Financial Security", icon: "cash", color: "#10b981" },
     { name: "Recreation & Leisure", icon: "bicycle", color: "#f59e0b" },
     { name: "Purpose & Meaning", icon: "compass", color: "#ef4444" },
-    { name: "Environment & Organization", icon: "home", color: "#6366f1" },
+    { name: "Community & Environment", icon: "home", color: "#6366f1" },
     { name: "Other", icon: "star", color: "#14b8a6" }
   ];
 
@@ -504,6 +504,7 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
                   goToNextScreen();
                 }}
                 onBack={goToPreviousScreen}
+                onSkipOnboarding={handleSkipOnboarding}
                 isNavigating={isNavigating}
               />
             )}

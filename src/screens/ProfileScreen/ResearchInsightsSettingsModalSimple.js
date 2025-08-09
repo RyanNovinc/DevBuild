@@ -32,7 +32,7 @@ const ResearchInsightsSettingsModalSimple = ({ visible, onClose, onSettingsChang
     // Create new settings with the selected country
     const newSettings = {
       selectedCountries: [selectedCountry],
-      selectedDomains: currentSettings?.selectedDomains || ['Career & Work', 'Health & Wellness', 'Relationships', 'Personal Growth', 'Financial Security', 'Recreation & Leisure', 'Purpose & Meaning', 'Environment & Organization'],
+      selectedDomains: currentSettings?.selectedDomains || ['Career & Work', 'Health & Wellness', 'Relationships', 'Personal Growth', 'Financial Security', 'Recreation & Leisure', 'Purpose & Meaning', 'Community & Environment'],
       researchScope: currentSettings?.researchScope || 'domain_wide',
       includeGeneralStats: currentSettings?.includeGeneralStats !== false
     };

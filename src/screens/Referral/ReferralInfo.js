@@ -17,18 +17,18 @@ const ReferralInfo = ({ theme }) => {
   const faqs = [
     {
       id: 1,
-      question: "How do I get my 50% discount?",
-      answer: "Once you successfully refer a friend who buys Pro, your next Pro purchase will automatically be 50% off - no additional steps required!"
+      question: "How do I get my 500 credits?",
+      answer: "Once you successfully refer a friend who signs up, you'll both automatically receive 500 AI credits - no additional steps required!"
     },
     {
       id: 2,
-      question: "When is the discount applied?",
-      answer: "The 50% off is automatically applied at checkout when you purchase Pro after a successful referral - it just shows up as savings!"
+      question: "When are the credits added?",
+      answer: "The 500 AI credits are automatically added to your account immediately after your friend successfully signs up using your referral code!"
     },
     {
       id: 3,
       question: "Where does my friend enter the referral code?",
-      answer: "Your friend must go to Profile → Settings → Enter Referral Code in the app and input your code BEFORE buying the Pro version. This is crucial - the code must be entered first!"
+      answer: "Your friend must go to Profile → Settings → Enter Referral Code in the app and input your code BEFORE or during the sign-up process. This ensures you both get the credits!"
     },
     {
       id: 4,
@@ -73,7 +73,7 @@ const ReferralInfo = ({ theme }) => {
                 Friend Enters Code
               </Text>
               <Text style={styles.stepDescription}>
-                They add your referral code in the app before upgrading
+                They add your referral code in the app before or during sign-up
               </Text>
             </View>
           </View>
@@ -84,10 +84,10 @@ const ReferralInfo = ({ theme }) => {
             </View>
             <View style={styles.stepContent}>
               <Text style={styles.stepTitle}>
-                Friend Buys Pro
+                Friend Signs Up
               </Text>
               <Text style={styles.stepDescription}>
-                They purchase the Pro version of LifeCompass
+                They create an account and start using LifeCompass
               </Text>
             </View>
           </View>
@@ -98,10 +98,10 @@ const ReferralInfo = ({ theme }) => {
             </View>
             <View style={styles.stepContent}>
               <Text style={styles.stepTitle}>
-                Both Get 50% Off
+                Both Get 500 Credits
               </Text>
               <Text style={styles.stepDescription}>
-                You both save 50% on your Pro purchase - instant rewards for sharing!
+                You both receive 500 AI credits - instant rewards for sharing!
               </Text>
             </View>
           </View>

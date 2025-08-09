@@ -161,7 +161,7 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
       'Explore Canada Through Epic Adventures': 'Exploring Canada through epic adventures',
       'Travel More': 'Traveling more',
       'Plan Dream Wedding': 'Planning your dream wedding',
-      // Environment & Organization Goals
+      // Community & Environment Goals
       'Find Quality Shared Housing': 'Finding quality shared housing',
       'Create Organized Living Space': 'Creating an organized living space',
       'Buy First Home': 'Buying your first home',
@@ -1086,36 +1086,36 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
       case "Purpose & Meaning-Get Involved in Local Community":
         return "Excellent decision! Getting involved in your local community will create meaningful connections, develop new skills, and make a positive impact where you live.";
       
-      // Environment & Organization Domain
-      case "Environment & Organization-Home Organization":
+      // Community & Environment Domain
+      case "Community & Environment-Home Organization":
         return "Great choice! Organizing your living spaces will reduce daily stress, save you time looking for things, and create a more peaceful environment.";
-      case "Environment & Organization-Daily Routines":
+      case "Community & Environment-Daily Routines":
         return "Excellent decision! Optimizing your daily routines will help you use your time more effectively and create space for what truly matters to you.";
-      case "Environment & Organization-Creating Peaceful Spaces":
+      case "Community & Environment-Creating Peaceful Spaces":
         return "Perfect! Designing more peaceful surroundings will reduce mental clutter and provide the right environment for you to thrive in all areas of life.";
-      case "Environment & Organization-Live Sustainably/Zero-Waste":
+      case "Community & Environment-Live Sustainably/Zero-Waste":
         return "Excellent choice! Living sustainably and reducing waste will help you align your daily actions with your environmental values while creating a healthier planet for future generations.";
-      case "Environment & Organization-Buy First Home":
+      case "Community & Environment-Buy First Home":
         return "Fantastic goal! Buying your first home will build equity, provide stability, and give you a space to truly call your own while establishing a foundation for long-term wealth.";
-      case "Environment & Organization-Organize Living Space":
+      case "Community & Environment-Organize Living Space":
         return "Great choice! Organizing your living space will improve your daily efficiency, reduce stress, and create a more peaceful environment for relaxation and productivity.";
-      case "Environment & Organization-Create Eco-Friendly Home":
+      case "Community & Environment-Create Eco-Friendly Home":
         return "Excellent decision! Creating an eco-friendly home will reduce your environmental impact, lower utility costs, and provide a healthier living environment for you and your family.";
-      case "Environment & Organization-Create Affordable Home Office Space":
+      case "Community & Environment-Create Affordable Home Office Space":
         return "Smart choice! Setting up an affordable home office will boost your productivity, improve work-life boundaries, and potentially increase your earning potential.";
-      case "Environment & Organization-Navigate Path to Homeownership":
+      case "Community & Environment-Navigate Path to Homeownership":
         return "Wise goal! Learning about homeownership will help you make informed decisions, avoid costly mistakes, and build a clear roadmap to achieving this major milestone.";
-      case "Environment & Organization-Build Eco-Conscious Living Space":
+      case "Community & Environment-Build Eco-Conscious Living Space":
         return "Perfect choice! Building an eco-conscious living space will align your environment with your values while creating a healthier, more sustainable lifestyle.";
-      case "Environment & Organization-Create Home Office Setup":
+      case "Community & Environment-Create Home Office Setup":
         return "Excellent decision! Creating a proper home office setup will increase your productivity, improve your professional presence, and enhance your work-from-home experience.";
-      case "Environment & Organization-Improve Home Energy Efficiency":
+      case "Community & Environment-Improve Home Energy Efficiency":
         return "Smart goal! Improving your home's energy efficiency will reduce utility bills, increase property value, and minimize your environmental footprint.";
-      case "Environment & Organization-Live Zero-Waste Lifestyle":
+      case "Community & Environment-Live Zero-Waste Lifestyle":
         return "Inspiring choice! Living a zero-waste lifestyle will dramatically reduce your environmental impact while often saving money and creating mindful consumption habits.";
-      case "Environment & Organization-Find Quality Shared Housing":
+      case "Community & Environment-Find Quality Shared Housing":
         return "Practical choice! Finding quality shared housing will help you save money, build social connections, and live in a better location while maintaining financial flexibility.";
-      case "Environment & Organization-Create Organized Living Space":
+      case "Community & Environment-Create Organized Living Space":
         return "Great decision! Creating an organized living space will save you time daily, reduce stress, and create a more peaceful environment that supports your other goals.";
       
       // Indian specific messages
@@ -1161,11 +1161,11 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
         return "Deep personal journey! Understanding your life purpose provides direction for major decisions and creates motivation for pursuing meaningful goals.";
       case "Purpose & Meaning-Practice Mindfulness":
         return "Wise wellness practice! Mindfulness reduces stress, improves focus, and enhances emotional well-being through greater awareness of thoughts and feelings.";
-      case "Environment & Organization-Organize Living Space":
+      case "Community & Environment-Organize Living Space":
         return "Practical life improvement! An organized living space reduces daily stress, improves efficiency, and creates a peaceful environment that supports well-being.";
-      case "Environment & Organization-Reduce Environmental Impact":
+      case "Community & Environment-Reduce Environmental Impact":
         return "Responsible environmental choice! Eco-friendly practices help protect the planet while often saving money through reduced consumption and waste.";
-      case "Environment & Organization-Declutter and Simplify":
+      case "Community & Environment-Declutter and Simplify":
         return "Liberating lifestyle change! Decluttering creates more space, reduces stress, and helps focus on what truly matters by removing excess possessions.";
       
       // Irish specific messages
@@ -1211,11 +1211,11 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
         return "Personal journey! Understanding your deeper values and life mission provides direction for important decisions and creates motivation for pursuing truly meaningful goals.";
       case "Purpose & Meaning-Practice Mindfulness":
         return "Wellness foundation! Mindfulness practices reduce stress, improve focus, and enhance emotional well-being through greater awareness and present-moment living.";
-      case "Environment & Organization-Organize Living Space":
+      case "Community & Environment-Organize Living Space":
         return "Life improvement! An organized home reduces daily stress, improves efficiency, and creates a peaceful environment supporting overall well-being and productivity.";
-      case "Environment & Organization-Reduce Environmental Impact":
+      case "Community & Environment-Reduce Environmental Impact":
         return "Responsible choice! Ireland's growing sustainability movement shows 64% of consumers purchase eco-friendly products, making environmental responsibility both impactful and socially supported.";
-      case "Environment & Organization-Declutter and Simplify":
+      case "Community & Environment-Declutter and Simplify":
         return "Liberating lifestyle! Decluttering creates more space, reduces stress, and helps focus on what matters most by removing excess while embracing intentional, simpler living.";
       
       // Nigerian specific messages
@@ -1347,8 +1347,8 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
     
     // Abbreviate long domain names for header display to prevent overlap with icon
     if (currentLanguage === 'en') {
-      if (translatedDomain === 'Environment & Organization') {
-        translatedDomain = 'Environment & Org';
+      if (translatedDomain === 'Community & Environment') {
+        translatedDomain = 'Community & Env';
       } else if (translatedDomain === 'Financial Security') {
         translatedDomain = 'Financial';
       } else if (translatedDomain === 'Recreation & Leisure') {

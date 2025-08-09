@@ -182,7 +182,7 @@ const ReferralCodeInputModal = ({ visible, onClose, theme, onSuccess }) => {
         
         Alert.alert(
           'Success! 🎉',
-          'Referral code saved! You\'ll get 50% off your first AI plan after upgrading to Pro. The person who referred you will also get 50% off!',
+          'Referral code saved! You\'ll get 500 AI credits when you sign up. The person who referred you will also get 500 credits!',
           [{ text: 'Awesome!', style: 'default' }]
         );
       } else {
@@ -266,7 +266,7 @@ const ReferralCodeInputModal = ({ visible, onClose, theme, onSuccess }) => {
               Enter Referral Code
             </Text>
             <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-              Get 50% off your first AI plan after upgrading to Pro
+              Get 500 AI credits when you sign up with a referral code
             </Text>
           </View>
 

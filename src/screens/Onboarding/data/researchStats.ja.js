@@ -517,7 +517,7 @@ export const RESEARCH_STATS_JA = {
         }
       }
     ],
-    "Environment & Organization": [
+    "Community & Environment": [
       {
         title: "オフィス環境の影響",
         figure: "70%",
@@ -1404,7 +1404,7 @@ export const RESEARCH_STATS_JA = {
       }
     ],
     
-    // Environment & Organization Goals
+    // Community & Environment Goals
     "Home Organization": [
       {
         title: "整理整頓の認知効果",

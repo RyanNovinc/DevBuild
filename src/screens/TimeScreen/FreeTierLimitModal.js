@@ -114,8 +114,8 @@ const FreeTierLimitModal = ({
       default:
         return {
           icon: 'lock-closed',
-          title: 'Premium Feature',
-          message: 'This feature is only available in the Pro version. Upgrade now to unlock all premium features.',
+          title: 'Pro Feature',
+          message: 'This feature is only available in the Pro version. Upgrade now to unlock all Pro features.',
           upgradeText: 'Upgrade to Pro'
         };
     }

@@ -48,6 +48,9 @@ const initialState = {
   todos: [],
   tomorrowTodos: [],
   laterTodos: [],
+  
+  // User preferences
+  userCountry: null,
 };
 
 // Create a combined reducer function

@@ -3,7 +3,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTheme } from '../../../../context/ThemeContext';
 
-const AuthFooter = () => {
+const AuthFooter = ({ onOpenTerms, onOpenPrivacy }) => {
   const { theme } = useTheme();
   
   return (
@@ -12,11 +12,11 @@ const AuthFooter = () => {
         By continuing, you agree to our
       </Text>
       <View style={styles.linksContainer}>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={onOpenTerms}>
           <Text style={[styles.link, { color: theme.primary }]}>Terms of Service</Text>
         </TouchableOpacity>
         <Text style={[styles.footerText, { color: theme.textSecondary }]}> & </Text>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={onOpenPrivacy}>
           <Text style={[styles.link, { color: theme.primary }]}>Privacy Policy</Text>
         </TouchableOpacity>
       </View>

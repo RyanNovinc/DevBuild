@@ -690,7 +690,9 @@ const GoalsScreen = ({ navigation, route, tabMode }) => {
       mode: 'create',
       initialDomain: screenState.filterDomain || undefined,
       // Pass the enhanced goal creation handler
-      onCreateGoal: handleCreateGoal
+      onCreateGoal: handleCreateGoal,
+      // Pass information to return to Goals tab (index 1) after creation
+      returnToTab: 'active'
     });
   };
   
@@ -1349,7 +1351,7 @@ const GoalsScreen = ({ navigation, route, tabMode }) => {
                   style={[styles.upgradeModalTitle, { color: theme.text }]}
                   maxFontSizeMultiplier={1.3}
                 >
-                  Premium Feature
+                  Pro Feature
                 </Text>
               </View>
               

@@ -509,6 +509,130 @@ export const markReferralNotificationsRead = async () => {
   }
 };
 
+/**
+ * Get user's current credit balance and subscription info from Lambda
+ * @param {string} userToken - JWT token for authentication
+ * @returns {Promise<Object>} Credit and subscription information
+ */
+export const getCreditBalance = async (userToken) => {
+  try {
+    const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://your-api-gateway-url.com';
+    
+    const response = await fetch(`${API_BASE_URL}/get-credit-balance`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${userToken}`,
+      },
+      body: JSON.stringify({
+        includeHistory: false
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching credit balance:', error);
+    throw error;
+  }
+};
+
+/**
+ * Format subscription tier name for display
+ * @param {string} tier - Raw tier name from backend
+ * @returns {string} Formatted tier name
+ */
+export const formatTierName = (tier) => {
+  const tierMap = {
+    'light': 'AI Light',
+    'standard': 'AI Standard', 
+    'max': 'AI Max',
+    'free': 'Free'
+  };
+  
+  return tierMap[tier?.toLowerCase()] || 'Free';
+};
+
+/**
+ * Format the next refresh/billing date for display
+ * @param {string} dateString - ISO date string
+ * @param {string} subscriptionTier - Subscription tier
+ * @returns {string} Formatted date for display
+ */
+export const formatNextRefreshDate = (dateString, subscriptionTier) => {
+  if (!dateString) return 'Unknown';
+
+  const date = new Date(dateString);
+  const now = new Date();
+  
+  // Calculate time difference
+  const diffTime = date - now;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  if (subscriptionTier === 'free') {
+    // For free tier, show hours if less than 2 days
+    if (diffDays <= 2) {
+      const diffHours = Math.ceil(diffTime / (1000 * 60 * 60));
+      return `${diffHours}h`;
+    }
+    return `${diffDays}d`;
+  } else {
+    // For paid tiers, show abbreviated date
+    if (diffDays <= 7) {
+      return `${diffDays}d`;
+    } else if (diffDays <= 30) {
+      const weeks = Math.ceil(diffDays / 7);
+      return `${weeks}w`;
+    } else {
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      return `${month}/${day}`;
+    }
+  }
+};
+
+/**
+ * Get subscription info with error handling for offline/development mode
+ * @param {string} userToken - JWT token for authentication
+ * @returns {Promise<Object>} Subscription information with fallbacks
+ */
+export const getSubscriptionInfo = async (userToken) => {
+  try {
+    const data = await getCreditBalance(userToken);
+    
+    return {
+      tier: data.subscription?.tier || 'free',
+      status: data.subscription?.status || 'active',
+      nextRefreshDate: data.refreshInfo?.nextRefreshDate,
+      daysRemaining: data.refreshInfo?.daysRemaining || 0,
+      formattedTierName: formatTierName(data.subscription?.tier),
+      formattedRefreshDate: formatNextRefreshDate(
+        data.refreshInfo?.nextRefreshDate, 
+        data.subscription?.tier
+      ),
+      isFreeTier: !data.subscription?.tier || data.subscription?.tier === 'free'
+    };
+  } catch (error) {
+    console.warn('Failed to fetch subscription info, using fallback:', error);
+    
+    // Return fallback data for development/offline mode
+    return {
+      tier: 'free',
+      status: 'active', 
+      nextRefreshDate: null,
+      daysRemaining: 18,
+      formattedTierName: 'Free',
+      formattedRefreshDate: '18h',
+      isFreeTier: true,
+      isOffline: true
+    };
+  }
+};
+
 export default {
   PREMIUM_FEATURES,
   FREE_PLAN_LIMITS,
@@ -521,5 +645,10 @@ export default {
   canAddMoreProjectsToGoal,
   upgradeSubscription,
   getReferralNotifications,
-  markReferralNotificationsRead
+  markReferralNotificationsRead,
+  // New Lambda integration functions
+  getCreditBalance,
+  formatTierName,
+  formatNextRefreshDate,
+  getSubscriptionInfo
 };

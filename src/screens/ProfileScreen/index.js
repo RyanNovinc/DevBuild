@@ -46,6 +46,7 @@ import SettingsModal from './SettingsModal';
 import AIExplanationModal from './AIExplanationModal';
 import DomainColorPickerModal from './DomainColorPickerModal';
 import ThemeColorPickerModal from './ThemeColorPickerModal';
+import ProGiftSurprise from '../../components/ProGiftSurprise';
 import { STANDARD_DOMAINS } from './constants';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -146,6 +147,7 @@ const ProfileScreen = ({ navigation, route }) => {
     showAIButton: true,
     userSubscriptionStatus: 'free',
     hasEnteredReferralCode: false,
+    showProGiftSurprise: false,
     profile: {
       name: user?.displayName || '',
       email: user?.email || '',
@@ -1034,6 +1036,29 @@ const ProfileScreen = ({ navigation, route }) => {
     };
   }, [goals?.length, mainGoals?.length, calculateDomainsFromGoals]);
   
+  // Check for Pro gift surprise trigger
+  useEffect(() => {
+    const checkForGiftSurprise = async () => {
+      try {
+        const shouldShowGift = await AsyncStorage.getItem('showProGiftSurprise');
+        const hasReceivedGift = await AsyncStorage.getItem('proGiftReceived');
+        console.log('🎁 GIFT DEBUG: shouldShowGift:', shouldShowGift, 'hasReceivedGift:', hasReceivedGift);
+        console.log('🎁 GIFT DEBUG: userSubscriptionStatus:', screenState.userSubscriptionStatus);
+        
+        if (shouldShowGift === 'true') {
+          console.log('🎁 GIFT DEBUG: Showing gift surprise!');
+          setScreenState(prev => ({ ...prev, showProGiftSurprise: true }));
+          // Clear the trigger flag
+          await AsyncStorage.removeItem('showProGiftSurprise');
+        }
+      } catch (error) {
+        console.error('Error checking for gift surprise:', error);
+      }
+    };
+
+    checkForGiftSurprise();
+  }, [screenState.userSubscriptionStatus]); // Re-check when subscription status changes
+  
   // Generate a random referral code
   const generateReferralCode = () => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -1239,6 +1264,37 @@ const ProfileScreen = ({ navigation, route }) => {
   const handleScreenStateUpdate = (updates) => {
     setScreenState(prev => ({ ...prev, ...updates }));
   };
+
+  // Handle Pro gift surprise
+  const handleCloseGiftSurprise = () => {
+    setScreenState(prev => ({ ...prev, showProGiftSurprise: false }));
+  };
+
+  const handleColorWheelUnlocked = async () => {
+    // This is called when the user opens the gift and unlocks the color wheel
+    try {
+      await AsyncStorage.setItem('colorWheelUnlocked', 'true');
+      console.log('Color wheel unlocked for Pro member');
+    } catch (error) {
+      console.error('Error saving color wheel unlock state:', error);
+    }
+  };
+
+  // Helper function for testing the gift surprise (only in dev mode)
+  const triggerGiftSurpriseForTesting = async () => {
+    if (__DEV__) {
+      try {
+        // Reset gift state for testing
+        await AsyncStorage.removeItem('proGiftReceived');
+        await AsyncStorage.removeItem('colorWheelUnlocked');
+        // Trigger the gift surprise
+        setScreenState(prev => ({ ...prev, showProGiftSurprise: true }));
+        console.log('🎁 MANUAL TRIGGER: Gift surprise triggered for testing');
+      } catch (error) {
+        console.error('Error triggering gift surprise for testing:', error);
+      }
+    }
+  };
   
   // Calculate total domains once
   const totalDomains = screenState.localDomains ? screenState.localDomains.length : 0;
@@ -1381,6 +1437,7 @@ const ProfileScreen = ({ navigation, route }) => {
         onLogout={toggleSettings}
         updateAppSetting={updateAppSetting}
         onScreenStateUpdate={handleScreenStateUpdate}
+        onTriggerGiftSurprise={triggerGiftSurpriseForTesting}
       />
       
       {/* AI Explanation Modal */}
@@ -1412,6 +1469,15 @@ const ProfileScreen = ({ navigation, route }) => {
         onSelectColor={handleThemeColorChange}
         onClose={closeThemeColorPicker}
         navigation={navigation}
+      />
+
+      {/* Pro Gift Surprise Modal */}
+      <ProGiftSurprise
+        visible={screenState.showProGiftSurprise}
+        onClose={handleCloseGiftSurprise}
+        theme={theme}
+        onColorWheelUnlocked={handleColorWheelUnlocked}
+        showAppStoreRating={true}
       />
     </View>
   );

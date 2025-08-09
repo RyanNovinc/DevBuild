@@ -11,7 +11,7 @@ export const DOMAIN_TRANSLATIONS = {
     "Financial Security": "Financial Security",
     "Recreation & Leisure": "Recreation & Leisure",
     "Purpose & Meaning": "Purpose & Meaning",
-    "Environment & Organization": "Environment & Organization"
+    "Community & Environment": "Community & Environment"
   },
   ja: {
     // Japanese domain translations
@@ -22,7 +22,7 @@ export const DOMAIN_TRANSLATIONS = {
     "Financial Security": "経済的安全",
     "Recreation & Leisure": "レクリエーションと余暇",
     "Purpose & Meaning": "目的と意味",
-    "Environment & Organization": "環境と整理整頓"
+    "Community & Environment": "コミュニティと環境"
   }
 };
 
@@ -130,7 +130,7 @@ export const DOMAIN_DESCRIPTION_TRANSLATIONS = {
     "Financial Security": "お金を効果的に管理し、貯蓄を増やし、賢明な投資を行い、経済的自由に向けて取り組みます。",
     "Recreation & Leisure": "趣味、楽しい活動、リラクゼーション、旅行などの喜びとバランスをもたらす時間を作ります。",
     "Purpose & Meaning": "精神性を探求し、あなたが気にかける原因に貢献し、行動をあなたの価値観に合わせます。",
-    "Environment & Organization": "物理的な空間に秩序を作り、システムを開発し、周囲を最適化します。"
+    "Community & Environment": "コミュニティのつながりを築き、環境を改善し、ウェルビーイングのためのスペースを整理します。"
   }
 };
 

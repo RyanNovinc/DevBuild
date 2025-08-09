@@ -134,7 +134,7 @@ const OnboardingTransitionScreen = ({
         };
       case ONBOARDING_STATES.PREPARING_APP:
         return {
-          icon: 'rocket-outline',
+          icon: 'compass-outline',
           title: 'Preparing Your App',
           subtitle: 'Finalizing your LifeCompass experience...'
         };
@@ -203,11 +203,6 @@ const OnboardingTransitionScreen = ({
           </Animated.View>
         </Animated.View>
 
-        {/* Title */}
-        <ResponsiveText style={[styles.title, isError && styles.errorTitle]}>
-          {content.title}
-        </ResponsiveText>
-
         {/* Animated Percentage Counter */}
         {!isError && (
           <View style={styles.percentageContainer}>
@@ -216,6 +211,13 @@ const OnboardingTransitionScreen = ({
             </ResponsiveText>
           </View>
         )}
+
+        {/* Title */}
+        <View style={styles.titleContainer}>
+          <ResponsiveText style={isError ? styles.errorTitle : styles.title}>
+            {content.title}
+          </ResponsiveText>
+        </View>
 
 
         {/* Error message */}
@@ -228,14 +230,6 @@ const OnboardingTransitionScreen = ({
         )}
       </Animated.View>
 
-      {/* Loading dots animation */}
-      {!isError && (
-        <View style={styles.dotsContainer}>
-          {[0, 1, 2].map((index) => (
-            <LoadingDot key={index} index={index} />
-          ))}
-        </View>
-      )}
     </View>
   );
 };
@@ -318,12 +312,17 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'rgba(239, 68, 68, 0.3)',
   },
+  titleContainer: {
+    marginTop: 16,
+    marginBottom: 12,
+    alignItems: 'center',
+  },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '300',
     color: '#FFFFFF',
     textAlign: 'center',
-    marginBottom: 12,
+    letterSpacing: 1,
   },
   errorTitle: {
     color: '#ef4444',

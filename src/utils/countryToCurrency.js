@@ -25,6 +25,51 @@ export const COUNTRY_CURRENCY_MAP = {
     symbol: '$',
     code: 'USD',
     name: 'US Dollar'
+  },
+  'india': {
+    symbol: '₹',
+    code: 'INR',
+    name: 'Indian Rupee'
+  },
+  'ireland': {
+    symbol: '€',
+    code: 'EUR',
+    name: 'Euro'
+  },
+  'malaysia': {
+    symbol: 'RM',
+    code: 'MYR',
+    name: 'Malaysian Ringgit'
+  },
+  'newzealand': {
+    symbol: 'NZ$',
+    code: 'NZD',
+    name: 'New Zealand Dollar'
+  },
+  'nigeria': {
+    symbol: '₦',
+    code: 'NGN',
+    name: 'Nigerian Naira'
+  },
+  'philippines': {
+    symbol: '₱',
+    code: 'PHP',
+    name: 'Philippine Peso'
+  },
+  'singapore': {
+    symbol: 'S$',
+    code: 'SGD',
+    name: 'Singapore Dollar'
+  },
+  'southafrica': {
+    symbol: 'R',
+    code: 'ZAR',
+    name: 'South African Rand'
+  },
+  'other': {
+    symbol: '$',
+    code: 'USD',
+    name: 'US Dollar'
   }
 };
 
@@ -35,15 +80,15 @@ export const COUNTRY_CURRENCY_MAP = {
  */
 export const getCurrencyForCountry = (countryCode) => {
   if (!countryCode) {
-    // Default to USD if no country provided
-    return COUNTRY_CURRENCY_MAP.usa;
+    // Default to 'other' if no country provided
+    return COUNTRY_CURRENCY_MAP.other;
   }
   
   const currency = COUNTRY_CURRENCY_MAP[countryCode.toLowerCase()];
   
   if (!currency) {
-    console.warn(`No currency mapping found for country: ${countryCode}, defaulting to USD`);
-    return COUNTRY_CURRENCY_MAP.usa;
+    console.warn(`No currency mapping found for country: ${countryCode}, defaulting to 'other' country currency (USD)`);
+    return COUNTRY_CURRENCY_MAP.other;
   }
   
   return currency;

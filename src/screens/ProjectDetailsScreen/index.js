@@ -104,6 +104,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
     showTaskDetailModal: false,
     showGoalSelector: false,
     showUnsavedChangesModal: false,
+    showDeleteConfirmModal: false,
     isLoading: false,
     saveAttempted: false,
     hasUnsavedChanges: false,
@@ -837,65 +838,61 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
     }, 500);
   };
   
-  // Delete project function
+  // Delete project function - show confirmation modal
   const handleDelete = () => {
-    Alert.alert(
-      'Delete Project',
-      'Are you sure you want to delete this project and all its tasks?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              isDeleting.current = true;
-              setUiState(prev => ({
-                ...prev,
-                isLoading: true
-              }));
-              
-              setUiState(prev => ({
-                ...prev,
-                showGoalSelector: false,
-                showAddTaskModal: false,
-                showTaskDetailModal: false
-              }));
-              
-              const projectIdToDelete = projectId;
-              
-              // Use a timeout to ensure smooth navigation
-              setTimeout(async () => {
-                try {
-                  const success = await deleteProject(projectIdToDelete);
-                  
-                  if (success) {
-                    console.log(`Successfully deleted project ID: ${projectIdToDelete}`);
-                    showSuccess('Project deleted successfully');
-                  } else {
-                    console.error(`Failed to delete project ID: ${projectIdToDelete}`);
-                    showError('Error deleting project');
-                  }
-                } catch (deleteError) {
-                  console.error("Error during project deletion:", deleteError);
-                  showError('Error deleting project');
-                }
-              }, 500);
-              
-              navigation.goBack();
-              
-            } catch (error) {
-              console.error("Fatal error in delete handling:", error);
-              showError('Error deleting project');
-              
-              if (isMounted.current) {
-                navigation.goBack();
-              }
-            }
+    setUiState(prev => ({
+      ...prev,
+      showDeleteConfirmModal: true
+    }));
+  };
+
+  // Actual delete project implementation
+  const handleConfirmDelete = async () => {
+    try {
+      isDeleting.current = true;
+      setUiState(prev => ({
+        ...prev,
+        showDeleteConfirmModal: false,
+        isLoading: true
+      }));
+      
+      setUiState(prev => ({
+        ...prev,
+        showGoalSelector: false,
+        showAddTaskModal: false,
+        showTaskDetailModal: false
+      }));
+      
+      const projectIdToDelete = projectId;
+      
+      // Use a timeout to ensure smooth navigation
+      setTimeout(async () => {
+        try {
+          const success = await deleteProject(projectIdToDelete);
+          
+          if (success) {
+            console.log(`Successfully deleted project ID: ${projectIdToDelete}`);
+            showSuccess('Project deleted successfully');
+          } else {
+            console.error(`Failed to delete project ID: ${projectIdToDelete}`);
+            showError('Error deleting project');
           }
+        } catch (deleteError) {
+          console.error("Error during project deletion:", deleteError);
+          showError('Error deleting project');
         }
-      ]
-    );
+      }, 500);
+      
+      navigation.goBack();
+      
+    } catch (error) {
+      console.error("Fatal error in delete handling:", error);
+      showError('Error deleting project');
+      
+      if (isMounted.current) {
+        navigation.goBack();
+      }
+    }
   };
   
   // Format date for display
@@ -1167,6 +1164,79 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
         theme={theme}
         color={projectState.color}
       />
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        visible={uiState.showDeleteConfirmModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setUiState(prev => ({ ...prev, showDeleteConfirmModal: false }))}
+      >
+        <View style={styles.deleteModalOverlay}>
+          <View style={[
+            styles.deleteModalContainer, 
+            { 
+              backgroundColor: theme.surface || theme.background,
+              marginTop: insets.top,
+              marginBottom: insets.bottom,
+              marginLeft: spacing.m,
+              marginRight: spacing.m
+            }
+          ]}>
+            <View style={styles.deleteModalHeader}>
+              <Ionicons name="trash-outline" size={scaleWidth(40)} color={theme.error} />
+              <Text 
+                style={[styles.deleteModalTitle, { color: theme.text }]}
+                maxFontSizeMultiplier={1.3}
+              >
+                Delete Project
+              </Text>
+            </View>
+            
+            <Text 
+              style={[styles.deleteModalMessage, { color: theme.textSecondary }]}
+              maxFontSizeMultiplier={1.3}
+            >
+              Are you sure you want to delete this project and all its tasks? This action cannot be undone.
+            </Text>
+            
+            <View style={styles.deleteModalButtons}>
+              <TouchableOpacity
+                style={[
+                  styles.deleteModalButton, 
+                  styles.deleteCancelButton, 
+                  { 
+                    backgroundColor: theme.background,
+                    borderColor: theme.border
+                  }
+                ]}
+                onPress={() => setUiState(prev => ({ ...prev, showDeleteConfirmModal: false }))}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Cancel"
+                accessibilityHint="Cancels the delete operation"
+              >
+                <Text style={[styles.deleteButtonText, { color: theme.text }]}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.deleteModalButton, styles.deleteConfirmButton]}
+                onPress={handleConfirmDelete}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Delete Project"
+                accessibilityHint="Permanently deletes this project and all its tasks"
+              >
+                <Text style={[styles.deleteButtonText, styles.deleteConfirmText]}>
+                  Delete
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
       
       {/* Loading Overlay */}
       {renderLoadingOverlay()}
@@ -1195,7 +1265,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
                 style={[styles.upgradeModalTitle, { color: theme.text }]}
                 maxFontSizeMultiplier={1.3}
               >
-                Premium Feature
+                Pro Feature
               </Text>
             </View>
             
@@ -1392,6 +1462,75 @@ const styles = StyleSheet.create({
   },
   laterButtonText: {
     fontSize: fontSizes.s,
+  },
+  // Delete Modal Styles (matching goal delete modal)
+  deleteModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: spacing.m,
+  },
+  deleteModalContainer: {
+    width: '100%',
+    maxWidth: scaleWidth(320),
+    borderRadius: scaleWidth(16),
+    paddingVertical: spacing.xl,
+    paddingHorizontal: spacing.m,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: scaleHeight(8),
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: scaleWidth(24),
+    elevation: 8,
+  },
+  deleteModalHeader: {
+    alignItems: 'center',
+    marginBottom: spacing.l,
+  },
+  deleteModalTitle: {
+    fontSize: fontSizes.xl,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: spacing.m,
+    letterSpacing: 0.3,
+  },
+  deleteModalMessage: {
+    fontSize: fontSizes.m,
+    textAlign: 'center',
+    marginBottom: spacing.xl,
+    lineHeight: scaleHeight(22),
+    opacity: 0.8,
+    fontWeight: '400',
+  },
+  deleteModalButtons: {
+    flexDirection: 'row',
+    gap: spacing.s,
+  },
+  deleteModalButton: {
+    flex: 1,
+    paddingVertical: spacing.m,
+    borderRadius: scaleWidth(12),
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44, // accessibility.minTouchTarget equivalent
+  },
+  deleteCancelButton: {
+    borderWidth: 1,
+  },
+  deleteConfirmButton: {
+    backgroundColor: '#FF3B30',
+  },
+  deleteButtonText: {
+    fontSize: fontSizes.m,
+    fontWeight: '500',
+    letterSpacing: 0.2,
+  },
+  deleteConfirmText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
   }
 });
 

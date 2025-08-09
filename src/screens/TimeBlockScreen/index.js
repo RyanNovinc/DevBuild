@@ -52,6 +52,7 @@ import ProjectSelector from './ProjectSelector';
 import TaskSelector from './TaskSelector';
 import TimeBlockForm from './TimeBlockForm';
 import UnsavedChangesModal from './UnsavedChangesModal';
+import GoalRequiredModal from './GoalRequiredModal';
 
 const TimeBlockScreen = ({ route, navigation }) => {
   const { theme } = useTheme();
@@ -86,6 +87,10 @@ const TimeBlockScreen = ({ route, navigation }) => {
   
   // For the unsaved changes modal
   const [showUnsavedChangesModal, setShowUnsavedChangesModal] = useState(false);
+  
+  // For the goal required modal
+  const [showGoalRequiredModal, setShowGoalRequiredModal] = useState(false);
+  const [goalRequiredModalType, setGoalRequiredModalType] = useState('project'); // 'project' or 'task'
   
   // Function to extract all tasks from projects
   const getAllTasks = () => {
@@ -1014,6 +1019,12 @@ const TimeBlockScreen = ({ route, navigation }) => {
   
   // Open project selection modal
   const openProjectModal = () => {
+    // Check if there are any goals available
+    if (availableGoals.length === 0) {
+      setGoalRequiredModalType('project');
+      setShowGoalRequiredModal(true);
+      return;
+    }
     setShowProjectModal(true);
   };
   
@@ -1023,11 +1034,18 @@ const TimeBlockScreen = ({ route, navigation }) => {
     if (selectedProject) {
       setShowTaskModal(true);
     } else {
-      Alert.alert(
-        'Select a Project First',
-        'Please select a project before selecting a task.',
-        [{ text: 'OK' }]
-      );
+      // Check if there are projects available for the current goal
+      if (goalProjects.length === 0) {
+        setGoalRequiredModalType('task');
+        setShowGoalRequiredModal(true);
+      } else {
+        // There are projects, but user hasn't selected one
+        Alert.alert(
+          'Select a Project First',
+          'Please select a project before selecting a task.',
+          [{ text: 'OK' }]
+        );
+      }
     }
   };
   
@@ -1042,6 +1060,16 @@ const TimeBlockScreen = ({ route, navigation }) => {
     setShowStartTimePicker(false);
     setShowEndTimePicker(false);
     setShowRepeatUntilDatePicker(false);
+  };
+  
+  // Navigate to Goals tab to create a goal
+  const navigateToGoals = () => {
+    navigation.navigate('GoalsTab');
+  };
+  
+  // Navigate to Projects tab to create a project
+  const navigateToProjects = () => {
+    navigation.navigate('ProjectsTab');
   };
   
   // Navigate to goal details for notification settings - UPDATED with alert approach
@@ -1157,6 +1185,7 @@ const TimeBlockScreen = ({ route, navigation }) => {
       {/* Main content with KeyboardAwareScrollView */}
       <Animated.View style={{
         flex: 1,
+        backgroundColor: theme.background,
         opacity: contentFadeIn,
         transform: [{
           translateY: contentFadeIn.interpolate({
@@ -1169,25 +1198,16 @@ const TimeBlockScreen = ({ route, navigation }) => {
           ref={scrollViewRef}
           contentContainerStyle={{ 
             flexGrow: 1,
-            paddingBottom: safeSpacing.bottom + spacing.xl // Add safe area bottom padding
+            backgroundColor: 'transparent',
+            paddingBottom: 0 // Remove bottom padding that might create black space
           }}
           keyboardShouldPersistTaps="handled"
           enableOnAndroid={true}
           enableResetScrollToCoords={false}
           keyboardOpeningTime={0}
-          extraHeight={getResponsiveSize({
-            small: 150,
-            medium: 180,
-            large: 200,
-            tablet: 250
-          })}
-          extraScrollHeight={getResponsiveSize({
-            small: 30,
-            medium: 50,
-            large: 60,
-            tablet: 80
-          })}
-          style={{ backgroundColor: theme.background, flex: 1 }}
+          extraHeight={0}
+          extraScrollHeight={0}
+          style={{ backgroundColor: 'transparent', flex: 1 }}
         >
           {/* Main form component with accessibility props */}
           <TimeBlockForm
@@ -1262,56 +1282,76 @@ const TimeBlockScreen = ({ route, navigation }) => {
 
       {/* REMOVED: Floating Add Button */}
 
-      {/* Modals */}
-      <ColorPicker
-        visible={showColorModal}
-        onClose={() => setShowColorModal(false)}
-        onColorSelect={handleColorSelect}
-        selectedColor={customColor}
-        colorOptions={colorOptions}
-        theme={theme}
-        isDarkMode={isDarkMode}
-      />
+      {/* Modals - Conditionally rendered to prevent overlay issues */}
+      {showColorModal && (
+        <ColorPicker
+          visible={showColorModal}
+          onClose={() => setShowColorModal(false)}
+          onColorSelect={handleColorSelect}
+          selectedColor={customColor}
+          colorOptions={colorOptions}
+          theme={theme}
+          isDarkMode={isDarkMode}
+        />
+      )}
 
-      <ProjectSelector
-        visible={showProjectModal}
-        onClose={() => setShowProjectModal(false)}
-        onSelectProject={handleProjectSelect}
-        selectedProject={selectedProject}
-        projects={goalProjects}
-        domainColor={domainColor}
-        theme={theme}
-        isDarkMode={isDarkMode}
-        // Add responsive props
-        spacing={spacing}
-        fontSizes={fontSizes}
-        accessibility={accessibility}
-      />
+      {showProjectModal && (
+        <ProjectSelector
+          visible={showProjectModal}
+          onClose={() => setShowProjectModal(false)}
+          onSelectProject={handleProjectSelect}
+          selectedProject={selectedProject}
+          projects={goalProjects}
+          domainColor={domainColor}
+          theme={theme}
+          isDarkMode={isDarkMode}
+          // Add responsive props
+          spacing={spacing}
+          fontSizes={fontSizes}
+          accessibility={accessibility}
+        />
+      )}
 
-      <TaskSelector
-        visible={showTaskModal}
-        onClose={() => setShowTaskModal(false)}
-        onSelectTask={handleTaskSelect}
-        selectedTask={selectedTask}
-        tasks={projectTasks}
-        domainColor={domainColor}
-        theme={theme}
-        isDarkMode={isDarkMode}
-        // Add responsive props
-        spacing={spacing}
-        fontSizes={fontSizes}
-        accessibility={accessibility}
-      />
+      {showTaskModal && (
+        <TaskSelector
+          visible={showTaskModal}
+          onClose={() => setShowTaskModal(false)}
+          onSelectTask={handleTaskSelect}
+          selectedTask={selectedTask}
+          tasks={projectTasks}
+          domainColor={domainColor}
+          theme={theme}
+          isDarkMode={isDarkMode}
+          // Add responsive props
+          spacing={spacing}
+          fontSizes={fontSizes}
+          accessibility={accessibility}
+        />
+      )}
 
-      <UnsavedChangesModal
-        visible={showUnsavedChangesModal}
-        onKeepEditing={() => setShowUnsavedChangesModal(false)}
-        onDiscard={discardChangesAndGoBack}
-        theme={theme}
-        // Add responsive props
-        spacing={spacing}
-        fontSizes={fontSizes}
-      />
+      {showUnsavedChangesModal && (
+        <UnsavedChangesModal
+          visible={showUnsavedChangesModal}
+          onKeepEditing={() => setShowUnsavedChangesModal(false)}
+          onDiscard={discardChangesAndGoBack}
+          theme={theme}
+          // Add responsive props
+          spacing={spacing}
+          fontSizes={fontSizes}
+        />
+      )}
+
+      {showGoalRequiredModal && (
+        <GoalRequiredModal
+          visible={showGoalRequiredModal}
+          onClose={() => setShowGoalRequiredModal(false)}
+          onNavigateToGoals={navigateToGoals}
+          onNavigateToProjects={navigateToProjects}
+          type={goalRequiredModalType}
+          theme={theme}
+          isDarkMode={isDarkMode}
+        />
+      )}
 
       {/* Date/Time Pickers */}
       <CustomDateTimePicker
