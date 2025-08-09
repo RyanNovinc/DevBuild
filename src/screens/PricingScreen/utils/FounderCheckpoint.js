@@ -183,7 +183,7 @@ class FounderCheckpoint {
       setTimeout(() => {
         Alert.alert(
           "🏆 Founder Status Achieved!",
-          "Congratulations! You're one of the first 1,000 LifeCompass founders. Your account has been permanently upgraded with lifetime access to all premium features.",
+          "Congratulations! You're one of the first 1,000 LifeCompass founders. Your account has been permanently upgraded with lifetime access to all Pro features.",
           [
             { 
               text: "Continue to App", 

@@ -72,10 +72,10 @@ const WHEEL_DOMAINS = [
     description: "Exploring spirituality, contributing to causes you care about, and aligning actions with your values."
   },
   {
-    name: "Environment & Organization",
+    name: "Community & Environment",
     icon: "home",
     color: "#6366f1", // Indigo/purple
-    description: "Creating order in your physical spaces, developing systems, and optimizing your surroundings."
+    description: "Building community connections, improving your environment, and organizing your spaces for wellbeing."
   }
   // Note: "Other" domain is not included in the wheel but still available for goal creation
 ];
@@ -108,9 +108,12 @@ const DomainBalanceWheel = ({ theme, navigation }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [highlightedDomain, setHighlightedDomain] = useState(null);
   const [isScreenReaderEnabled, setIsScreenReaderEnabled] = useState(false);
+  const [showLabels, setShowLabels] = useState(true); // Toggle for domain labels visibility
   
   // Animation
   const wheelRotation = useRef(new Animated.Value(0)).current;
+  const [fadingOutDomain, setFadingOutDomain] = useState(null);
+  const fadeOutProgress = useRef(new Animated.Value(0)).current;
   
   // Theme detection
   const isDarkMode = theme.background === '#000000';
@@ -614,6 +617,34 @@ const DomainBalanceWheel = ({ theme, navigation }) => {
     }
   };
 
+  // Toggle label visibility
+  const toggleLabelVisibility = () => {
+    setShowLabels(!showLabels);
+  };
+
+  // Simple pulse animation when modal closes
+  const animateFadeOut = (domainName) => {
+    setFadingOutDomain(domainName);
+    fadeOutProgress.setValue(1);
+    
+    // Simple fade from normal to slightly dimmed and back
+    Animated.sequence([
+      Animated.timing(fadeOutProgress, {
+        toValue: 0.3,
+        duration: 400,
+        useNativeDriver: false
+      }),
+      Animated.timing(fadeOutProgress, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: false
+      })
+    ]).start(() => {
+      setFadingOutDomain(null);
+      fadeOutProgress.setValue(1);
+    });
+  };
+
   // Animate wheel rotation
   const animateWheelRotation = () => {
     Animated.sequence([
@@ -629,6 +660,7 @@ const DomainBalanceWheel = ({ theme, navigation }) => {
       })
     ]).start();
   };
+
 
   // Handle view goals for a domain
   const handleViewDomainGoals = () => {
@@ -721,6 +753,8 @@ const DomainBalanceWheel = ({ theme, navigation }) => {
         title={balanceView ? "Domain Overview" : "Current Focus"}
         icon="compass-outline"
         theme={theme}
+        onActionPress={toggleLabelVisibility}
+        actionIcon={showLabels ? "eye" : "eye-off"}
       />
       
       {/* Main Wheel Visualization */}
@@ -760,16 +794,18 @@ const DomainBalanceWheel = ({ theme, navigation }) => {
                 const labelX = labelRadius * Math.cos((slice.midAngle - 90) * Math.PI / 180);
                 const labelY = labelRadius * Math.sin((slice.midAngle - 90) * Math.PI / 180);
                 
-                // Determine if this domain is selected
-                const isSelected = selectedDomain?.name === slice.domain.name;
+                // Determine selection and fade states
+                const isCurrentlySelected = selectedDomain?.name === slice.domain.name;
+                const isFadingOut = fadingOutDomain === slice.domain.name;
+                const isSelected = isCurrentlySelected;
                 
-                // Calculate circle size for icon background
+                // Calculate circle size
                 const circleRadius = isSelected ? 26 : 24;
                 
                 // Determine if this domain should be darkened in Active Focus Areas view
                 const hasActiveGoals = getDomainActiveGoalCount(slice.domain) > 0;
                 const shouldDarken = !balanceView && !hasActiveGoals;
-                const opacity = shouldDarken ? 0.2 : (isSelected ? 1 : 0.7);
+                const baseOpacity = shouldDarken ? 0.2 : (isSelected ? 1 : 0.7);
                 
                 // Skip accessibility properties if screen reader is enabled (handled by parent)
                 const sliceAccessibilityProps = isScreenReaderEnabled ? {} : {
@@ -780,46 +816,48 @@ const DomainBalanceWheel = ({ theme, navigation }) => {
                 };
                 
                 return (
-                  <G key={`slice-${index}`}>
+                  <G key={`slice-${index}`} opacity={isFadingOut ? fadeOutProgress : 1}>
                     {/* Main slice with solid color fill */}
                     <Path
                       d={slice.path}
                       fill={slice.domain.color}
                       stroke="rgba(255,255,255,0.2)"
                       strokeWidth={0.5}
-                      opacity={opacity}
+                      opacity={baseOpacity}
                       onPress={() => handleDomainPress(slice.domain)}
                       onLongPress={() => handleDomainLongPress(slice.domain)}
                       delayLongPress={500}
                       {...sliceAccessibilityProps}
                     />
                     
-                    {/* Domain label outside wheel */}
-                    <G>
-                      {/* Add a small line from segment to label */}
-                      <Path
-                        d={`M ${(WHEEL_SIZE/2 - 5) * Math.cos((slice.midAngle - 90) * Math.PI / 180)} ${(WHEEL_SIZE/2 - 5) * Math.sin((slice.midAngle - 90) * Math.PI / 180)} 
-                            L ${(WHEEL_SIZE/2 + 10) * Math.cos((slice.midAngle - 90) * Math.PI / 180)} ${(WHEEL_SIZE/2 + 10) * Math.sin((slice.midAngle - 90) * Math.PI / 180)}`}
-                        stroke="rgba(255,255,255,0.3)"
-                        strokeWidth={1}
-                        opacity={shouldDarken ? 0.2 : 1}
-                      />
-                      
-                      {/* Position text radially outward - but adjust rotation for bottom labels */}
-                      <SvgText
-                        x={labelX}
-                        y={labelY}
-                        textAnchor="middle"
-                        fontSize={12}
-                        fontWeight={isSelected ? 'bold' : 'normal'}
-                        fill={isSelected ? '#FFFFFF' : 'rgba(255,255,255,0.8)'}
-                        rotation={slice.isBottomHalf ? slice.midAngle + 180 : slice.midAngle}
-                        origin={`${labelX},${labelY}`}
-                        opacity={shouldDarken ? 0.2 : 1}
-                      >
-                        {slice.domain.name === 'Personal Growth' ? 'Growth' : slice.domain.name.split(' ')[0]}
-                      </SvgText>
-                    </G>
+                    {/* Domain label outside wheel - only show if labels are enabled */}
+                    {showLabels && (
+                      <G>
+                        {/* Add a small line from segment to label */}
+                        <Path
+                          d={`M ${(WHEEL_SIZE/2 - 5) * Math.cos((slice.midAngle - 90) * Math.PI / 180)} ${(WHEEL_SIZE/2 - 5) * Math.sin((slice.midAngle - 90) * Math.PI / 180)} 
+                              L ${(WHEEL_SIZE/2 + 10) * Math.cos((slice.midAngle - 90) * Math.PI / 180)} ${(WHEEL_SIZE/2 + 10) * Math.sin((slice.midAngle - 90) * Math.PI / 180)}`}
+                          stroke="rgba(255,255,255,0.3)"
+                          strokeWidth={1}
+                          opacity={shouldDarken ? 0.2 : 1}
+                        />
+                        
+                        {/* Position text radially outward - but adjust rotation for bottom labels */}
+                        <SvgText
+                          x={labelX}
+                          y={labelY}
+                          textAnchor="middle"
+                          fontSize={12}
+                          fontWeight={isSelected ? 'bold' : 'normal'}
+                          fill={isSelected ? '#FFFFFF' : 'rgba(255,255,255,0.8)'}
+                          rotation={slice.isBottomHalf ? slice.midAngle + 180 : slice.midAngle}
+                          origin={`${labelX},${labelY}`}
+                          opacity={shouldDarken ? 0.2 : 1}
+                        >
+                          {slice.domain.name === 'Personal Growth' ? 'Growth' : slice.domain.name.split(' ')[0]}
+                        </SvgText>
+                      </G>
+                    )}
                     
                     {/* Circle background for icon */}
                     <Circle
@@ -913,7 +951,6 @@ const DomainBalanceWheel = ({ theme, navigation }) => {
           {/* Position icons using manual calculation */}
           <View style={styles.iconsOverlay} pointerEvents="none">
             {wheelSlices.map((slice, index) => {
-              const isSelected = selectedDomain?.name === slice.domain.name;
               const hasActiveGoals = getDomainActiveGoalCount(slice.domain) > 0;
               const shouldDarken = !balanceView && !hasActiveGoals;
               
@@ -1005,7 +1042,11 @@ const DomainBalanceWheel = ({ theme, navigation }) => {
         transparent={true}
         animationType="fade"
         onRequestClose={() => {
+          if (selectedDomain) {
+            animateFadeOut(selectedDomain.name);
+          }
           setShowDetailModal(false);
+          setSelectedDomain(null);
           setHighlightedDomain(null);
         }}
       >
@@ -1053,7 +1094,11 @@ const DomainBalanceWheel = ({ theme, navigation }) => {
                   <TouchableOpacity
                     style={styles.closeButton}
                     onPress={() => {
+                      if (selectedDomain) {
+                        animateFadeOut(selectedDomain.name);
+                      }
                       setShowDetailModal(false);
+                      setSelectedDomain(null);
                       setHighlightedDomain(null);
                     }}
                     accessible={true}

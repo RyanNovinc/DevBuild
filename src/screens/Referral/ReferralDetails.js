@@ -17,7 +17,7 @@ const ReferralDetails = ({ data, onRefresh, showSuccess, showError, theme }) => 
   const { code, link, remainingCount } = data;
   
   const [customMessage, setCustomMessage] = useState(
-    "I've been using LifeCompass to boost my productivity. Join with my code and get 50% off your first month!"
+    "I've been using LifeCompass to boost my productivity. Join with my code and get 500 AI credits when you sign up!"
   );
   
   // NEW: Add state to control message expansion
@@ -44,7 +44,7 @@ const ReferralDetails = ({ data, onRefresh, showSuccess, showError, theme }) => 
       const result = await Share.share({
         message: `${customMessage}\n\nUse my referral code: ${code}\n${link}`,
         url: link,
-        title: 'Get 50% off LifeCompass Premium'
+        title: 'Get 500 AI credits with LifeCompass'
       });
       
       if (result.action === Share.sharedAction) {

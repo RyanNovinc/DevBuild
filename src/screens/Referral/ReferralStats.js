@@ -65,7 +65,7 @@ const ReferralStats = ({ data, theme }) => {
             <View style={styles.rewardBadge}>
               <Ionicons name="checkmark-circle" size={14} color="#4CAF50" />
               <Text style={styles.rewardText}>
-                50% Off Applied
+                500 Credits Added
               </Text>
             </View>
           )}
@@ -110,9 +110,9 @@ const ReferralStats = ({ data, theme }) => {
           </View>
           
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{stats.plansEarned || 0}</Text>
-            <Text style={styles.statLabel}>AI Plans Earned</Text>
-            <Text style={styles.statSubLabel}>50% off</Text>
+            <Text style={styles.statNumber}>{(stats.plansEarned || 0) * 500}</Text>
+            <Text style={styles.statLabel}>Credits Earned</Text>
+            <Text style={styles.statSubLabel}>AI Assistant</Text>
           </View>
         </View>
       </View>
@@ -120,9 +120,9 @@ const ReferralStats = ({ data, theme }) => {
       {/* Available Discounts Section */}
       <View style={styles.discountsSection}>
         <View style={styles.discountHeader}>
-          <Ionicons name="ticket" size={20} color="#4CAF50" />
+          <Ionicons name="diamond" size={20} color="#4CAF50" />
           <Text style={styles.sectionTitle}>
-            Your 50% Off Discounts
+            Your AI Credits
           </Text>
         </View>
         
@@ -139,10 +139,10 @@ const ReferralStats = ({ data, theme }) => {
             </View>
             <View style={styles.discountInfo}>
               <Text style={styles.discountDescription}>
-                You have {discounts.length} discount{discounts.length !== 1 ? 's' : ''} ready to use!
+                You have {discounts.length * 500} credits ready to use!
               </Text>
               <Text style={styles.discountSubtext}>
-                50% off your next AI monthly plan{discounts.length > 1 ? 's' : ''}
+                AI Assistant conversation credits
               </Text>
             </View>
           </View>
@@ -150,10 +150,10 @@ const ReferralStats = ({ data, theme }) => {
           <View style={styles.discountEmpty}>
             <Ionicons name="ticket-outline" size={32} color="#666" />
             <Text style={styles.discountEmptyText}>
-              No discounts available yet
+              No credits available yet
             </Text>
             <Text style={styles.discountEmptySubtext}>
-              Share your referral code to earn 50% off discounts!
+              Share your referral code to earn 500 AI credits!
             </Text>
           </View>
         )}

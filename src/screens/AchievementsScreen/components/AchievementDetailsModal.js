@@ -403,7 +403,7 @@ const AchievementDetailsModal = ({
                       Pro Feature
                     </Text>
                     <Text style={[styles.simpleSectionText, { color: theme.text }]}>
-                      This is a premium achievement exclusively available to Pro users. Upgrade once to unlock all premium achievements forever.
+                      This is a Pro achievement exclusively available to Pro users. Upgrade once to unlock all Pro achievements forever.
                     </Text>
                   </View>
                 )}

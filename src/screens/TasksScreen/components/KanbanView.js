@@ -441,7 +441,7 @@ const KanbanView = ({ taskScreenProps }) => {
                     onUpdateProjectProgress={handleUpdateProjectProgress}
                     filterBy={kanbanFilter}
                     isProjectLevel={true}
-                    darkMode={true}
+                    darkMode={isDarkMode}
                     customStyles={kanbanCustomStyles}
                     containerStyle={{ 
                       backgroundColor: '#121212',
@@ -451,7 +451,7 @@ const KanbanView = ({ taskScreenProps }) => {
                     hideAddButton={true}
                     hideColumnAddButtons={true}
                     options={kanbanOptions}
-                    // Pass the selected goal's color if applicable
+                        // Pass the selected goal's color if applicable
                     color={selectedGoalId !== 'all' ? 
                       taskScreenProps.goalsToShow.find(g => g.id === selectedGoalId)?.color || theme.primary 
                       : theme.primary}
@@ -467,7 +467,7 @@ const KanbanView = ({ taskScreenProps }) => {
                     onUpdateTaskStatus={handleUpdateTaskStatus}
                     filterBy={kanbanFilter}
                     isProjectLevel={false}
-                    darkMode={true}
+                    darkMode={isDarkMode}
                     customStyles={kanbanCustomStyles}
                     containerStyle={{ 
                       backgroundColor: '#121212',
@@ -477,7 +477,7 @@ const KanbanView = ({ taskScreenProps }) => {
                     hideAddButton={true}
                     hideColumnAddButtons={true}
                     options={kanbanOptions}
-                    // Pass the selected goal's color if applicable
+                        // Pass the selected goal's color if applicable
                     color={selectedGoalId !== 'all' ? 
                       taskScreenProps.goalsToShow.find(g => g.id === selectedGoalId)?.color || theme.primary 
                       : theme.primary}

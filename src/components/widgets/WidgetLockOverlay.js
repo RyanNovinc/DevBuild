@@ -47,7 +47,7 @@ const WidgetLockOverlay = ({ theme, dashboardMode = false, onUpgrade }) => {
         </Text>
         
         <Text style={styles.lockMessage} maxFontSizeMultiplier={1.5}>
-          This premium feature is available with a one-time purchase.
+          This Pro feature is available with a one-time purchase.
         </Text>
         
         <TouchableOpacity

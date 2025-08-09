@@ -1067,8 +1067,8 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
     ]
   },
   
-  // Domain: Environment & Organization
-  "Environment & Organization": {
+  // Domain: Community & Environment
+  "Community & Environment": {
     "Organize Living Space": [
       {
         title: "Productivity ROI: Organized Workspaces Increase Efficiency by 85% and Reduce Stress",

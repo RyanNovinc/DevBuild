@@ -19,7 +19,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { generateConversationTitle } from '../utils/conversationUtils';
 
 const LAST_CHAT_KEY = 'currentConversationId';
-const MAX_CONVERSATIONS = 50;
+const MAX_CONVERSATIONS = 100;
 
 // Helper function to determine text color based on background
 const getContrastTextColor = (bgColor) => {
@@ -393,6 +393,14 @@ const ConversationsScreen = () => {
     // Generate preview if not available
     const preview = item.title || generatePreview(item.messages);
     
+    // Debug logging for title generation
+    if (__DEV__) {
+      console.log(`📋 [TITLE DEBUG] ConversationItem ID: ${item._id}`);
+      console.log(`📋 [TITLE DEBUG] Raw item.title: "${item.title}" (length: ${item.title?.length || 0})`);
+      console.log(`📋 [TITLE DEBUG] Final preview: "${preview}" (length: ${preview.length})`);
+      console.log(`📋 [TITLE DEBUG] Using item.title: ${!!item.title}, messages length: ${item.messages?.length || 0}`);
+    }
+    
     return (
       <TouchableOpacity
         style={[styles.conversationItem, { backgroundColor: theme.card }]}
@@ -402,27 +410,27 @@ const ConversationsScreen = () => {
           <Ionicons name="sparkles" size={20} color={theme.primary} />
         </View>
         <View style={styles.conversationContent}>
-          <Text style={[styles.conversationTitle, { color: theme.text }]} numberOfLines={1}>
+          <Text style={[styles.conversationTitle, { color: theme.text }]}>
             {preview}
           </Text>
-        </View>
-        <View style={styles.conversationRight}>
-          <Text style={[styles.conversationDate, { color: theme.textSecondary }]}>
-            {formatDate(item.updatedAt)}
-          </Text>
-          <View style={styles.conversationActions}>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={() => handleShareConversation(item)}
-            >
-              <Ionicons name="share-outline" size={18} color={theme.primary} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={() => handleDeleteConversation(item)}
-            >
-              <Ionicons name="trash-outline" size={18} color={theme.error || '#ff3b30'} />
-            </TouchableOpacity>
+          <View style={styles.conversationMeta}>
+            <Text style={[styles.conversationDate, { color: theme.textSecondary }]}>
+              {formatDate(item.updatedAt)}
+            </Text>
+            <View style={styles.conversationActions}>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => handleShareConversation(item)}
+              >
+                <Ionicons name="share-outline" size={18} color={theme.primary} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => handleDeleteConversation(item)}
+              >
+                <Ionicons name="trash-outline" size={18} color={theme.error || '#ff3b30'} />
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </TouchableOpacity>
@@ -616,6 +624,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 12,
     marginTop: 4,
+    alignItems: 'flex-start',
   },
   conversationIcon: {
     width: 40,
@@ -628,20 +637,22 @@ const styles = StyleSheet.create({
   },
   conversationContent: {
     flex: 1,
-    paddingRight: 12,
   },
   conversationTitle: {
     fontSize: 16,
     fontWeight: '500',
+    lineHeight: 22,
+    marginBottom: 8,
   },
-  conversationRight: {
-    alignItems: 'flex-end',
+  conversationMeta: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 2,
+    alignItems: 'center',
   },
   conversationDate: {
     fontSize: 12,
-    marginBottom: 8,
+    fontWeight: '400',
+    color: '#666',
   },
   conversationActions: {
     flexDirection: 'row',

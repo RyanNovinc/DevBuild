@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../context/ThemeContext';
 
 /**
- * A simple button that displays the user's remaining AI credits
+ * Simple credits display button that opens modal when pressed
  */
 const CreditsIndicator = ({ 
   credits = {
@@ -17,6 +17,7 @@ const CreditsIndicator = ({
   onPress                  // Function to call when button is pressed
 }) => {
   const { theme } = useTheme();
+  
   // Calculate remaining credits
   const totalCredits = credits.baseCredits + credits.rolledOverCredits;
   const remainingCredits = totalCredits - credits.creditsUsed;
@@ -24,24 +25,17 @@ const CreditsIndicator = ({
   // Format for display (1000 credits = $1)
   const formattedCredits = Math.round(remainingCredits * 1000);
   
-  // Determine color based on usage
-  let color = '#34C759'; // Green (default)
-  if (totalCredits > 0) {
-    const percentUsed = (credits.creditsUsed / totalCredits) * 100;
-    if (percentUsed > 80) color = '#FF3B30'; // Red - low credits
-    else if (percentUsed > 50) color = '#FF9500'; // Orange - medium credits
-  }
-  
   return (
     <TouchableOpacity 
       style={[styles.button, { 
-        backgroundColor: '#1C1C1E' // Keep dark background
+        backgroundColor: '#1C1C1E'
       }]}
       onPress={() => {
         console.log('Credits button pressed');
         if (onPress) onPress();
       }}
       activeOpacity={0.7}
+      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
     >
       <Ionicons name="flash" size={16} color={theme.primary} />
       <Text style={styles.text}>{formattedCredits}</Text>
@@ -55,10 +49,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 8, // Increased padding for better touch target
     borderRadius: 16,
     minWidth: 80,
-    minHeight: 32,
+    minHeight: 36, // Increased minimum height for better touch target
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,

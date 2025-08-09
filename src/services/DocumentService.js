@@ -314,7 +314,7 @@ class DocumentService {
   }
 
   /**
-   * Calculate total storage used by processed documents
+   * Calculate total storage used by processed documents (only counts documents with AI access enabled)
    * @returns {Promise<number>} Size in bytes
    */
   async getStorageUsage() {
@@ -332,15 +332,26 @@ class DocumentService {
         return 0;
       }
       
-      // Calculate total size by directly summing the document sizes
+      // Only count documents that have AI access enabled (aiAccessEnabled !== false)
+      const enabledDocs = completedDocs.filter(doc => doc.aiAccessEnabled !== false);
+      
+      console.log(`Storage calculation: ${completedDocs.length} completed documents, ${enabledDocs.length} with AI access enabled`);
+      
+      if (enabledDocs.length === 0) {
+        console.log('No documents with AI access enabled for storage calculation');
+        return 0;
+      }
+      
+      // Calculate total size by directly summing the enabled document sizes
       let totalBytes = 0;
       
       // Debug each document's size properties
-      for (const doc of completedDocs) {
+      for (const doc of enabledDocs) {
         // Log each document to debug
-        console.log(`Document ${doc.name}: `, {
+        console.log(`Document ${doc.name} (AI enabled): `, {
           size: doc.size,
           processedSize: doc.processedSize,
+          aiAccessEnabled: doc.aiAccessEnabled,
           sizeKB: doc.size / 1024,
           processedSizeKB: doc.processedSize / 1024
         });
@@ -353,7 +364,7 @@ class DocumentService {
         }
       }
       
-      console.log(`Total storage calculated: ${totalBytes} bytes (${(totalBytes / 1024).toFixed(2)}KB)`);
+      console.log(`Total storage calculated: ${totalBytes} bytes (${(totalBytes / 1024).toFixed(2)}KB) from ${enabledDocs.length} enabled documents`);
       
       return totalBytes;
     } catch (error) {
@@ -555,7 +566,8 @@ class DocumentService {
           originalSize: result.originalSize,
           processedSize: result.processedText ? result.processedText.length * 2 : 0, // Store in bytes
           uri: file.uri,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
+          aiAccessEnabled: true  // Default to AI access enabled for new documents
         };
 
         // Add to documents list
@@ -735,16 +747,18 @@ class DocumentService {
       // Get all documents
       const documents = await this.getDocuments();
       
-      // Only include completed documents that aren't processing
+      // Only include completed documents that aren't processing AND have AI access enabled
       const completedDocs = documents.filter(doc => 
         !doc.isProcessing && 
         doc.status === 'completed' && 
-        doc.openaiFileId
+        doc.openaiFileId &&
+        doc.aiAccessEnabled !== false  // Only include documents with AI access enabled
       );
       
-      console.log(`Found ${completedDocs.length} completed documents for context`);
+      console.log(`Found ${completedDocs.length} completed documents with AI access enabled for context`);
       
       if (completedDocs.length === 0) {
+        console.log('No documents with AI access enabled for context');
         return '';
       }
       

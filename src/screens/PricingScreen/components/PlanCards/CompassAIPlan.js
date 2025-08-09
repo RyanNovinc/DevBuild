@@ -14,12 +14,23 @@ const CompassAIPlan = ({
   selectedSubscription, 
   handlePurchase 
 }) => {
-  // Regular price - updated to $16.99
-  const regularMonthlyPrice = 16.99;
+  // Regular price - updated to $9.99
+  const regularMonthlyPrice = 9.99;
   
   // Helper function to get display price based on subscription
   const getDisplayPrice = () => {
     return selectedSubscription === 'monthly' ? regularMonthlyPrice.toFixed(2) : (regularMonthlyPrice * 0.8).toFixed(2);
+  };
+
+  // Helper function to get credits per dollar
+  const getCreditsPerDollar = () => {
+    const currentPrice = selectedSubscription === 'monthly' ? regularMonthlyPrice : (regularMonthlyPrice * 0.8);
+    return Math.round(5000 / currentPrice);
+  };
+
+  // Helper function to get value description
+  const getValueDescription = () => {
+    return selectedSubscription === 'monthly' ? 'Best value' : 'Exceptional value (annual)';
   };
 
   return (
@@ -65,14 +76,6 @@ const CompassAIPlan = ({
         {selectedSubscription === 'monthly' ? 'per month' : 'per month, billed annually'}
       </Text>
       
-      {isFromReferral && (
-        <Text style={[
-          styles.savingsText, 
-          { color: selectedPlan === 'business' ? 'rgba(255, 255, 255, 0.9)' : '#4CAF50' }
-        ]}>
-          50% off your first month!
-        </Text>
-      )}
       
       {selectedSubscription === 'annual' && (
         <Text style={[
@@ -86,7 +89,7 @@ const CompassAIPlan = ({
       <View style={styles.planFeatures}>
         <View style={styles.featureItem}>
           <Ionicons 
-            name="chatbox" 
+            name="flash" 
             size={20} 
             color={selectedPlan === 'business' ? '#FFFFFF' : '#673AB7'} 
           />
@@ -94,11 +97,23 @@ const CompassAIPlan = ({
             styles.featureText, 
             { color: selectedPlan === 'business' ? '#FFFFFF' : theme.text }
           ]}>
-            <Text style={styles.highlightedText}>5,000+ AI interactions per month*</Text>
+            <Text style={styles.highlightedText}>5,000 AI credits monthly</Text>
           </Text>
         </View>
         
-        <CapacityIndicator level={5} selectedPlan={selectedPlan} theme={theme} />
+        <View style={styles.featureItem}>
+          <Ionicons 
+            name="calculator" 
+            size={20} 
+            color={selectedPlan === 'business' ? '#FFFFFF' : '#673AB7'} 
+          />
+          <Text style={[
+            styles.featureText, 
+            { color: selectedPlan === 'business' ? '#FFFFFF' : theme.text }
+          ]}>
+            <Text style={styles.highlightedText}>{getCreditsPerDollar()} credits per $1 • {getValueDescription()}</Text>
+          </Text>
+        </View>
         
         {/* Credit Rollover Feature */}
         <View style={styles.featureItem}>

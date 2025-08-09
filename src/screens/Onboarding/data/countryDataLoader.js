@@ -9,6 +9,7 @@ import { DOMAIN_DEFINITIONS as IrelandData } from './countries/ireland';
 import { DOMAIN_DEFINITIONS as MalaysiaData } from './countries/malaysia';
 import { DOMAIN_DEFINITIONS as NewZealandData } from './countries/newzealand';
 import { DOMAIN_DEFINITIONS as NigeriaData } from './countries/nigeria';
+import { DOMAIN_DEFINITIONS as OtherData } from './countries/other';
 import { DOMAIN_DEFINITIONS as PhilippinesData } from './countries/philippines';
 import { DOMAIN_DEFINITIONS as SingaporeData } from './countries/singapore';
 import { DOMAIN_DEFINITIONS as SouthAfricaData } from './countries/southafrica';
@@ -75,9 +76,13 @@ export const getCountryData = (countryCode) => {
       console.log('Loading USA-specific data');
       return USAData;
       
+    case 'other':
+      console.log('Loading universal data for other countries');
+      return OtherData;
+      
     default:
-      console.log(`Unknown country code: ${countryCode}, using Australian data as fallback`);
-      return AustraliaData;
+      console.log(`Unknown country code: ${countryCode}, using universal data as fallback`);
+      return OtherData;
   }
 };
 
@@ -99,6 +104,7 @@ export const getAvailableCountries = () => {
     { code: 'southafrica', name: 'South Africa', flag: '🇿🇦', dataAvailable: true }, // South African-specific data
     { code: 'uk', name: 'United Kingdom', flag: '🇬🇧', dataAvailable: true }, // UK-specific data
     { code: 'usa', name: 'United States', flag: '🇺🇸', dataAvailable: true }, // USA-specific data
+    { code: 'other', name: 'Other', flag: '🌍', dataAvailable: true }, // Universal data for other countries
   ];
 };
 

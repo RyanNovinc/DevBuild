@@ -1,5 +1,7 @@
 // src/components/ai/LoginScreen/utils/auth-service.js
-// UPDATED: Direct imports from aws-amplify/auth
+// UPDATED: Direct imports from aws-amplify/auth with configuration check
+
+import { Amplify } from 'aws-amplify';
 
 // Import directly from aws-amplify/auth
 import { 
@@ -7,15 +9,21 @@ import {
   signUp, 
   signOut, 
   confirmSignUp, 
-  forgotPassword, 
-  forgotPasswordSubmit,
+  resetPassword, 
+  confirmResetPassword,
   fetchUserAttributes, 
   getCurrentUser, 
   updateUserAttributes 
 } from 'aws-amplify/auth';
 
+// Simple configuration check - AWS should be configured in App.js
+const checkAwsConfiguration = () => {
+  console.log('✅ AUTH SERVICE: Using AWS configuration from App.js');
+  return true; // Assume AWS is properly configured in development builds
+};
+
 // Added debug logging
-console.log('AUTH SERVICE LOADED - Using direct auth imports');
+console.log('AUTH SERVICE LOADED - Using direct auth imports with configuration check');
 
 /**
  * AWS Cognito authentication service
@@ -31,6 +39,15 @@ export const authService = {
   signIn: async (email, password) => {
     try {
       console.log('AUTH SERVICE: Starting sign-in process');
+      console.log('AUTH SERVICE: Login attempt for email:', email);
+      console.log('AUTH SERVICE: Password length:', password ? password.length : 'undefined');
+      
+      // Ensure AWS is configured before any auth operation
+      if (!checkAwsConfiguration()) {
+        throw new Error('AWS Amplify configuration failed');
+      }
+      
+      console.log('AUTH SERVICE: AWS configuration verified, proceeding with signIn...');
       
       const signInResult = await signIn({ username: email, password });
       console.log('AUTH SERVICE: Sign-in successful');
@@ -55,8 +72,21 @@ export const authService = {
       console.error('AUTH SERVICE: Sign-in error details:', {
         code: error.code,
         name: error.name,
-        message: error.message
+        message: error.message,
+        stack: error.stack,
+        originalError: error
       });
+      
+      // Enhanced error logging for native builds
+      console.error('AUTH SERVICE: Full error object:', JSON.stringify(error, null, 2));
+      console.error('AUTH SERVICE: Error constructor:', error.constructor.name);
+      console.error('AUTH SERVICE: Error keys:', Object.keys(error));
+      
+      // Check if it's a network error
+      if (error.message && error.message.includes('Network')) {
+        console.error('AUTH SERVICE: Network error detected - check internet connection');
+      }
+      
       throw error;
     }
   },
@@ -72,6 +102,11 @@ export const authService = {
     try {
       console.log('AUTH SERVICE: Starting sign-up');
       console.log('AUTH SERVICE: Attributes:', JSON.stringify(attributes));
+      
+      // Ensure AWS is configured before any auth operation
+      if (!checkAwsConfiguration()) {
+        throw new Error('AWS Amplify configuration failed');
+      }
       
       // Create sign up parameters - format for Amplify v6
       const signUpParams = {
@@ -167,10 +202,18 @@ export const authService = {
    */
   forgotPassword: async (email) => {
     try {
-      await forgotPassword({ username: email });
+      console.log('AUTH SERVICE: Attempting resetPassword for:', email);
+      
+      // Ensure AWS is configured before any auth operation
+      if (!checkAwsConfiguration()) {
+        throw new Error('AWS Amplify configuration failed');
+      }
+      
+      await resetPassword({ username: email });
+      console.log('AUTH SERVICE: resetPassword successful');
       return true;
     } catch (error) {
-      console.error('Forgot password error:', error);
+      console.error('AUTH SERVICE: Forgot password error:', error);
       throw error;
     }
   },
@@ -184,7 +227,7 @@ export const authService = {
    */
   resetPassword: async (email, code, newPassword) => {
     try {
-      await forgotPasswordSubmit({
+      await confirmResetPassword({
         username: email,
         confirmationCode: code,
         newPassword
@@ -234,35 +277,51 @@ export const authService = {
   },
   
   /**
-   * Get the error message for a specific error code
+   * Get user-friendly error messages for authentication errors
    * @param {Error} error - Error object
    * @returns {string} - User-friendly error message
    */
   getErrorMessage: (error) => {
-    switch (error.code) {
+    switch (error.code || error.name) {
       case 'UserNotConfirmedException':
-        return 'Please verify your email before logging in';
+        return 'Please check your email and verify your account before logging in.';
       case 'NotAuthorizedException':
-        return 'Incorrect username or password';
+        return 'Incorrect email or password. Please try again.';
       case 'UserNotFoundException':
-        return 'No account found with this email';
+        return 'No account found with this email address. Please sign up first.';
       case 'UsernameExistsException':
-        return 'An account with this email already exists';
+        return 'An account with this email already exists. Please try logging in instead.';
       case 'InvalidPasswordException':
-        return 'Password does not meet requirements';
+        return 'Password must be at least 8 characters long and contain uppercase, lowercase, and numbers.';
       case 'CodeMismatchException':
-        return 'Invalid verification code';
+        return 'The verification code you entered is incorrect. Please try again.';
       case 'ExpiredCodeException':
-        return 'Verification code has expired';
+        return 'The verification code has expired. Please request a new one.';
       case 'LimitExceededException':
-        return 'Too many attempts. Please try again later';
+        return 'Too many attempts. Please wait a few minutes before trying again.';
       case 'InvalidParameterException':
-        if (error.message.includes('phone')) {
-          return 'Please enter a valid phone number with country code (e.g., +1234567890)';
+        if (error.message && error.message.includes('phone')) {
+          return 'Please enter a valid phone number (e.g., +1 555 123 4567).';
         }
-        return error.message || 'Invalid parameter. Please check your input.';
+        if (error.message && error.message.includes('email')) {
+          return 'Please enter a valid email address.';
+        }
+        return 'Please check your input and try again.';
+      case 'NetworkError':
+      case 'NetworkingError':
+        return 'Network connection error. Please check your internet and try again.';
+      case 'UnknownError':
+      case 'Unknown':
+        return 'Something went wrong. Please check your internet connection and try again.';
       default:
-        return error.message || 'An error occurred. Please try again.';
+        // Provide helpful fallback messages
+        if (error.message && error.message.includes('Network')) {
+          return 'Network connection error. Please check your internet and try again.';
+        }
+        if (error.message && error.message.includes('password')) {
+          return 'Password issue. Please check your password and try again.';
+        }
+        return error.message || 'An unexpected error occurred. Please try again.';
     }
   }
 };

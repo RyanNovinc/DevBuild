@@ -45,10 +45,10 @@ export const STANDARD_DOMAINS = [
     description: "Exploring spirituality, contributing to causes you care about, and aligning actions with your values."
   },
   {
-    name: "Environment & Organization",
+    name: "Community & Environment",
     icon: "home",
     color: "#6366f1", // Indigo/purple
-    description: "Creating order in your physical spaces, developing systems, and optimizing your surroundings."
+    description: "Living spaces, neighborhood quality, civic engagement, and environmental sustainability."
   },
   {
     name: "Other",

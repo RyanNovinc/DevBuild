@@ -112,6 +112,11 @@ class WebSocketService {
   handleMessage(data) {
     console.log('Received WebSocket message:', data);
     
+    // Debug logging for title data
+    if (data.title && __DEV__) {
+      console.log(`🌐 [TITLE DEBUG] WebSocket received title: "${data.title}" (length: ${data.title.length})`);
+    }
+    
     // Get the message type
     const type = data.type;
     

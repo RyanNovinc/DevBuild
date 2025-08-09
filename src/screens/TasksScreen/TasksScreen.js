@@ -1831,7 +1831,7 @@ const TasksScreen = ({ route, navigation }) => {
                 style={[additionalStyles.upgradeModalTitle, { color: theme.text }]}
                 maxFontSizeMultiplier={1.3}
               >
-                Premium Feature
+                Pro Feature
               </Text>
             </View>
             

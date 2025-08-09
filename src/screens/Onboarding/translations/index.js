@@ -41,7 +41,7 @@ export default {
         "Financial Security": "Financial Security",
         "Recreation & Leisure": "Recreation & Leisure",
         "Purpose & Meaning": "Purpose & Meaning",
-        "Environment & Organization": "Environment & Organization"
+        "Community & Environment": "Community & Environment"
       },
       continueBtnText: "Continue with {{domain}}",
     },
@@ -117,7 +117,7 @@ export default {
         "Financial Security": "経済的安定",
         "Recreation & Leisure": "レクリエーションと余暇",
         "Purpose & Meaning": "目的と意味",
-        "Environment & Organization": "環境と組織"
+        "Community & Environment": "コミュニティと環境"
       },
       continueBtnText: "{{domain}}で続ける",
     },

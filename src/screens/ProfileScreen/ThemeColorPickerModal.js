@@ -1657,7 +1657,7 @@ const ThemeColorPickerModal = ({
             </Text>
             
             <Text style={[styles.congratsDescription, { color: textColor }]}>
-              You've reached Level 3 and unlocked the natural Forest Green theme color! This color promotes balance, growth, and sustainable productivity while reducing eye strain.
+              You've reached Stage 3 and unlocked the natural Forest Green theme color! This color promotes balance, growth, and sustainable productivity while reducing eye strain.
             </Text>
             
             <TouchableOpacity

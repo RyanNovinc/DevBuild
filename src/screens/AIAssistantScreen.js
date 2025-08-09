@@ -19,6 +19,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { ThemeProvider, useTheme } from '../context/ThemeContext';
 import { useAppContext } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { AIAssistantProvider, useAIAssistant } from '../context/AIAssistantContext/index';
 import * as AIService from '../services/AIService';
 import assistantService from '../services/AssistantService';
@@ -73,8 +74,11 @@ import {
 // Import CreditDetailModal
 import CreditDetailModal from '../components/ai/AIModals/CreditDetailModal';
 
-// API endpoint for Lambda functions
-const API_ENDPOINT = 'https://your-api-gateway-url/dev'; // Replace with your actual API Gateway URL
+// Import API configuration
+import { API_BASE_URL } from '../config/apiConfig';
+
+// API endpoint for Lambda functions  
+const API_ENDPOINT = API_BASE_URL;
 
 // Messages to retain when truncating
 const MAX_MESSAGES_TO_KEEP = 30;
@@ -144,6 +148,7 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
   
   const { theme } = useTheme();
   const appContext = useAppContext(); // Add app context
+  const { user, isAuthenticated } = useAuth(); // Add authentication check
   const { 
     state, 
     dispatch, 
@@ -163,6 +168,18 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
   
   // NEW: State for unlimited usage status
   const [isUnlimitedMode, setIsUnlimitedMode] = useState(false);
+  
+  // Effect to handle authentication changes and credit fetching
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      console.log('User authenticated, fetching credit information...');
+      // You can call credit fetching logic here if needed
+      // For now, credits will be fetched when needed by existing functions
+    } else {
+      console.log('User not authenticated, hiding credit information');
+      // Credits will be 0 due to our authentication check above
+    }
+  }, [isAuthenticated, user]);
   
   // NEW: State for credit detail modal
   const [creditDetailVisible, setCreditDetailVisible] = useState(false);
@@ -228,13 +245,14 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
     userKnowledgeEnabled = true
   } = state.knowledge || {};
   
+  // Only show real credits for authenticated users
   const {
     subscriptionStatus = 'free',
-    baseCredits = 0.60,         // Default to Basic tier
-    rolledOverCredits = 0,
-    creditsUsed = 0,
-    nextRefreshDate = null
-  } = state.credits || {};
+    baseCredits = isAuthenticated ? (state.credits?.baseCredits || 0) : 0,
+    rolledOverCredits = isAuthenticated ? (state.credits?.rolledOverCredits || 0) : 0,
+    creditsUsed = isAuthenticated ? (state.credits?.creditsUsed || 0) : 0,
+    nextRefreshDate = isAuthenticated ? (state.credits?.nextRefreshDate || null) : null
+  } = {};
   
   // MODIFIED: Use a fixed AI model tier
   const aiModelTier = 'guide';
@@ -296,12 +314,21 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
       try {
         const user = await Auth.currentAuthenticatedUser();
         userEmail = user.attributes.email;
+        console.log('Authenticated user found:', userEmail);
       } catch (error) {
-        console.error('Error getting current user:', error);
-        userEmail = 'test@example.com'; // Fallback for testing
+        console.error('User not authenticated:', error);
+        // Don't proceed if user is not authenticated
+        dispatch({ 
+          type: 'SHOW_TOAST', 
+          payload: 'Please log in to view credit information' 
+        });
+        return;
       }
       
       // Call your GetCreditBalance Lambda through API
+      console.log('Calling credit balance API for user:', userEmail);
+      console.log('API endpoint:', `${API_ENDPOINT}/credits/balance`);
+      
       const response = await fetch(`${API_ENDPOINT}/credits/balance`, {
         method: 'POST',
         headers: {
@@ -312,14 +339,25 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
         })
       });
       
+      console.log('Credit API response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}`);
+        const errorText = await response.text();
+        console.error('Credit API error response:', errorText);
+        throw new Error(`Credit API error ${response.status}: ${errorText}`);
       }
       
       const result = await response.json();
-      const creditData = JSON.parse(result.body);
+      console.log('Raw credit API result:', result);
       
-      console.log('Credit data refreshed:', creditData);
+      let creditData;
+      if (typeof result.body === 'string') {
+        creditData = JSON.parse(result.body);
+      } else {
+        creditData = result.body || result;
+      }
+      
+      console.log('Parsed credit data:', creditData);
       
       // Map subscription tier to base credits
       let baseAmount = 0.60; // default light tier
@@ -1053,7 +1091,13 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
             documentContext = await DocumentService.getDocumentContextForAI();
           }
           
-          console.log('Document context size:', documentContext ? documentContext.length : 0, 'characters');
+          console.log('📄 [CONTEXT DEBUG] Document context size:', documentContext ? documentContext.length : 0, 'characters');
+          
+          if (documentContext) {
+            console.log('📄 [CONTEXT DEBUG] Context preview (first 200 chars):', documentContext.substring(0, 200));
+            console.log('📄 [CONTEXT DEBUG] Contains goals?', documentContext.toLowerCase().includes('goals'));
+            console.log('📄 [CONTEXT DEBUG] Contains app context?', documentContext.toLowerCase().includes('app context'));
+          }
           
           // Clear from assistant service after using
           if (documentContext) {
@@ -1116,18 +1160,25 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
             
             // Check if we received a title from the AI response for the first message
             if (title && firstMessage) {
-              console.log(`Received conversation title from AI: "${title}"`);
+              console.log(`🎯 [TITLE DEBUG] Received conversation title from AI: "${title}" (length: ${title.length})`);
               
               try {
-                // Update the conversation with the title
+                // Update the conversation with the AI title
                 await AIService.updateConversation(conversationId, {
                   title: title
                 });
                 
-                console.log(`Saved title "${title}" to conversation ${conversationId}`);
+                console.log(`✅ [TITLE DEBUG] Successfully saved AI title "${title}" to conversation ${conversationId}`);
+                
+                // Verify the title was saved correctly
+                const savedConversation = await AIService.getConversation(conversationId);
+                console.log(`🔍 [TITLE DEBUG] Verified saved title: "${savedConversation?.title}" (length: ${savedConversation?.title?.length || 0})`);
+                
               } catch (error) {
-                console.error('Error saving conversation title:', error);
+                console.error('❌ Error saving conversation title:', error);
               }
+            } else if (firstMessage) {
+              console.log('⚠️ First message but no title received from AI');
             }
             
             if (conversationId) {
@@ -1212,8 +1263,9 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
                   const user = await Auth.currentAuthenticatedUser();
                   userEmail = user.attributes.email;
                 } catch (error) {
-                  console.error('Error getting current user for token tracking:', error);
-                  userEmail = 'test@example.com'; // Fallback for testing
+                  console.error('User not authenticated for token tracking:', error);
+                  // Skip token tracking if user not authenticated
+                  return;
                 }
                 
                 // Estimate token counts (this would be more accurate from a real API response)
@@ -1995,9 +2047,6 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
         todoData={currentTodoData}
       />
       
-      {/* Debug: Log modal visibility */}
-      {console.log('DEBUG: todoModalVisible =', todoModalVisible)}
-      {console.log('DEBUG: currentTodoData =', currentTodoData)}
       
       <UpdateLifeDirectionModal
         visible={lifeDirectionModalVisible}
@@ -2017,7 +2066,7 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
         onTruncateConversation={handleTruncateConversation}
       />
       
-      {/* Credit Detail Modal with API integration */}
+      {/* Credit Detail Modal with simplified UI */}
       <CreditDetailModal
         visible={creditDetailVisible}
         onClose={() => setCreditDetailVisible(false)}
@@ -2027,6 +2076,7 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
           creditsUsed: creditsUsed,
           nextRefreshDate: nextRefreshDate
         }}
+        isAuthenticated={isAuthenticated}
         onRefresh={refreshCreditData}
       />
       
@@ -2061,7 +2111,7 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
                 style={[styles.upgradeModalTitle, { color: theme.text }]}
                 maxFontSizeMultiplier={1.3}
               >
-                Premium Feature
+                Pro Feature
               </Text>
             </View>
             

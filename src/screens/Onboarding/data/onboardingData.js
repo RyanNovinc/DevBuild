@@ -1024,10 +1024,10 @@ export const DOMAIN_DEFINITIONS = [
     ]
   },
   {
-    name: "Environment & Organization",
+    name: "Community & Environment",
     icon: "home-outline",
     color: "#0ea5e9", // Sky blue
-    description: "Home, physical spaces, systems, surroundings",
+    description: "Community connections, environmental improvements, organized spaces",
     goals: [
       {
         name: "Home Organization",

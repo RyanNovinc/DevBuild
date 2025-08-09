@@ -1581,6 +1581,7 @@ export const updateConversation = async (conversationId, updates) => {
     // Handle special case for title
     if (updates.title && conversation.messages && conversation.messages.length === 1 && 
         conversation.messages[0].type === 'ai') {
+      console.log(`🔄 [TITLE DEBUG] Setting pendingTitle: "${updates.title}" (length: ${updates.title.length})`);
       updatedConversation.pendingTitle = updates.title;
     }
     
@@ -1649,12 +1650,15 @@ export const addMessageToConversation = async (conversationId, text, type = 'use
     
     // Handle title
     if (type === 'ai' && conversation.pendingTitle) {
+      console.log(`✅ [TITLE DEBUG] Moving pendingTitle to title: "${conversation.pendingTitle}" (length: ${conversation.pendingTitle.length})`);
       conversation.title = conversation.pendingTitle;
       delete conversation.pendingTitle;
     }
-    else if (type === 'user' && conversation.messages.filter(m => m.type === 'user').length === 1) {
-      // Generate title for first user message
-      conversation.title = generateConversationTitle([...conversation.messages]);
+    else if (type === 'user' && conversation.messages.filter(m => m.type === 'user').length === 1 && !conversation.title) {
+      // Generate title for first user message ONLY if no title exists yet
+      const generatedTitle = generateConversationTitle([...conversation.messages]);
+      console.log(`📝 [TITLE DEBUG] Generated fallback title: "${generatedTitle}" (length: ${generatedTitle.length})`);
+      conversation.title = generatedTitle;
     }
     
     // Save updated conversation

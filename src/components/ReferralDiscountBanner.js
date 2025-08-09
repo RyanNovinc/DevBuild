@@ -121,10 +121,10 @@ const ReferralDiscountBanner = ({
         
         <View style={styles.textContainer}>
           <Text style={styles.title}>
-            🎉 Referral Reward Available!
+            🎉 Referral Credits Available!
           </Text>
           <Text style={styles.subtitle}>
-            Save {discountAmount}% (${savings.toFixed(2)}) with your referral reward
+            You have 500 AI credits from referrals ready to use!
           </Text>
         </View>
         
@@ -150,7 +150,7 @@ const ReferralDiscountBanner = ({
         <View style={styles.appliedBanner}>
           <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
           <Text style={styles.appliedText}>
-            Discount applied! New price: ${(originalPrice - savings).toFixed(2)}
+            Credits activated! 500 AI credits added to your account
           </Text>
         </View>
       )}

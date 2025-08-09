@@ -1,5 +1,5 @@
-// src/screens/TimeBlockScreen/TimeBlockForm.js
-import React, { useRef, useState, useEffect } from 'react';
+// src/screens/TimeBlockScreen/TimeBlockFormNew.js
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -11,15 +11,19 @@ import {
   LayoutAnimation,
   Platform,
   UIManager,
-  Modal
+  Modal,
+  Dimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 
 // Enable LayoutAnimation for Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
+
+const { width } = Dimensions.get('window');
 
 // Goal Selector Component
 const GoalSelector = ({ 
@@ -64,7 +68,6 @@ const GoalSelector = ({
           </View>
           
           <ScrollView style={styles.modalContent}>
-            {/* No specific goal option */}
             <TouchableOpacity 
               style={[
                 styles.modalItem,
@@ -101,7 +104,6 @@ const GoalSelector = ({
               </Text>
             </TouchableOpacity>
             
-            {/* Goals list */}
             {goals.length > 0 ? (
               goals.map(goal => (
                 <TouchableOpacity 
@@ -234,25 +236,18 @@ const TimeBlockForm = ({
   validateCustomMinutes,
 }) => {
   
-  // Define tabs for the form
-  const TABS = {
-    BASIC: 'basic',
-    ADDITIONAL: 'additional'
-  };
-  
-  // State for active tab
-  const [activeTab, setActiveTab] = useState(TABS.BASIC);
-  
   // State for showing goal selector modal
   const [showGoalModal, setShowGoalModal] = useState(false);
   
   // Duration state for displaying time block length
   const [duration, setDuration] = useState('');
   
-  // Animation values
-  const tabIndicator = useRef(new Animated.Value(activeTab === TABS.BASIC ? 0 : 1)).current;
-  const contentOpacity = useRef(new Animated.Value(1)).current;
-  const contentTranslateY = useRef(new Animated.Value(0)).current;
+  // Tab navigation state
+  const [index, setIndex] = useState(0);
+  const [routes] = useState([
+    { key: 'basic', title: 'Basic Details' },
+    { key: 'additional', title: 'Additional Options' }
+  ]);
   
   // Find selected goal
   const selectedGoal = Array.isArray(availableGoals) ? 
@@ -282,55 +277,6 @@ const TimeBlockForm = ({
     return 'Custom time before';
   };
   
-  // Handle tab change with animation
-  const handleTabChange = (newTab) => {
-    if (newTab === activeTab) return;
-    
-    // Prepare animation config
-    const config = LayoutAnimation.create(
-      250, 
-      LayoutAnimation.Types.easeInEaseOut,
-      LayoutAnimation.Properties.opacity
-    );
-    
-    // First fade out the content
-    Animated.timing(contentOpacity, {
-      toValue: 0,
-      duration: 180,
-      useNativeDriver: true
-    }).start(() => {
-      // Apply layout animation for height changes
-      LayoutAnimation.configureNext(config);
-      
-      // Set new tab
-      setActiveTab(newTab);
-      
-      // Animate tab indicator
-      Animated.timing(tabIndicator, {
-        toValue: newTab === TABS.BASIC ? 0 : 1,
-        duration: 250,
-        useNativeDriver: false
-      }).start();
-      
-      // Set up content for fade-in and slide up
-      contentTranslateY.setValue(20);
-      
-      // Fade in the new content with a slight slide up
-      Animated.parallel([
-        Animated.timing(contentOpacity, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true
-        }),
-        Animated.timing(contentTranslateY, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true
-        })
-      ]).start();
-    });
-  };
-  
   // Function to handle quick duration selection
   const handleQuickDuration = (minutes) => {
     const newEndTime = new Date(startTime.getTime());
@@ -338,1206 +284,890 @@ const TimeBlockForm = ({
     setEndTime(newEndTime);
   };
   
-  // Function to open goal selection modal
-  const openGoalModal = () => {
-    setShowGoalModal(true);
-  };
-  
   // Function to handle goal selection
   const handleGoalSelect = (goal) => {
     if (goal === null) {
-      // Selected "No Specific Goal"
       setDomain('');
       setDomainColor(customColor);
     } else {
-      // Selected a specific goal
       setDomain(goal.title);
       setDomainColor(goal.color);
     }
-    
-    // Clear project and task when goal changes
-    if ((!selectedGoal && goal) || (selectedGoal && goal && selectedGoal.id !== goal.id)) {
-      // If selecting a different goal, clear the project selection
-      //setSelectedProject(null);
-      //setSelectedTask(null);
-    }
   };
 
-  return (
-    <ScrollView
-      style={styles.content}
-      showsVerticalScrollIndicator={true}
-      contentContainerStyle={{ paddingBottom: 50 }}
+  const renderBasicDetails = () => (
+    <ScrollView 
+      style={[styles.tabContent, { backgroundColor: theme.background }]}
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={styles.scrollContent}
     >
-      <View style={[styles.form, { backgroundColor: theme.card, borderRadius: 16 }]}>
-        {/* Tab Selector */}
-        <View style={[styles.tabContainer, { 
-          backgroundColor: theme.background, 
-          marginBottom: 20,
-          borderRadius: 12,
-          padding: 4,
-        }]}>
-          {/* Animated Tab Indicator */}
-          <Animated.View 
-            style={[
-              styles.tabIndicator,
-              {
-                backgroundColor: theme.primary,
-                left: tabIndicator.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: ['2%', '52%']
-                })
-              }
-            ]}
-          />
+      <View style={styles.formContainer}>
+        {/* Title */}
+        <View style={styles.sectionGroup}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>
+            Activity Details
+          </Text>
           
-          <TouchableOpacity
-            style={styles.tab}
-            onPress={() => handleTabChange(TABS.BASIC)}
-            activeOpacity={0.7}
-          >
-            <Ionicons 
-              name="document-text-outline" 
-              size={18} 
-              color={activeTab === TABS.BASIC ? '#FFFFFF' : theme.textSecondary} 
+          <View style={styles.inputGroup}>
+            <View style={styles.inputHeader}>
+              <Ionicons name="create-outline" size={18} color={theme.primary} />
+              <Text style={[styles.inputLabel, { color: theme.text }]}>Title</Text>
+            </View>
+            <TextInput
+              style={[styles.modernInput, { 
+                color: theme.text, 
+                backgroundColor: theme.card, 
+                borderColor: theme.border
+              }]}
+              value={title}
+              onChangeText={setTitle}
+              placeholder="What are you planning to do?"
+              placeholderTextColor={theme.textSecondary}
             />
-            <Text style={[
-              styles.tabText,
-              { 
-                color: activeTab === TABS.BASIC ? '#FFFFFF' : theme.text,
-                fontWeight: activeTab === TABS.BASIC ? '600' : '500'
-              }
-            ]}>
-              Basic Details
-            </Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={styles.tab}
-            onPress={() => handleTabChange(TABS.ADDITIONAL)}
-            activeOpacity={0.7}
-          >
-            <Ionicons 
-              name="options-outline" 
-              size={18} 
-              color={activeTab === TABS.ADDITIONAL ? '#FFFFFF' : theme.textSecondary} 
-            />
-            <Text style={[
-              styles.tabText,
-              { 
-                color: activeTab === TABS.ADDITIONAL ? '#FFFFFF' : theme.text,
-                fontWeight: activeTab === TABS.ADDITIONAL ? '600' : '500'
-              }
-            ]}>
-              Additional Options
-            </Text>
-          </TouchableOpacity>
+          </View>
         </View>
         
-        {/* Animated Content Container */}
-        <Animated.View style={{
-          opacity: contentOpacity,
-          transform: [{ translateY: contentTranslateY }]
-        }}>
-          {/* Basic Details Tab */}
-          {activeTab === TABS.BASIC && (
-            <>
-              {/* Title */}
-              <View style={styles.formGroup}>
-                <View style={styles.labelContainer}>
-                  <Ionicons name="create-outline" size={16} color={theme.textSecondary} />
-                  <Text style={[styles.label, { color: theme.textSecondary }]}>
-                    Title
-                  </Text>
-                </View>
-                <TextInput
-                  style={[styles.input, { 
-                    color: theme.text, 
-                    backgroundColor: theme.background, 
-                    borderColor: theme.border
-                  }]}
-                  value={title}
-                  onChangeText={setTitle}
-                  placeholder="What are you planning to do?"
-                  placeholderTextColor={theme.textSecondary}
-                />
-              </View>
-              
-              {/* Goal Selection - Using dropdown style */}
-              <View style={styles.formGroup}>
-                <View style={styles.labelContainer}>
-                  <Ionicons name="flag-outline" size={16} color={theme.textSecondary} />
-                  <Text style={[styles.label, { color: theme.textSecondary }]}>
-                    Goal
-                  </Text>
-                </View>
-                <TouchableOpacity 
-                  style={[
-                    styles.selector, 
-                    { 
-                      backgroundColor: theme.background, 
-                      borderColor: domain ? domainColor : theme.border
-                    }
-                  ]}
-                  onPress={openGoalModal}
-                  activeOpacity={0.7}
-                >
-                  {domain ? (
-                    <View style={styles.selectedItem}>
-                      <View style={[styles.itemColorBar, { backgroundColor: domainColor }]} />
-                      <Text style={[styles.selectedItemText, { color: theme.text }]}>
-                        {domain}
-                      </Text>
-                      {selectedGoal && selectedGoal.progress !== undefined && (
-                        <View style={styles.progressBadge}>
-                          <Text style={[styles.progressText, { color: domainColor }]}>
-                            {selectedGoal.progress}%
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-                  ) : (
-                    <Text style={[styles.placeholderText, { color: theme.textSecondary }]}>
-                      No Specific Goal (Optional)
-                    </Text>
-                  )}
-                  <Ionicons name="chevron-down" size={18} color={theme.textSecondary} />
-                </TouchableOpacity>
-              </View>
-              
-              {/* Color selection for when no goal is selected */}
-              {!domain && (
-                <View style={styles.formGroup}>
-                  <Text style={[styles.label, { color: theme.textSecondary }]}>
-                    <Ionicons name="color-palette-outline" size={16} color={theme.textSecondary} style={{ marginRight: 10 }} />
-                    Block Color
-                  </Text>
-                  <TouchableOpacity 
-                    style={[
-                      styles.colorSelector, 
-                      { 
-                        backgroundColor: theme.background, 
-                        borderColor: theme.border
-                      }
-                    ]}
-                    onPress={openColorModal}
-                    activeOpacity={0.7}
-                  >
-                    <View style={[styles.colorPreview, { backgroundColor: customColor }]} />
-                    <Text style={[styles.colorText, { color: theme.text }]}>
-                      {customColor.toUpperCase()}
-                    </Text>
-                    <View style={styles.colorIconContainer}>
-                      <Ionicons name="color-palette" size={18} color={customColor} />
-                    </View>
-                  </TouchableOpacity>
-                </View>
-              )}
-              
-              {/* Project Selection - Only shown when a goal is selected */}
-              {domain && (
-                <View style={styles.formGroup}>
-                  <Text style={[styles.label, { color: theme.textSecondary }]}>
-                    <Ionicons name="folder-outline" size={16} color={theme.textSecondary} style={{ marginRight: 10 }} />
-                    Project
-                  </Text>
-                  <TouchableOpacity 
-                    style={[
-                      styles.selector, 
-                      { 
-                        backgroundColor: theme.background, 
-                        borderColor: selectedProject ? domainColor : theme.border
-                      }
-                    ]}
-                    onPress={openProjectModal}
-                    activeOpacity={0.7}
-                  >
-                    {selectedProject ? (
-                      <View style={styles.selectedItem}>
-                        <View style={[
-                          styles.itemColorBar, 
-                          { backgroundColor: selectedProject.color || domainColor }
-                        ]} />
-                        <Text style={[styles.selectedItemText, { color: theme.text }]}>
-                          {selectedProject.title}
-                        </Text>
-                      </View>
-                    ) : (
-                      <Text style={[styles.placeholderText, { color: theme.textSecondary }]}>
-                        {goalProjects.length > 0 
-                          ? 'Select a project (optional)' 
-                          : 'No projects available for this goal'}
-                      </Text>
-                    )}
-                    {goalProjects.length > 0 && (
-                      <Ionicons name="chevron-down" size={18} color={theme.textSecondary} />
-                    )}
-                  </TouchableOpacity>
-                </View>
-              )}
-              
-              {/* Task Selection - Only shown when a project is selected */}
-              {domain && selectedProject && (
-                <View style={styles.formGroup}>
-                  <Text style={[styles.label, { color: theme.textSecondary }]}>
-                    <Ionicons name="checkbox-outline" size={16} color={theme.textSecondary} style={{ marginRight: 10 }} />
-                    Task
-                  </Text>
-                  <TouchableOpacity 
-                    style={[
-                      styles.selector, 
-                      { 
-                        backgroundColor: theme.background, 
-                        borderColor: selectedTask ? domainColor : theme.border
-                      }
-                    ]}
-                    onPress={openTaskModal}
-                    activeOpacity={0.7}
-                  >
-                    {selectedTask ? (
-                      <View style={styles.selectedItem}>
-                        <Ionicons 
-                          name="checkbox" 
-                          size={18} 
-                          color={selectedTask.color || domainColor}
-                          style={styles.taskIcon} 
-                        />
-                        <Text style={[styles.selectedItemText, { color: theme.text }]}>
-                          {selectedTask.title}
-                        </Text>
-                      </View>
-                    ) : (
-                      <Text style={[styles.placeholderText, { color: theme.textSecondary }]}>
-                        {projectTasks.length > 0 
-                          ? 'Select a task (optional)' 
-                          : 'No tasks available for this project'}
-                      </Text>
-                    )}
-                    {projectTasks.length > 0 && (
-                      <Ionicons name="chevron-down" size={18} color={theme.textSecondary} />
-                    )}
-                  </TouchableOpacity>
-                </View>
-              )}
-              
-              {/* Date & Time */}
-              <View style={styles.formGroup}>
-                <View style={styles.labelContainer}>
-                  <Ionicons name="calendar-outline" size={16} color={theme.textSecondary} />
-                  <Text style={[styles.label, { color: theme.textSecondary }]}>
-                    Date & Time
-                  </Text>
-                </View>
-                
-                {/* Date selector */}
-                <TouchableOpacity 
-                  style={[styles.dateSelector, { 
-                    backgroundColor: theme.background, 
-                    borderColor: theme.border
-                  }]}
-                  onPress={openDatePicker}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.calendarIcon}>
-                    <View style={styles.calendarHeader}>
-                      <Text style={styles.calendarMonth}>
-                        {startTime.toLocaleString('default', { month: 'short' })}
-                      </Text>
-                    </View>
-                    <Text style={styles.calendarDay}>
-                      {startTime.getDate()}
-                    </Text>
-                  </View>
-                  <View style={styles.dateInfo}>
-                    <Text style={[styles.dateText, { color: theme.text }]}>
-                      {formatDate(startTime)}
-                    </Text>
-                    <Text style={[styles.dayText, { color: theme.textSecondary }]}>
-                      {startTime.toLocaleDateString(undefined, { weekday: 'long' })}
-                    </Text>
-                  </View>
-                  <Ionicons name="calendar" size={20} color={domain ? domainColor : customColor} />
-                </TouchableOpacity>
-                
-                {/* Time Range */}
-                <View style={[styles.timeContainer, { 
-                  backgroundColor: theme.background, 
-                  borderColor: theme.border
-                }]}>
-                  <View style={styles.timeRow}>
-                    <View style={styles.timeColumn}>
-                      <Text style={[styles.timeLabel, { color: theme.textSecondary }]}>Start</Text>
-                      <TouchableOpacity 
-                        style={styles.timeButton} 
-                        onPress={openStartTimePicker}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={[styles.timeValue, { color: theme.text }]}>
-                          {formatTime(startTime)}
-                        </Text>
-                        <Ionicons name="time-outline" size={18} color={domain ? domainColor : customColor} />
-                      </TouchableOpacity>
-                    </View>
-                    <View style={styles.timeArrow}>
-                      <Ionicons name="arrow-forward" size={20} color={theme.textSecondary} />
-                    </View>
-                    <View style={styles.timeColumn}>
-                      <Text style={[styles.timeLabel, { color: theme.textSecondary }]}>End</Text>
-                      <TouchableOpacity 
-                        style={styles.timeButton} 
-                        onPress={openEndTimePicker}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={[styles.timeValue, { color: theme.text }]}>
-                          {formatTime(endTime)}
-                        </Text>
-                        <Ionicons name="time-outline" size={18} color={domain ? domainColor : customColor} />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                  
-                  <View style={[styles.durationContainer, { borderTopColor: theme.border }]}>
-                    <View style={styles.durationInfo}>
-                      <Ionicons name="time" size={16} color={theme.textSecondary} style={{ marginRight: 4 }} />
-                      <Text style={[styles.durationText, { color: theme.textSecondary }]}>Duration: </Text>
-                      <Text style={[styles.durationValue, { color: theme.text }]}>
-                        {duration}
-                      </Text>
-                    </View>
-                    <View style={styles.quickDurationButtons}>
-                      <TouchableOpacity 
-                        style={[styles.quickButton, { 
-                          borderColor: domain ? domainColor : customColor,
-                          backgroundColor: `${domain ? domainColor : customColor}15`
-                        }]}
-                        onPress={() => handleQuickDuration(30)}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={[styles.quickButtonText, { color: domain ? domainColor : customColor }]}>
-                          30m
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity 
-                        style={[styles.quickButton, { 
-                          borderColor: domain ? domainColor : customColor,
-                          backgroundColor: `${domain ? domainColor : customColor}15`
-                        }]}
-                        onPress={() => handleQuickDuration(60)}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={[styles.quickButtonText, { color: domain ? domainColor : customColor }]}>
-                          1h
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity 
-                        style={[styles.quickButton, { 
-                          borderColor: domain ? domainColor : customColor,
-                          backgroundColor: `${domain ? domainColor : customColor}15`
-                        }]}
-                        onPress={() => handleQuickDuration(120)}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={[styles.quickButtonText, { color: domain ? domainColor : customColor }]}>
-                          2h
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </View>
-                
-                {/* Time Error Message */}
-                {timeError ? (
-                  <View style={[styles.errorContainer, { backgroundColor: `${theme.error}10` }]}>
-                    <Ionicons name="alert-circle" size={18} color={theme.error} style={styles.errorIcon} />
-                    <Text style={[styles.errorText, { color: theme.error }]}>{timeError}</Text>
-                  </View>
-                ) : null}
-              </View>
-            </>
-          )}
+        {/* Goal & Project Section */}
+        <View style={styles.sectionGroup}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>
+            Link to Goals & Projects
+          </Text>
           
-          {/* Additional Options Tab */}
-          {activeTab === TABS.ADDITIONAL && (
-            <>
-              {/* Repeating Options */}
-              <View style={styles.formGroup}>
-                <View style={styles.optionHeader}>
-                  <View style={styles.optionTitleContainer}>
-                    <Ionicons name="repeat" size={20} color={theme.textSecondary} style={{ marginRight: 8 }} />
-                    <Text style={[styles.optionTitle, { color: theme.text }]}>Repeat</Text>
-                  </View>
-                  <TouchableOpacity 
-                    style={[
-                      styles.toggle,
-                      { 
-                        backgroundColor: isRepeating ? domain ? domainColor : customColor : theme.border
-                      }
-                    ]}
-                    onPress={() => {
-                      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-                      setIsRepeating(!isRepeating);
-                    }}
-                  >
-                    <View style={[
-                      styles.toggleHandle,
-                      { 
-                        backgroundColor: isDarkMode ? '#000000' : '#fff',
-                        transform: [{ translateX: isRepeating ? 20 : 0 }] 
-                      }
-                    ]} />
-                  </TouchableOpacity>
+          <View style={styles.inputGroup}>
+            <View style={styles.inputHeader}>
+              <Ionicons name="flag-outline" size={18} color={theme.primary} />
+              <Text style={[styles.inputLabel, { color: theme.text }]}>Goal</Text>
+              <Text style={[styles.optionalTag, { color: theme.textSecondary }]}>Optional</Text>
+            </View>
+            <TouchableOpacity 
+              style={[
+                styles.modernSelector, 
+                { 
+                  backgroundColor: theme.card, 
+                  borderColor: domain ? domainColor : theme.border
+                }
+              ]}
+              onPress={() => setShowGoalModal(true)}
+              activeOpacity={0.8}
+            >
+              {domain ? (
+                <View style={styles.selectedContent}>
+                  <View style={[styles.colorDot, { backgroundColor: domainColor }]} />
+                  <Text style={[styles.selectedText, { color: theme.text }]}>
+                    {domain}
+                  </Text>
+                  {selectedGoal && selectedGoal.progress !== undefined && (
+                    <View style={[styles.progressChip, { backgroundColor: `${domainColor}15` }]}>
+                      <Text style={[styles.progressChipText, { color: domainColor }]}>
+                        {selectedGoal.progress}%
+                      </Text>
+                    </View>
+                  )}
                 </View>
-                
-                {isRepeating && (
-                  <View style={[styles.optionContent, { backgroundColor: theme.background }]}>
-                    <Text style={[styles.sublabel, { color: theme.textSecondary }]}>Frequency</Text>
-                    <View style={styles.frequencyButtons}>
-                      <TouchableOpacity 
-                        style={[
-                          styles.frequencyButton, 
-                          { 
-                            backgroundColor: repeatFrequency === 'daily' ? 
-                              `${domain ? domainColor : customColor}15` : theme.background,
-                            borderColor: repeatFrequency === 'daily' ? 
-                              (domain ? domainColor : customColor) : theme.border
-                          }
-                        ]}
-                        onPress={() => setRepeatFrequency('daily')}
-                        activeOpacity={0.7}
-                      >
-                        <Ionicons 
-                          name="calendar-outline" 
-                          size={16} 
-                          color={repeatFrequency === 'daily' ? 
-                            (domain ? domainColor : customColor) : theme.textSecondary} 
-                          style={{ marginRight: 10 }}
-                        />
-                        <Text style={[
-                          styles.frequencyButtonText, 
-                          { color: repeatFrequency === 'daily' ? 
-                            (domain ? domainColor : customColor) : theme.textSecondary }
-                        ]}>
-                          Daily
-                        </Text>
-                      </TouchableOpacity>
-                      
-                      <TouchableOpacity 
-                        style={[
-                          styles.frequencyButton, 
-                          { 
-                            backgroundColor: repeatFrequency === 'weekly' ? 
-                              `${domain ? domainColor : customColor}15` : theme.background,
-                            borderColor: repeatFrequency === 'weekly' ? 
-                              (domain ? domainColor : customColor) : theme.border
-                          }
-                        ]}
-                        onPress={() => setRepeatFrequency('weekly')}
-                        activeOpacity={0.7}
-                      >
-                        <Ionicons 
-                          name="calendar-outline" 
-                          size={16} 
-                          color={repeatFrequency === 'weekly' ? 
-                            (domain ? domainColor : customColor) : theme.textSecondary} 
-                          style={{ marginRight: 10 }}
-                        />
-                        <Text style={[
-                          styles.frequencyButtonText, 
-                          { color: repeatFrequency === 'weekly' ? 
-                            (domain ? domainColor : customColor) : theme.textSecondary }
-                        ]}>
-                          Weekly
-                        </Text>
-                      </TouchableOpacity>
-                      
-                      <TouchableOpacity 
-                        style={[
-                          styles.frequencyButton, 
-                          { 
-                            backgroundColor: repeatFrequency === 'monthly' ? 
-                              `${domain ? domainColor : customColor}15` : theme.background,
-                            borderColor: repeatFrequency === 'monthly' ? 
-                              (domain ? domainColor : customColor) : theme.border
-                          }
-                        ]}
-                        onPress={() => setRepeatFrequency('monthly')}
-                        activeOpacity={0.7}
-                      >
-                        <Ionicons 
-                          name="calendar-outline" 
-                          size={16} 
-                          color={repeatFrequency === 'monthly' ? 
-                            (domain ? domainColor : customColor) : theme.textSecondary} 
-                          style={{ marginRight: 10 }}
-                        />
-                        <Text style={[
-                          styles.frequencyButtonText, 
-                          { color: repeatFrequency === 'monthly' ? 
-                            (domain ? domainColor : customColor) : theme.textSecondary }
-                        ]}>
-                          Monthly
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                    
-                    <Text style={[styles.sublabel, { color: theme.textSecondary, marginTop: 15 }]}>
-                      End Repeat
-                    </Text>
-                    <View style={styles.repeatEndOptions}>
-                      <TouchableOpacity 
-                        style={[
-                          styles.repeatEndOption, 
-                          { 
-                            backgroundColor: repeatIndefinitely ? 
-                              `${domain ? domainColor : customColor}15` : theme.background,
-                            borderColor: repeatIndefinitely ? 
-                              (domain ? domainColor : customColor) : theme.border
-                          }
-                        ]}
-                        onPress={() => setRepeatIndefinitely(true)}
-                        activeOpacity={0.7}
-                      >
-                        <Ionicons 
-                          name="infinite" 
-                          size={16} 
-                          color={repeatIndefinitely ? 
-                            (domain ? domainColor : customColor) : theme.textSecondary} 
-                          style={{ marginRight: 10 }}
-                        />
-                        <Text style={[
-                          styles.repeatEndOptionText, 
-                          { color: repeatIndefinitely ? 
-                            (domain ? domainColor : customColor) : theme.textSecondary }
-                        ]}>
-                          Never
-                        </Text>
-                      </TouchableOpacity>
-                      
-                      <TouchableOpacity 
-                        style={[
-                          styles.repeatEndOption, 
-                          { 
-                            backgroundColor: !repeatIndefinitely ? 
-                              `${domain ? domainColor : customColor}15` : theme.background,
-                            borderColor: !repeatIndefinitely ? 
-                              (domain ? domainColor : customColor) : theme.border
-                          }
-                        ]}
-                        onPress={() => setRepeatIndefinitely(false)}
-                        activeOpacity={0.7}
-                      >
-                        <View style={styles.repeatUntilContainer}>
-                          <Ionicons 
-                            name="calendar" 
-                            size={16} 
-                            color={!repeatIndefinitely ? 
-                              (domain ? domainColor : customColor) : theme.textSecondary} 
-                            style={{ marginRight: 10 }}
-                          />
-                          <Text style={[
-                            styles.repeatEndOptionText, 
-                            { color: !repeatIndefinitely ? 
-                              (domain ? domainColor : customColor) : theme.textSecondary }
-                          ]}>
-                            Until
-                          </Text>
-                          {!repeatIndefinitely && (
-                            <TouchableOpacity 
-                              style={styles.repeatUntilDateButton}
-                              onPress={openRepeatUntilDatePicker}
-                              activeOpacity={0.7}
-                            >
-                              <Text style={[styles.repeatUntilDateText, { 
-                                color: domain ? domainColor : customColor 
-                              }]}>
-                                {repeatUntil ? formatDate(repeatUntil) : 'Select date'}
-                              </Text>
-                              <Ionicons 
-                                name="calendar-outline" 
-                                size={14} 
-                                color={domain ? domainColor : customColor} 
-                              />
-                            </TouchableOpacity>
-                          )}
-                        </View>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                )}
-              </View>
-
-              {/* Notification Options */}
-              <View style={styles.formGroup}>
-                <View style={styles.optionHeader}>
-                  <View style={styles.optionTitleContainer}>
-                    <Ionicons name="notifications-outline" size={20} color={theme.textSecondary} style={{ marginRight: 8 }} />
-                    <Text style={[styles.optionTitle, { color: theme.text }]}>Get notified</Text>
-                  </View>
-                  <TouchableOpacity 
-                    style={[
-                      styles.toggle,
-                      { 
-                        backgroundColor: enableNotification ? domain ? domainColor : customColor : theme.border
-                      }
-                    ]}
-                    onPress={() => {
-                      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-                      setEnableNotification(!enableNotification);
-                    }}
-                  >
-                    <View style={[
-                      styles.toggleHandle,
-                      { 
-                        backgroundColor: isDarkMode ? '#000000' : '#fff',
-                        transform: [{ translateX: enableNotification ? 20 : 0 }] 
-                      }
-                    ]} />
-                  </TouchableOpacity>
-                </View>
-                
-                {enableNotification && (
-                  <View style={[styles.optionContent, { backgroundColor: theme.background }]}>
-                    <Text style={[styles.sublabel, { color: theme.textSecondary }]}>When to notify</Text>
-                    
-                    <View style={styles.notificationOptions}>
-                      {/* At start time option */}
-                      <TouchableOpacity 
-                        style={[
-                          styles.notificationOption, 
-                          { 
-                            backgroundColor: notificationTime === 'exact' ? 
-                              `${domain ? domainColor : customColor}15` : theme.background,
-                            borderColor: notificationTime === 'exact' ? 
-                              (domain ? domainColor : customColor) : theme.border
-                          }
-                        ]}
-                        onPress={() => {
-                          setNotificationTime('exact');
-                          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-                          setShowCustomTimeInput(false);
-                        }}
-                        activeOpacity={0.7}
-                      >
-                        <Ionicons 
-                          name="alarm-outline" 
-                          size={18} 
-                          color={notificationTime === 'exact' ? 
-                            (domain ? domainColor : customColor) : theme.textSecondary} 
-                          style={{ marginRight: 12 }}
-                        />
-                        <View style={styles.notificationTextContainer}>
-                          <Text style={[
-                            styles.notificationText, 
-                            { color: notificationTime === 'exact' ? 
-                              (domain ? domainColor : customColor) : theme.text }
-                          ]}>
-                            At start time
-                          </Text>
-                          <Text style={[styles.notificationDescription, { color: theme.textSecondary }]}>
-                            Notify when the block starts
-                          </Text>
-                        </View>
-                      </TouchableOpacity>
-                      
-                      {/* Custom time before option */}
-                      <TouchableOpacity 
-                        style={[
-                          styles.notificationOption, 
-                          { 
-                            backgroundColor: notificationTime === 'custom' ? 
-                              `${domain ? domainColor : customColor}15` : theme.background,
-                            borderColor: notificationTime === 'custom' ? 
-                              (domain ? domainColor : customColor) : theme.border,
-                            marginTop: 10
-                          }
-                        ]}
-                        onPress={() => {
-                          setNotificationTime('custom');
-                          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-                          setShowCustomTimeInput(true);
-                        }}
-                        activeOpacity={0.7}
-                      >
-                        <Ionicons 
-                          name="time-outline" 
-                          size={18} 
-                          color={notificationTime === 'custom' ? 
-                            (domain ? domainColor : customColor) : theme.textSecondary} 
-                          style={{ marginRight: 12 }}
-                        />
-                        <View style={styles.notificationTextContainer}>
-                          <Text style={[
-                            styles.notificationText, 
-                            { color: notificationTime === 'custom' ? 
-                              (domain ? domainColor : customColor) : theme.text }
-                          ]}>
-                            {notificationTime === 'custom' && customMinutes 
-                              ? getFormattedCustomMinutes()
-                              : 'Custom time before'}
-                          </Text>
-                          <Text style={[styles.notificationDescription, { color: theme.textSecondary }]}>
-                            Get a reminder before the block starts
-                          </Text>
-                        </View>
-                      </TouchableOpacity>
-                    </View>
-                    
-                    {/* Custom time input */}
-                    {notificationTime === 'custom' && showCustomTimeInput && (
-                      <View style={[styles.customTimeInputContainer, { 
-                        backgroundColor: `${domain ? domainColor : customColor}10`
-                      }]}>
-                        <View style={styles.customTimeInputRow}>
-                          <TextInput
-                            style={[
-                              styles.customTimeInput,
-                              { 
-                                color: theme.text, 
-                                backgroundColor: theme.background, 
-                                borderColor: domain ? domainColor : customColor
-                              }
-                            ]}
-                            value={customMinutes}
-                            onChangeText={(value) => setCustomMinutes(validateCustomMinutes(value))}
-                            keyboardType="number-pad"
-                            maxLength={4}
-                            selectTextOnFocus={true}
-                            onFocus={(event) => scrollToInput(event.target)}
-                          />
-                          <Text style={[styles.customTimeLabel, { color: theme.text }]}>
-                            minutes before
-                          </Text>
-                        </View>
-                        <View style={styles.timePresetContainer}>
-                          {[5, 15, 30, 60].map(mins => (
-                            <TouchableOpacity 
-                              key={mins}
-                              style={[styles.timePresetButton, { 
-                                backgroundColor: customMinutes === mins.toString() ? 
-                                  (domain ? domainColor : customColor) : 
-                                  `${domain ? domainColor : customColor}30`,
-                              }]}
-                              onPress={() => setCustomMinutes(mins.toString())}
-                              activeOpacity={0.7}
-                            >
-                              <Text style={[styles.timePresetText, { 
-                                color: customMinutes === mins.toString() ? '#FFFFFF' : theme.text
-                              }]}>
-                                {mins < 60 ? `${mins}m` : `1h`}
-                              </Text>
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-                      </View>
-                    )}
-                    
-                    {/* Goal notification settings link - only shown for goal-focused blocks */}
-                    {domain && selectedGoal && (
-                      <TouchableOpacity 
-                        style={[styles.goalNotificationsButton, { 
-                          borderColor: domainColor,
-                          backgroundColor: `${domainColor}10`
-                        }]}
-                        onPress={navigateToGoalSettings}
-                        activeOpacity={0.7}
-                      >
-                        <Ionicons name="information-circle-outline" size={18} color={domainColor} style={{ marginRight: 12 }} />
-                        <Text style={[styles.goalNotificationsText, { color: theme.text }]}>
-                          Configure notifications for all "{domain}" time blocks
-                        </Text>
-                        <Ionicons name="chevron-forward" size={16} color={domainColor} />
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                )}
-              </View>
-
-              {/* Location */}
-              <View style={styles.formGroup}>
-                <View style={styles.labelContainer}>
-                  <Ionicons name="location-outline" size={16} color={theme.textSecondary} />
-                  <Text style={[styles.label, { color: theme.textSecondary }]}>
-                    Location (Optional)
+              ) : (
+                <View style={styles.placeholderContent}>
+                  <Ionicons name="add-circle-outline" size={16} color={theme.textSecondary} />
+                  <Text style={[styles.placeholderText, { color: theme.textSecondary }]}>
+                    Select a goal
                   </Text>
                 </View>
-                <View style={[styles.locationInputContainer, { 
-                  backgroundColor: theme.background,
-                  borderColor: theme.border
-                }]}>
-                  <Ionicons 
-                    name="location" 
-                    size={18} 
-                    color={domain ? domainColor : customColor} 
-                    style={styles.locationIcon}
-                  />
-                  <TextInput
-                    style={[styles.locationInput, { color: theme.text }]}
-                    value={location}
-                    onChangeText={setLocation}
-                    placeholder="Where will this activity take place?"
-                    placeholderTextColor={theme.textSecondary}
-                    onFocus={(event) => scrollToInput(event.target)}
-                  />
-                </View>
-              </View>
-
-              {/* Notes */}
-              <View style={styles.formGroup}>
-                <View style={styles.labelContainer}>
-                  <Ionicons name="document-text-outline" size={16} color={theme.textSecondary} />
-                  <Text style={[styles.label, { color: theme.textSecondary }]}>
-                    Notes (Optional)
-                  </Text>
-                </View>
-                <TextInput
-                  style={[
-                    styles.notesInput, 
-                    { 
-                      color: theme.text, 
-                      backgroundColor: theme.background, 
-                      borderColor: theme.border
-                    }
-                  ]}
-                  value={notes}
-                  onChangeText={setNotes}
-                  placeholder="Add any details or notes"
-                  placeholderTextColor={theme.textSecondary}
-                  multiline
-                  numberOfLines={4}
-                  onFocus={(event) => scrollToInput(event.target)}
-                />
-              </View>
-
-              {/* Delete Button (only when editing) */}
-              {!isCreating && (
-                <TouchableOpacity 
-                  style={[styles.deleteButton, { backgroundColor: theme.error }]} 
-                  onPress={handleDelete}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="trash-outline" size={18} color="#FFFFFF" style={{ marginRight: 12 }} />
-                  <Text style={styles.deleteButtonText}>
-                    Delete Time Block
-                  </Text>
-                </TouchableOpacity>
               )}
-            </>
-          )}
-        </Animated.View>
+              <Ionicons name="chevron-forward-outline" size={16} color={theme.textSecondary} />
+            </TouchableOpacity>
+          </View>
+        </View>
+        
+        {/* Color selection for when no goal is selected */}
+        {!domain && (
+          <View style={styles.inputGroup}>
+            <View style={styles.inputHeader}>
+              <Ionicons name="color-palette-outline" size={18} color={theme.primary} />
+              <Text style={[styles.inputLabel, { color: theme.text }]}>Color</Text>
+            </View>
+            <TouchableOpacity 
+              style={[
+                styles.modernSelector, 
+                { 
+                  backgroundColor: theme.card, 
+                  borderColor: theme.border
+                }
+              ]}
+              onPress={openColorModal}
+              activeOpacity={0.8}
+            >
+              <View style={styles.selectedContent}>
+                <View style={[styles.colorDot, { backgroundColor: customColor }]} />
+                <Text style={[styles.selectedText, { color: theme.text }]}>
+                  {customColor.toUpperCase()}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward-outline" size={16} color={theme.textSecondary} />
+            </TouchableOpacity>
+          </View>
+        )}
+        
+        {/* Project Selection */}
+        {domain && (
+          <View style={styles.inputGroup}>
+            <View style={styles.inputHeader}>
+              <Ionicons name="folder-outline" size={18} color={theme.primary} />
+              <Text style={[styles.inputLabel, { color: theme.text }]}>Project</Text>
+              <Text style={[styles.optionalTag, { color: theme.textSecondary }]}>Optional</Text>
+            </View>
+            <TouchableOpacity 
+              style={[
+                styles.modernSelector, 
+                { 
+                  backgroundColor: theme.card, 
+                  borderColor: selectedProject ? domainColor : theme.border,
+                  opacity: goalProjects.length > 0 ? 1 : 0.6
+                }
+              ]}
+              onPress={goalProjects.length > 0 ? openProjectModal : null}
+              activeOpacity={goalProjects.length > 0 ? 0.8 : 1}
+            >
+              {selectedProject ? (
+                <View style={styles.selectedContent}>
+                  <View style={[styles.colorDot, { backgroundColor: selectedProject.color || domainColor }]} />
+                  <Text style={[styles.selectedText, { color: theme.text }]}>
+                    {selectedProject.title}
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.placeholderContent}>
+                  <Ionicons 
+                    name={goalProjects.length > 0 ? "add-circle-outline" : "close-circle-outline"} 
+                    size={16} 
+                    color={theme.textSecondary} 
+                  />
+                  <Text style={[styles.placeholderText, { color: theme.textSecondary }]}>
+                    {goalProjects.length > 0 ? 'Select a project' : 'No projects available'}
+                  </Text>
+                </View>
+              )}
+              {goalProjects.length > 0 && (
+                <Ionicons name="chevron-forward-outline" size={16} color={theme.textSecondary} />
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
+        
+        {/* Task Selection */}
+        {domain && selectedProject && (
+          <View style={styles.inputGroup}>
+            <View style={styles.inputHeader}>
+              <Ionicons name="checkbox-outline" size={18} color={theme.primary} />
+              <Text style={[styles.inputLabel, { color: theme.text }]}>Task</Text>
+              <Text style={[styles.optionalTag, { color: theme.textSecondary }]}>Optional</Text>
+            </View>
+            <TouchableOpacity 
+              style={[
+                styles.modernSelector, 
+                { 
+                  backgroundColor: theme.card, 
+                  borderColor: selectedTask ? domainColor : theme.border,
+                  opacity: projectTasks.length > 0 ? 1 : 0.6
+                }
+              ]}
+              onPress={projectTasks.length > 0 ? openTaskModal : null}
+              activeOpacity={projectTasks.length > 0 ? 0.8 : 1}
+            >
+              {selectedTask ? (
+                <View style={styles.selectedContent}>
+                  <Ionicons 
+                    name="checkmark-circle" 
+                    size={16} 
+                    color={selectedTask.color || domainColor}
+                  />
+                  <Text style={[styles.selectedText, { color: theme.text }]}>
+                    {selectedTask.title}
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.placeholderContent}>
+                  <Ionicons 
+                    name={projectTasks.length > 0 ? "add-circle-outline" : "close-circle-outline"} 
+                    size={16} 
+                    color={theme.textSecondary} 
+                  />
+                  <Text style={[styles.placeholderText, { color: theme.textSecondary }]}>
+                    {projectTasks.length > 0 ? 'Select a task' : 'No tasks available'}
+                  </Text>
+                </View>
+              )}
+              {projectTasks.length > 0 && (
+                <Ionicons name="chevron-forward-outline" size={16} color={theme.textSecondary} />
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
+        
+        {/* Date & Time */}
+        <View style={styles.sectionGroup}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>
+            Schedule
+          </Text>
+          
+          <View style={styles.inputGroup}>
+            <View style={styles.inputHeader}>
+              <Ionicons name="calendar-outline" size={18} color={theme.primary} />
+              <Text style={[styles.inputLabel, { color: theme.text }]}>Date</Text>
+            </View>
+            <TouchableOpacity 
+              style={[
+                styles.modernDateSelector, 
+                { 
+                  backgroundColor: theme.card, 
+                  borderColor: theme.border
+                }
+              ]}
+              onPress={openDatePicker}
+              activeOpacity={0.8}
+            >
+              <View style={styles.dateContent}>
+                <View style={[styles.miniCalendar, { borderColor: domain ? domainColor : customColor }]}>
+                  <View style={[styles.miniCalendarHeader, { backgroundColor: domain ? domainColor : customColor }]}>
+                    <Text style={styles.miniCalendarMonth}>
+                      {startTime.toLocaleString('default', { month: 'short' })}
+                    </Text>
+                  </View>
+                  <Text style={[styles.miniCalendarDay, { color: theme.text }]}>
+                    {startTime.getDate()}
+                  </Text>
+                </View>
+                <View style={styles.dateDetails}>
+                  <Text style={[styles.dateMainText, { color: theme.text }]}>
+                    {formatDate(startTime)}
+                  </Text>
+                  <Text style={[styles.dateSubText, { color: theme.textSecondary }]}>
+                    {startTime.toLocaleDateString(undefined, { weekday: 'long' })}
+                  </Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward-outline" size={16} color={theme.textSecondary} />
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.inputGroup}>
+            <View style={styles.inputHeader}>
+              <Ionicons name="time-outline" size={18} color={theme.primary} />
+              <Text style={[styles.inputLabel, { color: theme.text }]}>Time</Text>
+            </View>
+            <View style={[styles.timeCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+              <View style={styles.timeSelectors}>
+                <TouchableOpacity 
+                  style={styles.timeSelector} 
+                  onPress={openStartTimePicker}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.timeLabel, { color: theme.textSecondary }]}>Start</Text>
+                  <View style={styles.timeDisplay}>
+                    <Text style={[styles.timeText, { color: theme.text }]}>
+                      {formatTime(startTime)}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+                
+                <View style={styles.timeSeparator}>
+                  <Ionicons name="arrow-forward" size={16} color={theme.textSecondary} />
+                </View>
+                
+                <TouchableOpacity 
+                  style={styles.timeSelector} 
+                  onPress={openEndTimePicker}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.timeLabel, { color: theme.textSecondary }]}>End</Text>
+                  <View style={styles.timeDisplay}>
+                    <Text style={[styles.timeText, { color: theme.text }]}>
+                      {formatTime(endTime)}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+              
+              <View style={[styles.durationSection, { borderTopColor: theme.border }]}>
+                <View style={styles.durationDisplay}>
+                  <Ionicons name="hourglass-outline" size={14} color={theme.textSecondary} />
+                  <Text style={[styles.durationLabel, { color: theme.textSecondary }]}>Duration</Text>
+                  <Text style={[styles.durationValue, { color: theme.text }]}>
+                    {duration}
+                  </Text>
+                </View>
+                
+                <View style={styles.quickActions}>
+                  {[30, 60, 120].map((minutes) => (
+                    <TouchableOpacity 
+                      key={minutes}
+                      style={[styles.quickActionButton, { 
+                        backgroundColor: `${domain ? domainColor : customColor}10`,
+                        borderColor: `${domain ? domainColor : customColor}30`
+                      }]}
+                      onPress={() => handleQuickDuration(minutes)}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={[styles.quickActionText, { color: domain ? domainColor : customColor }]}>
+                        {minutes < 60 ? `${minutes}m` : `${minutes/60}h`}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </View>
+          </View>
+          
+          {/* Time Error Message */}
+          {timeError ? (
+            <View style={[styles.errorContainer, { backgroundColor: `${theme.error}10` }]}>
+              <Ionicons name="alert-circle" size={18} color={theme.error} style={styles.errorIcon} />
+              <Text style={[styles.errorText, { color: theme.error }]}>{timeError}</Text>
+            </View>
+          ) : null}
+        </View>
       </View>
-
-      {/* Goal Selector Modal */}
-      <GoalSelector
-        visible={showGoalModal}
-        onClose={() => setShowGoalModal(false)}
-        onSelectGoal={handleGoalSelect}
-        selectedGoal={selectedGoal}
-        goals={availableGoals}
-        customColor={customColor}
-        theme={theme}
-        isDarkMode={isDarkMode}
-      />
     </ScrollView>
+  );
+
+  const renderAdditionalOptions = () => (
+    <ScrollView 
+      style={[styles.tabContent, { backgroundColor: theme.background }]}
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={styles.scrollContent}
+    >
+      <View style={styles.formContainer}>
+        {/* Recurring Options */}
+        <View style={styles.sectionGroup}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>
+            Recurring Options
+          </Text>
+          
+          <View style={styles.toggleGroup}>
+            <View style={styles.toggleHeader}>
+              <View style={styles.toggleInfo}>
+                <Ionicons name="repeat" size={18} color={theme.primary} />
+                <Text style={[styles.toggleTitle, { color: theme.text }]}>Repeat Event</Text>
+              </View>
+              <TouchableOpacity 
+                style={[
+                  styles.modernToggle,
+                  { 
+                    backgroundColor: isRepeating ? (domain ? domainColor : customColor) : theme.border
+                  }
+                ]}
+                onPress={() => {
+                  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                  setIsRepeating(!isRepeating);
+                }}
+                activeOpacity={0.8}
+              >
+                <View style={[
+                  styles.modernToggleHandle,
+                  { 
+                    backgroundColor: theme.background,
+                    transform: [{ translateX: isRepeating ? 22 : 2 }] 
+                  }
+                ]} />
+              </TouchableOpacity>
+            </View>
+            
+            {isRepeating && (
+              <View style={[styles.expandedContent, { backgroundColor: theme.card }]}>
+                <Text style={[styles.expandedLabel, { color: theme.textSecondary }]}>Frequency</Text>
+                <View style={styles.frequencyGrid}>
+                  {[
+                    { key: 'daily', label: 'Daily', icon: 'calendar' },
+                    { key: 'weekly', label: 'Weekly', icon: 'calendar-outline' },
+                    { key: 'monthly', label: 'Monthly', icon: 'calendar-clear-outline' }
+                  ].map((freq) => (
+                    <TouchableOpacity 
+                      key={freq.key}
+                      style={[
+                        styles.frequencyCard, 
+                        { 
+                          backgroundColor: repeatFrequency === freq.key ? 
+                            `${domain ? domainColor : customColor}15` : theme.background,
+                          borderColor: repeatFrequency === freq.key ? 
+                            (domain ? domainColor : customColor) : theme.border
+                        }
+                      ]}
+                      onPress={() => setRepeatFrequency(freq.key)}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons 
+                        name={freq.icon} 
+                        size={18} 
+                        color={repeatFrequency === freq.key ? 
+                          (domain ? domainColor : customColor) : theme.textSecondary} 
+                      />
+                      <Text style={[
+                        styles.frequencyText, 
+                        { color: repeatFrequency === freq.key ? 
+                          (domain ? domainColor : customColor) : theme.text }
+                      ]}>
+                        {freq.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            )}
+          </View>
+        </View>
+
+        {/* Notifications */}
+        <View style={styles.sectionGroup}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>
+            Notifications
+          </Text>
+          
+          <View style={styles.toggleGroup}>
+            <View style={styles.toggleHeader}>
+              <View style={styles.toggleInfo}>
+                <Ionicons name="notifications-outline" size={18} color={theme.primary} />
+                <View>
+                  <Text style={[styles.toggleTitle, { color: theme.text }]}>Get Reminded</Text>
+                  <Text style={[styles.toggleSubtitle, { color: theme.textSecondary }]}>Notify before event starts</Text>
+                </View>
+              </View>
+              <TouchableOpacity 
+                style={[
+                  styles.modernToggle,
+                  { 
+                    backgroundColor: enableNotification ? (domain ? domainColor : customColor) : theme.border
+                  }
+                ]}
+                onPress={() => {
+                  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                  setEnableNotification(!enableNotification);
+                }}
+                activeOpacity={0.8}
+              >
+                <View style={[
+                  styles.modernToggleHandle,
+                  { 
+                    backgroundColor: theme.background,
+                    transform: [{ translateX: enableNotification ? 22 : 2 }] 
+                  }
+                ]} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
+        {/* Additional Details */}
+        <View style={styles.sectionGroup}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>
+            Additional Details
+          </Text>
+          
+          <View style={styles.inputGroup}>
+            <View style={styles.inputHeader}>
+              <Ionicons name="location-outline" size={18} color={theme.primary} />
+              <Text style={[styles.inputLabel, { color: theme.text }]}>Location</Text>
+              <Text style={[styles.optionalTag, { color: theme.textSecondary }]}>Optional</Text>
+            </View>
+            <View style={[styles.modernInputContainer, { 
+              backgroundColor: theme.card,
+              borderColor: theme.border
+            }]}>
+              <TextInput
+                style={[styles.modernTextInput, { color: theme.text }]}
+                value={location}
+                onChangeText={setLocation}
+                placeholder="Where will this take place?"
+                placeholderTextColor={theme.textSecondary}
+              />
+            </View>
+          </View>
+          
+          <View style={styles.inputGroup}>
+            <View style={styles.inputHeader}>
+              <Ionicons name="document-text-outline" size={18} color={theme.primary} />
+              <Text style={[styles.inputLabel, { color: theme.text }]}>Notes</Text>
+              <Text style={[styles.optionalTag, { color: theme.textSecondary }]}>Optional</Text>
+            </View>
+            <View style={[styles.modernInputContainer, { 
+              backgroundColor: theme.card,
+              borderColor: theme.border,
+              minHeight: 80
+            }]}>
+              <TextInput
+                style={[styles.modernTextArea, { color: theme.text }]}
+                value={notes}
+                onChangeText={setNotes}
+                placeholder="Add any details or notes about this time block"
+                placeholderTextColor={theme.textSecondary}
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+              />
+            </View>
+          </View>
+        </View>
+
+        {/* Danger Zone - Delete (only when editing) */}
+        {!isCreating && (
+          <View style={styles.sectionGroup}>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>
+              Danger Zone
+            </Text>
+            
+            <TouchableOpacity 
+              style={[styles.modernDeleteButton, { 
+                backgroundColor: `${theme.error}15`,
+                borderColor: `${theme.error}30`
+              }]} 
+              onPress={handleDelete}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="trash-outline" size={18} color={theme.error} />
+              <Text style={[styles.modernDeleteText, { color: theme.error }]}>
+                Delete Time Block
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+    </ScrollView>
+  );
+
+
+  return (
+    <View style={[styles.container, { backgroundColor: theme.background, overflow: 'hidden' }]}>
+      <TabView
+        navigationState={{ index, routes }}
+        renderScene={SceneMap({
+          basic: () => (
+            <View style={{ flex: 1, backgroundColor: theme.background }}>
+              {renderBasicDetails()}
+            </View>
+          ),
+          additional: () => (
+            <View style={{ flex: 1, backgroundColor: theme.background }}>
+              {renderAdditionalOptions()}
+            </View>
+          )
+        })}
+        onIndexChange={setIndex}
+        initialLayout={{ width }}
+        renderTabBar={(props) => (
+          <TabBar
+            {...props}
+            indicatorStyle={{ backgroundColor: theme.primary, height: 3 }}
+            style={{ 
+              backgroundColor: theme.card,
+              shadowColor: 'transparent',
+              elevation: 0,
+              marginHorizontal: 16,
+              marginTop: 16,
+              borderRadius: 12,
+              overflow: 'hidden'
+            }}
+            contentContainerStyle={{
+              backgroundColor: 'transparent'
+            }}
+            tabStyle={{
+              backgroundColor: 'transparent'
+            }}
+            labelStyle={{ 
+              color: theme.text, 
+              fontSize: 14,
+              fontWeight: '600',
+              textTransform: 'none'
+            }}
+            activeColor={theme.primary}
+            inactiveColor={theme.textSecondary}
+            renderIcon={({ route, focused, color }) => (
+              <Ionicons
+                name={route.key === 'basic' ? 'document-text-outline' : 'options-outline'}
+                size={18}
+                color={color}
+                style={{ marginRight: 8 }}
+              />
+            )}
+            tabStyle={{
+              flexDirection: 'row',
+              alignItems: 'center'
+            }}
+          />
+        )}
+        swipeEnabled={true}
+        style={{ 
+          flex: 1, 
+          backgroundColor: 'transparent'
+        }}
+        sceneContainerStyle={{ 
+          backgroundColor: 'transparent'
+        }}
+      />
+
+      {/* Goal Selector Modal - Only render when visible */}
+      {showGoalModal && (
+        <GoalSelector
+          visible={showGoalModal}
+          onClose={() => setShowGoalModal(false)}
+          onSelectGoal={handleGoalSelect}
+          selectedGoal={selectedGoal}
+          goals={availableGoals}
+          customColor={customColor}
+          theme={theme}
+          isDarkMode={isDarkMode}
+        />
+      )}
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  // Main container styles
-  content: {
+  container: {
     flex: 1,
-    padding: 16,
+    backgroundColor: 'transparent',
   },
-  form: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  tabContent: {
+    flex: 1,
   },
-  formGroup: {
-    marginBottom: 20,
+  scrollContent: {
+    paddingBottom: 100,
+    backgroundColor: 'transparent',
   },
-  labelContainer: {
+  formContainer: {
+    backgroundColor: 'transparent',
+    padding: 20,
+    flex: 1,
+  },
+  
+  // Modern Section Styles
+  sectionGroup: {
+    marginBottom: 32,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 16,
+    letterSpacing: 0.3,
+  },
+  
+  // Modern Input Styles
+  inputGroup: {
+    marginBottom: 16,
+  },
+  inputHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
   },
-  label: {
-    fontSize: 16,
+  inputLabel: {
+    fontSize: 15,
     fontWeight: '600',
-    color: '#666666',
-    marginLeft: 12,
-  },
-  sublabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 8,
-    color: '#888888',
-  },
-  input: {
-    backgroundColor: '#F8F9FA',
-    borderWidth: 1,
-    borderColor: '#E1E2E3',
-    borderRadius: 12,
-    padding: 12,
-    fontSize: 16,
-    color: '#222222',
-  },
-  
-  // Tab styles
-  tabContainer: {
-    flexDirection: 'row',
-    borderRadius: 12,
-    marginBottom: 20,
-    padding: 4,
-    backgroundColor: '#F0F2F5',
-    position: 'relative',
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  tab: {
+    marginLeft: 8,
     flex: 1,
-    flexDirection: 'row',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 10,
-    zIndex: 1,
+    letterSpacing: 0.2,
   },
-  tabText: {
-    fontSize: 14,
+  optionalTag: {
+    fontSize: 11,
     fontWeight: '500',
-    marginLeft: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    opacity: 0.6,
   },
-  tabIndicator: {
-    position: 'absolute',
-    top: 4,
-    bottom: 4,
-    height: 'auto',
-    width: '46%',
-    borderRadius: 8,
-    zIndex: 0,
+  modernInput: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    fontWeight: '500',
   },
   
-  // Selectors (Goal, Project, Task)
-  selector: {
+  // Modern Selector Styles
+  modernSelector: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 12,
+    padding: 16,
     borderRadius: 12,
-    backgroundColor: '#F8F9FA',
     borderWidth: 1,
-    borderColor: '#E1E2E3',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 1,
-    elevation: 1,
+    minHeight: 56,
   },
-  selectedItem: {
+  selectedContent: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
   },
-  itemColorBar: {
-    width: 4,
-    height: 24,
-    borderRadius: 2,
-    backgroundColor: '#4CAF50',
+  placeholderContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  colorDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
     marginRight: 12,
   },
-  selectedItemText: {
+  selectedText: {
     fontSize: 15,
-    color: '#333333',
+    fontWeight: '500',
+    flex: 1,
+    letterSpacing: 0.2,
   },
   placeholderText: {
-    flex: 1,
     fontSize: 15,
-    color: '#888888',
+    fontWeight: '500',
+    marginLeft: 8,
+    letterSpacing: 0.2,
+    opacity: 0.8,
   },
-  taskIcon: {
-    marginRight: 12,
-  },
-  progressBadge: {
-    backgroundColor: '#4CAF5020',
+  progressChip: {
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 10,
+    borderRadius: 8,
     marginLeft: 8,
   },
-  progressText: {
-    fontSize: 12,
-    color: '#4CAF50',
-    fontWeight: '500',
+  progressChipText: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.3,
   },
   
-  // Color selector
-  colorSelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: '#F8F9FA',
-    borderWidth: 1,
-    borderColor: '#E1E2E3',
-  },
-  colorPreview: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    marginRight: 12,
-  },
-  colorText: {
-    flex: 1,
-    fontSize: 15,
-    color: '#333333',
-  },
-  colorIconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#F0F0F0',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  
-  // Date styles
-  dateSelector: {
+  // Modern Date Selector
+  modernDateSelector: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 12,
+    padding: 16,
     borderRadius: 12,
-    backgroundColor: '#F8F9FA',
     borderWidth: 1,
-    borderColor: '#E1E2E3',
-    marginBottom: 10,
+    minHeight: 56,
   },
-  calendarIcon: {
-    width: 40,
-    height: 40,
+  dateContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  miniCalendar: {
+    width: 36,
+    height: 36,
     borderRadius: 8,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#DDD',
     marginRight: 12,
   },
-  calendarHeader: {
-    backgroundColor: '#F44336',
+  miniCalendarHeader: {
     padding: 2,
     alignItems: 'center',
+    justifyContent: 'center',
+    height: 12,
   },
-  calendarMonth: {
-    color: '#FFF',
-    fontSize: 10,
+  miniCalendarMonth: {
+    color: '#FFFFFF',
+    fontSize: 8,
     fontWeight: '700',
+    textTransform: 'uppercase',
   },
-  calendarDay: {
+  miniCalendarDay: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: '700',
-    color: '#333',
-    lineHeight: 24,
+    lineHeight: 22,
   },
-  dateInfo: {
+  dateDetails: {
     flex: 1,
   },
-  dateText: {
+  dateMainText: {
     fontSize: 15,
-    color: '#333333',
-    fontWeight: '500',
+    fontWeight: '600',
+    letterSpacing: 0.2,
   },
-  dayText: {
-    fontSize: 13,
-    color: '#888888',
+  dateSubText: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 2,
+    opacity: 0.7,
   },
   
-  // Time styles
-  timeContainer: {
+  // Modern Time Card
+  timeCard: {
     borderRadius: 12,
-    overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#E1E2E3',
-    backgroundColor: '#F8F9FA',
+    overflow: 'hidden',
   },
-  timeRow: {
+  timeSelectors: {
     flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
+    padding: 16,
   },
-  timeColumn: {
+  timeSelector: {
     flex: 1,
+    alignItems: 'center',
   },
   timeLabel: {
-    fontSize: 13,
-    color: '#888888',
-    marginBottom: 6,
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 8,
+    opacity: 0.7,
   },
-  timeButton: {
-    flexDirection: 'row',
+  timeDisplay: {
     alignItems: 'center',
-    justifyContent: 'space-between',
   },
-  timeValue: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#333333',
+  timeText: {
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
-  timeArrow: {
-    marginHorizontal: 12,
+  timeSeparator: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 16,
   },
-  durationContainer: {
+  durationSection: {
     borderTopWidth: 1,
-    borderTopColor: '#E1E2E3',
-    padding: 12,
+    padding: 16,
+    paddingTop: 12,
   },
-  durationInfo: {
+  durationDisplay: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
-  durationText: {
-    fontSize: 14,
-    color: '#888888',
+  durationLabel: {
+    fontSize: 13,
+    fontWeight: '500',
+    marginLeft: 6,
+    marginRight: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    opacity: 0.7,
   },
   durationValue: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#333333',
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.2,
   },
-  quickDurationButtons: {
+  quickActions: {
     flexDirection: 'row',
     justifyContent: 'space-around',
   },
-  quickButton: {
+  quickActionButton: {
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 12,
+    borderRadius: 8,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    minWidth: 44,
   },
-  quickButtonText: {
-    fontSize: 13,
-    fontWeight: '500',
+  quickActionText: {
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 0.3,
   },
   
-  // Error styles
   errorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 10,
+    padding: 12,
     borderRadius: 8,
     marginTop: 8,
   },
@@ -1546,233 +1176,136 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 14,
-    color: '#EA4335',
+    fontWeight: '500',
   },
   
-  // Option styles
-  optionHeader: {
+  // Modern Toggle Styles
+  toggleGroup: {
+    borderRadius: 12,
+  },
+  toggleHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
-  optionTitleContainer: {
+  toggleInfo: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
   },
-  optionTitle: {
+  toggleTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333333',
+    marginLeft: 12,
+    letterSpacing: 0.2,
   },
-  optionContent: {
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: '#F8F9FA',
-    marginBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 1,
-    elevation: 1,
+  toggleSubtitle: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginLeft: 12,
+    marginTop: 2,
+    opacity: 0.7,
   },
-  toggle: {
-    width: 50,
+  modernToggle: {
+    width: 48,
     height: 28,
     borderRadius: 14,
-    padding: 4,
+    justifyContent: 'center',
   },
-  toggleHandle: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#FFFFFF',
+  modernToggleHandle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
   },
   
-  // Repeat styles
-  frequencyButtons: {
-    flexDirection: 'row',
-    marginBottom: 16,
+  // Expanded Content
+  expandedContent: {
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 8,
   },
-  frequencyButton: {
-    flex: 1,
-    flexDirection: 'row',
-    marginHorizontal: 4,
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  frequencyButtonText: {
+  expandedLabel: {
     fontSize: 13,
-  },
-  repeatEndOptions: {
-    flexDirection: 'row',
-  },
-  repeatEndOption: {
-    flex: 1,
-    flexDirection: 'row',
-    marginHorizontal: 4,
-    paddingVertical: 8,
-    paddingHorizontal: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  repeatEndOptionText: {
-    fontSize: 13,
-  },
-  repeatUntilContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  repeatUntilDateButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    marginLeft: 6,
-  },
-  repeatUntilDateText: {
-    fontSize: 12,
-    marginRight: 4,
-  },
-  
-  // Notification styles
-  notificationOptions: {
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
     marginBottom: 12,
+    opacity: 0.7,
   },
-  notificationOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  notificationTextContainer: {
-    flex: 1,
-  },
-  notificationText: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 2,
-  },
-  notificationDescription: {
-    fontSize: 12,
-  },
-  customTimeInputContainer: {
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 10,
-    marginBottom: 15,
-  },
-  customTimeInputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  customTimeInput: {
-    width: 60,
-    height: 40,
-    borderWidth: 1,
-    borderRadius: 8,
-    textAlign: 'center',
-    fontSize: 16,
-    marginRight: 8,
-  },
-  customTimeLabel: {
-    fontSize: 14,
-  },
-  timePresetContainer: {
+  frequencyGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  timePresetButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 6,
-    alignItems: 'center',
-    minWidth: 40,
-  },
-  timePresetText: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  goalNotificationsButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 12,
-    borderWidth: 1,
-    borderRadius: 8,
-    marginTop: 10,
-  },
-  goalNotificationsText: {
+  frequencyCard: {
     flex: 1,
-    fontSize: 13,
+    flexDirection: 'column',
+    alignItems: 'center',
+    padding: 12,
+    marginHorizontal: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    minHeight: 64,
+    justifyContent: 'center',
+  },
+  frequencyText: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 6,
+    letterSpacing: 0.2,
   },
   
-  // Location styles
-  locationInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  // Modern Input Container
+  modernInputContainer: {
     borderWidth: 1,
     borderRadius: 12,
-    backgroundColor: '#F8F9FA',
-    paddingHorizontal: 12,
-  },
-  locationIcon: {
-    marginRight: 8,
-  },
-  locationInput: {
-    flex: 1,
+    paddingHorizontal: 16,
     paddingVertical: 12,
+    minHeight: 48,
+  },
+  modernTextInput: {
     fontSize: 15,
+    fontWeight: '500',
+    letterSpacing: 0.2,
+  },
+  modernTextArea: {
+    fontSize: 15,
+    fontWeight: '500',
+    letterSpacing: 0.2,
+    minHeight: 60,
   },
   
-  // Notes styles
-  notesInput: {
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 12,
-    fontSize: 15,
-    textAlignVertical: 'top',
-    minHeight: 100,
-    backgroundColor: '#F8F9FA',
-  },
-  
-  // Delete button
-  deleteButton: {
+  // Modern Delete Button
+  modernDeleteButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#EA4335',
+    padding: 16,
     borderRadius: 12,
-    padding: 14,
-    marginTop: 10,
+    borderWidth: 1,
+    marginTop: 8,
   },
-  deleteButtonText: {
+  modernDeleteText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#FFFFFF',
+    marginLeft: 8,
+    letterSpacing: 0.2,
   },
   
-  // Modal styles for GoalSelector
+  // Modal styles (keeping existing)
   modalOverlay: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalContainer: {
     width: '90%',
     maxHeight: '80%',
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     overflow: 'hidden',
   },
@@ -1782,12 +1315,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E1E2E3',
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333333',
   },
   closeButton: {
     padding: 4,
@@ -1802,19 +1333,15 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E1E2E3',
-    backgroundColor: '#F8F9FA',
   },
   modalItemText: {
     fontSize: 16,
-    color: '#333333',
     marginLeft: 12,
   },
   goalColorIndicator: {
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: '#4CAF50',
     marginRight: 12,
   },
   goalDetails: {
@@ -1828,40 +1355,23 @@ const styles = StyleSheet.create({
   progressBar: {
     flex: 1,
     height: 4,
-    backgroundColor: '#E0F2F1',
     borderRadius: 2,
     overflow: 'hidden',
     marginRight: 8,
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#4CAF50',
     borderRadius: 2,
   },
   noItemsMessage: {
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E1E2E3',
     borderRadius: 8,
     marginBottom: 16,
   },
   noItemsText: {
     fontSize: 14,
-    color: '#888888',
     textAlign: 'center',
-  },
-  modalDoneButton: {
-    backgroundColor: '#4285F4',
-    padding: 14,
-    alignItems: 'center',
-    marginHorizontal: 16,
-    marginBottom: 16,
-    borderRadius: 8,
-  },
-  modalDoneButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
   },
 });
 

@@ -56,6 +56,7 @@ export const loadAppData = async () => {
       loadData(STORAGE_KEYS.TODOS).then(data => ({ todos: data || [] })),
       loadData(STORAGE_KEYS.TOMORROW_TODOS).then(data => ({ tomorrowTodos: data || [] })),
       loadData(STORAGE_KEYS.LATER_TODOS).then(data => ({ laterTodos: data || [] })),
+      loadData(STORAGE_KEYS.USER_COUNTRY).then(data => ({ userCountry: data || null })),
     ];
     
     // Wait for all promises to resolve
@@ -80,6 +81,7 @@ export const loadAppData = async () => {
       todos: [],
       tomorrowTodos: [],
       laterTodos: [],
+      userCountry: null,
     };
   }
 };

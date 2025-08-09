@@ -459,7 +459,7 @@ const IncomeTab = ({ theme, data, handlers }) => {
           accessibilityRole="button"
           accessibilityLabel="Add Income Source"
           accessibilityHint={userSubscriptionStatus === 'free' 
-            ? "Upgrade to access this premium feature" 
+            ? "Upgrade to access this Pro feature" 
             : "Opens form to add a new income source"}
         >
           <Ionicons 
@@ -1434,7 +1434,7 @@ const IncomeTab = ({ theme, data, handlers }) => {
                 style={[styles.upgradeModalTitle, { color: theme.text }]}
                 maxFontSizeMultiplier={1.3}
               >
-                Premium Feature
+                Pro Feature
               </Text>
             </View>
             

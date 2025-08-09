@@ -1898,7 +1898,7 @@ const ExpensesTab = ({ theme, data, handlers, navigation }) => {
                 style={[styles.upgradeModalTitle, { color: theme.text }]}
                 maxFontSizeMultiplier={1.3}
               >
-                Premium Feature
+                Pro Feature
               </Text>
             </View>
             

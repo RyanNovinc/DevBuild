@@ -449,7 +449,7 @@ export const RESEARCH_STATS = {
       }
     ],
     
-    "Environment & Organization": [
+    "Community & Environment": [
       {
         title: "Clutter and Cognitive Function",
         figure: "30%",
@@ -871,7 +871,7 @@ export const RESEARCH_STATS = {
       }
     ],
     
-    // Environment & Organization Goals
+    // Community & Environment Goals
     "Home Organization": [
       {
         title: "Organization Cognitive Impact",

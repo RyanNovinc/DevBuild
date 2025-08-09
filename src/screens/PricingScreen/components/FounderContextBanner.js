@@ -38,7 +38,7 @@ const FounderContextBanner = ({ theme, style = {} }) => {
         <View style={styles.bulletRow}>
           <View style={styles.bulletPoint} />
           <Text style={[styles.bulletText, { color: theme.textSecondary }]}>
-            Founders receive permanent lifetime access to premium features
+            Founders receive permanent lifetime access to Pro features
           </Text>
         </View>
         
@@ -52,7 +52,7 @@ const FounderContextBanner = ({ theme, style = {} }) => {
         <View style={styles.bulletRow}>
           <View style={styles.bulletPoint} />
           <Text style={[styles.bulletText, { color: theme.textSecondary }]}>
-            After 1,000 spots are claimed, premium features will only be available via subscription
+            After 1,000 spots are claimed, Pro features will only be available via subscription
           </Text>
         </View>
       </View>

@@ -164,239 +164,65 @@ const DocumentPreviewModal = ({ visible, theme, document, onClose, onDelete }) =
           {/* Only show delete button for non-system documents */}
           {!isSystemDocument && (
             <TouchableOpacity
-              style={[styles.previewDeleteButton, { backgroundColor: theme.errorLight }]}
+              style={[styles.previewDeleteButton, { backgroundColor: '#FF3B30' }]}
               onPress={() => {
                 onClose();
                 onDelete(document.id);
               }}
             >
-              <Ionicons name="trash-outline" size={22} color={theme.danger} />
+              <Ionicons name="trash" size={20} color="#FFFFFF" />
             </TouchableOpacity>
           )}
         </View>
         
-        <ScrollView style={styles.previewContent}>
-          <View style={[styles.documentDetails, { backgroundColor: theme.card }]}>
-            <View style={styles.documentDetailRow}>
-              <Text style={[styles.documentDetailLabel, { color: theme.textSecondary }]}>
-                Name:
-              </Text>
-              <Text style={[styles.documentDetailValue, { color: theme.text }]}>
-                {document.name}
-              </Text>
-            </View>
-            <View style={styles.documentDetailRow}>
-              <Text style={[styles.documentDetailLabel, { color: theme.textSecondary }]}>
-                Type:
-              </Text>
-              <Text style={[styles.documentDetailValue, { color: theme.text }]}>
-                {isSystemDocument ? 'System Document' : (document.type || 'Unknown')}
+        {/* Document Content Container */}
+        <View style={[styles.contentContainer, { backgroundColor: theme.background }]}>
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={theme.primary} />
+              <Text style={[styles.loadingText, { color: theme.text }]}>
+                Loading...
               </Text>
             </View>
-            
-            {!isSystemDocument && (
-              <>
-                <View style={styles.documentDetailRow}>
-                  <Text style={[styles.documentDetailLabel, { color: theme.textSecondary }]}>
-                    Original Size:
-                  </Text>
-                  <Text style={[styles.documentDetailValue, { color: theme.text }]}>
-                    {formatFileSize(document.originalSize || document.size)}
-                  </Text>
-                </View>
-                <View style={styles.documentDetailRow}>
-                  <Text style={[styles.documentDetailLabel, { color: theme.textSecondary }]}>
-                    Processed Size:
-                  </Text>
-                  <Text style={[styles.documentDetailValue, { color: theme.text }]}>
-                    {formatFileSize(document.processedSize || document.size)}
-                    {hasCompression && (
-                      <Text style={[{ color: theme.success || '#4CD964' }]}>
-                        {' '}({document.compressionRatio || 
-                          ((document.originalSize - document.processedSize) / document.originalSize * 100).toFixed(0) + '% smaller'})
-                      </Text>
-                    )}
-                  </Text>
-                </View>
-              </>
-            )}
-            
-            <View style={styles.documentDetailRow}>
-              <Text style={[styles.documentDetailLabel, { color: theme.textSecondary }]}>
-                Added:
+          ) : contentError ? (
+            <View style={styles.errorContainer}>
+              <Ionicons name="alert-circle" size={24} color={theme.danger} />
+              <Text style={[styles.errorText, { color: theme.danger }]}>
+                {contentError}
               </Text>
-              <Text style={[styles.documentDetailValue, { color: theme.text }]}>
-                {formatDate(document.dateAdded)}
-              </Text>
+              <TouchableOpacity
+                style={[styles.retryButton, { backgroundColor: theme.primary }]}
+                onPress={loadDocumentContent}
+              >
+                <Text style={styles.retryButtonText}>Try Again</Text>
+              </TouchableOpacity>
             </View>
-            
-            {/* Only show AI status for non-system documents */}
-            {!isSystemDocument && (
-              <View style={styles.documentDetailRow}>
-                <Text style={[styles.documentDetailLabel, { color: theme.textSecondary }]}>
-                  AI Status:
+          ) : documentContent ? (
+            <ScrollView 
+              style={styles.contentScroll}
+              contentContainerStyle={styles.contentScrollContainer}
+            >
+              {/* Always use markdown renderer if content contains markdown patterns */}
+              {documentContent && (documentContent.includes('**') || isSystemDocument || document.type?.includes('markdown') || document.name?.endsWith('.md')) ? (
+                <SimpleMarkdownRenderer content={documentContent} theme={theme} />
+              ) : (
+                <Text style={[styles.contentText, { color: theme.text }]}>
+                  {documentContent}
                 </Text>
-                <View style={styles.statusIndicator}>
-                  {document.isProcessing ? (
-                    <>
-                      <ActivityIndicator size="small" color={theme.primary} />
-                      <Text style={[styles.statusText, { color: theme.text, marginLeft: 8 }]}>
-                        Processing
-                      </Text>
-                    </>
-                  ) : document.processingError ? (
-                    <>
-                      <Ionicons name="alert-circle" size={18} color="#FF6B6B" />
-                      <Text style={[styles.statusText, { color: '#FF6B6B', marginLeft: 8 }]}>
-                        Error
-                      </Text>
-                    </>
-                  ) : document.openaiUploadError ? (
-                    <>
-                      <Ionicons name="cloud-offline" size={18} color="#FFA726" />
-                      <Text style={[styles.statusText, { color: '#FFA726', marginLeft: 8 }]}>
-                        AI Sync Error
-                      </Text>
-                    </>
-                  ) : document.openaiFileId ? (
-                    <>
-                      <Ionicons name="cloud-done" size={18} color="#4CD964" />
-                      <Text style={[styles.statusText, { color: '#4CD964', marginLeft: 8 }]}>
-                        AI Ready
-                      </Text>
-                    </>
-                  ) : (
-                    <>
-                      <Ionicons name="checkmark-circle" size={18} color="#4CD964" />
-                      <Text style={[styles.statusText, { color: '#4CD964', marginLeft: 8 }]}>
-                        Ready
-                      </Text>
-                    </>
-                  )}
-                </View>
-              </View>
-            )}
-            
-            {!isSystemDocument && document.openaiFileId && (
-              <View style={styles.documentDetailRow}>
-                <Text style={[styles.documentDetailLabel, { color: theme.textSecondary }]}>
-                  AI File ID:
-                </Text>
-                <Text 
-                  style={[
-                    styles.documentDetailValue, 
-                    { 
-                      color: theme.text, 
-                      fontSize: 12,
-                      fontFamily: 'monospace'
-                    }
-                  ]}
-                  numberOfLines={2}
-                >
-                  {document.openaiFileId}
-                </Text>
-              </View>
-            )}
-            
-            {document.openaiErrorMessage && (
-              <View style={styles.documentDetailRow}>
-                <Text style={[styles.documentDetailLabel, { color: theme.textSecondary }]}>
-                  Error:
-                </Text>
-                <Text 
-                  style={[
-                    styles.documentDetailValue, 
-                    { 
-                      color: theme.danger,
-                      fontSize: 13
-                    }
-                  ]}
-                >
-                  {document.openaiErrorMessage}
-                </Text>
-              </View>
-            )}
-          </View>
-          
-          {/* Add special explanation for system document */}
-          {isSystemDocument ? (
-            <View style={[styles.previewNoteCard, { backgroundColor: theme.primaryLight }]}>
-              <Ionicons name="information-circle" size={24} color={theme.primary} />
-              <Text style={[styles.previewNoteText, { color: theme.text }]}>
-                This is a system-generated summary of your app data. It provides your AI assistant with context about your goals, projects, and tasks. This document is automatically updated when you make changes in the app.
-              </Text>
-            </View>
+              )}
+            </ScrollView>
           ) : (
-            <View style={[styles.previewNoteCard, { backgroundColor: theme.cardElevated || theme.card }]}>
-              <Ionicons name="information-circle" size={24} color={theme.primary} />
-              <Text style={[styles.previewNoteText, { color: theme.text }]}>
-                {document.processingError ? 
-                  "There was an error processing this document. It won't be used for Personal Context. Please try removing and adding it again." :
-                  document.openaiUploadError ?
-                  "There was an error uploading this document to the AI service. You can try again by using the Retry button on the documents screen." :
-                  hasCompression ?
-                  `This document has been processed and compressed for AI use. The original size of ${formatFileSize(document.originalSize)} has been reduced by ${document.compressionRatio || ((document.originalSize - document.processedSize) / document.originalSize * 100).toFixed(0) + '%'} to save storage space. Your AI assistant can access and reference information from this document when responding to your queries.` :
-                  document.openaiFileId ?
-                  "This document is ready for AI use. Your AI assistant can access and reference information from this document when responding to your queries." :
-                  "This document will be used to provide context for your AI assistant. They'll be able to reference information from this document when responding to your queries."}
+            <View style={styles.placeholderContainer}>
+              <Ionicons name={getDocumentIcon()} size={42} color={theme.primary} />
+              <Text style={[styles.placeholderText, { color: theme.text }]}>
+                No content available
+              </Text>
+              <Text style={[styles.placeholderSubtext, { color: theme.textSecondary }]}>
+                The document content could not be loaded.
               </Text>
             </View>
           )}
-          
-          {/* Document Content Preview */}
-          <View style={[styles.contentPreviewContainer, { backgroundColor: theme.card }]}>
-            <View style={styles.contentPreviewHeader}>
-              <View style={styles.contentPreviewTitleContainer}>
-                <Ionicons name={getDocumentIcon()} size={22} color={theme.primary} />
-                <Text style={[styles.contentPreviewTitle, { color: theme.text }]}>
-                  Document Content
-                </Text>
-              </View>
-            </View>
-            
-            {isLoading ? (
-              <View style={styles.contentPreviewLoading}>
-                <ActivityIndicator size="large" color={theme.primary} />
-                <Text style={[styles.contentPreviewLoadingText, { color: theme.text }]}>
-                  Loading document content...
-                </Text>
-              </View>
-            ) : contentError ? (
-              <View style={[styles.contentPreviewError, { backgroundColor: theme.errorLight }]}>
-                <Ionicons name="alert-circle" size={24} color={theme.danger} />
-                <Text style={[styles.contentPreviewErrorText, { color: theme.danger }]}>
-                  {contentError}
-                </Text>
-                <TouchableOpacity
-                  style={[styles.retryButton, { backgroundColor: theme.primary }]}
-                  onPress={loadDocumentContent}
-                >
-                  <Text style={styles.retryButtonText}>Try Again</Text>
-                </TouchableOpacity>
-              </View>
-            ) : documentContent ? (
-              <ScrollView style={styles.contentPreviewScroll}>
-                {(isSystemDocument || document.type?.includes('markdown') || document.name?.endsWith('.md')) ? (
-                  <SimpleMarkdownRenderer content={documentContent} theme={theme} />
-                ) : (
-                  <Text style={[styles.contentPreviewText, { color: theme.text }]}>
-                    {documentContent}
-                  </Text>
-                )}
-              </ScrollView>
-            ) : (
-              <View style={styles.contentPreviewPlaceholder}>
-                <Ionicons name={getDocumentIcon()} size={42} color={theme.primary} />
-                <Text style={[styles.contentPreviewPlaceholderText, { color: theme.text }]}>
-                  No content available
-                </Text>
-                <Text style={[styles.contentPreviewPlaceholderSubtext, { color: theme.textSecondary }]}>
-                  The document content could not be loaded. It may be processing or unavailable.
-                </Text>
-              </View>
-            )}
-          </View>
-        </ScrollView>
+        </View>
       </SafeAreaView>
     </Modal>
   );
@@ -433,123 +259,68 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 20,
   },
-  previewContent: {
+  // Simplified content styles - only what's needed for document content
+  contentContainer: {
     flex: 1,
-    padding: 16,
   },
-  documentDetails: {
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-  },
-  documentDetailRow: {
-    flexDirection: 'row',
-    marginBottom: 12,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
+    padding: 40,
   },
-  documentDetailLabel: {
-    width: 100,
-    fontSize: 14,
-  },
-  documentDetailValue: {
-    flex: 1,
-    fontSize: 14,
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
     fontWeight: '500',
   },
-  statusIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statusText: {
-    fontSize: 14,
-  },
-  previewNoteCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 1,
-  },
-  previewNoteText: {
-    fontSize: 14,
-    lineHeight: 20,
-    marginLeft: 12,
+  errorContainer: {
     flex: 1,
-  },
-  contentPreviewContainer: {
-    borderRadius: 12,
-    marginBottom: 30,
-    overflow: 'hidden',
-  },
-  contentPreviewHeader: {
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.1)',
-  },
-  contentPreviewTitleContainer: {
-    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-  },
-  contentPreviewTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft: 8,
-  },
-  contentPreviewScroll: {
-    maxHeight: 500,  // Limit maximum height
-    padding: 16,
-  },
-  contentPreviewText: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  contentPreviewLoading: {
     padding: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  contentPreviewLoadingText: {
-    marginTop: 16,
-    fontSize: 14,
-  },
-  contentPreviewError: {
-    padding: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 8,
-    margin: 16,
-  },
-  contentPreviewErrorText: {
-    fontSize: 14,
+  errorText: {
+    fontSize: 16,
     textAlign: 'center',
     marginTop: 12,
     marginBottom: 16,
+    fontWeight: '500',
   },
   retryButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
     borderRadius: 20,
   },
   retryButtonText: {
     color: 'white',
     fontWeight: 'bold',
-  },
-  contentPreviewPlaceholder: {
-    padding: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  contentPreviewPlaceholderText: {
     fontSize: 16,
+  },
+  contentScroll: {
+    flex: 1,
+  },
+  contentScrollContainer: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  contentText: {
+    fontSize: 16,
+    lineHeight: 24,
+  },
+  placeholderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  placeholderText: {
+    fontSize: 18,
     fontWeight: 'bold',
     marginTop: 16,
+    textAlign: 'center',
   },
-  contentPreviewPlaceholderSubtext: {
+  placeholderSubtext: {
     fontSize: 14,
     textAlign: 'center',
     marginTop: 8,

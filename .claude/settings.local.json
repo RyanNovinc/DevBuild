@@ -61,7 +61,15 @@
       "Bash(fi)",
       "Bash(timeout 30 npx expo start --dev-client --port 8087)",
       "Bash(timeout 15 npx expo start --dev-client --port 8086)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(npm install:*)",
+      "Bash(timeout 30 npm start)",
+      "Bash(timeout 30 npx expo start --dev-client --port 8086)",
+      "Bash(timeout 10 npx expo start --dev-client --port 8087)",
+      "Bash(timeout 20 npx expo start --dev-client --port 8087)",
+      "Bash(git restore:*)",
+      "Bash(git checkout:*)",
+      "Bash(timeout 10 npx expo start --dev-client --port 8085)"
     ],
     "deny": []
   }

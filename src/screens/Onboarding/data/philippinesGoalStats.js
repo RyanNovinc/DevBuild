@@ -1084,8 +1084,8 @@ export const PHILIPPINE_GOAL_STATS = {
     ]
   },
   
-  // Domain: Environment & Organization
-  "Environment & Organization": {
+  // Domain: Community & Environment
+  "Community & Environment": {
     "Organize Living Space": [
       {
         title: "Productivity ROI: Organized Workspaces Increase Efficiency by 80% and Reduce Stress",

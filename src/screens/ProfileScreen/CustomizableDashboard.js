@@ -11,6 +11,7 @@ import {
   Alert,
   Platform
 } from 'react-native';
+import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -82,8 +83,11 @@ const DASHBOARD_COMPONENTS = {
 const CustomizableDashboard = ({ theme, navigation }) => {
   const [dashboardItems, setDashboardItems] = useState([]); // Now stores widget instances with unique IDs
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
-  const [removingMode, setRemovingMode] = useState(false);
   const [shakeAnimations, setShakeAnimations] = useState({});
+  
+  // Swipe-to-delete state
+  const [swipeAnimations, setSwipeAnimations] = useState({});
+  const [isSwipeActive, setIsSwipeActive] = useState({});
   // Custom Streak unlock state
   const [showCustomStreakCongrats, setShowCustomStreakCongrats] = useState(false);
   const [customStreakUnlockState, setCustomStreakUnlockState] = useState('locked'); // 'locked', 'unlocked', 'seen'
@@ -684,6 +688,98 @@ const CustomizableDashboard = ({ theme, navigation }) => {
     setIsAddModalVisible(false);
   };
   
+  // Create or get swipe animation for widget
+  const getSwipeAnimation = (widgetId) => {
+    if (!swipeAnimations[widgetId]) {
+      const newSwipeAnim = new Animated.Value(0);
+      setSwipeAnimations(prev => ({
+        ...prev,
+        [widgetId]: newSwipeAnim
+      }));
+      return newSwipeAnim;
+    }
+    return swipeAnimations[widgetId];
+  };
+
+  // Handle swipe gesture
+  const handleSwipeGesture = (event, widgetId, index) => {
+    const { translationX, state } = event.nativeEvent;
+    const swipeAnim = getSwipeAnimation(widgetId);
+    const SWIPE_THRESHOLD = -80; // Minimum swipe distance to trigger delete
+    const SWIPE_DELETE_THRESHOLD = -120; // Distance to auto-delete
+
+    if (state === State.ACTIVE) {
+      // Only allow left swipes (negative translationX)
+      if (translationX < 0) {
+        setIsSwipeActive(prev => ({ ...prev, [widgetId]: true }));
+        swipeAnim.setValue(Math.max(translationX, SWIPE_DELETE_THRESHOLD));
+      }
+    } else if (state === State.END) {
+      const shouldDelete = translationX < SWIPE_DELETE_THRESHOLD;
+      const shouldShowDelete = translationX < SWIPE_THRESHOLD;
+
+      if (shouldDelete) {
+        // Auto-delete if swiped far enough
+        Animated.timing(swipeAnim, {
+          toValue: -scaleWidth(400), // Animate off screen
+          duration: 300,
+          useNativeDriver: true,
+        }).start(() => {
+          removeComponent(index);
+          // Reset animation state
+          setIsSwipeActive(prev => {
+            const newState = { ...prev };
+            delete newState[widgetId];
+            return newState;
+          });
+          setSwipeAnimations(prev => {
+            const newState = { ...prev };
+            delete newState[widgetId];
+            return newState;
+          });
+        });
+      } else if (shouldShowDelete) {
+        // Show delete button
+        Animated.spring(swipeAnim, {
+          toValue: SWIPE_THRESHOLD,
+          useNativeDriver: true,
+        }).start();
+      } else {
+        // Snap back to original position
+        Animated.spring(swipeAnim, {
+          toValue: 0,
+          useNativeDriver: true,
+        }).start(() => {
+          setIsSwipeActive(prev => ({ ...prev, [widgetId]: false }));
+        });
+      }
+    }
+  };
+
+  // Handle delete button press from swipe
+  const handleSwipeDelete = (widgetId, index) => {
+    const swipeAnim = getSwipeAnimation(widgetId);
+    
+    Animated.timing(swipeAnim, {
+      toValue: -scaleWidth(400), // Animate off screen
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      removeComponent(index);
+      // Reset animation state
+      setIsSwipeActive(prev => {
+        const newState = { ...prev };
+        delete newState[widgetId];
+        return newState;
+      });
+      setSwipeAnimations(prev => {
+        const newState = { ...prev };
+        delete newState[widgetId];
+        return newState;
+      });
+    });
+  };
+
   // Remove a component from the dashboard (permanently delete)
   const removeComponent = async (index) => {
     console.log('=== Remove Component Debug ===');
@@ -716,11 +812,6 @@ const CustomizableDashboard = ({ theme, navigation }) => {
   };
 
   
-  // Toggle removing mode
-  const toggleRemovingMode = () => {
-    setRemovingMode(!removingMode);
-  };
-  
   // Render a specific dashboard component
   const renderDashboardComponent = (widget, index) => {
     const componentInfo = DASHBOARD_COMPONENTS[widget.type];
@@ -733,63 +824,92 @@ const CustomizableDashboard = ({ theme, navigation }) => {
     const hasPremiumAccess = isPremiumUser || !requiresPremium;
     const hasLevelAccess = !requiresLevel || userLevel >= requiresLevel;
     
+    const swipeAnim = getSwipeAnimation(widget.id);
+    const isWidgetSwipeActive = isSwipeActive[widget.id];
+    
     return (
       <View key={widget.id} style={styles.componentContainer}>
-        {removingMode && (
-          <TouchableOpacity
+        <PanGestureHandler
+          onGestureEvent={(event) => handleSwipeGesture(event, widget.id, index)}
+          onHandlerStateChange={(event) => handleSwipeGesture(event, widget.id, index)}
+          activeOffsetX={[-10, 10000]} // Only trigger on left swipes
+          failOffsetY={[-20, 20]} // Allow vertical scrolling
+        >
+          <Animated.View
             style={[
-              styles.removeButton, 
-              { 
-                backgroundColor: 'rgba(255, 59, 48, 0.8)',
-                zIndex: 20,
-                elevation: 5,
-                borderWidth: 0,
-                borderColor: 'transparent',
+              styles.swipeableWidget,
+              {
+                transform: [{ translateX: swipeAnim }],
               }
             ]}
-            onPress={() => {
-              console.log(`Remove button clicked for ${widget.name} at index ${index}`);
-              removeComponent(index);
-            }}
-            accessible={true}
-            accessibilityRole="button"
-            accessibilityLabel={`Remove ${widget.name}`}
-            accessibilityHint={`Removes ${widget.name} from your dashboard`}
-            hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
           >
-            <Ionicons 
-              name="close" 
-              size={16} 
-              color="#FFFFFF" 
+            {/* Show lock icon for premium components when user is on free plan */}
+            {requiresPremium && !hasPremiumAccess && (
+              <View style={[styles.premiumLockBadge, { backgroundColor: theme.primary }]}>
+                <Ionicons name="lock-closed" size={12} color="#FFFFFF" />
+              </View>
+            )}
+            
+            {/* Show lock icon for level-locked components */}
+            {requiresLevel && !hasLevelAccess && (
+              <View style={[styles.levelLockBadge, { backgroundColor: '#FF9500' }]}>
+                <Text style={styles.levelLockText}>{requiresLevel}</Text>
+              </View>
+            )}
+            
+            <Component 
+              theme={theme} 
+              navigation={navigation} 
+              isPremium={hasPremiumAccess}
+              isUnlocked={hasLevelAccess}
+              widgetId={widget.id}
+              widgetData={widget.data}
+              widgetName={widget.name}
+              saveWidgetData={saveWidgetData}
+              loadWidgetData={loadWidgetData}
             />
-          </TouchableOpacity>
-        )}
+          </Animated.View>
+        </PanGestureHandler>
         
-        {/* Show lock icon for premium components when user is on free plan */}
-        {requiresPremium && !hasPremiumAccess && (
-          <View style={[styles.premiumLockBadge, { backgroundColor: theme.primary }]}>
-            <Ionicons name="lock-closed" size={12} color="#FFFFFF" />
+        {/* Red delete background shown during swipe */}
+        {isWidgetSwipeActive && (
+          <View style={[
+            styles.deleteBackground,
+            {
+              backgroundColor: '#FF3B30',
+              position: 'absolute',
+              top: 0,
+              bottom: 0,
+              right: 0,
+              left: 0,
+              justifyContent: 'center',
+              alignItems: 'flex-end',
+              paddingRight: scaleWidth(20),
+            }
+          ]}>
+            <TouchableOpacity
+              style={[
+                styles.deleteButton,
+                {
+                  backgroundColor: 'transparent',
+                  padding: scaleWidth(10),
+                  borderRadius: scaleWidth(8),
+                }
+              ]}
+              onPress={() => handleSwipeDelete(widget.id, index)}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={`Delete ${widget.name}`}
+              accessibilityHint={`Removes ${widget.name} from your dashboard`}
+            >
+              <Ionicons 
+                name="trash" 
+                size={scaleWidth(24)} 
+                color="#FFFFFF" 
+              />
+            </TouchableOpacity>
           </View>
         )}
-        
-        {/* Show lock icon for level-locked components */}
-        {requiresLevel && !hasLevelAccess && (
-          <View style={[styles.levelLockBadge, { backgroundColor: '#FF9500' }]}>
-            <Text style={styles.levelLockText}>{requiresLevel}</Text>
-          </View>
-        )}
-        
-        <Component 
-          theme={theme} 
-          navigation={navigation} 
-          isPremium={hasPremiumAccess}
-          isUnlocked={hasLevelAccess}
-          widgetId={widget.id}
-          widgetData={widget.data}
-          widgetName={widget.name}
-          saveWidgetData={saveWidgetData}
-          loadWidgetData={loadWidgetData}
-        />
       </View>
     );
   };
@@ -1384,7 +1504,7 @@ const CustomizableDashboard = ({ theme, navigation }) => {
                 marginBottom: scaleHeight(12)
               }
             ]}>
-              🎉 Level 2 Unlocked!
+              🎉 Stage 2 Unlocked!
             </Text>
             
             <Text style={[
@@ -1524,7 +1644,7 @@ const CustomizableDashboard = ({ theme, navigation }) => {
                 marginBottom: scaleHeight(12)
               }
             ]}>
-              🎉 Level 3 Unlocked!
+              🎉 Stage 3 Unlocked!
             </Text>
             
             <Text style={[
@@ -1704,7 +1824,7 @@ const CustomizableDashboard = ({ theme, navigation }) => {
                 ]}
                 maxFontSizeMultiplier={1.3}
               >
-                You've reached Level 4 and unlocked the Focus Timer! This powerful tool helps you maintain deep focus using scientifically-proven 90-minute work cycles.
+                You've reached Stage 4 and unlocked the Focus Timer! This powerful tool helps you maintain deep focus using scientifically-proven 90-minute work cycles.
               </Text>
               
               <View style={styles.featuresList}>
@@ -1867,7 +1987,7 @@ const CustomizableDashboard = ({ theme, navigation }) => {
                 marginBottom: scaleHeight(12)
               }
             ]}>
-              🎉 Level 5 Unlocked!
+              🎉 Stage 5 Unlocked!
             </Text>
             
             <Text style={[
@@ -2005,34 +2125,6 @@ const CustomizableDashboard = ({ theme, navigation }) => {
             </TouchableOpacity>
           )}
           
-          {dashboardItems.length > 0 && (
-            <TouchableOpacity
-              style={[
-                styles.editButton, 
-                { 
-                  backgroundColor: theme.primary + '20',
-                  width: scaleWidth(32),
-                  height: scaleWidth(32),
-                  borderRadius: scaleWidth(16),
-                  marginRight: scaleWidth(8),
-                }
-              ]}
-              onPress={toggleRemovingMode}
-              accessible={true}
-              accessibilityRole="button"
-              accessibilityLabel={removingMode ? "Finish editing" : "Edit dashboard"}
-              accessibilityHint={removingMode ? "Exits edit mode" : "Enters edit mode to remove dashboard components"}
-              // Ensure minimum touch target size
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <Ionicons 
-                name={removingMode ? "checkmark" : "pencil-outline"} 
-                size={scaleWidth(18)} 
-                color={theme.primary} 
-              />
-            </TouchableOpacity>
-          )}
-          
           <TouchableOpacity
             style={[
               styles.addButton, 
@@ -2152,17 +2244,18 @@ const styles = StyleSheet.create({
   componentContainer: {
     position: 'relative',
     marginBottom: scaleHeight(4),
+    overflow: 'hidden', // Ensure swipe doesn't show outside bounds
   },
-  removeButton: {
-    position: 'absolute',
-    top: scaleWidth(10),
-    right: scaleWidth(10),
-    width: scaleWidth(24),
-    height: scaleWidth(24),
-    borderRadius: scaleWidth(12),
+  swipeableWidget: {
+    position: 'relative',
+    zIndex: 10,
+  },
+  deleteBackground: {
+    borderRadius: scaleWidth(12), // Match widget border radius
+  },
+  deleteButton: {
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 20, // Increased z-index to ensure it appears on top
   },
   // Premium lock badge
   premiumLockBadge: {

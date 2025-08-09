@@ -54,11 +54,8 @@ const AuthInput = ({
   const textColor = theme.text || '#000000';
   const placeholderColor = theme.textSecondary || '#777777';
   
-  // Only check contrast if both colors are defined
-  const useTextColor = (theme.text && theme.inputBackground && 
-    meetsContrastRequirements(theme.text, theme.inputBackground)) 
-    ? theme.text 
-    : '#000000';
+  // Use theme text color, falling back to white for better visibility
+  const useTextColor = theme.text || '#FFFFFF';
   
   // Set border color based on error state (with fallbacks)
   const borderColor = error ? (theme.error || '#ff0000') : (theme.border || '#cccccc');
@@ -74,18 +71,12 @@ const AuthInput = ({
       style={[
         styles.inputContainer, 
         { 
-          backgroundColor: theme.inputBackground, 
-          borderColor: borderColor,
-          borderRadius: spacing.s,
-          borderWidth: error ? 2 : 1,
-          height: getByDeviceSize({
-            small: scaleHeight(48),
-            medium: scaleHeight(52),
-            large: scaleHeight(56),
-            tablet: scaleHeight(60)
-          }),
-          // Add more horizontal padding in landscape mode on tablets
-          paddingHorizontal: isLandscape && width >= 768 ? spacing.m : 0,
+          backgroundColor: 'rgba(255,255,255,0.03)', // Very subtle white background
+          borderColor: error ? '#FF6B6B' : 'rgba(255,255,255,0.1)',
+          borderRadius: 12,
+          borderWidth: 1,
+          height: 52,
+          paddingHorizontal: 0,
         }
       ]}
       accessible={true}
@@ -108,8 +99,8 @@ const AuthInput = ({
       >
         <Ionicons 
           name={icon} 
-          size={iconSize} 
-          color={error ? (theme.error || '#ff0000') : placeholderColor}
+          size={18} 
+          color={error ? '#FF6B6B' : 'rgba(255,255,255,0.5)'}
         />
       </TouchableOpacity>
       
@@ -117,13 +108,13 @@ const AuthInput = ({
         style={[
           styles.input, 
           { 
-            color: useTextColor,
-            fontSize: inputFontSize,
-            paddingRight: rightIcon ? spacing.xs : spacing.s
+            color: '#FFFFFF',
+            fontSize: 14,
+            paddingRight: rightIcon ? 8 : 16
           }
         ]}
         placeholder={placeholder}
-        placeholderTextColor={placeholderColor}
+        placeholderTextColor="rgba(255,255,255,0.4)"
         value={value}
         onChangeText={onChangeText}
         secureTextEntry={secureTextEntry}
@@ -135,29 +126,23 @@ const AuthInput = ({
       />
       
       {rightIcon && (
-        <TouchableOpacity
-          style={[
-            styles.rightIcon,
-            {
-              width: touchableSize.width,
-              height: touchableSize.height,
-              paddingHorizontal: spacing.s
-            }
-          ]}
-          onPress={onRightIconPress}
-          accessible={true}
-          accessibilityRole="button"
-          accessibilityLabel={`${rightIcon} button`}
-          accessibilityHint={secureTextEntry ? "Toggle password visibility" : undefined}
-          // Add hit slop to increase touch target without changing visual size
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <Ionicons
-            name={rightIcon}
-            size={iconSize}
-            color={placeholderColor}
-          />
-        </TouchableOpacity>
+        <View style={styles.rightIconContainer}>
+          <TouchableOpacity
+            style={styles.rightIconButton}
+            onPress={onRightIconPress}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={`${rightIcon} button`}
+            accessibilityHint={secureTextEntry ? "Toggle password visibility" : undefined}
+            hitSlop={{ top: 10, bottom: 10, left: 15, right: 15 }}
+          >
+            <Ionicons
+              name={rightIcon}
+              size={18}
+              color="rgba(255,255,255,0.5)"
+            />
+          </TouchableOpacity>
+        </View>
       )}
     </View>
   );
@@ -168,7 +153,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginVertical: spacing.xs,
-    overflow: 'hidden',
+    overflow: 'visible', // Changed from 'hidden' to prevent icon clipping
   },
   inputIcon: {
     justifyContent: 'center',
@@ -177,9 +162,17 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
   },
-  rightIcon: {
+  rightIconContainer: {
+    minWidth: 44, // Ensure minimum touch target
+    paddingHorizontal: 12, // Give proper spacing around the icon
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  rightIconButton: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 32,
+    height: 32,
   },
 });
 

@@ -31,10 +31,13 @@ import {
   ensureAccessibleTouchTarget
 } from '../../../utils/responsive';
 import { AuthHeader, AuthInput, AuthButton, AuthFooter } from './components';
+import TermsOfServiceModal from './components/TermsOfServiceModal';
+import PrivacyPolicyModal from './components/PrivacyPolicyModal';
+import { cognitoDirectService } from './utils/cognito-direct';
 
-const LoginScreen = ({ navigation, route }) => {
+const LoginScreen = ({ navigation, route, onLoginSuccess, onClose, embedded = false }) => {
   const { theme } = useTheme();
-  const { login, register, loading } = useAuth();
+  const { login, register, loading, mockLogin } = useAuth();
   const { showSuccess, showError } = useNotification ? useNotification() : {
     showError: (msg) => Alert.alert('Error', msg),
     showSuccess: (msg) => Alert.alert('Success', msg)
@@ -71,7 +74,7 @@ const LoginScreen = ({ navigation, route }) => {
   }, []);
   
   // Debug state to show/hide debug info
-  const [showDebug, setShowDebug] = useState(__DEV__);
+  const [showDebug, setShowDebug] = useState(false);
   
   // Check if we should show registration form directly
   const showRegistrationParam = route?.params?.showRegistration;
@@ -81,9 +84,16 @@ const LoginScreen = ({ navigation, route }) => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [displayName, setDisplayName] = useState('');
   const [isLogin, setIsLogin] = useState(!showRegistrationParam);
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(true); // true = password hidden (secure)
+  
+  // Terms and Privacy Policy acceptance
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
+  
+  // Modal visibility states
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   
   // Local loading state for better UX
   const [localLoading, setLocalLoading] = useState(false);
@@ -103,7 +113,7 @@ const LoginScreen = ({ navigation, route }) => {
     }
   }, [showRegistrationParam]);
   
-  // Handle login with simplified flow
+  // Handle login with comprehensive error handling
   const handleLogin = async () => {
     // Validate login fields
     if (!validateLoginForm()) {
@@ -116,12 +126,53 @@ const LoginScreen = ({ navigation, route }) => {
       
       const success = await login(email, password);
       
-      if (!success) {
-        showError('Invalid email or password');
+      if (success) {
+        // Show success message and navigate to success screen
+        showSuccess('Login successful! Welcome back.');
+        
+        if (embedded && onLoginSuccess) {
+          // Call the embedded success callback
+          onLoginSuccess();
+        } else if (navigation && navigation.navigate) {
+          // Navigate to login success screen
+          navigation.navigate('LoginSuccess', { 
+            userName: user?.displayName || email.split('@')[0] 
+          });
+        }
+      } else {
+        // This should not happen as login throws errors, but just in case
+        showError('Login failed. Please check your credentials and try again.');
       }
     } catch (error) {
       console.error('Login error:', error);
-      showError('Login failed. Please try again.');
+      
+      // Use the auth service to get user-friendly error messages
+      const { authService } = require('./utils/auth-service');
+      const userFriendlyMessage = authService.getErrorMessage(error);
+      showError(userFriendlyMessage);
+      
+      // Special handling for specific errors
+      if (error.code === 'UserNotFoundException') {
+        // Suggest they sign up instead
+        setTimeout(() => {
+          Alert.alert(
+            'Account Not Found',
+            'Would you like to create a new account with this email?',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { 
+                text: 'Sign Up', 
+                onPress: () => setIsLogin(false) // Switch to registration mode
+              }
+            ]
+          );
+        }, 1000);
+      } else if (error.code === 'UserNotConfirmedException') {
+        // Navigate to verification screen
+        setTimeout(() => {
+          navigation.navigate('Verification', { email });
+        }, 1000);
+      }
     } finally {
       setLocalLoading(false);
     }
@@ -196,38 +247,66 @@ const LoginScreen = ({ navigation, route }) => {
       setConfirmPasswordError('');
     }
     
-    // Phone number validation
-    if (!phoneNumber) {
-      setPhoneNumberError('Phone number is required');
+    // Phone number validation (optional now)
+    if (phoneNumber && !formatPhoneNumber(phoneNumber)) {
+      setPhoneNumberError('Please enter a valid phone number (e.g., 04XX XXX XXX or +1 555 123 4567)');
       isValid = false;
     } else {
       setPhoneNumberError('');
     }
     
+    // Terms and Privacy Policy validation
+    if (!acceptedTerms) {
+      showError('Please accept the Terms of Service to continue');
+      isValid = false;
+    }
+    
+    if (!acceptedPrivacy) {
+      showError('Please accept the Privacy Policy to continue');
+      isValid = false;
+    }
+    
     return isValid;
   };
   
-  // Format phone number to E.164 format (required by AWS Cognito)
+  // Smart phone number formatting with auto-detection
   const formatPhoneNumber = (phone) => {
-    // Clean the phone number of any non-digit characters
-    let cleaned = phone.replace(/\D/g, '');
+    if (!phone) return '';
     
-    // Handle different formatting scenarios
-    if (cleaned.startsWith('1') && cleaned.length === 11) {
-      // Already has US country code
-      cleaned = '+' + cleaned;
-    } else if (cleaned.length === 10) {
-      // Assume US/Canada for 10-digit numbers
-      cleaned = '+1' + cleaned;
-    } else if (!cleaned.startsWith('+')) {
-      // Add + prefix if not present
-      cleaned = '+' + cleaned;
+    // Clean the phone number of any non-digit characters except +
+    let cleaned = phone.replace(/[^\d+]/g, '');
+    
+    // If it already starts with +, assume it's correctly formatted
+    if (cleaned.startsWith('+')) {
+      return cleaned;
     }
     
-    return cleaned;
+    // Remove any leading zeros or ones
+    cleaned = cleaned.replace(/^0+/, '');
+    
+    // Auto-detect common patterns
+    if (cleaned.length === 9 && phone.startsWith('04')) {
+      // Australian mobile (04 -> +614)
+      return '+614' + cleaned.substring(1);
+    } else if (cleaned.length === 10 && phone.startsWith('04')) {
+      // Australian mobile with leading 0 (0412345678 -> +61412345678)
+      return '+61' + cleaned.substring(1);
+    } else if (cleaned.length === 10) {
+      // US/Canada 10-digit number
+      return '+1' + cleaned;
+    } else if (cleaned.length === 11 && cleaned.startsWith('1')) {
+      // US/Canada with country code
+      return '+' + cleaned;
+    } else if (cleaned.length >= 8 && cleaned.length <= 15) {
+      // International format - just add + if not present
+      return '+' + cleaned;
+    }
+    
+    // Return empty string if format not recognized
+    return '';
   };
   
-  // Handle register with simplified flow
+  // Handle register with comprehensive error handling
   const handleRegister = async () => {
     try {
       // Validate all form fields
@@ -239,35 +318,62 @@ const LoginScreen = ({ navigation, route }) => {
       const formattedPhone = formatPhoneNumber(phoneNumber);
       
       // Validate phone number is in proper format
-      if (!formattedPhone || !formattedPhone.startsWith('+')) {
-        showError('Please enter a valid phone number with country code');
-        setPhoneNumberError('Please enter a valid phone number with country code');
+      if (phoneNumber && (!formattedPhone || !formattedPhone.startsWith('+'))) {
+        showError('Please enter a valid phone number (e.g., 04XX XXX XXX or +1 555 123 4567)');
+        setPhoneNumberError('Please enter a valid phone number (e.g., 04XX XXX XXX or +1 555 123 4567)');
         return;
       }
       
       // Show local loading
       setLocalLoading(true);
       
-      // Create attributes object
-      const attributes = {
-        phone_number: formattedPhone,
-        name: displayName || email.split('@')[0]
-      };
+      // Create attributes object (only include if provided)
+      const attributes = {};
+      if (phoneNumber && formattedPhone) {
+        attributes.phone_number = formattedPhone;
+      }
       
       const success = await register(email, password, attributes);
       
       if (success) {
-        showSuccess('Registration successful! Please check your email for verification code.');
+        showSuccess('Account created successfully! Please check your email for a verification code.');
         setRegistrationSuccess(true);
         
-        // Navigate to verification screen
-        navigation.navigate('Verification', { email });
+        // Navigate to verification screen after a brief delay
+        setTimeout(() => {
+          navigation.navigate('Verification', { email });
+        }, 1500);
       } else {
         showError('Registration failed. Please try again.');
       }
     } catch (error) {
       console.error('Registration error:', error);
-      showError(`Registration failed: ${error.message || 'Please try again.'}`);
+      
+      // Use the auth service to get user-friendly error messages
+      const { authService } = require('./utils/auth-service');
+      const userFriendlyMessage = authService.getErrorMessage(error);
+      showError(userFriendlyMessage);
+      
+      // Special handling for specific errors
+      if (error.code === 'UsernameExistsException') {
+        // Suggest they log in instead
+        setTimeout(() => {
+          Alert.alert(
+            'Account Already Exists',
+            'An account with this email already exists. Would you like to log in instead?',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { 
+                text: 'Log In', 
+                onPress: () => setIsLogin(true) // Switch to login mode
+              }
+            ]
+          );
+        }, 1000);
+      } else if (error.code === 'InvalidPasswordException') {
+        // Focus on password field
+        setPasswordError('Password must be at least 8 characters with uppercase, lowercase, and numbers');
+      }
     } finally {
       setLocalLoading(false);
     }
@@ -284,6 +390,10 @@ const LoginScreen = ({ navigation, route }) => {
     setConfirmPasswordError('');
     setPhoneNumberError('');
     
+    // Reset terms and privacy acceptance
+    setAcceptedTerms(false);
+    setAcceptedPrivacy(false);
+    
     // Toggle the mode
     setIsLogin(!isLogin);
   };
@@ -292,21 +402,68 @@ const LoginScreen = ({ navigation, route }) => {
   const handleForgotPassword = () => {
     navigation.navigate('ForgotPassword');
   };
+
+  // DEVELOPER TESTING: Mock login handler
+  const handleMockLogin = async (userType) => {
+    try {
+      setLocalLoading(true);
+      showSuccess(`Logging in as mock ${userType} user...`);
+      
+      const success = await mockLogin(userType);
+      
+      if (success) {
+        showSuccess(`Successfully logged in as ${userType} user!`);
+        
+        if (embedded && onLoginSuccess) {
+          // Call the embedded success callback after a short delay
+          setTimeout(() => {
+            onLoginSuccess();
+          }, 1000);
+        } else if (navigation && navigation.navigate) {
+          // Navigate to login success screen with mock user info
+          setTimeout(() => {
+            navigation.navigate('LoginSuccess', { 
+              userName: userType === 'free' ? 'Test User' : 
+                       userType === 'pro' ? 'Pro User' : 'Premium User'
+            });
+          }, 1000);
+        }
+      } else {
+        showError('Mock login failed');
+      }
+    } catch (error) {
+      showError(`Mock login error: ${error.message}`);
+    } finally {
+      setLocalLoading(false);
+    }
+  };
   
-  // Handle back (only if we came from another screen)
+  // Handle back - go back if possible, otherwise navigate to main app
   const handleBack = () => {
-    if (navigation.canGoBack()) {
+    if (embedded) {
+      // In embedded mode, call the close callback if provided
+      if (onClose) {
+        onClose();
+      }
+      return;
+    }
+    
+    if (navigation && navigation.canGoBack && navigation.canGoBack()) {
       navigation.goBack();
+    } else {
+      // If no previous screen, you might want to navigate to a specific screen
+      // For now, we'll just log this case
+      console.log('No previous screen to go back to from login');
     }
   };
   
   // Create responsive styles based on device size and orientation
   const getStyles = () => {
-    // Basic container styles with safe area handling
+    // Basic container styles with reduced top padding for better centering
     const containerStyle = {
       flex: 1,
       backgroundColor: theme.background,
-      paddingTop: safeSpacing.top,
+      paddingTop: Math.max(safeSpacing.top * 0.5, 20), // Reduce top padding by half
       paddingBottom: safeSpacing.bottom,
       paddingLeft: safeSpacing.left,
       paddingRight: safeSpacing.right
@@ -317,10 +474,12 @@ const LoginScreen = ({ navigation, route }) => {
       flexGrow: 1,
       paddingHorizontal: isLandscape ? spacing.xl : spacing.m,
       paddingBottom: spacing.xl,
+      // Add vertical centering for better positioning
+      justifyContent: 'center',
+      minHeight: '100%',
       // In landscape, we want to adjust the content for better layout
       ...(isLandscape && {
         flexDirection: isTablet ? 'row' : 'column',
-        justifyContent: 'center',
         alignItems: 'center'
       })
     };
@@ -330,7 +489,7 @@ const LoginScreen = ({ navigation, route }) => {
       backgroundColor: theme.card,
       borderRadius: scaleWidth(16),
       padding: isSmallDevice ? spacing.m : spacing.l,
-      marginTop: isLandscape ? spacing.s : spacing.l,
+      marginTop: isLandscape ? spacing.xs : spacing.m, // Reduced top margin
       width: isLandscape ? 
         (isTablet ? '45%' : isSmallDevice ? '95%' : '70%') : 
         '100%',
@@ -506,6 +665,68 @@ const LoginScreen = ({ navigation, route }) => {
       justifyContent: 'center',
       alignItems: 'center'
     };
+
+    // Mock login button styles
+    const mockButtonStyle = {
+      flex: 1,
+      paddingVertical: spacing.xs,
+      paddingHorizontal: spacing.xs,
+      marginHorizontal: 2,
+      borderRadius: scaleWidth(6),
+      alignItems: 'center',
+      justifyContent: 'center',
+    };
+
+    const mockButtonTextStyle = {
+      fontSize: fontSizes.xs,
+      fontWeight: '600',
+      color: '#FFFFFF',
+      textAlign: 'center',
+    };
+
+    // Terms and Privacy Policy styles
+    const termsContainerStyle = {
+      marginTop: spacing.m,
+      marginBottom: spacing.m,
+    };
+
+    const checkboxContainerStyle = {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      marginBottom: spacing.s,
+    };
+
+    const checkboxStyle = {
+      width: 18,
+      height: 18,
+      borderRadius: 4,
+      borderWidth: 1,
+      borderColor: 'rgba(255,255,255,0.2)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 12,
+      marginTop: 2,
+    };
+
+    const checkmarkStyle = {
+      color: '#FFFFFF',
+      fontSize: 12,
+      fontWeight: 'bold',
+    };
+
+    const termsTextContainerStyle = {
+      flex: 1,
+    };
+
+    const termsTextStyle = {
+      fontSize: fontSizes.s,
+      lineHeight: scaleFontSize(18),
+    };
+
+    const termsLinkStyle = {
+      textDecorationLine: 'underline',
+      fontWeight: '600',
+    };
     
     return {
       container: containerStyle,
@@ -532,6 +753,15 @@ const LoginScreen = ({ navigation, route }) => {
       successMessage: successMessageStyle,
       backButtonContainer: backButtonContainerStyle,
       backButton: backButtonStyle,
+      termsContainer: termsContainerStyle,
+      checkboxContainer: checkboxContainerStyle,
+      checkbox: checkboxStyle,
+      checkmark: checkmarkStyle,
+      termsTextContainer: termsTextContainerStyle,
+      termsText: termsTextStyle,
+      termsLink: termsLinkStyle,
+      mockButton: mockButtonStyle,
+      mockButtonText: mockButtonTextStyle,
       keyboardAvoidingView: {
         flex: 1
       }
@@ -595,25 +825,23 @@ const LoginScreen = ({ navigation, route }) => {
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoidingView}
-        keyboardVerticalOffset={isSmallDevice ? scaleHeight(40) : scaleHeight(80)}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
         <ScrollView 
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Add back button if we navigated here from another screen */}
-          {route?.params && (
-            <View style={styles.backButtonContainer}>
-              <TouchableOpacity
-                style={styles.backButton}
-                onPress={handleBack}
-                {...getAccessibilityProps('button', 'Go back', 'Returns to previous screen')}
-              >
-                <Ionicons name="arrow-back" size={scaleWidth(24)} color={theme.text} />
-              </TouchableOpacity>
-            </View>
-          )}
+          {/* Add back button to exit login screen */}
+          <View style={styles.backButtonContainer}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={handleBack}
+              {...getAccessibilityProps('button', 'Go back', 'Returns to previous screen')}
+            >
+              <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
           
           {/* Debug Info */}
           {showDebug && (
@@ -672,7 +900,6 @@ const LoginScreen = ({ navigation, route }) => {
           {(!isLandscape || isTablet) && (
             <AuthHeader 
               title={isLogin ? 'Welcome Back' : 'Create Account'}
-              subtitle="Achieve balance across all areas of your life"
             />
           )}
           
@@ -689,29 +916,6 @@ const LoginScreen = ({ navigation, route }) => {
               </Text>
             )}
             
-            {/* Display Name (Registration only) */}
-            {!isLogin && (
-              <View 
-                style={styles.inputGroup}
-                {...getAccessibilityProps('none', null, null)}
-              >
-                <Text 
-                  style={styles.inputLabel}
-                  maxFontSizeMultiplier={1.8}
-                >
-                  Name (Optional)
-                </Text>
-                <AuthInput
-                  icon="person-outline"
-                  placeholder="Your name"
-                  value={displayName}
-                  onChangeText={setDisplayName}
-                  autoCapitalize="words"
-                  accessibilityLabel="Name field, optional"
-                  accessibilityHint="Enter your name"
-                />
-              </View>
-            )}
             
             {/* Email Field */}
             <View 
@@ -765,11 +969,11 @@ const LoginScreen = ({ navigation, route }) => {
                   style={styles.inputLabel}
                   maxFontSizeMultiplier={1.8}
                 >
-                  Phone Number
+                  Phone Number (Optional)
                 </Text>
                 <AuthInput
                   icon="call-outline"
-                  placeholder="Your phone number"
+                  placeholder="04 1234 5678 or +1 555 123 4567"
                   value={phoneNumber}
                   onChangeText={(text) => {
                     setPhoneNumber(text);
@@ -792,7 +996,7 @@ const LoginScreen = ({ navigation, route }) => {
                   style={styles.helperText}
                   maxFontSizeMultiplier={1.8}
                 >
-                  Format: (123) 456-7890 or +1234567890
+                  Australian: 04XX XXX XXX • International: +country code
                 </Text>
               </View>
             )}
@@ -823,7 +1027,7 @@ const LoginScreen = ({ navigation, route }) => {
                     }
                   }
                 }}
-                secureTextEntry={!showPassword}
+                secureTextEntry={showPassword}
                 rightIcon={showPassword ? 'eye-off-outline' : 'eye-outline'}
                 onRightIconPress={() => setShowPassword(!showPassword)}
                 accessibilityLabel="Password field"
@@ -868,7 +1072,7 @@ const LoginScreen = ({ navigation, route }) => {
                     setConfirmPassword(text);
                     if (confirmPasswordError) validateRegistrationForm();
                   }}
-                  secureTextEntry={!showPassword}
+                  secureTextEntry={showPassword}
                   accessibilityLabel="Confirm password field"
                   accessibilityHint="Enter your password again"
                 />
@@ -900,12 +1104,116 @@ const LoginScreen = ({ navigation, route }) => {
               </TouchableOpacity>
             )}
             
+            {/* Terms and Privacy Policy (Registration only) */}
+            {!isLogin && (
+              <View style={styles.termsContainer}>
+                {/* Terms of Service */}
+                <View style={styles.checkboxContainer}>
+                  <TouchableOpacity
+                    style={[
+                      styles.checkbox,
+                      { 
+                        backgroundColor: acceptedTerms ? 'rgba(255,255,255,0.1)' : 'transparent' 
+                      }
+                    ]}
+                    onPress={() => setAcceptedTerms(!acceptedTerms)}
+                    accessible={true}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: acceptedTerms }}
+                    accessibilityLabel="Accept Terms of Service"
+                  >
+                    {acceptedTerms && (
+                      <Text style={styles.checkmark}>✓</Text>
+                    )}
+                  </TouchableOpacity>
+                  <View style={styles.termsTextContainer}>
+                    <Text style={styles.termsText}>
+                      I agree to the{' '}
+                      <Text 
+                        style={styles.termsLink}
+                        onPress={() => setShowTermsModal(true)}
+                      >
+                        Terms of Service
+                      </Text>
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Privacy Policy */}
+                <View style={styles.checkboxContainer}>
+                  <TouchableOpacity
+                    style={[
+                      styles.checkbox,
+                      { 
+                        backgroundColor: acceptedPrivacy ? 'rgba(255,255,255,0.1)' : 'transparent' 
+                      }
+                    ]}
+                    onPress={() => setAcceptedPrivacy(!acceptedPrivacy)}
+                    accessible={true}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: acceptedPrivacy }}
+                    accessibilityLabel="Accept Privacy Policy"
+                  >
+                    {acceptedPrivacy && (
+                      <Text style={styles.checkmark}>✓</Text>
+                    )}
+                  </TouchableOpacity>
+                  <View style={styles.termsTextContainer}>
+                    <Text style={styles.termsText}>
+                      I agree to the{' '}
+                      <Text 
+                        style={styles.termsLink}
+                        onPress={() => setShowPrivacyModal(true)}
+                      >
+                        Privacy Policy
+                      </Text>
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            )}
+
             {/* Submit Button */}
             <AuthButton
               title={isLogin ? 'Sign In' : 'Create Account'}
               onPress={isLogin ? handleLogin : handleRegister}
               loading={loading || localLoading}
             />
+            
+            {/* Mock Login Buttons - Only for development */}
+            {__DEV__ && (
+              <View style={{ marginTop: spacing.m }}>
+                <Text style={[{ fontSize: fontSizes.s, fontWeight: '600' }, { color: theme.textSecondary, textAlign: 'center', marginBottom: spacing.s }]}>
+                  🧪 Mock Login
+                </Text>
+                
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.s }}>
+                  <TouchableOpacity
+                    style={[styles.mockButton, { backgroundColor: '#9E9E9E' }]}
+                    onPress={() => handleMockLogin('free')}
+                    disabled={loading || localLoading}
+                  >
+                    <Text style={styles.mockButtonText}>Free User</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={[styles.mockButton, { backgroundColor: '#3F51B5' }]}
+                    onPress={() => handleMockLogin('pro')}
+                    disabled={loading || localLoading}
+                  >
+                    <Text style={styles.mockButtonText}>Pro User</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={[styles.mockButton, { backgroundColor: '#673AB7' }]}
+                    onPress={() => handleMockLogin('unlimited')}
+                    disabled={loading || localLoading}
+                  >
+                    <Text style={styles.mockButtonText}>Premium</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
             
             {/* Toggle Auth Mode */}
             <View 
@@ -932,27 +1240,27 @@ const LoginScreen = ({ navigation, route }) => {
               </TouchableOpacity>
             </View>
             
-            {/* Show Debug Button (Dev only) */}
-            {__DEV__ && !showDebug && (
-              <TouchableOpacity
-                style={styles.debugToggle}
-                onPress={() => setShowDebug(true)}
-                {...getAccessibilityProps('button', 'Show Debug Info', 'Shows developer debugging information')}
-              >
-                <Text 
-                  style={{ color: theme.textSecondary, fontSize: fontSizes.xs }}
-                  maxFontSizeMultiplier={1.5}
-                >
-                  Show Debug Info
-                </Text>
-              </TouchableOpacity>
-            )}
           </View>
           
           {/* Footer */}
-          <AuthFooter />
+          <AuthFooter 
+            onOpenTerms={() => setShowTermsModal(true)}
+            onOpenPrivacy={() => setShowPrivacyModal(true)}
+          />
         </ScrollView>
       </KeyboardAvoidingView>
+      
+      {/* Terms of Service Modal */}
+      <TermsOfServiceModal
+        visible={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+      />
+      
+      {/* Privacy Policy Modal */}
+      <PrivacyPolicyModal
+        visible={showPrivacyModal}
+        onClose={() => setShowPrivacyModal(false)}
+      />
     </SafeAreaView>
   );
 };

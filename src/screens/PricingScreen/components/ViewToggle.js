@@ -3,57 +3,45 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const ViewToggle = ({ theme, viewMode, setViewMode }) => {
+const ViewToggle = ({ theme, viewMode, setViewMode, activeTab }) => {
+  const isFounderTab = activeTab === 'lifetime';
+  
   return (
-    <View style={[styles.container, { backgroundColor: theme.cardElevated }]}>
+    <View style={{ paddingHorizontal: 16, marginBottom: 8 }}>
+      {/* Single toggle button */}
       <TouchableOpacity
-        style={[
-          styles.toggleButton,
-          viewMode === 'cards' && [
-            styles.activeButton,
-            { backgroundColor: theme.primary }
-          ]
-        ]}
-        onPress={() => setViewMode('cards')}
+        style={{
+          backgroundColor: '#000000',
+          borderRadius: 12,
+          padding: 14,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+        onPress={() => setViewMode(viewMode === 'cards' ? 'table' : 'cards')}
+        activeOpacity={0.7}
       >
         <Ionicons
-          name="grid-outline"
-          size={18}
-          color={viewMode === 'cards' ? '#FFFFFF' : theme.text}
+          name={viewMode === 'cards' ? 'list-outline' : 'card-outline'}
+          size={20}
+          color="#FFFFFF"
+          style={{ marginRight: 10 }}
         />
-        <Text
-          style={[
-            styles.toggleText,
-            { color: viewMode === 'cards' ? '#FFFFFF' : theme.text }
-          ]}
-        >
-          Plan Cards
+        <Text style={{
+          fontSize: 15,
+          fontWeight: '600',
+          color: '#FFFFFF',
+        }}>
+          {viewMode === 'cards' 
+            ? `View ${isFounderTab ? 'What\'s Included' : 'Feature Comparison'}`
+            : `View ${isFounderTab ? 'Pro Pricing' : 'Plan Options'}`}
         </Text>
-      </TouchableOpacity>
-      
-      <TouchableOpacity
-        style={[
-          styles.toggleButton,
-          viewMode === 'table' && [
-            styles.activeButton,
-            { backgroundColor: theme.primary }
-          ]
-        ]}
-        onPress={() => setViewMode('table')}
-      >
         <Ionicons
-          name="list-outline"
+          name="chevron-forward"
           size={18}
-          color={viewMode === 'table' ? '#FFFFFF' : theme.text}
+          color="rgba(255,255,255,0.6)"
+          style={{ marginLeft: 8 }}
         />
-        <Text
-          style={[
-            styles.toggleText,
-            { color: viewMode === 'table' ? '#FFFFFF' : theme.text }
-          ]}
-        >
-          Feature Table
-        </Text>
       </TouchableOpacity>
     </View>
   );

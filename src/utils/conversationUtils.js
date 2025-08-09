@@ -20,7 +20,7 @@ export const generateConversationTitle = (messages) => {
   const text = firstUserMessage.text.trim();
   
   // If message is already short, just use it directly
-  if (text.length <= 30) {
+  if (text.length <= 100) {
     return capitalizeFirstLetter(text);
   }
   
@@ -33,7 +33,7 @@ export const generateConversationTitle = (messages) => {
     const questionMatch = text.match(/(?:\?|how|what|when|where|why|can you|could you|would you|will you)([^.!?]+[.!?])/i);
     if (questionMatch && questionMatch[0]) {
       const question = questionMatch[0].trim();
-      if (question.length <= 32) {
+      if (question.length <= 100) {
         firstSentence = question;
       }
     }
@@ -42,21 +42,21 @@ export const generateConversationTitle = (messages) => {
     const keyPhraseMatch = text.match(/(help me with|create a|make a|build a|design a|setup a|write a|generate a)([^.!?]+)/i);
     if (keyPhraseMatch && keyPhraseMatch[0]) {
       const keyPhrase = keyPhraseMatch[0].trim();
-      if (keyPhrase.length <= 32) {
+      if (keyPhrase.length <= 100) {
         firstSentence = keyPhrase;
       }
     }
   }
   
-  // If first sentence is too long, truncate it
-  if (firstSentence.length > 32) {
+  // If first sentence is too long, truncate it (increased limit for better titles)
+  if (firstSentence.length > 100) {
     // Try to find a good breakpoint at a word boundary
-    const breakpoint = firstSentence.lastIndexOf(' ', 29);
-    if (breakpoint > 15) {
+    const breakpoint = firstSentence.lastIndexOf(' ', 95);
+    if (breakpoint > 50) {
       firstSentence = firstSentence.substring(0, breakpoint).trim() + '...';
     } else {
       // If no good breakpoint, just truncate
-      firstSentence = firstSentence.substring(0, 29).trim() + '...';
+      firstSentence = firstSentence.substring(0, 95).trim() + '...';
     }
   }
   
@@ -69,7 +69,7 @@ export const generateConversationTitle = (messages) => {
   
   // If we've removed too much, go back to truncated original
   if (firstSentence.length < 10 && text.length > 10) {
-    firstSentence = text.substring(0, 29).trim() + '...';
+    firstSentence = text.substring(0, 95).trim() + '...';
   }
   
   // Remove any trailing punctuation
@@ -137,7 +137,7 @@ export const getConversationPreview = (messages) => {
     const message = messages[i];
     if (message.type === 'user' && message.text) {
       const preview = message.text.trim();
-      return preview.length > 50 ? preview.substring(0, 47) + '...' : preview;
+      return preview.length > 150 ? preview.substring(0, 147) + '...' : preview;
     }
   }
   
@@ -146,7 +146,7 @@ export const getConversationPreview = (messages) => {
     const message = messages[i];
     if (message.type === 'ai' && message.text) {
       const preview = message.text.trim();
-      return preview.length > 50 ? preview.substring(0, 47) + '...' : preview;
+      return preview.length > 150 ? preview.substring(0, 147) + '...' : preview;
     }
   }
   

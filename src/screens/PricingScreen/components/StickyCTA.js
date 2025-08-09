@@ -206,17 +206,24 @@ const StickyCTA = ({
     }
   })();
   
-  // Get button text with appropriate pricing label
+  // Get button text with appropriate benefit-focused label
   const getButtonText = () => {
     if (activeTab === 'lifetime') {
       // Change text in last minute for urgency
       if (timerActive && sessionTimeLeft <= 60) {
         return 'Secure Your Spot Now!';
       }
-      return 'Claim Your Founder Access - $4.99';
+      return 'Claim Your Founder Access';
+    } else if (selectedPlan === 'credits') {
+      return 'Get 150 AI Credits';
+    } else if (selectedPlan === 'starter') {
+      return 'Get 600 Monthly Credits';
+    } else if (selectedPlan === 'professional') {
+      return 'Get 1,500 Monthly Credits';
+    } else if (selectedPlan === 'business') {
+      return 'Get 5,000 Monthly Credits';
     } else {
-      let prefix = selectedPlan === 'starter' ? 'Get Started' : 'Subscribe Now';
-      return `${prefix} - ${priceDisplay}`;
+      return 'Get Started';
     }
   };
   
@@ -291,7 +298,8 @@ const StickyCTA = ({
             { 
               backgroundColor: activeTab === 'lifetime' ? 
                 '#3F51B5' : 
-                (selectedPlan === 'starter' ? '#03A9F4' : 
+                (selectedPlan === 'credits' ? '#FF8C42' :
+                 selectedPlan === 'starter' ? '#03A9F4' : 
                  selectedPlan === 'professional' ? '#3F51B5' : '#673AB7'),
               // Add border for extra emphasis in last minute
               borderWidth: (timerActive && sessionTimeLeft <= 60) ? 2 : 0,

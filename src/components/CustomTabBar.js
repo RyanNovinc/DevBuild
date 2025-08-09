@@ -129,6 +129,25 @@ const CustomTabBar = ({ state, descriptors, navigation, theme }) => {
             
             // Navigate to the route
             navigation.navigate({ name: route.name, merge: true });
+          } else if (isFocused && route.name === 'TodoTab') {
+            // Handle tap on already selected Todo tab - toggle between todo/notes view
+            try {
+              // Haptic feedback for toggle
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+              
+              // Get current view from route params
+              const currentView = route.params?.currentView || 'todo';
+              const newView = currentView === 'todo' ? 'notes' : 'todo';
+              
+              // Navigate with updated params to trigger view toggle
+              navigation.navigate({
+                name: route.name,
+                params: { currentView: newView },
+                merge: true
+              });
+            } catch (error) {
+              console.log('Error toggling TodoTab view:', error);
+            }
           }
         };
 

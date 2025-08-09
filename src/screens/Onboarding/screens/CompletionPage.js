@@ -30,6 +30,7 @@ import { getNigeriaRelevantStats } from '../data/nigeriaGoalStats';
 import { getPhilippinesRelevantStats } from '../data/philippinesGoalStats';
 import { getSingaporeRelevantStats } from '../data/singaporeGoalStats';
 import { getSouthAfricaRelevantStats } from '../data/southafricaGoalStats';
+import { getOtherRelevantStats } from '../data/otherGoalStats';
 // Import useI18n hook
 import { useI18n } from '../context/I18nContext';
 
@@ -150,6 +151,8 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
         statsResult = getSingaporeRelevantStats(domainName, goalName);
       } else if (country === 'southafrica') {
         statsResult = getSouthAfricaRelevantStats(domainName, goalName);
+      } else if (country === 'other') {
+        statsResult = getOtherRelevantStats(domainName, goalName);
       } else {
         // Fall back to general stats for other countries
         statsResult = getRelevantStats(domainName, goalName, currentLanguage);

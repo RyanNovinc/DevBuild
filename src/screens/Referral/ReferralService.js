@@ -49,8 +49,8 @@ const ReferralService = {
         sent: 0,
         clicked: 0,
         converted: 0,
-        plansEarned: 0, // Number of 50% off plans earned for user
-        plansGifted: 0, // Number of 50% off plans gifted to others
+        plansEarned: 0, // Number of 500-credit rewards earned for user
+        plansGifted: 0, // Number of 500-credit rewards gifted to others
       };
       await AsyncStorage.setItem(KEYS.REFERRALS_STATS, JSON.stringify(initialStats));
       
@@ -169,7 +169,7 @@ const ReferralService = {
       stats.converted += 1;
       stats.clicked += 1;
       
-      // Each conversion gives user a 50% off plan and gifts one to the referrer
+      // Each conversion gives user 500 credits and gifts 500 credits to the referrer
       stats.plansEarned += 1;
       stats.plansGifted += 1;
       

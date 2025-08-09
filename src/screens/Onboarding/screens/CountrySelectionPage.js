@@ -21,7 +21,7 @@ import { safeAnimatedCall, createSafeAnimatedValue } from '../../../hooks/useSaf
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-const CountrySelectionPage = ({ onContinue, onBack, onCountrySelected }) => {
+const CountrySelectionPage = ({ onContinue, onBack, onCountrySelected, onSkipOnboarding }) => {
   // State
   const [selectedCountry, setSelectedCountry] = useState(null); // No initial selection
   const [messageStep, setMessageStep] = useState(1); // Track which message we're on (1, 2, or 3)
@@ -56,7 +56,7 @@ const CountrySelectionPage = ({ onContinue, onBack, onCountrySelected }) => {
   // Refs for typing animations
   const typingRef = useRef(null);
   
-  // Available countries (prioritized order: Australia first, then major markets)
+  // Available countries (prioritized order: Australia first, then major markets, then Other)
   const countries = [
     { code: 'australia', name: 'Australia', flag: '🇦🇺' },
     { code: 'usa', name: 'United States', flag: '🇺🇸' },
@@ -70,6 +70,7 @@ const CountrySelectionPage = ({ onContinue, onBack, onCountrySelected }) => {
     { code: 'nigeria', name: 'Nigeria', flag: '🇳🇬' },
     { code: 'philippines', name: 'Philippines', flag: '🇵🇭' },
     { code: 'southafrica', name: 'South Africa', flag: '🇿🇦' },
+    { code: 'other', name: 'Other', flag: '🌍' },
   ];
   
   // Country animations - create after countries array is defined
@@ -491,6 +492,8 @@ const CountrySelectionPage = ({ onContinue, onBack, onCountrySelected }) => {
         return '🏙️'; // City skyline
       case 'southafrica':
         return '🦁'; // Lion
+      case 'other':
+        return '🌟'; // Bright star
       default:
         return '⭐'; // Default star
     }
@@ -637,6 +640,18 @@ const CountrySelectionPage = ({ onContinue, onBack, onCountrySelected }) => {
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+      {/* Dev Skip Button - only show in development mode */}
+      {__DEV__ && onSkipOnboarding && (
+        <TouchableOpacity 
+          style={styles.devSkipButton}
+          onPress={onSkipOnboarding}
+          accessible={true}
+          accessibilityLabel="Skip onboarding (development only)"
+        >
+          <Text style={styles.devSkipText}>Skip</Text>
+        </TouchableOpacity>
+      )}
+      
       <Animated.View style={[styles.content, { opacity: contentFade }]}>
         {/* Background touchable area for message progression - active during messages and when ready to progress */}
         {!showCountryOptions && (
@@ -1022,6 +1037,29 @@ const styles = StyleSheet.create({
   },
   tapPromptIcon: {
     marginTop: -4,
+  },
+  devSkipButton: {
+    position: 'absolute',
+    top: 60,
+    right: 20,
+    backgroundColor: '#ff6b35',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    zIndex: 1000,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  devSkipText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
 

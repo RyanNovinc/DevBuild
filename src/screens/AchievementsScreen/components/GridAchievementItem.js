@@ -139,7 +139,7 @@ const GridAchievementItem = ({
         style={styles.touchableContent}
         activeOpacity={0.7}
         onPress={handlePress}
-        onLongPress={onLongPress}
+        onLongPress={handleLongPress}
         accessible={true}
         accessibilityRole="button"
         accessibilityLabel={`${achievement.title} achievement, ${isUnlocked ? 'unlocked' : 'locked'}${isPremium ? ', premium only' : ''}${isHighlighted ? ', recently unlocked' : ''}`}
@@ -226,6 +226,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
+    zIndex: 1,
   },
   iconBackground: {
     width: '90%',
@@ -240,6 +241,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 2,
     right: 2,
+    zIndex: 2,
+    pointerEvents: 'none',
   },
   pointsText: {
     fontSize: 10,
@@ -261,6 +264,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 2,
+    pointerEvents: 'none',
   },
   premiumIndicator: {
     position: 'absolute',
@@ -271,6 +276,8 @@ const styles = StyleSheet.create({
     borderRadius: 7,
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 2,
+    pointerEvents: 'none',
   }
 });
 

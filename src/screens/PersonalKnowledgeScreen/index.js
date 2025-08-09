@@ -1,5 +1,5 @@
 // src/screens/PersonalKnowledgeScreen/index.js
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,9 @@ import {
   Alert,
   Switch,
   ActivityIndicator,
-  Platform
+  Platform,
+  Modal,
+  Animated
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -89,6 +91,13 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [errorMessage, setErrorMessage] = useState(null);
   const [pendingFileName, setPendingFileName] = useState('');
+  const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
+  const [documentToDelete, setDocumentToDelete] = useState(null);
+  const [appContextInfoVisible, setAppContextInfoVisible] = useState(false);
+  
+  // Fade animations for smooth transitions
+  const contentOpacity = useRef(new Animated.Value(0)).current;
+  const loadingOpacity = useRef(new Animated.Value(1)).current;
   
   // Track when app context is ready
   useEffect(() => {
@@ -99,14 +108,40 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
     }
   }, [appContext.isLoading, appContext.goals, appContext.projects, appContext.tasks]);
   
+  // Handle smooth fade transition when loading completes
+  useEffect(() => {
+    if (!isLoading && isAppContextReady) {
+      // Content is ready, fade from loading to content
+      Animated.parallel([
+        Animated.timing(loadingOpacity, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(contentOpacity, {
+          toValue: 1,
+          duration: 400,
+          delay: 100, // Slight delay for smoother transition
+          useNativeDriver: true,
+        })
+      ]).start();
+    } else {
+      // Reset animations when loading starts
+      contentOpacity.setValue(0);
+      loadingOpacity.setValue(1);
+    }
+  }, [isLoading, isAppContextReady, contentOpacity, loadingOpacity]);
+  
   // Load documents and settings
   useEffect(() => {
-    loadData();
+    // Use the enhanced refresh function for initial load
+    refreshAppContextAndReload();
     
     // Add a refresh listener to reload data when the screen gains focus
     const unsubscribe = navigation.addListener('focus', () => {
-      console.log('Screen focused, reloading data');
-      loadData();
+      console.log('Screen focused, reloading data and refreshing app context');
+      // Force a complete reload including app context refresh
+      refreshAppContextAndReload();
     });
     
     return unsubscribe;
@@ -118,7 +153,8 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
       // Only update if app context is loaded and not currently loading
       if (!appContext.isLoading && appContext.goals && appContext.projects && appContext.tasks) {
         try {
-          console.log('App context data changed, auto-updating app summary');
+          console.log('🔄 [APP CONTEXT DEBUG] App context data changed, auto-updating app summary');
+          console.log('🔄 [APP CONTEXT DEBUG] Goals:', appData.goals.length, 'Projects:', appData.projects.length, 'Tasks:', appData.tasks.length);
           
           const appData = {
             goals: appContext.goals || [],
@@ -129,10 +165,11 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
           
           // Generate summary
           const summary = AppSummaryService.generateAppSummary(appData);
+          console.log('🔄 [APP CONTEXT DEBUG] Generated summary length:', summary.length, 'chars');
           
           // Update system document
           await DocumentService.updateAppContextDocument(summary);
-          console.log('App summary auto-updated successfully');
+          console.log('✅ [APP CONTEXT DEBUG] App summary auto-updated successfully');
           
           // Reload documents to reflect the change
           const updatedDocuments = await DocumentService.getDocuments();
@@ -169,6 +206,58 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
     console.log(`Personal Knowledge enabled changed to: ${isEnabled}`);
   }, [isEnabled]);
   
+  // Force refresh app context and reload all data
+  const refreshAppContextAndReload = async () => {
+    try {
+      console.log('🔄 Force refreshing app context and reloading data');
+      setIsLoading(true);
+      setErrorMessage(null);
+      
+      // Wait for app context to be ready if it's currently loading
+      let retryCount = 0;
+      const maxRetries = 10;
+      
+      while (appContext.isLoading && retryCount < maxRetries) {
+        console.log(`Waiting for app context to load... (attempt ${retryCount + 1}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        retryCount++;
+      }
+      
+      // If app context is still loading after retries, proceed anyway
+      if (appContext.isLoading) {
+        console.warn('App context still loading after retries, proceeding anyway');
+      }
+      
+      // Force update the app summary with current data
+      if (!appContext.isLoading) {
+        console.log('🔄 Forcing app context update on screen focus');
+        
+        const appData = {
+          goals: appContext.goals || [],
+          projects: appContext.projects || [],
+          tasks: appContext.tasks || [],
+          settings: appContext.settings || {}
+        };
+        
+        // Generate fresh summary
+        const summary = AppSummaryService.generateAppSummary(appData);
+        console.log('🔄 Generated fresh app summary:', summary.length, 'characters');
+        
+        // Update system document
+        await DocumentService.updateAppContextDocument(summary);
+        console.log('✅ App context document updated on screen focus');
+      }
+      
+      // Now load all documents and settings
+      await loadData();
+      
+    } catch (error) {
+      console.error('Error in refreshAppContextAndReload:', error);
+      // Fallback to regular loadData if refresh fails
+      await loadData();
+    }
+  };
+
   // Load documents and settings
   const loadData = async () => {
     try {
@@ -278,48 +367,6 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
     }
   };
   
-  // Force update of app summary
-  const forceUpdateAppSummary = async () => {
-    try {
-      setIsLoading(true);
-      setErrorMessage(null);
-      
-      // Only proceed if app context is loaded
-      if (appContext.isLoading) {
-        console.log('App context still loading, cannot update summary');
-        showError('App data still loading, please try again in a moment');
-        return;
-      }
-      
-      console.log('Forcing app summary update');
-      
-      const appData = {
-        goals: appContext.goals || [],
-        projects: appContext.projects || [],
-        tasks: appContext.tasks || [],
-        settings: appContext.settings || {}
-      };
-      
-      // Generate summary
-      const summary = AppSummaryService.generateAppSummary(appData);
-      
-      // Create/update system document
-      await DocumentService.updateAppContextDocument(summary);
-      console.log('Forced app summary update complete');
-      
-      // Reload documents
-      const updatedDocuments = await DocumentService.getDocuments();
-      setDocuments(updatedDocuments);
-      
-      showSuccess('App summary updated successfully');
-    } catch (error) {
-      console.error('Error forcing app summary update:', error);
-      setErrorMessage('Failed to update app summary');
-      showError('Failed to update app summary');
-    } finally {
-      setIsLoading(false);
-    }
-  };
   
   // Calculate total storage usage
   const calculateStorageUsage = async () => {
@@ -494,7 +541,8 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
         size: file.size,  // Original size
         dateAdded: new Date().toISOString(),
         isProcessing: true,
-        status: 'processing'
+        status: 'processing',
+        aiAccessEnabled: true  // Default to AI access enabled for new documents
       };
       console.log("Created temporary document object:", newDoc);
       
@@ -551,12 +599,8 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
           // Force refresh to make sure UI updates
           setRefreshKey(prev => prev + 1);
           
-          // Show success toast or alert
-          Alert.alert(
-            'Document Processed',
-            `"${file.name}" was successfully processed and added to your knowledge base.`,
-            [{ text: 'OK' }]
-          );
+          // Show success notification
+          showSuccess(`"${file.name}" processed successfully!`);
         } else {
           // Handle error case
           const errorDoc = {
@@ -629,62 +673,63 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
       return;
     }
     
-    Alert.alert(
-      'Delete Document',
-      'Are you sure you want to delete this document? This will remove it from your knowledge base.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setIsLoading(true);
-              setErrorMessage(null);
-              
-              console.log(`Starting deletion of document: ${documentId}`);
-              
-              // Capture storage before deletion for comparison
-              const beforeSize = await DocumentService.getStorageUsage();
-              console.log(`Storage before deletion: ${beforeSize} bytes`);
-              
-              // Use the DocumentService to delete the document
-              const result = await DocumentService.deleteDocument(documentId);
-              
-              if (result) {
-                // Update local state
-                const updatedDocuments = documents.filter(d => d.id !== documentId);
-                setDocuments(updatedDocuments);
-                
-                // Also update USER_KNOWLEDGE_KEY if enabled
-                if (isEnabled) {
-                  await AsyncStorage.setItem(USER_KNOWLEDGE_KEY, JSON.stringify(updatedDocuments));
-                }
-                
-                // Close preview if open
-                if (selectedDocument && selectedDocument.id === documentId) {
-                  setDocumentPreviewVisible(false);
-                  setSelectedDocument(null);
-                }
-                
-                // Recalculate storage usage
-                await calculateStorageUsage();
-                
-                console.log('Document deletion completed successfully');
-              } else {
-                console.error('Document deletion failed');
-                setErrorMessage('Failed to delete document. Please try again.');
-              }
-            } catch (error) {
-              console.error('Error deleting document:', error);
-              setErrorMessage('Failed to delete document. Please try again.');
-            } finally {
-              setIsLoading(false);
-            }
-          }
+    // Find the document to get its name for the confirmation
+    const document = documents.find(doc => doc.id === documentId);
+    setDocumentToDelete(document);
+    setDeleteConfirmVisible(true);
+  };
+
+  // Handle delete confirmation
+  const handleConfirmDelete = async () => {
+    if (!documentToDelete) return;
+    
+    setDeleteConfirmVisible(false);
+    
+    try {
+      setIsLoading(true);
+      setErrorMessage(null);
+      
+      console.log(`Starting deletion of document: ${documentToDelete.id}`);
+      
+      // Capture storage before deletion for comparison
+      const beforeSize = await DocumentService.getStorageUsage();
+      console.log(`Storage before deletion: ${beforeSize} bytes`);
+      
+      // Use the DocumentService to delete the document
+      const result = await DocumentService.deleteDocument(documentToDelete.id);
+      
+      if (result) {
+        // Update local state
+        const updatedDocuments = documents.filter(d => d.id !== documentToDelete.id);
+        setDocuments(updatedDocuments);
+        
+        // Also update USER_KNOWLEDGE_KEY if enabled
+        if (isEnabled) {
+          await AsyncStorage.setItem(USER_KNOWLEDGE_KEY, JSON.stringify(updatedDocuments));
         }
-      ]
-    );
+        
+        // Close preview if open
+        if (selectedDocument && selectedDocument.id === documentToDelete.id) {
+          setDocumentPreviewVisible(false);
+          setSelectedDocument(null);
+        }
+        
+        // Recalculate storage usage
+        await calculateStorageUsage();
+        
+        console.log('Document deletion completed successfully');
+        showSuccess('Document deleted successfully');
+      } else {
+        console.error('Document deletion failed');
+        setErrorMessage('Failed to delete document. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      setErrorMessage('Failed to delete document. Please try again.');
+    } finally {
+      setIsLoading(false);
+      setDocumentToDelete(null);
+    }
   };
   
   // View document details
@@ -726,25 +771,28 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
       style={[
         styles.container, 
         { 
-          backgroundColor: theme.background,
-          // Handle safe areas properly
-          paddingTop: safeSpacing.hasDynamicIsland ? spacing.xs : 0,
+          backgroundColor: '#000000', // Match AI screen black background
         }
       ]}
-      edges={['left', 'right']} // Let SafeAreaView handle left/right edges, we'll manually handle top/bottom
+      edges={['left', 'right']} 
     >
+      {/* Floating Header Banner with Title */}
       <View style={[
-        styles.header,
+        styles.floatingHeader,
         {
           paddingHorizontal: spacing.m,
-          paddingTop: spacing.m,
-          paddingBottom: spacing.s,
+          paddingTop: Platform.OS === 'ios' ? (safeSpacing.hasDynamicIsland ? 65 : 55) : 30,
+          paddingBottom: spacing.m,
         }
       ]}>
         <TouchableOpacity
           style={[
-            styles.backButton,
-            ensureAccessibleTouchTarget(scaleWidth(40), scaleWidth(40))
+            styles.iconBubble,
+            {
+              width: isTablet ? 44 : isSmallDevice ? 36 : 38,
+              height: isTablet ? 44 : isSmallDevice ? 36 : 38,
+              borderRadius: (isTablet ? 44 : isSmallDevice ? 36 : 38) / 2
+            }
           ]}
           onPress={() => navigation.goBack()}
           accessible={true}
@@ -754,18 +802,22 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
         >
           <Ionicons 
             name="arrow-back" 
-            size={scaleFontSize(24)} 
-            color={theme.text} 
+            size={isTablet ? 24 : 22} 
+            color="#FFFFFF" 
           />
         </TouchableOpacity>
         
+        {/* Title in Header */}
         <Text 
           style={[
-            styles.title, 
+            styles.headerTitle, 
             { 
-              color: theme.text,
-              fontSize: fontSizes.xl,
-              fontWeight: 'bold',
+              color: '#FFFFFF',
+              fontSize: fontSizes.l,
+              fontWeight: '700',
+              textAlign: 'center',
+              letterSpacing: 0.3,
+              flex: 1,
             }
           ]}
           maxFontSizeMultiplier={1.3}
@@ -773,210 +825,189 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
           Personal Knowledge
         </Text>
         
-        <View style={[
-          styles.toggleContainer, 
-          { 
-            backgroundColor: isEnabled ? theme.primaryLight : theme.border,
-            borderColor: isEnabled ? theme.primary : theme.textSecondary,
-            borderRadius: scaleWidth(16),
-            borderWidth: 1,
-            paddingLeft: spacing.s,
-            paddingRight: spacing.xxs,
-            paddingVertical: spacing.xxs,
-          }
-        ]}>
-          <Text 
-            style={[
-              styles.toggleText, 
-              { 
-                color: isEnabled ? theme.primary : theme.textSecondary,
-                fontSize: isSmallDevice ? fontSizes.xs : fontSizes.s,
-                fontWeight: '600',
-                marginRight: spacing.xxs,
-              }
-            ]}
-            maxFontSizeMultiplier={1.3}
-          >
-            {isEnabled ? 'On' : 'Off'}
-          </Text>
-          
-          <Switch
-            trackColor={{ false: 'transparent', true: 'transparent' }}
-            thumbColor={isEnabled ? theme.primary : theme.textSecondary}
-            ios_backgroundColor="transparent"
-            onValueChange={toggleSwitch}
-            value={isEnabled}
-            style={styles.toggle}
-            accessible={true}
-            accessibilityRole="switch"
-            accessibilityLabel="Enable personal knowledge"
-            accessibilityState={{ checked: isEnabled }}
-            accessibilityHint={`Tap to turn ${isEnabled ? 'off' : 'on'} personal knowledge base`}
+        {/* Info button in top right */}
+        <TouchableOpacity
+          style={[
+            styles.iconBubble,
+            {
+              width: isTablet ? 44 : isSmallDevice ? 36 : 38,
+              height: isTablet ? 44 : isSmallDevice ? 36 : 38,
+              borderRadius: (isTablet ? 44 : isSmallDevice ? 36 : 38) / 2,
+              backgroundColor: 'rgba(255, 255, 255, 0.15)',
+            }
+          ]}
+          onPress={() => setInfoModalVisible(true)}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel="Personal Knowledge information"
+          accessibilityHint="Shows information about Personal Knowledge features"
+        >
+          <Ionicons 
+            name="information-circle" 
+            size={isTablet ? 24 : 22} 
+            color="#FFFFFF" 
           />
-        </View>
+        </TouchableOpacity>
+        
       </View>
       
+      {/* Main Content - Maximum Height */}
       <View style={[
         styles.content,
         { 
           flex: 1,
-          paddingHorizontal: spacing.m 
+          paddingHorizontal: spacing.s,
+          marginTop: Platform.OS === 'ios' ? (safeSpacing.hasDynamicIsland ? 90 : 85) : 65, // Much smaller space for floating header
         }
       ]}>
-        {(isLoading || appContext.isLoading || !isAppContextReady) ? (
-          <View style={[
+        {/* Loading State - Animated */}
+        <Animated.View 
+          style={[
             styles.loadingContainer,
             {
-              flex: 1,
+              opacity: loadingOpacity,
+              position: 'absolute',
+              top: 0,
+              left: spacing.s,
+              right: spacing.s,
+              bottom: 0,
               justifyContent: 'center',
               alignItems: 'center',
+              zIndex: 2,
             }
-          ]}>
-            <ActivityIndicator size="large" color={theme.primary} />
-            <Text 
-              style={[
-                styles.loadingText, 
-                { 
-                  color: theme.text,
-                  marginTop: spacing.s,
-                  fontSize: fontSizes.m,
-                }
-              ]}
-              maxFontSizeMultiplier={1.3}
-            >
-              {appContext.isLoading 
-                ? 'Loading app context...' 
-                : !isAppContextReady 
-                  ? 'Preparing app context...'
-                  : 'Loading your Personal Knowledge data...'}
-            </Text>
-          </View>
-        ) : (
+          ]}
+          pointerEvents={(isLoading || appContext.isLoading || !isAppContextReady) ? 'auto' : 'none'}
+        >
+          <ActivityIndicator size="large" color={theme.primary} />
+          <Text 
+            style={[
+              styles.loadingText, 
+              { 
+                marginTop: spacing.s,
+                fontSize: fontSizes.m,
+                fontWeight: '500',
+                color: '#FFFFFF',
+              }
+            ]}
+            maxFontSizeMultiplier={1.3}
+          >
+            {appContext.isLoading 
+              ? 'Loading app context...' 
+              : !isAppContextReady 
+                ? 'Preparing app context...'
+                : 'Loading your Personal Knowledge data...'}
+          </Text>
+        </Animated.View>
+
+        {/* Main Content - Animated */}
+        <Animated.View 
+          style={[
+            { 
+              opacity: contentOpacity,
+              flex: 1,
+            }
+          ]}
+          pointerEvents={(!isLoading && isAppContextReady) ? 'auto' : 'none'}
+        >
           <>
-            {/* Storage Header */}
+            {/* Clean Storage Card - Much Higher Position */}
             <View style={[
-              styles.storageContainer,
-              { marginVertical: spacing.s }
+              styles.storageCard,
+              { 
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                borderRadius: 16,
+                padding: spacing.m,
+                marginTop: 0, // No top margin - start immediately
+                marginBottom: spacing.s, // Reduced bottom margin
+                borderWidth: 1,
+                borderColor: 'rgba(255, 255, 255, 0.1)',
+              }
             ]}>
-              <View style={styles.storageTextContainer}>
-                <View style={styles.titleContainer}>
-                  <Text 
-                    style={[
-                      styles.storageText, 
-                      { 
-                        color: theme.text,
-                        fontWeight: '500',
-                        fontSize: fontSizes.m,
-                      }
-                    ]}
-                    maxFontSizeMultiplier={1.3}
-                  >
-                    Storage Usage
-                  </Text>
-                  <Text 
-                    style={[
-                      styles.percentageText, 
-                      { 
-                        color: theme.textSecondary,
-                        fontSize: fontSizes.s,
-                      }
-                    ]}
-                    maxFontSizeMultiplier={1.3}
-                  >
-                    {" "}({storageUsedPercentage.toFixed(0)}%)
-                  </Text>
-                </View>
-                <TouchableOpacity 
+              <View style={styles.storageHeader}>
+                <Text 
                   style={[
-                    styles.infoButton,
-                    { padding: spacing.xxs }
+                    styles.storageTitle, 
+                    { 
+                      color: '#FFFFFF',
+                      fontWeight: '600',
+                      fontSize: fontSizes.m,
+                      letterSpacing: 0.3,
+                    }
                   ]}
-                  onPress={() => setInfoModalVisible(true)}
-                  accessible={true}
-                  accessibilityRole="button"
-                  accessibilityLabel="Storage information"
-                  accessibilityHint="Shows information about storage limits"
+                  maxFontSizeMultiplier={1.3}
                 >
-                  <Ionicons 
-                    name="information-circle-outline" 
-                    size={scaleFontSize(20)} 
-                    color={theme.text} 
-                  />
-                </TouchableOpacity>
+                  Storage Usage
+                </Text>
+                <Text 
+                  style={[
+                    styles.storagePercentage, 
+                    { 
+                      color: storageUsedPercentage > 90 ? '#FF6B6B' : '#FFFFFF',
+                      fontWeight: '600',
+                      fontSize: fontSizes.s,
+                      opacity: 0.8
+                    }
+                  ]}
+                  maxFontSizeMultiplier={1.2}
+                >
+                  {storageUsedPercentage.toFixed(1)}%
+                </Text>
               </View>
               
-              {/* Add console log to debug storage values */}
-              {console.log(`Rendering progress bar with width: ${storageUsedPercentage}%, Bytes: ${storageUsedBytes}`)}
-              
+              {/* Minimalist Progress Bar */}
               <View style={[
-                styles.progressBarContainer, 
+                styles.progressBar, 
                 { 
-                  backgroundColor: theme.border,
-                  height: scaleHeight(12), // Slightly taller for better visibility
-                  borderRadius: scaleWidth(6),
-                  borderWidth: 1,
-                  borderColor: 'rgba(0,0,0,0.1)',
-                  marginTop: spacing.xxs,
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  height: 6,
+                  borderRadius: 3,
+                  marginTop: spacing.s,
                   overflow: 'hidden',
                 }
               ]}>
-                {/* Document storage section */}
                 <View 
                   style={{
                     position: 'absolute',
                     left: 0,
                     top: 0,
                     bottom: 0,
-                    width: `${Math.max(1, storageUsedPercentage)}%`, // Ensure at least 1% width for visibility
-                    backgroundColor: theme.primary,
+                    width: `${Math.max(2, storageUsedPercentage)}%`,
+                    backgroundColor: storageUsedPercentage > 90 ? '#FF6B6B' : theme.primary,
+                    borderRadius: 3,
                   }}
                 />
-                
-                {/* Warning overlay for high usage */}
-                {storageUsedPercentage > 90 && (
-                  <View
-                    style={[
-                      styles.progressBarWarning,
-                      {
-                        width: '100%',
-                        height: '100%',
-                        backgroundColor: 'transparent',
-                        borderWidth: 1,
-                        borderColor: theme.danger,
-                        borderRadius: scaleWidth(5),
-                      }
-                    ]}
-                  />
-                )}
               </View>
             </View>
             
-            {/* Error Message */}
+            {/* Clean Error Message */}
             {errorMessage && (
               <View style={[
-                styles.errorContainer, 
+                styles.errorCard, 
                 { 
-                  backgroundColor: theme.errorLight,
-                  padding: spacing.s,
-                  borderRadius: scaleWidth(8),
-                  marginVertical: spacing.xs,
+                  backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                  borderColor: 'rgba(255, 107, 107, 0.3)',
+                  borderWidth: 1,
+                  padding: spacing.m,
+                  borderRadius: 12,
+                  marginVertical: spacing.s,
                   flexDirection: 'row',
                   alignItems: 'center',
                 }
               ]}>
                 <Ionicons 
                   name="alert-circle" 
-                  size={scaleFontSize(20)} 
-                  color={theme.danger} 
+                  size={20} 
+                  color="#FF6B6B" 
+                  style={{ marginRight: spacing.s }}
                 />
                 <Text 
                   style={[
                     styles.errorText, 
                     { 
-                      color: theme.danger,
-                      marginLeft: spacing.xs,
+                      color: '#FF6B6B',
                       flex: 1,
                       fontSize: fontSizes.s,
+                      fontWeight: '500',
                     }
                   ]}
                   maxFontSizeMultiplier={1.3}
@@ -986,113 +1017,79 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
               </View>
             )}
             
-            {/* Documents Section Header */}
+            {/* Clean Section Header - Much Higher Position */}
             <View style={[
               styles.sectionHeader,
               {
                 flexDirection: 'row',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginTop: spacing.m,
-                marginBottom: spacing.xs,
+                marginTop: 0, // No top margin - start immediately after storage
+                marginBottom: spacing.s, // Reduced bottom margin
+                paddingHorizontal: spacing.s,
               }
             ]}>
               <Text 
                 style={[
                   styles.sectionTitle, 
                   { 
-                    color: theme.text,
+                    color: '#FFFFFF',
                     fontSize: fontSizes.l,
-                    fontWeight: '600',
+                    fontWeight: '700',
+                    letterSpacing: 0.3,
                   }
                 ]}
                 maxFontSizeMultiplier={1.3}
               >
-                Documents {`(${documents.length})`}
+                Documents
               </Text>
-              <View style={styles.buttonContainer}>
-                {/* Optional manual refresh button (now that auto-update is enabled) */}
-                <TouchableOpacity
+              
+              <View style={styles.headerActions}>
+                <Text 
                   style={[
-                    styles.refreshButton,
-                    {
-                      backgroundColor: 'transparent',
-                      borderWidth: 1,
-                      borderColor: theme.border,
-                      marginRight: spacing.s,
-                      paddingHorizontal: spacing.xs,
-                      paddingVertical: spacing.xxs,
-                      borderRadius: scaleWidth(20),
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                    }
-                  ]}
-                  onPress={forceUpdateAppSummary}
-                  accessible={true}
-                  accessibilityRole="button"
-                  accessibilityLabel="Refresh app summary"
-                  accessibilityHint="Manually refreshes the app context summary document"
-                >
-                  <Ionicons 
-                    name="refresh" 
-                    size={scaleFontSize(16)} 
-                    color={theme.textSecondary} 
-                  />
-                  <Text
-                    style={{
-                      color: theme.textSecondary,
-                      fontSize: isSmallDevice ? fontSizes.xxs : fontSizes.xs,
-                      marginLeft: spacing.xxs,
-                      fontWeight: '500',
-                    }}
-                  >
-                    Refresh
-                  </Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity
-                  style={[
-                    styles.addButton, 
+                    styles.documentCount,
                     { 
-                      backgroundColor: theme.primary,
-                      opacity: isEnabled && !isUploading ? 1 : 0.7,
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      paddingHorizontal: spacing.s,
-                      paddingVertical: spacing.xs,
-                      borderRadius: scaleWidth(20),
+                      color: 'rgba(255, 255, 255, 0.6)',
+                      fontSize: fontSizes.s,
+                      fontWeight: '500',
+                      marginRight: spacing.m,
                     }
                   ]}
-                  onPress={pickDocument}
-                  disabled={isUploading || !isEnabled}
-                  accessible={true}
-                  accessibilityRole="button"
-                  accessibilityLabel="Add document"
-                  accessibilityHint="Opens the document picker to add a new document"
-                  accessibilityState={{ 
-                    disabled: isUploading || !isEnabled 
-                  }}
                 >
-                  <Ionicons 
-                    name="add" 
-                    size={scaleFontSize(22)} 
-                    color="#FFFFFF" 
-                  />
-                  <Text 
+                  {documents.length} {documents.length === 1 ? 'file' : 'files'}
+                </Text>
+                
+                {/* Floating Action Button */}
+                <View style={styles.actionButtons}>
+                  <TouchableOpacity
                     style={[
-                      styles.addButtonText,
-                      {
-                        color: 'white',
-                        fontWeight: '600',
-                        fontSize: isSmallDevice ? fontSizes.xs : fontSizes.s,
-                        marginLeft: spacing.xs,
+                      styles.actionButton,
+                      { 
+                        backgroundColor: isEnabled && !isUploading ? theme.primary : 'rgba(255, 255, 255, 0.2)',
+                        width: 36,
+                        height: 36,
+                        borderRadius: 18,
+                        justifyContent: 'center',
+                        alignItems: 'center',
                       }
                     ]}
-                    maxFontSizeMultiplier={1.3}
+                    onPress={pickDocument}
+                    disabled={isUploading || !isEnabled}
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel="Add document"
+                    accessibilityHint="Opens the document picker to add a new document"
+                    accessibilityState={{ 
+                      disabled: isUploading || !isEnabled 
+                    }}
                   >
-                    Add Document
-                  </Text>
-                </TouchableOpacity>
+                    <Ionicons 
+                      name="add" 
+                      size={18} 
+                      color="#FFFFFF" 
+                    />
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
             
@@ -1115,6 +1112,35 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
                     onDelete={() => deleteDocument(item.id)}
                     appContextEnabled={appContextEnabled}
                     onToggleAppContext={toggleAppContext}
+                    onToggleDocumentAccess={async (docId, enabled) => {
+                      console.log('Toggling document access:', docId, enabled);
+                      try {
+                        // Update the document's aiAccessEnabled property
+                        const updatedDocs = documents.map(doc => 
+                          doc.id === docId 
+                            ? { ...doc, aiAccessEnabled: enabled }
+                            : doc
+                        );
+                        
+                        // Save to storage
+                        const success = await DocumentService.saveDocuments(updatedDocs);
+                        
+                        if (success) {
+                          // Update local state
+                          setDocuments(updatedDocs);
+                          
+                          // Recalculate storage usage using DocumentService (which now filters by enabled documents)
+                          await calculateStorageUsage();
+                          
+                          console.log(`Document access toggled: ${enabled ? 'enabled' : 'disabled'} for document ${docId}`);
+                        } else {
+                          console.error('Failed to save document access changes');
+                        }
+                      } catch (error) {
+                        console.error('Error toggling document access:', error);
+                      }
+                    }}
+                    onShowAppContextInfo={() => setAppContextInfoVisible(true)}
                     // Pass responsive props to DocumentItem
                     responsive={{
                       fontSize: fontSizes,
@@ -1143,7 +1169,7 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
               />
             )}
           </>
-        )}
+        </Animated.View>
       </View>
       
       {/* Document Processing Animation */}
@@ -1188,6 +1214,96 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
           safeSpacing: safeSpacing
         }}
       />
+
+      {/* Custom Delete Confirmation Modal */}
+      {deleteConfirmVisible && (
+        <Modal
+          transparent={true}
+          animationType="fade"
+          visible={deleteConfirmVisible}
+          onRequestClose={() => setDeleteConfirmVisible(false)}
+        >
+          <View style={styles.deleteModalOverlay}>
+            <View style={[styles.deleteModalContainer, { backgroundColor: '#000000' }]}>
+              <Text style={[styles.deleteModalTitle, { color: theme.text }]}>
+                Delete Document
+              </Text>
+              <Text style={[styles.deleteModalMessage, { color: theme.textSecondary }]}>
+                Are you sure you want to delete "{documentToDelete?.name}"? This will remove it from your knowledge base permanently.
+              </Text>
+              
+              <View style={styles.deleteModalButtons}>
+                <TouchableOpacity
+                  style={[styles.deleteModalButton, styles.deleteCancelButton, { backgroundColor: theme.background }]}
+                  onPress={() => setDeleteConfirmVisible(false)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.deleteButtonText, { color: theme.text }]}>
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[styles.deleteModalButton, styles.deleteConfirmButton]}
+                  onPress={handleConfirmDelete}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.deleteButtonText, styles.deleteConfirmText]}>
+                    Delete
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
+
+      {/* App Context Info Modal - same style as top right info modal */}
+      <InfoModal 
+        visible={appContextInfoVisible}
+        theme={theme}
+        onClose={() => setAppContextInfoVisible(false)}
+        title="App Context Information"
+        content={{
+          sections: [
+            {
+              title: "What is App Context?",
+              text: "Turning this on gives the AI knowledge about your current app data, enabling personalized suggestions and seamless assistance with achieving your goals."
+            },
+            {
+              title: "The AI can reference your:",
+              bullets: [
+                "Goals and their progress",
+                "Projects and tasks",
+                "Life direction and strategic planning"
+              ]
+            },
+            {
+              title: "The AI can also create and update:",
+              bullets: [
+                "New goals and projects",
+                "Tasks and to-dos",
+                "Time blocks in your schedule",
+                "Your strategic life direction"
+              ]
+            },
+            {
+              title: "Privacy & Control",
+              text: "You can toggle this off at any time to disable app context sharing. Your data remains secure and is only used to enhance your AI experience."
+            }
+          ]
+        }}
+        // Add responsive props for the modal
+        responsive={{
+          fontSize: fontSizes,
+          spacing: spacing,
+          scaleWidth: scaleWidth,
+          scaleHeight: scaleHeight,
+          isSmallDevice: isSmallDevice,
+          isTablet: isTablet,
+          safeSpacing: safeSpacing
+        }}
+      />
     </SafeAreaView>
   );
 };
@@ -1196,102 +1312,113 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
+  // Floating header like AI screen
+  floatingHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
+    zIndex: 100,
+    backgroundColor: 'transparent',
+  },
+  iconBubble: {
+    backgroundColor: '#000000',
+    justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
   },
-  backButton: {
-    borderRadius: 20,
+  toggleBubble: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
   },
-  title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-  },
-  toggleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  toggleText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  toggle: {
-    transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }],
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
   },
   content: {
     flex: 1,
   },
-  storageContainer: {
-    borderRadius: 12,
+  // Clean storage card
+  storageCard: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  storageTextContainer: {
+  storageHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  titleContainer: {
+  storageTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  storageInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexWrap: 'wrap',
   },
-  storageText: {
+  storagePercentage: {
+    fontSize: 14,
     fontWeight: '500',
   },
-  percentageText: {
-    fontSize: 14,
-  },
-  infoButton: {
+  infoIconButton: {
     padding: 4,
   },
-  progressBarContainer: {
-    height: 10,
-    borderRadius: 5,
-    overflow: 'hidden',
-    marginTop: 4,
-  },
   progressBar: {
-    height: '100%',
+    position: 'relative',
   },
-  progressBarWarning: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    right: 0,
-    bottom: 0,
+  // Clean error card
+  errorCard: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
+  errorText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  // Section header styles
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: '700',
   },
-  buttonContainer: {
+  headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  refreshButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 16,
-  },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  addButtonText: {
-    color: 'white',
-    fontWeight: '600',
+  documentCount: {
     fontSize: 14,
-    marginLeft: 6,
+    fontWeight: '500',
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  actionButton: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 4,
   },
   loadingContainer: {
     flex: 1,
@@ -1301,22 +1428,78 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 16,
+    color: '#FFFFFF',
   },
   documentsList: {
     paddingBottom: 80,
   },
-  errorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 8,
-    marginVertical: 8,
-  },
-  errorText: {
-    marginLeft: 8,
+  // Custom delete modal styles - matching logout modal
+  deleteModalOverlay: {
     flex: 1,
-    fontSize: 14,
-  }
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  deleteModalContainer: {
+    width: '100%',
+    maxWidth: 320,
+    borderRadius: 16,
+    paddingVertical: 32,
+    paddingHorizontal: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 24,
+    elevation: 8,
+  },
+  deleteModalTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 12,
+    letterSpacing: 0.3,
+  },
+  deleteModalMessage: {
+    fontSize: 15,
+    textAlign: 'center',
+    marginBottom: 32,
+    lineHeight: 22,
+    opacity: 0.8,
+    fontWeight: '400',
+  },
+  deleteModalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  deleteModalButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteCancelButton: {
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  deleteConfirmButton: {
+    backgroundColor: '#FF3B30',
+  },
+  deleteButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    letterSpacing: 0.2,
+  },
+  deleteConfirmText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
 });
 
 export default PersonalKnowledgeScreen;

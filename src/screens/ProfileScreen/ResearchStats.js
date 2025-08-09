@@ -21,6 +21,15 @@ import { getAustralianRelevantStats } from '../Onboarding/data/australianGoalSta
 import { getUKRelevantStats } from '../Onboarding/data/ukGoalStats';
 import { getUSARelevantStats } from '../Onboarding/data/usaGoalStats';
 import { getCanadaRelevantStats } from '../Onboarding/data/canadaGoalStats';
+import { getIndiaRelevantStats } from '../Onboarding/data/indiaGoalStats';
+import { getIrelandRelevantStats } from '../Onboarding/data/irelandGoalStats';
+import { getMalaysiaRelevantStats } from '../Onboarding/data/malaysiaGoalStats';
+import { getNewZealandRelevantStats } from '../Onboarding/data/newzealandGoalStats';
+import { getNigeriaRelevantStats } from '../Onboarding/data/nigeriaGoalStats';
+import { getPhilippinesRelevantStats } from '../Onboarding/data/philippinesGoalStats';
+import { getSingaporeRelevantStats } from '../Onboarding/data/singaporeGoalStats';
+import { getSouthAfricaRelevantStats } from '../Onboarding/data/southafricaGoalStats';
+import { getOtherRelevantStats } from '../Onboarding/data/otherGoalStats';
 
 
 // Fallback general research (subset of original for mixed content)
@@ -98,7 +107,7 @@ const GENERAL_RESEARCH_STATS = [
 const SETTINGS_STORAGE_KEY = '@research_insights_settings';
 const DEFAULT_SETTINGS = {
   selectedCountries: ['australia'],
-  selectedDomains: ['Career & Work', 'Health & Wellness', 'Relationships', 'Personal Growth', 'Financial Security', 'Recreation & Leisure', 'Purpose & Meaning', 'Environment & Organization'],
+  selectedDomains: ['Career & Work', 'Health & Wellness', 'Relationships', 'Personal Growth', 'Financial Security', 'Recreation & Leisure', 'Purpose & Meaning', 'Community & Environment'],
   researchScope: 'domain_wide',
   includeGeneralStats: true
 };
@@ -112,7 +121,7 @@ const ResearchStats = ({ theme }) => {
   
   // Get AppContext to access onboarding country selection
   const appContext = useAppContext();
-  const onboardingCountry = appContext?.settings?.selectedCountry;
+  const onboardingCountry = appContext?.userCountry;
   
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const modalFadeAnim = useRef(new Animated.Value(0)).current;
@@ -134,11 +143,19 @@ const ResearchStats = ({ theme }) => {
         currentSettings = { ...DEFAULT_SETTINGS, ...JSON.parse(savedSettings) };
       }
       
-      // Use onboarding country if available and no custom country was set
-      if (onboardingCountry && currentSettings.selectedCountries.includes('australia') && currentSettings.selectedCountries.length === 1) {
+      // Use onboarding country if available and no custom country was set, OR if no country is detected
+      if (currentSettings.selectedCountries.includes('australia') && currentSettings.selectedCountries.length === 1) {
+        // Map unknown countries to 'other'
+        const validCountries = ['australia', 'uk', 'usa', 'canada', 'india', 'ireland', 'malaysia', 'newzealand', 'nigeria', 'philippines', 'singapore', 'southafrica', 'other'];
+        let mappedCountry = 'other'; // Default to 'other'
+        
+        if (onboardingCountry && validCountries.includes(onboardingCountry)) {
+          mappedCountry = onboardingCountry;
+        }
+        
         currentSettings = {
           ...currentSettings,
-          selectedCountries: [onboardingCountry]
+          selectedCountries: [mappedCountry]
         };
       }
       
@@ -153,19 +170,24 @@ const ResearchStats = ({ theme }) => {
   };
 
   const buildAvailableStats = (currentSettings) => {
+    console.log('Building research stats for settings:', currentSettings);
     let allStats = [];
 
     // Get country-specific statistics
     if (currentSettings.selectedCountries.includes('all') || currentSettings.selectedCountries.length === 0) {
       // Include all countries
-      ['australia', 'uk', 'usa', 'canada'].forEach(country => {
-        allStats = [...allStats, ...getCountryStats(country, currentSettings)];
+      ['australia', 'uk', 'usa', 'canada', 'india', 'ireland', 'malaysia', 'newzealand', 'nigeria', 'philippines', 'singapore', 'southafrica', 'other'].forEach(country => {
+        const countryStats = getCountryStats(country, currentSettings);
+        console.log(`Stats for ${country}:`, countryStats.length);
+        allStats = [...allStats, ...countryStats];
       });
     } else {
       // Include only selected countries
       currentSettings.selectedCountries.forEach(country => {
         if (country !== 'all') {
-          allStats = [...allStats, ...getCountryStats(country, currentSettings)];
+          const countryStats = getCountryStats(country, currentSettings);
+          console.log(`Stats for selected country ${country}:`, countryStats.length);
+          allStats = [...allStats, ...countryStats];
         }
       });
     }
@@ -175,6 +197,7 @@ const ResearchStats = ({ theme }) => {
       const filteredGeneralStats = GENERAL_RESEARCH_STATS.filter(stat =>
         currentSettings.selectedDomains.includes(stat.domain)
       );
+      console.log('General stats added:', filteredGeneralStats.length);
       allStats = [...allStats, ...filteredGeneralStats];
     }
 
@@ -185,7 +208,8 @@ const ResearchStats = ({ theme }) => {
 
     // Shuffle the stats for variety
     const shuffledStats = shuffleArray(uniqueStats);
-
+    
+    console.log('Final available stats:', shuffledStats.length);
     setAvailableStats(shuffledStats);
     setCurrentStatIndex(0);
   };
@@ -210,7 +234,36 @@ const ResearchStats = ({ theme }) => {
         case 'canada':
           domainStats = getCanadaRelevantStats(domain, null)?.all || [];
           break;
+        case 'india':
+          domainStats = getIndiaRelevantStats(domain, null)?.all || [];
+          break;
+        case 'ireland':
+          domainStats = getIrelandRelevantStats(domain, null)?.all || [];
+          break;
+        case 'malaysia':
+          domainStats = getMalaysiaRelevantStats(domain, null)?.all || [];
+          break;
+        case 'newzealand':
+          domainStats = getNewZealandRelevantStats(domain, null)?.all || [];
+          break;
+        case 'nigeria':
+          domainStats = getNigeriaRelevantStats(domain, null)?.all || [];
+          break;
+        case 'philippines':
+          domainStats = getPhilippinesRelevantStats(domain, null)?.all || [];
+          break;
+        case 'singapore':
+          domainStats = getSingaporeRelevantStats(domain, null)?.all || [];
+          break;
+        case 'southafrica':
+          domainStats = getSouthAfricaRelevantStats(domain, null)?.all || [];
+          break;
+        case 'other':
+          domainStats = getOtherRelevantStats(domain, null)?.all || [];
+          break;
         default:
+          // Fallback to 'other' stats for any unknown country
+          domainStats = getOtherRelevantStats(domain, null)?.all || [];
           break;
       }
 
@@ -341,12 +394,12 @@ const ResearchStats = ({ theme }) => {
           backgroundColor: theme.card,
           borderColor: theme.border
         }]}>
-          <Ionicons name="document-text-outline" size={48} color={theme.primary} />
+          <Ionicons name="book-outline" size={48} color={theme.primary} />
           <Text style={[styles.emptyTitle, { color: theme.text }]}>
-            No Research Available
+            Research Insights Loading
           </Text>
           <Text style={[styles.emptyDescription, { color: theme.textSecondary }]}>
-            No research data available for your selected country
+            Loading research data for your selected preferences
           </Text>
         </View>
       </View>

@@ -2892,8 +2892,12 @@ export const AppProvider = ({ children }) => {
   };
   
   // Function to update purchase status (lifetime or free)
-  const updatePurchaseStatus = async (status) => {
+  const updatePurchaseStatus = async (status, shouldShowGift = true) => {
     try {
+      const previousStatus = userSubscriptionStatus;
+      
+      console.log(`🎁 APPCONTEXT DEBUG: previousStatus: ${previousStatus}, newStatus: ${status}`);
+      
       // Update state
       setUserSubscriptionStatus(status);
       
@@ -2902,6 +2906,18 @@ export const AppProvider = ({ children }) => {
       
       // Increment refresh counter to trigger UI updates
       setRefreshCounter(prev => prev + 1);
+      
+      // Check if this is an upgrade to Pro and user hasn't received gift yet
+      const isUpgradeToPro = (previousStatus === 'free' || previousStatus === 'founding') && status === 'pro';
+      const hasReceivedGift = await AsyncStorage.getItem('proGiftReceived');
+      
+      console.log(`🎁 APPCONTEXT DEBUG: isUpgradeToPro: ${isUpgradeToPro}, hasReceivedGift: ${hasReceivedGift}, shouldShowGift: ${shouldShowGift}`);
+      
+      if (isUpgradeToPro && !hasReceivedGift && shouldShowGift) {
+        // Set a flag to trigger the gift surprise
+        await AsyncStorage.setItem('showProGiftSurprise', 'true');
+        console.log(`🎁 APPCONTEXT: Pro upgrade detected, gift surprise queued`);
+      }
       
       console.log(`[AppContext] Updated purchase status to: ${status}`);
       return true;

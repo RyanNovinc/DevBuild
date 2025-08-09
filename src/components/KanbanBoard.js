@@ -115,33 +115,6 @@ const KanbanBoard = ({
     scrollPositions.current[status] = event.nativeEvent.contentOffset.y;
   }, []);
 
-  // Restore scroll positions after a short delay
-  const restoreScrollPositions = useCallback(() => {
-    // Use requestAnimationFrame to ensure the UI has updated
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        // Restore horizontal scroll position
-        if (horizontalScrollRef.current && scrollPositions.current.horizontal > 0) {
-          horizontalScrollRef.current.scrollTo({
-            x: scrollPositions.current.horizontal,
-            animated: false
-          });
-        }
-        
-        // Restore column scroll positions
-        Object.keys(columnScrollRefs.current).forEach(status => {
-          const ref = columnScrollRefs.current[status];
-          const scrollY = scrollPositions.current[status];
-          if (ref && scrollY > 0) {
-            ref.scrollTo({
-              y: scrollY,
-              animated: false
-            });
-          }
-        });
-      }, 50); // Small delay to ensure re-render is complete
-    });
-  }, []);
 
   // Handle moving a project to a different status
   const handleMoveProject = (project, newStatus) => {
@@ -158,9 +131,6 @@ const KanbanBoard = ({
     
     // Call the update function from props with the status indicator
     onUpdateProjectProgress(project.id, statusIndicator);
-    
-    // Restore scroll positions after the state update
-    restoreScrollPositions();
   };
   
   // Handle moving a task to a different status
@@ -169,9 +139,6 @@ const KanbanBoard = ({
     
     // Call the update function from props
     onUpdateTaskStatus(task.id, newStatus);
-    
-    // Restore scroll positions after the state update
-    restoreScrollPositions();
   };
   
   // Function to render a column
@@ -363,7 +330,9 @@ const KanbanBoard = ({
                     {
                       borderTopColor: darkMode ? '#333333' : '#EEEEEE',
                       borderTopWidth: 1,
-                      backgroundColor: darkMode ? '#1E1E1E' : '#F8F8F8'
+                      backgroundColor: darkMode ? '#1E1E1E' : '#F8F8F8',
+                      // For todo items, align content to the right so the arrow appears on the right
+                      justifyContent: status === 'todo' ? 'flex-end' : 'space-between'
                     }
                   ]}>
                     {/* Move left button */}

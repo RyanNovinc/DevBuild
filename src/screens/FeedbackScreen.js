@@ -79,6 +79,7 @@ const FeedbackScreen = ({ navigation }) => {
   const [contactEmail, setContactEmail] = useState('');
   const [showThanksModal, setShowThanksModal] = useState(false);
   const [marketingConsent, setMarketingConsent] = useState(false);
+  const [isGoingBack, setIsGoingBack] = useState(false);
   
   // Feedback types with icons, labels, and colors
   const feedbackTypes = [
@@ -167,6 +168,20 @@ const FeedbackScreen = ({ navigation }) => {
     }
   };
 
+  // Handle back button with loading state
+  const handleBack = async () => {
+    setIsGoingBack(true);
+    
+    try {
+      // Small delay to ensure state updates are visible
+      await new Promise(resolve => setTimeout(resolve, 100));
+      navigation.goBack();
+    } catch (error) {
+      console.error('Error going back:', error);
+      setIsGoingBack(false); // Reset if navigation fails
+    }
+  };
+
   // Create shorter placeholders that won't get cut off
   const getShortPlaceholderText = () => {
     if (feedbackType === 'testimonial') {
@@ -241,16 +256,22 @@ const FeedbackScreen = ({ navigation }) => {
               style={[
                 styles.backButton,
                 {
-                  padding: spacing.xs
+                  padding: spacing.xs,
+                  opacity: isGoingBack ? 0.6 : 1
                 }
               ]}
-              onPress={() => navigation.goBack()}
+              onPress={handleBack}
+              disabled={isGoingBack}
               accessible={true}
               accessibilityRole="button"
               accessibilityLabel="Go back"
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Ionicons name="arrow-back" size={scaleWidth(24)} color={textColor} />
+              {isGoingBack ? (
+                <ActivityIndicator size="small" color={textColor} />
+              ) : (
+                <Ionicons name="arrow-back" size={scaleWidth(24)} color={textColor} />
+              )}
             </TouchableOpacity>
             <Text 
               style={[
@@ -273,62 +294,34 @@ const FeedbackScreen = ({ navigation }) => {
             ]} />
           </View>
           
-          {/* Founder/Free Status Message - UPDATED WITH CONTRASTING MESSAGES */}
-          {!route.params?.fromThemePicker && (
-            (userSubscriptionStatus === 'pro' || userSubscriptionStatus === 'unlimited') ? (
-              <View style={[
-                styles.founderBadgeContainer,
-                {
-                  backgroundColor: '#FFD70015', // Light gold background
-                  borderColor: '#FFD700',
-                  borderWidth: 1,
-                  borderRadius: scaleWidth(12),
-                  padding: spacing.s,
-                  marginBottom: spacing.m,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }
-              ]}>
-                <Ionicons name="star" size={scaleWidth(18)} color="#FFD700" style={{ marginRight: spacing.xs }} />
-                <Text
-                  style={{
-                    color: '#FFD700',
-                    fontWeight: 'bold',
-                    fontSize: fontSizes.s
-                  }}
-                  maxFontSizeMultiplier={1.3}
-                >
-                  Your feedback as a Founder will be prioritized
-                </Text>
-              </View>
-            ) : (
-              <View style={[
-                styles.freeBadgeContainer,
-                {
-                  backgroundColor: '#E0E0E020', // Light gray background
-                  borderColor: '#E0E0E0',
-                  borderWidth: 1,
-                  borderRadius: scaleWidth(12),
-                  padding: spacing.s,
-                  marginBottom: spacing.m,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }
-              ]}>
-                <Ionicons name="information-circle" size={scaleWidth(18)} color="#777777" style={{ marginRight: spacing.xs }} />
-                <Text
-                  style={{
-                    color: '#777777',
-                    fontSize: fontSizes.s
-                  }}
-                  maxFontSizeMultiplier={1.3}
-                >
-                  Founder feedback is prioritized. Upgrade to get priority.
-                </Text>
-              </View>
-            )
+          {/* Founder Status Message - Only show for paid users */}
+          {!route.params?.fromThemePicker && (userSubscriptionStatus === 'pro' || userSubscriptionStatus === 'unlimited') && (
+            <View style={[
+              styles.founderBadgeContainer,
+              {
+                backgroundColor: '#FFD70015', // Light gold background
+                borderColor: '#FFD700',
+                borderWidth: 1,
+                borderRadius: scaleWidth(12),
+                padding: spacing.s,
+                marginBottom: spacing.m,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }
+            ]}>
+              <Ionicons name="star" size={scaleWidth(18)} color="#FFD700" style={{ marginRight: spacing.xs }} />
+              <Text
+                style={{
+                  color: '#FFD700',
+                  fontWeight: 'bold',
+                  fontSize: fontSizes.s
+                }}
+                maxFontSizeMultiplier={1.3}
+              >
+                Your feedback as a Founder will be prioritized
+              </Text>
+            </View>
           )}
           
           {/* Feedback target selection (App vs AI) - NEW SECTION */}

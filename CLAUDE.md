@@ -133,3 +133,9 @@ The project does not have a formal test suite. When making changes:
 - Supabase Row Level Security (RLS) for data access
 - AWS Cognito for secure authentication
 - No secrets should be committed to the repository
+- It is still not displaying it correctly. Look at my profilescreen goals, projects, tasks counter closely. \
+\
+You will see how some things are not counted. You must do the same in the app context docuemnt.\
+\
+Do a deeper analysis of this
+- I have no goals created, but even so, when I have tasks toggled and I click to add a task it should say something about yo need to do this before creating a task as it still refercnes before you can add projects
