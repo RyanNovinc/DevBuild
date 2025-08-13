@@ -148,6 +148,7 @@ const ProfileScreen = ({ navigation, route }) => {
     userSubscriptionStatus: 'free',
     hasEnteredReferralCode: false,
     showProGiftSurprise: false,
+    showAIPlusUpgrade: false,
     profile: {
       name: user?.displayName || '',
       email: user?.email || '',
@@ -180,27 +181,27 @@ const ProfileScreen = ({ navigation, route }) => {
       // Log basic counts
       console.log(`DEBUG: Found ${goals.length} goals, ${projects.length} projects, ${tasks.length} tasks, ${Object.keys(linkMap).length} link map entries`);
       
-      // Check for orphaned projects (no valid goal ID)
+      // Check for invalid milestones (linked to non-existent goals - will be converted to standalone)
       const validGoalIds = new Set(goals.map(g => g.id));
       const orphanedProjects = projects.filter(p => p.goalId && !validGoalIds.has(p.goalId));
-      console.log(`DEBUG: Found ${orphanedProjects.length} orphaned projects`);
+      console.log(`DEBUG: Found ${orphanedProjects.length} milestones that will become standalone`);
       
       if (orphanedProjects.length > 0) {
-        console.log("ORPHANED PROJECTS:");
+        console.log("MILESTONES TO CONVERT TO STANDALONE:");
         orphanedProjects.forEach(p => {
-          console.log(`- Project "${p.title}" (ID: ${p.id}) linked to non-existent goal: ${p.goalId}`);
+          console.log(`- Milestone "${p.title}" (ID: ${p.id}) linked to non-existent goal: ${p.goalId}`);
         });
       }
       
-      // Check for orphaned tasks (no valid project ID)
+      // Check for invalid tasks (linked to non-existent milestones - will be converted to standalone)
       const validProjectIds = new Set(projects.map(p => p.id));
       const orphanedTasks = tasks.filter(t => t.projectId && !validProjectIds.has(t.projectId));
-      console.log(`DEBUG: Found ${orphanedTasks.length} orphaned tasks`);
+      console.log(`DEBUG: Found ${orphanedTasks.length} tasks that will become standalone`);
       
       if (orphanedTasks.length > 0) {
-        console.log("ORPHANED TASKS (first 5):");
+        console.log("TASKS TO CONVERT TO STANDALONE (first 5):");
         orphanedTasks.slice(0, 5).forEach(t => {
-          console.log(`- Task "${t.name || t.title}" (ID: ${t.id}) linked to non-existent project: ${t.projectId}`);
+          console.log(`- Task "${t.name || t.title}" (ID: ${t.id}) linked to non-existent milestone: ${t.projectId}`);
         });
       }
       
@@ -1295,6 +1296,16 @@ const ProfileScreen = ({ navigation, route }) => {
       }
     }
   };
+
+  // Helper function for showing AI Plus upgrade notification
+  const triggerAIPlusUpgrade = async () => {
+    try {
+      setScreenState(prev => ({ ...prev, showAIPlusUpgrade: true }));
+      console.log('🚀 Showing AI Plus upgrade notification');
+    } catch (error) {
+      console.error('Error showing AI Plus upgrade:', error);
+    }
+  };
   
   // Calculate total domains once
   const totalDomains = screenState.localDomains ? screenState.localDomains.length : 0;
@@ -1438,6 +1449,7 @@ const ProfileScreen = ({ navigation, route }) => {
         updateAppSetting={updateAppSetting}
         onScreenStateUpdate={handleScreenStateUpdate}
         onTriggerGiftSurprise={triggerGiftSurpriseForTesting}
+        onTriggerAIPlusUpgrade={triggerAIPlusUpgrade}
       />
       
       {/* AI Explanation Modal */}
@@ -1478,6 +1490,16 @@ const ProfileScreen = ({ navigation, route }) => {
         theme={theme}
         onColorWheelUnlocked={handleColorWheelUnlocked}
         showAppStoreRating={true}
+        giftType="colorWheel"
+      />
+
+      {/* AI Plus Upgrade Modal - uses same ProGiftSurprise component */}
+      <ProGiftSurprise
+        visible={screenState.showAIPlusUpgrade}
+        onClose={() => setScreenState(prev => ({ ...prev, showAIPlusUpgrade: false }))}
+        theme={theme}
+        giftType="aiPlus"
+        showAppStoreRating={false}
       />
     </View>
   );

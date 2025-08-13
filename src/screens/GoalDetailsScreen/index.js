@@ -1,10 +1,11 @@
 // src/screens/GoalDetailsScreen/index.js
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { 
   View, 
   SafeAreaView, 
   TouchableOpacity, 
   Text, 
+  TextInput,
   Animated, 
   Alert,
   Modal,
@@ -68,14 +69,14 @@ const GoalDetailsScreen = ({ route, navigation }) => {
   const appContext = useAppContext() || {
     goals: [],
     mainGoals: [],
-    projects: [],
+    milestones: [],
     tasks: [],
   };
   
   const { 
     goals = [], 
     mainGoals = goals,
-    projects = [],
+    milestones = [],
     tasks = [],
     updateGoal,
     addGoal,
@@ -104,8 +105,8 @@ const GoalDetailsScreen = ({ route, navigation }) => {
   const [goalState, setGoalState] = useState({
     title: '',
     description: '',
-    selectedIcon: 'star',
-    selectedColor: '#14b8a6',
+    selectedIcon: 'flag-outline',
+    selectedColor: '#FFFFFF',
     targetDate: new Date(),
     hasTargetDate: false,
     notifPrefs: {
@@ -115,7 +116,7 @@ const GoalDetailsScreen = ({ route, navigation }) => {
       '1hour': false,
       '1day': false
     },
-    projectsToShare: {},
+    milestonesToShare: {},
     shareFormat: 'simple',
   });
   
@@ -142,6 +143,7 @@ const GoalDetailsScreen = ({ route, navigation }) => {
   const scrollViewRef = useRef(null);
   const isMounted = useRef(true);
   const saveTimeoutRef = useRef(null);
+  const isTypingRef = useRef(false);
   
   // Enhanced goal achievement tracking with fixed AsyncStorage usage
   const directlyUnlockFirstGoalAchievement = async () => {
@@ -180,8 +182,8 @@ const GoalDetailsScreen = ({ route, navigation }) => {
         // Editing an existing goal - safely set values with defaults
         const titleValue = initialGoal.title || '';
         const descriptionValue = initialGoal.description || '';
-        const iconValue = initialGoal.icon || 'star';
-        const colorValue = initialGoal.color || '#14b8a6';
+        const iconValue = initialGoal.icon || 'flag-outline';
+        const colorValue = initialGoal.color || '#FFFFFF';
         
         // Load notification preferences
         const prefs = {
@@ -200,13 +202,13 @@ const GoalDetailsScreen = ({ route, navigation }) => {
           });
         }
         
-        // Initialize project sharing settings
-        const initialProjectsToShare = {};
+        // Initialize milestone sharing settings
+        const initialMilestonesToShare = {};
         if (initialGoal && initialGoal.id) {
-          const linkedProjects = getLinkedProjects();
-          linkedProjects.forEach(project => {
-            initialProjectsToShare[project.id] = initialGoal.projectsToShare ? 
-              initialGoal.projectsToShare[project.id] || false : 
+          const linkedMilestones = getLinkedMilestones();
+          linkedMilestones.forEach(milestone => {
+            initialMilestonesToShare[milestone.id] = initialGoal.milestonesToShare ? 
+              initialGoal.milestonesToShare[milestone.id] || false : 
               false;
           });
         }
@@ -233,7 +235,7 @@ const GoalDetailsScreen = ({ route, navigation }) => {
           targetDate: dateObj,
           hasTargetDate: hasDate,
           notifPrefs: prefs,
-          projectsToShare: initialProjectsToShare,
+          milestonesToShare: initialMilestonesToShare,
           shareFormat: 'simple'
         });
         
@@ -246,7 +248,7 @@ const GoalDetailsScreen = ({ route, navigation }) => {
           hasTargetDate: hasDate,
           targetDate: dateObj,
           notifPrefs: {...prefs},
-          projectsToShare: {...initialProjectsToShare}
+          milestonesToShare: {...initialMilestonesToShare}
         });
         
         // Reset unsaved changes flag
@@ -260,13 +262,13 @@ const GoalDetailsScreen = ({ route, navigation }) => {
         setGoalState(prev => ({
           ...prev,
           title: initialGoal.title || '',
-          selectedIcon: 'star',
-          selectedColor: '#14b8a6'
+          selectedIcon: 'flag-outline',
+          selectedColor: '#FFFFFF'
         }));
       }
     } else {
-      // Creating a new goal - set defaults to "Other" domain
-      let iconValue = 'star';
+      // Creating a new goal - set defaults to flag icon
+      let iconValue = 'flag-outline';
       
       // If there's an initial domain passed, set corresponding values
       if (initialDomain) {
@@ -281,7 +283,7 @@ const GoalDetailsScreen = ({ route, navigation }) => {
         title: '',
         description: '',
         selectedIcon: iconValue,
-        selectedColor: '#14b8a6',
+        selectedColor: '#FFFFFF',
         targetDate: new Date(),
         hasTargetDate: false,
         notifPrefs: {
@@ -291,7 +293,7 @@ const GoalDetailsScreen = ({ route, navigation }) => {
           '1hour': false,
           '1day': false
         },
-        projectsToShare: {},
+        milestonesToShare: {},
         shareFormat: 'simple'
       });
       
@@ -300,7 +302,7 @@ const GoalDetailsScreen = ({ route, navigation }) => {
         title: '',
         description: '',
         selectedIcon: iconValue,
-        selectedColor: '#14b8a6',
+        selectedColor: '#FFFFFF',
         hasTargetDate: false,
         targetDate: new Date(),
         notifPrefs: {
@@ -310,7 +312,7 @@ const GoalDetailsScreen = ({ route, navigation }) => {
           '1hour': false,
           '1day': false
         },
-        projectsToShare: {}
+        milestonesToShare: {}
       });
       
       // Reset unsaved changes flag
@@ -321,10 +323,10 @@ const GoalDetailsScreen = ({ route, navigation }) => {
     }
   }, [isCreating, initialGoal, initialDomain]);
   
-  // Update check for unsaved changes whenever relevant state changes
+  // Update check for unsaved changes - optimized to prevent render cycles
   useEffect(() => {
-    // Skip the initial render
-    if (Object.keys(initialValues).length === 0) return;
+    // Skip the initial render or when actively typing
+    if (Object.keys(initialValues).length === 0 || isTypingRef.current) return;
     
     // Check if any values are different from initial
     const hasChanges = 
@@ -333,14 +335,15 @@ const GoalDetailsScreen = ({ route, navigation }) => {
       goalState.selectedIcon !== initialValues.selectedIcon ||
       goalState.selectedColor !== initialValues.selectedColor ||
       goalState.hasTargetDate !== initialValues.hasTargetDate ||
-      (goalState.hasTargetDate && goalState.targetDate.toISOString() !== initialValues.targetDate?.toISOString()) ||
-      JSON.stringify(goalState.notifPrefs) !== JSON.stringify(initialValues.notifPrefs) ||
-      JSON.stringify(goalState.projectsToShare) !== JSON.stringify(initialValues.projectsToShare);
+      (goalState.hasTargetDate && goalState.targetDate?.getTime() !== initialValues.targetDate?.getTime()) ||
+      Object.keys(goalState.notifPrefs).some(key => goalState.notifPrefs[key] !== initialValues.notifPrefs[key]) ||
+      Object.keys(goalState.milestonesToShare).some(key => goalState.milestonesToShare[key] !== initialValues.milestonesToShare[key]);
     
-    setUiState(prev => ({
+    // Only update if the hasUnsavedChanges value actually changed
+    setUiState(prev => prev.hasUnsavedChanges !== hasChanges ? {
       ...prev,
       hasUnsavedChanges: hasChanges
-    }));
+    } : prev);
   }, [goalState, initialValues]);
   
   // Handle Android back button
@@ -432,24 +435,24 @@ const GoalDetailsScreen = ({ route, navigation }) => {
     }
   };
   
-  // Calculate progress based on linked projects
-  const calculateProjectsProgress = () => {
+  // Calculate progress based on linked milestones - memoized to prevent re-renders
+  const calculateMilestonesProgress = useCallback(() => {
     if (!initialGoal || !initialGoal.id) return 0;
     
-    const linkedProjects = getLinkedProjects();
-    if (linkedProjects.length === 0) return 0;
+    const linkedMilestones = getLinkedMilestones();
+    if (linkedMilestones.length === 0) return 0;
     
-    const completedProjects = linkedProjects.filter(project => project.progress === 100).length;
-    return Math.round((completedProjects / linkedProjects.length) * 100);
-  };
+    const completedMilestones = linkedMilestones.filter(milestone => milestone.progress === 100).length;
+    return Math.round((completedMilestones / linkedMilestones.length) * 100);
+  }, [initialGoal, getLinkedMilestones]);
   
-  // Get total progress
-  const getTotalProgress = () => {
-    return calculateProjectsProgress();
-  };
+  // Get total progress - memoized to prevent re-renders
+  const getTotalProgress = useCallback(() => {
+    return calculateMilestonesProgress();
+  }, [calculateMilestonesProgress]);
   
-  // Navigate to detailed progress view
-  const navigateToProgressView = () => {
+  // Navigate to detailed progress view - memoized to prevent re-renders
+  const navigateToProgressView = useCallback(() => {
     if (isCreating) {
       showSuccess('Please save your goal first to view progress details');
       return;
@@ -460,7 +463,7 @@ const GoalDetailsScreen = ({ route, navigation }) => {
       goalColor: goalState.selectedColor,
       goalTitle: goalState.title
     });
-  };
+  }, [isCreating, showSuccess, navigation, initialGoal?.id, goalState.selectedColor, goalState.title]);
   
   // Handle date change
 const handleDateChange = (event, selectedDate) => {
@@ -529,8 +532,8 @@ const toggleTargetDate = () => {
     }));
   };
   
-  // Handle notification preferences
-  const toggleNotificationPreference = (prefId) => {
+  // Handle notification preferences - memoized to prevent re-renders
+  const toggleNotificationPreference = useCallback((prefId) => {
     setGoalState(prev => ({
       ...prev,
       notifPrefs: {
@@ -538,87 +541,99 @@ const toggleTargetDate = () => {
         [prefId]: !prev.notifPrefs[prefId]
       }
     }));
-  };
+  }, []);
   
-  // Handle toggle for project sharing
-  const toggleProjectSharing = (projectId) => {
+  // Handle toggle for milestone sharing - memoized to prevent re-renders
+  const toggleMilestoneSharing = useCallback((milestoneId) => {
     setGoalState(prev => ({
       ...prev,
-      projectsToShare: {
-        ...prev.projectsToShare,
-        [projectId]: !prev.projectsToShare[projectId]
+      milestonesToShare: {
+        ...prev.milestonesToShare,
+        [milestoneId]: !prev.milestonesToShare[milestoneId]
       }
     }));
-  };
+  }, []);
   
-  // Set active section
-  const setActiveSection = (section) => {
+  // Set active section - memoized to prevent re-renders
+  const setActiveSection = useCallback((section) => {
     setUiState(prev => ({
       ...prev,
       activeSection: section
     }));
-  };
+  }, []);
   
-  // Toggle expanded section
-  const toggleExpandedSection = (section) => {
+  // Toggle expanded section - memoized to prevent re-renders
+  const toggleExpandedSection = useCallback((section) => {
     setUiState(prev => ({
       ...prev,
       expandedSection: prev.expandedSection === section ? null : section
     }));
-  };
+  }, []);
   
-  // Toggle notifications modal
-  const toggleNotificationsModal = (visible) => {
+  // Toggle notifications modal - memoized to prevent re-renders
+  const toggleNotificationsModal = useCallback((visible) => {
     setUiState(prev => ({
       ...prev,
       notificationsModal: visible
     }));
-  };
+  }, []);
   
-  // Toggle date picker
-  const toggleDatePicker = (visible) => {
+  // Toggle date picker - memoized to prevent re-renders
+  const toggleDatePicker = useCallback((visible) => {
     setUiState(prev => ({
       ...prev,
       showDatePicker: visible
     }));
-  };
+  }, []);
   
-  // Set share format
-  const setShareFormat = (format) => {
+  // Set share format - memoized to prevent re-renders
+  const setShareFormat = useCallback((format) => {
     setGoalState(prev => ({
       ...prev,
       shareFormat: format
     }));
-  };
+  }, []);
   
-  // Handle input changes
-  const handleTitleChange = (text) => {
+  // Handle input changes - memoized to prevent re-renders
+  const handleTitleChange = useCallback((text) => {
+    isTypingRef.current = true;
     setGoalState(prev => ({
       ...prev,
       title: text
     }));
-  };
+    // Reset typing flag after user stops typing
+    clearTimeout(isTypingRef.timeout);
+    isTypingRef.timeout = setTimeout(() => {
+      isTypingRef.current = false;
+    }, 200);
+  }, []);
   
-  const handleDescriptionChange = (text) => {
+  const handleDescriptionChange = useCallback((text) => {
+    isTypingRef.current = true;
     setGoalState(prev => ({
       ...prev,
       description: text
     }));
-  };
+    // Reset typing flag after user stops typing
+    clearTimeout(isTypingRef.timeout);
+    isTypingRef.timeout = setTimeout(() => {
+      isTypingRef.current = false;
+    }, 200);
+  }, []);
   
-  const handleIconChange = (icon) => {
+  const handleIconChange = useCallback((icon) => {
     setGoalState(prev => ({
       ...prev,
       selectedIcon: icon
     }));
-  };
+  }, []);
   
-  const handleColorChange = (color) => {
+  const handleColorChange = useCallback((color) => {
     setGoalState(prev => ({
       ...prev,
       selectedColor: color
     }));
-  };
+  }, []);
   
   // Share goal
   const handleShareGoal = async () => {
@@ -629,10 +644,10 @@ const toggleTargetDate = () => {
         goalState.hasTargetDate,
         goalState.targetDate,
         getTotalProgress(),
-        getLinkedProjects(),
-        goalState.projectsToShare,
+        getLinkedMilestones(),
+        goalState.milestonesToShare,
         goalState.shareFormat,
-        getTasksForProject
+        getTasksForMilestone
       );
       
       const result = await Share.share({
@@ -657,10 +672,10 @@ const toggleTargetDate = () => {
       goalState.hasTargetDate,
       goalState.targetDate,
       getTotalProgress(),
-      getLinkedProjects(),
-      goalState.projectsToShare,
+      getLinkedMilestones(),
+      goalState.milestonesToShare,
       goalState.shareFormat,
-      getTasksForProject
+      getTasksForMilestone
     );
     
     Clipboard.setString(shareContent);
@@ -734,7 +749,7 @@ const toggleTargetDate = () => {
         domain: initialDomain || getIconDomain(goalState.selectedIcon), // Set domain based on icon or initial domain
         domainName: initialDomain || getIconDomain(goalState.selectedIcon), // Same for domain name
         notificationPreferences: notificationPreferencesArray,
-        projectsToShare: goalState.projectsToShare
+        milestonesToShare: goalState.milestonesToShare
       };
       
       console.log(`[GoalDetailsScreen] ${isCreating ? 'Creating' : 'Updating'} goal with ID: ${goalId}`);
@@ -888,27 +903,27 @@ const toggleTargetDate = () => {
     }
   };
   
-  // Get linked projects
-  const getLinkedProjects = () => {
-    if (!initialGoal || !initialGoal.id || !Array.isArray(projects)) {
+  // Get linked milestones - memoized to prevent re-renders
+  const getLinkedMilestones = useCallback(() => {
+    if (!initialGoal || !initialGoal.id || !Array.isArray(milestones)) {
       return [];
     }
     
-    return projects.filter(project => project.goalId === initialGoal.id);
-  };
+    return milestones.filter(milestone => milestone.goalId === initialGoal.id);
+  }, [initialGoal, milestones]);
   
-  // Get linked projects count
-  const getLinkedProjectsCount = () => {
-    return getLinkedProjects().length;
-  };
+  // Get linked milestones count - memoized to prevent re-renders
+  const getLinkedMilestonesCount = useCallback(() => {
+    return getLinkedMilestones().length;
+  }, [getLinkedMilestones]);
   
-  // Get all tasks associated with a project
-  const getTasksForProject = (projectId) => {
-    if (!Array.isArray(tasks) || !projectId) {
+  // Get all tasks associated with a milestone
+  const getTasksForMilestone = (milestoneId) => {
+    if (!Array.isArray(tasks) || !milestoneId) {
       return [];
     }
     
-    return tasks.filter(task => task.projectId === projectId);
+    return tasks.filter(task => task.projectId === milestoneId);
   };
   
   // Handle delete confirmation with warning about linked projects
@@ -932,27 +947,27 @@ const toggleTargetDate = () => {
         isLoading: true
       }));
       
-      // Get linked projects
-      const linkedProjects = getLinkedProjects();
-      const linkedProjectIds = linkedProjects.map(project => project.id);
+      // Get linked milestones
+      const linkedMilestones = getLinkedMilestones();
+      const linkedMilestoneIds = linkedMilestones.map(milestone => milestone.id);
 
-      // Get all tasks associated with linked projects
+      // Get all tasks associated with linked milestones
       const tasksToDelete = [];
-      linkedProjects.forEach(project => {
-        const projectTasks = getTasksForProject(project.id);
-        tasksToDelete.push(...projectTasks);
+      linkedMilestones.forEach(milestone => {
+        const milestoneTasks = getTasksForMilestone(milestone.id);
+        tasksToDelete.push(...milestoneTasks);
       });
       
       // Log what we're deleting for debugging
       console.log(`Deleting goal: ${initialGoal.id}`);
-      console.log(`Deleting ${linkedProjects.length} projects:`, linkedProjectIds);
+      console.log(`Deleting ${linkedMilestones.length} milestones:`, linkedMilestoneIds);
       console.log(`Deleting ${tasksToDelete.length} tasks`);
       
       // APPROACH 1: Direct AsyncStorage manipulation to ensure complete cleanup
       try {
         // Load current data from AsyncStorage
         const storedGoals = await AsyncStorage.getItem('goals');
-        const storedProjects = await AsyncStorage.getItem('projects');
+        const storedMilestones = await AsyncStorage.getItem('projects');
         const storedTasks = await AsyncStorage.getItem('tasks');
         
         // Remove the goal from storage
@@ -963,22 +978,22 @@ const toggleTargetDate = () => {
           console.log('Directly removed goal from AsyncStorage');
         }
         
-        // Remove all linked projects from storage
-        if (storedProjects && linkedProjectIds.length > 0) {
-          const projectsData = JSON.parse(storedProjects);
-          // IMPORTANT CHANGE: Remove ALL projects linked to this goal
-          const updatedProjects = projectsData.filter(project => 
-            !linkedProjectIds.includes(project.id) && project.goalId !== initialGoal.id
+        // Remove all linked milestones from storage
+        if (storedMilestones && linkedMilestoneIds.length > 0) {
+          const milestonesData = JSON.parse(storedMilestones);
+          // IMPORTANT CHANGE: Remove ALL milestones linked to this goal
+          const updatedMilestones = milestonesData.filter(milestone => 
+            !linkedMilestoneIds.includes(milestone.id) && milestone.goalId !== initialGoal.id
           );
-          await AsyncStorage.setItem('projects', JSON.stringify(updatedProjects));
-          console.log(`Directly removed ${projectsData.length - updatedProjects.length} projects from AsyncStorage`);
+          await AsyncStorage.setItem('projects', JSON.stringify(updatedMilestones));
+          console.log(`Directly removed ${milestonesData.length - updatedMilestones.length} milestones from AsyncStorage`);
         }
         
-        // Remove all tasks from deleted projects
-        if (storedTasks && linkedProjectIds.length > 0) {
+        // Remove all tasks from deleted milestones
+        if (storedTasks && linkedMilestoneIds.length > 0) {
           const tasksData = JSON.parse(storedTasks);
           const updatedTasks = tasksData.filter(task => 
-            !linkedProjectIds.includes(task.projectId)
+            !linkedMilestoneIds.includes(task.projectId)
           );
           await AsyncStorage.setItem('tasks', JSON.stringify(updatedTasks));
           console.log(`Directly removed ${tasksData.length - updatedTasks.length} tasks from AsyncStorage`);
@@ -989,27 +1004,27 @@ const toggleTargetDate = () => {
       }
       
       // APPROACH 2: Try using context state update functions if available
-      if (typeof setProjects === 'function' && typeof setTasks === 'function') {
-        // Remove projects linked to this goal
-        setProjects(prevProjects => 
-          prevProjects.filter(project => 
-            !linkedProjectIds.includes(project.id) && project.goalId !== initialGoal.id
+      if (typeof setMilestones === 'function' && typeof setTasks === 'function') {
+        // Remove milestones linked to this goal
+        setMilestones(prevMilestones => 
+          prevMilestones.filter(milestone => 
+            !linkedMilestoneIds.includes(milestone.id) && milestone.goalId !== initialGoal.id
           )
         );
         
-        // Remove tasks linked to those projects
+        // Remove tasks linked to those milestones
         setTasks(prevTasks => 
-          prevTasks.filter(task => !linkedProjectIds.includes(task.projectId))
+          prevTasks.filter(task => !linkedMilestoneIds.includes(task.projectId))
         );
       }
       
       // APPROACH 3: Try individual deletion functions if available
-      if (typeof deleteProject === 'function') {
-        for (const project of linkedProjects) {
+      if (typeof deleteMilestone === 'function') {
+        for (const milestone of linkedMilestones) {
           try {
-            await deleteProject(project.id);
+            await deleteMilestone(milestone.id);
           } catch (error) {
-            console.error(`Failed to delete project ${project.id}:`, error);
+            console.error(`Failed to delete milestone ${milestone.id}:`, error);
           }
         }
       }
@@ -1063,12 +1078,22 @@ const toggleTargetDate = () => {
     return Object.values(goalState.notifPrefs).filter(value => value).length;
   };
 
-  // Scroll to input on focus
-  const handleInputFocus = (yOffset) => {
+  // Scroll to input on focus - memoized to prevent re-renders
+  const handleInputFocus = useCallback((yOffset) => {
     if (scrollViewRef.current) {
       scrollViewRef.current.scrollTo({ y: yOffset, animated: true });
     }
-  };
+  }, []);
+
+  // Memoized callback for setting target date - fixes inline function issue
+  const handleTargetDateChange = useCallback((date) => {
+    setGoalState(prev => ({ ...prev, targetDate: date }));
+  }, []);
+
+  // Memoized callback for toggling date picker mode - fixes inline function issue
+  const handleDatePickerModeToggle = useCallback((mode) => {
+    setUiState(prev => ({ ...prev, datePickerMode: mode }));
+  }, []);
   
   // Rendering helper
   const renderLoadingOverlay = () => {
@@ -1099,6 +1124,27 @@ const toggleTargetDate = () => {
   // Calculate minimum touch target size
   const minTouchSize = Math.max(scaleWidth(44), accessibility.minTouchTarget);
 
+  // Memoize save button styles to prevent re-renders
+  const saveButtonStyle = useMemo(() => ({
+    backgroundColor: goalState.selectedColor,
+    opacity: (!goalState.title.trim() || uiState.isLoading) ? 0.6 : 1.0
+  }), [goalState.selectedColor, goalState.title, uiState.isLoading]);
+
+  // Memoize save button disabled state
+  const saveButtonDisabled = useMemo(() => 
+    !goalState.title.trim() || uiState.isLoading,
+    [goalState.title, uiState.isLoading]
+  );
+
+  // Memoize ScrollView onScroll handler to prevent new function creation
+  const scrollHandler = useMemo(() => 
+    Animated.event(
+      [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+      { useNativeDriver: false }
+    ),
+    [scrollY]
+  );
+
   return (
     <SafeAreaView style={[
       styles.container, 
@@ -1128,20 +1174,14 @@ const toggleTargetDate = () => {
         <View style={styles.headerCenter} />
         
         <TouchableOpacity 
-          style={[
-            styles.saveButton, 
-            { 
-              backgroundColor: goalState.selectedColor,
-              opacity: (!goalState.title.trim() || uiState.isLoading) ? 0.6 : 1.0
-            }
-          ]}
+          style={[styles.saveButton, saveButtonStyle]}
           onPress={handleSave}
-          disabled={!goalState.title.trim() || uiState.isLoading}
+          disabled={saveButtonDisabled}
           accessible={true}
           accessibilityRole="button"
           accessibilityLabel="Save goal"
           accessibilityHint="Saves your goal changes"
-          accessibilityState={{ disabled: !goalState.title.trim() || uiState.isLoading }}
+          accessibilityState={{ disabled: saveButtonDisabled }}
         >
           <Ionicons name="save-outline" size={scaleWidth(18)} color="#000000" />
           <Text 
@@ -1159,13 +1199,10 @@ const toggleTargetDate = () => {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: false }
-        )}
+        onScroll={scrollHandler}
         scrollEventThrottle={16}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
+        // keyboardShouldPersistTaps="handled"
+        // keyboardDismissMode="on-drag"
         accessible={true}
         accessibilityLabel="Goal details"
       >
@@ -1208,7 +1245,7 @@ const toggleTargetDate = () => {
           />
         </View>
         
-        {/* General Section */}
+        {/* TEST: Add back GeneralSection wrapper */}
         {uiState.activeSection === 'general' && (
           <GeneralSection
             theme={theme}
@@ -1223,7 +1260,7 @@ const toggleTargetDate = () => {
             hasTargetDate={goalState.hasTargetDate}
             setHasTargetDate={toggleTargetDate}
             targetDate={goalState.targetDate}
-            setTargetDate={(date) => setGoalState(prev => ({ ...prev, targetDate: date }))}
+            setTargetDate={handleTargetDateChange}
             showDatePicker={uiState.showDatePicker}
             setShowDatePicker={toggleDatePicker}
             handleDateChange={handleDateChange}
@@ -1231,7 +1268,7 @@ const toggleTargetDate = () => {
             descriptionInputRef={descriptionInputRef}
             handleInputFocus={handleInputFocus}
             datePickerMode={uiState.datePickerMode}
-            toggleDatePickerMode={(mode) => setUiState(prev => ({ ...prev, datePickerMode: mode }))}
+            toggleDatePickerMode={handleDatePickerModeToggle}
           />
         )}
         
@@ -1246,14 +1283,14 @@ const toggleTargetDate = () => {
             expandedSection={uiState.expandedSection}
             setExpandedSection={toggleExpandedSection}
             getActiveNotificationCount={getActiveNotificationCount}
-            getLinkedProjects={getLinkedProjects}
-            projectsToShare={goalState.projectsToShare}
-            toggleProjectSharing={toggleProjectSharing}
+            getLinkedMilestones={getLinkedMilestones}
+            milestonesToShare={goalState.milestonesToShare}
+            toggleMilestoneSharing={toggleMilestoneSharing}
             shareFormat={goalState.shareFormat}
             setShareFormat={setShareFormat}
             copyToClipboard={copyToClipboard}
             handleShareGoal={handleShareGoal}
-            getLinkedProjectsCount={getLinkedProjectsCount}
+            getLinkedMilestonesCount={getLinkedMilestonesCount}
             handleDeleteConfirmation={handleDeleteConfirmation}
             isLoading={uiState.isLoading}
           />
@@ -1316,8 +1353,8 @@ const toggleTargetDate = () => {
               style={[styles.deleteModalMessage, { color: theme.textSecondary }]}
               maxFontSizeMultiplier={1.3}
             >
-              {getLinkedProjectsCount() > 0
-                ? `Are you sure you want to delete this goal? This will also delete ${getLinkedProjectsCount()} linked ${getLinkedProjectsCount() === 1 ? 'project' : 'projects'} and all their tasks. This action cannot be undone.`
+              {getLinkedMilestonesCount() > 0
+                ? `Are you sure you want to delete this goal? This will also delete ${getLinkedMilestonesCount()} linked ${getLinkedMilestonesCount() === 1 ? 'milestone' : 'milestones'} and all their tasks. This action cannot be undone.`
                 : 'Are you sure you want to delete this goal? This action cannot be undone.'
               }
             </Text>

@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MainGoalCard from '../components/MainGoalCard';
 import Confetti from '../components/Confetti';
 import { LinearGradient } from 'expo-linear-gradient';
+import AddSelectionModal from '../components/AddSelectionModal';
 // import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs'; // Moved to App.js
 // import LifePlanOverviewScreen from './LifePlanOverviewScreen'; // Moved to App.js
 import {
@@ -133,6 +134,9 @@ const GoalsScreen = ({ navigation, route, tabMode }) => {
   // State for manual fullscreen toggle on Overview tab
   const [isOverviewFullscreen, setIsOverviewFullscreen] = useState(false);
   
+  // State for add selection modal
+  const [showAddSelectionModal, setShowAddSelectionModal] = useState(false);
+  
   // Track current tab for UI state only
   // (React Navigation will handle persistence automatically)
   
@@ -149,7 +153,7 @@ const GoalsScreen = ({ navigation, route, tabMode }) => {
   // Get app context with defaults
   const appContext = useAppContext();
   const goals = appContext?.goals || [];
-  const projects = appContext?.projects || [];
+  const milestones = appContext?.projects || []; // Using projects data but calling them milestones in UI
   const updateGoal = appContext?.updateGoal;
   const createGoal = appContext?.createGoal;
   // Check for Pro status based on subscription status
@@ -314,8 +318,8 @@ const GoalsScreen = ({ navigation, route, tabMode }) => {
 
 
   // Verify goal progress is accurate
-  const verifyGoalProgress = (goalsData, projectsData) => {
-    if (!Array.isArray(goalsData) || !Array.isArray(projectsData)) {
+  const verifyGoalProgress = (goalsData, milestonesData) => {
+    if (!Array.isArray(goalsData) || !Array.isArray(milestonesData)) {
       return goalsData;
     }
 
@@ -326,16 +330,16 @@ const GoalsScreen = ({ navigation, route, tabMode }) => {
     for (let i = 0; i < fixedGoals.length; i++) {
       const goal = fixedGoals[i];
       
-      // Get projects for this goal
-      const goalProjects = projectsData.filter(project => project.goalId === goal.id);
+      // Get milestones for this goal
+      const goalMilestones = milestonesData.filter(milestone => milestone.goalId === goal.id);
       
       // Calculate expected progress
       let calculatedProgress = 0;
-      if (goalProjects.length > 0) {
-        const completedProjects = goalProjects.filter(project => 
-          project.progress === 100 || project.completed || project.status === 'done'
+      if (goalMilestones.length > 0) {
+        const completedMilestones = goalMilestones.filter(milestone => 
+          milestone.progress === 100 || milestone.completed || milestone.status === 'done'
         ).length;
-        calculatedProgress = Math.round((completedProjects / goalProjects.length) * 100);
+        calculatedProgress = Math.round((completedMilestones / goalMilestones.length) * 100);
       }
       
       // If there's a mismatch, fix it (but don't override manually completed goals)
@@ -384,7 +388,7 @@ const GoalsScreen = ({ navigation, route, tabMode }) => {
     }
 
     // Verify and fix goal progress
-    const fixedGoals = verifyGoalProgress(goalsData, projects);
+    const fixedGoals = verifyGoalProgress(goalsData, milestones);
 
     // Separate completed from active goals
     const completed = [];
@@ -459,7 +463,7 @@ const GoalsScreen = ({ navigation, route, tabMode }) => {
     }
     
     // Verify and fix goal progress
-    const fixedGoals = verifyGoalProgress(goalsData, projects);
+    const fixedGoals = verifyGoalProgress(goalsData, milestones);
     
     // Filter goals by domain
     const filtered = fixedGoals.filter(goal => {
@@ -524,15 +528,19 @@ const GoalsScreen = ({ navigation, route, tabMode }) => {
   
   // Add button animation with pulse effect
   const animateAddButton = () => {
+    // Stop any existing animation and reset
+    addButtonScale.stopAnimation();
+    addButtonScale.setValue(1);
+    
     Animated.sequence([
       Animated.timing(addButtonScale, {
-        toValue: 1.2,
-        duration: 200,
+        toValue: 0.85,
+        duration: 120,
         useNativeDriver: true
       }),
       Animated.timing(addButtonScale, {
         toValue: 1,
-        duration: 200,
+        duration: 150,
         useNativeDriver: true
       })
     ]).start();
@@ -672,10 +680,34 @@ const GoalsScreen = ({ navigation, route, tabMode }) => {
     }
   };
   
+  // Handle add button press - show selection modal
+  const handleAddButtonPress = () => {
+    animateAddButton();
+    // Small delay to let animation start before showing modal
+    setTimeout(() => {
+      setShowAddSelectionModal(true);
+    }, 50);
+  };
+  
+  // Handle selection from the modal
+  const handleSelectionModalChoice = (choice) => {
+    switch (choice) {
+      case 'goal':
+        handleAddGoal();
+        break;
+      case 'milestone':
+        handleAddMilestone();
+        break;
+      case 'task':
+        handleAddTask();
+        break;
+      default:
+        break;
+    }
+  };
+  
   // Handle creating a new goal
   const handleAddGoal = () => {
-    animateAddButton();
-    
     // Check if user can add more goals
     if (!canAddMoreGoals()) {
       // Simple message focused on unlimited goals
@@ -694,6 +726,26 @@ const GoalsScreen = ({ navigation, route, tabMode }) => {
       // Pass information to return to Goals tab (index 1) after creation
       returnToTab: 'active'
     });
+  };
+  
+  // Handle creating a new milestone (project)
+  const handleAddMilestone = () => {
+    // Navigate to project creation
+    if (goals.length === 0) {
+      showUpgradePrompt('Please create a goal first before adding milestones.');
+      return;
+    }
+    navigation.navigate('ProjectDetails', { mode: 'create' });
+  };
+  
+  // Handle creating a new task  
+  const handleAddTask = () => {
+    // Navigate to task creation
+    if (goals.length === 0) {
+      showUpgradePrompt('Please create a goal first before adding tasks.');
+      return;
+    }
+    navigation.navigate('TaskDetails', { mode: 'create' });
   };
   
   // Navigate to upgrade screen
@@ -1050,7 +1102,7 @@ const GoalsScreen = ({ navigation, route, tabMode }) => {
           </Text>
           <TouchableOpacity 
             style={[styles.emptyAddButton, { backgroundColor: theme.primary }]} 
-            onPress={handleAddGoal}
+            onPress={handleAddButtonPress}
             activeOpacity={0.8}
             accessible={true}
             accessibilityRole="button"
@@ -1179,10 +1231,6 @@ const GoalsScreen = ({ navigation, route, tabMode }) => {
   // Calculate button dimensions to ensure minimum touch target size
   const addButtonSize = Math.max(scaleWidth(60), 44); // Consistent with accessibility standards
   
-  // Handler for fullscreen toggle
-  const handleFullscreenToggle = () => {
-    setIsOverviewFullscreen(!isOverviewFullscreen);
-  };
 
   // Determine what content to render based on tabMode
   const renderTabContent = () => {
@@ -1291,19 +1339,15 @@ const GoalsScreen = ({ navigation, route, tabMode }) => {
                   borderRadius: addButtonSize / 2
                 }
               ]}
-              onPress={handleAddGoal}
+              onPress={handleAddButtonPress}
               activeOpacity={0.8}
               disabled={isProcessingGoals.current}
               accessible={true}
               accessibilityRole="button"
-              accessibilityLabel="Add new goal"
-              accessibilityHint="Opens the goal creation screen"
+              accessibilityLabel="Add new item"
+              accessibilityHint="Opens selection menu for goals, milestones, or tasks"
             >
-              <LinearGradient
-                colors={['rgba(255,255,255,0.2)', 'rgba(255,255,255,0)']}
-                style={styles.buttonGradient}
-              />
-              <Ionicons name="add" size={scaleWidth(28)} color="#FFFFFF" />
+              <Ionicons name="add" size={scaleWidth(24)} color="#FFFFFF" />
             </TouchableOpacity>
           </Animated.View>
         )}
@@ -1404,6 +1448,13 @@ const GoalsScreen = ({ navigation, route, tabMode }) => {
             </View>
           </View>
         </Modal>
+        
+        {/* Add Selection Modal */}
+        <AddSelectionModal
+          visible={showAddSelectionModal}
+          onClose={() => setShowAddSelectionModal(false)}
+          onSelectOption={handleSelectionModalChoice}
+        />
       </View>
     );
   }
@@ -1516,10 +1567,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
     overflow: 'hidden',
   },
   buttonGradient: {

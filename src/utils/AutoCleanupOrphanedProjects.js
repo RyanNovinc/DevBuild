@@ -27,10 +27,10 @@ const autoCleanupOrphanedProjects = async () => {
     // Get valid goal IDs
     const validGoalIds = goals.map(g => g.id);
     
-    // Filter projects - only keep those with valid goals
+    // Filter projects - keep those with valid goals OR standalone projects (flexible hierarchy)
     const validProjects = allProjects.filter(project => {
-      // Keep only projects that have a goalId AND that goalId exists
-      return project.goalId && validGoalIds.includes(project.goalId);
+      // Keep projects that have a valid goalId OR are standalone (no goalId)
+      return !project.goalId || validGoalIds.includes(project.goalId);
     });
     
     // Check if we need to clean up
@@ -44,13 +44,13 @@ const autoCleanupOrphanedProjects = async () => {
     const removedCount = allProjects.length - validProjects.length;
     
     // Log the cleanup for debugging
-    console.log(`Auto-cleaned ${removedCount} orphaned projects`);
+    console.log(`Auto-cleaned ${removedCount} invalid projects (preserving standalone)`);
     
     return {
       cleaned: true,
       removedCount,
       remainingCount: validProjects.length,
-      message: `Cleaned ${removedCount} orphaned projects`
+      message: `Cleaned ${removedCount} invalid projects (preserved standalone)`
     };
   } catch (error) {
     console.error('Error in auto cleanup:', error);

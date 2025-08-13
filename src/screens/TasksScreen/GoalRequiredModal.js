@@ -23,19 +23,19 @@ const GoalRequiredModal = ({
   
   const getTitle = () => {
     return isProjectType 
-      ? 'Goals Required' 
-      : 'Projects Required';
+      ? 'Organization Options' 
+      : 'Task Organization Options';
   };
   
   const getMessage = () => {
     if (isProjectType) {
-      return 'You need to create a goal before you can add projects.';
+      return 'Create a goal first to organize your milestones, or create standalone milestones that can be organized later.';
     } else {
-      // For tasks, check the context
+      // For tasks - flexible hierarchy allows multiple options
       if (context === 'noGoals') {
-        return 'You need to create a goal and project before you can add tasks.';
+        return 'Create a goal to organize tasks, create a milestone for task groups, or add standalone tasks.';
       } else {
-        return 'You need to create a project before you can add tasks.';
+        return 'Add tasks directly to goals, create milestones for organization, or add standalone tasks.';
       }
     }
   };
@@ -43,7 +43,7 @@ const GoalRequiredModal = ({
   const getActionText = () => {
     return isProjectType 
       ? 'Create Goal' 
-      : 'Create Project';
+      : 'Add Task';
   };
   
   const getIcon = () => {

@@ -21,9 +21,6 @@ import {
   calculateTotalSavings,
   calculateTotalDebt,
   calculateSavingsPercentage,
-  calculateIncomePercentile,
-  calculateExpensePercentile,
-  calculateSavingsPercentile,
   initializeWithExampleData
 } from './utils';
 import CurrencyService from './CurrencyService';
@@ -518,24 +515,6 @@ const FinancialTracker = ({
     saveFinancialData(updatedData);
   };
 
-  // Handle replacing all goals with preset goals
-  const handleReplaceAllGoals = (newGoals) => {
-    // If not premium, don't allow replacing
-    if (!isPremium) {
-      navigation.navigate('PricingScreen');
-      return;
-    }
-    
-    console.log("Replacing all goals with:", newGoals);
-    
-    const updatedData = {
-      ...financialData,
-      goals: newGoals
-    };
-    
-    setFinancialData(updatedData);
-    saveFinancialData(updatedData);
-  };
   
   // Enhanced format currency function using the currency service
   const enhancedFormatCurrency = async (amount) => {
@@ -560,9 +539,6 @@ const FinancialTracker = ({
   const totalSavings = calculateTotalSavings(financialData);
   const totalDebt = calculateTotalDebt(financialData);
   const savingsPercentage = calculateSavingsPercentage(totalIncome, totalExpenses);
-  const incomePercentile = calculateIncomePercentile(totalIncome);
-  const expensePercentile = calculateExpensePercentile(totalExpenses);
-  const savingsPercentile = calculateSavingsPercentile(savingsPercentage);
   
   // Get highest bar for chart scaling
   const highestBar = Math.max(totalIncome, totalExpenses);
@@ -575,9 +551,6 @@ const FinancialTracker = ({
     totalSavings,
     totalDebt,
     savingsPercentage,
-    incomePercentile,
-    expensePercentile,
-    savingsPercentile,
     highestBar,
     barAnim,
     isDarkMode,
@@ -660,7 +633,6 @@ const FinancialTracker = ({
     handleToggleGoal,
     handleAddGoal,
     handleDeleteGoal,
-    handleReplaceAllGoals,
     setCurrency: handleCurrencyChange,
     loadSavedFinancialData,
     startFreshFinancialData,

@@ -308,7 +308,10 @@ const AchievementsScreen = ({ navigation, route }) => {
   // Get achievement context
   const { 
     isAchievementUnlocked, 
-    getTotalPoints
+    getTotalPoints,
+    unlockAchievement,
+    resetAllAchievements,
+    refreshAchievements
   } = useAchievements();
 
   // Get user subscription status
@@ -359,6 +362,119 @@ const AchievementsScreen = ({ navigation, route }) => {
     }
   };
 
+  // Dev functions for testing
+  const unlockTestAchievement = async (achievementId) => {
+    try {
+      console.log(`Attempting to unlock achievement: ${achievementId}`);
+      const result = await unlockAchievement(achievementId);
+      console.log(`Unlock result: ${result}`);
+      // Force refresh after a short delay to ensure state updates
+      setTimeout(() => {
+        refreshAchievements();
+      }, 100);
+    } catch (error) {
+      console.error('Error unlocking achievement:', error);
+    }
+  };
+
+  const addTestPoints = async (points) => {
+    // Use actual achievement IDs with varying point values
+    const testAchievements = [
+      { id: 'ai-apprentice', points: 5 },
+      { id: 'profile-personalizer', points: 5 },
+      { id: 'vision-setter', points: 5 },
+      { id: '7-day-streak', points: 10 },
+      { id: 'foundation-builder', points: 10 },
+      { id: 'theme-customizer', points: 10 },
+      { id: 'strategic-thinker', points: 10 },
+      { id: 'document-master', points: 10 },
+      { id: 'strategic-advisor', points: 15 },
+      { id: 'progress-tracker', points: 15 },
+      { id: 'domain-diversifier', points: 20 },
+      { id: 'completion-champion', points: 20 },
+      { id: 'referral-guide', points: 25 },
+      { id: 'system-builder', points: 25 },
+      { id: '30-day-momentum', points: 30 }
+    ];
+
+    let pointsAdded = 0;
+    for (const achievement of testAchievements) {
+      if (pointsAdded >= points) break;
+      
+      if (!isAchievementUnlocked(achievement.id)) {
+        await unlockTestAchievement(achievement.id);
+        pointsAdded += achievement.points;
+        
+        // Small delay between unlocks
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+    }
+  };
+
+  const renderDevButtons = () => {
+    if (__DEV__) {
+      return (
+        <View style={styles.devButtonsContainer}>
+          <Text style={[styles.devTitle, { color: theme.text }]}>Dev Testing</Text>
+          <View style={styles.devButtonsRow}>
+            <TouchableOpacity 
+              style={styles.devButton}
+              onPress={() => unlockTestAchievement('goal-pioneer')}
+            >
+              <Text style={styles.devButtonText}>+Goal Pioneer</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.devButton}
+              onPress={() => addTestPoints(50)}
+            >
+              <Text style={styles.devButtonText}>+50 Points</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.devButton, styles.devButtonDanger]}
+              onPress={async () => {
+                await resetAllAchievements();
+                await refreshAchievements();
+              }}
+            >
+              <Text style={styles.devButtonText}>Reset All</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.devButtonsRow}>
+            <TouchableOpacity 
+              style={styles.devButton}
+              onPress={() => unlockTestAchievement('7-day-streak')}
+            >
+              <Text style={styles.devButtonText}>+7-Day Streak</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.devButton}
+              onPress={() => addTestPoints(100)}
+            >
+              <Text style={styles.devButtonText}>+100 Points</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.devButton}
+              onPress={async () => {
+                const stageInfo = LevelService.getStageInfo(totalPoints);
+                const pointsNeeded = stageInfo.scoreForNextStage;
+                
+                if (pointsNeeded > 0) {
+                  console.log(`Need ${pointsNeeded} points to reach next stage`);
+                  await addTestPoints(pointsNeeded);
+                } else {
+                  console.log('Already at max stage');
+                }
+              }}
+            >
+              <Text style={styles.devButtonText}>Next Stage</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      );
+    }
+    return null;
+  };
+
   const renderOverviewTab = () => {
     return (
       <ScrollView 
@@ -366,6 +482,9 @@ const AchievementsScreen = ({ navigation, route }) => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.overviewContent}
       >
+        {/* Dev Buttons */}
+        {renderDevButtons()}
+
         {/* Clean Stats Section */}
         <View style={styles.statsSection}>
           <View style={[styles.mainStatCard, { backgroundColor: '#0A0A0A' }]}>
@@ -1093,6 +1212,44 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textAlign: 'center',
     lineHeight: 20,
+  },
+  
+  // Dev button styles
+  devButtonsContainer: {
+    backgroundColor: '#0A0A0A',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#FF0000',
+  },
+  devTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  devButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+    gap: 8,
+  },
+  devButton: {
+    flex: 1,
+    backgroundColor: '#2563eb',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  devButtonDanger: {
+    backgroundColor: '#dc2626',
+  },
+  devButtonText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
   },
 });
 

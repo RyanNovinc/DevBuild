@@ -22,7 +22,8 @@ const ProGiftSurprise = ({
   onClose, 
   theme, 
   onColorWheelUnlocked,
-  showAppStoreRating = true 
+  showAppStoreRating = true,
+  giftType = 'colorWheel' // 'colorWheel' or 'aiPlus'
 }) => {
   const [giftOpened, setGiftOpened] = useState(false);
   const [showRatingPrompt, setShowRatingPrompt] = useState(false);
@@ -90,8 +91,8 @@ const ProGiftSurprise = ({
       console.error('Error saving gift state:', error);
     }
 
-    // Trigger color wheel unlock
-    if (onColorWheelUnlocked) {
+    // Trigger color wheel unlock - only for color wheel gifts
+    if (giftType === 'colorWheel' && onColorWheelUnlocked) {
       onColorWheelUnlocked();
     }
 
@@ -288,25 +289,45 @@ const ProGiftSurprise = ({
               ]}
             >
               <View style={styles.unlockIcon}>
-                <Ionicons name="color-palette" size={48} color={theme.primary} />
+                <Ionicons 
+                  name={giftType === 'aiPlus' ? 'sparkles' : 'color-palette'} 
+                  size={48} 
+                  color={giftType === 'aiPlus' ? '#FFFFFF' : theme.primary} 
+                />
               </View>
 
               <Text style={[styles.unlockTitle, { color: theme.text }]}>
-                Theme Colors Unlocked
+                {giftType === 'aiPlus' ? 'Upgraded to AI Plus!' : 'Theme Colors Unlocked'}
               </Text>
 
               <Text style={[styles.unlockSubtitle, { color: theme.textSecondary }]}>
-                Customize your app theme
+                {giftType === 'aiPlus' ? '$4.99 value • Early user bonus' : 'Customize your app theme'}
               </Text>
 
-              <View style={[styles.messageCard, { backgroundColor: theme.cardElevated }]}>
-                <Text style={[styles.thankYouMessage, { color: theme.textSecondary }]}>
-                  "Thank you for upgrading to Pro! Your support helps me continue improving LifeCompass."
-                </Text>
-                <Text style={[styles.signature, { color: theme.primary }]}>
-                  — Ryan
-                </Text>
-              </View>
+              {giftType === 'aiPlus' ? (
+                <View style={[styles.messageCard, { backgroundColor: 'rgba(255,255,255,0.03)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' }]}>
+                  <View style={{ alignItems: 'flex-start', width: '100%' }}>
+                    <Text style={[styles.featureItem, { color: theme.text, marginBottom: 8 }]}>
+                      • Additional user context (2x)
+                    </Text>
+                    <Text style={[styles.featureItem, { color: theme.text, marginBottom: 8 }]}>
+                      • More daily usage (3x AI Light)
+                    </Text>
+                    <Text style={[styles.featureItem, { color: theme.text }]}>
+                      • Built for everyday productivity
+                    </Text>
+                  </View>
+                </View>
+              ) : (
+                <View style={[styles.messageCard, { backgroundColor: theme.cardElevated }]}>
+                  <Text style={[styles.thankYouMessage, { color: theme.textSecondary }]}>
+                    "Thank you for upgrading to Pro! Your support helps me continue improving LifeCompass."
+                  </Text>
+                  <Text style={[styles.signature, { color: theme.primary }]}>
+                    — Ryan
+                  </Text>
+                </View>
+              )}
 
               {!showRatingPrompt && (
                 <TouchableOpacity
@@ -519,6 +540,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'right',
+  },
+  featureItem: {
+    fontSize: 14,
+    fontWeight: '400',
+    lineHeight: 20,
   },
   continueButton: {
     paddingVertical: 16,

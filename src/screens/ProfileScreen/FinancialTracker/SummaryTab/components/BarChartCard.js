@@ -22,8 +22,6 @@ const BarChartCard = ({
   theme, 
   totalIncome, 
   totalExpenses, 
-  incomePercentile,
-  expensePercentile,
   highestBar,
   barAnim,
   isDarkMode,

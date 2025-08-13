@@ -37,7 +37,7 @@ const ViewToggle = ({ theme, viewMode, setViewMode, activeTab }) => {
             : `View ${isFounderTab ? 'Pro Pricing' : 'Plan Options'}`}
         </Text>
         <Ionicons
-          name="chevron-forward"
+          name={viewMode === 'cards' ? "chevron-forward" : "chevron-back"}
           size={18}
           color="rgba(255,255,255,0.6)"
           style={{ marginLeft: 8 }}

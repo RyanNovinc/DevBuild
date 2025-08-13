@@ -28,7 +28,7 @@ const ProjectHeader = ({
       </TouchableOpacity>
       
       <Text style={[styles.headerTitle, { color: theme.text }]}>
-        {isCreating ? 'New Project' : 'Edit Project'}
+        {isCreating ? 'New Milestone' : 'Edit Milestone'}
       </Text>
       
       <TouchableOpacity 

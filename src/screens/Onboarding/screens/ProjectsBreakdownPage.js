@@ -417,26 +417,30 @@ const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, onConfettiSta
     
     switch (key) {
       case "Personal Growth-Reading More":
-        return "Reading regularly improves vocabulary, reduces stress by up to 68%, and expands your knowledge base. It's also linked to improved empathy, better sleep when done before bed, and stronger analytical thinking skills.";
+        return "Reading regularly improves vocabulary, reduces stress, and expands your knowledge base. It enhances empathy, improves sleep quality, and strengthens analytical thinking skills that benefit all areas of your life.";
       case "Personal Growth-Learning New Skills":
-        return "Learning new skills creates new neural pathways, keeps your mind sharp as you age, and builds confidence that transfers to other areas of life. It also provides a sense of accomplishment outside your professional identity.";
+        return "Learning new skills keeps your mind sharp, builds confidence that transfers to other areas of life, and provides a sense of accomplishment beyond your professional identity. It opens new opportunities and perspectives.";
       case "Personal Growth-Mindfulness Practice":
-        return "Regular mindfulness practice is linked to reduced stress, improved focus, better emotional regulation, and enhanced immunity. It can help break negative thought patterns and increase your enjoyment of everyday experiences.";
+        return "Regular mindfulness practice reduces stress, improves focus, enhances emotional regulation, and boosts immunity. It helps break negative thought patterns and increases your enjoyment of everyday experiences.";
       case "Health & Wellness-Regular Exercise":
-        return "Beyond weight management, consistent exercise improves mood through endorphin release, enhances sleep quality, boosts immunity, and significantly reduces risk of chronic diseases like heart disease and diabetes.";
+        return "Beyond weight management, consistent exercise improves mood, enhances sleep quality, boosts immunity, and significantly reduces risk of chronic diseases. It provides energy and confidence for pursuing other goals.";
       // Add more cases as needed
       default:
         // Generic response based on domain
         if (domainName === "Career & Work") {
-          return "This goal will help you find more satisfaction and success in your professional life. Progress here often leads to greater financial rewards, improved workplace relationships, and a stronger sense of accomplishment.";
+          return "This goal helps you find more satisfaction and success in your professional life. Progress here often leads to better opportunities, improved workplace relationships, and a stronger sense of accomplishment in your career.";
         } else if (domainName === "Health & Wellness") {
-          return "Investing in this aspect of health creates a foundation for everything else in your life. The benefits include increased energy, improved mood, greater resilience to stress, and reduced risk of illness.";
+          return "Investing in this aspect of health creates a foundation for everything else in your life. You'll experience increased energy, improved mood, greater resilience to stress, and better overall wellbeing.";
         } else if (domainName === "Relationships") {
-          return "Strong relationships are consistently linked to happiness, longevity, and resilience. This goal helps you build deeper connections that provide support during challenges and enhance your enjoyment of life's positive moments.";
+          return "Strong relationships are key to happiness and life satisfaction. This goal helps you build deeper connections that provide support during challenges and enhance your enjoyment of life's positive moments.";
         } else if (domainName === "Financial Security") {
-          return "Progress in this area reduces stress and increases your options in all other areas of life. Financial security provides both peace of mind and the resources to pursue other important goals.";
+          return "Progress in this area reduces financial stress and increases your options in all areas of life. Financial security provides peace of mind and the resources to pursue other important goals with confidence.";
+        } else if (domainName === "Personal Growth") {
+          return "This goal helps you develop as a person and unlock your potential. Personal growth builds confidence, expands your perspectives, and creates a stronger foundation for achieving your other life goals.";
+        } else if (domainName === "Community & Environment") {
+          return "This goal helps you create positive impact while building meaningful connections. Contributing to your community and environment provides purpose, fulfillment, and a sense of belonging.";
         } else {
-          return "This goal addresses a fundamental aspect of your wellbeing and life satisfaction. Consistent progress here will create positive ripple effects in other areas of your life.";
+          return "This goal addresses an important aspect of your wellbeing and life satisfaction. Consistent progress here will create positive changes that benefit other areas of your life as well.";
         }
     }
   };
@@ -998,8 +1002,9 @@ const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, onConfettiSta
                   {selectedItem.type === 'task' ? 
                     translate('common', 'taskExplanation', {}) || "This task breaks down your project into a specific, actionable step you can complete. Tasks are concrete actions that move you toward your goals." : 
                     selectedItem.explanation || `${
-                      selectedItem.type === 'goal' ? 'This goal helps you focus on a specific aspect of the ' + domain.name + ' domain.' :
-                      'This project helps break down your goal into manageable pieces.'
+                      selectedItem.type === 'goal' ? 'A goal represents something meaningful you want to achieve. Breaking goals down into projects and tasks makes it easier and much more likely to reach it.' :
+                      selectedItem.type === 'project' ? 'A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.' :
+                      'A task is a specific action you complete to make progress. Tasks are concrete, doable steps that move you forward through each project toward your goal.'
                     }`}
                 </ResponsiveText>
                 
@@ -1038,15 +1043,6 @@ const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, onConfettiSta
                         </View>
                         <ResponsiveText style={styles.expandedText}>
                           {getBenefitsForGoal(selectedItem, domain.name)}
-                        </ResponsiveText>
-                        
-                        <View style={[styles.expandedSectionTitleContainer, { borderLeftColor: domain.color }]}>
-                          <ResponsiveText style={styles.expandedSectionTitle}>
-                            {translate('common', 'implementationTips')}
-                          </ResponsiveText>
-                        </View>
-                        <ResponsiveText style={styles.expandedText}>
-                          {getTipsForGoal(selectedItem, domain.name)}
                         </ResponsiveText>
                       </>
                     ) : (

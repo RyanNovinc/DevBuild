@@ -22,20 +22,20 @@ const GoalRequiredModal = ({
   
   const getTitle = () => {
     return isProjectType 
-      ? 'Goals Required' 
-      : 'Project Required';
+      ? 'Organization Options' 
+      : 'Task Organization Options';
   };
   
   const getMessage = () => {
     return isProjectType 
-      ? 'You need to create a goal before you can add projects to a time block.'
-      : 'You need to create a project before you can add tasks to a time block.';
+      ? 'Create a goal first to organize milestones, or create standalone milestones for time blocks.'
+      : 'Add tasks from goals, milestones, or use standalone tasks for time blocks.';
   };
   
   const getActionText = () => {
     return isProjectType 
       ? 'Create Goal' 
-      : 'Create Project';
+      : 'Add Task';
   };
   
   const getIcon = () => {

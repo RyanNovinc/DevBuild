@@ -1,5 +1,5 @@
 // src/screens/GoalDetailsScreen/components/GeneralSection.js
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { 
   View, 
   Text, 
@@ -26,6 +26,86 @@ import {
   accessibility,
   meetsContrastRequirements
 } from '../../../utils/responsive';
+
+// ModernInput defined OUTSIDE GeneralSection to prevent recreation on every render
+const ModernInput = React.memo(({ 
+  label, 
+  value, 
+  onChangeText, 
+  placeholder, 
+  multiline = false, 
+  maxLength, 
+  inputRef, 
+  onFocus, 
+  onBlur, 
+  focused,
+  onSubmitEditing,
+  returnKeyType = "done",
+  selectedColor,
+  theme        
+}) => {
+  // Memoize styles to prevent unnecessary recalculations
+  const wrapperStyle = React.useMemo(() => ({
+    borderColor: focused ? selectedColor : theme.border,
+    borderWidth: focused ? 2 : 1,
+    backgroundColor: theme.backgroundSecondary,
+  }), [focused, selectedColor, theme.border, theme.backgroundSecondary]);
+
+  const labelStyle = React.useMemo(() => ({
+    color: focused ? selectedColor : theme.textSecondary,
+    fontSize: fontSizes.xs,
+    fontWeight: focused ? '600' : '500'
+  }), [focused, selectedColor, theme.textSecondary]);
+
+  return (
+    <View style={styles.modernInputContainer}>
+      <View style={[styles.modernInputWrapper, wrapperStyle]}>
+        <View style={styles.labelContainer}>
+          <Text style={[styles.modernLabel, labelStyle]}>
+            {label}
+          </Text>
+          {maxLength && (
+            <Text style={[styles.characterCount, { color: theme.textTertiary }]}>
+              {value.length}/{maxLength}
+            </Text>
+          )}
+        </View>
+        
+        <TextInput
+          ref={inputRef}
+          style={[
+            styles.modernTextInput,
+            {
+              color: theme.text,
+              fontSize: fontSizes.m,
+              minHeight: multiline ? scaleHeight(80) : scaleHeight(24),
+              textAlignVertical: multiline ? 'top' : 'center',
+              fontWeight: multiline ? '400' : '600'
+            }
+          ]}
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          placeholderTextColor={theme.textTertiary}
+          multiline={multiline}
+          numberOfLines={multiline ? 3 : 1}
+          maxLength={maxLength}
+          onFocus={onFocus}
+          onBlur={onBlur}
+          returnKeyType={returnKeyType}
+          onSubmitEditing={onSubmitEditing}
+          blurOnSubmit={!multiline}
+          autoCorrect={false}
+          spellCheck={false}
+          keyboardType={Platform.OS === 'ios' ? 'ascii-capable' : 'default'}
+          maxFontSizeMultiplier={1.6}
+          accessible={true}
+          accessibilityLabel={label}
+        />
+      </View>
+    </View>
+  );
+});
 
 const GeneralSection = ({
   theme,
@@ -66,18 +146,19 @@ const GeneralSection = ({
   
   const selectedDomain = getSelectedDomain();
   
-  // Handle domain selection
-  const handleDomainSelect = (domainName) => {
+  // Handle domain selection - memoized to prevent re-renders
+  const handleDomainSelect = useCallback((domainName) => {
     const domainData = STANDARD_DOMAINS.find(domain => domain.name === domainName);
     if (domainData) {
       setSelectedIcon(domainData.icon);
       setSelectedColor(domainData.color);
     }
-  };
+  }, [setSelectedIcon, setSelectedColor]);
 
-  // Handle input focus animations
-  const handleTitleFocus = () => {
+  // Handle input focus animations - memoized to prevent re-renders
+  const handleTitleFocus = useCallback(() => {
     setTitleFocused(true);
+    setDescFocused(false); // Ensure description is not focused when title is focused
     handleInputFocus(0);
     Animated.spring(titleFocusAnim, {
       toValue: 1,
@@ -85,9 +166,9 @@ const GeneralSection = ({
       tension: 100,
       friction: 8
     }).start();
-  };
+  }, [handleInputFocus, titleFocusAnim]);
 
-  const handleTitleBlur = () => {
+  const handleTitleBlur = useCallback(() => {
     setTitleFocused(false);
     Animated.spring(titleFocusAnim, {
       toValue: 0,
@@ -95,10 +176,11 @@ const GeneralSection = ({
       tension: 100,
       friction: 8
     }).start();
-  };
+  }, [titleFocusAnim]);
 
-  const handleDescFocus = () => {
+  const handleDescFocus = useCallback(() => {
     setDescFocused(true);
+    setTitleFocused(false); // Ensure title is not focused when description is focused
     handleInputFocus(100);
     Animated.spring(descFocusAnim, {
       toValue: 1,
@@ -106,9 +188,9 @@ const GeneralSection = ({
       tension: 100,
       friction: 8
     }).start();
-  };
+  }, [handleInputFocus, descFocusAnim]);
 
-  const handleDescBlur = () => {
+  const handleDescBlur = useCallback(() => {
     setDescFocused(false);
     Animated.spring(descFocusAnim, {
       toValue: 0,
@@ -116,91 +198,18 @@ const GeneralSection = ({
       tension: 100,
       friction: 8
     }).start();
-  };
+  }, [descFocusAnim]);
 
-  // Modern Input Component
-  const ModernInput = ({ 
-    label, 
-    value, 
-    onChangeText, 
-    placeholder, 
-    multiline = false, 
-    maxLength, 
-    inputRef, 
-    onFocus, 
-    onBlur, 
-    focused,
-    focusAnim,
-    onSubmitEditing,
-    returnKeyType = "done"
-  }) => (
-    <View style={styles.modernInputContainer}>
-      <Animated.View style={[
-        styles.modernInputWrapper,
-        {
-          borderColor: focused ? selectedColor : theme.border,
-          borderWidth: focused ? 2 : 1,
-          backgroundColor: theme.backgroundSecondary,
-        }
-      ]}>
-        <View style={styles.labelContainer}>
-          <Text style={[
-            styles.modernLabel,
-            {
-              color: focused ? selectedColor : theme.textSecondary,
-              fontSize: fontSizes.xs,
-              fontWeight: focused ? '600' : '500'
-            }
-          ]}>
-            {label}
-          </Text>
-          {maxLength && (
-            <Text style={[
-              styles.characterCount,
-              { color: theme.textTertiary }
-            ]}>
-              {value.length}/{maxLength}
-            </Text>
-          )}
-        </View>
-        
-        <TextInput
-          ref={inputRef}
-          style={[
-            styles.modernTextInput,
-            {
-              color: theme.text,
-              fontSize: fontSizes.m,
-              minHeight: multiline ? scaleHeight(80) : scaleHeight(24),
-              textAlignVertical: multiline ? 'top' : 'center',
-              fontWeight: multiline ? '400' : '600'
-            }
-          ]}
-          value={value}
-          onChangeText={onChangeText}
-          placeholder={placeholder}
-          placeholderTextColor={theme.textTertiary}
-          multiline={multiline}
-          numberOfLines={multiline ? 3 : 1}
-          maxLength={maxLength}
-          onFocus={onFocus}
-          onBlur={onBlur}
-          returnKeyType={returnKeyType}
-          onSubmitEditing={onSubmitEditing}
-          blurOnSubmit={!multiline}
-          autoCorrect={false}
-          spellCheck={false}
-          keyboardType={Platform.OS === 'ios' ? 'ascii-capable' : 'default'}
-          maxFontSizeMultiplier={1.6}
-          accessible={true}
-          accessibilityLabel={label}
-        />
-      </Animated.View>
-    </View>
-  );
+  // Memoized callback for moving from title to description
+  const handleTitleSubmit = useCallback(() => {
+    if (descriptionInputRef.current) {
+      descriptionInputRef.current.focus();
+    }
+  }, []);
 
-  // Domain Card Component
-  const DomainCard = ({ domain, isSelected, onSelect }) => (
+
+  // Domain Card Component - memoized to prevent re-renders
+  const DomainCard = React.memo(({ domain, isSelected, onSelect }) => (
     <TouchableOpacity 
       style={[
         styles.domainCard,
@@ -242,7 +251,7 @@ const GeneralSection = ({
         </Text>
       </View>
     </TouchableOpacity>
-  );
+  ));
 
   return (
     <View style={[
@@ -252,7 +261,7 @@ const GeneralSection = ({
 
       {/* Title Input */}
       <ModernInput
-        label="Goal Title"
+        label="Goal Title *"
         value={title}
         onChangeText={setTitle}
         placeholder="What do you want to achieve?"
@@ -260,9 +269,10 @@ const GeneralSection = ({
         onFocus={handleTitleFocus}
         onBlur={handleTitleBlur}
         focused={titleFocused}
-        focusAnim={titleFocusAnim}
-        onSubmitEditing={() => descriptionInputRef.current?.focus()}
+        onSubmitEditing={handleTitleSubmit}
         returnKeyType="next"
+        selectedColor={selectedColor}
+        theme={theme}
       />
 
       {/* Description Input */}
@@ -276,7 +286,8 @@ const GeneralSection = ({
         onFocus={handleDescFocus}
         onBlur={handleDescBlur}
         focused={descFocused}
-        focusAnim={descFocusAnim}
+        selectedColor={selectedColor}
+        theme={theme}
       />
 
       {/* Domain Selection */}
@@ -295,7 +306,7 @@ const GeneralSection = ({
                 styles.sectionLabel,
                 { color: theme.text }
               ]}>
-                Choose Domain
+                Choose Domain *
               </Text>
               <Ionicons 
                 name={domainSectionExpanded ? 'chevron-up' : 'chevron-down'} 
@@ -303,7 +314,6 @@ const GeneralSection = ({
                 color={theme.textSecondary}
               />
             </View>
-            {domainSectionExpanded && null}
           </TouchableOpacity>
           
           {domainSectionExpanded && (
@@ -313,7 +323,6 @@ const GeneralSection = ({
                   const nextItem = STANDARD_DOMAINS[index + 1];
                   
                   if (nextItem) {
-                    // Two items in row
                     rows.push(
                       <View key={`row-${index}`} style={styles.domainRow}>
                         <DomainCard
@@ -329,7 +338,6 @@ const GeneralSection = ({
                       </View>
                     );
                   } else {
-                    // Single item in last row - center it
                     rows.push(
                       <View key={`row-${index}`} style={styles.domainRowCentered}>
                         <DomainCard
@@ -363,6 +371,7 @@ const GeneralSection = ({
           />
         </View>
       </TouchableWithoutFeedback>
+
     </View>
   );
 };
@@ -493,4 +502,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default GeneralSection;
+export default React.memo(GeneralSection);

@@ -11,12 +11,12 @@ export const DOMAIN_DEFINITIONS = [
         name: "Secure Flexible Work with New Skills",
         description: "Master new capabilities while maintaining or negotiating hybrid/remote work arrangements",
         icon: "laptop",
-        explanation: "Work-life balance is now twice as important as career development for attracting employees. 52% of professionals actively explore new career paths, and 76% consider career moves in 2024.",
+        explanation: "A goal represents something meaningful you want to achieve. Breaking goals down into projects and tasks makes it easier and much more likely to reach it.",
         projects: [
           {
             name: "Flexible Work Negotiation",
             description: "Secure hybrid or remote work arrangements with current employer",
-            explanation: "9.4% of SEEK job ads indicate remote options. Companies increasingly offer flexible arrangements to retain talent with new skills.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Research your company's flexible work policy and document key points",
@@ -37,12 +37,12 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Cross-Functional Skill Development",
             description: "Learn high-demand skills that increase workplace value and flexibility",
-            explanation: "63% of employees seek learning opportunities. Skills development makes flexible work requests more compelling to employers.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Identify top 3 skills most valued in your industry for hybrid roles",
                 summary: "Identify skills",
-                explanation: "Skills research ensures learning investment aligns with market demand and employer needs. Hybrid roles often require additional technical and communication skills for remote collaboration.",
+                explanation: "Researching certification programs ensures you choose credible, industry-recognized credentials that align with career goals. Reputable providers offer better employer recognition and higher-quality training that leads to successful career transitions.",
                 timeframe: "1 week",
                 completed: false
               },
@@ -61,12 +61,12 @@ export const DOMAIN_DEFINITIONS = [
         name: "Move into Management Role",
         description: "Progress from individual contributor to people manager through leadership development",
         icon: "people",
-        explanation: "Manager roles face persistent shortage with projected growth of 151,500 positions (8.2%) by 2029. Leadership positions feature prominently on Core Skills Occupation List.",
+        explanation: "A goal represents something meaningful you want to achieve. Breaking goals down into projects and tasks makes it easier and much more likely to reach it.",
         projects: [
           {
             name: "Leadership Skills Development",
             description: "Build management capabilities through training and experience",
-            explanation: "91% of businesses maintain training budgets. Most organizations offer leadership development programs for internal advancement.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Enroll in leadership training program or workshop",
@@ -87,7 +87,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Internal Advancement Strategy",
             description: "Position yourself for promotion opportunities within current organization",
-            explanation: "Skills shortage creates unprecedented advancement opportunities. Natural career progression point for 25-35 demographic.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Schedule career development conversation with your manager",
@@ -111,7 +111,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Switch to Tech Career",
         description: "Pivot into growth technology sectors through certification and reskilling",
         icon: "code-slash",
-        explanation: "Cybersecurity Analyst ranks #1 fastest-growing job (57% growth). Skills changed 24% since 2015, expected to change 65% by 2030. 94% of IT professionals contemplate job changes.",
+        explanation: "A goal represents something meaningful you want to achieve. Breaking goals down into projects and tasks makes it easier and much more likely to reach it.",
         needsClarification: true,
         clarificationOptions: [
           {
@@ -122,12 +122,12 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Cybersecurity Foundation Skills",
                 description: "Build core cybersecurity knowledge and practical experience with security tools",
-                explanation: "Cybersecurity Analyst ranks #1 fastest-growing job (57% growth). Australian government invests $1.67B in cyber security. Skills shortage creates entry opportunities.",
+                explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
                 tasks: [
                   {
                     name: "Complete CompTIA Security+ or similar cybersecurity certification course",
                     summary: "Get certified",
-                    explanation: "CompTIA Security+ provides industry-recognized foundation for cybersecurity careers. Government investment of $1.67B in cyber security creates strong job demand with competitive salaries.",
+                    explanation: "CompTIA Security+ provides industry-recognized foundation for cybersecurity careers. Government investment creates strong job demand with competitive salaries.",
                     timeframe: "4 months",
                     completed: false
                   },
@@ -143,7 +143,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Security Career Portfolio",
                 description: "Build practical portfolio demonstrating security analysis and incident response skills",
-                explanation: "Hands-on experience essential for cybersecurity roles. Government and private sector actively recruiting with competitive salaries.",
+                explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
                 tasks: [
                   {
                     name: "Complete vulnerability assessment project and document security findings",
@@ -171,7 +171,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Programming Language Mastery",
                 description: "Learn in-demand programming languages and development frameworks",
-                explanation: "Python, JavaScript, and Java dominate Australian tech job market. Bootcamps report 80%+ job placement rates within 6 months.",
+                explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
                 tasks: [
                   {
                     name: "Complete comprehensive course in Python or JavaScript including web development frameworks",
@@ -192,7 +192,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Development Career Transition",
                 description: "Create professional portfolio and apply for entry-level development positions",
-                explanation: "Tech talent shortage means employers hire based on skills over degrees. GitHub portfolio essential for demonstrating capabilities.",
+                explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
                 tasks: [
                   {
                     name: "Deploy portfolio projects on GitHub with professional documentation and live demos",
@@ -204,7 +204,7 @@ export const DOMAIN_DEFINITIONS = [
                   {
                     name: "Apply for junior developer roles at Australian tech companies and startups",
                     summary: "Apply jobs",
-                    explanation: "Tech talent shortage means employers hire based on demonstrated skills over formal qualifications. Bootcamps report 80%+ job placement rates, indicating strong demand for skilled developers.",
+                    explanation: "Tech talent shortage means employers hire based on demonstrated skills over formal qualifications. Bootcamps report strong job placement rates, indicating high demand for skilled developers.",
                     timeframe: "2 months",
                     completed: false
                   }
@@ -220,7 +220,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Digital Marketing Certification",
                 description: "Master Google Ads, Analytics, and social media marketing tools",
-                explanation: "Digital marketing growing 7.4% annually in Australia. Google and Facebook certifications valued by employers. Remote work opportunities abundant.",
+                explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
                 tasks: [
                   {
                     name: "Complete Google Ads and Google Analytics certifications plus Facebook Blueprint",
@@ -241,7 +241,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Marketing Analytics Portfolio",
                 description: "Build data analysis skills and create marketing campaign case studies",
-                explanation: "Marketing analytics roles combine creativity with data skills. Average salary $75,000+ for experienced professionals.",
+                explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
                 tasks: [
                   {
                     name: "Create and analyze 2 complete digital marketing campaigns with ROI measurement",
@@ -266,7 +266,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Tech Skill Certification",
             description: "Earn industry-recognized certification in chosen tech field",
-            explanation: "Bootcamps and online certifications enable 6-12 month transitions. Skills shortages reduce barriers to entry.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Research certification programs and choose reputable provider",
@@ -287,7 +287,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Tech Career Transition Plan",
             description: "Build portfolio and network for tech industry entry",
-            explanation: "Many programs offer job guarantees or placement assistance. Building portfolio demonstrates practical skills to employers.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Create portfolio showcasing projects and skills learned",
@@ -319,12 +319,12 @@ export const DOMAIN_DEFINITIONS = [
         name: "Build 6-Month Emergency Fund",
         description: "Save 3-6 months expenses using high-interest accounts and disciplined budgeting",
         icon: "shield",
-        explanation: "Gen Z NAB customers opened 24% more high-interest savings accounts past year. 56% of young Australians redirect spending cuts ($450/month average) directly into savings.",
+        explanation: "A goal represents something meaningful you want to achieve. Breaking goals down into projects and tasks makes it easier and much more likely to reach it.",
         projects: [
           {
             name: "Emergency Fund Strategy",
             description: "Calculate target amount and set up automatic savings system",
-            explanation: "High-yield accounts offering 5%+ returns. Average $450/month savings achievable through expense reduction.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Calculate 6 months of essential expenses for your target emergency fund",
@@ -345,7 +345,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Expense Optimization",
             description: "Reduce unnecessary spending to maximize savings rate",
-            explanation: "1.5 million NAB customers use spending tracking tools. 'Loud budgeting' trend normalizes financial discipline among peers.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Track all expenses for one month to identify spending patterns",
@@ -357,7 +357,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Cancel or reduce 3 subscription services or recurring expenses you don't actively use",
                 summary: "Cut subscriptions",
-                explanation: "Cutting unused subscriptions provides immediate monthly savings that can be redirected to emergency fund. Average household saves $50-100+ monthly by auditing and eliminating unnecessary recurring expenses.",
+                explanation: "Cutting unused subscriptions provides immediate monthly savings that can be redirected to emergency fund. Households can save significantly by auditing and eliminating unnecessary recurring expenses.",
                 timeframe: "1 week",
                 completed: false
               }
@@ -369,12 +369,12 @@ export const DOMAIN_DEFINITIONS = [
         name: "Start Profitable Side Hustle",
         description: "Establish side business generating $500+ monthly within 12 months",
         icon: "storefront",
-        explanation: "48% of Australians have or plan side hustles. 950,000+ work multiple jobs (10% increase). Average side hustle earning potential $52.60/hour.",
+        explanation: "A goal represents something meaningful you want to achieve. Breaking goals down into projects and tasks makes it easier and much more likely to reach it.",
         projects: [
           {
             name: "Side Hustle Launch",
             description: "Choose and start profitable side business based on your skills",
-            explanation: "Side hustles achieve profitability within 3-6 months average. Technology platforms reduce barriers to entry.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Identify marketable skill or service you can offer part-time",
@@ -395,7 +395,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Income Stream Optimization",
             description: "Scale side hustle to consistent monthly income target",
-            explanation: "66% of 18-35 year-olds started or plan side hustles continuing into 2025. Skills-based services scale quickly.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Complete first 5 paid jobs to establish ratings and reviews",
@@ -419,12 +419,12 @@ export const DOMAIN_DEFINITIONS = [
         name: "Plan Path to Homeownership",
         description: "Develop actionable pathway to property through strategic saving and planning",
         icon: "home",
-        explanation: "56% of Gen Z and millennials plan property entry within 5 years. Average first buyer age risen to 36. Regional purchases save $126,439 average on loans.",
+        explanation: "A goal represents something meaningful you want to achieve. Breaking goals down into projects and tasks makes it easier and much more likely to reach it.",
         projects: [
           {
             name: "Home Buying Strategy",
             description: "Research options and create realistic timeline for property purchase",
-            explanation: "First home buyer lending grew 20.7%. Government schemes allow 5% deposits. Multiple pathways suit different situations.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Research First Home Owner Grant and government assistance programs",
@@ -445,7 +445,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Deposit Savings Plan",
             description: "Build systematic savings plan for house deposit",
-            explanation: "'Rentvesting' enables ladder entry in affordable areas. Clear 3-year saving plans with specific targets proven effective.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Calculate deposit needed (10-20% of target property price) and create savings timeline",
@@ -477,12 +477,12 @@ export const DOMAIN_DEFINITIONS = [
         name: "Exercise for Mental Health",
         description: "Establish consistent workout routine specifically targeting stress and mental wellbeing",
         icon: "heart",
-        explanation: "Mental health ranks #1 Australian fitness trend 2024. 46% cite financial pressure as key stressor. Exercise proven 1.5x more effective than medication for anxiety/depression.",
+        explanation: "A goal represents something meaningful you want to achieve. Breaking goals down into projects and tasks makes it easier and much more likely to reach it.",
         projects: [
           {
             name: "Mental Health Fitness Routine",
             description: "Create exercise schedule focused on stress relief and mood improvement",
-            explanation: "29% attend gyms primarily for mental wellbeing (up from 19% pre-COVID). Results visible within weeks of consistent activity.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Choose 3 physical activities you enjoy and can do consistently",
@@ -503,7 +503,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Stress Management Integration",
             description: "Use physical activity as primary tool for managing work and life stress",
-            explanation: "Post-pandemic stress and housing pressures drive mental health focus. 24-hour gym access supports flexible scheduling.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Track mood and stress levels before/after exercise sessions for motivation",
@@ -527,7 +527,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Prevent Chronic Disease",
         description: "Implement evidence-based habits reducing diabetes, heart disease, and cancer risk",
         icon: "medical",
-        explanation: "6 in 10 Australians live with chronic conditions. Over 90% of disease burden relates to preventable conditions. Millennials showing increased health consciousness.",
+        explanation: "A goal represents something meaningful you want to achieve. Breaking goals down into projects and tasks makes it easier and much more likely to reach it.",
         projects: [
           {
             name: "Preventive Health Foundation",
@@ -577,12 +577,12 @@ export const DOMAIN_DEFINITIONS = [
         name: "Build Fitness Routine",
         description: "Create sustainable exercise habits that improve daily quality of life",
         icon: "barbell",
-        explanation: "Only 27.2% of young Australians meet recommended activity guidelines. Trend shifted from aesthetic goals to functional fitness supporting busy professional lifestyles.",
+        explanation: "A goal represents something meaningful you want to achieve. Breaking goals down into projects and tasks makes it easier and much more likely to reach it.",
         projects: [
           {
             name: "Sustainable Workout Plan",
             description: "Design exercise routine you can maintain long-term",
-            explanation: "Functional fitness focuses on movements that improve daily life. 74% prefer in-person fitness classes for community.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Schedule 3 specific workout sessions in your calendar each week",
@@ -603,7 +603,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Active Lifestyle Integration",
             description: "Build movement into daily routine beyond structured exercise",
-            explanation: "72.8% of young Australians don't meet guidelines. Incorporating activity into daily life makes fitness sustainable.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Walk or cycle to work at least 2 days per week if possible",
@@ -635,7 +635,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Find Long-Term Partner",
         description: "Develop meaningful romantic relationship with long-term potential",
         icon: "heart",
-        explanation: "60% of young Australians identify their partner as their most important relationship, prioritizing quality time (38%) and meaningful connection over materialistic expressions.",
+        explanation: "A goal represents something meaningful you want to achieve. Breaking goals down into projects and tasks makes it easier and much more likely to reach it.",
         projects: [
           {
             name: "Intentional Dating Strategy",
@@ -659,7 +659,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Authentic Connection Building",
             description: "Focus on genuine compatibility and emotional connection in dating",
-            explanation: "Young Australians prioritize quality time (38%) and physical touch (33%) in relationships, focusing on meaningful connection.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Set up dating profiles or ask friends for introductions to meet potential partners",
@@ -681,7 +681,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Build Strong Social Circle",
         description: "Create meaningful friendships and community connections beyond work relationships",
         icon: "people",
-        explanation: "Post-pandemic isolation revealed importance of social connection. Over 50% of hybrid workers feel lonelier than pre-pandemic, making friendship investment essential.",
+        explanation: "A goal represents something meaningful you want to achieve. Breaking goals down into projects and tasks makes it easier and much more likely to reach it.",
         projects: [
           {
             name: "Social Network Rebuilding",
@@ -727,12 +727,12 @@ export const DOMAIN_DEFINITIONS = [
         name: "Strengthen Romantic Relationship",
         description: "Improve quality and connection in existing partnership",
         icon: "heart-circle",
-        explanation: "76.9% of young Australians communicate openly about problems in relationships. Quality time and communication are prioritized over material expressions of love.",
+        explanation: "A goal represents something meaningful you want to achieve. Breaking goals down into projects and tasks makes it easier and much more likely to reach it.",
         projects: [
           {
             name: "Relationship Quality Enhancement",
             description: "Strengthen existing relationship through quality time and communication",
-            explanation: "Young Australians prioritize quality time (38%) and meaningful connection. Work-life balance challenges require intentional relationship investment.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Schedule weekly date nights or quality time together without distractions",
@@ -751,7 +751,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Partnership Goal Alignment",
             description: "Align life goals and support each other's personal development",
-            explanation: "25.8% cite work commitments as top relationship pressure. Creating boundaries and shared goals strengthens partnerships.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Discuss and align major life goals like career, housing, and family planning",
@@ -781,12 +781,12 @@ export const DOMAIN_DEFINITIONS = [
         name: "Earn Professional Certification",
         description: "Complete industry-recognized credential in emerging field through online learning",
         icon: "school",
-        explanation: "Learning ranks top 3 reasons for employer choice. 77% believe GenAI will impact work within year. Over 50% of adults took online training past year.",
+        explanation: "A goal represents something meaningful you want to achieve. Breaking goals down into projects and tasks makes it easier and much more likely to reach it.",
         projects: [
           {
             name: "Certification Program Selection",
             description: "Choose and enroll in industry-recognized certification program",
-            explanation: "90% of employers value online learning. Self-paced options suit working professionals. 3-6 month completion typical.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Research certifications most valued in your industry and career goals",
@@ -805,7 +805,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Certification Completion",
             description: "Complete coursework and earn professional credential",
-            explanation: "Micro-credentials stack toward larger qualifications. Many free or employer-funded options available.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Complete all required coursework and assignments within program timeline",
@@ -827,12 +827,12 @@ export const DOMAIN_DEFINITIONS = [
         name: "Launch Creative Project",
         description: "Start passion project combining personal interests with potential portfolio building",
         icon: "brush",
-        explanation: "92% consider purpose important to job satisfaction. Only 6% prioritize leadership, seeking fulfillment elsewhere. Remote work provides time flexibility for creative pursuits.",
+        explanation: "A goal represents something meaningful you want to achieve. Breaking goals down into projects and tasks makes it easier and much more likely to reach it.",
         projects: [
           {
             name: "Creative Project Planning",
             description: "Define creative project scope and create launch timeline",
-            explanation: "22% Gen Z engage in digital creation daily. Creator economy enables potential monetization. Low startup costs for digital projects.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Choose creative project that combines personal interests with skills development",
@@ -851,7 +851,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Project Execution and Sharing",
             description: "Complete creative project and share with community for feedback",
-            explanation: "YouTube/TikTok provide free distribution. Communities offer support and feedback. Skills complement primary career development.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Complete creative project according to planned timeline and quality standards",
@@ -873,7 +873,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Learn Practical Life Skill",
         description: "Master concrete capability that reduces dependence and costs",
         icon: "construct",
-        explanation: "46% feel financially insecure, driving self-sufficiency interest. Rising service costs make DIY valuable. Cultural values emphasize practical skills.",
+        explanation: "A goal represents something meaningful you want to achieve. Breaking goals down into projects and tasks makes it easier and much more likely to reach it.",
         needsClarification: true,
         clarificationOptions: [
           {
@@ -884,7 +884,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Culinary Skills Development",
                 description: "Master fundamental cooking techniques and build confidence in the kitchen",
-                explanation: "Average Australian household spends $272/week on food. Cooking skills can reduce this by 40-50%. Meal prep saves 5+ hours weekly.",
+                explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
                 tasks: [
                   {
                     name: "Learn 5 fundamental cooking techniques (sautéing, roasting, braising, grilling, steaming)",
@@ -903,7 +903,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Meal Planning System",
                 description: "Develop efficient meal planning and preparation system to save money and time",
-                explanation: "Food costs rising 7.8% annually. Strategic meal planning and bulk cooking reduce expenses while improving nutrition quality.",
+                explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
                 tasks: [
                   {
                     name: "Create weekly meal planning system with shopping lists and prep schedules",
@@ -929,7 +929,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Essential Home Repair Skills",
                 description: "Learn basic repair and maintenance skills to handle common household issues",
-                explanation: "Average tradesperson callout costs $150-300 minimum. Basic DIY skills save thousands annually while increasing property value.",
+                explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
                 tasks: [
                   {
                     name: "Master basic plumbing repairs (leaky taps, blocked drains, toilet maintenance)",
@@ -948,7 +948,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "DIY Project Capability",
                 description: "Build confidence with tools and complete practical home improvement projects",
-                explanation: "DIY market worth $12B in Australia. YouTube and community workshops provide accessible learning. Skills valuable for rental improvements.",
+                explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
                 tasks: [
                   {
                     name: "Acquire basic tool kit and learn proper use of power tools for home projects",
@@ -974,7 +974,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Financial Literacy Foundation",
                 description: "Master budgeting, investing basics, and financial planning fundamentals",
-                explanation: "Only 64% of Australians are financially literate. Understanding compound interest and investing basics essential for wealth building.",
+                explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
                 tasks: [
                   {
                     name: "Create comprehensive budget tracking all income and expenses using app or spreadsheet",
@@ -993,7 +993,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Wealth Building Strategy",
                 description: "Implement long-term financial strategy for wealth accumulation and security",
-                explanation: "Superannuation alone insufficient for retirement. Early investing leverages compound interest. Side investments provide additional security.",
+                explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
                 tasks: [
                   {
                     name: "Maximize superannuation contributions and understand investment options within super",
@@ -1016,7 +1016,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Skill Development Program",
             description: "Learn chosen practical skill through structured learning approach",
-            explanation: "Online tutorials widely available. Local workshops provide hands-on learning. Skills immediately applicable to daily life.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Research learning resources and create structured learning plan",
@@ -1035,7 +1035,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Practical Application",
             description: "Apply learned skill in real-world situations to build confidence",
-            explanation: "Community groups share knowledge freely. Inflation makes self-sufficiency economically attractive.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Apply skill in real situations and document cost savings or benefits",
@@ -1065,12 +1065,12 @@ export const DOMAIN_DEFINITIONS = [
         name: "Explore Australian Nature",
         description: "Discover local trails and national parks through regular outdoor adventures",
         icon: "leaf",
-        explanation: "Bushwalking participation jumped 68% nationally (3.7M adults). Now 3rd most popular adult activity. Post-COVID emphasis on nature connection.",
+        explanation: "A goal represents something meaningful you want to achieve. Breaking goals down into projects and tasks makes it easier and much more likely to reach it.",
         projects: [
           {
             name: "Local Nature Exploration",
             description: "Discover and regularly visit local trails, parks, and natural areas",
-            explanation: "36% of participants aged 15-34. Free activity requiring minimal equipment. Apps provide trail information and community connections.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Research and visit 3 local hiking trails or nature reserves in your area",
@@ -1089,7 +1089,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "National Parks Adventure",
             description: "Plan trips to explore Australia's national parks and iconic natural destinations",
-            explanation: "Participation quadrupled since 2015. Mental health awareness drives nature engagement. Extensive trail infrastructure available.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Create bucket list of national parks and natural destinations to visit",
@@ -1111,12 +1111,12 @@ export const DOMAIN_DEFINITIONS = [
         name: "Travel Around Australia",
         description: "Create bucket list of destinations and systematically explore through trips",
         icon: "airplane",  
-        explanation: "78% of 25-39 year-olds plan domestic travel next year (highest demographic). 45% prioritize travel over home ownership. Work flexibility enables extended stays.",
+        explanation: "A goal represents something meaningful you want to achieve. Breaking goals down into projects and tasks makes it easier and much more likely to reach it.",
         projects: [
           {
             name: "Australian Travel Planning",
             description: "Research and plan meaningful domestic travel experiences",
-            explanation: "76% plan domestic trips. Tourism spending reached $112.6M December 2023. Government initiatives improve offerings.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Create Australian travel bucket list with specific destinations and experiences",
@@ -1135,7 +1135,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Travel Experience Execution",
             description: "Execute planned trips and document experiences for future planning",
-            explanation: "Remote work enables 'workcations'. Group travel splits expenses. Loyalty programs reduce costs.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Complete first planned Australian destination trip and document experience",
@@ -1157,7 +1157,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Develop New Hobby",
         description: "Start engaging hobby that provides personal satisfaction and potential social connection",
         icon: "color-palette",
-        explanation: "Millennials spend least on recreation but show 90% participation. Only 53% of 30-49 age group report satisfaction with leisure time. New hobbies provide fulfillment.",
+        explanation: "A goal represents something meaningful you want to achieve. Breaking goals down into projects and tasks makes it easier and much more likely to reach it.",
         needsClarification: true,
         clarificationOptions: [
           {
@@ -1168,7 +1168,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Creative Skill Foundation",
                 description: "Build fundamental skills in chosen creative art form",
-                explanation: "22% Gen Z engage in digital creation daily. Creative pursuits provide mental health benefits and potential income streams through platforms like Etsy, YouTube.",
+                explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
                 tasks: [
                   {
                     name: "Choose primary creative focus (photography, music, or writing) and acquire basic equipment",
@@ -1187,7 +1187,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Creative Portfolio Development",
                 description: "Create body of work and share with community for feedback and growth",
-                explanation: "Creator economy worth $104B globally. Australian creators increasingly successful on platforms. Skills complement professional development.",
+                explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
                 tasks: [
                   {
                     name: "Create 10 pieces of work (photos, songs, writings) to build initial portfolio",
@@ -1213,7 +1213,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Outdoor Activity Setup",
                 description: "Choose outdoor pursuit and acquire necessary gear and knowledge for safe participation",
-                explanation: "Bushwalking participation jumped 68% nationally. Cycling infrastructure improving in major cities. Gardening surged during pandemic, continues growing.",
+                explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
                 tasks: [
                   {
                     name: "Choose primary outdoor activity and research gear, safety, and local opportunities",
@@ -1232,7 +1232,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Regular Outdoor Practice",
                 description: "Establish consistent outdoor activity routine and connect with community",
-                explanation: "Free or low-cost activities with high health benefits. Strong community networks provide social connection and safety support.",
+                explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
                 tasks: [
                   {
                     name: "Schedule weekly outdoor sessions and explore 5+ local locations or trails",
@@ -1258,7 +1258,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Social Activity Selection",
                 description: "Find and join social group activities that match your interests and schedule",
-                explanation: "Post-pandemic desire for in-person connection. Sports leagues, board game cafes, and classes provide structured social interaction.",
+                explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
                 tasks: [
                   {
                     name: "Research local sports leagues, game groups, or classes that fit your interests",
@@ -1277,7 +1277,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Community Building",
                 description: "Build meaningful connections and potentially take on organizational role",
-                explanation: "Social hobbies combat isolation while developing leadership skills. Many groups need volunteers for organization and event planning.",
+                explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
                 tasks: [
                   {
                     name: "Build relationships with 3-5 regular participants in your chosen social activity",
@@ -1300,7 +1300,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Hobby Selection and Setup",
             description: "Choose hobby and acquire necessary equipment or knowledge to start",
-            explanation: "Activities include reading (27% discover through bookstores/libraries). Variable schedules require flexible activities.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Research hobby options and choose one that fits your interests and schedule",
@@ -1319,7 +1319,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Hobby Development and Community",
             description: "Develop skills in chosen hobby and connect with others who share the interest",
-            explanation: "Community engagement provides social connection while developing new capabilities. Skills can complement career development.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Practice hobby regularly and track progress toward initial competency goals",
@@ -1349,12 +1349,12 @@ export const DOMAIN_DEFINITIONS = [
         name: "Volunteer Using Professional Skills",
         description: "Establish monthly volunteering commitment aligning professional skills with chosen cause",
         icon: "heart",
-        explanation: "29.7% of 18-24 year-olds volunteer formally. 70% volunteered at least once past year. Young volunteers seek skills-based opportunities that use professional capabilities.",
+        explanation: "A goal represents something meaningful you want to achieve. Breaking goals down into projects and tasks makes it easier and much more likely to reach it.",
         projects: [
           {
             name: "Skills-Based Volunteering Setup",
             description: "Find organization that can use your professional skills for meaningful impact",
-            explanation: "Health organizations (28.8%) and animal welfare (37.8%) most popular. Employers value volunteering experience.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Research charities and causes that align with your values and could use your professional skills",
@@ -1373,7 +1373,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Volunteering Impact and Growth",
             description: "Develop volunteering role and measure impact on both cause and personal development",
-            explanation: "Strong infrastructure through peak bodies. Virtual options available. 2-4 hours monthly manageable for working professionals.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Complete first 3 months of regular volunteering and assess impact created",
@@ -1395,7 +1395,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Find Purpose-Driven Work",
         description: "Transition to role or create initiatives that align with personal values and impact",
         icon: "compass",
-        explanation: "89% Gen Z and 92% millennials consider purpose important. 44% Gen Z rejected employers over values misalignment. 76% consider corporate responsibility before accepting jobs.",
+        explanation: "A goal represents something meaningful you want to achieve. Breaking goals down into projects and tasks makes it easier and much more likely to reach it.",
         needsClarification: true,
         clarificationOptions: [
           {
@@ -1406,7 +1406,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Environmental Career Preparation",
                 description: "Build credentials and network for environmental/sustainability career transition",
-                explanation: "Australian government investing $20B in renewable energy. Climate tech growing 48% annually. 40% of companies need sustainability expertise.",
+                explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
                 tasks: [
                   {
                     name: "Complete environmental science or sustainability certification relevant to your background",
@@ -1425,7 +1425,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Green Industry Transition",
                 description: "Apply for roles in renewable energy, environmental consulting, or sustainability",
-                explanation: "Clean energy jobs growing 3x faster than overall economy. Government support creates stable career pathways in environmental sector.",
+                explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
                 tasks: [
                   {
                     name: "Research environmental organizations, green companies, and government roles in your area",
@@ -1451,7 +1451,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Healthcare Career Foundation",
                 description: "Build qualifications and experience for healthcare or community service roles",
-                explanation: "Healthcare demand growing with aging population. Community services expanding with social housing initiatives. Stable, meaningful employment.",
+                explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
                 tasks: [
                   {
                     name: "Research healthcare qualifications (nursing, allied health) or community service training",
@@ -1470,7 +1470,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Community Service Career",
                 description: "Apply for roles in healthcare, social services, or community development",
-                explanation: "NDIS creates diverse opportunities. Mental health support roles growing. Regional areas offer attractive packages for healthcare workers.",
+                explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
                 tasks: [
                   {
                     name: "Volunteer with community health organizations or disability services for experience",
@@ -1496,7 +1496,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Education Sector Preparation",
                 description: "Build teaching credentials or education support qualifications",
-                explanation: "Teacher shortage creates opportunities. Alternative pathways available. Adult education and training sectors growing with reskilling needs.",
+                explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
                 tasks: [
                   {
                     name: "Research teaching qualifications or education support roles in your area of expertise",
@@ -1515,7 +1515,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Social Impact Career Transition",
                 description: "Apply for education roles or join social impact organizations",
-                explanation: "NFPs hiring for digital skills. Corporate social responsibility creates new roles. Education technology sector expanding rapidly.",
+                explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
                 tasks: [
                   {
                     name: "Volunteer as tutor, mentor, or education support to gain experience",
@@ -1538,7 +1538,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Purpose-Driven Career Research",
             description: "Identify and research career opportunities that align with your values",
-            explanation: "Growing green jobs sector. B-Corps and social enterprises hiring. ESG commitments increasingly standard across industries.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Define your core values and research organizations/roles that align with them",
@@ -1557,7 +1557,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Purpose Integration Strategy",
             description: "Create plan to transition toward or integrate more purpose into current work",
-            explanation: "Internal sustainability roles emerging. Skills transferable across industries. 67% Gen Z with good mental health feel jobs allow meaningful contribution.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Identify ways to increase meaningful impact within your current role or organization",
@@ -1579,12 +1579,12 @@ export const DOMAIN_DEFINITIONS = [
         name: "Get Involved in Local Community",
         description: "Take active role in addressing local issues through civic participation or grassroots advocacy",
         icon: "people",
-        explanation: "Young Australians redefining civic participation. 40% see climate needing immediate action. 73% identify affordable housing as priority issue requiring community solutions.",
+        explanation: "A goal represents something meaningful you want to achieve. Breaking goals down into projects and tasks makes it easier and much more likely to reach it.",
         projects: [
           {
             name: "Community Issue Engagement",
             description: "Identify local issues you care about and get involved in addressing them",
-            explanation: "Youth Barometer shows desire for activism 'for things you care about'. Housing crisis mobilizes communities for local solutions.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Research local issues in your community and choose one to focus on",
@@ -1603,7 +1603,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Civic Leadership Development",
             description: "Take on leadership role in community initiatives or local government",
-            explanation: "Local councils seek younger perspectives. Online tools facilitate organizing. Skills valuable for career advancement.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Volunteer for local campaign, initiative, or community organization in leadership capacity",
@@ -1633,12 +1633,12 @@ export const DOMAIN_DEFINITIONS = [
         name: "Find Quality Shared Housing",
         description: "Establish sustainable co-living arrangement balancing community, affordability, and quality",
         icon: "home",
-        explanation: "1.46 million 25-34 year-olds currently rent. Only 16% satisfied with housing affordability. Co-living reduces costs 30-50% while providing community.",
+        explanation: "A goal represents something meaningful you want to achieve. Breaking goals down into projects and tasks makes it easier and much more likely to reach it.",
         projects: [
           {
             name: "Shared Housing Search",
             description: "Find high-quality shared living arrangement that meets your needs and budget",
-            explanation: "Growing co-living market with investor interest. Apps facilitate roommate matching. Clear agreements prevent conflicts.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Research shared housing options and co-living opportunities in your preferred areas",
@@ -1657,7 +1657,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Community Living Optimization",
             description: "Establish positive house dynamics and shared responsibilities",
-            explanation: "Modern options include private spaces with shared amenities. Stepping stone to future ownership while building community.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Create clear house agreements covering expenses, responsibilities, and boundaries",
@@ -1679,12 +1679,12 @@ export const DOMAIN_DEFINITIONS = [
         name: "Live Sustainably/Zero-Waste",
         description: "Implement comprehensive sustainability practices reducing environmental impact",
         icon: "leaf",
-        explanation: "55% view sustainability as extremely important. 92% millennials consider environmental effects when purchasing. 67% pay more for durable products.",
+        explanation: "A goal represents something meaningful you want to achieve. Breaking goals down into projects and tasks makes it easier and much more likely to reach it.",
         projects: [
           {
             name: "Sustainable Lifestyle Implementation",
             description: "Implement daily practices that reduce environmental impact and waste",
-            explanation: "62% consider sustainability core value (up from 50% 2019). Infrastructure supports recycling/composting. Cost savings offset initial investment.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Audit current consumption patterns and implement zero-waste practices in daily life",
@@ -1703,7 +1703,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Circular Economy Participation",
             description: "Engage with sharing economy and circular practices to reduce consumption",
-            explanation: "Over 35% always consider sustainability shopping. Bulk stores reduce packaging. Apps track environmental impact.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Set up home composting, recycling system, and waste reduction practices",
@@ -1725,12 +1725,12 @@ export const DOMAIN_DEFINITIONS = [
         name: "Create Organized Living Space",
         description: "Design efficient, organized home environment that supports productivity and wellbeing",
         icon: "grid",
-        explanation: "Generation Rent focuses on multifunctional furniture and organization. 25% of workforce now remote requires organized home workspace for productivity.",
+        explanation: "A goal represents something meaningful you want to achieve. Breaking goals down into projects and tasks makes it easier and much more likely to reach it.",
         projects: [
           {
             name: "Home Organization System",
             description: "Create organized, functional systems that work within your living constraints",
-            explanation: "Limited living spaces require strategic organization. Multifunctional solutions create comfortable environments within budget.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Declutter possessions and organize living space for maximum functionality",
@@ -1749,7 +1749,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Productive Environment Design",
             description: "Create designated spaces that support work, relaxation, and personal activities",
-            explanation: "Remote work requires dedicated workspace. Well-organized spaces reduce stress and increase productivity.",
+            explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Create designated areas for work, relaxation, and hobbies within your living space",

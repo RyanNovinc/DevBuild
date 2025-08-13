@@ -198,12 +198,12 @@ export const cleanupOrphanedProjects = (projects, goals, projectGoalLinkMap = {}
     return { projects, projectGoalLinkMap, orphanCount: 0 };
   }
   
-  console.log(`Found ${orphanedProjects.length} orphaned projects to clean up`);
+  console.log(`Found ${orphanedProjects.length} orphaned projects to convert to standalone`);
   
-  // Make orphaned projects independent (remove goal references)
+  // Convert orphaned projects to standalone (remove goal references)
   const updatedProjects = projects.map(project => {
     if (project.goalId && !validGoalIds.includes(project.goalId)) {
-      // Convert to independent project
+      // Convert to standalone milestone
       return {
         ...project,
         goalId: null,

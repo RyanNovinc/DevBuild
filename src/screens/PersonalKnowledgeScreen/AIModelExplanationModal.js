@@ -51,7 +51,7 @@ const AIModelExplanationModal = ({ visible, theme, onClose }) => {
                   Our fastest model, ideal for simple tasks and everyday assistance. Best for quick questions and basic organization.
                 </Text>
                 <Text style={[styles.aiModelDetailTech, { color: '#03A9F4' }]}>
-                  Powered by gpt-4o-mini
+                  Powered by gpt-5-nano
                 </Text>
               </View>
             </View>

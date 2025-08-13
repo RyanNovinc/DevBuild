@@ -276,13 +276,18 @@ ProfileHeader.Banner = ({ theme, isDarkMode, profile, user, navigation, toggleSe
               style={[
                 styles.profileName, 
                 profileTextStyles,
-                { fontSize: scaleFontSize(20) } // Increased font size
+                { 
+                  fontSize: scaleFontSize(18),
+                  fontWeight: '300',
+                  letterSpacing: 1,
+                  textTransform: 'uppercase'
+                }
               ]}
               maxFontSizeMultiplier={1.3}
               numberOfLines={1}
               adjustsFontSizeToFit={true}
             >
-              {profile.name || user?.displayName || "User"}
+              {profile.name || user?.displayName || "USER"}
             </Text>
           </View>
           
@@ -336,15 +341,10 @@ const styles = StyleSheet.create({
   settingsButton: {
     width: scaleWidth(36),
     height: scaleWidth(36),
-    borderRadius: scaleWidth(18),
-    backgroundColor: 'rgba(0, 0, 0, 0.1)', // Semi-transparent background
+    borderRadius: scaleWidth(12),
+    backgroundColor: 'rgba(255, 255, 255, 0.1)', // Semi-transparent background
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.5,
-    elevation: 2,
     marginLeft: 'auto', // Push to the right side
     zIndex: 3, // Ensure it's above the theme touchable area
   },
@@ -396,7 +396,6 @@ const styles = StyleSheet.create({
   },
   profileName: {
     // fontSize set in component
-    fontWeight: 'bold',
     marginBottom: scaleHeight(2),
   },
   // Added for DefaultAvatar wrapper

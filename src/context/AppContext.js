@@ -21,6 +21,9 @@ import SubscriptionService, {
 // Import calendar service
 import CalendarService from '../services/CalendarService';
 
+// Import goal progress calculator
+import { calculateGoalProgress } from '../utils/GoalProgressCalculator';
+
 const AppContext = createContext();
 
 // Storage keys for app data
@@ -275,7 +278,8 @@ export const AppProvider = ({ children }) => {
   }, []);
   
   // Helper function to calculate goal progress from projects
-  const calculateGoalProgress = useCallback((goalId, currentProjects = null) => {
+  // Legacy function - use imported calculateGoalProgress for flexible hierarchy support
+  const calculateGoalProgressLegacy = useCallback((goalId, currentProjects = null) => {
     const projectsToUse = currentProjects || projectsRef.current;
     if (!Array.isArray(projectsToUse)) return 0;
     
@@ -451,6 +455,73 @@ export const AppProvider = ({ children }) => {
       return [];
     }
     return tasks.filter(task => task.projectId === projectId);
+  };
+
+  // NEW FLEXIBLE HIERARCHY FUNCTIONS
+  
+  // Get standalone milestones (milestones with no goal parent and no tasks)
+  const getStandaloneMilestones = () => {
+    if (!Array.isArray(projects)) {
+      return [];
+    }
+    return projects.filter(project => {
+      const hasNoGoal = !project.goalId || project.goalId === null || project.goalId === undefined;
+      const hasNoTasks = !Array.isArray(tasks) || tasks.filter(task => task.projectId === project.id).length === 0;
+      const notDeleted = !deletedProjectIds.current.has(project.id);
+      const notInProgress = !operationsInProgress.current.deletingProjects.has(project.id);
+      
+      return hasNoGoal && hasNoTasks && notDeleted && notInProgress;
+    });
+  };
+
+  // Get standalone tasks (tasks with no goal and no project)
+  const getStandaloneTasks = () => {
+    if (!Array.isArray(tasks)) {
+      return [];
+    }
+    return tasks.filter(task => {
+      const hasNoGoal = !task.goalId || task.goalId === null || task.goalId === undefined;
+      const hasNoProject = !task.projectId || task.projectId === null || task.projectId === undefined;
+      
+      return hasNoGoal && hasNoProject;
+    });
+  };
+
+  // Get populated standalone milestones (milestones with no goal parent but have tasks)
+  // These appear in the "Standalone Tasks" section
+  const getPopulatedStandaloneMilestones = () => {
+    if (!Array.isArray(projects)) {
+      return [];
+    }
+    return projects.filter(project => {
+      const hasNoGoal = !project.goalId || project.goalId === null || project.goalId === undefined;
+      const hasTasks = Array.isArray(tasks) && tasks.filter(task => task.projectId === project.id).length > 0;
+      const notDeleted = !deletedProjectIds.current.has(project.id);
+      const notInProgress = !operationsInProgress.current.deletingProjects.has(project.id);
+      
+      return hasNoGoal && hasTasks && notDeleted && notInProgress;
+    });
+  };
+
+  // Get tasks directly under a goal (no milestone parent)
+  const getDirectTasksForGoal = (goalId) => {
+    if (!goalId || !Array.isArray(tasks)) {
+      return [];
+    }
+    return tasks.filter(task => {
+      const hasGoalId = task.goalId === goalId;
+      const hasNoProject = !task.projectId || task.projectId === null || task.projectId === undefined;
+      
+      return hasGoalId && hasNoProject;
+    });
+  };
+
+  // Get all tasks for a populated standalone milestone
+  const getTasksForPopulatedStandaloneMilestone = (milestoneId) => {
+    if (!milestoneId || !Array.isArray(tasks)) {
+      return [];
+    }
+    return tasks.filter(task => task.projectId === milestoneId);
   };
   
   // AUDIT: Check project-goal relationships for issues
@@ -1199,15 +1270,21 @@ export const AppProvider = ({ children }) => {
       const validGoalIds = new Set(updatedGoals.map(g => g.id));
       log('Error', `🎯 VALID GOALS AFTER DELETION: [${Array.from(validGoalIds).join(', ')}]`);
         
-      // STEP 4: Remove ALL orphaned projects (projects without valid goals) - COMPREHENSIVE APPROACH
+      // STEP 4: Remove ONLY projects linked to the deleted goal (keep standalone projects)
       const validProjects = currentProjects.filter(project => {
+        // Keep standalone projects (no goalId) and projects linked to remaining valid goals
+        const isStandalone = !project.goalId || project.goalId === null || project.goalId === undefined;
         const hasValidGoal = project.goalId && validGoalIds.has(project.goalId);
-        if (!hasValidGoal) {
-          log('Error', `🗑️ REMOVING ORPHANED PROJECT: "${project.title}" (goalId: ${project.goalId})`);
+        const shouldKeep = isStandalone || hasValidGoal;
+        
+        if (!shouldKeep) {
+          log('Error', `🗑️ REMOVING PROJECT LINKED TO DELETED GOAL: "${project.title}" (goalId: ${project.goalId})`);
+        } else if (isStandalone) {
+          log('Error', `✅ KEEPING STANDALONE PROJECT: "${project.title}"`);
         } else {
-          log('Error', `✅ KEEPING VALID PROJECT: "${project.title}" (goalId: ${project.goalId})`);
+          log('Error', `✅ KEEPING PROJECT WITH VALID GOAL: "${project.title}" (goalId: ${project.goalId})`);
         }
-        return hasValidGoal;
+        return shouldKeep;
       });
       
       // STEP 5: Remove ALL orphaned tasks (tasks without valid projects) - COMPREHENSIVE APPROACH  
@@ -1215,11 +1292,21 @@ export const AppProvider = ({ children }) => {
       log('Error', `🎯 VALID PROJECTS AFTER CLEANUP: [${Array.from(validProjectIds).join(', ')}]`);
       
       const validTasks = currentTasks.filter(task => {
+        // Keep standalone tasks (no projectId/goalId) and tasks linked to remaining valid projects/goals  
+        const isStandaloneTask = (!task.projectId || task.projectId === null || task.projectId === undefined) && 
+                                (!task.goalId || task.goalId === null || task.goalId === undefined);
         const hasValidProject = task.projectId && validProjectIds.has(task.projectId);
-        if (!hasValidProject) {
-          log('Error', `🗑️ REMOVING ORPHANED TASK: "${task.name || task.title}" (projectId: ${task.projectId})`);
+        const hasValidGoal = task.goalId && validGoalIds.has(task.goalId);
+        const shouldKeep = isStandaloneTask || hasValidProject || hasValidGoal;
+        
+        if (!shouldKeep) {
+          log('Error', `🗑️ REMOVING TASK LINKED TO DELETED GOAL: "${task.name || task.title}" (goalId: ${task.goalId}, projectId: ${task.projectId})`);
+        } else if (isStandaloneTask) {
+          log('Error', `✅ KEEPING STANDALONE TASK: "${task.name || task.title}"`);
+        } else {
+          log('Error', `✅ KEEPING TASK WITH VALID PARENT: "${task.name || task.title}"`);
         }
-        return hasValidProject;
+        return shouldKeep;
       });
       
       // STEP 6: Clean up link map - remove all invalid entries
@@ -1287,16 +1374,16 @@ export const AppProvider = ({ children }) => {
     }
   };
   
-  // Add a project - UPDATED WITH DOMAIN NORMALIZATION, BETTER GOAL LINKING, AND SUBSCRIPTION CHECK
+  // Add a project/milestone - UPDATED FOR FLEXIBLE HIERARCHY (goalId now optional)
   const addProject = async (newProject) => {
     try {
-      // Check subscription limits
+      // Check subscription limits only if attached to a goal
       if (newProject.goalId && !canAddMoreProjectsToGoal(newProject.goalId)) {
         showError(`Free version limited to ${FREE_PLAN_LIMITS.MAX_PROJECTS} projects per goal. Complete a project or upgrade to Pro.`);
         return null;
       }
       
-      // First verify goal relationship if goalId is provided
+      // Verify goal relationship ONLY if goalId is provided (now optional)
       if (newProject.goalId) {
         const goalExists = isGoalActive(newProject.goalId);
         
@@ -1318,14 +1405,15 @@ export const AppProvider = ({ children }) => {
               newProject.domain = matchingGoal.domain || newProject.domain;
               newProject.color = matchingGoal.color || newProject.color;
             } else {
-              // No matching goal found, remove goal association
-              console.warn(`No goal found matching title "${newProject.goalTitle}" - creating project without goal link`);
+              // No matching goal found, create as standalone milestone
+              console.warn(`No goal found matching title "${newProject.goalTitle}" - creating standalone milestone`);
               delete newProject.goalId;
               delete newProject.goalTitle;
             }
           } else {
-            // No goalTitle to match with, remove the invalid goalId
+            // No goalTitle to match with, create as standalone milestone
             delete newProject.goalId;
+            console.log('Creating standalone milestone (no goal parent)');
           }
         } else {
           // Goal exists, ensure we have the correct title and inherit domain/color
@@ -1340,6 +1428,9 @@ export const AppProvider = ({ children }) => {
             newProject.color = linkedGoal.color;
           }
         }
+      } else {
+        // Creating standalone milestone - no goal parent required
+        console.log('Creating standalone milestone (goalId not provided)');
       }
       
       // Calculate initial progress from tasks if any
@@ -1511,7 +1602,7 @@ export const AppProvider = ({ children }) => {
       const goal = goalsRef.current.find(g => g.id === goalId);
       if (!goal) return;
       
-      const calculatedProgress = calculateGoalProgress(goalId, projectsRef.current);
+      const calculatedProgress = calculateGoalProgress(goalId, projectsRef.current, tasksRef.current);
       
       // Don't override manually completed goals
       if (goal.completed) {
@@ -1612,18 +1703,36 @@ export const AppProvider = ({ children }) => {
     }
   };
   
-  // Add a task to a project - COMPLETELY REWRITTEN TO NEVER CHANGE PROJECT STATUS AND ADD SUBSCRIPTION CHECK
-  const addTask = async (projectId, newTask) => {
+  // Add a task to a project OR create standalone task - COMPLETELY REWRITTEN TO NEVER CHANGE PROJECT STATUS AND ADD SUBSCRIPTION CHECK
+  const addTask = async (projectIdOrTaskData, newTask) => {
     try {
-      // Check if project exists
-      if (!isProjectActive(projectId)) {
+      // Handle both old format (projectId, newTask) and new format (taskData only)
+      let projectId, taskData;
+      
+      if (typeof projectIdOrTaskData === 'string' || projectIdOrTaskData === null) {
+        // Old format: addTask(projectId, newTask)
+        projectId = projectIdOrTaskData;
+        taskData = newTask;
+      } else {
+        // New format: addTask(taskData)
+        taskData = projectIdOrTaskData;
+        projectId = taskData.projectId;
+      }
+      
+      // For standalone tasks, projectId will be null/undefined
+      const isStandaloneTask = !projectId || projectId === null || projectId === undefined;
+      
+      console.log('🔍 addTask called with:', { projectId, isStandaloneTask, taskData: taskData?.title });
+      
+      // Check if project exists (only for non-standalone tasks)
+      if (!isStandaloneTask && !isProjectActive(projectId)) {
         console.warn(`Project with ID ${projectId} not found, cannot add task`);
         showError('Project not found');
         return null;
       }
       
-      // Check subscription limits
-      if (!canAddMoreTasksToProject(projectId)) {
+      // Check subscription limits (only for project-based tasks)
+      if (!isStandaloneTask && !canAddMoreTasksToProject(projectId)) {
         showError(`Free version limited to ${FREE_PLAN_LIMITS.MAX_TASKS_PER_PROJECT} tasks per project. Complete a task or upgrade to Pro.`);
         return null;
       }
@@ -1633,11 +1742,12 @@ export const AppProvider = ({ children }) => {
       
       // Add the task
       const taskWithId = { 
-        ...newTask,
-        id: newTask.id || `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        projectId: projectId,
-        completed: newTask.completed || false,
-        createdAt: new Date().toISOString()
+        ...taskData,
+        id: taskData.id || `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        projectId: isStandaloneTask ? null : projectId, // Explicitly set to null for standalone tasks
+        goalId: taskData.goalId || null, // Ensure goalId is set
+        completed: taskData.completed || false,
+        createdAt: taskData.createdAt || new Date().toISOString()
       };
       
       // Add to state
@@ -1646,6 +1756,13 @@ export const AppProvider = ({ children }) => {
       
       // Save to AsyncStorage
       await saveData(STORAGE_KEYS.TASKS, updatedTasks);
+      
+      console.log('🔍 Task added successfully:', { id: taskWithId.id, title: taskWithId.title, isStandalone: isStandaloneTask });
+      
+      // Skip project progress calculation for standalone tasks
+      if (isStandaloneTask) {
+        return taskWithId;
+      }
       
       // Find the current project
       const project = projectsRef.current.find(p => p.id === projectId);
@@ -1797,11 +1914,13 @@ export const AppProvider = ({ children }) => {
     }
   };
   
-  // Delete a task - COMPLETELY REWRITTEN TO NEVER CHANGE PROJECT STATUS
+  // Delete a task - UPDATED FOR FLEXIBLE HIERARCHY (handles standalone tasks)
   const deleteTask = async (projectId, taskId) => {
     try {
-      // Check if project exists
-      if (!isProjectActive(projectId)) {
+      const isStandaloneTask = projectId === null || projectId === undefined;
+      
+      // Check if project exists (only for non-standalone tasks)
+      if (!isStandaloneTask && !isProjectActive(projectId)) {
         console.warn(`Project with ID ${projectId} not found, cannot delete task`);
         showError('Project not found');
         return false;
@@ -1813,16 +1932,21 @@ export const AppProvider = ({ children }) => {
         throw new Error('Tasks array not available');
       }
       
-      // Check if task exists
-      const taskExists = tasks.some(task => task.id === taskId && task.projectId === projectId);
+      // Check if task exists (handle both standalone and project tasks)
+      const taskExists = isStandaloneTask 
+        ? tasks.some(task => task.id === taskId && (task.projectId === null || task.projectId === undefined))
+        : tasks.some(task => task.id === taskId && task.projectId === projectId);
+      
       if (!taskExists) {
-        console.warn(`Task with ID ${taskId} not found in project ${projectId}`);
+        console.warn(`Task with ID ${taskId} not found${isStandaloneTask ? ' in standalone tasks' : ` in project ${projectId}`}`);
         showError('Task not found');
         return false;
       }
       
-      // Remove the task
-      const updatedTasks = tasks.filter(task => !(task.id === taskId && task.projectId === projectId));
+      // Remove the task (handle both standalone and project tasks)
+      const updatedTasks = isStandaloneTask
+        ? tasks.filter(task => !(task.id === taskId && (task.projectId === null || task.projectId === undefined)))
+        : tasks.filter(task => !(task.id === taskId && task.projectId === projectId));
       
       // Update state
       setTasks(updatedTasks);
@@ -2977,8 +3101,15 @@ export const AppProvider = ({ children }) => {
     getProjectsForGoal,
     getIndependentProjects,
     getTasksForProject,
-    calculateGoalProgress,
+    calculateGoalProgress: calculateGoalProgressLegacy,
     calculateProjectProgress,
+    
+    // NEW FLEXIBLE HIERARCHY FUNCTIONS
+    getStandaloneMilestones,
+    getStandaloneTasks,
+    getPopulatedStandaloneMilestones,
+    getDirectTasksForGoal,
+    getTasksForPopulatedStandaloneMilestone,
     
     // Goal functions
     addGoal,

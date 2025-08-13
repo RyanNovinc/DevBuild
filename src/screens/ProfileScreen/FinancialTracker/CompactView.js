@@ -8,17 +8,12 @@ import {
   Animated
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-// Fix: import from the correct path
-import { getPercentileColor } from './SummaryTab/utils';
 
 const CompactView = ({ theme, data, openDetailModal }) => {
   const { 
     totalIncome, 
     totalExpenses, 
     savingsPercentage, 
-    incomePercentile,
-    expensePercentile,
-    savingsPercentile,
     highestBar,
     barAnim,
     formatCurrency
@@ -63,16 +58,16 @@ const CompactView = ({ theme, data, openDetailModal }) => {
             </Text>
           </View>
           
-          {/* Right Column - Percentiles */}
+          {/* Right Column - Status */}
           <View style={styles.metricsColumn}>
-            <Text style={[styles.metricPercentile, { color: getPercentileColor(incomePercentile) }]}>
-              Better than {incomePercentile.toFixed(1)}%
+            <Text style={[styles.metricStatus, { color: '#4CAF50' }]}>
+              Monthly Income
             </Text>
-            <Text style={[styles.metricPercentile, { color: getPercentileColor(expensePercentile) }]}>
-              Better than {expensePercentile.toFixed(1)}%
+            <Text style={[styles.metricStatus, { color: '#F44336' }]}>
+              Monthly Expenses
             </Text>
-            <Text style={[styles.metricPercentile, { color: getPercentileColor(savingsPercentile) }]}>
-              Better than {savingsPercentile.toFixed(1)}%
+            <Text style={[styles.metricStatus, { color: savingsPercentage >= 0 ? '#4CAF50' : '#F44336' }]}>
+              {savingsPercentage >= 0 ? 'Surplus' : 'Deficit'}
             </Text>
           </View>
         </View>
@@ -174,7 +169,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 8,
   },
-  metricPercentile: {
+  metricStatus: {
     fontSize: 12,
     fontWeight: '500',
     marginBottom: 8,

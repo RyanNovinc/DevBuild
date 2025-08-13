@@ -2,7 +2,6 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { getPercentileColor } from '../utils';
 import styles from '../styles';
 import {
   scaleWidth,
@@ -33,9 +32,8 @@ const AssetsLiabilitiesCard = ({
   // Get landscape orientation
   const isLandscape = useIsLandscape();
   
-  // Calculate debt-to-assets ratio and percentile equivalent
+  // Calculate debt-to-assets ratio
   const debtRatio = totalSavings > 0 ? (totalDebt / Math.max(totalSavings, 1) * 100) : 100;
-  const debtPercentile = 100 - Math.min(100, debtRatio);
   
   // Ensure colors have proper contrast
   const savingsColor = meetsContrastRequirements('#4CAF50', theme.card, false) ? 
@@ -51,10 +49,10 @@ const AssetsLiabilitiesCard = ({
   ) ? ((totalSavings - totalDebt) >= 0 ? '#4CAF50' : '#F44336') : theme.text;
   
   const ratioColor = meetsContrastRequirements(
-    getPercentileColor(debtPercentile),
+    debtRatio > 50 ? '#F44336' : debtRatio > 25 ? '#FF9800' : '#4CAF50',
     theme.card,
     false
-  ) ? getPercentileColor(debtPercentile) : theme.text;
+  ) ? (debtRatio > 50 ? '#F44336' : debtRatio > 25 ? '#FF9800' : '#4CAF50') : theme.text;
   
   // Create accessibility labels
   const savingsAccessibilityLabel = `Total savings: ${formatCurrency(totalSavings)}`;

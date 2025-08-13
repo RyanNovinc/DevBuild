@@ -38,7 +38,8 @@ const SettingsModal = ({
   isEdgeSwipeActive,
   edgeSwipeX,
   onScreenStateUpdate, // Add this prop to update parent state
-  onTriggerGiftSurprise // Add this prop for testing the gift surprise
+  onTriggerGiftSurprise, // Add this prop for testing the gift surprise
+  onTriggerAIPlusUpgrade // Add this prop for AI Plus upgrade notification
 }) => {
   const { logout } = useAuth() || {};
   const insets = useSafeAreaInsets();
@@ -1009,9 +1010,9 @@ const SettingsModal = ({
                     marginTop: 12
                   }]}
                   onPress={() => {
-                    if (onTriggerGiftSurprise) {
-                      onTriggerGiftSurprise();
-                      onClose(); // Close the settings modal to see the gift
+                    if (onTriggerAIPlusUpgrade) {
+                      onTriggerAIPlusUpgrade();
+                      onClose(); // Close the settings modal to see the upgrade notification
                     }
                   }}
                   accessible={true}
@@ -1031,14 +1032,62 @@ const SettingsModal = ({
                         maxFontSizeMultiplier={1.3}
                         numberOfLines={1}
                       >
-                        Test Gift Surprise
+                        Upgraded to AI Plus!
                       </Text>
                       <Text 
                         style={[styles.settingButtonSubtext, { color: theme.textSecondary }]}
                         maxFontSizeMultiplier={1.5}
                         numberOfLines={1}
                       >
-                        Show Pro upgrade gift
+                        Thank you for being an early user
+                      </Text>
+                    </View>
+                  </View>
+                  <Ionicons 
+                    name="chevron-forward" 
+                    size={18} 
+                    color={theme.textSecondary} 
+                  />
+                </TouchableOpacity>
+
+                {/* Claim Next Gift Button */}
+                <TouchableOpacity
+                  style={[styles.settingButton, {
+                    backgroundColor: theme.card,
+                    borderColor: theme.border,
+                    marginTop: 8
+                  }]}
+                  onPress={() => {
+                    if (onTriggerGiftSurprise) {
+                      onTriggerGiftSurprise();
+                      onClose(); // Close the settings modal to see the color gift
+                    }
+                  }}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel="Claim Custom Colors"
+                  accessibilityHint="Claim your next early user gift - custom theme colors"
+                >
+                  <View style={styles.settingButtonContent}>
+                    <View style={[styles.settingIconContainer, {
+                      backgroundColor: '#FF69B420'
+                    }]}>
+                      <Ionicons name="color-palette" size={20} color="#FF69B4" />
+                    </View>
+                    <View style={styles.settingTextContainer}>
+                      <Text 
+                        style={[styles.settingButtonText, { color: theme.text }]}
+                        maxFontSizeMultiplier={1.3}
+                        numberOfLines={1}
+                      >
+                        Claim Next Gift
+                      </Text>
+                      <Text 
+                        style={[styles.settingButtonSubtext, { color: theme.textSecondary }]}
+                        maxFontSizeMultiplier={1.5}
+                        numberOfLines={1}
+                      >
+                        Unlock custom theme colors
                       </Text>
                     </View>
                   </View>
@@ -1239,8 +1288,8 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   settingsPanel: {
-    borderTopLeftRadius: 24,
-    borderBottomLeftRadius: 24,
+    borderTopLeftRadius: 12,
+    borderBottomLeftRadius: 12,
     paddingBottom: 24,
     width: '85%', // Control width of the panel
     height: '100%', // Full height
@@ -1256,7 +1305,8 @@ const styles = StyleSheet.create({
   },
   settingsTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '400',
+    letterSpacing: 0.5,
   },
   closeButton: {
     padding: 5,
@@ -1271,6 +1321,7 @@ const styles = StyleSheet.create({
   settingButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    borderRadius: 12,
     justifyContent: 'space-between',
     padding: 16,
     borderRadius: 12,

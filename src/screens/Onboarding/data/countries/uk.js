@@ -11,12 +11,12 @@ export const DOMAIN_DEFINITIONS = [
         name: "Get Significant Salary Increase",
         description: "Achieve 15-20% salary increase through strategic career moves and negotiations",
         icon: "trending-up",
-        explanation: "75% of UK professionals seek new jobs with better pay being the #1 reason (51%). Job switchers receive average 8% increases, making 15-20% achievable through strategic moves.",
+        explanation: "A goal in LifeCompass represents something meaningful you want to achieve in this domain. Goals provide direction and focus, and are broken down into projects and tasks to make them achievable.",
         projects: [
           {
             name: "Strategic Career Move Planning",
             description: "Research opportunities and plan career moves for maximum salary growth",
-            explanation: "With median UK salary at £34,963, a 20% increase means £7,000+ annually - significant given housing and living costs. Gen Z spends only 1.7 years per job, normalizing mobility.",
+            explanation: "A project in LifeCompass breaks your goal into manageable parts. Each project tackles one major component needed to achieve your goal and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Research salary benchmarks for your role in different companies and regions",
@@ -37,7 +37,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Salary Negotiation and Job Search",
             description: "Execute strategic job search or negotiate salary increase in current role",
-            explanation: "CIPD data shows 35% of career changers specifically seek better pay, with management roles seeing 15% increases when moving jobs.",
+            explanation: "A project in LifeCompass breaks your goal into manageable parts. Each project tackles one major component needed to achieve your goal and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Apply for roles with 15-20% salary increases or prepare case for current employer",

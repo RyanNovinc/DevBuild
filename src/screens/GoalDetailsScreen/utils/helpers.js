@@ -54,10 +54,10 @@ export const getIconDomain = (iconName) => {
  * @param {boolean} hasTargetDate - Whether goal has a target date
  * @param {Date} targetDate - The target date
  * @param {number} progress - Current progress percentage
- * @param {Array} linkedProjects - List of linked projects
- * @param {Object} projectsToShare - Map of project IDs to share status
+ * @param {Array} linkedMilestones - List of linked milestones
+ * @param {Object} milestonesToShare - Map of milestone IDs to share status
  * @param {string} shareFormat - Format type ('simple' or 'detailed')
- * @param {Function} getTasksForProject - Function to get tasks for a project
+ * @param {Function} getTasksForMilestone - Function to get tasks for a milestone
  * @returns {string} - Formatted content for sharing
  */
 export const generateShareableContent = (
@@ -66,17 +66,17 @@ export const generateShareableContent = (
   hasTargetDate, 
   targetDate, 
   progress, 
-  linkedProjects, 
-  projectsToShare, 
+  linkedMilestones, 
+  milestonesToShare, 
   shareFormat,
-  getTasksForProject
+  getTasksForMilestone
 ) => {
   // Safety checks
   if (!title) title = 'Untitled Goal';
   if (!description) description = '';
-  if (!Array.isArray(linkedProjects)) linkedProjects = [];
-  if (!projectsToShare) projectsToShare = {};
-  if (!getTasksForProject) getTasksForProject = () => [];
+  if (!Array.isArray(linkedMilestones)) linkedMilestones = [];
+  if (!milestonesToShare) milestonesToShare = {};
+  if (!getTasksForMilestone) getTasksForMilestone = () => [];
   
   // Start with goal title
   let content = `🎯 GOAL: ${title}\n\n`;
@@ -94,25 +94,25 @@ export const generateShareableContent = (
   // Add progress
   content += `⏱️ Progress: ${progress}%\n\n`;
   
-  // Add projects if any are selected for sharing
-  const projectsToInclude = linkedProjects.filter(project => projectsToShare[project.id]);
+  // Add milestones if any are selected for sharing
+  const milestonesToInclude = linkedMilestones.filter(milestone => milestonesToShare[milestone.id]);
   
-  if (projectsToInclude.length > 0) {
-    content += `🔍 PROJECTS (${projectsToInclude.length}):\n`;
+  if (milestonesToInclude.length > 0) {
+    content += `🏁 MILESTONES (${milestonesToInclude.length}):\n`;
     
-    projectsToInclude.forEach((project, index) => {
-      content += `${index + 1}. ${project.title} - ${project.progress || 0}% complete\n`;
+    milestonesToInclude.forEach((milestone, index) => {
+      content += `${index + 1}. ${milestone.title} - ${milestone.progress || 0}% complete\n`;
       
-      // Add detailed project info for detailed format
+      // Add detailed milestone info for detailed format
       if (shareFormat === 'detailed') {
-        if (project.description && project.description.trim()) {
-          content += `   Description: ${project.description}\n`;
+        if (milestone.description && milestone.description.trim()) {
+          content += `   Description: ${milestone.description}\n`;
         }
         
-        const projectTasks = getTasksForProject(project.id);
-        if (projectTasks.length > 0) {
-          content += `   Tasks (${projectTasks.length}):\n`;
-          projectTasks.forEach((task, taskIndex) => {
+        const milestoneTasks = getTasksForMilestone(milestone.id);
+        if (milestoneTasks.length > 0) {
+          content += `   Tasks (${milestoneTasks.length}):\n`;
+          milestoneTasks.forEach((task, taskIndex) => {
             content += `   ${taskIndex + 1}. [${task.completed ? '✓' : ' '}] ${task.title}\n`;
           });
         }

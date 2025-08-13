@@ -161,6 +161,9 @@ import { setupGlobalLogFilter } from './src/utils/LoggerUtility';
 // Import Custom Tab Bar for enhanced animations
 import CustomTabBar from './src/components/CustomTabBar';
 
+// Import Swipeable Tab Navigator for physical swiping between tabs
+import SwipeableTabNavigator from './src/components/SwipeableTabNavigator';
+
 // Import ProfileProvider
 import { ProfileProvider } from './src/context/ProfileContext';
 
@@ -197,7 +200,7 @@ if (Platform && Platform.OS === 'ios') {
       // Then re-enable with specific settings (after a brief delay)
       setTimeout(() => {
         if (typeof KeyboardManager.setEnable === 'function') {
-          KeyboardManager.setEnable(true);
+          KeyboardManager.setEnable(false); // TEMPORARY: Disable entirely to test
           
           // Disable auto toolbar
           if (typeof KeyboardManager.setEnableAutoToolbar === 'function') {
@@ -228,7 +231,9 @@ import TasksScreen from './src/screens/TasksScreen';
 import EditProfileScreen from './src/screens/EditProfileScreen';
 import TimeBlockScreen from './src/screens/TimeBlockScreen';
 import ProjectDetailsScreen from './src/screens/ProjectDetailsScreen';
+import MilestoneDetailsScreen from './src/screens/MilestoneDetailsScreen';
 import GoalDetailsScreen from './src/screens/GoalDetailsScreen';
+import TaskDetailsScreen from './src/screens/TaskDetailsScreen';
 import TodoListScreen from './src/screens/TodoListScreen';
 // UPDATED: Import both AuthNavigator and LoginScreen from LoginScreen module
 import AuthNavigator, { LoginScreen } from './src/components/ai/LoginScreen';
@@ -485,7 +490,7 @@ const TabBadge = ({ count, maxCount, isPro }) => {
   );
 };
 
-// Goals Tab Navigator using TabView
+// Goals Tab Navigator with Toggle (No Top Tabs)
 const GoalsTabNavigator = ({ navigation, route }) => {
   const { theme } = useTheme();
   const { width } = useScreenDimensions();
@@ -500,29 +505,30 @@ const GoalsTabNavigator = ({ navigation, route }) => {
   const activeGoals = goals.filter(goal => !goal.completed);
   const completedGoals = goals.filter(goal => goal.completed);
   
-  // Navigation state for TabView
-  const [navigationState, setNavigationState] = React.useState({
-    index: 0,
-    routes: [
-      { key: 'overview', title: 'Overview' },
-      { key: 'active', title: 'Goals' },
-      { key: 'completed', title: 'Done' },
-    ],
-  });
+  // View mode state: 'overview' or 'completed'
+  const [viewMode, setViewMode] = React.useState('overview');
 
   // Full-screen state for Overview tab
   const [isOverviewFullscreen, setIsOverviewFullscreen] = React.useState(false);
+  
+  // Edit mode state for drag and drop
+  const [isEditMode, setIsEditMode] = React.useState(false);
   
   // Full-screen toggle handler
   const handleFullScreenToggle = React.useCallback(() => {
     setIsOverviewFullscreen(prev => !prev);
   }, []);
+  
+  // Edit mode toggle handler
+  const handleEditModeToggle = React.useCallback(() => {
+    setIsEditMode(prev => !prev);
+  }, []);
 
   // Effect to set global fullscreen state
   React.useEffect(() => {
     if (isOverviewFullscreen) {
-      // Only hide tabs/AI button when the Overview tab is in fullscreen and currently active
-      const isOverviewActive = navigationState && navigationState.index === 0;
+      // Only hide tabs/AI button when the Overview tab is in fullscreen and in overview mode
+      const isOverviewActive = viewMode === 'overview';
       if (isOverviewActive) {
         // Hide AI button
         if (typeof window !== 'undefined' && window.setAIButtonVisible) {
@@ -556,45 +562,54 @@ const GoalsTabNavigator = ({ navigation, route }) => {
         }
       }
     };
-  }, [isOverviewFullscreen, navigationState?.index]);
+  }, [isOverviewFullscreen, viewMode]);
   
-  // Handle navigation to specific tab when parameters change
+  // Handle navigation to specific view when parameters change
   React.useEffect(() => {
     if (route.params?.targetTabIndex !== undefined) {
-      // Navigate to specific tab when targetTabIndex is provided
-      setNavigationState(prev => ({
-        ...prev,
-        index: route.params.targetTabIndex
-      }));
+      // targetTabIndex: 0 = overview, 1 = completed
+      const newViewMode = route.params.targetTabIndex === 0 ? 'overview' : 'completed';
+      setViewMode(newViewMode);
     }
   }, [route.params?.targetTabIndex]);
 
-  // Debug navigationState changes
+  // Debug viewMode changes
   React.useEffect(() => {
-    console.log('GoalsScreen navigationState changed:', navigationState);
-  }, [navigationState]);
+    console.log('GoalsScreen viewMode changed:', viewMode);
+  }, [viewMode]);
   
-  // No forced reset - let content match whatever tab is selected
+  // No forced reset - let content match whatever view mode is selected
   
-  // Render scene function - content matches selected tab
-  const renderScene = ({ route }) => {
-    console.log('GoalsScreen renderScene called for route:', route.key, 'navigationState.index:', navigationState.index);
-    switch (route.key) {
-      case 'overview':
-        return <LifePlanOverviewScreen 
-          navigation={navigation} 
-          hideBackButton={true} 
-          onFullScreenToggle={handleFullScreenToggle}
-        />;
-      case 'active':
-        return <GoalsScreen navigation={navigation} tabMode="active" />;
-      case 'completed':
-        return <GoalsScreen navigation={navigation} tabMode="completed" />;
-      default:
-        return null;
-    }
-  };
-  
+  // Expose toggle function to be called from bottom tab press
+  React.useEffect(() => {
+    // Store the toggle function globally so it can be accessed by the bottom tab
+    global.toggleGoalsView = () => {
+      setViewMode(prev => {
+        const newMode = prev === 'overview' ? 'completed' : 'overview';
+        return newMode;
+      });
+    };
+    
+    // Store the current view mode globally for tab bar rendering
+    global.goalsViewMode = viewMode;
+    
+    // Update tab bar options when view mode changes
+    // The navigation object here is for the stack, we need the parent tab navigation
+    // We'll store this globally so the tab press handler can update it
+    global.updateGoalsTabOptions = () => {
+      // This will be called from the tab press handler which has access to the tab navigation
+    };
+    
+    // Cleanup
+    return () => {
+      if (global.toggleGoalsView) {
+        delete global.toggleGoalsView;
+      }
+      if (global.goalsViewMode) {
+        delete global.goalsViewMode;
+      }
+    };
+  }, [viewMode, navigation]);
 
   return (
     <View style={{ 
@@ -602,97 +617,91 @@ const GoalsTabNavigator = ({ navigation, route }) => {
       backgroundColor: theme.background,
       paddingTop: safeSpacing.top // Match TasksScreen safe area padding
     }}>
-      <TabView
-        key={`goals-tabview-${navigationState.index}`}
-        navigationState={navigationState}
-        renderScene={renderScene}
-        onIndexChange={(index) => {
-          console.log('GoalsScreen TabView onIndexChange:', index);
-          setNavigationState(prev => ({ ...prev, index }));
+      {/* Fullscreen/Minimize Toggle Button - top left */}
+      <TouchableOpacity
+        style={{
+          position: 'absolute',
+          top: safeSpacing.top + spacing.s,
+          left: spacing.m,
+          width: scaleWidth(44),
+          height: scaleWidth(44),
+          borderRadius: scaleWidth(22),
+          backgroundColor: theme.card,
+          borderColor: theme.border,
+          borderWidth: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 101,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.08,
+          shadowRadius: 3,
+          elevation: 2,
         }}
-        initialLayout={{ width }}
-        renderTabBar={(props) => {
-          // Hide tab bar when Overview is in fullscreen mode
-          if (isOverviewFullscreen && navigationState && navigationState.index === 0) {
-            return null;
-          }
-          
-          return (
-            <TabBar
-              {...props}
-              style={{
-                backgroundColor: theme.cardElevated || '#1F1F1F',
-                elevation: 0,
-                shadowOpacity: 0,
-                borderRadius: scaleWidth(25),
-                marginHorizontal: scaleWidth(20),
-                marginVertical: scaleHeight(10),
-                height: scaleHeight(44),
-              }}
-              indicatorStyle={{
-                backgroundColor: theme.primary,
-                height: scaleHeight(38),
-              borderRadius: scaleWidth(20),
-              marginBottom: 3,
-              marginLeft: 3,
-              width: Math.floor((width - scaleWidth(46)) / 3) - 6,
-              zIndex: 1,
-            }}
-            labelStyle={{
-              fontSize: scaleFontSize(16),
-              fontWeight: '600',
-              textTransform: 'none',
-              margin: 0,
-            }}
-            renderLabel={({ route, focused, color }) => {
-              // Get icon and badge for each route
-              let iconName, badge = null;
-              if (route.key === 'overview') {
-                iconName = focused ? 'compass' : 'compass-outline';
-              } else if (route.key === 'active') {
-                iconName = focused ? 'flag' : 'flag-outline';
-                badge = <TabBadge count={activeGoals.length} maxCount={LOCAL_MAX_GOALS} isPro={isPro} />;
-              } else if (route.key === 'completed') {
-                iconName = focused ? 'trophy' : 'trophy-outline';
-                badge = <TabBadge count={completedGoals.length} maxCount={LOCAL_MAX_GOALS} isPro={isPro} />;
-              }
-              
-              return (
-                <View style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  paddingVertical: 0,
-                  paddingHorizontal: scaleWidth(12),
-                  height: scaleHeight(38),
-                  marginTop: -scaleHeight(6),
-                }}>
-                  <Ionicons
-                    name={iconName}
-                    size={scaleWidth(22)}
-                    color={color}
-                    style={{ 
-                      marginRight: spacing.xs,
-                      marginTop: scaleHeight(1),
-                    }}
-                  />
-                  <Text style={{
-                    color: color,
-                    fontSize: scaleFontSize(16),
-                    fontWeight: '600',
-                    textTransform: 'none',
-                    marginTop: scaleHeight(1),
-                  }}>
-                    {route.title}
-                  </Text>
-                  {badge}
-                </View>
-              );
-            }}
-            />
-          );
-        }}
-      />
+        onPress={handleFullScreenToggle}
+        activeOpacity={0.8}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel={isOverviewFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+        accessibilityHint={isOverviewFullscreen ? "Returns to normal view" : "Expands the overview to fullscreen"}
+      >
+        <Ionicons 
+          name={isOverviewFullscreen ? "contract" : "expand"} 
+          size={scaleWidth(18)} 
+          color={theme.text} 
+        />
+      </TouchableOpacity>
+      
+      {/* Edit button in top right only for life plan overview */}
+      {viewMode === 'overview' && !isOverviewFullscreen && (
+        <TouchableOpacity
+          style={{
+            position: 'absolute',
+            top: safeSpacing.top + spacing.s,
+            right: spacing.m + scaleWidth(50), // Move it left to avoid overlapping fullscreen button
+            width: scaleWidth(44),
+            height: scaleWidth(44),
+            borderRadius: scaleWidth(22),
+            backgroundColor: isEditMode ? theme.primary + '15' : theme.card,
+            borderColor: isEditMode ? theme.primary : theme.border,
+            borderWidth: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 101,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.08,
+            shadowRadius: 3,
+            elevation: 2,
+          }}
+          onPress={handleEditModeToggle}
+          activeOpacity={0.8}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={isEditMode ? "Exit edit mode" : "Enter edit mode"}
+          accessibilityHint={isEditMode ? "Exits drag and drop mode" : "Enables drag and drop for reorganizing items"}
+        >
+          <Ionicons 
+            name={isEditMode ? "pencil" : "pencil-outline"} 
+            size={scaleWidth(18)} 
+            color={isEditMode ? theme.primary : theme.text} 
+          />
+        </TouchableOpacity>
+      )}
+      
+      {/* Conditional rendering based on viewMode */}
+      {viewMode === 'overview' ? (
+        <LifePlanOverviewScreen 
+          navigation={navigation} 
+          hideBackButton={true} 
+          onFullScreenToggle={handleFullScreenToggle}
+          isFullscreen={isOverviewFullscreen}
+          isEditMode={isEditMode}
+          onEditModeToggle={handleEditModeToggle}
+        />
+      ) : (
+        <GoalsScreen navigation={navigation} tabMode="completed" />
+      )}
     </View>
   );
 };
@@ -780,6 +789,40 @@ const GoalsStack = () => {
           }
         }}
       />
+      <Stack.Screen 
+        name="MilestoneDetails" 
+        component={MilestoneDetailsScreen}
+        options={{
+          gestureDirection: 'horizontal',
+          transitionSpec: {
+            open: {
+              animation: 'timing',
+              config: { duration: 300 }
+            },
+            close: {
+              animation: 'timing', 
+              config: { duration: 300 }
+            }
+          },
+          cardStyleInterpolator: ({ current, next, layouts }) => {
+            const progress = current.progress;
+            
+            // Milestone screens should enter from right and exit to right
+            return {
+              cardStyle: {
+                transform: [
+                  {
+                    translateX: progress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [layouts.screen.width, 0],
+                    }),
+                  },
+                ],
+              }
+            };
+          }
+        }}
+      />
     </Stack.Navigator>
   );
 };
@@ -815,6 +858,40 @@ const ProjectsStack = () => {
             const progress = current.progress;
             
             // Goal/Project screens should enter from right and exit to right
+            return {
+              cardStyle: {
+                transform: [
+                  {
+                    translateX: progress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [layouts.screen.width, 0]
+                    })
+                  }
+                ]
+              }
+            };
+          }
+        }}
+      />
+      <Stack.Screen 
+        name="MilestoneDetails" 
+        component={MilestoneDetailsScreen}
+        options={{
+          gestureDirection: 'horizontal',
+          transitionSpec: {
+            open: {
+              animation: 'timing',
+              config: { duration: 300 }
+            },
+            close: {
+              animation: 'timing', 
+              config: { duration: 300 }
+            }
+          },
+          cardStyleInterpolator: ({ current, next, layouts }) => {
+            const progress = current.progress;
+            
+            // Milestone screens should enter from right and exit to right
             return {
               cardStyle: {
                 transform: [
@@ -912,8 +989,9 @@ function MainTabNavigator({ route }) {
   // Track full-screen state for the entire app
   const [isAnyScreenFullScreen, setIsAnyScreenFullScreen] = useState(false);
   
-  // Navigation ref for notification navigation
+  // Navigation ref for notification navigation and swipeable navigation
   const tabNavigationRef = useRef(null);
+  const [navigationState, setNavigationState] = useState(null);
   
   // Animation values for tab transitions
   const contentOpacity = useRef(new Animated.Value(1)).current;
@@ -1019,7 +1097,14 @@ function MainTabNavigator({ route }) {
   return (
     <View style={s.container}>
       <Animated.View style={[s.contentContainer, { opacity: contentOpacity }]}>
-        <Tab.Navigator
+        <SwipeableTabNavigator
+          navigation={tabNavigationRef.current}
+          state={navigationState}
+          swipeThreshold={50}
+          velocityThreshold={300}
+        >
+          <Tab.Navigator
+          ref={tabNavigationRef}
           // Set initial route to ProfileTab when coming from onboarding
           initialRouteName="ProfileTab"
           screenOptions={{
@@ -1075,8 +1160,11 @@ function MainTabNavigator({ route }) {
               />
             );
           }}
-          // Track state changes for animations
-          onStateChange={handleTabChange}
+          // Track state changes for animations and swipeable navigation
+          onStateChange={(state) => {
+            setNavigationState(state);
+            handleTabChange(navigationState, state);
+          }}
           lazy={false}
           detachInactiveScreens={false}
         >
@@ -1093,33 +1181,49 @@ function MainTabNavigator({ route }) {
           <Tab.Screen 
             name="GoalsTab" 
             component={GoalsStack} 
-            options={{ 
-              tabBarLabel: 'Goals',
+            options={({ navigation }) => ({
+              tabBarLabel: 'Goals', // Start with default, will be updated dynamically
               tabBarIcon: ({ focused, color }) => 
-                createTabBarIcon('star', 'Goals', focused, color),
+                createTabBarIcon('flag', 'Goals', focused, color), // Start with default
               tabBarAccessibilityLabel: "Goals tab",
               unmountOnBlur: false
-            }} 
+            })}
+            listeners={({ navigation, route }) => ({
+              tabPress: (e) => {
+                // If we're already on the Goals tab, toggle the view
+                if (navigation.isFocused()) {
+                  e.preventDefault();
+                  if (global.toggleGoalsView) {
+                    global.toggleGoalsView();
+                    // Force navigation update to refresh tab bar
+                    setTimeout(() => {
+                      navigation.setOptions({
+                        tabBarLabel: global.goalsViewMode === 'overview' ? 'Goals' : 'Done',
+                        tabBarIcon: ({ focused, color }) => {
+                          const currentMode = global.goalsViewMode || 'overview';
+                          const iconName = currentMode === 'overview' ? 'flag' : 'checkmark-done-circle';
+                          const label = currentMode === 'overview' ? 'Goals' : 'Done';
+                          return createTabBarIcon(iconName, label, focused, color);
+                        },
+                        tabBarAccessibilityLabel: global.goalsViewMode === 'overview' ? "Goals tab" : "Completed goals tab"
+                      });
+                    }, 100);
+                  }
+                } else {
+                  // If we're coming from another tab, navigate normally
+                  navigation.navigate('GoalsTab');
+                }
+              },
+            })} 
           />
           <Tab.Screen 
             name="ProjectsTab"
             component={ProjectsStack}
-            options={({ route }) => {
-              // Get the viewMode from route params, default to 'projects'
-              const viewMode = route.params?.viewMode || 'projects';
-              
-              // Set the label based on viewMode
-              const label = viewMode === 'projects' ? 'Projects' : 'Tasks';
-              
-              // Set the icon based on viewMode
-              const iconName = viewMode === 'projects' ? 'folder' : 'list';
-              
-              return {
-                tabBarLabel: label,
-                tabBarIcon: ({ focused, color }) => 
-                  createTabBarIcon(iconName, label, focused, color),
-                tabBarAccessibilityLabel: `${label} tab`
-              };
+            options={{
+              tabBarLabel: 'Kanban',
+              tabBarIcon: ({ focused, color }) => 
+                createTabBarIcon('reader', 'Kanban', focused, color),
+              tabBarAccessibilityLabel: "Kanban tab"
             }}
           />
           <Tab.Screen 
@@ -1128,7 +1232,7 @@ function MainTabNavigator({ route }) {
             options={{ 
               tabBarLabel: 'Time',
               tabBarIcon: ({ focused, color }) => 
-                createTabBarIcon('time', 'Time', focused, color),
+                createTabBarIcon('calendar', 'Time', focused, color),
               tabBarAccessibilityLabel: "Time tab"
             }} 
           />
@@ -1148,7 +1252,8 @@ function MainTabNavigator({ route }) {
               };
             }}
           />
-        </Tab.Navigator>
+          </Tab.Navigator>
+        </SwipeableTabNavigator>
       </Animated.View>
       
       {/* Add Floating AI Button to the main tab navigator with responsive props */}
@@ -1434,6 +1539,7 @@ function AppContent({ navigationRef }) {
           <Stack.Screen name="WatchAdsScreen" component={WatchAdsScreen} />
           <Stack.Screen name="CommunityScreen" component={CommunityScreen} />
           <Stack.Screen name="StreakDetailScreen" component={StreakDetailScreen} />
+          <Stack.Screen name="TaskDetails" component={TaskDetailsScreen} />
           {/* Login screen is still available but not forced initially */}
           <Stack.Screen name="Login" component={LoginScreen} />
         </Stack.Navigator>

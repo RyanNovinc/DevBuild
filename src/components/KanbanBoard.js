@@ -24,23 +24,23 @@ const SafeText = ({ children, style, ...props }) => {
 };
 
 const KanbanBoard = ({ 
-  projects = [],  // Array of projects to display
+  milestones = [],  // Array of milestones to display
   tasks = [],     // Optional array of tasks  
   theme,          // Theme object for styling
-  onPressProject, // Function called when a project is pressed
+  onPressMilestone, // Function called when a milestone is pressed
   onPressTask,    // Function called when a task is pressed
-  onPressAddProject, // Function called when add project is pressed
+  onPressAddMilestone, // Function called when add milestone is pressed
   onPressAddTask, // Function called when add task is pressed
-  onUpdateProjectProgress, // Function to update project progress state
+  onUpdateMilestoneProgress, // Function to update milestone progress state
   onUpdateTaskStatus, // Function to update task status
   onEditTask,     // Function to edit a task
   onDeleteTask,   // Function to delete a task
   containerStyle, // Optional style override for container
-  isProjectLevel = false, // Whether this is a project-level board
+  isMilestoneLevel = false, // Whether this is a milestone-level board
   filterBy = null, // Optional filter (e.g., by goal, by domain)
   color = '#4CAF50', // Color for styling
   darkMode = true, // Default to dark mode
-  allProjects = [], // All projects for color inheritance
+  allMilestones = [], // All milestones for color inheritance
   allGoals = [] // All goals for color inheritance
 }) => {
   const [draggingItem, setDraggingItem] = useState(null);
@@ -61,38 +61,38 @@ const KanbanBoard = ({
     done: 0
   });
   
-  // Function to get the color for a task based on its project's goal's color
+  // Function to get the color for a task based on its milestone's goal's color
   const getTaskColor = (task) => {
     if (!task.projectId) return color;
     
-    // Find the project this task belongs to
-    const project = allProjects.find(p => p.id === task.projectId);
-    if (!project || !project.goalId) return color;
+    // Find the milestone this task belongs to
+    const milestone = allMilestones.find(p => p.id === task.projectId);
+    if (!milestone || !milestone.goalId) return color;
     
-    // Find the goal this project belongs to
-    const goal = allGoals.find(g => g.id === project.goalId);
+    // Find the goal this milestone belongs to
+    const goal = allGoals.find(g => g.id === milestone.goalId);
     if (!goal) return color;
     
-    // Return the goal's color, or the project's color, or the default color
-    return goal.color || project.color || color;
+    // Return the goal's color, or the milestone's color, or the default color
+    return goal.color || milestone.color || color;
   };
   
   // Get column items based on status
   const getItemsByStatus = (status) => {
-    if (isProjectLevel) {
-      // Project level - filter projects by their status first, then progress
-      return projects.filter(project => {
-        if (filterBy && filterBy.goalId && project.goalId !== filterBy.goalId) return false;
+    if (isMilestoneLevel) {
+      // Milestone level - filter milestones by their status first, then progress
+      return milestones.filter(milestone => {
+        if (filterBy && filterBy.goalId && milestone.goalId !== filterBy.goalId) return false;
         
-        // First check if the project has an explicit status property
-        if (project.status) {
-          return project.status === status;
+        // First check if the milestone has an explicit status property
+        if (milestone.status) {
+          return milestone.status === status;
         }
         
         // Fall back to progress-based status for backward compatibility
-        if (status === 'todo') return project.progress === 0;
-        if (status === 'in_progress') return project.progress > 0 && project.progress < 100;
-        if (status === 'done') return project.progress === 100;
+        if (status === 'todo') return milestone.progress === 0;
+        if (status === 'in_progress') return milestone.progress > 0 && milestone.progress < 100;
+        if (status === 'done') return milestone.progress === 100;
         
         return false;
       });
@@ -116,9 +116,9 @@ const KanbanBoard = ({
   }, []);
 
 
-  // Handle moving a project to a different status
-  const handleMoveProject = (project, newStatus) => {
-    if (!onUpdateProjectProgress) return;
+  // Handle moving a milestone to a different status
+  const handleMoveMilestone = (milestone, newStatus) => {
+    if (!onUpdateMilestoneProgress) return;
     
     // Convert status to status indicator value - this is NOT a progress percentage
     // It's just a signal for the AppContext to change the status
@@ -127,10 +127,10 @@ const KanbanBoard = ({
     else if (newStatus === 'in_progress') statusIndicator = 50;
     else if (newStatus === 'done') statusIndicator = 100;
     
-    console.log(`Moving project "${project.title}" to ${newStatus} status`);
+    console.log(`Moving milestone "${milestone.title}" to ${newStatus} status`);
     
     // Call the update function from props with the status indicator
-    onUpdateProjectProgress(project.id, statusIndicator);
+    onUpdateMilestoneProgress(milestone.id, statusIndicator);
   };
   
   // Handle moving a task to a different status
@@ -201,16 +201,16 @@ const KanbanBoard = ({
                   }
                 ]}
                 onPress={() => {
-                  if (isProjectLevel && onPressProject) {
-                    onPressProject(item);
-                  } else if (!isProjectLevel && onPressTask) {
+                  if (isMilestoneLevel && onPressMilestone) {
+                    onPressMilestone(item);
+                  } else if (!isMilestoneLevel && onPressTask) {
                     onPressTask(item);
                   }
                 }}
                 onLongPress={() => {
-                  if (isProjectLevel) {
+                  if (isMilestoneLevel) {
                     Alert.alert(
-                      'Move Project',
+                      'Move Milestone',
                       `Move "${item.title}" to a different status?`,
                       [
                         { text: 'Cancel', style: 'cancel' },
@@ -219,7 +219,7 @@ const KanbanBoard = ({
                           .map(newStatus => ({
                             text: newStatus === 'todo' ? 'To Do' : 
                                  newStatus === 'in_progress' ? 'In Progress' : 'Done',
-                            onPress: () => handleMoveProject(item, newStatus)
+                            onPress: () => handleMoveMilestone(item, newStatus)
                           }))
                         )
                       ]
@@ -249,7 +249,7 @@ const KanbanBoard = ({
                 {/* Left color bar */}
                 <View style={[
                   styles.itemColorBar, 
-                  { backgroundColor: isProjectLevel ? (item.color || color) : getTaskColor(item) }
+                  { backgroundColor: isMilestoneLevel ? (item.color || color) : getTaskColor(item) }
                 ]} />
                 
                 <View style={styles.itemContent}>
@@ -278,9 +278,9 @@ const KanbanBoard = ({
                       </SafeText>
                     )}
                     
-                    {/* Show meta info for projects */}
-                    {isProjectLevel && (
-                      <View style={styles.projectMeta}>
+                    {/* Show meta info for milestones */}
+                    {isMilestoneLevel && (
+                      <View style={styles.milestoneMeta}>
                         {item.dueDate && (
                           <View style={styles.metaItem}>
                             <Ionicons 
@@ -297,7 +297,7 @@ const KanbanBoard = ({
                           </View>
                         )}
                         
-                        {/* Progress bar for projects */}
+                        {/* Progress bar for milestones */}
                         <View style={styles.progressContainer}>
                           <View style={[
                             styles.progressBar, 
@@ -308,7 +308,7 @@ const KanbanBoard = ({
                                 styles.progressFill,
                                 { 
                                   width: `${item.progress || 0}%`, 
-                                  backgroundColor: isProjectLevel ? (item.color || color) : getTaskColor(item) 
+                                  backgroundColor: isMilestoneLevel ? (item.color || color) : getTaskColor(item) 
                                 }
                               ]}
                             />
@@ -342,8 +342,8 @@ const KanbanBoard = ({
                         onPress={(e) => {
                           e.stopPropagation();
                           const targetStatus = status === 'in_progress' ? 'todo' : 'in_progress';
-                          if (isProjectLevel) {
-                            handleMoveProject(item, targetStatus);
+                          if (isMilestoneLevel) {
+                            handleMoveMilestone(item, targetStatus);
                           } else {
                             handleMoveTask(item, targetStatus);
                           }
@@ -359,7 +359,7 @@ const KanbanBoard = ({
                     )}
                     
                     {/* Edit button (for tasks only) */}
-                    {!isProjectLevel && onEditTask && (
+                    {!isMilestoneLevel && onEditTask && (
                       <TouchableOpacity 
                         style={styles.actionButton}
                         onPress={(e) => {
@@ -377,7 +377,7 @@ const KanbanBoard = ({
                     )}
                     
                     {/* Delete button (for tasks only) */}
-                    {!isProjectLevel && onDeleteTask && (
+                    {!isMilestoneLevel && onDeleteTask && (
                       <TouchableOpacity 
                         style={styles.actionButton}
                         onPress={(e) => {
@@ -397,8 +397,8 @@ const KanbanBoard = ({
                         onPress={(e) => {
                           e.stopPropagation();
                           const targetStatus = status === 'todo' ? 'in_progress' : 'done';
-                          if (isProjectLevel) {
-                            handleMoveProject(item, targetStatus);
+                          if (isMilestoneLevel) {
+                            handleMoveMilestone(item, targetStatus);
                           } else {
                             handleMoveTask(item, targetStatus);
                           }
@@ -433,9 +433,9 @@ const KanbanBoard = ({
                 { borderColor: darkMode ? '#444444' : '#CCCCCC' }
               ]}
               onPress={() => {
-                if (isProjectLevel && onPressAddProject) {
-                  onPressAddProject();
-                } else if (!isProjectLevel && onPressAddTask) {
+                if (isMilestoneLevel && onPressAddMilestone) {
+                  onPressAddMilestone();
+                } else if (!isMilestoneLevel && onPressAddTask) {
                   onPressAddTask();
                 }
               }}
@@ -450,7 +450,7 @@ const KanbanBoard = ({
                 styles.addButtonText, 
                 { color: darkMode ? '#AAAAAA' : '#888888' }
               ]}>
-                {isProjectLevel ? 'Add Project' : 'Add Task'}
+                {isMilestoneLevel ? 'Add Milestone' : 'Add Task'}
               </SafeText>
             </TouchableOpacity>
           )}
@@ -562,7 +562,7 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     marginBottom: 4,
   },
-  projectMeta: {
+  milestoneMeta: {
     flexDirection: 'column',
     marginTop: 4,
   },

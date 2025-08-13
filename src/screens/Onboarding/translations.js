@@ -37,7 +37,7 @@ const translations = {
       whyThisApproachWorks: "Why This Approach Works",
       gettingStarted: "Getting Started",
       editabilityNote: "You can customize this {{itemType}} after setup.",
-      taskExplanation: "This task breaks down your project into a specific, actionable step you can complete. Tasks are concrete actions that move you toward your goals."
+      taskExplanation: "A task is a specific action you complete to make progress. Tasks are concrete, doable steps that move you forward through each project toward your goal."
     },
     welcome: {
       greeting: "Hi! Welcome to LifeCompass!",
@@ -62,8 +62,8 @@ const translations = {
       dontWorry: "Remember, this isn't set in stone. You can add more goals once you're in the app."
     },
     projects: {
-      title: "{{goalName}} Breakdown",
-      message1: "Now we can turn your goal into actionable steps. This breakdown system is what turns aspirations into results."
+      title: "{{goalName}} Breakdown", 
+      message1: "Here's how we'll break down your goal into manageable projects and tasks. Each element works together to help you achieve what matters to you."
     },
     completion: {
       title: "All Set!",

@@ -2217,7 +2217,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     // paddingHorizontal set in component
-    marginBottom: scaleHeight(16),
+    marginBottom: scaleHeight(20),
   },
   headerLeft: {
     flexDirection: 'row',
@@ -2225,7 +2225,8 @@ const styles = StyleSheet.create({
   },
   dashboardTitle: {
     // fontSize set in component
-    fontWeight: 'bold',
+    fontWeight: '400',
+    letterSpacing: 0.5,
   },
   headerActions: {
     flexDirection: 'row',
@@ -2235,11 +2236,13 @@ const styles = StyleSheet.create({
     // width, height, borderRadius set in component
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: 12,
   },
   addButton: {
     // width, height, borderRadius set in component
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: 12,
   },
   componentContainer: {
     position: 'relative',

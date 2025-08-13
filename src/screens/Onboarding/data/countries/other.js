@@ -13,12 +13,12 @@ export const DOMAIN_DEFINITIONS = [
         name: "Switch to Tech Career",
         description: "Transition into technology sector with high-demand skills and global opportunities",
         icon: "code",
-        explanation: "The global technology sector grows 32% faster than the overall economy, creating opportunities worldwide. Tech skills enable remote work and access to international markets.",
+        explanation: "A goal in LifeCompass represents something meaningful you want to achieve in this domain. Goals provide direction and focus, and are broken down into projects and tasks to make them achievable.",
         projects: [
           {
             name: "Learn Core Programming Skills",
             description: "Master fundamental programming languages and development concepts",
-            explanation: "Programming skills provide the foundation for tech career transition. Focus on in-demand languages with strong job market demand.",
+            explanation: "A project in LifeCompass breaks your goal into manageable parts. Each project tackles one major component needed to achieve your goal and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Choose primary programming language (Python, JavaScript, or Java) based on career goals",
@@ -39,7 +39,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Build Professional Portfolio",
             description: "Create portfolio demonstrating practical programming skills and project experience",
-            explanation: "Portfolio projects showcase abilities to employers and provide concrete examples of problem-solving skills.",
+            explanation: "A project in LifeCompass breaks your goal into manageable parts. Each project tackles one major component needed to achieve your goal and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Develop 3-5 projects showcasing different programming concepts and technologies",

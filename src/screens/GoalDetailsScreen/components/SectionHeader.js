@@ -4,8 +4,8 @@ import { View, Text, TouchableOpacity, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 const SectionHeader = ({ title, icon, isActive, onPress, selectedColor, theme }) => {
-  // Animation for active indicator
-  const [scaleAnim] = React.useState(new Animated.Value(isActive ? 1 : 0));
+  // Animation for active indicator - use ref to persist across renders
+  const scaleAnim = React.useRef(new Animated.Value(isActive ? 1 : 0)).current;
   
   // Update animation when active state changes
   React.useEffect(() => {
@@ -80,4 +80,4 @@ const styles = {
   }
 };
 
-export default SectionHeader;
+export default React.memo(SectionHeader);

@@ -23,14 +23,14 @@ const AdvancedSection = ({
   expandedSection,
   setExpandedSection,
   getActiveNotificationCount,
-  getLinkedProjects,
-  projectsToShare,
-  toggleProjectSharing,
+  getLinkedMilestones,
+  milestonesToShare,
+  toggleMilestoneSharing,
   shareFormat,
   setShareFormat,
   copyToClipboard,
   handleShareGoal,
-  getLinkedProjectsCount,
+  getLinkedMilestonesCount,
   handleDeleteConfirmation,
   isLoading
 }) => {
@@ -52,8 +52,8 @@ const AdvancedSection = ({
   // Check if the selected color has good contrast with white text
   const hasGoodTextContrast = meetsContrastRequirements('#FFFFFF', selectedColor);
   
-  // Custom button component for consistency
-  const ActionButton = ({ icon, label, onPress, disabled, destructive }) => (
+  // Custom button component for consistency - memoized
+  const ActionButton = React.memo(({ icon, label, onPress, disabled, destructive }) => (
     <TouchableOpacity
       style={[
         styles.actionButton,
@@ -90,7 +90,7 @@ const AdvancedSection = ({
         {label}
       </Text>
     </TouchableOpacity>
-  );
+  ));
 
   return (
     <View style={[
@@ -472,7 +472,7 @@ const AdvancedSection = ({
                 </TouchableOpacity>
               </View>
               
-              {/* Project selection for sharing */}
+              {/* Milestone selection for sharing */}
               <Text 
                 style={[
                   styles.optionSubheader, 
@@ -485,12 +485,12 @@ const AdvancedSection = ({
                 ]}
                 maxFontSizeMultiplier={1.5}
               >
-                Include Projects:
+                Include Milestones:
               </Text>
               
-              {getLinkedProjects().length === 0 ? (
+              {getLinkedMilestones().length === 0 ? (
                 <View style={[
-                  styles.emptyProjectsContainer, 
+                  styles.emptyMilestonesContainer, 
                   { 
                     backgroundColor: theme.backgroundTertiary,
                     borderColor: theme.border,
@@ -500,10 +500,10 @@ const AdvancedSection = ({
                     minHeight: minTouchSize
                   }
                 ]}>
-                  <Ionicons name="folder-outline" size={scaleWidth(20)} color={theme.textSecondary} />
+                  <Ionicons name="flag-outline" size={scaleWidth(20)} color={theme.textSecondary} />
                   <Text 
                     style={[
-                      styles.noProjectsText, 
+                      styles.noMilestonesText, 
                       { 
                         color: theme.textSecondary,
                         fontSize: fontSizes.s,
@@ -513,12 +513,12 @@ const AdvancedSection = ({
                     ]}
                     maxFontSizeMultiplier={1.5}
                   >
-                    No projects linked
+                    No milestones linked
                   </Text>
                 </View>
               ) : (
                 <View style={[
-                  styles.shareProjectsList,
+                  styles.shareMilestonesList,
                   { 
                     backgroundColor: theme.backgroundTertiary,
                     borderColor: theme.border,
@@ -526,11 +526,11 @@ const AdvancedSection = ({
                     borderRadius: scaleWidth(8)
                   }
                 ]}>
-                  {getLinkedProjects().map(project => (
+                  {getLinkedMilestones().map(milestone => (
                     <View 
-                      key={project.id} 
+                      key={milestone.id} 
                       style={[
-                        styles.shareProjectItem, 
+                        styles.shareMilestoneItem, 
                         { 
                           borderBottomColor: theme.border,
                           borderBottomWidth: 1,
@@ -544,7 +544,7 @@ const AdvancedSection = ({
                     >
                       <Text 
                         style={[
-                          styles.shareProjectTitle, 
+                          styles.shareMilestoneTitle, 
                           { 
                             color: theme.text,
                             fontSize: fontSizes.m,
@@ -553,17 +553,17 @@ const AdvancedSection = ({
                         ]}
                         maxFontSizeMultiplier={1.5}
                       >
-                        {project.title}
+                        {milestone.title}
                       </Text>
                       <Switch
-                        value={projectsToShare[project.id] || false}
-                        onValueChange={() => toggleProjectSharing(project.id)}
+                        value={milestonesToShare[milestone.id] || false}
+                        onValueChange={() => toggleMilestoneSharing(milestone.id)}
                         trackColor={{ false: theme.border, true: `${selectedColor}80` }}
-                        thumbColor={projectsToShare[project.id] ? selectedColor : '#f4f3f4'}
+                        thumbColor={milestonesToShare[milestone.id] ? selectedColor : '#f4f3f4'}
                         accessible={true}
-                        accessibilityLabel={`Include ${project.title} ${projectsToShare[project.id] ? 'on' : 'off'}`}
+                        accessibilityLabel={`Include ${milestone.title} ${milestonesToShare[milestone.id] ? 'on' : 'off'}`}
                         accessibilityRole="switch"
-                        accessibilityState={{ checked: projectsToShare[project.id] || false }}
+                        accessibilityState={{ checked: milestonesToShare[milestone.id] || false }}
                       />
                     </View>
                   ))}
@@ -628,10 +628,10 @@ const AdvancedSection = ({
             </Text>
             
             <View style={{ marginBottom: spacing.m }}>
-              {getLinkedProjectsCount() > 0 && (
+              {getLinkedMilestonesCount() > 0 && (
                 <Text 
                   style={[
-                    styles.linkedProjectsWarningText, 
+                    styles.linkedMilestonesWarningText, 
                     { 
                       color: theme.textSecondary,
                       fontSize: fontSizes.s,
@@ -640,7 +640,7 @@ const AdvancedSection = ({
                   ]}
                   maxFontSizeMultiplier={1.8}
                 >
-                  <Text style={{ fontWeight: 'bold' }}>Note:</Text> Will also delete {getLinkedProjectsCount()} linked {getLinkedProjectsCount() === 1 ? 'project' : 'projects'}.
+                  <Text style={{ fontWeight: 'bold' }}>Note:</Text> Will also delete {getLinkedMilestonesCount()} linked {getLinkedMilestonesCount() === 1 ? 'milestone' : 'milestones'}.
                 </Text>
               )}
             </View>
@@ -660,7 +660,7 @@ const AdvancedSection = ({
               accessible={true}
               accessibilityRole="button"
               accessibilityLabel="Delete Goal"
-              accessibilityHint={`Permanently removes this goal ${getLinkedProjectsCount() > 0 ? `and all ${getLinkedProjectsCount()} linked ${getLinkedProjectsCount() === 1 ? 'project' : 'projects'}` : ''}`}
+              accessibilityHint={`Permanently removes this goal ${getLinkedMilestonesCount() > 0 ? `and all ${getLinkedMilestonesCount()} linked ${getLinkedMilestonesCount() === 1 ? 'milestone' : 'milestones'}` : ''}`}
               accessibilityState={{ disabled: isLoading }}
             >
               <Ionicons name="trash-outline" size={scaleWidth(20)} color={theme.error} />
@@ -760,4 +760,4 @@ const styles = {
   },
 };
 
-export default AdvancedSection;
+export default React.memo(AdvancedSection);

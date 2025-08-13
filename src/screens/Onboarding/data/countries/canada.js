@@ -11,7 +11,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Master In-Demand Tech Skills",
         description: "Develop technology capabilities essential for Canada's digital transformation",
         icon: "laptop",
-        explanation: "305,000+ tech workers needed by 2024. AI and machine learning skills command 35% salary premiums with federal government investing $2.5 billion in digital skills development.",
+        explanation: "A goal in LifeCompass represents something meaningful you want to achieve in this domain. Goals provide direction and focus, and are broken down into projects and tasks to make them achievable.",
         needsClarification: true,
         clarificationOptions: [
           {
@@ -211,7 +211,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Achieve 3.5%+ Salary Increase",
         description: "Exceed national average salary growth to gain real purchasing power",
         icon: "trending-up",
-        explanation: "2025 salary projections average 3.4-3.6% nationally with inflation at 2.4%. Tech professionals expect 4.3% increases, professional services 3.7%, finance 3.6%.",
+        explanation: "A goal in LifeCompass represents something meaningful you want to achieve in this domain. Goals provide direction and focus, and are broken down into projects and tasks to make them achievable.",
         projects: [
           {
             name: "Performance-Based Salary Strategy",
@@ -261,12 +261,12 @@ export const DOMAIN_DEFINITIONS = [
         name: "Secure Flexible Work Arrangement",
         description: "Negotiate hybrid or remote work options for optimal work-life integration",
         icon: "home",
-        explanation: "95% of young professionals say work-life balance is important. 29% of new job postings offer hybrid work and 12% fully remote positions.",
+        explanation: "A goal in LifeCompass represents something meaningful you want to achieve in this domain. Goals provide direction and focus, and are broken down into projects and tasks to make them achievable.",
         projects: [
           {
             name: "Flexible Work Negotiation",
             description: "Secure hybrid or remote work arrangements with current employer",
-            explanation: "80% of remote workers want to spend at least half their time working from home, directly addressing mental health challenges where only 52% of Gen Z rate wellbeing as good.",
+            explanation: "A project in LifeCompass breaks your goal into manageable parts. Each project tackles one major component needed to achieve your goal and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Research your company's flexible work policy and document productivity benefits",

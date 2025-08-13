@@ -37,8 +37,8 @@ import UnsavedChangesModal from './components/UnsavedChangesModal';
 // Import external AddTaskModal component for compatibility
 import AddTaskModalExternal from '../../components/AddTaskModal';
 
-// Import the new ProjectPreview component
-import ProjectPreview from './components/ProjectPreview';
+// Import the new MilestonePreview component
+import MilestonePreview from './components/MilestonePreview';
 
 // Import subscription UI components - removed FeatureLimitBanner
 import { FREE_PLAN_LIMITS } from '../../services/SubscriptionService';
@@ -267,10 +267,10 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
           console.error("Projects is not an array:", projects);
           setProjectState(prev => ({
             ...prev,
-            title: "Error: Project data unavailable",
-            description: "There was an error loading the project data. Please go back and try again."
+            title: "Error: Milestone data unavailable",
+            description: "There was an error loading the milestone data. Please go back and try again."
           }));
-          showError("Error loading project data");
+          showError("Error loading milestone data");
           return;
         }
         
@@ -279,12 +279,12 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
           console.error(`Project with ID ${projectId} is not active or has been deleted`);
           setProjectState(prev => ({
             ...prev,
-            title: "Project Not Found or Deleted",
-            description: "This project may have been deleted or is no longer available."
+            title: "Milestone Not Found or Deleted",
+            description: "This milestone may have been deleted or is no longer available."
           }));
           
           if (!isDeleting.current) {
-            showError("Project not found");
+            showError("Milestone not found");
           }
           
           return;
@@ -377,10 +377,10 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
             console.error(`Project with ID ${projectId} not found in`, projects);
             setProjectState(prev => ({
               ...prev,
-              title: "Project Not Found",
-              description: "This project may have been deleted or is no longer available."
+              title: "Milestone Not Found",
+              description: "This milestone may have been deleted or is no longer available."
             }));
-            showError("Project not found");
+            showError("Milestone not found");
           }
         }
       } else if (isCreating) {
@@ -429,10 +429,10 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
       console.error("Error in project loading effect:", error);
       setProjectState(prev => ({
         ...prev,
-        title: "Error Loading Project",
-        description: "An unexpected error occurred while loading the project data."
+        title: "Error Loading Milestone",
+        description: "An unexpected error occurred while loading the milestone data."
       }));
-      showError("Error loading project data");
+      showError("Error loading milestone data");
     }
   }, [isCreating, projectId, preselectedGoalId, mainGoals, goals, isProjectActive, showError, projects, tasks]); 
   
@@ -753,7 +753,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
     if (isDeleting.current) return;
     
     if (!projectState.title.trim()) {
-      showError('Please enter a project title');
+      showError('Please enter a milestone title');
       return;
     }
     
@@ -802,10 +802,10 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
       try {
         if (isCreating) {
           addProject(project);
-          showSuccess('Project created successfully');
+          showSuccess('Milestone created successfully');
         } else {
           updateProject(project);
-          showSuccess('Project updated successfully');
+          showSuccess('Milestone updated successfully');
         }
         
         // Track strategic thinker achievement if project has a goal
@@ -827,7 +827,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
         navigation.goBack();
       } catch (error) {
         console.error("Error saving project:", error);
-        showError("An error occurred while saving the project.");
+        showError("An error occurred while saving the milestone.");
         
         setUiState(prev => ({
           ...prev,
@@ -872,14 +872,14 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
           
           if (success) {
             console.log(`Successfully deleted project ID: ${projectIdToDelete}`);
-            showSuccess('Project deleted successfully');
+            showSuccess('Milestone deleted successfully');
           } else {
             console.error(`Failed to delete project ID: ${projectIdToDelete}`);
-            showError('Error deleting project');
+            showError('Error deleting milestone');
           }
         } catch (deleteError) {
           console.error("Error during project deletion:", deleteError);
-          showError('Error deleting project');
+          showError('Error deleting milestone');
         }
       }, 500);
       
@@ -887,7 +887,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
       
     } catch (error) {
       console.error("Fatal error in delete handling:", error);
-      showError('Error deleting project');
+      showError('Error deleting milestone');
       
       if (isMounted.current) {
         navigation.goBack();
@@ -1040,18 +1040,12 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
         accessible={true}
         accessibilityLabel="Project details content"
       >
-        {/* Project Preview */}
-        <ProjectPreview
-          scrollY={scrollY}
+        {/* Milestone Preview */}
+        <MilestonePreview
           title={projectState.title}
-          color={projectState.color}
-          calculateProgress={calculateProgress}
+          selectedColor={projectState.color}
+          progress={calculateProgress()}
           theme={theme}
-          isCreating={isCreating}
-          getGoalName={getGoalName}
-          goalColor={availableGoals.find(g => g.id === selectedGoalId)?.color}
-          hasGoal={!!selectedGoalId}
-          taskCount={Array.isArray(tasks) ? tasks.filter(task => task.projectId === projectId).length : 0}
         />
         
         {/* Tabs Navigation */}
@@ -1189,7 +1183,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
                 style={[styles.deleteModalTitle, { color: theme.text }]}
                 maxFontSizeMultiplier={1.3}
               >
-                Delete Project
+                Delete Milestone
               </Text>
             </View>
             
@@ -1226,8 +1220,8 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
                 onPress={handleConfirmDelete}
                 accessible={true}
                 accessibilityRole="button"
-                accessibilityLabel="Delete Project"
-                accessibilityHint="Permanently deletes this project and all its tasks"
+                accessibilityLabel="Delete Milestone"
+                accessibilityHint="Permanently deletes this milestone and all its tasks"
               >
                 <Text style={[styles.deleteButtonText, styles.deleteConfirmText]}>
                   Delete

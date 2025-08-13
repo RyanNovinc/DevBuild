@@ -81,11 +81,19 @@ const FeedbackScreen = ({ navigation }) => {
   const [marketingConsent, setMarketingConsent] = useState(false);
   const [isGoingBack, setIsGoingBack] = useState(false);
   
+  // Refund-specific states
+  const [refundReason, setRefundReason] = useState('');
+  const [refundExpectations, setRefundExpectations] = useState('');
+  const [refundSuggestions, setRefundSuggestions] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('paypal'); // 'paypal' or 'other'
+  const [paymentDetails, setPaymentDetails] = useState('');
+  
   // Feedback types with icons, labels, and colors
   const feedbackTypes = [
     { id: 'suggestion', label: 'Suggestion', icon: 'bulb-outline', color: '#FFD700' },
     { id: 'issue', label: 'Issue/Bug', icon: 'bug-outline', color: theme.error || '#E53935' },
     { id: 'feature', label: 'Feature Request', icon: 'add-circle-outline', color: '#4CAF50' },
+    { id: 'refund', label: 'Refund Request', icon: 'card-outline', color: '#FF6B6B' },
     { id: 'testimonial', label: 'Testimonial', icon: 'star-outline', color: '#9C27B0' },
     { id: 'other', label: 'Other', icon: 'chatbox-outline', color: theme.info || '#039BE5' }
   ];
@@ -98,7 +106,12 @@ const FeedbackScreen = ({ navigation }) => {
 
   // Handle feedback submission
   const handleSubmitFeedback = async () => {
-    if (!feedbackText.trim()) {
+    if (feedbackType === 'refund') {
+      if (!refundReason.trim() || !refundExpectations.trim() || !refundSuggestions.trim() || !paymentDetails.trim()) {
+        showError('Please complete all required refund fields');
+        return;
+      }
+    } else if (!feedbackText.trim()) {
       showError('Please enter your feedback');
       return;
     }
@@ -126,7 +139,16 @@ const FeedbackScreen = ({ navigation }) => {
         is_founder: isFounder,
         founder_status: isFounder ? 'Founder' : 'free',
         // Include priority field - founders get high priority
-        priority: isFounder ? 'high' : 'normal'
+        priority: isFounder ? 'high' : 'normal',
+        // Add refund-specific data
+        ...(feedbackType === 'refund' && {
+          refund_reason: refundReason,
+          refund_expectations: refundExpectations,
+          refund_suggestions: refundSuggestions,
+          payment_method: paymentMethod,
+          payment_details: paymentDetails,
+          refund_status: 'requested'
+        })
       };
       
       // Send to AWS
@@ -153,6 +175,13 @@ const FeedbackScreen = ({ navigation }) => {
       setFeedbackType('suggestion');
       setFeedbackTarget('app');
       setMarketingConsent(false);
+      
+      // Reset refund fields
+      setRefundReason('');
+      setRefundExpectations('');
+      setRefundSuggestions('');
+      setPaymentMethod('paypal');
+      setPaymentDetails('');
       
       // Close modal and navigate back after a delay
       setTimeout(() => {
@@ -558,23 +587,24 @@ const FeedbackScreen = ({ navigation }) => {
             </View>
           )}
           
-          {/* Feedback message - COMPLETELY REWORKED FOR PROPER TEXT WRAPPING */}
-          <View style={[
-            styles.card, 
-            { 
-              backgroundColor: theme.card,
-              borderWidth: 1,
-              borderColor: theme.border,
-              borderRadius: scaleWidth(16),
-              padding: spacing.m,
-              marginBottom: spacing.m,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: scaleHeight(2) },
-              shadowOpacity: 0.05,
-              shadowRadius: 3,
-              elevation: 2
-            }
-          ]}>
+          {/* Feedback message - Only show for non-refund types */}
+          {feedbackType !== 'refund' && (
+            <View style={[
+              styles.card, 
+              { 
+                backgroundColor: theme.card,
+                borderWidth: 1,
+                borderColor: theme.border,
+                borderRadius: scaleWidth(16),
+                padding: spacing.m,
+                marginBottom: spacing.m,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: scaleHeight(2) },
+                shadowOpacity: 0.05,
+                shadowRadius: 3,
+                elevation: 2
+              }
+            ]}>
             <View style={[
               styles.sectionTitleContainer,
               {
@@ -667,6 +697,7 @@ const FeedbackScreen = ({ navigation }) => {
               {getHintText()}
             </Text>
           </View>
+          )}
           
           {/* Marketing consent for testimonials */}
           {feedbackType === 'testimonial' && !route.params?.fromThemePicker && (
@@ -766,8 +797,9 @@ const FeedbackScreen = ({ navigation }) => {
             </View>
           )}
           
-          {/* Contact email (optional) */}
-          <View style={[
+          {/* Contact email (optional) - Skip for refund requests */}
+          {feedbackType !== 'refund' && (
+            <View style={[
             styles.card, 
             { 
               backgroundColor: theme.card,
@@ -856,6 +888,317 @@ const FeedbackScreen = ({ navigation }) => {
                 : "We'll only use this to follow up on your feedback if needed."}
             </Text>
           </View>
+          )}
+          
+          {/* Refund-specific sections */}
+          {feedbackType === 'refund' && (
+            <>
+              {/* Refund Reason */}
+              <View style={[
+                styles.card, 
+                { 
+                  backgroundColor: theme.card,
+                  borderWidth: 1,
+                  borderColor: theme.border,
+                  borderRadius: scaleWidth(16),
+                  padding: spacing.m,
+                  marginBottom: spacing.m,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: scaleHeight(2) },
+                  shadowOpacity: 0.05,
+                  shadowRadius: 3,
+                  elevation: 2
+                }
+              ]}>
+                <View style={[
+                  styles.sectionTitleContainer,
+                  {
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    marginBottom: spacing.m
+                  }
+                ]}>
+                  <Ionicons 
+                    name="help-circle-outline" 
+                    size={scaleWidth(22)} 
+                    color="#FF6B6B" 
+                    style={{ marginRight: spacing.xs }}
+                  />
+                  <Text 
+                    style={[
+                      styles.sectionTitle, 
+                      { 
+                        color: textColor,
+                        fontSize: fontSizes.m,
+                        fontWeight: '600'
+                      }
+                    ]}
+                    maxFontSizeMultiplier={1.3}
+                  >
+                    Why didn't Pro Access meet your expectations? *
+                  </Text>
+                </View>
+                
+                <TextInput
+                  style={[
+                    styles.feedbackInput,
+                    { 
+                      backgroundColor: isDarkMode ? '#1A1A1A' : '#F5F5F5',
+                      color: textColor,
+                      borderColor: theme.border,
+                      borderWidth: 1,
+                      minHeight: scaleHeight(80),
+                      borderRadius: scaleWidth(12),
+                      padding: spacing.m,
+                      fontSize: fontSizes.m,
+                      textAlignVertical: 'top'
+                    }
+                  ]}
+                  placeholder="What specifically didn't work for you?"
+                  placeholderTextColor={isDarkMode ? '#777777' : '#999999'}
+                  multiline={true}
+                  value={refundReason}
+                  onChangeText={setRefundReason}
+                  textAlignVertical="top"
+                  maxFontSizeMultiplier={1.5}
+                  accessible={true}
+                  accessibilityLabel="Refund reason"
+                />
+              </View>
+
+              {/* What were you hoping to achieve */}
+              <View style={[
+                styles.card, 
+                { 
+                  backgroundColor: theme.card,
+                  borderWidth: 1,
+                  borderColor: theme.border,
+                  borderRadius: scaleWidth(16),
+                  padding: spacing.m,
+                  marginBottom: spacing.m,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: scaleHeight(2) },
+                  shadowOpacity: 0.05,
+                  shadowRadius: 3,
+                  elevation: 2
+                }
+              ]}>
+                <View style={[
+                  styles.sectionTitleContainer,
+                  {
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    marginBottom: spacing.m
+                  }
+                ]}>
+                  <Ionicons 
+                    name="target-outline" 
+                    size={scaleWidth(22)} 
+                    color="#FF6B6B" 
+                    style={{ marginRight: spacing.xs }}
+                  />
+                  <Text 
+                    style={[
+                      styles.sectionTitle, 
+                      { 
+                        color: textColor,
+                        fontSize: fontSizes.m,
+                        fontWeight: '600'
+                      }
+                    ]}
+                    maxFontSizeMultiplier={1.3}
+                  >
+                    What were you hoping to achieve? *
+                  </Text>
+                </View>
+                
+                <TextInput
+                  style={[
+                    styles.feedbackInput,
+                    { 
+                      backgroundColor: isDarkMode ? '#1A1A1A' : '#F5F5F5',
+                      color: textColor,
+                      borderColor: theme.border,
+                      borderWidth: 1,
+                      minHeight: scaleHeight(80),
+                      borderRadius: scaleWidth(12),
+                      padding: spacing.m,
+                      fontSize: fontSizes.m,
+                      textAlignVertical: 'top'
+                    }
+                  ]}
+                  placeholder="What were you trying to accomplish?"
+                  placeholderTextColor={isDarkMode ? '#777777' : '#999999'}
+                  multiline={true}
+                  value={refundExpectations}
+                  onChangeText={setRefundExpectations}
+                  textAlignVertical="top"
+                  maxFontSizeMultiplier={1.5}
+                  accessible={true}
+                  accessibilityLabel="Expected outcomes"
+                />
+              </View>
+
+              {/* What would you like to see changed */}
+              <View style={[
+                styles.card, 
+                { 
+                  backgroundColor: theme.card,
+                  borderWidth: 1,
+                  borderColor: theme.border,
+                  borderRadius: scaleWidth(16),
+                  padding: spacing.m,
+                  marginBottom: spacing.m,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: scaleHeight(2) },
+                  shadowOpacity: 0.05,
+                  shadowRadius: 3,
+                  elevation: 2
+                }
+              ]}>
+                <View style={[
+                  styles.sectionTitleContainer,
+                  {
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    marginBottom: spacing.m
+                  }
+                ]}>
+                  <Ionicons 
+                    name="construct-outline" 
+                    size={scaleWidth(22)} 
+                    color="#FF6B6B" 
+                    style={{ marginRight: spacing.xs }}
+                  />
+                  <Text 
+                    style={[
+                      styles.sectionTitle, 
+                      { 
+                        color: textColor,
+                        fontSize: fontSizes.m,
+                        fontWeight: '600'
+                      }
+                    ]}
+                    maxFontSizeMultiplier={1.3}
+                  >
+                    What would you like to see changed? *
+                  </Text>
+                </View>
+                
+                <TextInput
+                  style={[
+                    styles.feedbackInput,
+                    { 
+                      backgroundColor: isDarkMode ? '#1A1A1A' : '#F5F5F5',
+                      color: textColor,
+                      borderColor: theme.border,
+                      borderWidth: 1,
+                      minHeight: scaleHeight(80),
+                      borderRadius: scaleWidth(12),
+                      padding: spacing.m,
+                      fontSize: fontSizes.m,
+                      textAlignVertical: 'top'
+                    }
+                  ]}
+                  placeholder="What would make this better for you?"
+                  placeholderTextColor={isDarkMode ? '#777777' : '#999999'}
+                  multiline={true}
+                  value={refundSuggestions}
+                  onChangeText={setRefundSuggestions}
+                  textAlignVertical="top"
+                  maxFontSizeMultiplier={1.5}
+                  accessible={true}
+                  accessibilityLabel="Improvement suggestions"
+                />
+              </View>
+
+              {/* PayPal Email for Refund */}
+              <View style={[
+                styles.card, 
+                { 
+                  backgroundColor: theme.card,
+                  borderWidth: 1,
+                  borderColor: theme.border,
+                  borderRadius: scaleWidth(16),
+                  padding: spacing.m,
+                  marginBottom: spacing.m,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: scaleHeight(2) },
+                  shadowOpacity: 0.05,
+                  shadowRadius: 3,
+                  elevation: 2
+                }
+              ]}>
+                <View style={[
+                  styles.sectionTitleContainer,
+                  {
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    marginBottom: spacing.m
+                  }
+                ]}>
+                  <Ionicons 
+                    name="logo-paypal" 
+                    size={scaleWidth(22)} 
+                    color="#0070ba" 
+                    style={{ marginRight: spacing.xs }}
+                  />
+                  <Text 
+                    style={[
+                      styles.sectionTitle, 
+                      { 
+                        color: textColor,
+                        fontSize: fontSizes.m,
+                        fontWeight: '600'
+                      }
+                    ]}
+                    maxFontSizeMultiplier={1.3}
+                  >
+                    PayPal email for refund *
+                  </Text>
+                </View>
+                
+                <TextInput
+                  style={[
+                    styles.emailInput,
+                    { 
+                      backgroundColor: isDarkMode ? '#1A1A1A' : '#F5F5F5',
+                      color: textColor,
+                      borderColor: theme.border,
+                      borderWidth: 1,
+                      height: scaleHeight(48),
+                      borderRadius: scaleWidth(12),
+                      padding: spacing.m,
+                      fontSize: fontSizes.m
+                    }
+                  ]}
+                  placeholder="your@paypal.com"
+                  placeholderTextColor={isDarkMode ? '#777777' : '#999999'}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  value={paymentDetails}
+                  onChangeText={setPaymentDetails}
+                  maxFontSizeMultiplier={1.5}
+                  accessible={true}
+                  accessibilityLabel="PayPal email address"
+                />
+                
+                <Text 
+                  style={[
+                    styles.inputHint, 
+                    { 
+                      color: secondaryTextColor,
+                      marginTop: spacing.xs,
+                      fontSize: fontSizes.xs
+                    }
+                  ]}
+                  maxFontSizeMultiplier={1.3}
+                >
+                  We'll send your refund to this PayPal email address within 24 hours
+                </Text>
+              </View>
+            </>
+          )}
           
           {/* Submit button */}
           <TouchableOpacity
@@ -879,10 +1222,10 @@ const FeedbackScreen = ({ navigation }) => {
                 elevation: 5,
                 minWidth: accessibility.minTouchTarget * 3
               },
-              (!feedbackText.trim() || isSubmitting || (feedbackType === 'testimonial' && marketingConsent && !contactEmail.trim())) && { opacity: 0.7 }
+              (isSubmitting || (feedbackType === 'refund' ? (!refundReason.trim() || !refundExpectations.trim() || !refundSuggestions.trim() || !paymentDetails.trim()) : (!feedbackText.trim() || (feedbackType === 'testimonial' && marketingConsent && !contactEmail.trim())))) && { opacity: 0.7 }
             ]}
             onPress={handleSubmitFeedback}
-            disabled={isSubmitting || !feedbackText.trim() || (feedbackType === 'testimonial' && marketingConsent && !contactEmail.trim())}
+            disabled={isSubmitting || (feedbackType === 'refund' ? (!refundReason.trim() || !refundExpectations.trim() || !refundSuggestions.trim() || !paymentDetails.trim()) : (!feedbackText.trim() || (feedbackType === 'testimonial' && marketingConsent && !contactEmail.trim())))}
             accessible={true}
             accessibilityRole="button"
             accessibilityLabel={route.params?.fromThemePicker ? 

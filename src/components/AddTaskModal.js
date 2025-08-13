@@ -218,23 +218,16 @@ const AddTaskModal = ({
       return;
     }
     
-    if (!selectedGoalId) {
-      Alert.alert('Required Field', 'Please select a goal');
-      return;
-    }
-    
-    if (!selectedProjectId) {
-      Alert.alert('Required Field', 'Please select a project');
-      return;
-    }
+    // Goal and project selection now optional for flexible hierarchy
+    // Tasks can be standalone, under goals only, or under milestones
     
     const newTask = {
       id: Date.now().toString(),
       title: title.trim(),
-      goalId: selectedGoalId,
-      goalTitle: selectedGoalTitle,
-      projectId: selectedProjectId,
-      projectTitle: selectedProjectTitle,
+      goalId: selectedGoalId || null,
+      goalTitle: selectedGoalTitle || null,
+      projectId: selectedProjectId || null,
+      projectTitle: selectedProjectTitle || null,
       status: 'todo',
       completed: false
     };

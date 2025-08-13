@@ -17,7 +17,7 @@ const SectionHeader = ({
         <View style={styles.sectionTitleContainer}>
           <Ionicons name={icon} size={22} color={theme.primary} />
           <Text style={[styles.sectionTitle, { color: theme.text }]}>
-            {title}
+            {title.toUpperCase()}
           </Text>
         </View>
         
@@ -55,8 +55,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '400',
+    letterSpacing: 1,
     marginLeft: 8,
   },
   actionButton: {

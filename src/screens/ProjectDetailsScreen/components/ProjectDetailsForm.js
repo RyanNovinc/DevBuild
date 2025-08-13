@@ -143,9 +143,9 @@ const ProjectDetailsForm = ({
       contentContainerStyle={styles.contentContainer}
       showsVerticalScrollIndicator={false}
       accessible={true}
-      accessibilityLabel="Project details form"
+      accessibilityLabel="Milestone details form"
     >
-      {/* Project Details */}
+      {/* Milestone Details */}
       <View 
         style={[
           styles.card, 
@@ -175,7 +175,7 @@ const ProjectDetailsForm = ({
           accessible={true}
           accessibilityRole="header"
         >
-          Project Details
+          Milestone Details
         </Text>
         
         {/* Title */}
@@ -208,12 +208,12 @@ const ProjectDetailsForm = ({
             ]}
             value={title}
             onChangeText={setTitle}
-            placeholder="Enter project title"
+            placeholder="Enter milestone title"
             placeholderTextColor={theme.textSecondary}
             maxFontSizeMultiplier={1.3}
             accessible={true}
-            accessibilityLabel="Project title"
-            accessibilityHint="Enter the title for your project"
+            accessibilityLabel="Milestone title"
+            accessibilityHint="Enter the title for your milestone"
           />
         </View>
         
@@ -343,14 +343,14 @@ const ProjectDetailsForm = ({
             ]}
             value={description}
             onChangeText={setDescription}
-            placeholder="Enter project description"
+            placeholder="Enter milestone description"
             placeholderTextColor={theme.textSecondary}
             multiline
             numberOfLines={4}
             maxFontSizeMultiplier={1.3}
             accessible={true}
-            accessibilityLabel="Project description"
-            accessibilityHint="Enter an optional description for your project"
+            accessibilityLabel="Milestone description"
+            accessibilityHint="Enter an optional description for your milestone"
           />
         </View>
         
@@ -532,7 +532,7 @@ const ProjectDetailsForm = ({
               ]}
               accessible={true}
               accessibilityLabel="Date picker"
-              accessibilityHint="Select a due date for your project"
+              accessibilityHint="Select a due date for your milestone"
             >
               {/* Picker Mode Selector */}
               <View style={styles.datePickerModeSelector}>
@@ -709,7 +709,7 @@ const ProjectDetailsForm = ({
               ]}
               maxFontSizeMultiplier={1.3}
             >
-              Delete Project
+              Delete Milestone
             </Text>
           </TouchableOpacity>
         )}

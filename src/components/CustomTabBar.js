@@ -70,7 +70,7 @@ const CustomTabBar = ({ state, descriptors, navigation, theme }) => {
       style={[
         styles.tabBar, 
         { 
-          backgroundColor: theme.card, 
+          backgroundColor: theme.background, 
           borderTopColor: theme.border,
           paddingBottom: bottomPadding,
           marginBottom: -20, // Add this line to lower it by 20 points

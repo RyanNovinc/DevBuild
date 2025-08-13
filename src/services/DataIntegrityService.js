@@ -371,18 +371,18 @@ class DataIntegrityService {
       const issues = [];
       const fixes = [];
       
-      // Check 1: Find orphaned projects (linked to non-existent goals)
+      // Check 1: Convert orphaned milestones to standalone (flexible hierarchy support)
       const validGoalIds = new Set(goals.map(g => g.id));
       const orphanedProjects = projects.filter(p => 
         p.goalId && !validGoalIds.has(p.goalId)
       );
       
       if (orphanedProjects.length > 0) {
-        issues.push(`Found ${orphanedProjects.length} orphaned projects linked to non-existent goals`);
+        issues.push(`Found ${orphanedProjects.length} orphaned milestones to convert to standalone`);
         
-        // Fix: Remove goalId from orphaned projects
+        // Fix: Convert to standalone milestones
         orphanedProjects.forEach(p => {
-          fixes.push(`Removing goalId from orphaned project "${p.title}" (${p.id})`);
+          fixes.push(`Converting milestone "${p.title}" (${p.id}) to standalone`);
         });
         
         // Apply fix
@@ -396,24 +396,33 @@ class DataIntegrityService {
         await AsyncStorage.setItem(this.STORAGE_KEYS.PROJECTS, JSON.stringify(updatedProjects));
       }
       
-      // Check 2: Find orphaned tasks (linked to non-existent projects)
+      // Check 2: Convert orphaned tasks to standalone (flexible hierarchy support)
       const validProjectIds = new Set(projects.map(p => p.id));
       const orphanedTasks = tasks.filter(t => 
         t.projectId && !validProjectIds.has(t.projectId)
       );
       
       if (orphanedTasks.length > 0) {
-        issues.push(`Found ${orphanedTasks.length} orphaned tasks linked to non-existent projects`);
+        issues.push(`Found ${orphanedTasks.length} orphaned tasks to convert to standalone`);
         
-        // Fix: Remove orphaned tasks
+        // Fix: Convert to standalone tasks
         orphanedTasks.forEach(t => {
-          fixes.push(`Removing orphaned task "${t.title || t.name}" (${t.id})`);
+          fixes.push(`Converting task "${t.title || t.name}" (${t.id}) to standalone`);
         });
         
-        // Apply fix
-        const updatedTasks = tasks.filter(t => 
-          !t.projectId || validProjectIds.has(t.projectId)
-        );
+        // Apply fix - convert to standalone by removing project/goal references
+        const updatedTasks = tasks.map(t => {
+          if (t.projectId && !validProjectIds.has(t.projectId)) {
+            return { 
+              ...t, 
+              projectId: null, 
+              projectTitle: null,
+              goalId: null, // Also remove goal reference to make truly standalone
+              goalTitle: null
+            };
+          }
+          return t;
+        });
         
         await AsyncStorage.setItem(this.STORAGE_KEYS.TASKS, JSON.stringify(updatedTasks));
       }

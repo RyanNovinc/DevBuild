@@ -21,6 +21,183 @@ import { useProfile } from '../../../context/ProfileContext';
 import { useAppContext } from '../../../context/AppContext';
 import { DefaultAvatar } from '../../AvatarComponents';
 import { getSubscriptionInfo } from '../../../services/SubscriptionService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_BASE_URL } from '../../../config/apiConfig';
+
+/**
+ * ClaimAIAccessButton - Button to claim AI access for founders
+ */
+const ClaimAIAccessButton = ({ theme, onClose, subscriptionStatus, realSubscriptionInfo, user }) => {
+  const [aiAccessInfo, setAiAccessInfo] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [claimedTier, setClaimedTier] = useState(null);
+
+  // Check if user has unclaimed AI access
+  useEffect(() => {
+    checkAIAccessEligibility();
+  }, [subscriptionStatus, realSubscriptionInfo]);
+
+  const checkAIAccessEligibility = async () => {
+    try {
+      console.log('[ClaimAIAccess] Checking eligibility...');
+      console.log('[ClaimAIAccess] Subscription status:', subscriptionStatus);
+      console.log('[ClaimAIAccess] Real subscription info:', realSubscriptionInfo);
+      
+      // Check local receipt for Pro Access purchase
+      const hasProAccess = await checkLocalProAccessReceipt();
+      console.log('[ClaimAIAccess] Has Pro Access:', hasProAccess);
+      if (!hasProAccess) return;
+
+      // Check if already claimed
+      const alreadyClaimed = await AsyncStorage.getItem('aiAccessClaimed');
+      console.log('[ClaimAIAccess] Already claimed:', alreadyClaimed);
+      if (alreadyClaimed) return;
+
+      // Show claim button
+      console.log('[ClaimAIAccess] Showing claim button!');
+      setAiAccessInfo({ hasAccess: true });
+    } catch (error) {
+      console.error('Error checking AI access eligibility:', error);
+    }
+  };
+
+  const checkLocalProAccessReceipt = async () => {
+    try {
+      // MOCK: For testing, check if user has premium/pro status
+      // This simulates them being one of the first 1000 founders
+      
+      // Check if they have pro access (you can set this in login screen)
+      const proAccessPurchased = await AsyncStorage.getItem('proAccessPurchased');
+      if (proAccessPurchased === 'true') {
+        return true;
+      }
+      
+      // MOCK: Also check subscription status for testing
+      if (realSubscriptionInfo?.isProTier || subscriptionStatus === 'pro' || subscriptionStatus === 'unlimited') {
+        // Set mock founder status for testing
+        await AsyncStorage.setItem('proAccessPurchased', 'true');
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Error checking local receipt:', error);
+      return false;
+    }
+  };
+
+  const handleClaimAIAccess = async () => {
+    if (loading) return;
+    
+    setLoading(true);
+    
+    try {
+      // For production, uncomment this to use real Lambda:
+      /*
+      const response = await fetch(`${API_BASE_URL}/ai/claim-access`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user?.email || user?.username,
+          action: 'claimAIAccess'
+        })
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        const { aiTier, purchaseRank, message } = result;
+      */
+      
+      // MOCK for testing (remove in production):
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      const result = {
+        aiTier: 'MAX',
+        purchaseRank: 47,
+        message: 'Congratulations! You\'re founder #47 and have been granted AI Max access!'
+      };
+      
+      // Mark as claimed locally
+      await AsyncStorage.setItem('aiAccessClaimed', 'true');
+      await AsyncStorage.setItem('userAITier', result.aiTier);
+      await AsyncStorage.setItem('userPurchaseRank', result.purchaseRank.toString());
+      
+      // Show success
+      setClaimedTier(result.aiTier);
+      setShowSuccessModal(true);
+      setAiAccessInfo(null); // Hide claim button
+      
+    } catch (error) {
+      console.error('Error claiming AI access:', error);
+      alert('Error claiming AI access. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!aiAccessInfo?.hasAccess) {
+    return null;
+  }
+
+  return (
+    <>
+      <TouchableOpacity
+        style={[styles.claimButton, { 
+          backgroundColor: theme.surface,
+          borderWidth: 1,
+          borderColor: theme.border
+        }]}
+        onPress={handleClaimAIAccess}
+        disabled={loading}
+        activeOpacity={0.7}
+      >
+        <View style={styles.claimButtonContent}>
+          <Ionicons name="sparkles" size={16} color={theme.text} style={{ opacity: 0.8 }} />
+          <Text style={[styles.claimButtonText, { color: theme.text }]}>
+            {loading ? 'Processing...' : 'Claim AI Access'}
+          </Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <Modal
+          transparent={true}
+          animationType="fade"
+          visible={showSuccessModal}
+          onRequestClose={() => setShowSuccessModal(false)}
+        >
+          <View style={styles.successModalOverlay}>
+            <View style={[styles.successModalContainer, { backgroundColor: theme.surface }]}>
+              <Ionicons name="checkmark-circle" size={60} color="#4CAF50" />
+              <Text style={[styles.successModalTitle, { color: theme.text }]}>
+                Congratulations!
+              </Text>
+              <Text style={[styles.successModalMessage, { color: theme.textSecondary }]}>
+                You've successfully claimed your AI {claimedTier} access!
+              </Text>
+              
+              <TouchableOpacity
+                style={[styles.successModalButton, { backgroundColor: '#4CAF50' }]}
+                onPress={() => {
+                  setShowSuccessModal(false);
+                  onClose();
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.successModalButtonText}>
+                  Start Using AI
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      )}
+    </>
+  );
+};
 
 /**
  * AISideMenu - Side menu with smooth animations for both opening and closing
@@ -584,8 +761,8 @@ const AISideMenu = ({
                       </Text>
                       <Text style={[styles.planName, { color: theme.text }]}>
                         {realSubscriptionInfo?.formattedTierName || 
-                         (subscriptionStatus === 'pro' ? 'Navigator' : 
-                          subscriptionStatus === 'unlimited' ? 'Compass' : 'Free')}
+                         (subscriptionStatus === 'pro' ? 'Pro' : 
+                          subscriptionStatus === 'unlimited' ? 'Premium' : 'Free')}
                       </Text>
                     </View>
                     
@@ -627,6 +804,15 @@ const AISideMenu = ({
                         </Text>
                       </View>
                     </View>
+                    
+                    {/* AI Access Claim Button */}
+                    <ClaimAIAccessButton 
+                      theme={theme}
+                      onClose={onClose}
+                      subscriptionStatus={subscriptionStatus}
+                      realSubscriptionInfo={realSubscriptionInfo}
+                      user={user}
+                    />
                   </View>
                 </View>
               )}
@@ -977,7 +1163,80 @@ const styles = StyleSheet.create({
   logoutConfirmText: {
     color: '#FFFFFF',
     fontWeight: '600',
-  }
+  },
+  // Claim AI Access Button styles - minimal and professional
+  claimButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 24,
+    marginHorizontal: 32,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  claimButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  claimButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 8,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    opacity: 0.9,
+  },
+  // Success Modal styles
+  successModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  successModalContainer: {
+    width: '100%',
+    maxWidth: 320,
+    borderRadius: 16,
+    paddingVertical: 32,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 8,
+  },
+  successModalTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginTop: 16,
+    marginBottom: 12,
+    letterSpacing: 0.3,
+  },
+  successModalMessage: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 22,
+    opacity: 0.8,
+    fontWeight: '400',
+  },
+  successModalButton: {
+    width: '100%',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  successModalButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 0.3,
+  },
 });
 
 export default AISideMenu;

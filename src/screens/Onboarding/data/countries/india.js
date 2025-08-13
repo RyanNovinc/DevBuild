@@ -11,12 +11,12 @@ export const DOMAIN_DEFINITIONS = [
         name: "Switch to Tech Career",
         description: "Transition into high-growth technology roles with remote work opportunities and competitive salaries",
         icon: "code-slash",
-        explanation: "India's tech sector is exploding with incredible opportunities! With 4.5 million IT professionals and growing, smart professionals are pivoting into development, data science, and fintech roles that pay ₹8-25L+ annually and offer global remote opportunities.",
+        explanation: "A goal in LifeCompass represents something meaningful you want to achieve in this domain. Goals provide direction and focus, and are broken down into projects and tasks to make them achievable.",
         projects: [
           {
             name: "AI/ML Foundation Skills",
             description: "Build core technical knowledge in machine learning and artificial intelligence",
-            explanation: "Government's Skill India Digital Hub actively promotes AI/ML education. 5,000+ Global Capability Centers create strong demand for AI talent.",
+            explanation: "A project in LifeCompass breaks your goal into manageable parts. Each project tackles one major component needed to achieve your goal and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Complete Python and ML fundamentals course",
@@ -37,7 +37,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Industry Certification and Specialization",
             description: "Earn recognized credentials and choose AI/ML specialization area",
-            explanation: "Specialized roles like ML Engineers face 60-73% demand-supply disparity. Certification provides credible evidence of skills for career transition.",
+            explanation: "A project in LifeCompass breaks your goal into manageable parts. Each project tackles one major component needed to achieve your goal and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Get cloud certification in AI/ML domain",

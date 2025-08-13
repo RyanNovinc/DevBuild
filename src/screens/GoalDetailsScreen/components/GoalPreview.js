@@ -24,7 +24,7 @@ const GoalPreview = ({
 }) => {
   // Calculate progress for display
   const progress = getTotalProgress();
-  const displayTitle = title.trim() || 'Give your goal a title';
+  const displayTitle = title.trim();
   
   // Use actual progress percentage instead of scroll-based animation
   const progressWidth = progress;
@@ -68,19 +68,21 @@ const GoalPreview = ({
             color={iconColor} 
           />
         </View>
-        <Text 
-          style={[
-            styles.previewTitle, 
-            { 
-              color: theme.text || '#FFFFFF',
-              fontSize: fontSizes.xxl
-            }
-          ]}
-          maxFontSizeMultiplier={1.8}
-          accessibilityRole="text"
-        >
-          {displayTitle}
-        </Text>
+        {displayTitle && (
+          <Text 
+            style={[
+              styles.previewTitle, 
+              { 
+                color: theme.text || '#FFFFFF',
+                fontSize: fontSizes.xxl
+              }
+            ]}
+            maxFontSizeMultiplier={1.8}
+            accessibilityRole="text"
+          >
+            {displayTitle}
+          </Text>
+        )}
         
         {/* Progress Preview - Made clickable */}
         <TouchableOpacity 
@@ -233,4 +235,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default GoalPreview;
+export default React.memo(GoalPreview);

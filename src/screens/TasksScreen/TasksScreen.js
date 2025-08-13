@@ -1,4 +1,5 @@
 // src/screens/TasksScreen/TasksScreen.js
+// Kanban-focused task management screen
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   View, 
@@ -20,14 +21,8 @@ import { useNotification } from '../../context/NotificationContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import PagerView from 'react-native-pager-view';
-import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
-import { NavigationContainer } from '@react-navigation/native';
-import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
-
-const Tab = createMaterialTopTabNavigator();
+// Removed unused imports for tabs and pager view
 import GoalFilters from './components/GoalFilters';
-import ProjectsList from './components/ProjectsList';
 import KanbanView from './components/KanbanView';
 import Confetti from '../../components/Confetti';
 import * as FeatureExplorerTracker from '../../services/FeatureExplorerTracker';
@@ -43,8 +38,7 @@ import {
 } from '../../utils/responsive';
 import { styles } from './styles';
 
-// Import the new TaskViewModeToggle component
-import TaskViewModeToggle from './components/TaskViewModeToggle';
+// Removed TaskViewModeToggle import as it's no longer needed
 
 // Import subscription UI components
 import { 
@@ -57,7 +51,7 @@ import {
 // Import subscription service constants
 import { FREE_PLAN_LIMITS, checkProjectsPerGoalLimit } from '../../services/SubscriptionService';
 
-const { width, height } = Dimensions.get('window');
+// Removed width/height as they were only used for tabs
 
 const TasksScreen = ({ route, navigation }) => {
   // Get safe area insets and safe spacing to prevent the UI from being cut off
@@ -95,23 +89,8 @@ const TasksScreen = ({ route, navigation }) => {
   
   // States
   const [selectedGoalId, setSelectedGoalId] = useState(filterGoalId || 'all');
-  const [activeTab, setActiveTab] = useState(0); // 0 = list, 1 = kanban
-  
-  // Create navigation state object for controlled navigation
-  const [navigationState, setNavigationState] = useState({
-    index: 0,
-    routes: [
-      { key: 'list', name: 'List' },
-      { key: 'kanban', name: 'Kanban' }
-    ]
-  });
-  
-  // Sync navigationState with activeTab
-  useEffect(() => {
-    if (navigationState.index !== activeTab) {
-      setNavigationState(prev => ({ ...prev, index: activeTab }));
-    }
-  }, [activeTab]);
+  const [selectedMilestoneId, setSelectedMilestoneId] = useState(null); // New milestone filter state
+  // Removed tab-related state since we're Kanban-only now
   
   // New state for task/project view mode toggle
   const [viewMode, setViewMode] = useState('projects'); // 'projects' or 'tasks'
@@ -134,46 +113,12 @@ const TasksScreen = ({ route, navigation }) => {
   
   // Note: Removed PagerView refs since we're now using React Navigation
   
-  // New state for kanban full-screen mode
+  // State for kanban full-screen mode (simplified)
   const [kanbanFullScreen, setKanbanFullScreen] = useState(false);
-  // State to preserve which tab was active when entering full-screen
-  const [tabBeforeFullScreen, setTabBeforeFullScreen] = useState(null);
   
-  // Ref for the tab navigator to manually control navigation
-  const tabNavigatorRef = useRef(null);
-  
-  // Custom function to handle full-screen state changes with tab preservation
+  // Simplified full-screen handler
   const handleKanbanFullScreenChange = (isFullScreen) => {
-    if (isFullScreen) {
-      // Entering full-screen - save current tab
-      console.log('Entering full-screen, saving activeTab:', activeTab);
-      setTabBeforeFullScreen(activeTab);
-      setKanbanFullScreen(true);
-    } else {
-      // Exiting full-screen
-      console.log('Exiting full-screen, restoring tab to:', tabBeforeFullScreen);
-      
-      // If we were on Kanban tab, set navigation state to Kanban BEFORE setting full-screen to false
-      if (tabBeforeFullScreen === 1) {
-        console.log('Setting navigation state to Kanban before exiting full-screen');
-        setNavigationState({
-          index: 1,
-          routes: [
-            { key: 'list', name: 'List' },
-            { key: 'kanban', name: 'Kanban' }
-          ]
-        });
-        setActiveTab(1);
-      }
-      
-      // Then set full-screen to false
-      setKanbanFullScreen(false);
-      
-      // Clear the saved state
-      setTimeout(() => {
-        setTabBeforeFullScreen(null);
-      }, 100);
-    }
+    setKanbanFullScreen(isFullScreen);
   };
   
   // Separate collapsed states for "all" view and specific goal views
@@ -185,8 +130,8 @@ const TasksScreen = ({ route, navigation }) => {
   const [showConfetti, setShowConfetti] = useState(false);
   const [confettiColors, setConfettiColors] = useState(['#4CAF50', '#8BC34A', '#CDDC39', '#2E7D32', '#1B5E20']);
   
-  // Animation values for add button and view transitions
-  const addButtonScale = useRef(new Animated.Value(1)).current;
+  // Animation values for view transitions
+  // Removed addButtonScale as we no longer have the floating button
   const contentFadeOpacity = useRef(new Animated.Value(1)).current;
   const contentTranslateY = useRef(new Animated.Value(0)).current;
   const headerOpacity = useRef(new Animated.Value(1)).current;
@@ -403,7 +348,7 @@ const TasksScreen = ({ route, navigation }) => {
     }
   }, [selectedGoalId]);
   
-  // Note: Removed old PagerView event handlers since we're now using React Navigation
+  // Simplified for Kanban-only view
   
   // Show feature limit banner - MODIFIED to use modal instead
   const showFeatureLimitBanner = (message) => {
@@ -486,6 +431,9 @@ const TasksScreen = ({ route, navigation }) => {
     // Don't do anything if it's the same goal
     if (goalId === selectedGoalId) return;
     
+    // Clear milestone selection when changing goals
+    setSelectedMilestoneId(null);
+    
     // Set animation value to start position (slide up and fade out)
     goalSwitchAnim.setValue(0);
     
@@ -511,8 +459,13 @@ const TasksScreen = ({ route, navigation }) => {
       }).start();
     });
   };
+  
+  // Handle milestone filter change
+  const handleMilestoneSelect = (milestoneId) => {
+    setSelectedMilestoneId(milestoneId);
+  };
 
-  // NEW FUNCTION: Get tasks filtered by goal and view mode
+  // NEW FUNCTION: Get tasks filtered by goal and milestone
   const getFilteredTasks = () => {
     // Ensure tasks is an array before filtering
     if (!Array.isArray(tasks)) {
@@ -529,42 +482,59 @@ const TasksScreen = ({ route, navigation }) => {
       ? goalsToUse.filter(goal => goal.completed).map(goal => goal.id)
       : [];
     
-    // Get projects first to map tasks to goals
-    const validProjects = Array.isArray(projects) ? projects.filter(project => 
-      project.goalId && validGoalIds.includes(project.goalId) &&
-      !completedGoalIds.includes(project.goalId)
-    ) : [];
+    // Get all projects (including standalone ones)
+    const allProjects = Array.isArray(projects) ? projects : [];
     
-    // Create a map of projectId -> goalId for quick lookups
+    // Create a map of projectId -> goalId for quick lookups (includes standalone projects)
     const projectGoalMap = {};
-    validProjects.forEach(project => {
-      projectGoalMap[project.id] = project.goalId;
+    allProjects.forEach(project => {
+      projectGoalMap[project.id] = project.goalId || null; // null for standalone milestones
     });
     
-    // Filter tasks based on the selected goal and valid projects
+    // Filter tasks for flexible hierarchy
     let filtered = tasks.filter(task => {
-      // Skip tasks without a projectId
-      if (!task.projectId) return false;
+      // CASE 1: Standalone tasks (no goalId, no projectId)
+      if (!task.goalId && !task.projectId) {
+        if (selectedGoalId === 'all') return true;
+        return selectedGoalId === 'standalone'; // Show only when standalone filter selected
+      }
       
-      // Get the goalId for this task's project
-      const goalId = projectGoalMap[task.projectId];
+      // CASE 2: Direct goal tasks (goalId but no projectId)
+      if (task.goalId && !task.projectId) {
+        const goalExists = validGoalIds.includes(task.goalId);
+        const goalNotCompleted = !completedGoalIds.includes(task.goalId);
+        const goalMatches = selectedGoalId === 'all' || selectedGoalId === task.goalId;
+        return goalExists && goalNotCompleted && goalMatches;
+      }
       
-      // Skip if no goalId (orphaned task)
-      if (!goalId) return false;
+      // CASE 3: Milestone tasks (projectId with or without goalId)
+      if (task.projectId) {
+        const project = allProjects.find(p => p.id === task.projectId);
+        if (!project) return false; // Project doesn't exist
+        
+        // Apply milestone filter if selected
+        if (selectedMilestoneId && task.projectId !== selectedMilestoneId) return false;
+        
+        // If project has a goal, check goal validity and filter
+        if (project.goalId) {
+          const goalExists = validGoalIds.includes(project.goalId);
+          const goalNotCompleted = !completedGoalIds.includes(project.goalId);
+          const goalMatches = selectedGoalId === 'all' || selectedGoalId === project.goalId;
+          return goalExists && goalNotCompleted && goalMatches;
+        } else {
+          // Standalone milestone task
+          if (selectedGoalId === 'all') return true;
+          return selectedGoalId === 'standalone'; // Show only when standalone filter selected
+        }
+      }
       
-      // Skip tasks in completed goals
-      if (completedGoalIds.includes(goalId)) return false;
-      
-      // Apply goal filter if not "all"
-      if (selectedGoalId !== 'all' && goalId !== selectedGoalId) return false;
-      
-      return true;
+      return false;
     });
     
     return filtered;
   };
   
-  // Filter projects based on selected goal
+  // Filter projects based on selected goal and milestone
   const getFilteredProjects = () => {
     // Ensure projects is an array before filtering
     if (!Array.isArray(projects)) {
@@ -581,17 +551,25 @@ const TasksScreen = ({ route, navigation }) => {
       ? goalsToUse.filter(goal => goal.completed).map(goal => goal.id)
       : [];
     
-    // Filter out ALL projects with no goalId and ensure goalId exists in validGoalIds
-    let filtered = [...projects].filter(project => 
-      // Only include projects with a valid goalId
-      (project.goalId && validGoalIds.includes(project.goalId)) &&
-      // Exclude projects with completed goals
-      (!project.goalId || !completedGoalIds.includes(project.goalId))
-    );
+    // Filter projects for flexible hierarchy (include standalone milestones)
+    let filtered = [...projects].filter(project => {
+      // Standalone milestones (no goalId)
+      if (!project.goalId) {
+        if (selectedGoalId === 'all') return true;
+        return selectedGoalId === 'standalone';
+      }
+      
+      // Goal-based milestones
+      const goalExists = validGoalIds.includes(project.goalId);
+      const goalNotCompleted = !completedGoalIds.includes(project.goalId);
+      const goalMatches = selectedGoalId === 'all' || selectedGoalId === project.goalId;
+      
+      return goalExists && goalNotCompleted && goalMatches;
+    });
     
-    // Apply goal filter if not "all"
-    if (selectedGoalId !== 'all') {
-      filtered = filtered.filter(project => project.goalId === selectedGoalId);
+    // Apply milestone filter if one is selected (show only the selected milestone)
+    if (selectedMilestoneId) {
+      filtered = filtered.filter(project => project.id === selectedMilestoneId);
     }
     
     return filtered;
@@ -899,12 +877,8 @@ const TasksScreen = ({ route, navigation }) => {
     }
   };
 
-  // Handle view mode change
+  // Handle view mode change - now handled through GoalFilters or other UI
   const handleViewModeChange = () => {
-    // Animate the button
-    animateToggleButton();
-    
-    // Toggle the view mode
     const newViewMode = viewMode === 'projects' ? 'tasks' : 'projects';
     setViewMode(newViewMode);
     
@@ -916,8 +890,6 @@ const TasksScreen = ({ route, navigation }) => {
     if (rootNavigation) {
       rootNavigation.setParams({ viewMode: newViewMode });
     }
-    
-    // Note: No need to reset tabs since React Navigation handles this
   };
   
   // Handle project status change in list view
@@ -1098,26 +1070,7 @@ const TasksScreen = ({ route, navigation }) => {
     }
   };
   
-  // Animate toggle button
-  const animateToggleButton = () => {
-    Animated.sequence([
-      Animated.timing(addButtonScale, {
-        toValue: 0.9,
-        duration: 150,
-        useNativeDriver: true
-      }),
-      Animated.timing(addButtonScale, {
-        toValue: 1.1,
-        duration: 150,
-        useNativeDriver: true
-      }),
-      Animated.timing(addButtonScale, {
-        toValue: 1,
-        duration: 150,
-        useNativeDriver: true
-      })
-    ]).start();
-  };
+  // Removed animateToggleButton as we no longer have the floating button
   
   // Handle add project button - direct implementation instead of reference
   const handleAddProject = () => {
@@ -1442,6 +1395,20 @@ const TasksScreen = ({ route, navigation }) => {
   const goalsToShow = Array.isArray(mainGoals) && mainGoals.length > 0 
     ? mainGoals.filter(goal => !goal.completed) 
     : Array.isArray(goals) ? goals.filter(goal => !goal.completed) : [];
+    
+  // Get milestones for the selected goal (these are projects within the goal)
+  const getMilestonesForSelectedGoal = () => {
+    if (selectedGoalId === 'all') return [];
+    
+    return Array.isArray(projects) 
+      ? projects.filter(project => 
+          project.goalId === selectedGoalId && 
+          !project.completed
+        )
+      : [];
+  };
+  
+  const milestonesForGoal = getMilestonesForSelectedGoal();
 
   // Get section data for list rendering
   const sectionData = getSectionedData();
@@ -1479,9 +1446,10 @@ const TasksScreen = ({ route, navigation }) => {
     verifyProjectDataConsistency,
     viewMode, // NEW: Current view mode (projects/tasks)
     setViewMode, // NEW: Function to change view mode
-    displayMode: activeTab === 0 ? 'list' : 'kanban', // Renamed from viewMode to avoid confusion
-    setDisplayMode: (mode) => handleTabChange(mode === 'list' ? 0 : 1), // Renamed from setViewMode
+    displayMode: 'kanban', // Always kanban now
+    setDisplayMode: () => {}, // No-op since we only have kanban
     selectedGoalId,
+    selectedMilestoneId,
     setSelectedGoalId,
     goalsToShow,
     sectionData,
@@ -1528,8 +1496,7 @@ const TasksScreen = ({ route, navigation }) => {
 
 
   // Check if we should show the kanban view as a full-screen overlay
-  // Use tabBeforeFullScreen or activeTab to determine if we should show full-screen
-  const shouldShowFullScreen = kanbanFullScreen && (tabBeforeFullScreen === 1 || activeTab === 1);
+  const shouldShowFullScreen = kanbanFullScreen;
   
   if (shouldShowFullScreen) {
     // When in full-screen mode, render only the KanbanView as an overlay
@@ -1568,123 +1535,32 @@ const TasksScreen = ({ route, navigation }) => {
         onComplete={() => setShowConfetti(false)}
       />
       
-      {/* TabView with full control over navigation state */}
-      <TabView
-        navigationState={navigationState}
-        renderScene={SceneMap({
-          list: () => (
-            <Animated.View style={{
-              flex: 1,
-              backgroundColor: theme.background,
-              opacity: Animated.multiply(contentFadeOpacity, contentOpacity),
-              transform: [{ translateY: contentTranslate }]
-            }}>
-              <GoalFilters 
-                selectedGoalId={selectedGoalId}
-                onGoalSelect={handleGoalSelect}
-                goalsToShow={goalsToShow}
-                theme={theme}
-                viewMode={viewMode}
-              />
-              <View style={{ flex: 1, backgroundColor: theme.background }}>
-                <ProjectsList taskScreenProps={taskScreenProps} />
-              </View>
-            </Animated.View>
-          ),
-          kanban: () => (
-            <Animated.View style={{
-              flex: 1,
-              backgroundColor: theme.background,
-              opacity: Animated.multiply(contentFadeOpacity, contentOpacity),
-              transform: [{ translateY: contentTranslate }]
-            }}>
-              <GoalFilters 
-                selectedGoalId={selectedGoalId}
-                onGoalSelect={handleGoalSelect}
-                goalsToShow={goalsToShow}
-                theme={theme}
-                viewMode={viewMode}
-              />
-              <View style={{ flex: 1, backgroundColor: '#000000' }}>
-                <KanbanView taskScreenProps={taskScreenProps} />
-              </View>
-            </Animated.View>
-          ),
-        })}
-        onIndexChange={(index) => {
-          console.log('TabView index changed to:', index);
-          setActiveTab(index);
-          setNavigationState(prev => ({ ...prev, index }));
-        }}
-        initialLayout={{ width }}
-        renderTabBar={(props) => (
-          <TabBar
-            {...props}
-            style={{
-              backgroundColor: theme.cardElevated || '#1F1F1F',
-              elevation: 0,
-              shadowOpacity: 0,
-              borderRadius: scaleWidth(25),
-              marginHorizontal: scaleWidth(20),
-              marginVertical: scaleHeight(10),
-              height: scaleHeight(44),
-            }}
-            indicatorStyle={{
-              backgroundColor: theme.primary,
-              height: scaleHeight(38),
-              borderRadius: scaleWidth(20),
-              marginBottom: 3,
-              marginLeft: 3,
-              width: Math.floor((width - scaleWidth(46)) / 2) - 6,
-              zIndex: 1,
-            }}
-            activeColor="#FFFFFF"
-            inactiveColor={theme.textSecondary}
-            labelStyle={{
-              fontSize: scaleFontSize(16),
-              fontWeight: '600',
-              textTransform: 'none',
-              margin: 0,
-            }}
-            renderLabel={({ route, focused, color }) => {
-              const iconName = route.key === 'list' ? 'list-outline' : 'grid';
-              const label = route.key === 'list' ? 'List View' : 'Kanban View';
-              
-              return (
-                <View style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  paddingVertical: 0,
-                  paddingHorizontal: scaleWidth(12),
-                  height: scaleHeight(38),
-                  marginTop: -scaleHeight(6), // Move content up even more
-                }}>
-                  <Ionicons
-                    name={iconName}
-                    size={scaleWidth(22)} // Slightly larger icon
-                    color={color}
-                    style={{ 
-                      marginRight: spacing.xs,
-                      marginTop: scaleHeight(1), // Fine-tune icon alignment
-                    }}
-                  />
-                  <Text style={{
-                    color: color,
-                    fontSize: scaleFontSize(16), // Larger text
-                    fontWeight: '600',
-                    textTransform: 'none',
-                    marginTop: scaleHeight(1), // Fine-tune text alignment
-                  }}>
-                    {label}
-                  </Text>
-                </View>
-              );
-            }}
-          />
-        )}
-        swipeEnabled={true}
-      />
+      {/* Kanban View - Always displayed */}
+      <Animated.View style={{
+        flex: 1,
+        backgroundColor: theme.background,
+        opacity: Animated.multiply(contentFadeOpacity, contentOpacity),
+        transform: [{ translateY: contentTranslate }]
+      }}>
+        <GoalFilters 
+          selectedGoalId={selectedGoalId}
+          onGoalSelect={handleGoalSelect}
+          goalsToShow={goalsToShow}
+          theme={theme}
+          viewMode={viewMode}
+          onViewModeChange={handleViewModeChange}
+          selectedMilestoneId={selectedMilestoneId}
+          onMilestoneSelect={handleMilestoneSelect}
+          milestonesForGoal={milestonesForGoal}
+        />
+        <View style={{ 
+          flex: 1, 
+          backgroundColor: '#000000',
+          paddingBottom: 0  // Remove extra padding since no floating button
+        }}>
+          <KanbanView taskScreenProps={taskScreenProps} />
+        </View>
+      </Animated.View>
       
       {/* Overlay for drag and drop mode */}
       {isDragging && (
@@ -1732,80 +1608,7 @@ const TasksScreen = ({ route, navigation }) => {
         </View>
       )}
 
-      {/* Floating Toggle Button - Fixed positioning and hit area */}
-      <Animated.View style={[
-        {
-          position: 'absolute',
-          bottom: insets.bottom - scaleHeight(20), // A bit higher
-          left: scaleWidth(20),
-          zIndex: 100,
-          transform: [{ scale: addButtonScale }]
-        }
-      ]}>
-        <TouchableOpacity
-          style={{
-            width: Math.max(scaleWidth(60), 44), // Ensure minimum touch target
-            height: Math.max(scaleWidth(60), 44),
-            borderRadius: Math.max(scaleWidth(60), 44) / 2,
-            backgroundColor: theme.primary,
-            alignItems: 'center',
-            justifyContent: 'center',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.3,
-            shadowRadius: 6,
-            elevation: 8,
-          }}
-          onPress={handleViewModeChange}
-          activeOpacity={0.8}
-          accessible={true}
-          accessibilityRole="button"
-          accessibilityLabel={`Currently in ${viewMode} view`}
-          accessibilityHint={`Toggle between projects and tasks views`}
-        >
-          <Animated.View style={{ 
-            transform: [{ scale: addButtonScale }],
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-            {viewMode === 'projects' ? (
-              <>
-                <Ionicons 
-                  name="folder-outline" 
-                  size={24} 
-                  color="#FFFFFF" 
-                />
-                <Text style={{
-                  color: '#FFFFFF',
-                  fontSize: 10,
-                  fontWeight: '600',
-                  marginTop: 2,
-                  textAlign: 'center'
-                }}>
-                  Projects
-                </Text>
-              </>
-            ) : (
-              <>
-                <Ionicons 
-                  name="list-outline" 
-                  size={24} 
-                  color="#FFFFFF" 
-                />
-                <Text style={{
-                  color: '#FFFFFF',
-                  fontSize: 10,
-                  fontWeight: '600',
-                  marginTop: 2,
-                  textAlign: 'center'
-                }}>
-                  Tasks
-                </Text>
-              </>
-            )}
-          </Animated.View>
-        </TouchableOpacity>
-      </Animated.View>
+      {/* Removed floating toggle button - Kanban now uses full screen space */}
       
       {/* Upgrade Modal */}
       <Modal

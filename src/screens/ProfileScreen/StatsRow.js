@@ -94,48 +94,48 @@ const StatsRow = ({ theme, totalActiveGoals, activeProjects, totalActiveTasks, n
     <View style={styles.statsRow}>
       <TouchableOpacity 
         style={[styles.statCard, { 
-          backgroundColor: theme.card,
-          borderWidth: 1,
-          borderColor: theme.border 
+          backgroundColor: '#000000',
+          borderWidth: 0.5,
+          borderColor: 'rgba(255,255,255,0.2)'
         }]}
         onPress={navigateToGoals}
         activeOpacity={0.7}
       >
-        <Ionicons name="star-outline" size={28} color={theme.primary} />
-        <Text style={[styles.statValue, { color: theme.text }]}>{totalActiveGoals}</Text>
-        <Text style={[styles.statLabel, { color: theme.textSecondary }]}>
+        <Ionicons name="star-outline" size={24} color={theme.primary} />
+        <Text style={[styles.statValue, { color: '#FFFFFF' }]}>{totalActiveGoals}</Text>
+        <Text style={[styles.statLabel, { color: 'rgba(255,255,255,0.7)' }]}>
           {totalActiveGoals === 1 ? 'Goal' : 'Goals'}
         </Text>
       </TouchableOpacity>
       
       <TouchableOpacity 
         style={[styles.statCard, { 
-          backgroundColor: theme.card,
-          borderWidth: 1,
-          borderColor: theme.border  
+          backgroundColor: '#000000',
+          borderWidth: 0.5,
+          borderColor: 'rgba(255,255,255,0.2)'
         }]}
         onPress={navigateToProjects}
         activeOpacity={0.7}
       >
-        <Ionicons name="folder-outline" size={28} color={theme.primary} />
-        <Text style={[styles.statValue, { color: theme.text }]}>{activeProjects}</Text>
-        <Text style={[styles.statLabel, { color: theme.textSecondary }]}>
-          {activeProjects === 1 ? 'Project' : 'Projects'}
+        <Ionicons name="folder-outline" size={24} color={theme.primary} />
+        <Text style={[styles.statValue, { color: '#FFFFFF' }]}>{activeProjects}</Text>
+        <Text style={[styles.statLabel, { color: 'rgba(255,255,255,0.7)' }]}>
+          {activeProjects === 1 ? 'Milestone' : 'Milestones'}
         </Text>
       </TouchableOpacity>
       
       <TouchableOpacity 
         style={[styles.statCard, { 
-          backgroundColor: theme.card,
-          borderWidth: 1,
-          borderColor: theme.border  
+          backgroundColor: '#000000',
+          borderWidth: 0.5,
+          borderColor: 'rgba(255,255,255,0.2)'
         }]}
         onPress={navigateToTodoList}
         activeOpacity={0.7}
       >
-        <Ionicons name="list-outline" size={28} color={theme.primary} />
-        <Text style={[styles.statValue, { color: theme.text }]}>{totalActiveTasks}</Text>
-        <Text style={[styles.statLabel, { color: theme.textSecondary }]}>
+        <Ionicons name="list-outline" size={24} color={theme.primary} />
+        <Text style={[styles.statValue, { color: '#FFFFFF' }]}>{totalActiveTasks}</Text>
+        <Text style={[styles.statLabel, { color: 'rgba(255,255,255,0.7)' }]}>
           {totalActiveTasks === 1 ? 'Task' : 'Tasks'}
         </Text>
       </TouchableOpacity>
@@ -160,23 +160,22 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 10, // Higher elevation to ensure it's above other elements
     height: 100, // Fixed height for predictable layout
     zIndex: 1000, // Very high z-index
     opacity: 1, // Full opacity
   },
   statValue: {
     fontSize: 22,
-    fontWeight: 'bold',
+    fontWeight: '500',
     marginVertical: 8,
+    letterSpacing: 0.3,
   },
   statLabel: {
     fontSize: 12,
+    fontWeight: '400',
+    letterSpacing: 0.5,
     textAlign: 'center',
+    textTransform: 'uppercase',
   },
 });
 

@@ -69,7 +69,15 @@
       "Bash(timeout 20 npx expo start --dev-client --port 8087)",
       "Bash(git restore:*)",
       "Bash(git checkout:*)",
-      "Bash(timeout 10 npx expo start --dev-client --port 8085)"
+      "Bash(timeout 10 npx expo start --dev-client --port 8085)",
+      "Bash(timeout 30 npx expo start --dev-client --port 8088)",
+      "Bash(timeout 10 npx expo start --dev-client --port 8088)",
+      "Bash(timeout 10 npx expo start --dev-client --port 8093)",
+      "Bash(timeout 15 npx expo start --dev-client --port 8095)",
+      "Bash(timeout 20 npx expo start --dev-client --port 8097)",
+      "Bash(touch:*)",
+      "Bash(rg:*)",
+      "Bash(timeout 15 npx expo start --dev-client --port 8097)"
     ],
     "deny": []
   }

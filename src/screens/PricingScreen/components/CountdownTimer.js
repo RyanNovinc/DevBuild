@@ -2,6 +2,7 @@
 import React, { useState, useEffect, memo } from 'react';
 import { View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { FontAwesome5 } from '@expo/vector-icons';
 
 const CountdownTimer = memo(({ initialTime, style, textStyle, theme }) => {
   const [countdownTime, setCountdownTime] = useState(initialTime || {
@@ -60,6 +61,12 @@ const CountdownTimer = memo(({ initialTime, style, textStyle, theme }) => {
         justifyContent: 'center',
         marginBottom: 12,
       }}>
+        <FontAwesome5 
+          name="crown" 
+          size={12} 
+          color="#FFD700"
+          style={{ marginRight: 6 }}
+        />
         <Ionicons 
           name="time-outline" 
           size={16} 

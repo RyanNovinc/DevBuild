@@ -2,29 +2,56 @@
 // This utility ensures consistent goal progress calculation across the app
 
 /**
- * Calculates a goal's progress based on its completed projects
+ * Calculates a goal's progress based on completed milestones AND direct tasks (flexible hierarchy)
  * @param {string} goalId - The ID of the goal
- * @param {Array} projects - Array of all projects
+ * @param {Array} projects - Array of all projects/milestones
+ * @param {Array} tasks - Array of all tasks
  * @returns {number} - Progress percentage (0-100)
  */
-export const calculateGoalProgress = (goalId, projects) => {
-  if (!goalId || !Array.isArray(projects)) return 0;
+export const calculateGoalProgress = (goalId, projects = [], tasks = []) => {
+  if (!goalId) return 0;
   
-  // Get projects linked to this goal
-  const linkedProjects = projects.filter(project => project.goalId === goalId);
-  if (linkedProjects.length === 0) return 0;
+  // Get milestones linked to this goal
+  const linkedMilestones = Array.isArray(projects) ? projects.filter(project => project.goalId === goalId) : [];
+  
+  // Get direct tasks linked to this goal (no milestone parent)
+  const directTasks = Array.isArray(tasks) ? tasks.filter(task => 
+    task.goalId === goalId && (!task.projectId || task.projectId === null)
+  ) : [];
+  
+  const totalMilestones = linkedMilestones.length;
+  const totalDirectTasks = directTasks.length;
+  
+  // If no milestones or direct tasks, return 0
+  if (totalMilestones === 0 && totalDirectTasks === 0) return 0;
   
   try {
-    // Calculate based on completed projects
-    const completedProjects = linkedProjects.filter(project => 
-      project.progress === 100 || project.completed === true
-    ).length;
+    let completedItems = 0;
+    let totalItems = 0;
+    
+    // Count completed milestones
+    if (totalMilestones > 0) {
+      const completedMilestones = linkedMilestones.filter(milestone => 
+        milestone.progress === 100 || milestone.completed === true
+      ).length;
+      completedItems += completedMilestones;
+      totalItems += totalMilestones;
+    }
+    
+    // Count completed direct tasks
+    if (totalDirectTasks > 0) {
+      const completedDirectTasks = directTasks.filter(task => 
+        task.completed === true || task.status === 'done'
+      ).length;
+      completedItems += completedDirectTasks;
+      totalItems += totalDirectTasks;
+    }
     
     // Calculate percentage (safeguard against division by zero)
-    const percentage = Math.round((completedProjects / linkedProjects.length) * 100);
+    const percentage = Math.round((completedItems / totalItems) * 100);
     
     if (__DEV__) {
-      console.log(`[GoalProgressCalculator] Goal ${goalId}: ${completedProjects}/${linkedProjects.length} = ${percentage}%`);
+      console.log(`[GoalProgressCalculator] Goal ${goalId}: ${completedItems}/${totalItems} items = ${percentage}% (${totalMilestones} milestones, ${totalDirectTasks} direct tasks)`);
     }
     
     return percentage;

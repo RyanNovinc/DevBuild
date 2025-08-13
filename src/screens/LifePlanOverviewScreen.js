@@ -20,12 +20,14 @@ import {
   Dimensions
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useAppContext } from '../context/AppContext';
 import { useNotification } from '../context/NotificationContext';
 import Svg, { Circle } from 'react-native-svg';
 import Confetti from '../components/Confetti';
+import AddSelectionModal from '../components/AddSelectionModal';
 import {
   scaleWidth,
   scaleHeight,
@@ -39,7 +41,7 @@ import {
   accessibility
 } from '../utils/responsive';
 
-const LifePlanOverviewScreen = ({ navigation, hideBackButton = false, onFullScreenToggle }) => {
+const LifePlanOverviewScreen = ({ navigation, hideBackButton = false, onFullScreenToggle, isFullscreen = false, isEditMode = false, onEditModeToggle }) => {
   // Determine if we're embedded in a tab (Goals tab) or standalone (from ProfileTab)
   const isEmbeddedInTab = hideBackButton;
   const { theme } = useTheme();
@@ -48,6 +50,136 @@ const LifePlanOverviewScreen = ({ navigation, hideBackButton = false, onFullScre
   const { showSuccess, showError } = useNotification();
   const isLandscape = useIsLandscape();
   
+  // Floating Add Button State
+  const addButtonScale = useRef(new Animated.Value(1)).current;
+  const addButtonSize = scaleWidth(60);
+  
+  // State for add selection modal
+  const [showAddSelectionModal, setShowAddSelectionModal] = useState(false);
+  
+  // State for delete all confirmation
+  const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
+  
+  // Add button animation
+  const animateAddButton = () => {
+    // Stop any existing animation and reset
+    addButtonScale.stopAnimation();
+    addButtonScale.setValue(1);
+    
+    Animated.sequence([
+      Animated.timing(addButtonScale, {
+        toValue: 0.85,
+        duration: 120,
+        useNativeDriver: true,
+      }),
+      Animated.timing(addButtonScale, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+  
+  // Handle add button press - show selection modal
+  const handleAddButtonPress = () => {
+    animateAddButton();
+    // Small delay to let animation start before showing modal
+    setTimeout(() => {
+      setShowAddSelectionModal(true);
+    }, 50);
+  };
+  
+  // Handle selection from the modal
+  const handleSelectionModalChoice = (choice) => {
+    switch (choice) {
+      case 'goal':
+        handleAddGoal();
+        break;
+      case 'milestone':
+        handleAddMilestone();
+        break;
+      case 'task':
+        handleAddTask();
+        break;
+      default:
+        break;
+    }
+  };
+  
+  // Handle Add Goal
+  const handleAddGoal = () => {
+    navigation.navigate('GoalDetails', { 
+      mode: 'create',
+      previousScreen: isEmbeddedInTab ? 'GoalsTab' : 'LifePlanOverview'
+    });
+  };
+  
+  // Handle Add Milestone (Project)
+  const handleAddMilestone = () => {
+    navigation.navigate('MilestoneDetails', { mode: 'create' });
+  };
+  
+  // Handle Add Task
+  const handleAddTask = () => {
+    navigation.navigate('TaskDetails', { mode: 'create' });
+  };
+  
+  // Handle Delete All
+  const handleDeleteAll = async () => {
+    try {
+      // Get all items to delete (including standalone)
+      const standaloneTasksToDelete = getStandaloneTasks();
+      const standaloneMilestonesToDelete = getStandaloneProjects();
+      const goalTasksToDelete = tasks.filter(task => task.goalId || task.projectId);
+      const goalProjectsToDelete = projects.filter(project => project.goalId);
+      const goalsToDelete = goals;
+      
+      const totalItems = standaloneTasksToDelete.length + standaloneMilestonesToDelete.length + 
+                        goalTasksToDelete.length + goalProjectsToDelete.length + goalsToDelete.length;
+      
+      if (totalItems === 0) {
+        showError('No items to delete');
+        return;
+      }
+      
+      console.log('Deleting all items:', {
+        standaloneTasks: standaloneTasksToDelete.length,
+        standaloneMilestones: standaloneMilestonesToDelete.length,
+        goalTasks: goalTasksToDelete.length,
+        goalProjects: goalProjectsToDelete.length,
+        goals: goalsToDelete.length,
+        total: totalItems
+      });
+      
+      // Delete standalone tasks first (use direct state manipulation since deleteTask requires projectId)
+      if (standaloneTasksToDelete.length > 0) {
+        console.log('Deleting standalone tasks:', standaloneTasksToDelete.map(t => t.title));
+        const standaloneTaskIds = standaloneTasksToDelete.map(t => t.id);
+        const remainingTasks = tasks.filter(task => !standaloneTaskIds.includes(task.id));
+        setTasks(remainingTasks);
+      }
+      
+      // Delete standalone milestones
+      for (const project of standaloneMilestonesToDelete) {
+        console.log('Deleting standalone milestone:', project.id, project.title);
+        await deleteProject(project.id);
+      }
+      
+      // Delete all goals (this should cascade to delete their projects and tasks)
+      for (const goal of goalsToDelete) {
+        console.log('Deleting goal:', goal.id, goal.title);
+        await deleteGoal(goal.id);
+      }
+      
+      showSuccess(`Successfully deleted ${totalItems} items`);
+      setShowDeleteAllModal(false);
+      
+    } catch (error) {
+      console.error('Error deleting all items:', error);
+      showError('Failed to delete all items. Please try again.');
+    }
+  };
+  
   // Get app context with goals, projects, tasks
   const appContext = useAppContext() || {};
   const { 
@@ -55,19 +187,15 @@ const LifePlanOverviewScreen = ({ navigation, hideBackButton = false, onFullScre
     projects = [], 
     tasks = [], 
     getTasksForProject,
-    getLifeDirection,
     updateProject,
     updateTask,
     updateGoal,
     updateGoalProgress,
-    updateAppSetting,
     deleteGoal,
     deleteProject,
-    deleteTask
+    deleteTask,
+    setTasks
   } = appContext;
-  
-  const lifeDirection = getLifeDirection ? getLifeDirection() : 
-    "Define your life direction in settings";
   
   // Generate confetti colors based on project color (matches TasksScreen implementation)
   const getProjectConfettiColors = (baseColor) => {
@@ -143,11 +271,14 @@ const LifePlanOverviewScreen = ({ navigation, hideBackButton = false, onFullScre
   // Check if dark mode is active
   const isDarkMode = theme.background === '#000000';
   
-  // New state for Strategic Direction features
-  const [directionCollapsed, setDirectionCollapsed] = useState(false);
-  const [directionModalVisible, setDirectionModalVisible] = useState(false);
-  const [editedDirection, setEditedDirection] = useState("");
-  const [infoModalVisible, setInfoModalVisible] = useState(false);
+  // Drag and drop state
+  const [dragState, setDragState] = useState({
+    isDragging: false,
+    draggedItem: null,
+    draggedItemType: null, // 'task' or 'milestone'
+    dropZones: []
+  });
+  
   
   // Context menu state
   const [contextMenu, setContextMenu] = useState({
@@ -216,6 +347,24 @@ const LifePlanOverviewScreen = ({ navigation, hideBackButton = false, onFullScre
   return unsubscribe;
 }, [navigation]);
   
+  // Get standalone tasks (tasks with no goal or project parent)
+  const getStandaloneTasks = () => {
+    return tasks.filter(task => {
+      const hasNoGoal = !task.goalId || task.goalId === null || task.goalId === undefined;
+      const hasNoProject = !task.projectId || task.projectId === null || task.projectId === undefined;
+      return hasNoGoal && hasNoProject;
+    });
+  };
+
+  // Get standalone projects/milestones (projects with no goal parent)
+  const getStandaloneProjects = () => {
+    return projects.filter(project => {
+      const hasNoGoal = !project.goalId || project.goalId === null || project.goalId === undefined;
+      const isActive = !project.completed; // Only show active standalone milestones
+      return hasNoGoal && isActive;
+    });
+  };
+
   // Process goals, projects, and tasks data to create a hierarchical structure
   const processData = () => {
     // Filter out completed goals - LifePlanOverview only shows active goals
@@ -251,9 +400,15 @@ const LifePlanOverviewScreen = ({ navigation, hideBackButton = false, onFullScre
         };
       });
       
+      // Get direct tasks for this goal (tasks with goalId but no projectId)
+      const directTasks = tasks.filter(task => 
+        task.goalId === goal.id && (!task.projectId || task.projectId === null || task.projectId === undefined)
+      );
+      
       return {
         ...goal,
-        projects: projectsWithTasks
+        projects: projectsWithTasks,
+        directTasks: directTasks
       };
     });
   };
@@ -480,71 +635,69 @@ const LifePlanOverviewScreen = ({ navigation, hideBackButton = false, onFullScre
       showError("Couldn't update project");
     }
   };
-  
-  // Toggle the collapsed state of the direction card
-  const toggleDirectionCollapse = () => {
-    setDirectionCollapsed(!directionCollapsed);
+
+  // Drag and Drop Functions - Long press to start drag without edit mode
+  const handleLongPress = (item, itemType) => {
+    console.log('Long press started for:', item.title, 'Type:', itemType);
+    
+    setDragState({
+      isDragging: true,
+      draggedItem: item,
+      draggedItemType: itemType,
+      dropZones: getAvailableDropZones(item, itemType)
+    });
   };
-  
-  // Open the direction editing modal
-  const openDirectionModal = () => {
-    setEditedDirection(lifeDirection);
-    setDirectionModalVisible(true);
+
+  const handleDragEnd = () => {
+    setDragState({
+      isDragging: false,
+      draggedItem: null,
+      draggedItemType: null,
+      dropZones: []
+    });
   };
-  
-  // Save the updated direction
-const saveDirection = async () => {
-  if (typeof updateAppSetting === 'function') {
+
+  const handleDrop = async (targetGoalId) => {
+    if (!dragState.draggedItem || !dragState.isDragging) return;
+
     try {
-      await updateAppSetting('lifeDirection', editedDirection.trim());
-      showSuccess('Strategic Direction updated');
+      const { draggedItem, draggedItemType } = dragState;
       
-      // Track vision setter achievement
-      try {
-        FeatureExplorerTracker.trackVisionSetter(editedDirection, showSuccess);
-      } catch (error) {
-        console.error('Error tracking vision setter achievement:', error);
-        // Silently handle tracking errors without affecting main functionality
+      if (draggedItemType === 'task') {
+        // Move task to different goal
+        if (typeof updateTask === 'function') {
+          await updateTask(null, draggedItem.id, { goalId: targetGoalId });
+          showSuccess(`Task moved ${targetGoalId ? 'to goal' : 'to standalone'}`);
+        }
+      } else if (draggedItemType === 'milestone') {
+        // Move milestone to different goal
+        if (typeof updateProject === 'function') {
+          await updateProject({ ...draggedItem, goalId: targetGoalId });
+          showSuccess(`Milestone moved ${targetGoalId ? 'to goal' : 'to standalone'}`);
+        }
       }
-      
-      // Update app summary to reflect the new life direction in AI context
-      try {
-        const AppSummaryService = await import('../services/AppSummaryService');
-        const DocumentService = await import('../services/DocumentService');
-        
-        // Generate new app summary with updated life direction
-        const appData = {
-          goals: goals || [],
-          projects: projects || [],
-          tasks: tasks || [],
-          settings: {
-            ...appContext.settings,
-            lifeDirection: editedDirection.trim()
-          }
-        };
-        
-        const summary = AppSummaryService.default.generateAppSummary(appData);
-        await DocumentService.default.updateAppContextDocument(summary);
-        
-        console.log('App summary updated with new Strategic Direction');
-      } catch (error) {
-        console.error('Error updating app summary after Strategic Direction change:', error);
-        // Don't fail the main operation if summary update fails
-      }
-      
-      setDirectionModalVisible(false);
     } catch (error) {
-      console.error('Error updating Strategic Direction:', error);
-      showError("Couldn't update Strategic Direction");
+      console.error('Error moving item:', error);
+      showError('Failed to move item');
+    } finally {
+      handleDragEnd();
     }
-  } else {
-    showError("Couldn't update Strategic Direction");
-  }
-};
-  
-  // Show info modal about Strategic Direction
-  const showInfoModal = () => {
-    setInfoModalVisible(true);
+  };
+
+  const getAvailableDropZones = (item, itemType) => {
+    const dropZones = [];
+    
+    // Add standalone option
+    dropZones.push({ id: null, name: 'Standalone', type: 'standalone' });
+    
+    // Add all goals as drop zones
+    goals.forEach(goal => {
+      if (goal.id !== item.goalId) { // Don't show current goal as option
+        dropZones.push({ id: goal.id, name: goal.title, type: 'goal' });
+      }
+    });
+    
+    return dropZones;
   };
 
   // Handle goal long press to show context menu
@@ -615,27 +768,50 @@ const saveDirection = async () => {
     }
   };
 
-  // Handle goal deletion - show confirmation modal
+  // Handle goal deletion - smart deletion logic
   const handleDeleteGoal = (goal) => {
     closeContextMenu();
-    setDeleteModal({
-      visible: true,
-      type: 'goal',
-      item: goal,
-      isDeleting: false
-    });
+    
+    // Check if goal has any projects or tasks
+    const goalProjects = projects.filter(project => project.goalId === goal.id);
+    const goalTasks = tasks.filter(task => task.goalId === goal.id);
+    const hasContent = goalProjects.length > 0 || goalTasks.length > 0;
+    
+    if (hasContent) {
+      // Goal has content - show confirmation modal
+      setDeleteModal({
+        visible: true,
+        type: 'goal',
+        item: goal,
+        isDeleting: false
+      });
+    } else {
+      // Goal is empty - delete directly
+      handleConfirmDeleteGoal(goal);
+    }
   };
 
-  // Handle project deletion - show confirmation modal
+  // Handle project/milestone deletion - smart deletion logic
   const handleDeleteProject = (project) => {
     closeContextMenu();
-    setDeleteModal({
-      visible: true,
-      type: 'project',
-      item: project,
-      projectId: null,
-      isDeleting: false
-    });
+    
+    // Check if project/milestone has any tasks
+    const projectTasks = tasks.filter(task => task.projectId === project.id);
+    const hasContent = projectTasks.length > 0;
+    
+    if (hasContent) {
+      // Project/milestone has tasks - show confirmation modal
+      setDeleteModal({
+        visible: true,
+        type: 'project',
+        item: project,
+        projectId: null,
+        isDeleting: false
+      });
+    } else {
+      // Project/milestone is empty - delete directly
+      handleConfirmDeleteProject(project);
+    }
   };
 
   // Handle task deletion - show confirmation modal
@@ -733,21 +909,25 @@ const saveDirection = async () => {
             if (isMounted.current) {
               if (success !== false) {
                 console.log(`Successfully deleted project ID: ${projectIdToDelete}`);
-                showSuccess('Project deleted successfully');
+                const itemType = project.isMilestone ? 'Milestone' : 'Project';
+                showSuccess(`${itemType} deleted successfully`);
               } else {
                 console.error(`Failed to delete project ID: ${projectIdToDelete}`);
-                showError('Error deleting project');
+                const itemType = project.isMilestone ? 'milestone' : 'project';
+                showError(`Error deleting ${itemType}`);
               }
             }
           } else {
             if (isMounted.current) {
-              showError("Couldn't delete project");
+              const itemType = project.isMilestone ? 'milestone' : 'project';
+              showError(`Couldn't delete ${itemType}`);
             }
           }
         } catch (deleteError) {
           console.error("Error during project deletion:", deleteError);
           if (isMounted.current) {
-            showError('Error deleting project');
+            const itemType = project.isMilestone ? 'milestone' : 'project';
+            showError(`Error deleting ${itemType}`);
           }
         } finally {
           if (isMounted.current) {
@@ -763,7 +943,8 @@ const saveDirection = async () => {
     } catch (error) {
       console.error("Fatal error in project delete handling:", error);
       if (isMounted.current) {
-        showError('Error deleting project');
+        const itemType = project.isMilestone ? 'milestone' : 'project';
+        showError(`Error deleting ${itemType}`);
         isDeletingRef.current = false;
         setDeleteModal(prev => ({
           ...prev,
@@ -1064,7 +1245,8 @@ const saveDirection = async () => {
         ]} 
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ 
-          paddingBottom: scaleHeight(40),
+          paddingTop: !isFullscreen ? insets.top + scaleHeight(70) : spacing.m,
+          paddingBottom: scaleHeight(100),
           paddingLeft: safeSpacing.left > spacing.m ? safeSpacing.left : 0,
           paddingRight: safeSpacing.right > spacing.m ? safeSpacing.right : 0
         }}
@@ -1072,238 +1254,585 @@ const saveDirection = async () => {
         accessibilityRole="scrollView"
         accessibilityLabel="Life Plan Overview"
       >
-        {/* Strategic Direction Section with Back Button Overlay */}
-        <Animated.View 
-          style={[
-            styles.directionContainer, 
-            { 
-              backgroundColor: theme.card,
-              borderColor: theme.border,
-              shadowColor: isDarkMode ? '#000000' : 'rgba(0,0,0,0.3)',
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }],
-              marginTop: spacing.xs,
-              position: 'relative',
-              height: directionCollapsed ? scaleHeight(80) : 'auto',
-              borderRadius: scaleWidth(12),
+        {/* Edit Mode Indicator */}
+        {isEditMode && (
+          <View style={[
+            styles.editModeIndicator,
+            {
+              backgroundColor: theme.primary + '15',
+              borderColor: theme.primary + '30',
               borderWidth: 1,
-              marginBottom: spacing.xl,
-              shadowOffset: { width: 0, height: scaleHeight(2) },
-              shadowOpacity: 0.1,
-              shadowRadius: scaleWidth(4),
-              elevation: 3
+              borderRadius: scaleWidth(12),
+              padding: spacing.m,
+              marginHorizontal: spacing.m,
+              marginBottom: spacing.l,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center'
             }
-          ]}
-          accessible={true}
-          accessibilityRole="header"
-          accessibilityLabel={directionCollapsed ? 
-            "Strategic Direction - collapsed" : 
-            `Strategic Direction - ${lifeDirection}`}
-        >
-          {/* Back button overlaid on the card - only show when not embedded in tabs */}
-          {!hideBackButton && (
+          ]}>
+            <Ionicons name="move" size={scaleWidth(20)} color={theme.primary} />
+            <Text style={[
+              styles.editModeText,
+              {
+                color: theme.primary,
+                fontSize: fontSizes.m,
+                fontWeight: '600',
+                marginLeft: spacing.s
+              }
+            ]}>
+              Edit Mode: Drag items to reorganize
+            </Text>
+          </View>
+        )}
+        
+        {/* Standalone Tasks Section */}
+        {getStandaloneTasks().length > 0 && (
+          <Animated.View style={[
+            styles.hierarchyItem,
+            { 
+              opacity: fadeAnim, 
+              transform: [{ translateY: slideAnim }],
+              marginBottom: spacing.m 
+            }
+          ]}>
             <TouchableOpacity 
               style={[
-                styles.backButtonOverlay,
-                {
-                  position: 'absolute',
-                  top: spacing.s,
-                  left: spacing.m,
-                  zIndex: 10,
-                  borderRadius: scaleWidth(20)
+                styles.goalItem, 
+                { 
+                  backgroundColor: theme.card,
+                  borderColor: theme.text, // Black/white theme
+                  borderWidth: 1,
+                  borderRadius: scaleWidth(16),
+                  padding: spacing.m,
+                  marginBottom: spacing.s,
+                  shadowColor: theme.text,
+                  shadowOffset: { width: 0, height: scaleHeight(2) },
+                  shadowOpacity: 0.1,
+                  shadowRadius: scaleWidth(4),
+                  elevation: 2
                 }
               ]}
-              onPress={() => {
-                // Since hideBackButton controls visibility, this only runs when back button is shown
-                // Back button is only shown when accessed from ProfileTab settings, so always go to ProfileTab
-                navigation.navigate('ProfileTab');
-              }}
+              onPress={() => toggleGoal('standalone-tasks')}
               accessible={true}
               accessibilityRole="button"
-              accessibilityLabel="Go back to profile"
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityLabel="Standalone Tasks section"
+              accessibilityHint="Tap to expand or collapse standalone tasks"
             >
               <View style={[
-                styles.iconBackground,
+                styles.goalHeader,
                 {
-                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-                  width: scaleWidth(36),
-                  height: scaleWidth(36),
-                  borderRadius: scaleWidth(18),
+                  flexDirection: 'row',
                   alignItems: 'center',
-                  justifyContent: 'center'
+                  justifyContent: 'space-between',
+                  marginBottom: spacing.m
                 }
               ]}>
-                <Ionicons name="arrow-back" size={scaleWidth(22)} color={textColor} />
-              </View>
-            </TouchableOpacity>
-          )}
-          
-
-          {/* Collapse/Expand button */}
-          <TouchableOpacity 
-            style={[
-              styles.collapseButtonOverlay,
-              {
-                position: 'absolute',
-                top: spacing.s,
-                right: spacing.m,
-                zIndex: 10,
-                borderRadius: scaleWidth(20)
-              }
-            ]}
-            onPress={toggleDirectionCollapse}
-            accessible={true}
-            accessibilityRole="button"
-            accessibilityLabel={directionCollapsed ? "Expand direction" : "Collapse direction"}
-            accessibilityState={{ expanded: !directionCollapsed }}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <View style={[
-              styles.iconBackground,
-              {
-                backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-                width: scaleWidth(36),
-                height: scaleWidth(36),
-                borderRadius: scaleWidth(18),
-                alignItems: 'center',
-                justifyContent: 'center'
-              }
-            ]}>
-              <Ionicons 
-                name={directionCollapsed ? "chevron-down" : "chevron-up"} 
-                size={scaleWidth(22)} 
-                color={textColor} 
-              />
-            </View>
-          </TouchableOpacity>
-          
-          {/* Info button */}
-          <TouchableOpacity 
-            style={[
-              styles.infoButtonOverlay,
-              {
-                position: 'absolute',
-                top: spacing.s,
-                right: spacing.m + scaleWidth(44),
-                zIndex: 10,
-                borderRadius: scaleWidth(20)
-              }
-            ]}
-            onPress={showInfoModal}
-            accessible={true}
-            accessibilityRole="button"
-            accessibilityLabel="Show information about strategic direction"
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <View style={[
-              styles.iconBackground,
-              {
-                backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-                width: scaleWidth(36),
-                height: scaleWidth(36),
-                borderRadius: scaleWidth(18),
-                alignItems: 'center',
-                justifyContent: 'center'
-              }
-            ]}>
-              <Ionicons name="information-circle-outline" size={scaleWidth(22)} color={textColor} />
-            </View>
-          </TouchableOpacity>
-          
-          {/* Make entire card clickable to open editor */}
-          <TouchableOpacity 
-            style={[
-              styles.directionContentContainer,
-              {
-                paddingHorizontal: spacing.m,
-                paddingVertical: spacing.l, // More vertical padding for longer text
-                alignItems: 'center',
-                minHeight: 'auto', // Allow to expand with content
-                flexGrow: 1 // Allow to grow as needed
-              }
-            ]}
-            onPress={openDirectionModal}
-            activeOpacity={0.7}
-            accessible={true}
-            accessibilityRole="button"
-            accessibilityLabel="Edit strategic direction"
-            accessibilityHint="Tap to edit your strategic direction"
-          >
-            {/* Only show the compass icon when collapsed */}
-            <View style={styles.directionIconContainer}>
-              <View style={[
-                styles.directionIcon,
-                { 
-                  backgroundColor: colorWithOpacity(theme.primary, 0.15),
-                  width: scaleWidth(48),
-                  height: scaleWidth(48),
-                  borderRadius: scaleWidth(24),
-                  justifyContent: 'center',
-                  alignItems: 'center'
-                }
-              ]}>
-                <Ionicons name="compass" size={scaleWidth(24)} color={theme.primary} />
-              </View>
-            </View>
-            
-            {/* Hide all text content when collapsed */}
-            {!directionCollapsed && (
-              <>
-                <Text 
-                  style={[
-                    styles.directionTitle, 
-                    { 
-                      color: textColor,
-                      fontSize: fontSizes.l,
-                      fontWeight: '600',
-                      marginBottom: spacing.m,
-                      textAlign: 'center'
-                    }
-                  ]}
-                  maxFontSizeMultiplier={1.3}
-                >
-                  Strategic Direction
-                </Text>
-                
                 <View style={[
-                  styles.directionTextContainer,
-                  { 
-                    width: '100%',
-                    minHeight: 'auto', // Allow container to size to content
-                    flexShrink: 0 // Prevent shrinking
+                  styles.goalTitleContainer,
+                  {
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    flex: 1
                   }
                 ]}>
-                  <Text 
-                    style={[
-                      styles.directionText, 
-                      { 
-                        color: textColor,
-                        fontSize: fontSizes.m,
-                        lineHeight: scaleHeight(24),
-                        fontStyle: 'italic',
-                        textAlign: 'center',
-                        flexWrap: 'wrap' // Allow text to wrap
-                      }
-                    ]}
-                    maxFontSizeMultiplier={1.5}
-                    numberOfLines={0} // Remove any line limit
-                  >
-                    {lifeDirection}
-                  </Text>
+                  <View style={[
+                    styles.goalIconCircle,
+                    { 
+                      backgroundColor: theme.text + '15', // Light black/white
+                      width: scaleWidth(36),
+                      height: scaleWidth(36),
+                      borderRadius: scaleWidth(18),
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      marginRight: spacing.s
+                    }
+                  ]}>
+                    <Ionicons 
+                      name="checkmark-done-outline" 
+                      size={scaleWidth(20)} 
+                      color={theme.text} 
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text 
+                      style={[
+                        styles.goalTitle, 
+                        { 
+                          color: theme.text,
+                          fontSize: fontSizes.l,
+                          fontWeight: '700',
+                          marginBottom: spacing.xs
+                        }
+                      ]}
+                      maxFontSizeMultiplier={1.3}
+                    >
+                      Standalone Tasks
+                    </Text>
+                    <Text 
+                      style={[
+                        styles.goalSubtitle, 
+                        { 
+                          color: theme.textSecondary,
+                          fontSize: fontSizes.s
+                        }
+                      ]}
+                      maxFontSizeMultiplier={1.3}
+                    >
+                      {getStandaloneTasks().length} task{getStandaloneTasks().length !== 1 ? 's' : ''}
+                    </Text>
+                  </View>
                 </View>
-              </>
+                
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  {renderCircularProgress((() => {
+                    const standaloneTasks = getStandaloneTasks();
+                    if (standaloneTasks.length === 0) return 0;
+                    const completedTasks = standaloneTasks.filter(task => task.completed || task.status === 'done');
+                    return Math.round((completedTasks.length / standaloneTasks.length) * 100);
+                  })(), 32, theme.text, 3)}
+                  <Ionicons 
+                    name={expandedGoals['standalone-tasks'] ? 'chevron-up' : 'chevron-down'} 
+                    size={scaleWidth(20)} 
+                    color={theme.textSecondary} 
+                    style={{ marginLeft: spacing.s }}
+                  />
+                </View>
+              </View>
+            </TouchableOpacity>
+
+            {/* Standalone Tasks List */}
+            {expandedGoals['standalone-tasks'] && (
+              <View style={[
+                styles.projectsContainer,
+                {
+                  marginLeft: scaleWidth(20),
+                  marginTop: spacing.xs
+                }
+              ]}>
+                {getStandaloneTasks().map((task) => (
+                  <View key={task.id} style={[
+                    styles.taskWrapper,
+                    {
+                      marginTop: spacing.xs,
+                      position: 'relative'
+                    }
+                  ]}>
+                    <TouchableOpacity 
+                      style={[
+                        styles.taskItem, 
+                        { 
+                          backgroundColor: dragState.draggedItem?.id === task.id && dragState.isDragging 
+                            ? theme.primary + '20' : theme.card,
+                          borderColor: dragState.draggedItem?.id === task.id && dragState.isDragging 
+                            ? theme.primary : theme.border,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          paddingHorizontal: spacing.m,
+                          paddingVertical: spacing.s,
+                          borderRadius: scaleWidth(12),
+                          borderWidth: 1,
+                          opacity: dragState.draggedItem?.id === task.id && dragState.isDragging ? 0.7 : 1
+                        }
+                      ]}
+                      onPress={() => {
+                        // Handle standalone task toggle
+                        if (typeof updateTask === 'function') {
+                          updateTask(null, task.id, { completed: !task.completed });
+                        }
+                      }}
+                      onLongPress={() => handleLongPress(task, 'task')}
+                      delayLongPress={300}
+                      accessible={true}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Task: ${task.title || task.name}`}
+                      accessibilityState={{ checked: task.completed }}
+                    >
+                      <View style={[
+                        styles.taskCheckCircle, 
+                        {
+                          width: scaleWidth(20),
+                          height: scaleWidth(20),
+                          borderRadius: scaleWidth(10),
+                          borderWidth: 2,
+                          marginRight: spacing.s,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderColor: task.completed ? theme.text : theme.border,
+                          backgroundColor: task.completed ? theme.text : 'transparent'
+                        }
+                      ]}>
+                        {task.completed && (
+                          <Ionicons 
+                            name="checkmark" 
+                            size={scaleWidth(12)} 
+                            color={theme.background} 
+                          />
+                        )}
+                      </View>
+                      <Text 
+                        style={[
+                          styles.taskTitle, 
+                          {
+                            color: task.completed ? theme.textSecondary : theme.text,
+                            textDecorationLine: task.completed ? 'line-through' : 'none',
+                            fontSize: fontSizes.s,
+                            flex: 1
+                          }
+                        ]}
+                        numberOfLines={2}
+                        maxFontSizeMultiplier={1.3}
+                      >
+                        {task.title || task.name}
+                      </Text>
+                      
+                      {/* Drag Handle - only show in edit mode */}
+                      {isEditMode && (
+                        <View style={[
+                          styles.dragHandle,
+                          {
+                            marginLeft: spacing.s,
+                            padding: spacing.xs
+                          }
+                        ]}>
+                          <Ionicons 
+                            name="reorder-two-outline" 
+                            size={scaleWidth(18)} 
+                            color={theme.textSecondary} 
+                          />
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
             )}
-          </TouchableOpacity>
-        </Animated.View>
-        
+          </Animated.View>
+        )}
+
+        {/* Standalone Milestones Section */}
+        {getStandaloneProjects().length > 0 && (
+          <Animated.View style={[
+            styles.hierarchyItem,
+            { 
+              opacity: fadeAnim, 
+              transform: [{ translateY: slideAnim }],
+              marginBottom: spacing.m 
+            }
+          ]}>
+            <TouchableOpacity 
+              style={[
+                styles.goalItem, 
+                { 
+                  backgroundColor: theme.card,
+                  borderColor: theme.text, // Black/white theme
+                  borderWidth: 1,
+                  borderRadius: scaleWidth(16),
+                  padding: spacing.m,
+                  marginBottom: spacing.s,
+                  shadowColor: theme.text,
+                  shadowOffset: { width: 0, height: scaleHeight(2) },
+                  shadowOpacity: 0.1,
+                  shadowRadius: scaleWidth(4),
+                  elevation: 2
+                }
+              ]}
+              onPress={() => toggleGoal('standalone-milestones')}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Standalone Milestones section"
+              accessibilityHint="Tap to expand or collapse standalone milestones"
+            >
+              <View style={[
+                styles.goalHeader,
+                {
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: spacing.m
+                }
+              ]}>
+                <View style={[
+                  styles.goalTitleContainer,
+                  {
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    flex: 1
+                  }
+                ]}>
+                  <View style={[
+                    styles.goalIconCircle,
+                    { 
+                      backgroundColor: theme.text + '15', // Light black/white
+                      width: scaleWidth(36),
+                      height: scaleWidth(36),
+                      borderRadius: scaleWidth(18),
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      marginRight: spacing.s
+                    }
+                  ]}>
+                    <Ionicons 
+                      name="diamond" 
+                      size={scaleWidth(20)} 
+                      color="#FFFFFF" 
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text 
+                      style={[
+                        styles.goalTitle, 
+                        { 
+                          color: theme.text,
+                          fontSize: fontSizes.l,
+                          fontWeight: '700',
+                          marginBottom: spacing.xs
+                        }
+                      ]}
+                      maxFontSizeMultiplier={1.3}
+                    >
+                      Standalone Milestones
+                    </Text>
+                    <Text 
+                      style={[
+                        styles.goalSubtitle, 
+                        { 
+                          color: theme.textSecondary,
+                          fontSize: fontSizes.s
+                        }
+                      ]}
+                      maxFontSizeMultiplier={1.3}
+                    >
+                      {getStandaloneProjects().length} milestone{getStandaloneProjects().length !== 1 ? 's' : ''}
+                    </Text>
+                  </View>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  {renderCircularProgress((() => {
+                    const standaloneMilestones = getStandaloneProjects();
+                    if (standaloneMilestones.length === 0) return 0;
+                    const completedMilestones = standaloneMilestones.filter(milestone => milestone.completed || milestone.status === 'done');
+                    return Math.round((completedMilestones.length / standaloneMilestones.length) * 100);
+                  })(), 32, theme.text, 3)}
+                  <Ionicons 
+                    name={expandedGoals['standalone-milestones'] ? 'chevron-up' : 'chevron-down'} 
+                    size={scaleWidth(20)} 
+                    color={theme.textSecondary} 
+                    style={{ marginLeft: spacing.s }}
+                  />
+                </View>
+              </View>
+            </TouchableOpacity>
+
+            {/* Standalone Milestones List */}
+            {expandedGoals['standalone-milestones'] && (
+              <View style={[
+                styles.projectsContainer,
+                {
+                  marginLeft: scaleWidth(20),
+                  marginTop: spacing.xs
+                }
+              ]}>
+                {getStandaloneProjects().map((project) => (
+                  <View key={project.id} style={[
+                    styles.projectWrapper,
+                    {
+                      marginBottom: spacing.s
+                    }
+                  ]}>
+                    <TouchableOpacity
+                      style={[
+                        styles.projectItem,
+                        {
+                          backgroundColor: dragState.draggedItem?.id === project.id && dragState.isDragging 
+                            ? theme.primary + '20' : theme.card,
+                          borderColor: dragState.draggedItem?.id === project.id && dragState.isDragging 
+                            ? theme.primary : theme.border,
+                          borderWidth: 1,
+                          borderRadius: scaleWidth(12),
+                          padding: spacing.m,
+                          marginBottom: spacing.s,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          shadowColor: theme.text,
+                          shadowOffset: { width: 0, height: scaleHeight(1) },
+                          shadowOpacity: 0.05,
+                          shadowRadius: scaleWidth(2),
+                          elevation: 1,
+                          opacity: dragState.draggedItem?.id === project.id && dragState.isDragging ? 0.7 : 1
+                        }
+                      ]}
+                      onPress={() => {
+                        navigation.navigate('MilestoneDetails', {
+                          projectId: project.id,
+                          mode: 'edit',
+                          project: project,
+                          previousScreen: 'LifePlanOverview'
+                        });
+                      }}
+                      onLongPress={(event) => {
+                        // First try to initiate drag, if no drag zones available, use context menu
+                        const dropZones = getAvailableDropZones(project, 'milestone');
+                        if (dropZones.length > 0) {
+                          handleLongPress(project, 'milestone');
+                        } else {
+                          handleProjectLongPress(project, event);
+                        }
+                      }}
+                      delayLongPress={300}
+                      accessible={true}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Milestone: ${project.title || project.name}`}
+                      accessibilityHint="Tap to edit milestone, long press to drag or show options"
+                    >
+                      <View style={{
+                        width: scaleWidth(12),
+                        height: scaleWidth(12),
+                        marginRight: spacing.s,
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        <Ionicons 
+                          name="diamond" 
+                          size={scaleWidth(10)} 
+                          color="#FFFFFF" 
+                        />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text 
+                          style={[
+                            styles.projectTitle, 
+                            {
+                              color: theme.text,
+                              fontSize: fontSizes.s,
+                              fontWeight: '600',
+                              lineHeight: scaleHeight(20)
+                            }
+                          ]}
+                          numberOfLines={2}
+                          maxFontSizeMultiplier={1.3}
+                        >
+                          {project.title || project.name}
+                        </Text>
+                        {project.progress !== undefined && project.progress !== null && (
+                          <View style={[
+                            styles.progressContainer,
+                            {
+                              marginTop: spacing.xxs,
+                              flexDirection: 'row',
+                              alignItems: 'center'
+                            }
+                          ]}>
+                            <View style={[
+                              styles.progressBar,
+                              {
+                                flex: 1,
+                                height: scaleHeight(4),
+                                backgroundColor: theme.border,
+                                borderRadius: scaleWidth(2),
+                                marginRight: spacing.xs
+                              }
+                            ]}>
+                              <View 
+                                style={[
+                                  styles.progressFill,
+                                  {
+                                    width: `${project.progress}%`,
+                                    height: '100%',
+                                    backgroundColor: project.color || theme.primary,
+                                    borderRadius: scaleWidth(2)
+                                  }
+                                ]} 
+                              />
+                            </View>
+                            <Text 
+                              style={[
+                                styles.progressText, 
+                                { 
+                                  color: theme.textSecondary,
+                                  fontSize: fontSizes.xxs,
+                                  fontWeight: '500'
+                                }
+                              ]}
+                              maxFontSizeMultiplier={1.2}
+                            >
+                              {project.progress}%
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                      
+                      {/* Drag Handle - only show in edit mode */}
+                      {isEditMode && (
+                        <View style={[
+                          styles.dragHandle,
+                          {
+                            marginLeft: spacing.s,
+                            marginRight: spacing.xs,
+                            padding: spacing.xs
+                          }
+                        ]}>
+                          <Ionicons 
+                            name="reorder-two-outline" 
+                            size={scaleWidth(18)} 
+                            color={theme.textSecondary} 
+                          />
+                        </View>
+                      )}
+                      
+                      <TouchableOpacity
+                        style={[
+                          styles.projectCheckbox,
+                          {
+                            width: scaleWidth(20),
+                            height: scaleWidth(20),
+                            borderRadius: scaleWidth(10),
+                            borderWidth: 2,
+                            marginLeft: spacing.s,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderColor: project.completed ? theme.primary : theme.border,
+                            backgroundColor: project.completed ? theme.primary : 'transparent'
+                          }
+                        ]}
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          handleProjectToggle(project);
+                        }}
+                        accessible={true}
+                        accessibilityRole="checkbox"
+                        accessibilityState={{ checked: project.completed }}
+                        accessibilityLabel={`Mark milestone ${project.completed ? 'incomplete' : 'complete'}`}
+                      >
+                        {project.completed && (
+                          <Ionicons 
+                            name="checkmark" 
+                            size={scaleWidth(12)} 
+                            color="#FFFFFF" 
+                          />
+                        )}
+                      </TouchableOpacity>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            )}
+          </Animated.View>
+        )}
+
         {/* Goals and Projects Hierarchy */}
         <View style={[
           styles.hierarchyContainer,
           { paddingBottom: spacing.m }
         ]}>
-          {processedData.length > 0 ? (
-            processedData.map((goal) => (
+          {(processedData.length > 0 || getStandaloneTasks().length > 0 || getStandaloneProjects().length > 0) ? (
+            <>
+            {processedData.length > 0 && processedData.map((goal) => {
+              // Define goal projects and tasks for this specific goal
+              const goalProjects = projects.filter(project => project.goalId === goal.id);
+              const goalTasks = tasks.filter(task => task.goalId === goal.id);
+              
+              return (
               <Animated.View 
                 key={goal.id}
                 style={[
@@ -1315,54 +1844,39 @@ const saveDirection = async () => {
                   }
                 ]}
               >
-                {/* Goal Item */}
+                {/* Goal Item - Matches Standalone Tasks Style */}
                 <TouchableOpacity 
                   style={[
                     styles.goalItem, 
                     { 
                       backgroundColor: theme.card,
-                      borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-                      shadowColor: isDarkMode ? '#000000' : 'rgba(0,0,0,0.3)',
+                      borderColor: goal.color || theme.primary,
+                      borderWidth: 1,
                       borderRadius: scaleWidth(16),
                       padding: spacing.m,
-                      borderWidth: 1,
-                      shadowOffset: { width: 0, height: scaleHeight(4) },
+                      marginBottom: spacing.s,
+                      shadowColor: goal.color || theme.primary,
+                      shadowOffset: { width: 0, height: scaleHeight(2) },
                       shadowOpacity: 0.1,
-                      shadowRadius: scaleWidth(8),
-                      elevation: 3,
-                      position: 'relative',
-                      overflow: 'hidden'
+                      shadowRadius: scaleWidth(4),
+                      elevation: 2
                     }
                   ]}
                   onPress={() => toggleGoal(goal.id)}
                   onLongPress={(event) => handleGoalLongPress(goal, event)}
-                  activeOpacity={0.9}
+                  activeOpacity={0.96}
                   accessible={true}
                   accessibilityRole="button"
                   accessibilityLabel={`Goal: ${goal.title}, Progress: ${goal.progress || 0} percent`}
                   accessibilityHint="Tap to expand or collapse. Long press to show options"
-                  accessibilityState={{ expanded: expandedGoals[goal.id] }}
                 >
-                  <View style={[
-                    styles.goalColorBand,
-                    { 
-                      backgroundColor: goal.color || theme.primary,
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: scaleHeight(6),
-                      borderTopLeftRadius: scaleWidth(16),
-                      borderTopRightRadius: scaleWidth(16),
-                    }
-                  ]} />
                   
                   <View style={[
                     styles.goalHeader,
                     {
                       flexDirection: 'row',
-                      justifyContent: 'space-between',
                       alignItems: 'center',
+                      justifyContent: 'space-between',
                       marginBottom: spacing.m
                     }
                   ]}>
@@ -1377,128 +1891,61 @@ const saveDirection = async () => {
                       <View style={[
                         styles.goalIconCircle,
                         { 
-                          backgroundColor: colorWithOpacity(goal.color || theme.primary, 0.15),
+                          backgroundColor: goal.color || theme.primary,
                           width: scaleWidth(36),
                           height: scaleWidth(36),
                           borderRadius: scaleWidth(18),
                           justifyContent: 'center',
                           alignItems: 'center',
-                          marginRight: spacing.m
+                          marginRight: spacing.s
                         }
                       ]}>
                         <Ionicons 
-                          name={goal.icon || 'star'} 
+                          name={goal.icon || 'flag'} 
                           size={scaleWidth(18)} 
-                          color={goal.color || theme.primary} 
+                          color={goal.color === '#FFFFFF' ? '#000000' : '#FFFFFF'} 
                         />
                       </View>
-                      <Text 
-                        style={[
-                          styles.goalTitle, 
-                          { 
-                            color: textColor,
-                            fontSize: fontSizes.m,
-                            fontWeight: '600',
-                            flex: 1
-                          }
-                        ]}
-                        maxFontSizeMultiplier={1.3}
-                        numberOfLines={2}
-                      >
-                        {goal.title}
-                      </Text>
+                      
+                      <View style={{ flex: 1 }}>
+                        <Text 
+                          style={[
+                            styles.goalTitle, 
+                            { 
+                              color: theme.text,
+                              fontSize: fontSizes.l,
+                              fontWeight: '700',
+                              marginBottom: spacing.xs
+                            }
+                          ]}
+                          maxFontSizeMultiplier={1.3}
+                        >
+                          {goal.title}
+                        </Text>
+                        <Text 
+                          style={[
+                            styles.goalSubtitle, 
+                            { 
+                              color: theme.textSecondary,
+                              fontSize: fontSizes.s
+                            }
+                          ]}
+                          maxFontSizeMultiplier={1.3}
+                        >
+                          {goalProjects.length} milestone{goalProjects.length !== 1 ? 's' : ''} • {goalTasks.length} task{goalTasks.length !== 1 ? 's' : ''}
+                        </Text>
+                      </View>
                     </View>
                     
-                    {renderCircularProgress(goal.progress, 38, goal.color || theme.primary)}
-                  </View>
-                  
-                  <View style={[
-                    styles.goalFooter,
-                    {
-                      flexDirection: isSmallDevice && isLandscape ? 'column' : 'row',
-                      justifyContent: 'space-between',
-                      alignItems: isSmallDevice && isLandscape ? 'stretch' : 'center'
-                    }
-                  ]}>
-                    <TouchableOpacity 
-                      style={[
-                        styles.goalButton,
-                        { 
-                          backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          paddingVertical: spacing.xs,
-                          paddingHorizontal: spacing.m,
-                          borderRadius: scaleWidth(20),
-                          flex: isSmallDevice && isLandscape ? undefined : 0.48,
-                          justifyContent: 'center',
-                          marginBottom: isSmallDevice && isLandscape ? spacing.xs : 0
-                        }
-                      ]}
-                      onPress={() => navigateToGoal(goal)}
-                      accessible={true}
-                      accessibilityRole="button"
-                      accessibilityLabel={`View details of ${goal.title}`}
-                    >
-                      <Ionicons name="open-outline" size={scaleWidth(16)} color={secondaryTextColor} />
-                      <Text 
-                        style={[
-                          styles.goalButtonText, 
-                          { 
-                            color: secondaryTextColor,
-                            fontSize: fontSizes.s,
-                            fontWeight: '500',
-                            marginLeft: spacing.xs
-                          }
-                        ]}
-                        maxFontSizeMultiplier={1.3}
-                      >
-                        Details
-                      </Text>
-                    </TouchableOpacity>
-                    
-                    <TouchableOpacity 
-                      style={[
-                        styles.goalButton,
-                        { 
-                          backgroundColor: colorWithOpacity(goal.color || theme.primary, 0.15),
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          paddingVertical: spacing.xs,
-                          paddingHorizontal: spacing.m,
-                          borderRadius: scaleWidth(20),
-                          flex: isSmallDevice && isLandscape ? undefined : 0.48,
-                          justifyContent: 'center'
-                        }
-                      ]}
-                      onPress={() => toggleGoal(goal.id)}
-                      accessible={true}
-                      accessibilityRole="button"
-                      accessibilityLabel={expandedGoals[goal.id] ? 
-                        `Collapse ${goal.title}` : 
-                        `Expand ${goal.title}`}
-                      accessibilityState={{ expanded: expandedGoals[goal.id] }}
-                    >
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      {renderCircularProgress(goal.progress || 0, 32, goal.color, 3)}
                       <Ionicons 
                         name={expandedGoals[goal.id] ? 'chevron-up' : 'chevron-down'} 
-                        size={scaleWidth(16)} 
-                        color={goal.color || theme.primary} 
+                        size={scaleWidth(20)} 
+                        color={theme.textSecondary} 
+                        style={{ marginLeft: spacing.s }}
                       />
-                      <Text 
-                        style={[
-                          styles.goalButtonText, 
-                          { 
-                            color: goal.color || theme.primary,
-                            fontSize: fontSizes.s,
-                            fontWeight: '500',
-                            marginLeft: spacing.xs
-                          }
-                        ]}
-                        maxFontSizeMultiplier={1.3}
-                      >
-                        {expandedGoals[goal.id] ? 'Collapse' : 'Expand'}
-                      </Text>
-                    </TouchableOpacity>
+                    </View>
                   </View>
                   
                   {/* Auto-suggestion banner when all projects are complete */}
@@ -1688,7 +2135,7 @@ const saveDirection = async () => {
                                   }
                                 ]}>
                                   <Ionicons 
-                                    name={project.completed ? "checkmark-circle" : "folder"} 
+                                    name={project.completed ? "checkmark-circle" : (project.isMilestone ? "diamond" : "folder")} 
                                     size={scaleWidth(16)} 
                                     color={project.color || goal.color || theme.primary} 
                                   />
@@ -1738,52 +2185,65 @@ const saveDirection = async () => {
                                       backgroundColor: project.completed ?
                                         colorWithOpacity(project.color || goal.color || theme.primary, 0.2) :
                                         isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-                                      width: scaleWidth(28),
+                                      // Milestone buttons are wider and more prominent
+                                      width: project.isMilestone ? scaleWidth(40) : scaleWidth(28),
                                       height: scaleWidth(28),
-                                      borderRadius: scaleWidth(14),
+                                      borderRadius: project.isMilestone ? scaleWidth(20) : scaleWidth(14),
                                       justifyContent: 'center',
                                       alignItems: 'center',
-                                      marginLeft: spacing.xs
+                                      marginLeft: spacing.xs,
+                                      // Add subtle border for milestones when not completed
+                                      ...(project.isMilestone && !project.completed && {
+                                        borderWidth: 1,
+                                        borderColor: colorWithOpacity(project.color || goal.color || theme.primary, 0.3)
+                                      })
                                     }
                                   ]}
                                   onPress={() => handleToggleProjectCompletion(project)}
                                   accessible={true}
                                   accessibilityRole="button"
-                                  accessibilityLabel={project.completed ? 
-                                    "Mark project as incomplete" : 
-                                    "Mark project as complete"}
+                                  accessibilityLabel={project.isMilestone 
+                                    ? (project.completed ? "Mark milestone as incomplete" : "Mark milestone as achieved")
+                                    : (project.completed ? "Mark project as incomplete" : "Mark project as complete")
+                                  }
                                   accessibilityState={{ checked: project.completed }}
                                 >
                                   <Ionicons 
-                                    name={project.completed ? "refresh-outline" : "checkmark-done-outline"} 
-                                    size={scaleWidth(14)} 
+                                    name={project.isMilestone 
+                                      ? (project.completed ? "medal" : "medal-outline")
+                                      : (project.completed ? "refresh-outline" : "checkmark-done-outline")
+                                    }
+                                    size={project.isMilestone ? scaleWidth(16) : scaleWidth(14)}
                                     color={project.completed ? 
                                       project.color || goal.color || theme.primary : 
-                                      secondaryTextColor
+                                      (project.isMilestone ? (project.color || goal.color || theme.primary) : secondaryTextColor)
                                     } 
                                   />
                                 </TouchableOpacity>
                                 
-                                <TouchableOpacity 
-                                  style={[
-                                    styles.projectActionButton,
-                                    { 
-                                      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-                                      width: scaleWidth(28),
-                                      height: scaleWidth(28),
-                                      borderRadius: scaleWidth(14),
-                                      justifyContent: 'center',
-                                      alignItems: 'center',
-                                      marginLeft: spacing.xs
-                                    }
-                                  ]}
-                                  onPress={() => navigateToProject(project)}
-                                  accessible={true}
-                                  accessibilityRole="button"
-                                  accessibilityLabel={`View details of ${project.title}`}
-                                >
-                                  <Ionicons name="open-outline" size={scaleWidth(14)} color={secondaryTextColor} />
-                                </TouchableOpacity>
+                                {/* Only show details button for projects, not milestones */}
+                                {!project.isMilestone && (
+                                  <TouchableOpacity 
+                                    style={[
+                                      styles.projectActionButton,
+                                      { 
+                                        backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                                        width: scaleWidth(28),
+                                        height: scaleWidth(28),
+                                        borderRadius: scaleWidth(14),
+                                        justifyContent: 'center',
+                                        alignItems: 'center',
+                                        marginLeft: spacing.xs
+                                      }
+                                    ]}
+                                    onPress={() => navigateToProject(project)}
+                                    accessible={true}
+                                    accessibilityRole="button"
+                                    accessibilityLabel={`View details of ${project.title}`}
+                                  >
+                                    <Ionicons name="open-outline" size={scaleWidth(14)} color={secondaryTextColor} />
+                                  </TouchableOpacity>
+                                )}
                                 
                                 <TouchableOpacity 
                                   style={[
@@ -2000,7 +2460,15 @@ const saveDirection = async () => {
                                         console.log('🔍 Visual state:', (task.completed || task.status === 'done'));
                                         handleToggleTask(task.id, project.id);
                                       }}
-                                      onLongPress={(event) => handleTaskLongPress(task, project.id, event)}
+                                      onLongPress={(event) => {
+                                        // First try to initiate drag, if no drag zones available, use context menu
+                                        const dropZones = getAvailableDropZones(task, 'task');
+                                        if (dropZones.length > 0) {
+                                          handleLongPress(task, 'task');
+                                        } else {
+                                          handleTaskLongPress(task, project.id, event);
+                                        }
+                                      }}
                                       activeOpacity={0.7}
                                       accessible={true}
                                       accessibilityRole="button"
@@ -2107,14 +2575,117 @@ const saveDirection = async () => {
                           ]}
                           maxFontSizeMultiplier={1.3}
                         >
-                          No projects in this goal
+                          Nothing in this goal
                         </Text>
+                      </View>
+                    )}
+                    
+                    {/* Direct Tasks for this Goal (below milestones) */}
+                    {goal.directTasks && goal.directTasks.length > 0 && (
+                      <View style={[
+                        styles.directTasksContainer,
+                        {
+                          marginTop: spacing.m,
+                          paddingTop: spacing.s,
+                          borderTopWidth: 1,
+                          borderTopColor: colorWithOpacity(goal.color || theme.primary, 0.2)
+                        }
+                      ]}>
+                        {goal.directTasks.map((task) => (
+                          <View key={task.id} style={[
+                            styles.taskWrapper,
+                            {
+                              marginTop: spacing.xs,
+                              position: 'relative'
+                            }
+                          ]}>
+                            {/* Connection line from goal to direct task */}
+                            <View style={[
+                              styles.verticalLine, 
+                              { 
+                                backgroundColor: colorWithOpacity(goal.color || theme.primary, 0.3),
+                                width: scaleWidth(2),
+                                height: scaleHeight(16),
+                                position: 'absolute',
+                                left: scaleWidth(10),
+                                top: scaleHeight(-8)
+                              }
+                            ]} />
+                            
+                            <TouchableOpacity 
+                              style={[
+                                styles.taskItem, 
+                                { 
+                                  backgroundColor: theme.card,
+                                  borderColor: theme.border,
+                                  flexDirection: 'row',
+                                  alignItems: 'center',
+                                  paddingHorizontal: spacing.m,
+                                  paddingVertical: spacing.s,
+                                  borderRadius: scaleWidth(12),
+                                  borderWidth: 1,
+                                  marginLeft: scaleWidth(20)
+                                }
+                              ]}
+                              onPress={() => {
+                                // Handle direct task toggle
+                                if (typeof updateTask === 'function') {
+                                  updateTask(null, task.id, { completed: !task.completed });
+                                }
+                              }}
+                              accessible={true}
+                              accessibilityRole="button"
+                              accessibilityLabel={`Direct task: ${task.title || task.name}`}
+                              accessibilityState={{ checked: task.completed }}
+                            >
+                              <View style={[
+                                styles.taskCheckCircle, 
+                                {
+                                  width: scaleWidth(20),
+                                  height: scaleWidth(20),
+                                  borderRadius: scaleWidth(10),
+                                  borderWidth: 2,
+                                  marginRight: spacing.s,
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  borderColor: task.completed ? (goal.color || theme.primary) : theme.border,
+                                  backgroundColor: task.completed ? (goal.color || theme.primary) : 'transparent'
+                                }
+                              ]}>
+                                {task.completed && (
+                                  <Ionicons 
+                                    name="checkmark" 
+                                    size={scaleWidth(12)} 
+                                    color="#FFFFFF" 
+                                  />
+                                )}
+                              </View>
+                              <Text 
+                                style={[
+                                  styles.taskTitle, 
+                                  {
+                                    color: task.completed ? theme.textSecondary : theme.text,
+                                    textDecorationLine: task.completed ? 'line-through' : 'none',
+                                    fontSize: fontSizes.s,
+                                    flex: 1
+                                  }
+                                ]}
+                                numberOfLines={2}
+                                maxFontSizeMultiplier={1.3}
+                              >
+                                {task.title || task.name}
+                              </Text>
+                            </TouchableOpacity>
+                          </View>
+                        ))}
                       </View>
                     )}
                   </View>
                 )}
               </Animated.View>
-            ))
+              );
+            })}
+            </>
           ) : (
             <View style={[
               styles.emptyState,
@@ -2122,7 +2693,8 @@ const saveDirection = async () => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 padding: spacing.xl,
-                marginTop: spacing.m
+                marginTop: scaleHeight(80),
+                marginBottom: scaleHeight(80)
               }
             ]}>
               <View style={[
@@ -2137,7 +2709,7 @@ const saveDirection = async () => {
                   marginBottom: spacing.m
                 }
               ]}>
-                <Ionicons name="layers-outline" size={scaleWidth(60)} color={theme.primary} />
+                <Ionicons name="flag-outline" size={scaleWidth(60)} color={theme.primary} />
               </View>
               <Text 
                 style={[
@@ -2160,628 +2732,124 @@ const saveDirection = async () => {
                     color: secondaryTextColor,
                     fontSize: fontSizes.m,
                     textAlign: 'center',
-                    marginBottom: spacing.xl
+                    marginBottom: spacing.l
                   }
                 ]}
                 maxFontSizeMultiplier={1.3}
               >
                 Start building your life plan by adding goals
               </Text>
-              <TouchableOpacity 
-                style={[
-                  styles.emptyStateButton, 
-                  { 
-                    backgroundColor: theme.primary,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    paddingVertical: spacing.m,
-                    paddingHorizontal: spacing.m,
-                    borderRadius: scaleWidth(25)
-                  }
-                ]}
-                onPress={() => navigation.navigate('GoalDetails', { 
-                  mode: 'create',
-                  previousScreen: isEmbeddedInTab ? 'GoalsTab' : 'LifePlanOverview'
-                })}
-                accessible={true}
-                accessibilityRole="button"
-                accessibilityLabel="Add your first goal"
-              >
-                <Ionicons name="add" size={scaleWidth(18)} color="#FFFFFF" style={{ marginRight: spacing.xs }} />
-                <Text 
-                  style={[
-                    styles.emptyStateButtonText,
-                    {
-                      fontSize: fontSizes.m,
-                      fontWeight: '600',
-                      color: '#FFFFFF'
-                    }
-                  ]}
-                  maxFontSizeMultiplier={1.3}
-                >
-                  Add Your First Goal
-                </Text>
-              </TouchableOpacity>
+              
             </View>
           )}
         </View>
       </ScrollView>
       
-      {/* Full-screen button (only shown when in tab mode) - Positioned at screen bottom left */}
-      {isEmbeddedInTab && onFullScreenToggle && (
-        <TouchableOpacity 
-          style={[
-            styles.fullscreenButtonOverlay,
-            {
-              position: 'absolute',
-              bottom: insets.bottom + spacing.m,
-              left: spacing.m,
-              zIndex: 1000,
-              borderRadius: scaleWidth(20)
-            }
-          ]}
-          onPress={onFullScreenToggle}
-          accessible={true}
-          accessibilityRole="button"
-          accessibilityLabel="Toggle full screen"
-          accessibilityHint="Expands the overview to full screen"
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
+      {/* Drop Zones Overlay - only show when dragging */}
+      {dragState.isDragging && (
+        <View style={[
+          styles.dropZonesOverlay,
+          {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.3)',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000
+          }
+        ]}>
           <View style={[
-            styles.iconBackground,
+            styles.dropZonesContainer,
             {
-              backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-              width: scaleWidth(36),
-              height: scaleWidth(36),
-              borderRadius: scaleWidth(18),
-              alignItems: 'center',
-              justifyContent: 'center'
+              backgroundColor: theme.card,
+              borderRadius: scaleWidth(16),
+              padding: spacing.l,
+              margin: spacing.l,
+              maxWidth: '80%'
             }
           ]}>
-            <Ionicons 
-              name="expand-outline" 
-              size={scaleWidth(20)} 
-              color={isDarkMode ? '#FFFFFF' : '#000000'} 
-            />
-          </View>
-        </TouchableOpacity>
-      )}
-      
-      {/* Strategic Direction Edit Modal - MODIFIED TO HANDLE KEYBOARD */}
-      <Modal
-        visible={directionModalVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setDirectionModalVisible(false)}
-        accessible={true}
-        accessibilityViewIsModal={true}
-        accessibilityLabel="Edit Strategic Direction"
-      >
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={{ flex: 1 }}
-        >
-          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <View style={[
-              styles.modalOverlay,
+            <Text style={[
+              styles.dropZonesTitle,
               {
-                flex: 1,
-                backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                justifyContent: 'center',
-                alignItems: 'center',
-                padding: spacing.m
+                color: theme.text,
+                fontSize: fontSizes.l,
+                fontWeight: '700',
+                textAlign: 'center',
+                marginBottom: spacing.m
               }
             ]}>
-              <View style={[
-                styles.modalContent, 
-                { 
-                  backgroundColor: theme.card,
-                  borderColor: theme.border,
-                  width: '90%',
-                  maxWidth: isTablet ? scaleWidth(500) : '100%',
-                  borderRadius: scaleWidth(16),
-                  padding: spacing.m,
-                  borderWidth: 1,
-                  maxHeight: '80%'
-                }
-              ]}>
-                <View style={[
-                  styles.modalHeader,
-                  {
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: spacing.m
-                  }
-                ]}>
-                  <Text 
-                    style={[
-                      styles.modalTitle, 
-                      { 
-                        color: textColor,
-                        fontSize: fontSizes.xl,
-                        fontWeight: '700'
-                      }
-                    ]}
-                    maxFontSizeMultiplier={1.3}
-                  >
-                    Strategic Direction
-                  </Text>
-                  <TouchableOpacity
-                    style={[
-                      styles.modalCloseButton,
-                      { padding: spacing.xs }
-                    ]}
-                    onPress={() => setDirectionModalVisible(false)}
-                    accessible={true}
-                    accessibilityRole="button"
-                    accessibilityLabel="Close modal"
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  >
-                    <Ionicons name="close" size={scaleWidth(24)} color={secondaryTextColor} />
-                  </TouchableOpacity>
-                </View>
-                
-                <Text 
-                  style={[
-                    styles.modalDescription, 
-                    { 
-                      color: secondaryTextColor,
-                      fontSize: fontSizes.m,
-                      marginBottom: spacing.m,
-                      lineHeight: scaleHeight(22)
-                    }
-                  ]}
-                  maxFontSizeMultiplier={1.3}
-                >
-                  Your strategic direction defines your overall purpose and guides all of your goals, projects, and tasks.
-                </Text>
-                
-                <TextInput
-                  style={[
-                    styles.directionInput, 
-                    { 
-                      color: textColor,
-                      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
-                      borderColor: theme.border,
-                      borderWidth: 1,
-                      borderRadius: scaleWidth(12),
-                      padding: spacing.m,
-                      fontSize: fontSizes.m,
-                      minHeight: scaleHeight(120),
-                      marginBottom: spacing.m,
-                      textAlignVertical: "top"
-                    }
-                  ]}
-                  value={editedDirection}
-                  onChangeText={setEditedDirection}
-                  multiline
-                  placeholder="Define your life direction..."
-                  placeholderTextColor={secondaryTextColor}
-                  textAlignVertical="top"
-                  maxFontSizeMultiplier={1.5}
-                  accessible={true}
-                  accessibilityLabel="Strategic direction text"
-                  accessibilityHint="Enter your life direction that guides all goals and projects"
-                />
-                
-                <View style={[
-                  styles.modalFooter,
-                  {
-                    flexDirection: 'row',
-                    justifyContent: 'space-between'
-                  }
-                ]}>
-                  <TouchableOpacity
-                    style={[
-                      styles.modalButton, 
-                      { 
-                        backgroundColor: 'transparent',
-                        borderColor: theme.border,
-                        borderWidth: 1,
-                        flex: 0.48,
-                        paddingVertical: spacing.m,
-                        borderRadius: scaleWidth(12),
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }
-                    ]}
-                    onPress={() => setDirectionModalVisible(false)}
-                    accessible={true}
-                    accessibilityRole="button"
-                    accessibilityLabel="Cancel"
-                  >
-                    <Text 
-                      style={[
-                        styles.modalButtonText, 
-                        { 
-                          color: textColor,
-                          fontSize: fontSizes.m,
-                          fontWeight: '600'
-                        }
-                      ]}
-                      maxFontSizeMultiplier={1.3}
-                    >
-                      Cancel
-                    </Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity
-                    style={[
-                      styles.modalButton, 
-                      { 
-                        backgroundColor: theme.primary,
-                        flex: 0.48,
-                        paddingVertical: spacing.m,
-                        borderRadius: scaleWidth(12),
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }
-                    ]}
-                    onPress={saveDirection}
-                    accessible={true}
-                    accessibilityRole="button"
-                    accessibilityLabel="Save strategic direction"
-                  >
-                    <Text 
-                      style={[
-                        styles.modalButtonText, 
-                        { 
-                          color: '#FFFFFF',
-                          fontSize: fontSizes.m,
-                          fontWeight: '600'
-                        }
-                      ]}
-                      maxFontSizeMultiplier={1.3}
-                    >
-                      Save
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          </TouchableWithoutFeedback>
-        </KeyboardAvoidingView>
-      </Modal>
-      
-      {/* Strategic Direction Info Modal - ALSO MODIFIED TO BE CONSISTENT */}
-      <Modal
-        visible={infoModalVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setInfoModalVisible(false)}
-        accessible={true}
-        accessibilityViewIsModal={true}
-        accessibilityLabel="About Strategic Direction"
-      >
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={{ flex: 1 }}
-        >
-          <View style={[
-            styles.modalOverlay,
-            {
-              flex: 1,
-              backgroundColor: 'rgba(0, 0, 0, 0.5)',
-              justifyContent: 'center',
-              alignItems: 'center',
-              padding: spacing.m
-            }
-          ]}>
-            <View style={[
-              styles.modalContent, 
-              { 
-                backgroundColor: theme.card,
-                borderColor: theme.border,
-                width: '90%',
-                maxWidth: isTablet ? scaleWidth(500) : '100%',
-                borderRadius: scaleWidth(16),
-                padding: spacing.m,
-                borderWidth: 1,
-                maxHeight: '80%'
-              }
-            ]}>
-              <View style={[
-                styles.modalHeader,
-                {
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: spacing.m
-                }
-              ]}>
-                <Text 
-                  style={[
-                    styles.modalTitle, 
-                    { 
-                      color: textColor,
-                      fontSize: fontSizes.xl,
-                      fontWeight: '700'
-                    }
-                  ]}
-                  maxFontSizeMultiplier={1.3}
-                >
-                  About Strategic Direction
-                </Text>
-                <TouchableOpacity
-                  style={[
-                    styles.modalCloseButton,
-                    { padding: spacing.xs }
-                  ]}
-                  onPress={() => setInfoModalVisible(false)}
-                  accessible={true}
-                  accessibilityRole="button"
-                  accessibilityLabel="Close modal"
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <Ionicons name="close" size={scaleWidth(24)} color={secondaryTextColor} />
-                </TouchableOpacity>
-              </View>
-              
-              <ScrollView 
+              Drop {dragState.draggedItemType} here:
+            </Text>
+            
+            {dragState.dropZones.map((zone) => (
+              <TouchableOpacity
+                key={zone.id || 'standalone'}
                 style={[
-                  styles.infoScrollView,
-                  { marginBottom: spacing.m }
-                ]}
-                accessible={true}
-                accessibilityRole="scrollView"
-              >
-                <Text 
-                  style={[
-                    styles.infoText, 
-                    { 
-                      color: textColor,
-                      fontSize: fontSizes.m,
-                      lineHeight: scaleHeight(22),
-                      marginBottom: spacing.m
-                    }
-                  ]}
-                  maxFontSizeMultiplier={1.3}
-                >
-                  Your Strategic Direction is the compass that guides all your goals, projects, and daily tasks. It answers the big question: "What am I working toward in my life?"
-                </Text>
-                
-                <Text 
-                  style={[
-                    styles.infoSectionTitle, 
-                    { 
-                      color: textColor,
-                      fontSize: fontSizes.l,
-                      fontWeight: '600',
-                      marginTop: spacing.m,
-                      marginBottom: spacing.xs
-                    }
-                  ]}
-                  maxFontSizeMultiplier={1.3}
-                >
-                  Why it matters:
-                </Text>
-                <Text 
-                  style={[
-                    styles.infoText, 
-                    { 
-                      color: textColor,
-                      fontSize: fontSizes.m,
-                      lineHeight: scaleHeight(22),
-                      marginBottom: spacing.xs
-                    }
-                  ]}
-                  maxFontSizeMultiplier={1.3}
-                >
-                  • Creates coherence across all your activities
-                </Text>
-                <Text 
-                  style={[
-                    styles.infoText, 
-                    { 
-                      color: textColor,
-                      fontSize: fontSizes.m,
-                      lineHeight: scaleHeight(22),
-                      marginBottom: spacing.xs
-                    }
-                  ]}
-                  maxFontSizeMultiplier={1.3}
-                >
-                  • Helps you prioritize what's truly important
-                </Text>
-                <Text 
-                  style={[
-                    styles.infoText, 
-                    { 
-                      color: textColor,
-                      fontSize: fontSizes.m,
-                      lineHeight: scaleHeight(22),
-                      marginBottom: spacing.xs
-                    }
-                  ]}
-                  maxFontSizeMultiplier={1.3}
-                >
-                  • Provides clarity when making decisions
-                </Text>
-                <Text 
-                  style={[
-                    styles.infoText, 
-                    { 
-                      color: textColor,
-                      fontSize: fontSizes.m,
-                      lineHeight: scaleHeight(22),
-                      marginBottom: spacing.m
-                    }
-                  ]}
-                  maxFontSizeMultiplier={1.3}
-                >
-                  • Keeps you focused on your long-term vision
-                </Text>
-                
-                <Text 
-                  style={[
-                    styles.infoSectionTitle, 
-                    { 
-                      color: textColor,
-                      fontSize: fontSizes.l,
-                      fontWeight: '600',
-                      marginTop: spacing.m,
-                      marginBottom: spacing.xs
-                    }
-                  ]}
-                  maxFontSizeMultiplier={1.3}
-                >
-                  Example:
-                </Text>
-                <View style={[
-                  styles.exampleBox, 
-                  { 
-                    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
-                    borderColor: theme.border,
-                    borderWidth: 1,
+                  styles.dropZone,
+                  {
+                    backgroundColor: zone.type === 'standalone' ? theme.backgroundSecondary : theme.primary + '15',
+                    borderColor: zone.type === 'standalone' ? theme.border : theme.primary,
+                    borderWidth: 2,
                     borderRadius: scaleWidth(12),
                     padding: spacing.m,
-                    marginVertical: spacing.xs
-                  }
-                ]}>
-                  <Text 
-                    style={[
-                      styles.exampleText, 
-                      { 
-                        color: textColor,
-                        fontSize: fontSizes.m,
-                        lineHeight: scaleHeight(22),
-                        fontStyle: 'italic'
-                      }
-                    ]}
-                    maxFontSizeMultiplier={1.3}
-                  >
-                    "To build a life that balances professional growth and meaningful relationships while prioritizing health and creativity. I aim to create work that has positive impact, maintain deep connections with family and friends, and continuously learn and grow as a person."
-                  </Text>
-                </View>
-                
-                <Text 
-                  style={[
-                    styles.infoSectionTitle, 
-                    { 
-                      color: textColor,
-                      fontSize: fontSizes.l,
-                      fontWeight: '600',
-                      marginTop: spacing.m,
-                      marginBottom: spacing.xs
-                    }
-                  ]}
-                  maxFontSizeMultiplier={1.3}
-                >
-                  Tips for writing yours:
-                </Text>
-                <Text 
-                  style={[
-                    styles.infoText, 
-                    { 
-                      color: textColor,
-                      fontSize: fontSizes.m,
-                      lineHeight: scaleHeight(22),
-                      marginBottom: spacing.xs
-                    }
-                  ]}
-                  maxFontSizeMultiplier={1.3}
-                >
-                  • Keep it brief but meaningful (2-4 sentences)
-                </Text>
-                <Text 
-                  style={[
-                    styles.infoText, 
-                    { 
-                      color: textColor,
-                      fontSize: fontSizes.m,
-                      lineHeight: scaleHeight(22),
-                      marginBottom: spacing.xs
-                    }
-                  ]}
-                  maxFontSizeMultiplier={1.3}
-                >
-                  • Include your core values and priorities
-                </Text>
-                <Text 
-                  style={[
-                    styles.infoText, 
-                    { 
-                      color: textColor,
-                      fontSize: fontSizes.m,
-                      lineHeight: scaleHeight(22),
-                      marginBottom: spacing.xs
-                    }
-                  ]}
-                  maxFontSizeMultiplier={1.3}
-                >
-                  • Focus on your desired impact and legacy
-                </Text>
-                <Text 
-                  style={[
-                    styles.infoText, 
-                    { 
-                      color: textColor,
-                      fontSize: fontSizes.m,
-                      lineHeight: scaleHeight(22),
-                      marginBottom: spacing.xs
-                    }
-                  ]}
-                  maxFontSizeMultiplier={1.3}
-                >
-                  • Make it personally resonant - it should feel authentic to you
-                </Text>
-                <Text 
-                  style={[
-                    styles.infoText, 
-                    { 
-                      color: textColor,
-                      fontSize: fontSizes.m,
-                      lineHeight: scaleHeight(22),
-                      marginBottom: spacing.xs
-                    }
-                  ]}
-                  maxFontSizeMultiplier={1.3}
-                >
-                  • Revisit and refine it periodically as you evolve
-                </Text>
-              </ScrollView>
-              
-              <TouchableOpacity
-                style={[
-                  styles.modalButtonFull, 
-                  { 
-                    backgroundColor: theme.primary,
-                    width: '100%',
-                    paddingVertical: spacing.m,
-                    borderRadius: scaleWidth(12),
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginTop: spacing.s
+                    marginVertical: spacing.xs,
+                    alignItems: 'center'
                   }
                 ]}
-                onPress={() => {
-                  setInfoModalVisible(false);
-                  openDirectionModal();
-                }}
+                onPress={() => handleDrop(zone.id)}
                 accessible={true}
                 accessibilityRole="button"
-                accessibilityLabel="Set my strategic direction"
+                accessibilityLabel={`Move to ${zone.name}`}
               >
-                <Text 
-                  style={[
-                    styles.modalButtonText, 
-                    { 
-                      color: '#FFFFFF',
-                      fontSize: fontSizes.m,
-                      fontWeight: '600'
-                    }
-                  ]}
-                  maxFontSizeMultiplier={1.3}
-                >
-                  Set My Strategic Direction
+                <Text style={[
+                  styles.dropZoneText,
+                  {
+                    color: zone.type === 'standalone' ? theme.text : theme.primary,
+                    fontSize: fontSizes.m,
+                    fontWeight: '600'
+                  }
+                ]}>
+                  {zone.name}
                 </Text>
               </TouchableOpacity>
-            </View>
+            ))}
+            
+            <TouchableOpacity
+              style={[
+                styles.cancelDrop,
+                {
+                  backgroundColor: theme.error + '15',
+                  borderColor: theme.error,
+                  borderWidth: 1,
+                  borderRadius: scaleWidth(12),
+                  padding: spacing.m,
+                  marginTop: spacing.m,
+                  alignItems: 'center'
+                }
+              ]}
+              onPress={handleDragEnd}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Cancel drag"
+            >
+              <Text style={[
+                styles.cancelDropText,
+                {
+                  color: theme.error,
+                  fontSize: fontSizes.m,
+                  fontWeight: '600'
+                }
+              ]}>
+                Cancel
+              </Text>
+            </TouchableOpacity>
           </View>
-        </KeyboardAvoidingView>
-      </Modal>
-
+        </View>
+      )}
+      
       {/* Context Menu */}
       <Modal
         visible={contextMenu.visible}
@@ -2951,7 +3019,11 @@ const saveDirection = async () => {
                 ]}
                 maxFontSizeMultiplier={1.3}
               >
-                Delete {deleteModal.type === 'goal' ? 'Goal' : deleteModal.type === 'project' ? 'Project' : 'Task'}
+                Delete {deleteModal.type === 'goal' 
+                  ? 'Goal' 
+                  : deleteModal.type === 'project' 
+                    ? (deleteModal.item?.isMilestone ? 'Milestone' : 'Project')
+                    : 'Task'}
               </Text>
             </View>
             
@@ -3051,8 +3123,16 @@ const saveDirection = async () => {
                 disabled={deleteModal.isDeleting}
                 accessible={true}
                 accessibilityRole="button"
-                accessibilityLabel={`Delete ${deleteModal.type === 'goal' ? 'Goal' : deleteModal.type === 'project' ? 'Project' : 'Task'}`}
-                accessibilityHint={`Permanently deletes this ${deleteModal.type === 'goal' ? 'goal' : deleteModal.type === 'project' ? 'project' : 'task'}`}
+                accessibilityLabel={`Delete ${deleteModal.type === 'goal' 
+                  ? 'Goal' 
+                  : deleteModal.type === 'project' 
+                    ? (deleteModal.item?.isMilestone ? 'Milestone' : 'Project')
+                    : 'Task'}`}
+                accessibilityHint={`Permanently deletes this ${deleteModal.type === 'goal' 
+                  ? 'goal' 
+                  : deleteModal.type === 'project' 
+                    ? (deleteModal.item?.isMilestone ? 'milestone' : 'project')
+                    : 'task'}`}
               >
                 <Text style={[
                   styles.deleteButtonText, 
@@ -3071,6 +3151,123 @@ const saveDirection = async () => {
           </View>
         </View>
       </Modal>
+      
+      {/* Floating Add Button - positioned at bottom left, same as GoalsScreen */}
+      {!isFullscreen && (
+        <Animated.View 
+        style={[
+          styles.floatingAddButton,
+          { 
+            transform: [{ scale: addButtonScale }],
+            bottom: scaleHeight(20),
+            left: scaleWidth(20)
+          }
+        ]}
+      >
+        <TouchableOpacity
+          style={[
+            styles.floatingAddButtonInner,
+            { 
+              backgroundColor: theme.primary,
+              width: addButtonSize,
+              height: addButtonSize,
+              borderRadius: addButtonSize / 2
+            }
+          ]}
+          onPress={handleAddButtonPress}
+          activeOpacity={0.8}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel="Add new item"
+          accessibilityHint="Opens selection menu for goals, milestones, or tasks"
+        >
+          <Ionicons name="add" size={scaleWidth(24)} color="#FFFFFF" />
+        </TouchableOpacity>
+      </Animated.View>
+      )}
+      
+      {/* Delete All Button - only show if items exist and not in fullscreen */}
+      {!isFullscreen && (goals.length > 0 || getStandaloneProjects().length > 0 || getStandaloneTasks().length > 0 || projects.filter(p => p.goalId).length > 0 || tasks.filter(t => t.goalId || t.projectId).length > 0) && (
+        <TouchableOpacity
+          style={[
+            styles.deleteAllButton,
+            {
+              backgroundColor: theme.error,
+              borderColor: theme.border,
+              bottom: insets.bottom + spacing.m,
+            }
+          ]}
+          onPress={() => setShowDeleteAllModal(true)}
+          activeOpacity={0.8}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel="Delete all items"
+          accessibilityHint="Deletes all goals, milestones, and tasks"
+        >
+          <Ionicons name="trash-outline" size={scaleWidth(20)} color="#FFFFFF" />
+          <Text style={[styles.deleteAllButtonText, { color: '#FFFFFF' }]}>
+            Delete All
+          </Text>
+        </TouchableOpacity>
+      )}
+      
+      {/* Add Selection Modal */}
+      <AddSelectionModal
+        visible={showAddSelectionModal}
+        onClose={() => setShowAddSelectionModal(false)}
+        onSelectOption={handleSelectionModalChoice}
+      />
+      
+      {/* Delete All Confirmation Modal */}
+      <Modal
+        visible={showDeleteAllModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowDeleteAllModal(false)}
+      >
+        <View style={styles.deleteModalOverlay}>
+          <View style={[styles.deleteModalContent, { backgroundColor: theme.card }]}>
+            <View style={styles.deleteModalHeader}>
+              <Ionicons name="warning" size={scaleWidth(48)} color={theme.error} />
+              <Text style={[styles.deleteModalTitle, { color: theme.text }]}>
+                Delete Everything?
+              </Text>
+              <Text style={[styles.deleteModalMessage, { color: theme.textSecondary }]}>
+                This will permanently delete all your goals ({goals.length}), milestones ({getStandaloneProjects().length + projects.filter(p => p.goalId).length}), and tasks ({getStandaloneTasks().length + tasks.filter(t => t.goalId || t.projectId).length}).
+              </Text>
+              <Text style={[styles.deleteModalWarning, { color: theme.error }]}>
+                This action cannot be undone.
+              </Text>
+            </View>
+            
+            <View style={styles.deleteModalActions}>
+              <TouchableOpacity
+                style={[styles.deleteModalButton, { backgroundColor: theme.background, borderColor: theme.border }]}
+                onPress={() => setShowDeleteAllModal(false)}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Cancel deletion"
+              >
+                <Text style={[styles.deleteModalButtonText, { color: theme.text }]}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.deleteModalButton, { backgroundColor: theme.error }]}
+                onPress={handleDeleteAll}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Confirm delete all"
+              >
+                <Text style={[styles.deleteModalButtonText, { color: '#FFFFFF' }]}>
+                  Delete All
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -3079,29 +3276,61 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  backButtonOverlay: {},
-  collapseButtonOverlay: {},
-  fullscreenButtonOverlay: {},
-  infoButtonOverlay: {},
+  headerContainer: {
+    // Header styles handled inline
+  },
+  headerButton: {
+    // Header button styles handled inline  
+  },
+  editModeIndicator: {
+    // Edit mode indicator styles handled inline
+  },
+  editModeText: {
+    // Edit mode text styles handled inline
+  },
+  dragHandle: {
+    // Drag handle styles handled inline
+  },
+  dropZonesOverlay: {
+    // Drop zones overlay styles handled inline
+  },
+  dropZonesContainer: {
+    // Drop zones container styles handled inline
+  },
+  dropZonesTitle: {
+    // Drop zones title styles handled inline
+  },
+  dropZone: {
+    // Drop zone styles handled inline
+  },
+  dropZoneText: {
+    // Drop zone text styles handled inline
+  },
+  cancelDrop: {
+    // Cancel drop styles handled inline
+  },
+  cancelDropText: {
+    // Cancel drop text styles handled inline
+  },
   iconBackground: {},
   scrollView: {},
   sectionTitle: {},
   sectionTitleText: {},
-  directionContainer: {},
-  directionContentContainer: {},
-  directionIconContainer: {},
-  directionIcon: {},
-  directionTitle: {},
-  directionTextContainer: {},
-  directionText: {},
   hierarchyContainer: {},
   hierarchyItem: {},
   goalItem: {},
-  goalColorBand: {},
+  goalAccent: {},
   goalHeader: {},
   goalTitleContainer: {},
   goalIconCircle: {},
   goalTitle: {},
+  goalStats: {},
+  goalStatsText: {},
+  statsDivider: {},
+  expandIndicator: {},
+  progressBarContainer: {},
+  progressBarTrack: {},
+  progressBarFill: {},
   goalFooter: {},
   goalButton: {},
   goalButtonText: {},
@@ -3148,16 +3377,10 @@ const styles = StyleSheet.create({
   modalTitle: {},
   modalCloseButton: {},
   modalDescription: {},
-  directionInput: {},
   modalFooter: {},
   modalButton: {},
   modalButtonFull: {},
   modalButtonText: {},
-  infoScrollView: {},
-  infoText: {},
-  infoSectionTitle: {},
-  exampleBox: {},
-  exampleText: {},
   contextMenuOverlay: {},
   contextMenuContainer: {},
   contextMenuItem: {},
@@ -3174,6 +3397,113 @@ const styles = StyleSheet.create({
   deleteConfirmButton: {},
   deleteButtonText: {},
   deleteConfirmText: {},
+  
+  // Floating Add Button Styles
+  floatingAddButton: {
+    position: 'absolute',
+    zIndex: 100,
+  },
+  floatingAddButtonInner: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    overflow: 'hidden',
+  },
+  buttonGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: scaleWidth(30),
+  },
+  
+  // Delete All Button Styles
+  deleteAllButton: {
+    position: 'absolute',
+    right: spacing.m,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.m,
+    paddingVertical: spacing.s,
+    borderRadius: scaleWidth(20),
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+    zIndex: 99,
+  },
+  deleteAllButtonText: {
+    fontSize: fontSizes.s,
+    fontWeight: '600',
+    marginLeft: spacing.xs,
+  },
+  
+  // Delete Modal Styles
+  deleteModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.l,
+  },
+  deleteModalContent: {
+    borderRadius: scaleWidth(16),
+    padding: spacing.l,
+    width: '100%',
+    maxWidth: scaleWidth(400),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  deleteModalHeader: {
+    alignItems: 'center',
+    marginBottom: spacing.l,
+  },
+  deleteModalTitle: {
+    fontSize: fontSizes.xl,
+    fontWeight: '700',
+    marginTop: spacing.s,
+    marginBottom: spacing.s,
+    textAlign: 'center',
+  },
+  deleteModalMessage: {
+    fontSize: fontSizes.m,
+    textAlign: 'center',
+    lineHeight: fontSizes.m * 1.4,
+    marginBottom: spacing.s,
+  },
+  deleteModalWarning: {
+    fontSize: fontSizes.s,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  deleteModalActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: spacing.m,
+  },
+  deleteModalButton: {
+    flex: 1,
+    paddingVertical: spacing.m,
+    paddingHorizontal: spacing.l,
+    borderRadius: scaleWidth(8),
+    borderWidth: 1,
+    alignItems: 'center',
+    minHeight: accessibility.minTouchTarget,
+  },
+  deleteModalButtonText: {
+    fontSize: fontSizes.m,
+    fontWeight: '600',
+  },
 });
 
 export default LifePlanOverviewScreen;

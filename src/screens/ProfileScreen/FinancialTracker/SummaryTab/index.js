@@ -22,7 +22,6 @@ import FinancialSummaryCard from './components/FinancialSummaryCard';
 import BarChartCard from './components/BarChartCard';
 import AssetsLiabilitiesCard from './components/AssetsLiabilitiesCard';
 import CurrencyModal from './components/CurrencyModal';
-import PercentileDetailModal from './components/PercentileDetailModal';
 
 const SummaryTab = ({ theme, data, handlers }) => {
   // Get screen dimensions and orientation
@@ -33,11 +32,6 @@ const SummaryTab = ({ theme, data, handlers }) => {
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
   const [localCurrency, setLocalCurrency] = useState('$');
   
-  // State for detail modal
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [detailType, setDetailType] = useState('income');
-  const [detailValue, setDetailValue] = useState(0);
-  const [detailPercentile, setDetailPercentile] = useState(0);
   
   const { 
     totalIncome, 
@@ -45,9 +39,6 @@ const SummaryTab = ({ theme, data, handlers }) => {
     totalSavings, 
     totalDebt,
     savingsPercentage, 
-    incomePercentile,
-    expensePercentile,
-    savingsPercentile,
     highestBar,
     barAnim,
     isDarkMode,
@@ -84,13 +75,6 @@ const SummaryTab = ({ theme, data, handlers }) => {
     setShowCurrencyModal(false);
   };
   
-  // Handle opening the detail modal
-  const handleOpenDetailModal = (type, value, percentile) => {
-    setDetailType(type);
-    setDetailValue(value);
-    setDetailPercentile(percentile);
-    setShowDetailModal(true);
-  };
 
   // Create common props for all cards
   const cardProps = {
@@ -106,11 +90,7 @@ const SummaryTab = ({ theme, data, handlers }) => {
     totalIncome,
     totalExpenses,
     savingsPercentage,
-    incomePercentile,
-    expensePercentile,
-    savingsPercentile,
-    onCurrencyPress: () => setShowCurrencyModal(true),
-    onDetailPress: handleOpenDetailModal
+    onCurrencyPress: () => setShowCurrencyModal(true)
   };
 
   // Create specific props for bar chart card
@@ -118,8 +98,6 @@ const SummaryTab = ({ theme, data, handlers }) => {
     ...cardProps,
     totalIncome,
     totalExpenses,
-    incomePercentile,
-    expensePercentile,
     highestBar,
     barAnim
   };
@@ -206,17 +184,6 @@ const SummaryTab = ({ theme, data, handlers }) => {
         currentCurrency={displayCurrency}
       />
       
-      {/* Percentile Detail Modal */}
-      <PercentileDetailModal
-        visible={showDetailModal}
-        onClose={() => setShowDetailModal(false)}
-        type={detailType}
-        percentile={detailPercentile}
-        value={detailValue}
-        theme={theme}
-        formatCurrency={formatWithCurrency}
-        isDarkMode={isDarkMode}
-      />
     </ScrollView>
   );
 };

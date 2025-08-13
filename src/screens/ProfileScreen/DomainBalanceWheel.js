@@ -847,14 +847,15 @@ const DomainBalanceWheel = ({ theme, navigation }) => {
                           x={labelX}
                           y={labelY}
                           textAnchor="middle"
-                          fontSize={12}
-                          fontWeight={isSelected ? 'bold' : 'normal'}
-                          fill={isSelected ? '#FFFFFF' : 'rgba(255,255,255,0.8)'}
+                          fontSize={10}
+                          fontWeight="400"
+                          fill={isSelected ? '#FFFFFF' : 'rgba(255,255,255,0.9)'}
                           rotation={slice.isBottomHalf ? slice.midAngle + 180 : slice.midAngle}
                           origin={`${labelX},${labelY}`}
                           opacity={shouldDarken ? 0.2 : 1}
+                          letterSpacing={0.5}
                         >
-                          {slice.domain.name === 'Personal Growth' ? 'Growth' : slice.domain.name.split(' ')[0]}
+                          {slice.domain.name === 'Personal Growth' ? 'GROWTH' : slice.domain.name.split(' ')[0].toUpperCase()}
                         </SvgText>
                       </G>
                     )}
@@ -1444,7 +1445,7 @@ const styles = StyleSheet.create({
   modalIconContainer: {
     width: 50,
     height: 50,
-    borderRadius: 25,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 15,
@@ -1452,7 +1453,8 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
+    fontWeight: '400',
+    letterSpacing: 0.5,
     lineHeight: 26, // Add line height for better multi-line appearance
   },
   closeButton: {

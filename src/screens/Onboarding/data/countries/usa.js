@@ -11,12 +11,12 @@ export const DOMAIN_DEFINITIONS = [
         name: "Master Work-Life Balance",
         description: "Achieve sustainable integration between career success and personal wellbeing",
         icon: "scale",
-        explanation: "Work-life balance has become the #1 priority when choosing employers, with 65% of Gen Z preferring hybrid work and 83% ranking balance above pay for the first time in history.",
+        explanation: "A goal in LifeCompass represents something meaningful you want to achieve in this domain. Goals provide direction and focus, and are broken down into projects and tasks to make them achievable.",
         projects: [
           {
             name: "Flexible Work Arrangement",
             description: "Negotiate and maintain work arrangements that support life integration",
-            explanation: "77% willing to leave employers requiring full return-to-office. Hybrid work preferences have fundamentally changed workplace expectations.",
+            explanation: "A project in LifeCompass breaks your goal into manageable parts. Each project tackles one major component needed to achieve your goal and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Document your productivity metrics and propose flexible work arrangement to manager",
@@ -37,7 +37,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Stress Management System",
             description: "Develop tools to manage work stress and prevent burnout",
-            explanation: "40% of Gen Z and 34% of millennials cite job stress as major anxiety source. Proactive stress management essential for sustainable success.",
+            explanation: "A project in LifeCompass breaks your goal into manageable parts. Each project tackles one major component needed to achieve your goal and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Create daily routines that help transition between work and personal life",
@@ -61,7 +61,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Build Career-Advancing Skills",
         description: "Develop future-ready capabilities that guarantee career growth and advancement",
         icon: "trending-up",
-        explanation: "70% of Gen Z expect promotion within first 18 months. With rapid technological change, continuous skill development has become critical for career security.",
+        explanation: "A goal in LifeCompass represents something meaningful you want to achieve in this domain. Goals provide direction and focus, and are broken down into projects and tasks to make them achievable.",
         needsClarification: true,
         clarificationOptions: [
           {

@@ -1,11 +1,123 @@
 // STUPIDEST POSSIBLE SOLUTION - 4 separate cards, no scrolling bullshit
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Animated, Modal, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 
-const DumbAIPlans = ({ selectedPlan, handleSelectPlan, billing, setBilling }) => {
+const DumbAIPlans = ({ selectedPlan, handleSelectPlan, billing, setBilling, highlightPlan, pulseCredits }) => {
   const subscription = billing || 'monthly';
   const setSubscription = setBilling || (() => {});
+
+  // ScrollView ref for resetting position
+  const scrollViewRef = useRef(null);
+
+  // Animation for highlighting using Animated.sequence like achievement screen
+  const highlightAnim = useRef(new Animated.Value(0)).current;
+  
+  // Animation for pulsating credits text
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  
+  // Removed complex modal system - no longer needed
+  
+  useEffect(() => {
+    if (highlightPlan) {
+      // Position scroll to show the highlighted card
+      if (scrollViewRef.current) {
+        let scrollX = 0;
+        // Calculate scroll position based on highlighted plan
+        // Cards are: compass (left), navigator (middle), guide (right)
+        if (highlightPlan === 'compass') {
+          scrollX = 0; // AI Light - leftmost position
+        } else if (highlightPlan === 'navigator') {
+          scrollX = 320; // AI Plus - middle position (card width + margin)
+        } else if (highlightPlan === 'guide') {
+          scrollX = 640; // AI Max - rightmost position (2 * card width + margins)
+        }
+        
+        scrollViewRef.current.scrollTo({ x: scrollX, animated: true });
+      }
+      
+      // Wait for scroll to complete before starting animations
+      setTimeout(() => {
+        // Start highlight animation - 3 cycles ending with smooth fade to dim
+        Animated.sequence([
+        Animated.timing(highlightAnim, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: false,
+        }),
+        Animated.timing(highlightAnim, {
+          toValue: 0,
+          duration: 600,
+          useNativeDriver: false,
+        }),
+        Animated.timing(highlightAnim, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: false,
+        }),
+        Animated.timing(highlightAnim, {
+          toValue: 0,
+          duration: 600,
+          useNativeDriver: false,
+        }),
+        Animated.timing(highlightAnim, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: false,
+        }),
+        Animated.timing(highlightAnim, {
+          toValue: 0,
+          duration: 2000,
+          useNativeDriver: false,
+          easing: Easing.out(Easing.cubic),
+        })
+      ]).start();
+      }, 400); // Wait 400ms for scroll to complete
+    }
+  }, [highlightPlan]);
+
+  // Pulse animation for credits text - same as border highlight
+  useEffect(() => {
+    if (pulseCredits) {
+      // Wait for scroll to complete before starting pulse animation
+      setTimeout(() => {
+        // Start pulsating color animation - 3 cycles ending bright
+        Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: false,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 0,
+          duration: 600,
+          useNativeDriver: false,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: false,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 0,
+          duration: 600,
+          useNativeDriver: false,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: false,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1, // End at bright state instead of dim
+          duration: 600,
+          useNativeDriver: false,
+        })
+      ]).start();
+      }, 400); // Wait 400ms for scroll to complete
+    }
+  }, [pulseCredits]);
 
   // Helper function to add commas to numbers
   const formatNumber = (num) => {
@@ -18,6 +130,16 @@ const DumbAIPlans = ({ selectedPlan, handleSelectPlan, billing, setBilling }) =>
     const price = isCredits ? '$0.99' : (subscription === 'annual' ? annualPrice : monthlyPrice);
     const period = isCredits ? 'one-time' : (subscription === 'annual' ? '/year' : '/month');
     
+    // Determine haptic feedback intensity based on plan
+    const getHapticFeedback = () => {
+      switch(id) {
+        case 'compass': return Haptics.ImpactFeedbackStyle.Light;
+        case 'navigator': return Haptics.ImpactFeedbackStyle.Medium;
+        case 'guide': return Haptics.ImpactFeedbackStyle.Heavy;
+        default: return Haptics.ImpactFeedbackStyle.Light;
+      }
+    };
+    
     // Get the correct credits per dollar based on billing type
     const creditsPerDollar = !isCredits && subscription === 'annual' ? annualCreditsPerDollar : null;
     
@@ -25,22 +147,51 @@ const DumbAIPlans = ({ selectedPlan, handleSelectPlan, billing, setBilling }) =>
     const creditsDisplay = !isCredits && monthlyCredits ? 
       (subscription === 'annual' ? `${formatNumber(monthlyCredits * 12)} credits/year` : `${formatNumber(monthlyCredits)} credits/mo`) : 
       null;
+    
+    // No longer needed - we show simple daily limits instead
 
+    const shouldHighlight = highlightPlan === id;
+    
+    // Interpolate highlight animation like achievement screen
+    const highlightBorderColor = highlightAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [
+        'rgba(255,255,255,0.15)',
+        'rgba(255,255,255,0.8)'
+      ]
+    });
+    
+    // Determine border color
+    let borderColor;
+    if (shouldHighlight) {
+      borderColor = highlightBorderColor;
+    } else if (isSelected) {
+      borderColor = 'rgba(255,255,255,0.4)';
+    } else {
+      borderColor = 'rgba(255,255,255,0.15)';
+    }
+    
     return (
-      <TouchableOpacity
+      <Animated.View
         style={{
           backgroundColor: '#000000',
-          borderRadius: 24,
+          borderRadius: 18,
           padding: 32,
           marginRight: 20,
-          width: 320,
+          width: 300,
           height: 380,
           borderWidth: 2,
-          borderColor: isSelected ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.08)',
+          borderColor: borderColor,
           position: 'relative',
         }}
-        onPress={() => handleSelectPlan(id)}
-        activeOpacity={0.7}
+      >
+        <TouchableOpacity
+          style={{ flex: 1 }}
+          onPress={() => {
+            Haptics.impactAsync(getHapticFeedback());
+            handleSelectPlan(id);
+          }}
+          activeOpacity={0.7}
       >
         {popular && (
           <View style={{
@@ -62,6 +213,7 @@ const DumbAIPlans = ({ selectedPlan, handleSelectPlan, billing, setBilling }) =>
             </Text>
           </View>
         )}
+
 
         <View style={{
           width: 40,
@@ -93,9 +245,7 @@ const DumbAIPlans = ({ selectedPlan, handleSelectPlan, billing, setBilling }) =>
           color: 'rgba(255,255,255,0.5)',
           marginBottom: 16,
         }}>
-          {subscription === 'annual' && monthlyCredits ? 
-            `${formatNumber(monthlyCredits * 12)} credits annually` : 
-            description}
+          {description}
         </Text>
 
         <View style={{
@@ -103,13 +253,26 @@ const DumbAIPlans = ({ selectedPlan, handleSelectPlan, billing, setBilling }) =>
           alignItems: 'baseline',
           marginBottom: 20,
         }}>
-          <Text style={{
-            fontSize: 28,
-            fontWeight: '300',
-            color: '#FFFFFF',
-          }}>
-            {price}
-          </Text>
+          {id === highlightPlan && pulseCredits ? (
+            <Animated.Text style={{
+              fontSize: 28,
+              fontWeight: '300',
+              color: pulseAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: ['rgba(255,255,255,0.6)', 'rgba(255,255,255,1)']
+              })
+            }}>
+              {price}
+            </Animated.Text>
+          ) : (
+            <Text style={{
+              fontSize: 28,
+              fontWeight: '300',
+              color: '#FFFFFF',
+            }}>
+              {price}
+            </Text>
+          )}
           {period !== 'one-time' && (
             <Text style={{
               fontSize: 14,
@@ -122,21 +285,15 @@ const DumbAIPlans = ({ selectedPlan, handleSelectPlan, billing, setBilling }) =>
         </View>
 
         <View style={{ marginBottom: 40 }}>
-          {features.map((feature, index) => {
-            // Replace features with dynamic values
-            let displayFeature = feature;
-            if (feature.includes('credits/mo') && creditsDisplay) {
-              displayFeature = creditsDisplay;
-            } else if (feature.includes('credits per $') && creditsPerDollar) {
-              displayFeature = formatNumber(creditsPerDollar) + ' credits per $';
-            }
-            
-            return (
-            <View key={index} style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginBottom: 8,
-            }}>
+          {features.map((feature, index) => (
+            <View 
+              key={index} 
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginBottom: 8,
+              }}
+            >
               <Ionicons 
                 name="checkmark" 
                 size={14} 
@@ -147,10 +304,10 @@ const DumbAIPlans = ({ selectedPlan, handleSelectPlan, billing, setBilling }) =>
                 fontSize: 12,
                 color: 'rgba(255,255,255,0.7)',
               }}>
-                {displayFeature}
+                {feature}
               </Text>
             </View>
-          )})}
+          ))}
         </View>
 
         <TouchableOpacity
@@ -160,9 +317,12 @@ const DumbAIPlans = ({ selectedPlan, handleSelectPlan, billing, setBilling }) =>
             paddingVertical: 10,
             alignItems: 'center',
             borderWidth: 1,
-            borderColor: isSelected ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.08)',
+            borderColor: isSelected ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.15)',
           }}
-          onPress={() => handleSelectPlan(id)}
+          onPress={() => {
+            Haptics.impactAsync(getHapticFeedback());
+            handleSelectPlan(id);
+          }}
         >
           <Text style={{
             fontSize: 13,
@@ -173,11 +333,33 @@ const DumbAIPlans = ({ selectedPlan, handleSelectPlan, billing, setBilling }) =>
           </Text>
         </TouchableOpacity>
       </TouchableOpacity>
+      </Animated.View>
     );
   };
 
   return (
-    <View style={{ paddingHorizontal: 0, paddingVertical: 20, width: '100%', maxWidth: 400 }}>
+    <View style={{ paddingHorizontal: 0, paddingVertical: 0, marginTop: 24, width: '100%' }}>
+      {/* Header section to match Pro Access countdown timer height */}
+      <View style={{
+        paddingTop: 12,
+        paddingBottom: 16,
+        paddingHorizontal: 24,
+        marginTop: -48,
+        height: 82,
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}>
+        <Text style={{
+          fontSize: 16,
+          fontWeight: '300',
+          color: '#FFFFFF',
+          letterSpacing: 1,
+          textAlign: 'center',
+        }}>
+          AI PLANS
+        </Text>
+      </View>
+      
       {/* Billing Toggle */}
       <View style={{
         backgroundColor: '#000000',
@@ -185,8 +367,8 @@ const DumbAIPlans = ({ selectedPlan, handleSelectPlan, billing, setBilling }) =>
         padding: 4,
         flexDirection: 'row',
         marginBottom: 20,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.05)',
+        alignSelf: 'center',
+        width: '85%',
       }}>
         <TouchableOpacity
           style={{
@@ -225,12 +407,13 @@ const DumbAIPlans = ({ selectedPlan, handleSelectPlan, billing, setBilling }) =>
               Annual
             </Text>
             <Text style={{
-              fontSize: 10,
+              fontSize: 11,
               color: subscription === 'annual' ? '#FFD700' : 'transparent',
               marginTop: 2,
-              height: 12, // Reserve consistent height
+              height: 14, // Reserve consistent height
+              fontWeight: '600',
             }}>
-              Save 20%
+              2 months free
             </Text>
           </View>
         </TouchableOpacity>
@@ -238,19 +421,24 @@ const DumbAIPlans = ({ selectedPlan, handleSelectPlan, billing, setBilling }) =>
 
       {/* 4 SEPARATE CARDS - BASIC SCROLLVIEW */}
       <ScrollView 
+        ref={scrollViewRef}
         horizontal 
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingRight: 16 }}
-        style={{ marginHorizontal: -16, marginTop: 4 }}
+        style={{ marginHorizontal: -16, marginTop: 8 }}
       >
+        
         <View style={{ flexDirection: 'row', paddingLeft: 16 }}>
         
         <CardTemplate 
           id="compass"
           name="AI Light"
           icon="compass-outline"
-          description="500 credits per month"
-          features={['167 credits per $', 'For casual users']}
+          description="Perfect for casual planning"
+          features={[
+            'Standard user context*',
+            'For occasional users'
+          ]}
           popular={false}
           monthlyPrice="$2.99"
           annualPrice="$29.99"
@@ -262,8 +450,12 @@ const DumbAIPlans = ({ selectedPlan, handleSelectPlan, billing, setBilling }) =>
           id="navigator"
           name="AI Plus"
           icon="navigate-circle-outline"
-          description="1,500 credits per month"
-          features={['300 credits per $', 'For daily users']}
+          description="Built for everyday productivity"
+          features={[
+            'Additional user context*',
+            'More daily usage (3x AI Light)',
+            'For daily users'
+          ]}
           popular={true}
           monthlyPrice="$4.99"
           annualPrice="$49.99"
@@ -273,10 +465,14 @@ const DumbAIPlans = ({ selectedPlan, handleSelectPlan, billing, setBilling }) =>
         
         <CardTemplate 
           id="guide"
-          name="AI Pro"
+          name="AI Max"
           icon="shield-checkmark-outline"
-          description="5,000 credits per month"
-          features={['500 credits per $', 'For heavy users']}
+          description="Get the most out of LifeCompass AI"
+          features={[
+            'Maximum user context*',
+            'Heavy usage capacity (10x AI Light)',
+            'For power users'
+          ]}
           popular={false}
           monthlyPrice="$9.99"
           annualPrice="$99.99"
@@ -287,32 +483,102 @@ const DumbAIPlans = ({ selectedPlan, handleSelectPlan, billing, setBilling }) =>
       </ScrollView>
 
       <View style={{
-        flexDirection: 'row',
+        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        marginTop: 16,
+        marginTop: 20,
+        paddingHorizontal: 20,
       }}>
-        <Text style={{
-          fontSize: 11,
-          color: 'rgba(255,255,255,0.3)',
-          textAlign: 'center',
+        <View style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: 8,
         }}>
-          AI credits never expire • 
-        </Text>
-        <Ionicons 
-          name="shield-checkmark" 
-          size={12} 
-          color="rgba(255,255,255,0.3)"
-          style={{ marginLeft: 4, marginRight: 2 }}
-        />
+          <Text style={{
+            fontSize: 11,
+            color: 'rgba(255,255,255,0.6)',
+            textAlign: 'center',
+          }}>
+            Monthly subscription • 
+          </Text>
+          <Ionicons 
+            name="shield-checkmark" 
+            size={12} 
+            color="rgba(255,255,255,0.6)"
+            style={{ marginLeft: 4, marginRight: 2 }}
+          />
+          <Text style={{
+            fontSize: 11,
+            color: 'rgba(255,255,255,0.6)',
+            textAlign: 'center',
+          }}>
+            Secure App Store billing
+          </Text>
+        </View>
+        
         <Text style={{
-          fontSize: 11,
-          color: 'rgba(255,255,255,0.3)',
+          fontSize: 10,
+          color: 'rgba(255,255,255,0.4)',
           textAlign: 'center',
+          fontStyle: 'italic',
+          lineHeight: 14,
         }}>
-          Secure App Store billing
+          *Context refers to how much AI knows about your goals, milestones, tasks and any documents you upload (resumes, personality tests) to help with your planning.
         </Text>
       </View>
+
+      {/* Try with credits hint - only show when no AI plan selected OR credits selected */}
+      {(!selectedPlan || selectedPlan === 'credits') && (
+        <TouchableOpacity
+          style={{
+            marginTop: 20,
+            marginHorizontal: 20,
+            paddingVertical: 12,
+            paddingHorizontal: 16,
+            backgroundColor: selectedPlan === 'credits' ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.03)',
+            borderRadius: 12,
+            borderWidth: 2,
+            borderColor: selectedPlan === 'credits' ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.08)',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            // Toggle the credits option
+            if (selectedPlan === 'credits') {
+              handleSelectPlan(''); // Deselect if already selected
+            } else {
+              handleSelectPlan('credits'); // Select credits
+            }
+          }}
+          activeOpacity={0.7}
+        >
+          <Ionicons 
+            name="sparkles-outline" 
+            size={14} 
+            color={selectedPlan === 'credits' ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.5)'}
+            style={{ marginRight: 6 }}
+          />
+          <Text style={{
+            fontSize: 12,
+            color: 'rgba(255,255,255,0.5)',
+            fontWeight: '500',
+          }}>
+            Or try AI with 150 credits for $0.99
+          </Text>
+          <Text style={{
+            fontSize: 10,
+            color: 'rgba(255,255,255,0.3)',
+            marginLeft: 6,
+          }}>
+            • No subscription
+          </Text>
+        </TouchableOpacity>
+      )}
+
+      {/* Modal removed - no longer needed */}
     </View>
   );
 };

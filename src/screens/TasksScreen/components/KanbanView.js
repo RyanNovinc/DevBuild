@@ -265,8 +265,8 @@ const KanbanView = ({ taskScreenProps }) => {
                     
                   if (projectsForGoal.length === 0) {
                     Alert.alert(
-                      "No Projects Available",
-                      "You need to create a project for this goal before adding tasks.",
+                      "Task Organization Options",
+                      "Add tasks directly to this goal, create a milestone, or add standalone tasks.",
                       [
                         { text: "Cancel", style: "cancel" },
                         { 
@@ -325,8 +325,8 @@ const KanbanView = ({ taskScreenProps }) => {
             } else {
               // No goals available
               Alert.alert(
-                "No Goals Available",
-                "You need to create a goal before adding tasks.",
+                "Task Organization Options",
+                "Create a goal to organize tasks, create milestones, or add standalone tasks.",
                 [
                   { text: "Cancel", style: "cancel" },
                   { 
@@ -344,8 +344,8 @@ const KanbanView = ({ taskScreenProps }) => {
           
           if (projectsForGoal.length === 0) {
             Alert.alert(
-              "No Projects Available",
-              "You need to create a project for this goal before adding tasks.",
+              "Task Organization Options",
+              "Add tasks directly to this goal, create a milestone, or add standalone tasks.",
               [
                 { text: "Cancel", style: "cancel" },
                 { 
@@ -437,10 +437,10 @@ const KanbanView = ({ taskScreenProps }) => {
                   <KanbanBoard
                     projects={getFilteredProjects()}
                     theme={theme}
-                    onPressProject={handleKanbanProjectPress}
-                    onUpdateProjectProgress={handleUpdateProjectProgress}
+                    onPressMilestone={handleKanbanProjectPress}
+                    onUpdateMilestoneProgress={handleUpdateProjectProgress}
                     filterBy={kanbanFilter}
-                    isProjectLevel={true}
+                    isMilestoneLevel={true}
                     darkMode={isDarkMode}
                     customStyles={kanbanCustomStyles}
                     containerStyle={{ 
@@ -466,7 +466,7 @@ const KanbanView = ({ taskScreenProps }) => {
                     onPressTask={handleKanbanTaskPress}
                     onUpdateTaskStatus={handleUpdateTaskStatus}
                     filterBy={kanbanFilter}
-                    isProjectLevel={false}
+                    isMilestoneLevel={false}
                     darkMode={isDarkMode}
                     customStyles={kanbanCustomStyles}
                     containerStyle={{ 
@@ -562,15 +562,16 @@ const KanbanView = ({ taskScreenProps }) => {
               <KanbanBoard
                 projects={getFilteredProjects()}
                 theme={theme}
-                onPressProject={handleKanbanProjectPress}
-                onUpdateProjectProgress={handleUpdateProjectProgress}
+                onPressMilestone={handleKanbanProjectPress}
+                onUpdateMilestoneProgress={handleUpdateProjectProgress}
                 filterBy={kanbanFilter}
-                isProjectLevel={true}
+                isMilestoneLevel={true}
                 darkMode={isDarkMode}
                 customStyles={kanbanCustomStyles}
                 containerStyle={{ 
                   backgroundColor: '#000000',
-                  paddingBottom: insets.bottom
+                  paddingBottom: insets.bottom,
+                  paddingTop: 0  // Remove extra top padding for more space
                 }}
                 hideAddButton={true}
                 hideColumnAddButtons={true}
@@ -590,12 +591,13 @@ const KanbanView = ({ taskScreenProps }) => {
                 onPressTask={handleKanbanTaskPress}
                 onUpdateTaskStatus={handleUpdateTaskStatus}
                 filterBy={kanbanFilter}
-                isProjectLevel={false}
+                isMilestoneLevel={false}
                 darkMode={isDarkMode}
                 customStyles={kanbanCustomStyles}
                 containerStyle={{ 
                   backgroundColor: '#000000',
-                  paddingBottom: insets.bottom
+                  paddingBottom: insets.bottom,
+                  paddingTop: 0  // Remove extra top padding for more space
                 }}
                 hideAddButton={true}
                 hideColumnAddButtons={true}

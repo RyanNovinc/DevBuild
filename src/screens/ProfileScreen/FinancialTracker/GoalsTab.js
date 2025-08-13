@@ -30,34 +30,11 @@ import {
   accessibility
 } from '../../../utils/responsive';
 
-// Define preset goal templates
-const PRESET_TEMPLATES = {
-  financialMilestones: [
-    { title: "Build Your Safety Net - Create a starter emergency fund of $1,500", completed: false },
-    { title: "Create Your Debt Freedom Plan - Develop a structured approach to eliminating debt", completed: false },
-    { title: "Complete Your Protection Fund - Expand your emergency fund to cover 4 months of expenses", completed: false },
-    { title: "Secure Your Future - Allocate 12-20% of income to retirement investments", completed: false },
-    { title: "Establish Goal Funds - Create dedicated savings for important life objectives", completed: false },
-    { title: "Accelerate Mortgage Freedom - Make additional principal payments on your mortgage", completed: false },
-    { title: "Expand Your Financial Impact - Build wealth through diversified investments", completed: false }
-  ],
-  entrepreneurLaunch: [
-    { title: "Build Your Runway Fund - Save 6-12 months of personal expenses", completed: false },
-    { title: "Minimize Personal Overhead - Reduce or eliminate unnecessary expenses and debt", completed: false },
-    { title: "Create Your Business Seed Fund - Establish capital for business startup costs", completed: false },
-    { title: "Establish Dual Financial Systems - Separate personal and business finances", completed: false },
-    { title: "Reach Minimum Viable Income - Business consistently covers basic personal expenses", completed: false },
-    { title: "Build Business Resilience - Create a 3-month business emergency fund", completed: false },
-    { title: "Scale to Replacement Income - Grow business to match previous employment income", completed: false },
-    { title: "Expand Your Business Assets - Build business equity and passive income streams", completed: false }
-  ]
-};
 
 const GoalsTab = ({ theme, data, handlers, navigation }) => {
   const [showSavingsForm, setShowSavingsForm] = useState(false);
   const [showDebtForm, setShowDebtForm] = useState(false);
   const [showAddGoalForm, setShowAddGoalForm] = useState(false);
-  const [showPresetModal, setShowPresetModal] = useState(false);
   const [savingsFormAnimation] = useState(new Animated.Value(0));
   const [debtFormAnimation] = useState(new Animated.Value(0));
   const [goalFormAnimation] = useState(new Animated.Value(0));
@@ -250,16 +227,6 @@ const GoalsTab = ({ theme, data, handlers, navigation }) => {
     }
   };
 
-  // Toggle preset modal
-  const togglePresetModal = () => {
-    // Check premium status
-    if (!isPremium) {
-      showUpgradePrompt('Upgrade to Lifetime to use goal templates and track your progress.');
-      return;
-    }
-    
-    setShowPresetModal(!showPresetModal);
-  };
 
   // Local validation for add savings
   const validateAndAddSavings = () => {
@@ -342,79 +309,6 @@ const GoalsTab = ({ theme, data, handlers, navigation }) => {
     toggleAddGoalForm();
   };
 
-  // Handle applying a preset template
-  const handleApplyPreset = (presetKey) => {
-    // Check premium status
-    if (!isPremium) {
-      showUpgradePrompt('Upgrade to Lifetime to use goal templates and track your progress.');
-      togglePresetModal();
-      return;
-    }
-    
-    if (financialData.goals.length > 0) {
-      // Show confirmation alert if there are existing goals
-      Alert.alert(
-        "Replace Existing Goals",
-        "Adding this preset will delete all your current goals. Continue?",
-        [
-          {
-            text: "Cancel",
-            style: "cancel"
-          },
-          {
-            text: "Replace",
-            onPress: () => applyPresetTemplate(presetKey),
-            style: "destructive"
-          }
-        ]
-      );
-    } else {
-      // No existing goals, apply preset directly
-      applyPresetTemplate(presetKey);
-    }
-  };
-
-  // Apply the selected preset template - Simplified approach
-  const applyPresetTemplate = (presetKey) => {
-    // Check premium status - redundant as we check in handleApplyPreset, but keeping as a safeguard
-    if (!isPremium) {
-      showUpgradePrompt('Upgrade to Lifetime to use goal templates and track your progress.');
-      togglePresetModal();
-      return;
-    }
-    
-    // Create new goal objects from the selected preset
-    const presetGoals = PRESET_TEMPLATES[presetKey].map(goalTemplate => ({
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
-      title: goalTemplate.title,
-      completed: false
-    }));
-    
-    // Use the handleReplaceAllGoals function from parent
-    if (handlers && handlers.handleReplaceAllGoals) {
-      // This is the critical function that will replace all goals at once
-      handlers.handleReplaceAllGoals(presetGoals);
-      console.log("Applied preset template:", presetKey, "with", presetGoals.length, "goals");
-      
-      // Show success message
-      Alert.alert(
-        "Goals Updated",
-        `Successfully applied the '${presetKey === 'financialMilestones' ? 'Financial Milestones System' : 'Entrepreneur\'s Launch Path'}' template.`,
-        [{ text: "OK" }]
-      );
-    } else {
-      // If handleReplaceAllGoals is not available, show an error
-      console.error("handleReplaceAllGoals function not available in parent component");
-      Alert.alert(
-        "Error",
-        "Unable to apply preset template. Please try again later.",
-        [{ text: "OK" }]
-      );
-    }
-    
-    // Close the preset modal
-    togglePresetModal();
-  };
   
   // Wrapper for handleToggleGoal with premium check
   const handleToggleGoalWithPremiumCheck = (goalId) => {
@@ -480,36 +374,23 @@ const GoalsTab = ({ theme, data, handlers, navigation }) => {
           </View>
         </View>
         
-        {/* Separate action buttons row */}
-        <View style={styles.goalsActionRow}>
-          {/* Preset button - now larger and more prominent */}
-          <TouchableOpacity 
-            style={[
-              styles.actionButton, 
-              { backgroundColor: '#8667C8' },
-              ensureAccessibleTouchTarget(scaleWidth(150), scaleHeight(48))
-            ]}
-            onPress={togglePresetModal}
-            accessible={true}
-            accessibilityRole="button"
-            accessibilityLabel="Goal Templates"
-            accessibilityHint="Shows preset goal templates you can apply"
+        {/* Add disclaimer */}
+        <View style={styles.disclaimerContainer}>
+          <Text 
+            style={[styles.disclaimerText, { color: theme.textSecondary }]}
+            maxFontSizeMultiplier={1.2}
           >
-            <Ionicons name="list-outline" size={scaleWidth(20)} color="#FFFFFF" style={{marginRight: spacing.xs}} />
-            <Text 
-              style={styles.actionButtonText}
-              maxFontSizeMultiplier={1.3}
-            >
-              Goal Templates
-            </Text>
-          </TouchableOpacity>
-          
-          {/* Add goal button */}
+            📊 This tool is for personal goal tracking only. We do not provide financial advice. Consult a financial professional for personalized guidance.
+          </Text>
+        </View>
+        
+        {/* Add goal button - centered */}
+        <View style={styles.goalsActionRow}>
           <TouchableOpacity 
             style={[
               styles.actionButton, 
               { backgroundColor: '#673AB7' },
-              ensureAccessibleTouchTarget(scaleWidth(150), scaleHeight(48))
+              ensureAccessibleTouchTarget(scaleWidth(200), scaleHeight(48))
             ]}
             onPress={toggleAddGoalForm}
             accessible={true}
@@ -614,7 +495,7 @@ const GoalsTab = ({ theme, data, handlers, navigation }) => {
               >
                 {!isPremium 
                   ? "Upgrade to Lifetime to add financial goals" 
-                  : "Tap the + button to add goals or use presets"}
+                  : "Tap the + button to add your own financial goals"}
               </Text>
             </View>
           ) : (
@@ -1199,133 +1080,6 @@ const GoalsTab = ({ theme, data, handlers, navigation }) => {
         </View>
       </View>
 
-      {/* Preset Goals Modal */}
-      <Modal
-        visible={showPresetModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={togglePresetModal}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[
-            styles.presetModal, 
-            { 
-              backgroundColor: theme.card,
-              marginTop: safeSpacing.top,
-              marginBottom: safeSpacing.bottom,
-              marginLeft: safeSpacing.left,
-              marginRight: safeSpacing.right,
-              maxHeight: height - safeSpacing.top * 2
-            }
-          ]}>
-            <View style={styles.presetModalHeader}>
-              <Text 
-                style={[styles.presetModalTitle, { color: theme.text }]}
-                maxFontSizeMultiplier={1.3}
-              >
-                Choose Goal Template
-              </Text>
-              <TouchableOpacity 
-                onPress={togglePresetModal}
-                accessible={true}
-                accessibilityRole="button"
-                accessibilityLabel="Close"
-                accessibilityHint="Closes the goal templates modal"
-                hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
-              >
-                <Ionicons name="close" size={scaleWidth(24)} color={theme.textSecondary} />
-              </TouchableOpacity>
-            </View>
-            
-            <ScrollView style={styles.presetList}>
-              {/* Financial Milestones Preset */}
-              <TouchableOpacity
-                style={[
-                  styles.presetOption, 
-                  { borderColor: theme.border },
-                  ensureAccessibleTouchTarget(scaleWidth(300), scaleHeight(120))
-                ]}
-                onPress={() => handleApplyPreset('financialMilestones')}
-                accessible={true}
-                accessibilityRole="button"
-                accessibilityLabel="Financial Milestones System, 7 goals"
-                accessibilityHint="Applies the Financial Milestones System template"
-              >
-                <View style={styles.presetOptionHeader}>
-                  <Ionicons name="trending-up-outline" size={scaleWidth(24)} color="#673AB7" style={styles.presetIcon} />
-                  <Text 
-                    style={[styles.presetOptionTitle, { color: theme.text }]}
-                    maxFontSizeMultiplier={1.3}
-                  >
-                    Financial Milestones System
-                  </Text>
-                </View>
-                <Text 
-                  style={[styles.presetOptionDescription, { color: theme.textSecondary }]}
-                  maxFontSizeMultiplier={1.3}
-                >
-                  A 7-step system for building financial stability and wealth from the ground up.
-                </Text>
-                <View style={styles.presetGoalCountBadge}>
-                  <Text 
-                    style={styles.presetGoalCount}
-                    maxFontSizeMultiplier={1.3}
-                  >
-                    7 goals
-                  </Text>
-                </View>
-              </TouchableOpacity>
-              
-              {/* Entrepreneur's Launch Path Preset */}
-              <TouchableOpacity
-                style={[
-                  styles.presetOption, 
-                  { borderColor: theme.border },
-                  ensureAccessibleTouchTarget(scaleWidth(300), scaleHeight(120))
-                ]}
-                onPress={() => handleApplyPreset('entrepreneurLaunch')}
-                accessible={true}
-                accessibilityRole="button"
-                accessibilityLabel="Entrepreneur's Launch Path, 8 goals"
-                accessibilityHint="Applies the Entrepreneur's Launch Path template"
-              >
-                <View style={styles.presetOptionHeader}>
-                  <Ionicons name="briefcase-outline" size={scaleWidth(24)} color="#673AB7" style={styles.presetIcon} />
-                  <Text 
-                    style={[styles.presetOptionTitle, { color: theme.text }]}
-                    maxFontSizeMultiplier={1.3}
-                  >
-                    Entrepreneur's Launch Path
-                  </Text>
-                </View>
-                <Text 
-                  style={[styles.presetOptionDescription, { color: theme.textSecondary }]}
-                  maxFontSizeMultiplier={1.3}
-                >
-                  An 8-step roadmap for transitioning from employment to entrepreneurship.
-                </Text>
-                <View style={styles.presetGoalCountBadge}>
-                  <Text 
-                    style={styles.presetGoalCount}
-                    maxFontSizeMultiplier={1.3}
-                  >
-                    8 goals
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            </ScrollView>
-            
-            <View style={styles.presetModalFooter}>
-              <Text 
-                style={[styles.presetModalFooterText, { color: theme.textSecondary }]}
-                maxFontSizeMultiplier={1.3}
-              >
-                Note: Applying a preset will replace all your current goals
-              </Text>
-            </View>
-          </View>
-        </View>
-      </Modal>
       
       {/* Upgrade Modal */}
       <Modal
@@ -1443,9 +1197,23 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.xl,
     fontWeight: 'bold',
   },
+  disclaimerContainer: {
+    backgroundColor: 'rgba(103, 58, 183, 0.1)',
+    borderRadius: scaleWidth(8),
+    padding: spacing.m,
+    marginBottom: spacing.m,
+    borderLeftWidth: 3,
+    borderLeftColor: '#673AB7',
+  },
+  disclaimerText: {
+    fontSize: fontSizes.xs,
+    lineHeight: 18,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
   goalsActionRow: {
-    flexDirection: isSmallDevice ? 'column' : 'row',
-    justifyContent: 'space-between',
+    flexDirection: 'row',
+    justifyContent: 'center',
     marginBottom: spacing.l,
     paddingBottom: spacing.m,
     borderBottomWidth: 1,
@@ -1458,8 +1226,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.m,
     paddingVertical: spacing.s,
     borderRadius: scaleWidth(12),
-    flex: isSmallDevice ? 0 : 0.48,  // Almost half width, but with a small gap
-    marginBottom: isSmallDevice ? spacing.s : 0,
     minHeight: scaleHeight(44), // Ensure minimum touch target height
   },
   actionButtonText: {
@@ -1725,86 +1491,6 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   
-  // Preset Modal Styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.l,
-  },
-  presetModal: {
-    width: '100%',
-    borderRadius: scaleWidth(16),
-    padding: spacing.l,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 5,
-  },
-  presetModalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.l,
-  },
-  presetModalTitle: {
-    fontSize: fontSizes.l,
-    fontWeight: 'bold',
-  },
-  presetList: {
-    maxHeight: isSmallDevice ? scaleHeight(300) : scaleHeight(400),
-  },
-  presetOption: {
-    borderWidth: 1,
-    borderRadius: scaleWidth(12),
-    padding: spacing.m,
-    marginBottom: spacing.m,
-    position: 'relative',
-  },
-  presetOptionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.s,
-  },
-  presetIcon: {
-    marginRight: spacing.s,
-  },
-  presetOptionTitle: {
-    fontSize: fontSizes.m,
-    fontWeight: '600',
-  },
-  presetOptionDescription: {
-    fontSize: fontSizes.s,
-    lineHeight: 20,
-    marginBottom: spacing.s,
-  },
-  presetGoalCountBadge: {
-    position: 'absolute',
-    bottom: spacing.m,
-    right: spacing.m,
-    backgroundColor: '#673AB7',
-    paddingHorizontal: spacing.s,
-    paddingVertical: spacing.xxs,
-    borderRadius: scaleWidth(12),
-  },
-  presetGoalCount: {
-    color: '#FFFFFF',
-    fontSize: fontSizes.xs,
-    fontWeight: '600',
-  },
-  presetModalFooter: {
-    marginTop: spacing.s,
-    paddingTop: spacing.m,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0, 0, 0, 0.1)',
-  },
-  presetModalFooterText: {
-    fontSize: fontSizes.xs,
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
   
   // Upgrade Modal Styles
   upgradeModal: {

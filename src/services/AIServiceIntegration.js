@@ -274,13 +274,13 @@ const AIServiceIntegration = {
 function getModelName(tier) {
   switch (tier) {
     case 'guide':
-      return 'gpt-4o-mini';
+      return 'gpt-5-nano';
     case 'navigator':
-      return 'gpt-4o';
+      return 'gpt-5-nano';
     case 'compass':
-      return 'gpt-4-turbo';
+      return 'gpt-5-nano';
     default:
-      return 'gpt-4o';
+      return 'gpt-5-nano';
   }
 }
 

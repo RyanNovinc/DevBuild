@@ -246,13 +246,20 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
   } = state.knowledge || {};
   
   // Only show real credits for authenticated users
+  // MOCK: For testing, set subscription status to 'unlimited' when logged in as premium
+  const mockSubscriptionStatus = isAuthenticated && user?.email === 'premium.user@example.com' ? 'unlimited' : 'free';
+  
   const {
-    subscriptionStatus = 'free',
+    subscriptionStatus = mockSubscriptionStatus,
     baseCredits = isAuthenticated ? (state.credits?.baseCredits || 0) : 0,
     rolledOverCredits = isAuthenticated ? (state.credits?.rolledOverCredits || 0) : 0,
     creditsUsed = isAuthenticated ? (state.credits?.creditsUsed || 0) : 0,
     nextRefreshDate = isAuthenticated ? (state.credits?.nextRefreshDate || null) : null
   } = {};
+  
+  console.log('[AIAssistant] Current subscription status:', subscriptionStatus);
+  console.log('[AIAssistant] Is authenticated:', isAuthenticated);
+  console.log('[AIAssistant] User email:', user?.email);
   
   // MODIFIED: Use a fixed AI model tier
   const aiModelTier = 'guide';

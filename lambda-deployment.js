@@ -400,8 +400,8 @@ Now respond to their message using this specific context about their actual goal
           content: userMessage
         });
 
-        // UPDATED: Always use gpt-4.1-mini regardless of tier
-        const model = 'gpt-4.1-mini';
+        // UPDATED: Always use gpt-5-nano for best cost efficiency
+        const model = 'gpt-5-nano';
         console.log(`Using model: ${model} (ignoring tier: ${aiTier})`);
 
         // OpenAI API request
@@ -823,7 +823,7 @@ Title:`;
         'Authorization': `Bearer ${openAiApiKey}`
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini', // Fast, cheap model for titles
+        model: 'gpt-5-nano', // Fast, cheap model for titles
         messages: [{
           role: 'user',
           content: titlePrompt

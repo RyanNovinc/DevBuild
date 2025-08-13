@@ -70,9 +70,9 @@ const AddProjectModal = ({
   const slideAnim = useRef(new Animated.Value(300)).current;
   const translateY = useRef(new Animated.Value(0)).current;
   
-  // Add validation state
+  // Add validation state - goalRequired removed for flexible hierarchy
   const [validationErrors, setValidationErrors] = useState({
-    goalRequired: false
+    // goalRequired: false // Removed - goals are now optional for milestones
   });
   
   // Direct access to goals from AppContext
@@ -195,7 +195,7 @@ const AddProjectModal = ({
           setSelectedGoalColor(selectedGoal.color);
         }
         
-        setValidationErrors(prev => ({...prev, goalRequired: false}));
+        // Goal validation removed for flexible hierarchy
       }
       
       setHasDueDate(false);
@@ -214,7 +214,7 @@ const AddProjectModal = ({
       setTasks([]);
       setNewTaskTitle('');
       setShowGoalList(false);
-      setValidationErrors({goalRequired: false});
+      setValidationErrors({});
       setHasDueDate(false);
       setEditMode(false);
       setEditingTaskId(null);
@@ -229,22 +229,13 @@ const AddProjectModal = ({
     }
   }, [projectData, visible, goals]);
   
-  // Handle add project
+  // Handle add project - Updated for flexible hierarchy
   const handleAddProject = () => {
-    const errors = {
-      goalRequired: !selectedGoalId
-    };
+    const errors = {};
     
     setValidationErrors(errors);
     
-    if (errors.goalRequired) {
-      Alert.alert(
-        "Goal Required", 
-        "Please select a goal for this project.",
-        [{ text: "OK" }]
-      );
-      return;
-    }
+    // Goal validation removed - milestones can be standalone
     
     if (!title.trim()) {
       Alert.alert(
@@ -284,7 +275,7 @@ const AddProjectModal = ({
     setSelectedGoalTitle(goal.title);
     setSelectedGoalColor(goal.color);
     setShowGoalList(false);
-    setValidationErrors(prev => ({...prev, goalRequired: false}));
+    // Goal validation removed for flexible hierarchy
   };
   
   // Handle date change
@@ -573,7 +564,7 @@ const AddProjectModal = ({
             styles.goalSelector,
             { 
               backgroundColor: theme.inputBackground,
-              borderColor: validationErrors.goalRequired ? (theme.error || 'red') : theme.border,
+              borderColor: theme.border,
               borderBottomLeftRadius: showGoalList ? 0 : 8,
               borderBottomRightRadius: showGoalList ? 0 : 8,
               borderWidth: 1,
@@ -617,7 +608,7 @@ const AddProjectModal = ({
               />
               <Text 
                 style={{ 
-                  color: validationErrors.goalRequired ? (theme.error || 'red') : theme.textSecondary,
+                  color: theme.textSecondary,
                   fontSize: fontSizes.m,
                 }}
               >
@@ -657,17 +648,7 @@ const AddProjectModal = ({
           </View>
         </Animated.View>
         
-        {validationErrors.goalRequired && (
-          <Text 
-            style={{ 
-              color: theme.error || 'red',
-              fontSize: fontSizes.s,
-              marginBottom: spacing.m,
-            }}
-          >
-            Goal selection is required
-          </Text>
-        )}
+        {/* Goal validation removed - milestones can be standalone */}
         
         <Text 
           style={[
@@ -698,7 +679,7 @@ const AddProjectModal = ({
           ]}
           value={title}
           onChangeText={setTitle}
-          placeholder="Enter project title"
+          placeholder="Enter milestone title"
           placeholderTextColor={theme.textSecondary}
           autoFocus={false}
         />
@@ -1035,7 +1016,7 @@ const AddProjectModal = ({
               accessible={true}
               accessibilityRole="header"
             >
-              Create Project
+              Create Milestone
             </Text>
             <TouchableOpacity 
               style={[
@@ -1140,7 +1121,7 @@ const AddProjectModal = ({
             </NavigationContainer>
           </View>
           
-          {/* Create Project Button - Always visible outside tabs */}
+          {/* Create Milestone Button - Always visible outside tabs */}
           <TouchableOpacity 
             style={[
               styles.addButton, 
@@ -1179,7 +1160,7 @@ const AddProjectModal = ({
               ]}
               maxFontSizeMultiplier={1.5}
             >
-              {goals.length === 0 ? 'Create a Goal First' : 'Create Project'}
+              {goals.length === 0 ? 'Create a Goal First' : 'Create Milestone'}
             </Text>
           </TouchableOpacity>
 
