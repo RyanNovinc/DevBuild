@@ -19,12 +19,15 @@ const MinimalStickyCTA = ({
     return null;
   }
 
-  // Calculate current price based on spots remaining (single $3.49 price with different AI benefits)
+  // Calculate current price based on user number
   const getCurrentPrice = () => {
     const spotsExhausted = spotsRemaining <= 0;
-    if (spotsExhausted) return '$3.49/mo'; // Monthly pricing when sold out
+    if (spotsExhausted) return '$3.49/mo'; // Monthly subscription pricing when sold out
     
-    return '$3.49'; // Same price for all founder spots
+    const userNumber = 1001 - spotsRemaining;
+    if (userNumber <= 100) return '$0.99'; // Users 1-100
+    if (userNumber <= 500) return '$2.99'; // Users 101-500
+    return '$4.99'; // Users 501-1000
   };
 
   // Determine what to show based on selection

@@ -126,7 +126,8 @@ class OnboardingService {
             domainName: selectedDomain.name,
             color: selectedDomain.color,
             icon: selectedDomain.icon,
-            order: index // Ensure consistent ordering
+            order: index, // Ensure consistent ordering
+            isMilestone: true // Mark as milestone for proper display
           };
           
           log('Error', `🎯 [OnboardingService] Created project:`, { id: newProject.id, goalId: newProject.goalId, title: newProject.title });

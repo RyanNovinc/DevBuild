@@ -327,7 +327,7 @@ const SimpleTomorrowTab = ({
               <View style={styles.emptyStateContainer}>
                 <EmptyState
                   title="Plan for Tomorrow"
-                  message="Stay ahead by planning tomorrow's tasks today. Use numbers like '1. Priority Task' or '2.1 Subtask' to order them."
+                  message="Plan tomorrow's tasks. Pro tip: Number them (1., 2.1) to set order"
                   icon="calendar"
                   iconColor={theme.primary}
                   theme={theme}

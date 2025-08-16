@@ -375,7 +375,7 @@ export const getModelSettings = (aiTier = 'default') => {
   return {
     name: 'LifeCompass AI',
     description: 'Comprehensive AI assistant for life planning and productivity',
-    model: 'gpt-5-nano',
+    model: 'gpt-4.1-mini',
     contextLength: 'Unlimited',
     creditCost: 1,
     characterLimit: CHARACTER_LIMITS.default,

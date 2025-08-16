@@ -14,8 +14,202 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import ColorWheel from './ColorWheel';
+import { useTheme } from '../context/ThemeContext';
+import {
+  PanResponder,
+} from 'react-native';
+import Svg, { Defs, RadialGradient, Stop, Circle, Path } from 'react-native-svg';
 
 const { width, height } = Dimensions.get('window');
+
+// Simplified ColorWheel component without toggles and hex input
+const SimplifiedColorWheel = ({ onColorChange, selectedColor = '#3b82f6', theme }) => {
+  const WHEEL_SIZE = Math.min(width * 0.7, 280); // Smaller for gift modal
+  const WHEEL_RADIUS = WHEEL_SIZE / 2;
+  const CENTER = WHEEL_RADIUS;
+  const PICKER_RADIUS = 12;
+  
+  const [currentColor, setCurrentColor] = React.useState(selectedColor);
+  const [pickerPosition, setPickerPosition] = React.useState({ x: CENTER, y: CENTER });
+  const [isDragging, setIsDragging] = React.useState(false);
+
+  // Convert HSV to RGB
+  const hsvToRgb = (h, s, v) => {
+    const c = v * s;
+    const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+    const m = v - c;
+    
+    let r, g, b;
+    
+    if (h >= 0 && h < 60) {
+      r = c; g = x; b = 0;
+    } else if (h >= 60 && h < 120) {
+      r = x; g = c; b = 0;
+    } else if (h >= 120 && h < 180) {
+      r = 0; g = c; b = x;
+    } else if (h >= 180 && h < 240) {
+      r = 0; g = x; b = c;
+    } else if (h >= 240 && h < 300) {
+      r = x; g = 0; b = c;
+    } else {
+      r = c; g = 0; b = x;
+    }
+    
+    r = Math.round((r + m) * 255);
+    g = Math.round((g + m) * 255);
+    b = Math.round((b + m) * 255);
+    
+    return { r, g, b };
+  };
+
+  // Convert RGB to hex
+  const rgbToHex = (r, g, b) => {
+    return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
+  };
+
+  // Convert position to HSV
+  const positionToHsv = (x, y) => {
+    const dx = x - CENTER;
+    const dy = y - CENTER;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance > WHEEL_RADIUS - 20) return null;
+    
+    const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+    const normalizedAngle = angle < 0 ? angle + 360 : angle;
+    const saturation = Math.min(distance / (WHEEL_RADIUS - 20), 1);
+    const value = 0.9; // Fixed value for simplicity
+    
+    return { h: normalizedAngle, s: saturation, v: value };
+  };
+
+  // Pan responder for dragging
+  const panResponder = PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: () => true,
+    onPanResponderGrant: (evt) => {
+      const { locationX, locationY } = evt.nativeEvent;
+      const hsv = positionToHsv(locationX, locationY);
+      if (hsv) {
+        setIsDragging(true);
+        setPickerPosition({ x: locationX, y: locationY });
+        const { r, g, b } = hsvToRgb(hsv.h, hsv.s, hsv.v);
+        const newColor = rgbToHex(r, g, b);
+        setCurrentColor(newColor);
+        onColorChange(newColor);
+      }
+    },
+    onPanResponderMove: (evt) => {
+      const { locationX, locationY } = evt.nativeEvent;
+      const hsv = positionToHsv(locationX, locationY);
+      if (hsv) {
+        setPickerPosition({ x: locationX, y: locationY });
+        const { r, g, b } = hsvToRgb(hsv.h, hsv.s, hsv.v);
+        const newColor = rgbToHex(r, g, b);
+        setCurrentColor(newColor);
+        onColorChange(newColor);
+      }
+    },
+    onPanResponderRelease: () => {
+      setIsDragging(false);
+    },
+  });
+
+  // Generate color rings
+  const generateColorRings = () => {
+    const rings = [];
+    const numRings = 12;
+    const numSegments = 36;
+    
+    for (let ring = 0; ring < numRings; ring++) {
+      for (let segment = 0; segment < numSegments; segment++) {
+        const hue = (segment / numSegments) * 360;
+        const saturation = (ring + 1) / numRings;
+        const value = 0.9; // Fixed bright value
+        const { r, g, b } = hsvToRgb(hue, saturation, value);
+        const color = rgbToHex(r, g, b);
+        
+        const innerRadius = 20 + (ring * (WHEEL_RADIUS - 40) / numRings);
+        const outerRadius = 20 + ((ring + 1) * (WHEEL_RADIUS - 40) / numRings);
+        const startAngle = (segment / numSegments) * 360;
+        const endAngle = ((segment + 1) / numSegments) * 360;
+        
+        const startAngleRad = (startAngle * Math.PI) / 180;
+        const endAngleRad = (endAngle * Math.PI) / 180;
+        
+        const x1 = CENTER + innerRadius * Math.cos(startAngleRad);
+        const y1 = CENTER + innerRadius * Math.sin(startAngleRad);
+        const x2 = CENTER + outerRadius * Math.cos(startAngleRad);
+        const y2 = CENTER + outerRadius * Math.sin(startAngleRad);
+        const x3 = CENTER + outerRadius * Math.cos(endAngleRad);
+        const y3 = CENTER + outerRadius * Math.sin(endAngleRad);
+        const x4 = CENTER + innerRadius * Math.cos(endAngleRad);
+        const y4 = CENTER + innerRadius * Math.sin(endAngleRad);
+        
+        const largeArcFlag = endAngle - startAngle > 180 ? 1 : 0;
+        const pathData = `M ${x1} ${y1} L ${x2} ${y2} A ${outerRadius} ${outerRadius} 0 ${largeArcFlag} 1 ${x3} ${y3} L ${x4} ${y4} A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 0 ${x1} ${y1} Z`;
+        
+        rings.push(
+          <Path
+            key={`${ring}-${segment}`}
+            d={pathData}
+            fill={color}
+            stroke="none"
+          />
+        );
+      }
+    }
+    
+    return rings;
+  };
+
+  return (
+    <View style={{ alignItems: 'center' }}>
+      <View
+        style={{
+          width: WHEEL_SIZE,
+          height: WHEEL_SIZE,
+          borderRadius: WHEEL_SIZE / 2,
+        }}
+        {...panResponder.panHandlers}
+      >
+        <Svg width={WHEEL_SIZE} height={WHEEL_SIZE}>
+          <Defs>
+            <RadialGradient
+              id="saturationGradient"
+              cx="50%"
+              cy="50%"
+              r="50%"
+            >
+              <Stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
+              <Stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+            </RadialGradient>
+          </Defs>
+          
+          {generateColorRings()}
+          
+          <Circle
+            cx={CENTER}
+            cy={CENTER}
+            r={WHEEL_RADIUS - 20}
+            fill="url(#saturationGradient)"
+          />
+          
+          {/* Color picker dot */}
+          <Circle
+            cx={pickerPosition.x}
+            cy={pickerPosition.y}
+            r={PICKER_RADIUS}
+            fill={currentColor}
+            stroke="#FFFFFF"
+            strokeWidth="3"
+          />
+        </Svg>
+      </View>
+    </View>
+  );
+};
 
 const ProGiftSurprise = ({ 
   visible, 
@@ -27,12 +221,19 @@ const ProGiftSurprise = ({
 }) => {
   const [giftOpened, setGiftOpened] = useState(false);
   const [showRatingPrompt, setShowRatingPrompt] = useState(false);
+  const [selectedCustomColor, setSelectedCustomColor] = useState('#3b82f6');
+  const [isClosing, setIsClosing] = useState(false);
+  
+  // Get theme context for real-time theme updates
+  const { updateTheme, toggleColoredTheme, isColoredTheme } = useTheme();
   
   // Animation values
   const modalOpacity = useRef(new Animated.Value(0)).current;
   const giftScale = useRef(new Animated.Value(0)).current;
   const contentOpacity = useRef(new Animated.Value(0)).current;
   const contentTranslateY = useRef(new Animated.Value(50)).current;
+  const giftShake = useRef(new Animated.Value(0)).current;
+  const shakeAnimationRef = useRef(null);
   
   // Confetti animation values (multiple pieces)
   const confettiPieces = useRef([...Array(15)].map(() => ({
@@ -47,12 +248,14 @@ const ProGiftSurprise = ({
       // Reset state
       setGiftOpened(false);
       setShowRatingPrompt(false);
+      setIsClosing(false);
       
       // Reset all animations
       modalOpacity.setValue(0);
       giftScale.setValue(0);
       contentOpacity.setValue(0);
       contentTranslateY.setValue(50);
+      giftShake.setValue(0);
       
       confettiPieces.forEach(piece => {
         piece.translateY.setValue(-100);
@@ -74,12 +277,63 @@ const ProGiftSurprise = ({
           friction: 8,
           useNativeDriver: true,
         })
-      ]).start();
+      ]).start(() => {
+        // Start the shake animation after the gift appears
+        startShakeAnimation();
+      });
     }
   }, [visible]);
 
+  const startShakeAnimation = () => {
+    if (giftOpened) return;
+    
+    // Create a subtle shake animation that repeats every 2 seconds
+    const shakeSequence = Animated.sequence([
+      // Quick shake left-right
+      Animated.timing(giftShake, {
+        toValue: -3,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(giftShake, {
+        toValue: 3,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(giftShake, {
+        toValue: -2,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(giftShake, {
+        toValue: 2,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(giftShake, {
+        toValue: 0,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      // Wait 2 seconds before next shake
+      Animated.delay(1700),
+    ]);
+
+    // Loop the shake animation
+    const loopingShake = Animated.loop(shakeSequence);
+    loopingShake.start();
+    
+    // Store reference to stop it when gift is opened
+    shakeAnimationRef.current = loopingShake;
+  };
+
   const handleGiftTap = async () => {
     if (giftOpened) return;
+    
+    // Stop the shake animation
+    if (shakeAnimationRef.current) {
+      shakeAnimationRef.current.stop();
+    }
     
     setGiftOpened(true);
 
@@ -94,6 +348,11 @@ const ProGiftSurprise = ({
     // Trigger color wheel unlock - only for color wheel gifts
     if (giftType === 'colorWheel' && onColorWheelUnlocked) {
       onColorWheelUnlocked();
+      
+      // Enable colored theme mode to allow custom colors
+      if (!isColoredTheme) {
+        toggleColoredTheme(true);
+      }
     }
 
     // Start confetti animation
@@ -115,12 +374,7 @@ const ProGiftSurprise = ({
       ]).start();
     }, 500);
 
-    // Show rating prompt after content is visible
-    if (showAppStoreRating) {
-      setTimeout(() => {
-        setShowRatingPrompt(true);
-      }, 3500);
-    }
+    // Remove automatic rating prompt - user must click Continue
   };
 
   const startConfettiAnimation = () => {
@@ -178,12 +432,12 @@ const ProGiftSurprise = ({
       });
     }
 
-    setShowRatingPrompt(false);
+    setIsClosing(true);
     setTimeout(() => onClose(), 500);
   };
 
   const handleNotNow = () => {
-    setShowRatingPrompt(false);
+    setIsClosing(true);
     setTimeout(() => onClose(), 500);
   };
 
@@ -251,7 +505,12 @@ const ProGiftSurprise = ({
                 <Animated.View
                   style={[
                     styles.giftBoxInner,
-                    { transform: [{ scale: giftScale }] }
+                    { 
+                      transform: [
+                        { scale: giftScale },
+                        { translateX: giftShake }
+                      ] 
+                    }
                   ]}
                 >
                   {/* Modern gift box design */}
@@ -292,16 +551,16 @@ const ProGiftSurprise = ({
                 <Ionicons 
                   name={giftType === 'aiPlus' ? 'sparkles' : 'color-palette'} 
                   size={48} 
-                  color={giftType === 'aiPlus' ? '#FFFFFF' : theme.primary} 
+                  color={giftType === 'aiPlus' ? '#FFFFFF' : selectedCustomColor} 
                 />
               </View>
 
               <Text style={[styles.unlockTitle, { color: theme.text }]}>
-                {giftType === 'aiPlus' ? 'Upgraded to AI Plus!' : 'Theme Colors Unlocked'}
+                {giftType === 'aiPlus' ? 'Upgraded to AI Plus!' : '🎨 Custom Colors Unlocked!'}
               </Text>
 
               <Text style={[styles.unlockSubtitle, { color: theme.textSecondary }]}>
-                {giftType === 'aiPlus' ? '$4.99 value • Early user bonus' : 'Customize your app theme'}
+                {giftType === 'aiPlus' ? '$4.99 value • Early user bonus' : 'Choose any color you want with the color wheel'}
               </Text>
 
               {giftType === 'aiPlus' ? (
@@ -319,20 +578,36 @@ const ProGiftSurprise = ({
                   </View>
                 </View>
               ) : (
-                <View style={[styles.messageCard, { backgroundColor: theme.cardElevated }]}>
-                  <Text style={[styles.thankYouMessage, { color: theme.textSecondary }]}>
-                    "Thank you for upgrading to Pro! Your support helps me continue improving LifeCompass."
-                  </Text>
-                  <Text style={[styles.signature, { color: theme.primary }]}>
-                    — Ryan
-                  </Text>
+                <View style={styles.colorShowcase}>
+                  {/* Simplified Color Wheel Component - hide after Continue is clicked or when closing */}
+                  {!showRatingPrompt && !isClosing && (
+                    <View style={styles.colorWheelContainer}>
+                      <SimplifiedColorWheel
+                        onColorChange={(color) => {
+                          setSelectedCustomColor(color);
+                          // Just update local color - will apply to modal elements
+                        }}
+                        selectedColor={selectedCustomColor}
+                        theme={theme}
+                      />
+                    </View>
+                  )}
+                  
                 </View>
               )}
 
               {!showRatingPrompt && (
                 <TouchableOpacity
-                  style={[styles.continueButton, { backgroundColor: theme.primary }]}
-                  onPress={() => setShowRatingPrompt(true)}
+                  style={[styles.continueButton, { 
+                    backgroundColor: giftType === 'colorWheel' ? selectedCustomColor : theme.primary 
+                  }]}
+                  onPress={() => {
+                    // Save the selected color to theme when user clicks Continue
+                    if (giftType === 'colorWheel') {
+                      updateTheme({ primary: selectedCustomColor });
+                    }
+                    setShowRatingPrompt(true);
+                  }}
                 >
                   <Text style={styles.continueButtonText}>Continue</Text>
                 </TouchableOpacity>
@@ -349,7 +624,9 @@ const ProGiftSurprise = ({
                   
                   <View style={styles.ratingButtons}>
                     <TouchableOpacity
-                      style={[styles.primaryButton, { backgroundColor: theme.primary }]}
+                      style={[styles.primaryButton, { 
+                        backgroundColor: giftType === 'colorWheel' ? selectedCustomColor : theme.primary 
+                      }]}
                       onPress={handleRateApp}
                     >
                       <Text style={styles.primaryButtonText}>Leave a Review</Text>
@@ -369,6 +646,15 @@ const ProGiftSurprise = ({
             </Animated.View>
           )}
         </View>
+        
+        {/* Handwritten message overlay at bottom of screen */}
+        {showRatingPrompt && (
+          <View style={styles.handwrittenOverlay}>
+            <Text style={[styles.handwrittenMessage, { color: 'rgba(255,255,255,0.8)' }]}>
+              "Thank you for being one of my first 1000 users. The best way I can express what this means to me is to give you more than you expected. Thank you!"{'\n\n'}P.S. If you enjoy this app please consider leaving a review. It helps me out a lot.{'\n\n'}— Ryan ✍️
+            </Text>
+          </View>
+        )}
       </Animated.View>
     </Modal>
   );
@@ -601,6 +887,52 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     fontSize: 16,
     fontWeight: '500',
+  },
+  
+  // Handwritten message overlay styles
+  handwrittenOverlay: {
+    position: 'absolute',
+    bottom: 40,
+    left: 20,
+    right: 20,
+    alignItems: 'center',
+    pointerEvents: 'none',
+  },
+  handwrittenMessage: {
+    fontSize: 13,
+    lineHeight: 20,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    fontWeight: '300',
+    fontFamily: Platform.select({
+      ios: 'Bradley Hand',
+      android: 'casual',
+    }),
+  },
+  
+  // Color showcase styles
+  colorShowcase: {
+    alignItems: 'center',
+    marginBottom: 32,
+    width: '100%',
+  },
+  colorShowcaseText: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 8,
+    lineHeight: 22,
+  },
+  colorShowcaseSubtext: {
+    fontSize: 14,
+    textAlign: 'center',
+    fontWeight: '400',
+    opacity: 0.8,
+    marginBottom: 20,
+  },
+  colorWheelContainer: {
+    marginBottom: 20,
+    alignItems: 'center',
   },
 });
 

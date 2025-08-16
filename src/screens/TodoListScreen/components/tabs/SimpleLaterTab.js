@@ -327,7 +327,7 @@ const SimpleLaterTab = ({
               <View style={styles.emptyStateContainer}>
                 <EmptyState
                   title="Future Plans"
-                  message="Add tasks you want to do eventually. Use numbers like '1. High Priority' or '2.1 Subtask' to order them."
+                  message="Add future tasks here. Pro tip: Number them (1., 2.1) to set order"
                   icon="time-outline"
                   iconColor={theme.primary}
                   theme={theme}

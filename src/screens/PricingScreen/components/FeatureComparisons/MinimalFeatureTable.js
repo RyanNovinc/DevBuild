@@ -8,42 +8,39 @@ const MinimalFeatureTable = ({ theme, isLifetimeMember, responsive = {}, onNavig
   // Check if founder spots are sold out
   const isFounderSoldOut = spotsRemaining <= 0;
   
-  // Helper function to get AI benefit text based on founder spots
+  // Helper function to get AI benefit text - All founders get 1 month AI Light
   const getAIBenefitText = () => {
-    if (spotsRemaining > 900) {
-      return '1 Month AI Max included ($9.99 value)'; // First 100 spots
-    } else if (spotsRemaining > 500) {
-      return '1 Month AI Plus included ($4.99 value)'; // Next 400 spots
-    } else {
-      return '1 Month AI Light included ($2.99 value)'; // Last 500 spots
+    if (isFounderSoldOut) {
+      return 'AI subscriptions available separately';
     }
+    return '1 month AI Light included ($2.99 value)'; // All founder tiers get 1 month AI Light
   };
   
   // Feature data changes based on founder availability
   const features = isFounderSoldOut ? [
     // Monthly subscription features when founder spots are sold out
+    { name: 'Set unlimited goals, milestones and tasks', free: false, pro: true },
+    { name: 'Unlimited functionality in all calendar views', free: false, pro: true },
+    { name: 'Unlimited todos in all lists', free: false, pro: true },
+    { name: 'Unlock all achievements and dashboard widgets', free: false, pro: true },
+    { name: 'Refer friends: both get 500 AI credits', free: false, pro: true },
+    { name: 'Access to Pro Discord channels', free: false, pro: true },
+    { name: 'Choose from 10+ theme colors', free: false, pro: true },
     { name: 'All current and future Pro features', free: false, pro: true },
     { name: getAIBenefitText(), free: false, pro: true, clickable: true },
-    { name: 'Set unlimited goals', free: false, pro: true },
-    { name: 'Create unlimited projects', free: false, pro: true },
-    { name: 'Add unlimited tasks', free: false, pro: true },
-    { name: 'Plan beyond 2 weeks in calendar view', free: false, pro: true },
-    { name: 'PDF export for all calendar views', free: false, pro: true },
-    { name: 'Choose from 10+ theme colors', free: false, pro: true },
-    { name: 'Cancel anytime', free: false, pro: true },
   ] : [
     // Founder features when spots are available
     { name: 'One-time payment • No monthly fees ever', free: false, pro: true },
     { name: 'Lifetime access to all features and updates', free: false, pro: true },
     { name: getAIBenefitText(), free: false, pro: true, clickable: true },
-    { name: 'Set unlimited goals', free: false, pro: true },
-    { name: 'Create unlimited projects', free: false, pro: true },
-    { name: 'Add unlimited tasks', free: false, pro: true },
-    { name: 'Plan beyond 2 weeks in calendar view', free: false, pro: true },
-    { name: 'Refer friends: both get 1 month AI Light (limit 3)', free: false, pro: true },
-    { name: 'PDF export for all calendar views', free: false, pro: true },
+    { name: 'Set unlimited goals, milestones and tasks', free: false, pro: true },
+    { name: 'Unlimited functionality in all calendar views', free: false, pro: true },
+    { name: 'Unlimited todos in all lists', free: false, pro: true },
     { name: 'Choose from 10+ theme colors', free: false, pro: true },
-    { name: 'Exclusive founder title in Discord community', free: false, pro: true },
+    { name: 'All current and future dashboard widgets', free: false, pro: true },
+    { name: 'Unlock access to all achievements', free: false, pro: true },
+    { name: 'Refer friends: both get 1 month AI Light (limit 3)', free: false, pro: true },
+    { name: 'Exclusive Founder Discord channels', free: false, pro: true },
   ];
 
   return (
@@ -59,6 +56,7 @@ const MinimalFeatureTable = ({ theme, isLifetimeMember, responsive = {}, onNavig
         paddingVertical: 16,
         marginTop: 8,
       }}>
+
 
         {/* Clear Header */}
         <View style={{

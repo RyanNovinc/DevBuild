@@ -41,7 +41,12 @@ const KanbanBoard = ({
   color = '#4CAF50', // Color for styling
   darkMode = true, // Default to dark mode
   allMilestones = [], // All milestones for color inheritance
-  allGoals = [] // All goals for color inheritance
+  allGoals = [], // All goals for color inheritance
+  showTaskLabels = true, // Whether to show goal/milestone labels on tasks
+  isFullScreen = false, // Whether the kanban is in fullscreen mode
+  wipLimit = 3, // WIP limit for "In Progress" column
+  onWipLimitChange, // Function to handle WIP limit changes
+  onShowWipEducation // Function to show WIP limit education modal
 }) => {
   const [draggingItem, setDraggingItem] = useState(null);
   
@@ -120,6 +125,22 @@ const KanbanBoard = ({
   const handleMoveMilestone = (milestone, newStatus) => {
     if (!onUpdateMilestoneProgress) return;
     
+    // Check WIP limit for "In Progress" column
+    if (newStatus === 'in_progress') {
+      const inProgressItems = getItemsByStatus('in_progress');
+      if (inProgressItems.length >= wipLimit) {
+        Alert.alert(
+          'Work-in-Progress Limit Reached',
+          `You currently have ${inProgressItems.length} of ${wipLimit} projects in progress. To maintain focus and productivity, complete or move some projects before starting new work.`,
+          [
+            { text: 'Learn More', onPress: () => onShowWipEducation && onShowWipEducation() },
+            { text: 'OK', style: 'default' }
+          ]
+        );
+        return;
+      }
+    }
+    
     // Convert status to status indicator value - this is NOT a progress percentage
     // It's just a signal for the AppContext to change the status
     let statusIndicator;
@@ -137,6 +158,22 @@ const KanbanBoard = ({
   const handleMoveTask = (task, newStatus) => {
     if (!onUpdateTaskStatus) return;
     
+    // Check WIP limit for "In Progress" column
+    if (newStatus === 'in_progress') {
+      const inProgressItems = getItemsByStatus('in_progress');
+      if (inProgressItems.length >= wipLimit) {
+        Alert.alert(
+          'Work-in-Progress Limit Reached',
+          `You currently have ${inProgressItems.length} of ${wipLimit} tasks in progress. To maintain focus and productivity, complete or move some tasks before starting new work.`,
+          [
+            { text: 'Learn More', onPress: () => onShowWipEducation && onShowWipEducation() },
+            { text: 'OK', style: 'default' }
+          ]
+        );
+        return;
+      }
+    }
+    
     // Call the update function from props
     onUpdateTaskStatus(task.id, newStatus);
   };
@@ -149,35 +186,113 @@ const KanbanBoard = ({
       <View style={[
         styles.column, 
         { 
-          backgroundColor: darkMode ? '#1E1E1E' : '#FFFFFF',
-          borderColor: darkMode ? '#333333' : '#E0E0E0',
-          borderWidth: 1
+          maxHeight: isFullScreen ? '85vh' : 600, // Much taller in fullscreen
+          height: isFullScreen ? 'auto' : (Platform.OS === 'web' ? '80vh' : undefined)
         }
       ]}>
-        <View style={[
-          styles.columnHeader, 
-          { 
-            backgroundColor: darkMode ? '#282828' : headerColor,
-            borderBottomColor: darkMode ? '#333333' : '#E0E0E0',
-            borderBottomWidth: 1
-          }
-        ]}>
-          <SafeText style={[
-            styles.columnTitle,
-            { color: darkMode ? '#FFFFFF' : '#333333' }
-          ]}>
+        <View style={styles.columnHeader}>
+          <SafeText style={styles.columnTitle}>
             {title}
           </SafeText>
-          <View style={[
-            styles.columnCount,
-            { backgroundColor: darkMode ? '#383838' : 'rgba(255,255,255,0.7)' }
-          ]}>
-            <SafeText style={[
-              styles.columnCountText,
-              { color: darkMode ? '#CCCCCC' : '#333333' }
-            ]}>
-              {items.length}
-            </SafeText>
+          
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {/* Eye toggle - only show in first column and for tasks only */}
+            {status === 'todo' && !isMilestoneLevel && (
+              <TouchableOpacity
+                onPress={() => {
+                  // This will be handled by parent component
+                  if (typeof window !== 'undefined' && window.toggleTaskLabels) {
+                    window.toggleTaskLabels();
+                  }
+                }}
+                style={{ padding: 4 }}
+                activeOpacity={0.7}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={showTaskLabels ? "Hide task labels" : "Show task labels"}
+                accessibilityHint="Toggle visibility of goal and milestone labels on tasks"
+              >
+                <Ionicons 
+                  name={showTaskLabels ? "eye" : "eye-off"} 
+                  size={16} 
+                  color="rgba(255,255,255,0.7)" 
+                />
+              </TouchableOpacity>
+            )}
+            
+            {/* WIP Limit indicator and controls for In Progress column */}
+            {status === 'in_progress' && (
+              <View style={styles.wipLimitContainer}>
+                {/* Decrease button */}
+                <TouchableOpacity
+                  style={[styles.wipControlButton, { opacity: wipLimit <= 1 ? 0.3 : 1 }]}
+                  onPress={() => {
+                    if (wipLimit > 1 && onWipLimitChange) {
+                      onWipLimitChange(wipLimit - 1);
+                    }
+                  }}
+                  disabled={wipLimit <= 1}
+                  hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel="Decrease WIP limit"
+                >
+                  <Ionicons name="remove" size={16} color="rgba(255,255,255,0.9)" />
+                </TouchableOpacity>
+
+                {/* Clickable WIP indicator */}
+                <TouchableOpacity
+                  style={[
+                    styles.wipLimitIndicator,
+                    { 
+                      backgroundColor: items.length >= wipLimit ? '#FF5722' : 'rgba(255,255,255,0.1)',
+                      borderColor: items.length >= wipLimit ? '#FF5722' : 'rgba(255,255,255,0.3)'
+                    }
+                  ]}
+                  onPress={() => {
+                    if (onShowWipEducation) {
+                      onShowWipEducation();
+                    }
+                  }}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel={`WIP limit indicator: ${items.length} of ${wipLimit} items. Tap to learn about WIP limits.`}
+                >
+                  <SafeText style={[
+                    styles.wipLimitText,
+                    { color: items.length >= wipLimit ? '#FFFFFF' : 'rgba(255,255,255,0.8)' }
+                  ]}>
+                    {items.length}/{wipLimit}
+                  </SafeText>
+                </TouchableOpacity>
+
+                {/* Increase button */}
+                <TouchableOpacity
+                  style={[styles.wipControlButton, { opacity: wipLimit >= 10 ? 0.3 : 1 }]}
+                  onPress={() => {
+                    if (wipLimit < 10 && onWipLimitChange) {
+                      onWipLimitChange(wipLimit + 1);
+                    }
+                  }}
+                  disabled={wipLimit >= 10}
+                  hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel="Increase WIP limit"
+                >
+                  <Ionicons name="add" size={16} color="rgba(255,255,255,0.9)" />
+                </TouchableOpacity>
+              </View>
+            )}
+            
+            {/* Column count - only show for non-in-progress columns since in-progress has WIP indicator */}
+            {status !== 'in_progress' && (
+              <View style={styles.columnCount}>
+                <SafeText style={styles.columnCountText}>
+                  {items.length}
+                </SafeText>
+              </View>
+            )}
           </View>
         </View>
         
@@ -192,14 +307,7 @@ const KanbanBoard = ({
             items.map((item, index) => (
               <TouchableOpacity
                 key={item.id || index}
-                style={[
-                  styles.item, 
-                  { 
-                    backgroundColor: darkMode ? '#282828' : '#FFFFFF',
-                    borderColor: darkMode ? '#333333' : '#E0E0E0',
-                    borderWidth: 1
-                  }
-                ]}
+                style={styles.item}
                 onPress={() => {
                   if (isMilestoneLevel && onPressMilestone) {
                     onPressMilestone(item);
@@ -255,27 +363,87 @@ const KanbanBoard = ({
                 <View style={styles.itemContent}>
                   {/* Main content area */}
                   <View style={styles.itemTouchableArea}>
-                    <SafeText 
-                      style={[
-                        styles.itemTitle, 
-                        { color: darkMode ? '#FFFFFF' : '#333333' }
-                      ]}
-                      numberOfLines={2}
-                    >
+                    <SafeText style={styles.itemTitle}>
                       {item.title}
                     </SafeText>
                     
                     {/* Show description for all items if available */}
                     {item.description && (
                       <SafeText 
-                        style={[
-                          styles.itemDescription, 
-                          { color: darkMode ? '#AAAAAA' : '#666666' }
-                        ]}
-                        numberOfLines={2}
+                        style={styles.itemDescription}
+                        numberOfLines={3}
                       >
                         {item.description}
                       </SafeText>
+                    )}
+                    
+                    {/* Show goal/milestone info for tasks */}
+                    {!isMilestoneLevel && showTaskLabels && (
+                      <View style={styles.taskMeta}>
+                        {/* Goal info */}
+                        {(() => {
+                          const milestone = allMilestones.find(p => p.id === item.projectId);
+                          const goal = milestone ? allGoals.find(g => g.id === milestone.goalId) : null;
+                          
+                          return (
+                            <View style={styles.taskMetaContainer}>
+                              {/* Show goal info if available - FIRST (top) */}
+                              {goal && (
+                                <View style={[styles.taskMetaItem, { backgroundColor: (goal.color || color) + '15' }]}>
+                                  <Ionicons 
+                                    name={goal.icon || 'flag'} 
+                                    size={10} 
+                                    color={goal.color || color} 
+                                  />
+                                  <SafeText 
+                                    style={[styles.taskMetaText, { color: goal.color || color }]}
+                                    numberOfLines={1}
+                                    ellipsizeMode="tail"
+                                  >
+                                    {goal.title}
+                                  </SafeText>
+                                </View>
+                              )}
+                              
+                              {/* Show milestone info if available - SECOND (below goal) */}
+                              {milestone && (
+                                <View style={[styles.taskMetaItem, { backgroundColor: (milestone.color || '#9E9E9E') + '15' }]}>
+                                  <Ionicons 
+                                    name="diamond-outline" 
+                                    size={10} 
+                                    color={milestone.color || '#9E9E9E'} 
+                                  />
+                                  <SafeText 
+                                    style={[styles.taskMetaText, { color: milestone.color || '#9E9E9E' }]}
+                                    numberOfLines={1}
+                                    ellipsizeMode="tail"
+                                  >
+                                    {milestone.title}
+                                  </SafeText>
+                                </View>
+                              )}
+                              
+                              {/* Show standalone indicator only if no goal AND no milestone */}
+                              {!goal && !milestone && (
+                                <View style={[styles.taskMetaItem, { backgroundColor: '#9CA3AF15' }]}>
+                                  <Ionicons 
+                                    name="checkmark-circle-outline" 
+                                    size={10} 
+                                    color="#9CA3AF" 
+                                  />
+                                  <SafeText 
+                                    style={[styles.taskMetaText, { color: '#9CA3AF' }]}
+                                    numberOfLines={1}
+                                    ellipsizeMode="tail"
+                                  >
+                                    Standalone Task
+                                  </SafeText>
+                                </View>
+                              )}
+                            </View>
+                          );
+                        })()}
+                      </View>
                     )}
                     
                     {/* Show meta info for milestones */}
@@ -286,12 +454,9 @@ const KanbanBoard = ({
                             <Ionicons 
                               name="calendar-outline" 
                               size={12} 
-                              color={darkMode ? '#AAAAAA' : '#888888'} 
+                              color="rgba(255,255,255,0.7)" 
                             />
-                            <SafeText style={[
-                              styles.metaText, 
-                              { color: darkMode ? '#AAAAAA' : '#888888' }
-                            ]}>
+                            <SafeText style={styles.metaText}>
                               {new Date(item.dueDate).toLocaleDateString()}
                             </SafeText>
                           </View>
@@ -299,10 +464,7 @@ const KanbanBoard = ({
                         
                         {/* Progress bar for milestones */}
                         <View style={styles.progressContainer}>
-                          <View style={[
-                            styles.progressBar, 
-                            { backgroundColor: darkMode ? '#444444' : '#EEEEEE' }
-                          ]}>
+                          <View style={styles.progressBar}>
                             <View
                               style={[
                                 styles.progressFill,
@@ -313,10 +475,7 @@ const KanbanBoard = ({
                               ]}
                             />
                           </View>
-                          <SafeText style={[
-                            styles.progressText, 
-                            { color: darkMode ? '#AAAAAA' : '#888888' }
-                          ]}>
+                          <SafeText style={styles.progressText}>
                             {item.progress || 0}%
                           </SafeText>
                         </View>
@@ -328,9 +487,9 @@ const KanbanBoard = ({
                   <View style={[
                     styles.itemActions,
                     {
-                      borderTopColor: darkMode ? '#333333' : '#EEEEEE',
+                      borderTopColor: 'rgba(255,255,255,0.1)',
                       borderTopWidth: 1,
-                      backgroundColor: darkMode ? '#1E1E1E' : '#F8F8F8',
+                      backgroundColor: 'rgba(255,255,255,0.03)',
                       // For todo items, align content to the right so the arrow appears on the right
                       justifyContent: status === 'todo' ? 'flex-end' : 'space-between'
                     }
@@ -353,7 +512,7 @@ const KanbanBoard = ({
                         <Ionicons 
                           name="arrow-back" 
                           size={14} 
-                          color={darkMode ? '#AAAAAA' : '#888888'} 
+                          color="rgba(255,255,255,0.7)" 
                         />
                       </TouchableOpacity>
                     )}
@@ -371,7 +530,7 @@ const KanbanBoard = ({
                         <Ionicons 
                           name="create-outline" 
                           size={14} 
-                          color={darkMode ? '#AAAAAA' : '#888888'} 
+                          color="rgba(255,255,255,0.7)" 
                         />
                       </TouchableOpacity>
                     )}
@@ -408,7 +567,7 @@ const KanbanBoard = ({
                         <Ionicons 
                           name="arrow-forward" 
                           size={14} 
-                          color={darkMode ? '#AAAAAA' : '#888888'} 
+                          color="rgba(255,255,255,0.7)" 
                         />
                       </TouchableOpacity>
                     )}
@@ -417,10 +576,7 @@ const KanbanBoard = ({
               </TouchableOpacity>
             ))
           ) : (
-            <SafeText style={[
-              styles.emptyText, 
-              { color: darkMode ? '#888888' : '#999999' }
-            ]}>
+            <SafeText style={styles.emptyText}>
               No items
             </SafeText>
           )}
@@ -428,10 +584,7 @@ const KanbanBoard = ({
           {/* Add button - only for the first column */}
           {status === 'todo' && (
             <TouchableOpacity 
-              style={[
-                styles.addButton, 
-                { borderColor: darkMode ? '#444444' : '#CCCCCC' }
-              ]}
+              style={styles.addButton}
               onPress={() => {
                 if (isMilestoneLevel && onPressAddMilestone) {
                   onPressAddMilestone();
@@ -444,12 +597,9 @@ const KanbanBoard = ({
               <Ionicons 
                 name="add" 
                 size={16} 
-                color={darkMode ? '#AAAAAA' : '#888888'} 
+                color="rgba(255,255,255,0.8)" 
               />
-              <SafeText style={[
-                styles.addButtonText, 
-                { color: darkMode ? '#AAAAAA' : '#888888' }
-              ]}>
+              <SafeText style={styles.addButtonText}>
                 {isMilestoneLevel ? 'Add Milestone' : 'Add Task'}
               </SafeText>
             </TouchableOpacity>
@@ -461,8 +611,7 @@ const KanbanBoard = ({
   
   return (
     <View style={[
-      styles.container, 
-      { backgroundColor: darkMode ? '#121212' : '#F5F5F5' },
+      styles.container,
       containerStyle
     ]}>
       <ScrollView 
@@ -485,95 +634,138 @@ const KanbanBoard = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#000000',
   },
   boardScroll: {
     flex: 1,
   },
   boardContent: {
-    padding: 10,
-    paddingBottom: 20,
+    padding: 16,
+    paddingBottom: 24,
   },
   column: {
-    width: 280,
-    marginHorizontal: 8,
-    borderRadius: 12,
+    width: 300,
+    marginHorizontal: 12,
+    borderRadius: 20,
     overflow: 'hidden',
     height: Platform.OS === 'web' ? '80vh' : undefined,
     maxHeight: 600,
+    backgroundColor: '#000000',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.3)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   columnHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.2)',
   },
   columnTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
   },
   columnCount: {
     borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    backgroundColor: 'rgba(255,255,255,0.1)',
   },
   columnCountText: {
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
   columnContent: {
     flex: 1,
-    padding: 12,
+    padding: 16,
   },
   // Consistent card styles
   item: {
     flexDirection: 'row',
-    borderRadius: 8,
-    marginBottom: 12,
+    borderRadius: 16,
+    marginBottom: 16,
     overflow: 'hidden',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
   },
   itemColorBar: {
-    width: 4,
+    width: 5,
   },
   itemContent: {
     flex: 1,
   },
   itemTouchableArea: {
-    padding: 12,
-    paddingBottom: 6,
+    padding: 16,
+    paddingBottom: 12,
   },
   itemTitle: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
-    marginBottom: 6,
+    marginBottom: 8,
+    lineHeight: 20,
+    flexWrap: 'wrap',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
   },
   itemDescription: {
-    fontSize: 12,
-    lineHeight: 16,
-    marginBottom: 4,
+    fontSize: 13,
+    lineHeight: 18,
+    marginBottom: 6,
+    color: 'rgba(255,255,255,0.8)',
+  },
+  taskMeta: {
+    marginTop: 12,
+  },
+  taskMetaContainer: {
+    flexDirection: 'column',
+    gap: 6,
+  },
+  taskMetaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    maxWidth: '100%',
+  },
+  taskMetaText: {
+    fontSize: 11,
+    fontWeight: '500',
+    marginLeft: 6,
+    flex: 1,
+    color: 'rgba(255,255,255,0.9)',
   },
   milestoneMeta: {
     flexDirection: 'column',
-    marginTop: 4,
+    marginTop: 8,
   },
   metaItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   metaText: {
-    fontSize: 12,
-    marginLeft: 4,
+    fontSize: 13,
+    marginLeft: 6,
+    color: 'rgba(255,255,255,0.8)',
   },
   progressContainer: {
     flexDirection: 'row',
@@ -581,48 +773,87 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     flex: 1,
-    height: 4,
-    borderRadius: 2,
-    marginRight: 5,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 8,
+    backgroundColor: 'rgba(255,255,255,0.15)',
   },
   progressFill: {
     height: '100%',
-    borderRadius: 2,
+    borderRadius: 3,
   },
   progressText: {
-    fontSize: 10,
-    width: 24,
+    fontSize: 11,
+    width: 28,
     textAlign: 'right',
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
   itemActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
   actionButton: {
-    padding: 6,
-    marginHorizontal: 2,
+    padding: 8,
+    marginHorizontal: 4,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.1)',
   },
   emptyText: {
     textAlign: 'center',
     fontStyle: 'italic',
-    padding: 20,
+    padding: 24,
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 14,
   },
   addButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderStyle: 'dashed',
-    borderRadius: 8,
-    padding: 12,
-    marginTop: 8,
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 12,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderColor: 'rgba(255,255,255,0.3)',
   },
   addButtonText: {
-    marginLeft: 6,
-    fontWeight: '500',
+    marginLeft: 8,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.8)',
+    letterSpacing: 0.3,
+  },
+  wipLimitContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  wipControlButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  wipLimitIndicator: {
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+    minWidth: 50,
+    alignItems: 'center',
+  },
+  wipLimitText: {
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
 });
 

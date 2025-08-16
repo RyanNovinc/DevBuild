@@ -96,21 +96,22 @@ const AddSelectionModal = ({ visible, onClose, onSelectOption }) => {
       Animated.parallel(optionAnimations.map(anim =>
         Animated.timing(anim, {
           toValue: 0,
-          duration: 100,
+          duration: 150,
           useNativeDriver: true
         })
       )),
       // Scale out center
       Animated.timing(scaleAnim, {
         toValue: 0,
-        duration: 120,
+        duration: 180,
         useNativeDriver: true
       }),
-      // Fade out background
+      // Fade out background more gradually
       Animated.timing(backgroundOpacity, {
         toValue: 0,
-        duration: 100,
-        useNativeDriver: true
+        duration: 300,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.ease)
       })
     ]).start(() => {
       // Ensure all animations are fully reset after close
@@ -200,14 +201,14 @@ const AddSelectionModal = ({ visible, onClose, onSelectOption }) => {
           style={[
             styles.centerCircle,
             {
-              backgroundColor: theme.card,
-              borderColor: theme.border,
+              backgroundColor: '#000000',
+              borderColor: '#333333',
               borderWidth: 1,
               transform: [{ scale: scaleAnim }]
             }
           ]}
         >
-          <Ionicons name="add" size={scaleWidth(24)} color={theme.text} />
+          <Ionicons name="add" size={scaleWidth(24)} color="#FFFFFF" />
         </Animated.View>
 
         {/* Option buttons arranged in a circle */}
@@ -224,8 +225,8 @@ const AddSelectionModal = ({ visible, onClose, onSelectOption }) => {
               style={[
                 styles.optionButton,
                 {
-                  backgroundColor: theme.card,
-                  borderColor: theme.border,
+                  backgroundColor: '#000000',
+                  borderColor: '#333333',
                   borderWidth: 1,
                   transform: [
                     { translateX: x },
@@ -247,9 +248,9 @@ const AddSelectionModal = ({ visible, onClose, onSelectOption }) => {
                 <Ionicons 
                   name={option.icon} 
                   size={scaleWidth(20)} 
-                  color={theme.textSecondary} 
+                  color="#FFFFFF" 
                 />
-                <Text style={[styles.optionText, { color: theme.text }]}>{option.title}</Text>
+                <Text style={[styles.optionText, { color: "#FFFFFF" }]}>{option.title}</Text>
               </TouchableOpacity>
             </Animated.View>
           );
@@ -262,7 +263,7 @@ const AddSelectionModal = ({ visible, onClose, onSelectOption }) => {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
     justifyContent: 'center',
     alignItems: 'center',
   },

@@ -339,6 +339,7 @@ const DumbAIPlans = ({ selectedPlan, handleSelectPlan, billing, setBilling, high
 
   return (
     <View style={{ paddingHorizontal: 0, paddingVertical: 0, marginTop: 24, width: '100%' }}>
+      
       {/* Header section to match Pro Access countdown timer height */}
       <View style={{
         paddingTop: 12,

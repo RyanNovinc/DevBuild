@@ -36,7 +36,7 @@ const AddTaskTab = React.memo(({
   handlers
 }) => {
   const { theme } = useTheme();
-  const { goals = [] } = useAppContext();
+  const { goals = [], projects = [] } = useAppContext();
   const {
     isEditing,
     title,
@@ -169,8 +169,8 @@ const AddTaskTab = React.memo(({
             Milestone
           </Text>
           {(() => {
-            const selectedGoal = goals.find(g => g.id === selectedGoalId);
-            const goalMilestones = selectedGoal?.projects || []; // TODO: Rename to milestones
+            // Get milestones (projects) that belong to the selected goal
+            const goalMilestones = projects.filter(project => project.goalId === selectedGoalId);
             
             return (
               <View style={styles.optionsList}>
@@ -270,7 +270,13 @@ const TaskDetailsScreen = ({ route, navigation }) => {
   const { showSuccess, showError } = useNotification();
   
   // Get params
-  const { mode = 'create', task = null, previousScreen = 'LifePlanOverview' } = route.params || {};
+  const { 
+    mode = 'create', 
+    task = null, 
+    previousScreen = 'LifePlanOverview',
+    preselectedGoalId = null,
+    preselectedMilestoneId = null
+  } = route.params || {};
   const isEditing = mode === 'edit' && task;
   
   // State
@@ -278,8 +284,8 @@ const TaskDetailsScreen = ({ route, navigation }) => {
   const [taskList, setTaskList] = useState([]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [selectedGoalId, setSelectedGoalId] = useState(null);
-  const [selectedMilestoneId, setSelectedMilestoneId] = useState(null);
+  const [selectedGoalId, setSelectedGoalId] = useState(preselectedGoalId);
+  const [selectedMilestoneId, setSelectedMilestoneId] = useState(preselectedMilestoneId);
   const [expandedGoalId, setExpandedGoalId] = useState(null); // Track which goal is expanded, start with none expanded
   const [expandedMilestones, setExpandedMilestones] = useState({}); // Track which milestones are expanded
   
@@ -312,7 +318,8 @@ const TaskDetailsScreen = ({ route, navigation }) => {
       title: title.trim(),
       description: description.trim(),
       goalId: selectedGoalId,
-      projectId: selectedMilestoneId, // TODO: Rename to milestoneId
+      milestoneId: selectedMilestoneId,
+      projectId: selectedMilestoneId, // Keep for backward compatibility with AppContext
       status: 'todo',
       completed: false
     };
@@ -380,7 +387,8 @@ const TaskDetailsScreen = ({ route, navigation }) => {
           status: 'todo',
           completed: false,
           goalId: taskData.goalId,
-          projectId: taskData.projectId,
+          milestoneId: taskData.milestoneId,
+          projectId: taskData.projectId, // Keep for AppContext compatibility
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
@@ -411,7 +419,8 @@ const TaskDetailsScreen = ({ route, navigation }) => {
         status: task.status || 'todo',
         completed: task.completed || false,
         goalId: selectedGoalId,
-        projectId: selectedMilestoneId,
+        milestoneId: selectedMilestoneId,
+        projectId: selectedMilestoneId, // Keep for AppContext compatibility
         createdAt: task.createdAt,
         updatedAt: new Date().toISOString()
       };

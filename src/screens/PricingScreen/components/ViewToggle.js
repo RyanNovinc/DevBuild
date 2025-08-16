@@ -1,10 +1,42 @@
 // src/screens/PricingScreen/components/ViewToggle.js
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 const ViewToggle = ({ theme, viewMode, setViewMode, activeTab }) => {
   const isFounderTab = activeTab === 'lifetime';
+  
+  // Animation values for chevron bounce
+  const chevronScaleAnim = useRef(new Animated.Value(1)).current;
+  
+  useEffect(() => {
+    // Only animate when in cards view (showing "View What's Included")
+    if (viewMode === 'cards') {
+      // Create a gentle bounce animation for the chevron
+      const chevronAnimation = Animated.loop(
+        Animated.sequence([
+          Animated.timing(chevronScaleAnim, {
+            toValue: 1.3,
+            duration: 1500,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+          Animated.timing(chevronScaleAnim, {
+            toValue: 1,
+            duration: 1500,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      
+      chevronAnimation.start();
+      
+      return () => {
+        chevronAnimation.stop();
+      };
+    }
+  }, [viewMode, chevronScaleAnim]);
   
   return (
     <View style={{ paddingHorizontal: 16, marginBottom: 8 }}>
@@ -36,12 +68,18 @@ const ViewToggle = ({ theme, viewMode, setViewMode, activeTab }) => {
             ? `View ${isFounderTab ? 'What\'s Included' : 'Feature Comparison'}`
             : `View ${isFounderTab ? 'Pro Pricing' : 'Plan Options'}`}
         </Text>
-        <Ionicons
-          name={viewMode === 'cards' ? "chevron-forward" : "chevron-back"}
-          size={18}
-          color="rgba(255,255,255,0.6)"
-          style={{ marginLeft: 8 }}
-        />
+        <Animated.View
+          style={{
+            marginLeft: 8,
+            transform: [{ scale: viewMode === 'cards' ? chevronScaleAnim : 1 }],
+          }}
+        >
+          <Ionicons
+            name={viewMode === 'cards' ? "chevron-forward" : "chevron-back"}
+            size={18}
+            color="rgba(255,255,255,0.6)"
+          />
+        </Animated.View>
       </TouchableOpacity>
     </View>
   );

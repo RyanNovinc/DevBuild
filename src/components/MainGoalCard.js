@@ -113,9 +113,9 @@ const MainGoalCard = ({ goal, onPress, onProgressUpdate, onComplete, showComplet
     setContentHeight(newHeight);
   };
   
-  // Format target date in relative terms
+  // Format target date in relative terms with overdue styling
   const getTimeExpression = () => {
-    if (!goal.targetDate) return 'No due date';
+    if (!goal.targetDate) return { text: 'No due date', isOverdue: false };
     
     const targetDate = new Date(goal.targetDate);
     const now = new Date();
@@ -123,23 +123,59 @@ const MainGoalCard = ({ goal, onPress, onProgressUpdate, onComplete, showComplet
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
     if (diffDays < 0) {
-      return 'Overdue';
+      return { text: `Overdue by ${Math.abs(diffDays)} days`, isOverdue: true };
     } else if (diffDays === 0) {
-      return 'Due today';
+      return { text: 'Due today', isOverdue: false, isUrgent: true };
     } else if (diffDays === 1) {
-      return 'Due tomorrow';
+      return { text: 'Due tomorrow', isOverdue: false, isUrgent: true };
     } else if (diffDays < 7) {
-      return `Due in ${diffDays} days`;
+      return { text: `Due in ${diffDays} days`, isOverdue: false };
     } else if (diffDays < 30) {
       const weeks = Math.floor(diffDays / 7);
-      return `Due in ${weeks} ${weeks === 1 ? 'week' : 'weeks'}`;
+      return { text: `Due in ${weeks} ${weeks === 1 ? 'week' : 'weeks'}`, isOverdue: false };
     } else if (diffDays < 365) {
       const months = Math.floor(diffDays / 30);
-      return `Due in ${months} ${months === 1 ? 'month' : 'months'}`;
+      return { text: `Due in ${months} ${months === 1 ? 'month' : 'months'}`, isOverdue: false };
     } else {
       const years = Math.floor(diffDays / 365);
-      return `Due in ${years} ${years === 1 ? 'year' : 'years'}`;
+      return { text: `Due in ${years} ${years === 1 ? 'year' : 'years'}`, isOverdue: false };
     }
+  };
+  
+  // Format creation or completion date
+  const getFormattedDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric' 
+    });
+  };
+  
+  // Get domain icon based on goal domain
+  const getDomainIcon = () => {
+    const domainIcons = {
+      'Business': 'briefcase',
+      'Finance': 'card',
+      'Health': 'fitness',
+      'Relationships': 'people',
+      'Education': 'school',
+      'Knowledge': 'library',
+      'Wellbeing': 'heart',
+      'Joy': 'happy',
+      'Home': 'home',
+      'Travel': 'airplane',
+      'Achievement': 'trophy',
+      'General': 'star'
+    };
+    
+    return domainIcons[goal.domain || goal.domainName] || goal.icon || 'star';
+  };
+  
+  // Get milestone count for this goal
+  const getMilestoneCount = () => {
+    return goal.milestoneCount || 0;
   };
   
   // Extract top metrics (max 2)
@@ -213,10 +249,10 @@ const MainGoalCard = ({ goal, onPress, onProgressUpdate, onComplete, showComplet
     ];
   };
   
-  // Handle complete button press
+  // Handle complete/reactivate button press
   const handleComplete = () => {
     if (typeof onComplete === 'function') {
-      console.log("Completing goal:", goal.title);
+      console.log(goal.completed ? "Reactivating goal:" : "Completing goal:", goal.title);
       onComplete(goal.id, !goal.completed); // Pass the opposite of current completed state
     } else {
       console.warn("onComplete function not provided to MainGoalCard");
@@ -280,31 +316,24 @@ const MainGoalCard = ({ goal, onPress, onProgressUpdate, onComplete, showComplet
   
   // Get accessible touch target dimensions for buttons
   const touchTargetSize = accessibility.touchTarget.medium;
+  const timeInfo = getTimeExpression();
   
   return (
-    <Pressable 
-      onPress={onPress}
-      accessible={true}
-      accessibilityRole="button"
-      accessibilityLabel={`${goal.title} goal, ${getProgressText(progress)}`}
-      accessibilityHint="Double tap to view goal details"
-      style={({ pressed }) => [
-        { opacity: pressed ? 0.9 : 1 }
+    <Animated.View 
+      style={[
+        styles.container, 
+        { 
+          backgroundColor: theme.card,
+          borderColor: timeInfo.isOverdue ? '#FF5252' : theme.border,
+          borderWidth: timeInfo.isOverdue ? 2 : 1,
+          opacity: completed ? 0.85 : 1,
+          marginHorizontal: spacing.m,
+          marginBottom: spacing.m,
+          shadowColor: timeInfo.isOverdue ? '#FF5252' : '#000',
+          shadowOpacity: timeInfo.isOverdue ? 0.15 : 0.1
+        }
       ]}
     >
-      <Animated.View 
-        style={[
-          styles.container, 
-          { 
-            backgroundColor: theme.card,
-            borderLeftColor: goal.color,
-            opacity: completed ? 0.85 : 1, // Slightly dimmed if completed
-            marginHorizontal: spacing.m, // Use predefined responsive spacing
-            marginBottom: spacing.m,
-            borderLeftWidth: scaleWidth(5)
-          }
-        ]}
-      >
         {/* Completed Badge (only shown for completed goals) */}
         {completed && (
           <View style={[styles.completedBadge, { 
@@ -332,225 +361,198 @@ const MainGoalCard = ({ goal, onPress, onProgressUpdate, onComplete, showComplet
           </View>
         )}
         
-        {/* Card Header */}
-        <View style={[styles.header, { padding: spacing.m }]}>
-          <View style={[
-            styles.iconContainer, 
-            { 
-              backgroundColor: goal.color,
-              // Add border for white color to ensure visibility
-              borderWidth: goal.color === '#FFFFFF' ? 1 : 0,
-              borderColor: '#000000',
-              ...ensureAccessibleTouchTarget(scaleWidth(48), scaleWidth(48)),
-              borderRadius: scaleWidth(24)
-            }
-          ]}>
-            <Ionicons 
-              name={goal.icon || 'star'} 
-              size={scaleWidth(28)} 
-              color={getIconColor()} // Use our function to determine icon color
-            />
-          </View>
-          
-          <View style={styles.titleContainer}>
+        {/* Ultra-Clean Goal Header */}
+        <TouchableOpacity 
+          style={[styles.header, { 
+            paddingHorizontal: spacing.l, 
+            paddingVertical: spacing.l,
+            flexDirection: 'column',
+            alignItems: 'stretch'
+          }]}
+          onPress={onPress}
+          activeOpacity={0.7}
+        >
+          {/* Top Row: Domain Icon, Title and Progress */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: scaleHeight(16) }}>
+            {/* Domain Icon */}
+            <View style={[
+              styles.domainIconContainer, 
+              { 
+                backgroundColor: `${goal.color}15`,
+                borderWidth: 1,
+                borderColor: `${goal.color}30`,
+                width: scaleWidth(32),
+                height: scaleWidth(32),
+                borderRadius: scaleWidth(16),
+                marginRight: spacing.s
+              }
+            ]}>
+              <Ionicons 
+                name={getDomainIcon()} 
+                size={scaleWidth(16)} 
+                color={goal.color || theme.primary}
+              />
+            </View>
+            
             <Text 
               style={[
                 styles.title, 
                 { 
-                  color: theme.text,
+                  color: completed ? theme.textSecondary : theme.text,
                   textDecorationLine: completed ? 'line-through' : 'none',
-                  fontSize: fontSizes.l,
-                  marginBottom: scaleHeight(3)
+                  fontSize: fontSizes.xl,
+                  fontWeight: '700',
+                  flex: 1,
+                  lineHeight: scaleHeight(28),
+                  marginRight: spacing.m
                 }
               ]} 
-              numberOfLines={expanded ? undefined : 1}
-              maxFontSizeMultiplier={1.3} // Limit maximum text scaling for UI integrity
+              numberOfLines={3}
+              maxFontSizeMultiplier={1.3}
             >
               {goal.title}
             </Text>
-            <Text 
-              style={[
-                styles.dueDate, 
-                { 
-                  color: theme.textSecondary,
-                  fontSize: fontSizes.xs
-                }
-              ]}
-              maxFontSizeMultiplier={1.5}
-            >
-              {getTimeExpression()}
-            </Text>
-          </View>
-          
-          <TouchableOpacity 
-            style={[
-              styles.expandButton, 
-              ensureAccessibleTouchTarget(scaleWidth(36), scaleWidth(36))
-            ]} 
-            onPress={toggleExpanded}
-            accessible={true}
-            accessibilityRole="button"
-            accessibilityLabel={expanded ? "Collapse goal details" : "Expand goal details"}
-            accessibilityState={{ expanded }}
-          >
-            <Animated.View style={{ transform: [{ rotate: rotateArrow }] }}>
-              <Ionicons 
-                name="chevron-down" 
-                size={scaleWidth(20)} 
-                color={theme.textSecondary} 
-              />
-            </Animated.View>
-          </TouchableOpacity>
-        </View>
-        
-        {/* Progress Bar - Using a simple non-draggable progress bar */}
-        <View style={[
-          styles.progressContainer, 
-          { 
-            paddingHorizontal: spacing.m,
-            paddingBottom: spacing.m
-          }
-        ]}>
-          {/* Render static non-interactive progress bar */}
-          {renderProgressBar()}
-          
-          <View style={[styles.progressLabels, { marginTop: spacing.xxxs }]}>
-            <Text 
-              style={[
-                styles.progressPercent, 
-                { 
-                  color: getProgressColor(progress),
-                  fontSize: fontSizes.s
-                }
-              ]}
-              maxFontSizeMultiplier={1.3}
-            >
-              {getProgressText(progress)}
-            </Text>
             
-            {/* Only show +/- buttons if onProgressUpdate is provided */}
-            {!goal.useMetricsForProgress && !completed && onProgressUpdate && (
-              <View style={styles.progressControls}>
-                <TouchableOpacity 
-                  style={[
-                    styles.progressButton, 
-                    { 
-                      borderColor: theme.border,
-                      ...ensureAccessibleTouchTarget(scaleWidth(28), scaleWidth(28)),
-                      marginLeft: spacing.xs
-                    }
-                  ]} 
-                  onPress={() => incrementProgress(-5)}
-                  accessible={true}
-                  accessibilityRole="button"
-                  accessibilityLabel="Decrease progress by 5 percent"
-                >
-                  <Ionicons name="remove" size={scaleWidth(14)} color={theme.textSecondary} />
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={[
-                    styles.progressButton, 
-                    { 
-                      borderColor: theme.border,
-                      ...ensureAccessibleTouchTarget(scaleWidth(28), scaleWidth(28)),
-                      marginLeft: spacing.xs
-                    }
-                  ]} 
-                  onPress={() => incrementProgress(5)}
-                  accessible={true}
-                  accessibilityRole="button"
-                  accessibilityLabel="Increase progress by 5 percent"
-                >
-                  <Ionicons name="add" size={scaleWidth(14)} color={theme.textSecondary} />
-                </TouchableOpacity>
+            {!completed && (
+              <View style={{
+                backgroundColor: `${goal.color}20`,
+                paddingHorizontal: spacing.s,
+                paddingVertical: scaleHeight(6),
+                borderRadius: scaleWidth(20),
+                borderWidth: 1,
+                borderColor: `${goal.color}40`
+              }}>
+                <Text style={{
+                  color: goal.color,
+                  fontSize: fontSizes.xs,
+                  fontWeight: '600'
+                }}>
+                  {getProgressText(progress)}
+                </Text>
               </View>
             )}
           </View>
-        </View>
+          
+          {/* Progress Bar */}
+          <View style={[styles.modernProgressBar, { 
+            backgroundColor: `${goal.color}10`,
+            marginBottom: scaleHeight(16)
+          }]}>
+            <Animated.View 
+              style={[
+                styles.modernProgressFill, 
+                { 
+                  width: progressWidth,
+                  backgroundColor: completed ? theme.success : getProgressColor(progress)
+                }
+              ]} 
+            />
+          </View>
+          
+          {/* Bottom Row: Details and Actions */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <View style={{ flex: 1 }}>
+              {/* Milestone and Task Info */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                {getMilestoneCount() > 0 && (
+                  <Text style={{
+                    color: theme.textSecondary,
+                    fontSize: fontSizes.s,
+                    fontWeight: '500',
+                    marginRight: spacing.s
+                  }}>
+                    {goal.completedMilestoneCount || 0}/{getMilestoneCount()} milestone{getMilestoneCount() !== 1 ? 's' : ''}
+                  </Text>
+                )}
+                
+                {/* Add task count - always show, even if 0 */}
+                <Text style={{
+                  color: theme.textSecondary,
+                  fontSize: fontSizes.s,
+                  fontWeight: '500'
+                }}>
+                  {getMilestoneCount() > 0 ? '• ' : ''}{goal.completedTaskCount || 0}/{goal.taskCount || 0} task{(goal.taskCount || 0) !== 1 ? 's' : ''}
+                </Text>
+              </View>
+              
+              {/* Due Date */}
+              {timeInfo.text !== 'No due date' && (
+                <Text style={{
+                  color: timeInfo.isOverdue ? '#FF5252' : 
+                         timeInfo.isUrgent ? '#FF9800' : theme.textSecondary,
+                  fontSize: fontSizes.xs,
+                  fontWeight: timeInfo.isOverdue || timeInfo.isUrgent ? '600' : '500'
+                }}>
+                  {timeInfo.text}
+                </Text>
+              )}
+            </View>
+            
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              {completed ? (
+                <TouchableOpacity 
+                  style={{
+                    backgroundColor: theme.primary,
+                    paddingHorizontal: spacing.m,
+                    paddingVertical: scaleHeight(10),
+                    borderRadius: scaleWidth(24)
+                  }}
+                  onPress={handleComplete}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel="Reactivate this goal"
+                >
+                  <Text style={{
+                    color: '#FFFFFF',
+                    fontSize: fontSizes.s,
+                    fontWeight: '600'
+                  }}>
+                    Reactivate
+                  </Text>
+                </TouchableOpacity>
+              ) : progress === 100 ? (
+                <TouchableOpacity 
+                  style={{
+                    backgroundColor: goal.color,
+                    paddingHorizontal: spacing.m,
+                    paddingVertical: scaleHeight(10),
+                    borderRadius: scaleWidth(24)
+                  }}
+                  onPress={handleComplete}
+                >
+                  <Text style={{
+                    color: '#FFFFFF',
+                    fontSize: fontSizes.s,
+                    fontWeight: '600'
+                  }}>
+                    {getMilestoneCount() > 0 && (goal.completedMilestoneCount || 0) === getMilestoneCount() ? '🎉 Complete' : 'Complete'}
+                  </Text>
+                </TouchableOpacity>
+              ) : null}
+              
+              <TouchableOpacity 
+                style={{
+                  padding: scaleWidth(8),
+                  marginLeft: spacing.xs
+                }}
+                onPress={toggleExpanded}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={expanded ? "Collapse goal details" : "Expand goal details"}
+              >
+                <Animated.View style={{ transform: [{ rotate: rotateArrow }] }}>
+                  <Ionicons 
+                    name="chevron-down" 
+                    size={scaleWidth(22)} 
+                    color={theme.textSecondary} 
+                  />
+                </Animated.View>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
         
-        {/* Complete/Reactivate Goal Button */}
-        {(progress === 100 && !completed) ? (
-          <TouchableOpacity
-            style={[
-              styles.completeButton, 
-              { 
-                backgroundColor: theme.success || '#43A047',
-                borderWidth: 1,
-                borderColor: isDarkMode ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.3)',
-                marginHorizontal: spacing.m,
-                marginBottom: spacing.m,
-                paddingVertical: scaleHeight(10),
-                paddingHorizontal: spacing.m,
-                borderRadius: scaleWidth(8),
-                minHeight: accessibility.minTouchTarget // Ensure minimum touch target height
-              }
-            ]}
-            onPress={handleComplete}
-            accessible={true}
-            accessibilityRole="button"
-            accessibilityLabel="Complete this goal"
-            accessibilityHint="Marks the goal as completed"
-          >
-            <Ionicons 
-              name="checkmark-circle" 
-              size={scaleWidth(18)} 
-              color={isDarkMode ? '#000000' : '#FFFFFF'} 
-              style={[styles.completeButtonIcon, { marginRight: spacing.xxxs }]}
-            />
-            <Text 
-              style={[
-                styles.completeButtonText, 
-                {
-                  color: isDarkMode ? '#000000' : '#FFFFFF',
-                  fontSize: fontSizes.s
-                }
-              ]}
-              maxFontSizeMultiplier={1.3}
-            >
-              Complete Goal
-            </Text>
-          </TouchableOpacity>
-        ) : completed ? (
-          <TouchableOpacity
-            style={[
-              styles.uncompleteButton, 
-              { 
-                borderColor: theme.border,
-                borderWidth: 1,
-                marginHorizontal: spacing.m,
-                marginBottom: spacing.m,
-                paddingVertical: scaleHeight(10),
-                paddingHorizontal: spacing.m,
-                borderRadius: scaleWidth(8),
-                minHeight: accessibility.minTouchTarget // Ensure minimum touch target height
-              }
-            ]}
-            onPress={handleComplete}
-            accessible={true}
-            accessibilityRole="button"
-            accessibilityLabel="Reactivate this goal"
-            accessibilityHint="Changes the goal status back to active"
-          >
-            <Ionicons 
-              name="refresh-circle" 
-              size={scaleWidth(18)} 
-              color={theme.text} 
-              style={[styles.completeButtonIcon, { marginRight: spacing.xxxs }]}
-            />
-            <Text 
-              style={[
-                styles.uncompleteButtonText, 
-                {
-                  color: theme.text,
-                  fontSize: fontSizes.s
-                }
-              ]}
-              maxFontSizeMultiplier={1.3}
-            >
-              Reactivate Goal
-            </Text>
-          </TouchableOpacity>
-        ) : null}
+        
         
         {/* Expandable Content with smooth animation */}
         <Animated.View 
@@ -699,77 +701,59 @@ const MainGoalCard = ({ goal, onPress, onProgressUpdate, onComplete, showComplet
                   )}
                 </View>
               )}
-              
-              {/* Complete Goal Button (only shown for incomplete goals) */}
-              {!goal.completed && (
-                <TouchableOpacity 
-                  style={[
-                    styles.completeButton, 
-                    { 
-                      backgroundColor: goal.color || theme.primary,
-                      borderRadius: scaleWidth(20),
-                      paddingVertical: scaleHeight(12),
-                      paddingHorizontal: spacing.m,
-                      minHeight: accessibility.minTouchTarget,
-                      width: '100%',
-                      marginTop: spacing.m,
-                      marginBottom: spacing.s
-                    }
-                  ]} 
-                  onPress={handleComplete}
-                  accessible={true}
-                  accessibilityRole="button"
-                  accessibilityLabel="Complete this goal"
-                  accessibilityHint="Marks the goal as completed"
-                >
-                  <Ionicons 
-                    name="checkmark-circle" 
-                    size={scaleWidth(18)} 
-                    color={getTextColorForBackground(goal.color || theme.primary)} 
-                    style={{marginRight: spacing.xs}} 
-                  />
-                  <Text 
-                    style={[
-                      styles.completeButtonText, 
-                      { 
-                        color: getTextColorForBackground(goal.color || theme.primary),
-                        fontSize: fontSizes.s,
-                        fontWeight: '600'
-                      }
-                    ]}
-                    maxFontSizeMultiplier={1.3}
-                  >
-                    Complete Goal
-                  </Text>
-                </TouchableOpacity>
-              )}
             </LinearGradient>
           </View>
         </Animated.View>
-      </Animated.View>
-    </Pressable>
+    </Animated.View>
   );
 };
 
 // Simplified styles with no hard-coded values
 const styles = StyleSheet.create({
   container: {
-    borderRadius: scaleWidth(12),
+    borderRadius: scaleWidth(16),
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: scaleHeight(2) },
-    shadowOpacity: 0.1,
-    shadowRadius: scaleWidth(4),
-    elevation: 3,
+    shadowOffset: { width: 0, height: scaleHeight(3) },
+    shadowOpacity: 0.08,
+    shadowRadius: scaleWidth(8),
+    elevation: 4,
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
-  iconContainer: {
+  goalIconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: scaleWidth(12),
+  },
+  goalInfo: {
+    flex: 1,
+  },
+  simpleGoalStatus: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  progressStatus: {
+    // Style set inline
+  },
+  milestoneInfo: {
+    // Style set inline
+  },
+  goalActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  domainTag: {
+    borderWidth: 1,
+    borderRadius: scaleWidth(12),
+    paddingHorizontal: spacing.s,
+    paddingVertical: scaleHeight(4),
+  },
+  domainText: {
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   titleContainer: {
     flex: 1,
@@ -784,17 +768,32 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  progressContainer: {
-    // Padding set inline with scaling
+  progressSection: {
+    // Padding and border set inline
   },
-  staticProgressBar: {
-    height: scaleHeight(8),
-    borderRadius: scaleWidth(4),
+  progressStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statLabel: {
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: scaleHeight(4),
+  },
+  statValue: {
+    textAlign: 'center',
+  },
+  modernProgressBar: {
+    height: scaleHeight(4),
+    borderRadius: scaleWidth(2),
     overflow: 'hidden',
   },
-  staticProgressFill: {
+  modernProgressFill: {
     height: '100%',
-    borderRadius: scaleWidth(4),
+    borderRadius: scaleWidth(2),
   },
   progressLabels: {
     flexDirection: 'row',
@@ -897,6 +896,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 10,
     // Other properties set inline with scaling
+  },
+  reactivateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  reactivateButtonText: {
+    // Font styling is set inline
   },
   completedBadgeText: {
     fontWeight: '600',

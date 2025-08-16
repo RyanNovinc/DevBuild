@@ -617,82 +617,12 @@ const GoalsTabNavigator = ({ navigation, route }) => {
       backgroundColor: theme.background,
       paddingTop: safeSpacing.top // Match TasksScreen safe area padding
     }}>
-      {/* Fullscreen/Minimize Toggle Button - top left */}
-      <TouchableOpacity
-        style={{
-          position: 'absolute',
-          top: safeSpacing.top + spacing.s,
-          left: spacing.m,
-          width: scaleWidth(44),
-          height: scaleWidth(44),
-          borderRadius: scaleWidth(22),
-          backgroundColor: theme.card,
-          borderColor: theme.border,
-          borderWidth: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 101,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.08,
-          shadowRadius: 3,
-          elevation: 2,
-        }}
-        onPress={handleFullScreenToggle}
-        activeOpacity={0.8}
-        accessible={true}
-        accessibilityRole="button"
-        accessibilityLabel={isOverviewFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-        accessibilityHint={isOverviewFullscreen ? "Returns to normal view" : "Expands the overview to fullscreen"}
-      >
-        <Ionicons 
-          name={isOverviewFullscreen ? "contract" : "expand"} 
-          size={scaleWidth(18)} 
-          color={theme.text} 
-        />
-      </TouchableOpacity>
-      
-      {/* Edit button in top right only for life plan overview */}
-      {viewMode === 'overview' && !isOverviewFullscreen && (
-        <TouchableOpacity
-          style={{
-            position: 'absolute',
-            top: safeSpacing.top + spacing.s,
-            right: spacing.m + scaleWidth(50), // Move it left to avoid overlapping fullscreen button
-            width: scaleWidth(44),
-            height: scaleWidth(44),
-            borderRadius: scaleWidth(22),
-            backgroundColor: isEditMode ? theme.primary + '15' : theme.card,
-            borderColor: isEditMode ? theme.primary : theme.border,
-            borderWidth: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 101,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.08,
-            shadowRadius: 3,
-            elevation: 2,
-          }}
-          onPress={handleEditModeToggle}
-          activeOpacity={0.8}
-          accessible={true}
-          accessibilityRole="button"
-          accessibilityLabel={isEditMode ? "Exit edit mode" : "Enter edit mode"}
-          accessibilityHint={isEditMode ? "Exits drag and drop mode" : "Enables drag and drop for reorganizing items"}
-        >
-          <Ionicons 
-            name={isEditMode ? "pencil" : "pencil-outline"} 
-            size={scaleWidth(18)} 
-            color={isEditMode ? theme.primary : theme.text} 
-          />
-        </TouchableOpacity>
-      )}
       
       {/* Conditional rendering based on viewMode */}
       {viewMode === 'overview' ? (
         <LifePlanOverviewScreen 
           navigation={navigation} 
+          route={route}
           hideBackButton={true} 
           onFullScreenToggle={handleFullScreenToggle}
           isFullscreen={isOverviewFullscreen}
@@ -1182,10 +1112,10 @@ function MainTabNavigator({ route }) {
             name="GoalsTab" 
             component={GoalsStack} 
             options={({ navigation }) => ({
-              tabBarLabel: 'Goals', // Start with default, will be updated dynamically
+              tabBarLabel: 'Life Plan', // Start with default, will be updated dynamically
               tabBarIcon: ({ focused, color }) => 
-                createTabBarIcon('flag', 'Goals', focused, color), // Start with default
-              tabBarAccessibilityLabel: "Goals tab",
+                createTabBarIcon('compass', 'Life Plan', focused, color), // Start with default
+              tabBarAccessibilityLabel: "Life Plan tab",
               unmountOnBlur: false
             })}
             listeners={({ navigation, route }) => ({
@@ -1198,14 +1128,14 @@ function MainTabNavigator({ route }) {
                     // Force navigation update to refresh tab bar
                     setTimeout(() => {
                       navigation.setOptions({
-                        tabBarLabel: global.goalsViewMode === 'overview' ? 'Goals' : 'Done',
+                        tabBarLabel: global.goalsViewMode === 'overview' ? 'Life Plan' : 'Done',
                         tabBarIcon: ({ focused, color }) => {
                           const currentMode = global.goalsViewMode || 'overview';
-                          const iconName = currentMode === 'overview' ? 'flag' : 'checkmark-done-circle';
-                          const label = currentMode === 'overview' ? 'Goals' : 'Done';
+                          const iconName = currentMode === 'overview' ? 'compass' : 'checkmark-done-circle';
+                          const label = currentMode === 'overview' ? 'Life Plan' : 'Done';
                           return createTabBarIcon(iconName, label, focused, color);
                         },
-                        tabBarAccessibilityLabel: global.goalsViewMode === 'overview' ? "Goals tab" : "Completed goals tab"
+                        tabBarAccessibilityLabel: global.goalsViewMode === 'overview' ? "Life Plan tab" : "Completed goals tab"
                       });
                     }, 100);
                   }

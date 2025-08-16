@@ -9,7 +9,8 @@ import {
   Animated,
   StatusBar,
   Easing,
-  Modal
+  Modal,
+  ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
@@ -154,6 +155,7 @@ const GoalsScreen = ({ navigation, route, tabMode }) => {
   const appContext = useAppContext();
   const goals = appContext?.goals || [];
   const milestones = appContext?.projects || []; // Using projects data but calling them milestones in UI
+  const tasks = appContext?.tasks || []; // Get tasks from app context
   const updateGoal = appContext?.updateGoal;
   const createGoal = appContext?.createGoal;
   // Check for Pro status based on subscription status
@@ -314,8 +316,19 @@ const GoalsScreen = ({ navigation, route, tabMode }) => {
       clearTimeout(timer);
       isProcessingGoals.current = false;
     };
-  }, [isContextLoading, route?.params, refreshCounter]); // Added refreshCounter to dependencies
+  }, [isContextLoading, route?.params]); // Removed refreshCounter to prevent circular dependency
 
+  // Handle external goal updates separately to avoid circular dependencies
+  useEffect(() => {
+    // Only process if we're not the ones who triggered the update
+    if (lastGoalUpdate.current && Date.now() - lastGoalUpdate.current < 2000) {
+      return; // Skip if we recently updated goals ourselves
+    }
+    
+    if (!isProcessingGoals.current && !isContextLoading && goals && goals.length > 0) {
+      processGoals(goals);
+    }
+  }, [goals]); // Depend on the actual goals array instead of refreshCounter
 
   // Verify goal progress is accurate
   const verifyGoalProgress = (goalsData, milestonesData) => {
@@ -959,6 +972,30 @@ const GoalsScreen = ({ navigation, route, tabMode }) => {
       return getTextColorForBackground(goalColor);
     };
     
+    // Calculate milestone count for this goal
+    const goalMilestones = milestones.filter(milestone => milestone.goalId === item.id);
+    const milestoneCount = goalMilestones.length;
+    const completedMilestoneCount = goalMilestones.filter(milestone => milestone.completed).length;
+    
+    // Calculate task counts for this goal (including tasks in milestones)
+    const directTasks = tasks.filter(task => 
+      task.goalId === item.id && (!task.projectId || task.projectId === null)
+    );
+    
+    // Get all milestone/project IDs for this goal
+    const goalMilestoneIds = goalMilestones.map(milestone => milestone.id);
+    
+    // Get tasks that belong to milestones of this goal (check both projectId and milestoneId)
+    const milestoneTasks = tasks.filter(task => 
+      (task.projectId && goalMilestoneIds.includes(task.projectId)) ||
+      (task.milestoneId && goalMilestoneIds.includes(task.milestoneId))
+    );
+    
+    // Combine direct tasks and milestone tasks
+    const goalTasks = [...directTasks, ...milestoneTasks];
+    const taskCount = goalTasks.length;
+    const completedTaskCount = goalTasks.filter(task => task.completed).length;
+    
     // Note: activeTab is not available with React Navigation tabs, but we can determine limit differently
     const isBeyondFreeLimit = !isPro && index >= LOCAL_MAX_GOALS;
     
@@ -979,7 +1016,13 @@ const GoalsScreen = ({ navigation, route, tabMode }) => {
       >
         <View style={{ position: 'relative' }}>
           <MainGoalCard 
-            goal={item} 
+            goal={{
+              ...item,
+              milestoneCount: milestoneCount,
+              completedMilestoneCount: completedMilestoneCount,
+              taskCount: taskCount,
+              completedTaskCount: completedTaskCount
+            }} 
             onPress={() => handleGoalPress(item)}
             onProgressUpdate={null} // Disable progress updates by touching
             onComplete={handleGoalComplete}
@@ -1002,20 +1045,44 @@ const GoalsScreen = ({ navigation, route, tabMode }) => {
   // Loading placeholder
   const renderLoadingPlaceholder = () => {
     return (
-      <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-        <Text 
-          style={{
-            color: theme.textSecondary, 
-            fontSize: fontSizes.m, 
-            fontWeight: '500'
-          }}
-          maxFontSizeMultiplier={1.5}
-          accessible={true}
-          accessibilityLabel="Loading goals"
-          accessibilityRole="text"
-        >
-          Loading goals...
-        </Text>
+      <View style={{
+        flex: 1, 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        padding: spacing.xl
+      }}>
+        <View style={{
+          backgroundColor: theme.card,
+          borderRadius: scaleWidth(16),
+          padding: spacing.xl,
+          alignItems: 'center',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 3,
+          minWidth: scaleWidth(200)
+        }}>
+          <ActivityIndicator 
+            size="large" 
+            color={theme.primary} 
+            style={{ marginBottom: spacing.m }}
+          />
+          <Text 
+            style={{
+              color: theme.text, 
+              fontSize: fontSizes.l, 
+              fontWeight: '600',
+              textAlign: 'center'
+            }}
+            maxFontSizeMultiplier={1.3}
+            accessible={true}
+            accessibilityLabel={tabMode === 'completed' ? "Loading completed goals" : "Loading goals"}
+            accessibilityRole="text"
+          >
+            {tabMode === 'completed' ? 'Loading completed goals' : 'Loading goals'}
+          </Text>
+        </View>
       </View>
     );
   };
@@ -1083,7 +1150,7 @@ const GoalsScreen = ({ navigation, route, tabMode }) => {
           </View>
           <Text 
             style={[styles.emptyTitle, { color: theme.text }]}
-            maxFontSizeMultiplier={1.8}
+            maxFontSizeMultiplier={1.3}
             accessibilityRole="header"
           >
             {screenState.filterDomain 
@@ -1093,7 +1160,7 @@ const GoalsScreen = ({ navigation, route, tabMode }) => {
           </Text>
           <Text 
             style={[styles.emptyDescription, { color: theme.textSecondary }]}
-            maxFontSizeMultiplier={2.0}
+            maxFontSizeMultiplier={1.3}
           >
             {screenState.filterDomain 
               ? `Add your first goal in the ${screenState.filterDomain} domain` 
@@ -1124,7 +1191,7 @@ const GoalsScreen = ({ navigation, route, tabMode }) => {
             />
             <Text 
               style={[styles.emptyAddButtonText, { fontSize: fontSizes.m }]}
-              maxFontSizeMultiplier={1.5}
+              maxFontSizeMultiplier={1.3}
             >
               {screenState.filterDomain 
                 ? `Create ${screenState.filterDomain} Goal` 
@@ -1190,14 +1257,14 @@ const GoalsScreen = ({ navigation, route, tabMode }) => {
           </View>
           <Text 
             style={[styles.emptyTitle, { color: theme.text }]}
-            maxFontSizeMultiplier={1.8}
+            maxFontSizeMultiplier={1.3}
             accessibilityRole="header"
           >
             No Completed Goals Yet
           </Text>
           <Text 
             style={[styles.emptyDescription, { color: theme.textSecondary }]}
-            maxFontSizeMultiplier={2.0}
+            maxFontSizeMultiplier={1.3}
           >
             When you complete goals, they will appear here
           </Text>
@@ -1297,7 +1364,7 @@ const GoalsScreen = ({ navigation, route, tabMode }) => {
                     marginLeft: spacing.xs
                   }
                 ]}
-                maxFontSizeMultiplier={1.5}
+                maxFontSizeMultiplier={1.3}
               >
                 Clear Filter: {screenState.filterDomain}
               </Text>

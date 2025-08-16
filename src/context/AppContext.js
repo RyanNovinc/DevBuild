@@ -55,6 +55,7 @@ const DEFAULT_SETTINGS = {
   reminderTime: '09:00',
   darkMode: false,
   notificationsEnabled: true,
+  kanbanWipLimit: 3, // Default WIP limit for "In Progress" column
   userProfile: {
     name: '',
     email: '',
@@ -1745,6 +1746,7 @@ export const AppProvider = ({ children }) => {
         ...taskData,
         id: taskData.id || `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         projectId: isStandaloneTask ? null : projectId, // Explicitly set to null for standalone tasks
+        milestoneId: taskData.milestoneId || (isStandaloneTask ? null : projectId), // Use milestoneId or fallback to projectId
         goalId: taskData.goalId || null, // Ensure goalId is set
         completed: taskData.completed || false,
         createdAt: taskData.createdAt || new Date().toISOString()

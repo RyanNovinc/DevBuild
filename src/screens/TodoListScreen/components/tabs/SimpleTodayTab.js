@@ -327,7 +327,7 @@ const SimpleTodayTab = ({
               <View style={styles.emptyStateContainer}>
                 <EmptyState
                   title="No To-dos Yet"
-                  message="Add quick tasks to your daily to-do list. Use numbers like '1. High Priority' or '2.1 Subtask' to order them."
+                  message="Add your tasks here. Pro tip: Number them (1., 2.1) to set order"
                   icon="list"
                   iconColor={theme.primary}
                   theme={theme}

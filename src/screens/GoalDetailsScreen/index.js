@@ -1400,6 +1400,7 @@ const toggleTargetDate = () => {
         </View>
       </Modal>
 
+
       {/* Loading Overlay */}
       {renderLoadingOverlay()}
     </SafeAreaView>
@@ -1562,6 +1563,25 @@ const styles = StyleSheet.create({
   deleteConfirmText: {
     color: '#FFFFFF',
     fontWeight: '600',
+  },
+  addMilestoneButton: {
+    position: 'absolute',
+    right: spacing.l,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.s,
+    paddingHorizontal: spacing.m,
+    borderRadius: scaleWidth(25),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  addMilestoneText: {
+    fontSize: fontSizes.s,
+    fontWeight: '600',
+    marginLeft: spacing.xs,
   }
 });
 

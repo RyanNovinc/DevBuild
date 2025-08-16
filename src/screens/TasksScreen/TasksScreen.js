@@ -72,7 +72,9 @@ const TasksScreen = ({ route, navigation }) => {
     forceDataReset,
     refreshData,
     canAddMoreProjectsToGoal,
-    userSubscriptionStatus
+    userSubscriptionStatus,
+    settings,
+    updateAppSetting
   } = useAppContext();
   
   // Check if user is Pro
@@ -93,7 +95,7 @@ const TasksScreen = ({ route, navigation }) => {
   // Removed tab-related state since we're Kanban-only now
   
   // New state for task/project view mode toggle
-  const [viewMode, setViewMode] = useState('projects'); // 'projects' or 'tasks'
+  const [viewMode, setViewMode] = useState('tasks'); // 'projects' or 'tasks' - Default to tasks for Kanban filtering
   
   // State for subscription limit banner
   const [showLimitBanner, setShowLimitBanner] = useState(false);
@@ -472,6 +474,15 @@ const TasksScreen = ({ route, navigation }) => {
       console.warn('Tasks is not an array:', tasks);
       return [];
     }
+
+    console.log('🔍 getFilteredTasks DEBUG:');
+    console.log('- Total tasks:', tasks.length);
+    console.log('- Selected Goal ID:', selectedGoalId);
+    console.log('- Selected Milestone ID:', selectedMilestoneId);
+    console.log('- Current viewMode:', viewMode);
+    console.log('- Sample task data:', tasks.slice(0, 3));
+    console.log('- Raw tasks array:', tasks);
+    
     
     // First filter out orphaned tasks (tasks with goal IDs that don't exist)
     const goalsToUse = Array.isArray(mainGoals) && mainGoals.length > 0 ? mainGoals : goals;
@@ -531,6 +542,10 @@ const TasksScreen = ({ route, navigation }) => {
       return false;
     });
     
+    console.log('✅ getFilteredTasks RESULT:');
+    console.log('- Filtered tasks count:', filtered.length);
+    console.log('- First few filtered tasks:', filtered.slice(0, 3).map(t => ({ id: t.id, title: t.title, goalId: t.goalId, projectId: t.projectId })));
+    
     return filtered;
   };
   
@@ -541,6 +556,12 @@ const TasksScreen = ({ route, navigation }) => {
       console.warn('Projects is not an array:', projects);
       return [];
     }
+
+    console.log('🔍 getFilteredProjects DEBUG:');
+    console.log('- Total projects:', projects.length);
+    console.log('- Selected Goal ID:', selectedGoalId);
+    console.log('- Selected Milestone ID:', selectedMilestoneId);
+    console.log('- Sample project data:', projects.slice(0, 3));
     
     // First filter out orphaned projects (projects with goal IDs that don't exist)
     const goalsToUse = Array.isArray(mainGoals) && mainGoals.length > 0 ? mainGoals : goals;
@@ -571,6 +592,10 @@ const TasksScreen = ({ route, navigation }) => {
     if (selectedMilestoneId) {
       filtered = filtered.filter(project => project.id === selectedMilestoneId);
     }
+    
+    console.log('✅ getFilteredProjects RESULT:');
+    console.log('- Filtered projects count:', filtered.length);
+    console.log('- First few filtered projects:', filtered.slice(0, 3).map(p => ({ id: p.id, title: p.title, goalId: p.goalId })));
     
     return filtered;
   };
@@ -1195,200 +1220,70 @@ const TasksScreen = ({ route, navigation }) => {
     }
   };
   
-  // Handle add task button
+  // Handle add task button - uses current filter context directly
   const handleAddTask = () => {
-    // For "all" view, ask user to select a goal first
-    if (selectedGoalId === 'all') {
-      // Show a prompt to select a goal
-      if (Array.isArray(goalsToShow) && goalsToShow.length > 0) {
-        const goalOptions = goalsToShow.map(goal => ({
-          text: goal.title,
-          onPress: () => {
-            // First select the goal
-            handleGoalSelect(goal.id);
-            
-            // Then show projects for this goal
-            setTimeout(async () => {
-              const projectsForGoal = projects.filter(project => project.goalId === goal.id);
-              
-              if (projectsForGoal.length === 0) {
-                Alert.alert(
-                  "No Projects Available",
-                  "You need to create a project for this goal before adding tasks.",
-                  [
-                    { text: "Cancel", style: "cancel" },
-                    { 
-                      text: "Create Project", 
-                      onPress: () => navigation.navigate('ProjectDetails', { 
-                        mode: 'create',
-                        preselectedGoalId: goal.id
-                      })
-                    }
-                  ]
-                );
-                return;
-              }
-              
-              // If there's only one project, use it directly
-              if (projectsForGoal.length === 1) {
-                // Check if this project has reached task limit for free users
-                const projectId = projectsForGoal[0].id;
-                const hasTaskLimit = hasReachedTaskLimit(projectId);
-                
-                if (!isPro && hasTaskLimit) {
-                  // Show upgrade prompt
-                  showUpgradePrompt(
-                    `You've reached the limit of ${FREE_PLAN_LIMITS?.MAX_TASKS_PER_PROJECT || 5} tasks per project. Upgrade to Pro to create unlimited tasks.`
-                  );
-                  return;
-                }
-                
-                // If not at limit, proceed to task creation
-                navigation.navigate('ProjectDetails', { 
-                  projectId: projectId, 
-                  mode: 'edit',
-                  initialAction: 'addTask'
-                });
-                return;
-              }
-              
-              // Otherwise, let the user select which project to add the task to
-              const projectOptions = projectsForGoal.map(project => ({
-                text: project.title,
-                onPress: () => {
-                  // Check if this project has reached task limit for free users
-                  const hasTaskLimit = hasReachedTaskLimit(project.id);
-                  
-                  if (!isPro && hasTaskLimit) {
-                    // Show upgrade prompt
-                    showUpgradePrompt(
-                      `You've reached the limit of ${FREE_PLAN_LIMITS?.MAX_TASKS_PER_PROJECT || 5} tasks per project. Upgrade to Pro to create unlimited tasks.`
-                    );
-                    return;
-                  }
-                  
-                  // If not at limit, proceed to task creation
-                  navigation.navigate('ProjectDetails', { 
-                    projectId: project.id, 
-                    mode: 'edit',
-                    initialAction: 'addTask'
-                  });
-                }
-              }));
-              
-              Alert.alert(
-                "Select a Project",
-                "Choose which project to add this task to:",
-                [
-                  ...projectOptions,
-                  { text: "Cancel", style: "cancel" }
-                ]
-              );
-            }, 300);
-          }
-        }));
-        
-        Alert.alert(
-          "Select a Goal",
-          "Choose which goal to add a task to:",
-          [
-            ...goalOptions,
-            { text: "Cancel", style: "cancel" }
-          ]
-        );
-      } else {
-        // No goals available
-        Alert.alert(
-          "No Goals Available",
-          "You need to create a goal before adding tasks.",
-          [
-            { text: "Cancel", style: "cancel" },
-            { 
-              text: "Create Goal", 
-              onPress: () => navigation.navigate('GoalsTab')
-            }
-          ]
-        );
+    console.log('🎯 handleAddTask called with filters:', {
+      selectedGoalId,
+      selectedMilestoneId,
+      viewMode
+    });
+
+    // CASE 1: Specific milestone selected - add task directly to that milestone
+    if (selectedMilestoneId) {
+      const selectedMilestone = projects.find(p => p.id === selectedMilestoneId);
+      
+      if (!selectedMilestone) {
+        console.error("Selected milestone not found:", selectedMilestoneId);
+        showError("Selected milestone not found.");
+        return;
       }
-      return;
-    }
-    
-    // For specific goal view, check projects for the goal
-    const projectsForGoal = projects.filter(project => project.goalId === selectedGoalId);
-    
-    if (projectsForGoal.length === 0) {
-      Alert.alert(
-        "No Projects Available",
-        "You need to create a project for this goal before adding tasks.",
-        [
-          { text: "Cancel", style: "cancel" },
-          { 
-            text: "Create Project", 
-            onPress: () => navigation.navigate('ProjectDetails', { 
-              mode: 'create',
-              preselectedGoalId: selectedGoalId
-            })
-          }
-        ]
-      );
-      return;
-    }
-    
-    // If there's only one project, use it directly
-    if (projectsForGoal.length === 1) {
-      // Check if this project has reached task limit for free users
-      const projectId = projectsForGoal[0].id;
-      const hasTaskLimit = hasReachedTaskLimit(projectId);
+
+      // Check task limit for this milestone
+      const hasTaskLimit = hasReachedTaskLimit(selectedMilestoneId);
       
       if (!isPro && hasTaskLimit) {
-        // Show upgrade prompt
         showUpgradePrompt(
-          `You've reached the limit of ${FREE_PLAN_LIMITS?.MAX_TASKS_PER_PROJECT || 5} tasks per project. Upgrade to Pro to create unlimited tasks.`
+          `You've reached the limit of ${FREE_PLAN_LIMITS?.MAX_TASKS_PER_PROJECT || 5} tasks per milestone. Upgrade to Pro to create unlimited tasks.`
         );
         return;
       }
-      
-      // If not at limit, proceed to task creation
-      navigation.navigate('ProjectDetails', { 
-        projectId: projectId, 
-        mode: 'edit',
-        initialAction: 'addTask'
+
+      // Navigate to TaskDetailsScreen with pre-filled goal and milestone
+      navigation.navigate('TaskDetails', { 
+        mode: 'create',
+        preselectedGoalId: selectedMilestone.goalId,
+        preselectedMilestoneId: selectedMilestoneId,
+        previousScreen: 'TasksScreen'
       });
       return;
     }
-    
-    // Otherwise, let the user select which project to add the task to
-    const projectOptions = projectsForGoal.map(project => ({
-      text: project.title,
-      onPress: () => {
-        // Check if this project has reached task limit for free users
-        const hasTaskLimit = hasReachedTaskLimit(project.id);
-        
-        if (!isPro && hasTaskLimit) {
-          // Show upgrade prompt
-          showUpgradePrompt(
-            `You've reached the limit of ${FREE_PLAN_LIMITS?.MAX_TASKS_PER_PROJECT || 5} tasks per project. Upgrade to Pro to create unlimited tasks.`
-          );
-          return;
-        }
-        
-        // If not at limit, proceed to task creation
-        navigation.navigate('ProjectDetails', { 
-          projectId: project.id, 
-          mode: 'edit',
-          initialAction: 'addTask'
-        });
-      }
-    }));
-    
-    Alert.alert(
-      "Select a Project",
-      "Choose which project to add this task to:",
-      [
-        ...projectOptions,
-        { text: "Cancel", style: "cancel" }
-      ]
-    );
+
+    // CASE 2: Specific goal selected but no milestone - add goal-level standalone task
+    if (selectedGoalId && selectedGoalId !== 'all') {
+      // Navigate to TaskDetailsScreen with pre-filled goal only
+      navigation.navigate('TaskDetails', { 
+        mode: 'create',
+        preselectedGoalId: selectedGoalId,
+        preselectedMilestoneId: null,
+        previousScreen: 'TasksScreen'
+      });
+      return;
+    }
+
+    // CASE 3: "All" view selected - add truly standalone task (goal-level standalone)
+    if (selectedGoalId === 'all') {
+      // Navigate to TaskDetailsScreen with no pre-selection
+      navigation.navigate('TaskDetails', { 
+        mode: 'create',
+        preselectedGoalId: null,
+        preselectedMilestoneId: null,
+        previousScreen: 'TasksScreen'
+      });
+      return;
+    }
+
+    // Fallback - should not reach here
+    console.warn('Unexpected state in handleAddTask:', { selectedGoalId, selectedMilestoneId });
   };
   
   // Use mainGoals if available, otherwise use goals, filtering out completed goals
@@ -1398,7 +1293,7 @@ const TasksScreen = ({ route, navigation }) => {
     
   // Get milestones for the selected goal (these are projects within the goal)
   const getMilestonesForSelectedGoal = () => {
-    if (selectedGoalId === 'all') return [];
+    if (selectedGoalId === 'all' || selectedGoalId === 'standalone') return [];
     
     return Array.isArray(projects) 
       ? projects.filter(project => 
@@ -1491,6 +1386,9 @@ const TasksScreen = ({ route, navigation }) => {
     // Pass both functions to child components
     showUpgradePrompt,
     showFeatureLimitBanner,
+    // Pass settings for WIP limit access
+    settings,
+    updateAppSetting,
   };
 
 
@@ -1547,8 +1445,6 @@ const TasksScreen = ({ route, navigation }) => {
           onGoalSelect={handleGoalSelect}
           goalsToShow={goalsToShow}
           theme={theme}
-          viewMode={viewMode}
-          onViewModeChange={handleViewModeChange}
           selectedMilestoneId={selectedMilestoneId}
           onMilestoneSelect={handleMilestoneSelect}
           milestonesForGoal={milestonesForGoal}

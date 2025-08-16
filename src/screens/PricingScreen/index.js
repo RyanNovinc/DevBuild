@@ -104,18 +104,10 @@ const PricingScreen = ({ navigation, route }) => {
   // Navigation state for TabView - dynamic based on founder spots
   const getNavigationRoutes = () => {
     const isFounderSoldOut = founderSpotsRemaining <= 0;
-    if (isFounderSoldOut) {
-      // When sold out, only show the subscription plans tab
-      return [
-        { key: 'lifetime', title: 'LifeCompass Plans' }
-      ];
-    } else {
-      // When founder spots available, show both tabs
-      return [
-        { key: 'lifetime', title: 'Founder Access' },
-        { key: 'subscription', title: 'AI Add-ons' }
-      ];
-    }
+    return [
+      { key: 'lifetime', title: isFounderSoldOut ? 'LifeCompass Plans' : 'Founder Access' },
+      { key: 'subscription', title: 'AI Add-ons' }
+    ];
   };
 
   const [navigationState, setNavigationState] = useState({
@@ -133,20 +125,13 @@ const PricingScreen = ({ navigation, route }) => {
 
   // Update navigation routes when founder spots change
   useEffect(() => {
-    const isFounderSoldOut = founderSpotsRemaining <= 0;
     const newRoutes = getNavigationRoutes();
-    
-    // If founder spots are sold out and user is on subscription tab, switch to lifetime tab
-    if (isFounderSoldOut && activeTab === 'subscription') {
-      setActiveTab('lifetime');
-    }
     
     setNavigationState(prev => ({
       ...prev,
-      routes: newRoutes,
-      index: isFounderSoldOut ? 0 : prev.index // Force index to 0 when sold out
+      routes: newRoutes
     }));
-  }, [founderSpotsRemaining, activeTab]);
+  }, [founderSpotsRemaining]);
   const [selectedPlan, setSelectedPlan] = useState('');
   const [selectedSubscription, setSelectedSubscription] = useState('monthly');
   const [localSubscription, setLocalSubscription] = useState('monthly');
@@ -166,6 +151,8 @@ const PricingScreen = ({ navigation, route }) => {
   const [highlightPlan, setHighlightPlan] = useState(null);
   const [showDevButtons, setShowDevButtons] = useState(false);
   const [pulseCredits, setPulseCredits] = useState(false);
+  const [isTestMode, setIsTestMode] = useState(false);
+  const [realFounderSpots, setRealFounderSpots] = useState(1000);
   
   
   // Removed countdown state - now handled by isolated component
@@ -178,15 +165,40 @@ const PricingScreen = ({ navigation, route }) => {
   
   // Removed unused refs
   
-  // Helper function to determine which AI plan to highlight based on founder spots
-  const getAIPlanToHighlight = (spotsRemaining) => {
-    if (spotsRemaining > 900) {
-      return 'guide'; // AI Max for spots 1-100
-    } else if (spotsRemaining > 500) {
-      return 'navigator'; // AI Plus for spots 101-500
+  // Helper function to get current user number based on spots remaining
+  const getUserNumber = (spotsRemaining) => {
+    return 1001 - spotsRemaining; // Users 1-1000
+  };
+
+  // Helper function to determine pricing tier and AI plan based on user number
+  const getPricingTier = (userNumber) => {
+    if (userNumber <= 100) {
+      return { 
+        tier: 'early', 
+        price: '$0.99', 
+        aiPlan: 'compass', // AI Light for users 1-100
+        description: 'Early Bird Special'
+      };
+    } else if (userNumber <= 500) {
+      return { 
+        tier: 'mid', 
+        price: '$2.99', 
+        aiPlan: 'compass', // AI Light for users 101-500
+        description: 'Mid Tier Pricing'
+      };
     } else {
-      return 'compass'; // AI Light for spots 501-1000
+      return { 
+        tier: 'final', 
+        price: '$4.99', 
+        aiPlan: 'compass', // AI Light for users 501-1000
+        description: 'Final Tier Pricing'
+      };
     }
+  };
+
+  // Helper function to determine which AI plan to highlight - Always AI Light now
+  const getAIPlanToHighlight = (spotsRemaining) => {
+    return 'compass'; // Always AI Light for all user tiers
   };
   
   const isDarkMode = theme.dark;
@@ -244,7 +256,10 @@ const PricingScreen = ({ navigation, route }) => {
       // Check if the response has the expected structure
       if (data && data.success && typeof data.availableSpots === 'number') {
         console.log(`Fetched founder spots: ${data.availableSpots}`);
-        setFounderSpotsRemaining(data.availableSpots);
+        setRealFounderSpots(data.availableSpots); // Store the real value
+        if (!isTestMode) {
+          setFounderSpotsRemaining(data.availableSpots);
+        }
         
         // Store in AsyncStorage for offline access
         await AsyncStorage.setItem('founderSpotsRemaining', data.availableSpots.toString());
@@ -302,7 +317,11 @@ const PricingScreen = ({ navigation, route }) => {
         // Get the remaining founder spots count (or use default 1000)
         const remainingSpots = await AsyncStorage.getItem('founderSpotsRemaining');
         if (remainingSpots) {
-          setFounderSpotsRemaining(parseInt(remainingSpots));
+          const spots = parseInt(remainingSpots);
+          setRealFounderSpots(spots);
+          if (!isTestMode) {
+            setFounderSpotsRemaining(spots);
+          }
         }
         
         // Get the founder end date if available
@@ -325,12 +344,16 @@ const PricingScreen = ({ navigation, route }) => {
     fetchFounderSpotsRemaining();
     
     // Optionally, set up a refresh interval to periodically update the count
-    const refreshInterval = setInterval(fetchFounderSpotsRemaining, 60000); // Refresh every minute
+    const refreshInterval = setInterval(() => {
+      if (!isTestMode) {
+        fetchFounderSpotsRemaining();
+      }
+    }, 60000); // Refresh every minute
     
     return () => {
       clearInterval(refreshInterval); // Clean up the interval when component unmounts
     };
-  }, []);
+  }, [isTestMode]);
   
   // Toggle lifetime membership status (for testing only)
   const handleToggleLifetimeMember = async (value) => {
@@ -477,63 +500,58 @@ const PricingScreen = ({ navigation, route }) => {
 
     return (
       <>
-        {/* Show Subscription Plans if founder spots sold out */}
-        {isFounderSoldOut ? (
-          <SubscriptionPlans 
-            selectedPlan={selectedPlan}
-            handleSelectPlan={handleSelectPlan}
-            billing={selectedSubscription}
-            setBilling={setSelectedSubscription}
-            highlightPlan={highlightPlan}
-            pulseCredits={pulseCredits}
-          />
-        ) : (
-          <>
-            {/* Cards View - Unified design with timer integrated */}
-            {viewMode === 'cards' && (
-              <View style={{
-                paddingHorizontal: 0,
-                marginTop: spacing.s,
-                width: '100%'
-              }}>
-                <UnifiedBlackPlan 
-                  theme={theme}
-                  selectedPlan={selectedPlan}
-                  handleSelectPlan={handleSelectPlan}
-                  handlePurchase={handlePurchase}
-                  isLifetimeMember={isLifetimeMember}
-                  spotsRemaining={founderSpotsRemaining}
-                  initialTime={{
-                    days: 26,
-                    hours: 12,
-                    minutes: 45,
-                    seconds: 30
-                  }}
-                  responsive={{
-                    fontSize: fontSizes,
-                    spacing: spacing,
-                    isSmallDevice: isSmallDevice,
-                    isTablet: isTablet
-                  }}
-                  onNavigateToAIPlans={() => {
-                    setActiveTab('subscription');
-                    setNavigationState(prev => ({ ...prev, index: 1 }));
-                    setSelectedPlan('');
-                    // Force monthly billing since $2.99 value is for monthly plan
-                    setAiPlansBilling('monthly');
-                    // Highlight the appropriate AI plan based on current founder tier AND pulse credits
-                    const targetPlan = getAIPlanToHighlight(founderSpotsRemaining);
-                    setHighlightPlan(targetPlan);
-                    setPulseCredits(true);
-                    // Clear highlight and pulse after animations complete
-                    setTimeout(() => {
-                      setHighlightPlan(null);
-                      setPulseCredits(false);
-                    }, 6000); // 6 seconds - matches new longer animation duration
-                  }}
-                />
-              </View>
-            )}
+        {/* Cards View - Unified design with timer integrated (or regular pricing when sold out) */}
+        {viewMode === 'cards' && (
+          <View style={{
+            paddingHorizontal: 0,
+            marginTop: spacing.s,
+            width: '100%'
+          }}>
+            {/* Always use the same UnifiedBlackPlan layout, but behavior changes when sold out */}
+            <UnifiedBlackPlan 
+              theme={theme}
+              selectedPlan={selectedPlan}
+              handleSelectPlan={handleSelectPlan}
+              handlePurchase={handlePurchase}
+              isLifetimeMember={isLifetimeMember}
+              spotsRemaining={founderSpotsRemaining}
+              initialTime={{
+                days: 26,
+                hours: 12,
+                minutes: 45,
+                seconds: 30
+              }}
+              responsive={{
+                fontSize: fontSizes,
+                spacing: spacing,
+                isSmallDevice: isSmallDevice,
+                isTablet: isTablet
+              }}
+              billing={selectedSubscription}
+              setBilling={setSelectedSubscription}
+              onNavigateToAIPlans={() => {
+                setActiveTab('subscription');
+                setNavigationState(prev => ({ ...prev, index: 1 }));
+                setSelectedPlan('');
+                
+                // Only animate/highlight for founder spots (first 1000), not sold out
+                if (founderSpotsRemaining > 0) {
+                  // Force monthly billing since $2.99 value is for monthly plan
+                  setAiPlansBilling('monthly');
+                  // Highlight the appropriate AI plan based on current founder tier AND pulse credits
+                  const targetPlan = getAIPlanToHighlight(founderSpotsRemaining);
+                  setHighlightPlan(targetPlan);
+                  setPulseCredits(true);
+                  // Clear highlight and pulse after animations complete
+                  setTimeout(() => {
+                    setHighlightPlan(null);
+                    setPulseCredits(false);
+                  }, 6000); // 6 seconds - matches new longer animation duration
+                }
+              }}
+            />
+          </View>
+        )}
             
             {/* Table View */}
             {viewMode === 'table' && (
@@ -549,17 +567,21 @@ const PricingScreen = ({ navigation, route }) => {
                     setActiveTab('subscription');
                     setNavigationState(prev => ({ ...prev, index: 1 }));
                     setSelectedPlan('');
-                    // Force monthly billing since $2.99 value is for monthly plan
-                    setAiPlansBilling('monthly');
-                    // Highlight the appropriate AI plan based on current founder tier AND pulse credits
-                    const targetPlan = getAIPlanToHighlight(founderSpotsRemaining);
-                    setHighlightPlan(targetPlan);
-                    setPulseCredits(true);
-                    // Clear highlight and pulse after animations complete
-                    setTimeout(() => {
-                      setHighlightPlan(null);
-                      setPulseCredits(false);
-                    }, 6000); // 6 seconds - matches new longer animation duration
+                    
+                    // Only animate/highlight for founder spots (first 1000), not sold out
+                    if (founderSpotsRemaining > 0) {
+                      // Force monthly billing since $2.99 value is for monthly plan
+                      setAiPlansBilling('monthly');
+                      // Highlight the appropriate AI plan based on current founder tier AND pulse credits
+                      const targetPlan = getAIPlanToHighlight(founderSpotsRemaining);
+                      setHighlightPlan(targetPlan);
+                      setPulseCredits(true);
+                      // Clear highlight and pulse after animations complete
+                      setTimeout(() => {
+                        setHighlightPlan(null);
+                        setPulseCredits(false);
+                      }, 6000); // 6 seconds - matches new longer animation duration
+                    }
                   }}
                   responsive={{
                     fontSize: fontSizes,
@@ -572,8 +594,6 @@ const PricingScreen = ({ navigation, route }) => {
                 />
               </View>
             )}
-          </>
-        )}
       </>
     );
   }, [selectedPlan, handleSelectPlan, isLifetimeMember, founderSpotsRemaining, viewMode, theme, spacing, fontSizes, isSmallDevice, isTablet]);
@@ -623,26 +643,35 @@ const PricingScreen = ({ navigation, route }) => {
           paddingTop: founderSpotsRemaining <= 0 ? 12 : 16,
           height: founderSpotsRemaining <= 0 ? 56 : 64,
         }}>
-          {/* Only show back button on card view of Pro Access */}
-          {(activeTab === 'lifetime' && viewMode === 'cards') ? (
-            <TouchableOpacity
-              style={{
-                width: 40,
-                height: 40,
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}
-              onPress={() => navigation.goBack()}
-            >
-              <Ionicons 
-                name="arrow-back" 
-                size={20} 
-                color="#FFFFFF"
-              />
-            </TouchableOpacity>
-          ) : (
-            <View style={{ width: 40, height: 40 }} />
-          )}
+          {/* Back button - same position, different behavior based on current screen */}
+          <TouchableOpacity
+            style={{
+              width: 40,
+              height: 40,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+            onPress={() => {
+              if (activeTab === 'subscription') {
+                // From AI Plans -> Back to main pricing
+                setActiveTab('lifetime');
+                setNavigationState(prev => ({ ...prev, index: 0 }));
+                setSelectedPlan('');
+              } else if (activeTab === 'lifetime' && viewMode === 'table') {
+                // From feature table -> Back to card view
+                setViewMode('cards');
+              } else {
+                // Main pricing screen -> Exit pricing
+                navigation.goBack();
+              }
+            }}
+          >
+            <Ionicons 
+              name="arrow-back" 
+              size={20} 
+              color="#FFFFFF"
+            />
+          </TouchableOpacity>
           
           <Text style={{
             fontSize: 18,
@@ -752,8 +781,29 @@ const PricingScreen = ({ navigation, route }) => {
           setSelectedPlan('');
         }}
         initialLayout={{ width }}
-        renderTabBar={() => null}
-        swipeEnabled={founderSpotsRemaining > 0}
+        renderTabBar={(props) => {
+          const isFounderSoldOut = founderSpotsRemaining <= 0;
+          // Only show tab bar when sold out
+          if (isFounderSoldOut) {
+            return (
+              <TabBar
+                {...props}
+                indicatorStyle={{ backgroundColor: '#FFD700', height: 3 }}
+                style={{ backgroundColor: '#000000', elevation: 0, shadowOpacity: 0 }}
+                labelStyle={{ 
+                  fontSize: 14, 
+                  fontWeight: '600',
+                  textTransform: 'none'
+                }}
+                activeColor="#FFD700"
+                inactiveColor="rgba(255,255,255,0.5)"
+              />
+            );
+          }
+          // Hide tab bar when founder spots available (original design)
+          return null;
+        }}
+        swipeEnabled={true}
         lazy={false}
         animationEnabled={true}
         swipeVelocityImpact={0.5}
@@ -875,90 +925,125 @@ const PricingScreen = ({ navigation, route }) => {
             🧪 TIER TESTING
           </Text>
           
-          {/* Early Bird Section */}
+          {/* Early Bird Section - Users 1-100 ($0.99) */}
           <View style={{ marginBottom: 20 }}>
             <Text style={{ color: '#4CAF50', fontSize: 12, fontWeight: 'bold', marginBottom: 8 }}>
-              🕊️ Early Bird ($0.99) - Spots 901-1000
+              🕊️ Early Bird ($0.99) - Users 1-100 + AI Light
             </Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
               <TouchableOpacity
                 style={{ backgroundColor: '#4CAF50', padding: 10, margin: 4, borderRadius: 8, minWidth: 90 }}
-                onPress={() => setFounderSpotsRemaining(980)}
+                onPress={() => {
+                  setIsTestMode(true);
+                  setFounderSpotsRemaining(950);
+                }} // User 51
               >
-                <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>980 spots</Text>
-                <Text style={{ color: '#fff', fontSize: 8, textAlign: 'center' }}>Badge: ONLY 100</Text>
+                <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>User 51</Text>
+                <Text style={{ color: '#fff', fontSize: 8, textAlign: 'center' }}>$0.99 tier</Text>
               </TouchableOpacity>
               
               <TouchableOpacity
                 style={{ backgroundColor: '#4CAF50', padding: 10, margin: 4, borderRadius: 8, minWidth: 90 }}
-                onPress={() => setFounderSpotsRemaining(930)}
+                onPress={() => {
+                  setIsTestMode(true);
+                  setFounderSpotsRemaining(920);
+                }} // User 81
               >
-                <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>930 spots</Text>
-                <Text style={{ color: '#fff', fontSize: 8, textAlign: 'center' }}>Badge: 70 LEFT</Text>
+                <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>User 81</Text>
+                <Text style={{ color: '#fff', fontSize: 8, textAlign: 'center' }}>$0.99 tier</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={{ backgroundColor: '#4CAF50', padding: 10, margin: 4, borderRadius: 8, minWidth: 90 }}
+                onPress={() => {
+                  setIsTestMode(true);
+                  setFounderSpotsRemaining(901);
+                }} // User 100
+              >
+                <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>User 100</Text>
+                <Text style={{ color: '#fff', fontSize: 8, textAlign: 'center' }}>Last $0.99</Text>
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* Mid Tier Section */}
+          {/* Mid Tier Section - Users 101-500 ($2.99) */}
           <View style={{ marginBottom: 20 }}>
             <Text style={{ color: '#FF8C42', fontSize: 12, fontWeight: 'bold', marginBottom: 8 }}>
-              🚀 Mid Tier ($2.99) - Spots 501-900
+              🚀 Mid Tier ($2.99) - Users 101-500 + AI Light
             </Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
               <TouchableOpacity
                 style={{ backgroundColor: '#FF8C42', padding: 10, margin: 4, borderRadius: 8, minWidth: 90 }}
-                onPress={() => setFounderSpotsRemaining(750)}
+                onPress={() => {
+                  setIsTestMode(true);
+                  setFounderSpotsRemaining(750);
+                }} // User 251
               >
-                <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>750 spots</Text>
-                <Text style={{ color: '#fff', fontSize: 8, textAlign: 'center' }}>No badge</Text>
+                <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>User 251</Text>
+                <Text style={{ color: '#fff', fontSize: 8, textAlign: 'center' }}>$2.99 tier</Text>
               </TouchableOpacity>
               
               <TouchableOpacity
                 style={{ backgroundColor: '#FF8C42', padding: 10, margin: 4, borderRadius: 8, minWidth: 90 }}
-                onPress={() => setFounderSpotsRemaining(600)}
+                onPress={() => {
+                  setIsTestMode(true);
+                  setFounderSpotsRemaining(600);
+                }} // User 401
               >
-                <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>600 spots</Text>
-                <Text style={{ color: '#fff', fontSize: 8, textAlign: 'center' }}>Badge: ONLY 400</Text>
+                <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>User 401</Text>
+                <Text style={{ color: '#fff', fontSize: 8, textAlign: 'center' }}>$2.99 tier</Text>
               </TouchableOpacity>
               
               <TouchableOpacity
                 style={{ backgroundColor: '#FF8C42', padding: 10, margin: 4, borderRadius: 8, minWidth: 90 }}
-                onPress={() => setFounderSpotsRemaining(550)}
+                onPress={() => {
+                  setIsTestMode(true);
+                  setFounderSpotsRemaining(501);
+                }} // User 500
               >
-                <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>550 spots</Text>
-                <Text style={{ color: '#fff', fontSize: 8, textAlign: 'center' }}>Badge: 50 LEFT</Text>
+                <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>User 500</Text>
+                <Text style={{ color: '#fff', fontSize: 8, textAlign: 'center' }}>Last $2.99</Text>
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* Final Tier Section */}
+          {/* Final Tier Section - Users 501-1000 ($4.99) */}
           <View style={{ marginBottom: 20 }}>
             <Text style={{ color: '#FF6B6B', fontSize: 12, fontWeight: 'bold', marginBottom: 8 }}>
-              ⚡ Final Tier ($4.99) - Spots 1-500
+              ⚡ Final Tier ($4.99) - Users 501-1000 + AI Light
             </Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
               <TouchableOpacity
                 style={{ backgroundColor: '#FF6B6B', padding: 10, margin: 4, borderRadius: 8, minWidth: 90 }}
-                onPress={() => setFounderSpotsRemaining(450)}
+                onPress={() => {
+                  setIsTestMode(true);
+                  setFounderSpotsRemaining(250);
+                }} // User 751
               >
-                <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>450 spots</Text>
-                <Text style={{ color: '#fff', fontSize: 8, textAlign: 'center' }}>Badge: 500 LEFT</Text>
+                <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>User 751</Text>
+                <Text style={{ color: '#fff', fontSize: 8, textAlign: 'center' }}>$4.99 tier</Text>
               </TouchableOpacity>
               
               <TouchableOpacity
                 style={{ backgroundColor: '#FF6B6B', padding: 10, margin: 4, borderRadius: 8, minWidth: 90 }}
-                onPress={() => setFounderSpotsRemaining(150)}
+                onPress={() => {
+                  setIsTestMode(true);
+                  setFounderSpotsRemaining(100);
+                }} // User 901
               >
-                <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>150 spots</Text>
-                <Text style={{ color: '#fff', fontSize: 8, textAlign: 'center' }}>Badge: 150 LEFT</Text>
+                <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>User 901</Text>
+                <Text style={{ color: '#fff', fontSize: 8, textAlign: 'center' }}>$4.99 tier</Text>
               </TouchableOpacity>
               
               <TouchableOpacity
                 style={{ backgroundColor: '#FF6B6B', padding: 10, margin: 4, borderRadius: 8, minWidth: 90 }}
-                onPress={() => setFounderSpotsRemaining(25)}
+                onPress={() => {
+                  setIsTestMode(true);
+                  setFounderSpotsRemaining(1);
+                }} // User 1000
               >
-                <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>25 spots</Text>
-                <Text style={{ color: '#fff', fontSize: 8, textAlign: 'center' }}>Badge: 25 LEFT</Text>
+                <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>User 1000</Text>
+                <Text style={{ color: '#fff', fontSize: 8, textAlign: 'center' }}>Last founder</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -971,18 +1056,43 @@ const PricingScreen = ({ navigation, route }) => {
             <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
               <TouchableOpacity
                 style={{ backgroundColor: '#333', padding: 10, margin: 4, borderRadius: 8, minWidth: 90 }}
-                onPress={() => setFounderSpotsRemaining(0)}
+                onPress={() => {
+                  setIsTestMode(true);
+                  setFounderSpotsRemaining(0);
+                }}
               >
                 <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>SOLD OUT</Text>
-                <Text style={{ color: '#fff', fontSize: 8, textAlign: 'center' }}>Monthly $4.99</Text>
+                <Text style={{ color: '#fff', fontSize: 8, textAlign: 'center' }}>Monthly Plans</Text>
               </TouchableOpacity>
               
               <TouchableOpacity
                 style={{ backgroundColor: '#666', padding: 10, margin: 4, borderRadius: 8, minWidth: 90 }}
-                onPress={() => setFounderSpotsRemaining(1000)}
+                onPress={() => {
+                  setIsTestMode(true);
+                  setFounderSpotsRemaining(1000);
+                }}
               >
                 <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>RESET</Text>
                 <Text style={{ color: '#fff', fontSize: 8, textAlign: 'center' }}>Back to 1000</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={{ 
+                  backgroundColor: '#22C55E', 
+                  padding: 10, 
+                  margin: 4, 
+                  borderRadius: 8, 
+                  minWidth: 90,
+                  borderWidth: isTestMode ? 0 : 2,
+                  borderColor: '#22C55E'
+                }}
+                onPress={() => {
+                  setIsTestMode(false);
+                  setFounderSpotsRemaining(realFounderSpots);
+                }}
+              >
+                <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>REAL MODE</Text>
+                <Text style={{ color: '#fff', fontSize: 8, textAlign: 'center' }}>API: {realFounderSpots}</Text>
               </TouchableOpacity>
             </View>
           </View>

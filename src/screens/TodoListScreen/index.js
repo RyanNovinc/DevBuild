@@ -411,7 +411,8 @@ const TodoListScreen = ({ navigation, route }) => {
             shadowOpacity: 0,
             borderRadius: 25,
             marginHorizontal: spacing.m,
-            marginVertical: spacing.xs,
+            marginTop: spacing.xs,
+            marginBottom: spacing.s,
             height: 44,
           },
           tabBarIndicatorStyle: {
@@ -607,34 +608,6 @@ const TodoListScreen = ({ navigation, route }) => {
         style={[styles.container, { backgroundColor: theme.background }]}
         edges={['top']}
       >
-        {/* Header with view toggle */}
-        <View style={[styles.header, { backgroundColor: theme.background, borderBottomColor: theme.border }]}>
-          <View style={styles.headerContent}>
-            <TouchableOpacity
-              style={[styles.viewToggle, { 
-                backgroundColor: theme.cardElevated,
-                borderColor: theme.primary + '30' // Semi-transparent primary color
-              }]}
-              onPress={toggleView}
-              activeOpacity={0.8}
-            >
-              <Ionicons 
-                name={currentView === 'todo' ? 'checkbox-outline' : 'document-text-outline'} 
-                size={scaleWidth(22)} 
-                color={theme.primary} 
-              />
-              <Text style={[styles.viewToggleText, { color: theme.text }]}>
-                {currentView === 'todo' ? 'To-Do' : 'Notes'}
-              </Text>
-              <Ionicons 
-                name="chevron-down" 
-                size={scaleWidth(18)} 
-                color={theme.textSecondary} 
-              />
-            </TouchableOpacity>
-
-          </View>
-        </View>
 
         {/* Content */}
         <View style={[styles.content, { flex: 1 }]}>
@@ -648,46 +621,6 @@ const TodoListScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    paddingHorizontal: scaleWidth(20),
-    paddingVertical: scaleHeight(16),
-    borderBottomWidth: 0.5,
-    minHeight: scaleHeight(70),
-    justifyContent: 'center',
-  },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-  },
-  viewToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: scaleWidth(20),
-    paddingVertical: scaleHeight(14),
-    borderRadius: scaleWidth(25),
-    borderWidth: 1,
-    minWidth: scaleWidth(150),
-    minHeight: scaleHeight(50),
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  viewToggleText: {
-    fontSize: scaleFontSize(16),
-    fontWeight: '600',
-    marginHorizontal: scaleWidth(8),
-    textAlign: 'center',
-    includeFontPadding: false,
-    textAlignVertical: 'center',
   },
   content: {
     flex: 1,

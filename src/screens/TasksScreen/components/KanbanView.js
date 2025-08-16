@@ -16,6 +16,7 @@ import { styles } from '../styles';
 import KanbanBoard from '../../../components/KanbanBoard';
 import CustomEmptyState from './CustomEmptyState';
 import EmptyTasksIllustration from '../../../components/illustrations/EmptyTasksIllustration';
+import WipEducationModal from '../../../components/WipEducationModal';
 import { 
   scaleWidth, 
   scaleHeight, 
@@ -49,7 +50,11 @@ const KanbanView = ({ taskScreenProps }) => {
     kanbanFullScreen,
     setKanbanFullScreen,
     // NEW: View mode state
-    viewMode
+    viewMode,
+    // App settings for WIP limit
+    settings,
+    // Function to update app settings
+    updateAppSetting
   } = taskScreenProps;
 
   // Get safe area insets for proper positioning
@@ -57,6 +62,36 @@ const KanbanView = ({ taskScreenProps }) => {
   
   // Animation for transitions
   const [fadeAnim] = useState(new Animated.Value(1));
+  
+  // State for showing/hiding task meta labels
+  const [showTaskLabels, setShowTaskLabels] = useState(false);
+  
+  // State for WIP education modal
+  const [showWipEducation, setShowWipEducation] = useState(false);
+
+  // Handle WIP limit changes
+  const handleWipLimitChange = (newLimit) => {
+    if (updateAppSetting) {
+      updateAppSetting('kanbanWipLimit', newLimit);
+    }
+  };
+
+  // Handle showing WIP education modal
+  const handleShowWipEducation = () => {
+    setShowWipEducation(true);
+  };
+
+  // Set up global toggle function for KanbanBoard to call
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.toggleTaskLabels = () => setShowTaskLabels(!showTaskLabels);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        delete window.toggleTaskLabels;
+      }
+    };
+  }, [showTaskLabels]);
 
   // Handle animation when toggling full screen
   useEffect(() => {
@@ -403,17 +438,31 @@ const KanbanView = ({ taskScreenProps }) => {
       <View style={fullScreenStyles.fullScreenContainer}>
         <View style={[
           fullScreenStyles.kanbanContainer, 
-          { backgroundColor: '#121212' }
+          { backgroundColor: '#000000' }
         ]}>
           {((viewMode === 'projects' && getFilteredProjects().length > 0) || 
             (viewMode === 'tasks' && getFilteredTasks().length > 0)) ? (
             <>
-              {/* Full Screen Toggle Button */}
+              {/* Exit Full Screen Toggle Button - Bottom Left */}
               <TouchableOpacity
-                style={[
-                  fullScreenStyles.toggleButton,
-                  { top: insets.top + scaleHeight(10) }
-                ]}
+                style={{
+                  position: 'absolute', 
+                  bottom: 15, 
+                  left: 20, 
+                  zIndex: 100,
+                  backgroundColor: '#333333',
+                  borderRadius: 20,
+                  padding: 8,
+                  minWidth: 44,
+                  minHeight: 44,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 4,
+                  elevation: 5,
+                }}
                 onPress={() => setKanbanFullScreen(false)}
                 activeOpacity={0.7}
                 accessible={true}
@@ -423,7 +472,7 @@ const KanbanView = ({ taskScreenProps }) => {
               >
                 <Ionicons 
                   name="contract" 
-                  size={scaleWidth(24)} 
+                  size={scaleWidth(20)} 
                   color="#FFFFFF" 
                 />
               </TouchableOpacity>
@@ -431,9 +480,15 @@ const KanbanView = ({ taskScreenProps }) => {
               {/* Full-screen Kanban Board */}
               <View style={[
                 fullScreenStyles.boardContainer,
-                { paddingTop: insets.top + scaleHeight(20) }
+                { 
+                  paddingTop: scaleHeight(40),
+                  paddingBottom: insets.bottom
+                }
               ]}>
-                {viewMode === 'projects' ? (
+                {(() => {
+                  console.log('🎯 KanbanView (fullscreen): Current viewMode is:', viewMode);
+                  return viewMode === 'projects';
+                })() ? (
                   <KanbanBoard
                     projects={getFilteredProjects()}
                     theme={theme}
@@ -444,9 +499,9 @@ const KanbanView = ({ taskScreenProps }) => {
                     darkMode={isDarkMode}
                     customStyles={kanbanCustomStyles}
                     containerStyle={{ 
-                      backgroundColor: '#121212',
-                      paddingTop: scaleHeight(16),
-                      paddingBottom: insets.bottom + (Platform.OS === 'ios' ? scaleHeight(20) : scaleHeight(10))
+                      backgroundColor: '#000000',
+                      paddingTop: 0,
+                      paddingBottom: insets.bottom
                     }}
                     hideAddButton={true}
                     hideColumnAddButtons={true}
@@ -458,33 +513,51 @@ const KanbanView = ({ taskScreenProps }) => {
                     // Pass all projects and goals for color inheritance
                     allProjects={getFilteredProjects()}
                     allGoals={taskScreenProps.goalsToShow || []}
+                    // Pass WIP limit from settings
+                    wipLimit={settings?.kanbanWipLimit || 3}
+                    onWipLimitChange={handleWipLimitChange}
+                    onShowWipEducation={handleShowWipEducation}
                   />
                 ) : (
-                  <KanbanBoard
-                    tasks={getFilteredTasks()}
-                    theme={theme}
+                  (() => {
+                    const filteredTasks = getFilteredTasks();
+                    console.log('🎯 KanbanView: Passing tasks to KanbanBoard:', filteredTasks.length, 'tasks');
+                    console.log('🎯 Sample tasks:', filteredTasks.slice(0, 3).map(t => ({ id: t.id, title: t.title, status: t.status })));
+                    return (
+                      <KanbanBoard
+                        tasks={filteredTasks}
+                        theme={theme}
                     onPressTask={handleKanbanTaskPress}
                     onUpdateTaskStatus={handleUpdateTaskStatus}
+                    onPressAddTask={handleAddTask}
                     filterBy={kanbanFilter}
                     isMilestoneLevel={false}
                     darkMode={isDarkMode}
                     customStyles={kanbanCustomStyles}
                     containerStyle={{ 
-                      backgroundColor: '#121212',
-                      paddingTop: scaleHeight(16),
-                      paddingBottom: insets.bottom + (Platform.OS === 'ios' ? scaleHeight(20) : scaleHeight(10))
+                      backgroundColor: '#000000',
+                      paddingTop: 0,
+                      paddingBottom: insets.bottom
                     }}
-                    hideAddButton={true}
-                    hideColumnAddButtons={true}
-                    options={kanbanOptions}
+                    hideAddButton={false}
+                    hideColumnAddButtons={false}
+                    options={{...kanbanOptions, hideAddButton: false, hideColumnAddButtons: false}}
                         // Pass the selected goal's color if applicable
                     color={selectedGoalId !== 'all' ? 
                       taskScreenProps.goalsToShow.find(g => g.id === selectedGoalId)?.color || theme.primary 
                       : theme.primary}
-                    // Pass all projects and goals for color inheritance
-                    allProjects={getFilteredProjects()}
-                    allGoals={taskScreenProps.goalsToShow || []}
-                  />
+                        // Pass all projects and goals for color inheritance
+                        allMilestones={getFilteredProjects()}
+                        allGoals={taskScreenProps.goalsToShow || []}
+                        showTaskLabels={showTaskLabels}
+                        isFullScreen={true}
+                        // Pass WIP limit from settings
+                        wipLimit={settings?.kanbanWipLimit || 3}
+                        onWipLimitChange={handleWipLimitChange}
+                        onShowWipEducation={handleShowWipEducation}
+                      />
+                    );
+                  })()
                 )}
               </View>
             </>
@@ -522,43 +595,12 @@ const KanbanView = ({ taskScreenProps }) => {
       {((viewMode === 'projects' && getFilteredProjects().length > 0) || 
         (viewMode === 'tasks' && getFilteredTasks().length > 0)) ? (
         <>
-          {/* Full Screen Toggle Button */}
-          <TouchableOpacity
-            style={{
-              position: 'absolute', 
-              top: 10, 
-              right: 10, 
-              zIndex: 100,
-              backgroundColor: isDarkMode ? '#333333' : '#FFFFFF',
-              borderRadius: 20,
-              padding: 8,
-              minWidth: 44,
-              minHeight: 44,
-              alignItems: 'center',
-              justifyContent: 'center',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.3,
-              shadowRadius: 4,
-              elevation: 5,
-            }}
-            onPress={() => setKanbanFullScreen(true)}
-            activeOpacity={0.7}
-            accessible={true}
-            accessibilityRole="button"
-            accessibilityLabel="Enter full screen"
-            accessibilityHint="Expands kanban board to full screen"
-          >
-            <Ionicons 
-              name="expand" 
-              size={scaleWidth(24)} 
-              color={isDarkMode ? '#FFFFFF' : '#333333'} 
-            />
-          </TouchableOpacity>
-
           {/* Regular Kanban Board */}
           <View style={{ flex: 1, backgroundColor: '#000000' }}>
-            {viewMode === 'projects' ? (
+            {(() => {
+              console.log('🎯 KanbanView: Current viewMode is:', viewMode);
+              return viewMode === 'projects';
+            })() ? (
               <KanbanBoard
                 projects={getFilteredProjects()}
                 theme={theme}
@@ -583,13 +625,23 @@ const KanbanView = ({ taskScreenProps }) => {
                 // Pass all projects and goals for color inheritance
                 allProjects={getFilteredProjects()}
                 allGoals={taskScreenProps.goalsToShow || []}
+                // Pass WIP limit from settings
+                wipLimit={settings?.kanbanWipLimit || 3}
+                onWipLimitChange={handleWipLimitChange}
+                onShowWipEducation={handleShowWipEducation}
               />
             ) : (
-              <KanbanBoard
-                tasks={getFilteredTasks()}
-                theme={theme}
+              (() => {
+                const filteredTasks = getFilteredTasks();
+                console.log('🎯 KanbanView (regular): Passing tasks to KanbanBoard:', filteredTasks.length, 'tasks');
+                console.log('🎯 Sample tasks (regular):', filteredTasks.slice(0, 3).map(t => ({ id: t.id, title: t.title, status: t.status })));
+                return (
+                  <KanbanBoard
+                    tasks={filteredTasks}
+                    theme={theme}
                 onPressTask={handleKanbanTaskPress}
                 onUpdateTaskStatus={handleUpdateTaskStatus}
+                onPressAddTask={handleAddTask}
                 filterBy={kanbanFilter}
                 isMilestoneLevel={false}
                 darkMode={isDarkMode}
@@ -599,19 +651,61 @@ const KanbanView = ({ taskScreenProps }) => {
                   paddingBottom: insets.bottom,
                   paddingTop: 0  // Remove extra top padding for more space
                 }}
-                hideAddButton={true}
-                hideColumnAddButtons={true}
-                options={kanbanOptions}
+                hideAddButton={false}
+                hideColumnAddButtons={false}
+                options={{...kanbanOptions, hideAddButton: false, hideColumnAddButtons: false}}
                 // Pass the selected goal's color if applicable
                 color={selectedGoalId !== 'all' ? 
                   taskScreenProps.goalsToShow.find(g => g.id === selectedGoalId)?.color || theme.primary 
                   : theme.primary}
-                // Pass all projects and goals for color inheritance
-                allProjects={getFilteredProjects()}
-                allGoals={taskScreenProps.goalsToShow || []}
-              />
+                    // Pass all projects and goals for color inheritance
+                    allMilestones={getFilteredProjects()}
+                    allGoals={taskScreenProps.goalsToShow || []}
+                    showTaskLabels={showTaskLabels}
+                    isFullScreen={false}
+                    // Pass WIP limit from settings
+                    wipLimit={settings?.kanbanWipLimit || 3}
+                    onWipLimitChange={handleWipLimitChange}
+                    onShowWipEducation={handleShowWipEducation}
+                  />
+                );
+              })()
             )}
           </View>
+
+          {/* Full Screen Toggle Button - Bottom Left */}
+          <TouchableOpacity
+            style={{
+              position: 'absolute', 
+              bottom: insets.bottom - 20, 
+              left: 20, 
+              zIndex: 100,
+              backgroundColor: isDarkMode ? '#333333' : '#FFFFFF',
+              borderRadius: 20,
+              padding: 8,
+              minWidth: 44,
+              minHeight: 44,
+              alignItems: 'center',
+              justifyContent: 'center',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.3,
+              shadowRadius: 4,
+              elevation: 5,
+            }}
+            onPress={() => setKanbanFullScreen(true)}
+            activeOpacity={0.7}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Enter full screen"
+            accessibilityHint="Expands kanban board to full screen"
+          >
+            <Ionicons 
+              name="expand" 
+              size={scaleWidth(20)} 
+              color={isDarkMode ? '#FFFFFF' : '#333333'} 
+            />
+          </TouchableOpacity>
         </>
       ) : (
         <View style={[styles.kanbanEmptyContainer, { backgroundColor: '#000000' }]}>
@@ -665,6 +759,14 @@ const KanbanView = ({ taskScreenProps }) => {
           )}
         </View>
       )}
+
+      {/* WIP Education Modal */}
+      <WipEducationModal
+        visible={showWipEducation}
+        onClose={() => setShowWipEducation(false)}
+        theme={theme}
+        isDarkMode={isDarkMode}
+      />
     </View>
   );
 };
@@ -678,7 +780,7 @@ const fullScreenStyles = StyleSheet.create({
     right: 0,
     bottom: 0,
     zIndex: 1000,
-    backgroundColor: '#121212',
+    backgroundColor: '#000000',
     width: '100%',
     height: '100%',
   },
@@ -707,8 +809,8 @@ const fullScreenStyles = StyleSheet.create({
   },
   boardContainer: {
     flex: 1,
-    paddingTop: Platform.OS === 'ios' ? 70 : 50,
-    paddingBottom: 0,
+    paddingTop: 0, // Will be set dynamically
+    paddingBottom: 0, // Will be set dynamically
   }
 });
 

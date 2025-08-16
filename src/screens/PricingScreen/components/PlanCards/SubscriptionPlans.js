@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useNavigation } from '@react-navigation/native';
 
-const SubscriptionPlans = ({ selectedPlan, handleSelectPlan, billing, setBilling, highlightPlan, pulseCredits }) => {
+const SubscriptionPlans = ({ selectedPlan, handleSelectPlan, billing, setBilling, highlightPlan, pulseCredits, hideFounderMessage = false }) => {
   const subscription = billing || 'monthly';
   const setSubscription = setBilling || (() => {});
   const navigation = useNavigation();
@@ -322,50 +322,18 @@ const SubscriptionPlans = ({ selectedPlan, handleSelectPlan, billing, setBilling
         
           <CardTemplate 
             id="basic"
-            name="LifeCompass Basic"
-            icon="leaf-outline"
-            description="Full app + AI Light included"
+            name="LifeCompass"
+            icon="compass-outline"
+            description="Complete life planning app"
             features={[
               'All core app features',
-              'Standard user context*',
-              'Basic AI assistance',
-              'For personal use'
-            ]}
-            popular={false}
-            monthlyPrice="$3.49"
-            annualPrice="$34.99"
-          />
-          
-          <CardTemplate 
-            id="pro"
-            name="LifeCompass Pro"
-            icon="compass-outline"
-            description="Full app + AI Plus included"
-            features={[
-              'Everything in Basic',
-              'Additional user context* (2x)',
-              'More daily usage (3x Basic)',
-              'For daily users'
+              'Unlimited goals, projects, tasks',
+              'Full calendar access',
+              'AI plans available separately'
             ]}
             popular={true}
-            monthlyPrice="$4.99"
-            annualPrice="$49.99"
-          />
-          
-          <CardTemplate 
-            id="premium"
-            name="LifeCompass Premium"
-            icon="diamond-outline"
-            description="Full app + AI Max included"
-            features={[
-              'Everything in Pro',
-              'Maximum user context* (7x)',
-              'Heavy usage capacity (10x Basic)',
-              'For power users'
-            ]}
-            popular={false}
-            monthlyPrice="$9.99"
-            annualPrice="$99.99"
+            monthlyPrice="$3.49"
+            annualPrice="$34.99"
           />
         </View>
       </ScrollView>
@@ -433,46 +401,48 @@ const SubscriptionPlans = ({ selectedPlan, handleSelectPlan, billing, setBilling
         </Text>
       </View>
 
-      {/* Founder Access Sold Out Message */}
-      <View style={{
-        marginTop: 32,
-        marginHorizontal: 20,
-        paddingVertical: 16,
-        paddingHorizontal: 20,
-        backgroundColor: 'rgba(255,215,0,0.05)',
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: 'rgba(255,215,0,0.2)',
-        alignItems: 'center',
-      }}>
+      {/* Founder Access Sold Out Message - Only show when hideFounderMessage is false */}
+      {!hideFounderMessage && (
         <View style={{
-          flexDirection: 'row',
+          marginTop: 32,
+          marginHorizontal: 20,
+          paddingVertical: 16,
+          paddingHorizontal: 20,
+          backgroundColor: 'rgba(255,215,0,0.05)',
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: 'rgba(255,215,0,0.2)',
           alignItems: 'center',
-          marginBottom: 8,
         }}>
-          <Ionicons 
-            name="star" 
-            size={16} 
-            color="#FFD700"
-            style={{ marginRight: 8 }}
-          />
-          <Text style={{
-            fontSize: 14,
-            fontWeight: '600',
-            color: '#FFD700',
+          <View style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginBottom: 8,
           }}>
-            Founder Access: SOLD OUT
+            <Ionicons 
+              name="star" 
+              size={16} 
+              color="#FFD700"
+              style={{ marginRight: 8 }}
+            />
+            <Text style={{
+              fontSize: 14,
+              fontWeight: '600',
+              color: '#FFD700',
+            }}>
+              Founder Access: SOLD OUT
+            </Text>
+          </View>
+          <Text style={{
+            fontSize: 12,
+            color: 'rgba(255,255,255,0.7)',
+            textAlign: 'center',
+            lineHeight: 16,
+          }}>
+            Join 1,000+ founding members already building better lives with LifeCompass
           </Text>
         </View>
-        <Text style={{
-          fontSize: 12,
-          color: 'rgba(255,255,255,0.7)',
-          textAlign: 'center',
-          lineHeight: 16,
-        }}>
-          Join 1,000+ founding members already building better lives with LifeCompass
-        </Text>
-      </View>
+      )}
 
       {/* Guarantee Info Modal */}
       <Modal

@@ -32,8 +32,8 @@ const FeatureComparisonTable = ({ theme, isLifetimeMember, responsive = {} }) =>
       features: [
         { name: "Life Direction", free: "1", premium: "1" },
         { name: "Goals", free: "2 active, 2 completed", premium: "Unlimited" },
-        { name: "Projects", free: "2 per goal", premium: "Unlimited" },
-        { name: "Tasks", free: "5 per project", premium: "Unlimited" },
+        { name: "Milestones", free: "2 per goal", premium: "Unlimited" },
+        { name: "Tasks", free: "5 per milestone", premium: "Unlimited" },
       ]
     },
     {
@@ -52,7 +52,7 @@ const FeatureComparisonTable = ({ theme, isLifetimeMember, responsive = {} }) =>
       icon: "list",
       color: "#03A9F4",
       features: [
-        { name: "To-Do Lists", free: "10-7-5 Active", premium: "Unlimited" },
+        { name: "To-Do Lists", free: "10-7-5 Active", premium: "Unlimited todos" },
         { name: "Notes", free: "Unlimited", premium: "Unlimited" },
       ]
     },
@@ -62,7 +62,8 @@ const FeatureComparisonTable = ({ theme, isLifetimeMember, responsive = {} }) =>
       color: "#9C27B0",
       features: [
         { name: "Theme Colors", free: "Blue, Charcoal, Green", premium: "All 10 colors" },
-        { name: "Dashboard Widgets", free: "2 widgets", premium: "All widgets" },
+        { name: "Dashboard Widgets", free: "2 widgets", premium: "All current & future widgets" },
+        { name: "Achievements", free: "Basic achievements", premium: "All achievements unlocked" },
         { name: "PDF Export", free: "Day view with watermark", premium: "Professional export" },
       ]
     },
@@ -71,8 +72,8 @@ const FeatureComparisonTable = ({ theme, isLifetimeMember, responsive = {} }) =>
       icon: "sparkles",
       color: "#673AB7",
       features: [
-        { name: "AI Credits", free: "Free AI sample", premium: "1-month free AI" },
-        { name: "AI Plans", free: "Regular price", premium: "Regular price" },
+        { name: "AI Light Plan", free: "Separate subscription", premium: "1 month included" },
+        { name: "AI Credits", free: "Free AI sample", premium: "600 AI credits included" },
       ]
     }
   ];

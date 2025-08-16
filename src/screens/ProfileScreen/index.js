@@ -159,6 +159,7 @@ const ProfileScreen = ({ navigation, route }) => {
     referralCode: '',
     referralsLeft: 3,
     showTestModeToggles: __DEV__,
+    settings: {}, // Add settings property
   });
   
   // Add the debug function
@@ -990,7 +991,8 @@ const ProfileScreen = ({ navigation, route }) => {
               totalActiveGoals: activeGoalsCount,
               completedGoals: completedGoalsCount,
               activeProjects: activeProjectsCount,
-              totalActiveTasks: activeTasksCount
+              totalActiveTasks: activeTasksCount,
+              settings: settings // Add settings to screenState
             }));
             
             // Check for pending onboarding achievement after profile loads
@@ -1256,6 +1258,33 @@ const ProfileScreen = ({ navigation, route }) => {
   const closeThemeColorPicker = () => {
     setScreenState(prev => ({ ...prev, showThemeColorPicker: false }));
   };
+
+  // Handle theme color press - check for Pro gift eligibility
+  const handleThemeColorPress = async () => {
+    try {
+      // Check if user has Pro access
+      const hasPro = screenState.userSubscriptionStatus === 'pro' || 
+                     screenState.userSubscriptionStatus === 'unlimited';
+      
+      if (hasPro) {
+        // Check if user has already seen the color gift
+        const hasSeenColorGift = await AsyncStorage.getItem('proColorGiftShown');
+        
+        if (!hasSeenColorGift) {
+          // First time Pro user clicking theme color - show gift
+          setScreenState(prev => ({ ...prev, showProGiftSurprise: true }));
+          return;
+        }
+      }
+      
+      // Normal behavior - show theme picker
+      setScreenState(prev => ({ ...prev, showThemeColorPicker: true }));
+    } catch (error) {
+      console.error('Error checking color gift eligibility:', error);
+      // Fallback to normal theme picker
+      setScreenState(prev => ({ ...prev, showThemeColorPicker: true }));
+    }
+  };
   
   const closeDomainColorPicker = () => {
     setScreenState(prev => ({ ...prev, showDomainColorPicker: false }));
@@ -1267,8 +1296,15 @@ const ProfileScreen = ({ navigation, route }) => {
   };
 
   // Handle Pro gift surprise
-  const handleCloseGiftSurprise = () => {
+  const handleCloseGiftSurprise = async () => {
     setScreenState(prev => ({ ...prev, showProGiftSurprise: false }));
+    
+    // Mark color gift as shown so it only appears once
+    try {
+      await AsyncStorage.setItem('proColorGiftShown', 'true');
+    } catch (error) {
+      console.error('Error marking color gift as shown:', error);
+    }
   };
 
   const handleColorWheelUnlocked = async () => {
@@ -1401,7 +1437,7 @@ const ProfileScreen = ({ navigation, route }) => {
           user={user}
           navigation={navigation}
           toggleSettings={toggleSettings}
-          onThemeColorPress={() => setScreenState(prev => ({ ...prev, showThemeColorPicker: true }))}
+          onThemeColorPress={handleThemeColorPress}
         />
         
         {/* Stats Cards */}

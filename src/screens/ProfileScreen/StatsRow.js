@@ -7,87 +7,24 @@ import { CommonActions } from '@react-navigation/native';
 
 const StatsRow = ({ theme, totalActiveGoals, activeProjects, totalActiveTasks, navigation }) => {
   const navigateToGoals = () => {
-    navigation.navigate('GoalsTab');
+    navigation.navigate('GoalsTab', {
+      screen: 'Goals',
+      params: { filter: 'goals' }
+    });
   };
 
-  const navigateToProjects = async () => {
-    try {
-      // First, save the preference to AsyncStorage
-      await AsyncStorage.setItem('preferred_view_mode', 'projects');
-      
-      // Add a timestamp to force a refresh when navigating
-      await AsyncStorage.setItem('view_mode_timestamp', Date.now().toString());
-
-      // IMPORTANT: Reset the entire tab navigator state to force a remount
-      // This will ensure the view mode is properly applied
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [
-            {
-              name: 'ProjectsTab',
-              params: { viewMode: 'projects', timestamp: Date.now() },
-              state: {
-                routes: [
-                  {
-                    name: 'Projects',
-                    params: { viewMode: 'projects', timestamp: Date.now() }
-                  }
-                ]
-              }
-            }
-          ]
-        })
-      );
-    } catch (error) {
-      console.error('Error navigating to projects view:', error);
-      
-      // Fallback to simple navigation if reset fails
-      navigation.navigate('ProjectsTab', { 
-        screen: 'Projects', 
-        params: { viewMode: 'projects', timestamp: Date.now() }
-      });
-    }
+  const navigateToProjects = () => {
+    navigation.navigate('GoalsTab', {
+      screen: 'Goals',
+      params: { filter: 'milestones' }
+    });
   };
 
-  const navigateToTodoList = async () => {
-    try {
-      // First, save the preference to AsyncStorage
-      await AsyncStorage.setItem('preferred_view_mode', 'tasks');
-      
-      // Add a timestamp to force a refresh when navigating
-      await AsyncStorage.setItem('view_mode_timestamp', Date.now().toString());
-
-      // IMPORTANT: Reset the entire tab navigator state to force a remount
-      // This will ensure the view mode is properly applied
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [
-            {
-              name: 'ProjectsTab',
-              params: { viewMode: 'tasks', timestamp: Date.now() },
-              state: {
-                routes: [
-                  {
-                    name: 'Projects',
-                    params: { viewMode: 'tasks', timestamp: Date.now() }
-                  }
-                ]
-              }
-            }
-          ]
-        })
-      );
-    } catch (error) {
-      console.error('Error navigating to tasks view:', error);
-      
-      // Fallback to simple navigation if reset fails
-      navigation.navigate('ProjectsTab', { 
-        screen: 'Projects', 
-        params: { viewMode: 'tasks', timestamp: Date.now() }
-      });
-    }
+  const navigateToTodoList = () => {
+    navigation.navigate('GoalsTab', {
+      screen: 'Goals',
+      params: { filter: 'tasks' }
+    });
   };
 
   return (

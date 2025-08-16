@@ -23,6 +23,7 @@ import { DefaultAvatar } from '../../AvatarComponents';
 import { getSubscriptionInfo } from '../../../services/SubscriptionService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL } from '../../../config/apiConfig';
+import ProGiftSurprise from '../../ProGiftSurprise';
 
 /**
  * ClaimAIAccessButton - Button to claim AI access for founders
@@ -195,6 +196,82 @@ const ClaimAIAccessButton = ({ theme, onClose, subscriptionStatus, realSubscript
           </View>
         </Modal>
       )}
+    </>
+  );
+};
+
+/**
+ * ClaimAILightButton - Button to claim 1 month AI Light for premium mock users
+ */
+const ClaimAILightButton = ({ theme, subscriptionStatus, realSubscriptionInfo }) => {
+  const [showGiftModal, setShowGiftModal] = useState(false);
+  const [shouldShowButton, setShouldShowButton] = useState(false);
+
+  // Check if user should see the AI Light claim button
+  useEffect(() => {
+    checkShouldShowAILightButton();
+  }, [subscriptionStatus, realSubscriptionInfo]);
+
+  const checkShouldShowAILightButton = async () => {
+    try {
+      // Check if user has premium/pro status (mock or real)
+      const isPremiumMock = subscriptionStatus === 'pro' || 
+                           subscriptionStatus === 'unlimited' ||
+                           realSubscriptionInfo?.isProTier;
+      
+      // Check if they've already claimed this gift
+      const alreadyClaimedAILight = await AsyncStorage.getItem('aiLightGiftClaimed');
+      
+      // Show button if they're premium and haven't claimed yet
+      if (isPremiumMock && !alreadyClaimedAILight) {
+        setShouldShowButton(true);
+      } else {
+        setShouldShowButton(false);
+      }
+    } catch (error) {
+      console.error('Error checking AI Light eligibility:', error);
+    }
+  };
+
+  const handleClaimAILight = () => {
+    setShowGiftModal(true);
+  };
+
+  const handleGiftClose = async () => {
+    setShowGiftModal(false);
+    // Mark as claimed
+    await AsyncStorage.setItem('aiLightGiftClaimed', 'true');
+    setShouldShowButton(false);
+  };
+
+  if (!shouldShowButton) return null;
+
+  return (
+    <>
+      <TouchableOpacity
+        style={[styles.claimButton, { 
+          backgroundColor: 'rgba(102, 102, 255, 0.1)',
+          borderColor: '#6666FF',
+          marginTop: 16
+        }]}
+        onPress={handleClaimAILight}
+        activeOpacity={0.7}
+      >
+        <View style={styles.claimButtonContent}>
+          <Ionicons name="sparkles" size={20} color="#6666FF" />
+          <Text style={[styles.claimButtonText, { color: '#6666FF' }]}>
+            Claim AI Light
+          </Text>
+        </View>
+      </TouchableOpacity>
+
+      <ProGiftSurprise
+        visible={showGiftModal}
+        onClose={handleGiftClose}
+        theme={theme}
+        giftType="aiPlus"
+        showAppStoreRating={false}
+      />
     </>
   );
 };
@@ -792,7 +869,7 @@ const AISideMenu = ({
                           {stats.projectsCount}
                         </Text>
                         <Text style={[styles.statLabel, { color: theme.textSecondary }]}>
-                          {stats.projectsCount === 1 ? 'Project' : 'Projects'}
+                          {stats.projectsCount === 1 ? 'Milestone' : 'Milestones'}
                         </Text>
                       </View>
                       <View style={styles.statCard}>
@@ -804,6 +881,13 @@ const AISideMenu = ({
                         </Text>
                       </View>
                     </View>
+                    
+                    {/* AI Light Claim Button */}
+                    <ClaimAILightButton 
+                      theme={theme}
+                      subscriptionStatus={subscriptionStatus}
+                      realSubscriptionInfo={realSubscriptionInfo}
+                    />
                     
                     {/* AI Access Claim Button */}
                     <ClaimAIAccessButton 
@@ -1186,6 +1270,12 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     textTransform: 'uppercase',
     opacity: 0.9,
+  },
+  claimButtonSubtext: {
+    fontSize: 11,
+    fontWeight: '400',
+    marginTop: 4,
+    opacity: 0.7,
   },
   // Success Modal styles
   successModalOverlay: {

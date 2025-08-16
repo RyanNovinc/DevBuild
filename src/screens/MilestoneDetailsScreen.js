@@ -52,7 +52,9 @@ const MilestoneDetailsScreen = ({ route, navigation }) => {
     mode = 'create', 
     projectId = null, 
     project: initialProject = null,
-    goalId = null 
+    goalId = null,
+    goalTitle = null,
+    goalColor = null
   } = route.params || {};
   
   const isCreating = mode === 'create';
@@ -62,7 +64,7 @@ const MilestoneDetailsScreen = ({ route, navigation }) => {
   const [milestoneState, setMilestoneState] = useState({
     title: '',
     description: '',
-    color: '#FFFFFF', // Default black and white theme
+    color: goalColor || '#FFFFFF', // Use goal color if provided
     goalId: goalId || null
   });
 
@@ -488,6 +490,36 @@ const MilestoneDetailsScreen = ({ route, navigation }) => {
           </View>
         )}
       </ScrollView>
+
+      {/* Add Task Button - only show when editing an existing milestone */}
+      {!isCreating && (
+        <TouchableOpacity
+          style={[
+            styles.addTaskButton,
+            {
+              backgroundColor: milestoneState.color,
+              bottom: insets.bottom + spacing.l
+            }
+          ]}
+          onPress={() => navigation.navigate('TaskDetails', { 
+            mode: 'create',
+            projectId: projectId || initialProject?.id,
+            milestoneTitle: milestoneState.title,
+            milestoneColor: milestoneState.color,
+            goalId: milestoneState.goalId,
+            goalTitle: goals.find(g => g.id === milestoneState.goalId)?.title
+          })}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel="Add task to this milestone"
+          accessibilityHint="Creates a new task for this milestone"
+        >
+          <Ionicons name="checkmark-done" size={scaleWidth(20)} color="#000000" />
+          <Text style={[styles.addTaskText, { color: '#000000' }]}>
+            Add Task
+          </Text>
+        </TouchableOpacity>
+      )}
     </SafeAreaView>
   );
 };
@@ -681,6 +713,25 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.m,
     textAlign: 'center',
   },
+  addTaskButton: {
+    position: 'absolute',
+    right: spacing.l,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.s,
+    paddingHorizontal: spacing.m,
+    borderRadius: scaleWidth(25),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  addTaskText: {
+    fontSize: fontSizes.s,
+    fontWeight: '600',
+    marginLeft: spacing.xs,
+  }
 });
 
 export default MilestoneDetailsScreen;

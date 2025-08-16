@@ -14,7 +14,9 @@ const UnifiedBlackPlan = ({
   spotsRemaining = 1000,
   responsive = {},
   initialTime,
-  onNavigateToAIPlans
+  onNavigateToAIPlans,
+  billing = 'monthly',
+  setBilling
 }) => {
   const isSelected = selectedPlan === 'founding';
   const { isTablet } = responsive;
@@ -72,29 +74,34 @@ const UnifiedBlackPlan = ({
   const spotsExhausted = spotsRemaining <= 0;
   const isMonthlyPlan = spotsExhausted;
   
-  // Calculate current price based on spots remaining (single $3.49 price with different AI benefits)
+  // Calculate current price based on user number
   const getCurrentPrice = () => {
-    if (spotsExhausted) return '$3.49'; // Basic tier pricing when sold out
+    if (spotsExhausted) {
+      // When sold out, show billing-based pricing
+      return billing === 'annual' ? '$34.99' : '$3.49';
+    }
     
-    return '$3.49'; // Same price for all founder spots
+    const userNumber = 1001 - spotsRemaining;
+    if (userNumber <= 100) return '$0.99'; // Users 1-100
+    if (userNumber <= 500) return '$2.99'; // Users 101-500
+    return '$4.99'; // Users 501-1000
   };
   
   // Get current tier info for AI benefits messaging
   const getCurrentTier = () => {
     if (spotsExhausted) return { tier: 'monthly', nextTier: null };
     
-    if (spotsRemaining > 900) return { tier: 'early', nextTier: 'AI Plus', nextAt: 900 };
-    if (spotsRemaining > 500) return { tier: 'mid', nextTier: 'AI Light', nextAt: 500 };
-    return { tier: 'final', nextTier: 'Monthly subscription', nextAt: 0 };
+    const userNumber = 1001 - spotsRemaining;
+    if (userNumber <= 100) return { tier: 'early', nextTier: 'Mid tier', nextAt: 101, price: '$0.99' };
+    if (userNumber <= 500) return { tier: 'mid', nextTier: 'Final tier', nextAt: 501, price: '$2.99' };
+    return { tier: 'final', nextTier: 'Monthly subscription', nextAt: 1001, price: '$4.99' };
   };
 
-  // Get AI benefit for current tier
+  // Get AI benefit for current tier - All users get 1 month AI Light
   const getAIBenefit = () => {
-    if (spotsExhausted) return 'AI subscription separate';
+    if (spotsExhausted) return 'All Pro features';
     
-    if (spotsRemaining > 900) return 'Free AI Max forever'; // First 100 spots
-    if (spotsRemaining > 500) return 'Free AI Plus forever'; // Next 400 spots
-    return 'Free AI Light forever'; // Last 500 spots
+    return '1 month AI Light included'; // All founder tiers get 1 month AI Light
   };
   
   return (
@@ -133,13 +140,13 @@ const UnifiedBlackPlan = ({
                     if (spotsRemaining === 0) {
                       // When sold out, show 1000+ SOLD
                       return '1000+ SOLD';
-                    } else if (spotsSold <= 500) {
-                      // 50 increments up to 500
-                      const increment = Math.floor(spotsSold / 50) * 50;
+                    } else if (spotsSold < 100) {
+                      // 10 increments under 100
+                      const increment = Math.floor(spotsSold / 10) * 10;
                       return increment > 0 ? `${increment}+ SOLD` : '';
                     } else {
-                      // 100 increments after 500
-                      const increment = 500 + Math.floor((spotsSold - 500) / 100) * 100;
+                      // 50 increments for 100+
+                      const increment = Math.floor(spotsSold / 50) * 50;
                       return `${increment}+ SOLD`;
                     }
                   })()}
@@ -150,17 +157,86 @@ const UnifiedBlackPlan = ({
           return null;
         })()}
 
+        {/* Billing Toggle - Only show when sold out */}
+        {spotsExhausted && setBilling && (
+          <View style={{
+            backgroundColor: '#000000',
+            borderRadius: 12,
+            padding: 4,
+            flexDirection: 'row',
+            marginBottom: 20,
+            marginTop: 12,
+            alignSelf: 'center',
+            width: '85%',
+          }}>
+            <TouchableOpacity
+              style={{
+                flex: 1,
+                paddingVertical: 12,
+                borderRadius: 10,
+                backgroundColor: billing === 'monthly' ? 'rgba(255,255,255,0.1)' : 'transparent',
+              }}
+              onPress={() => setBilling('monthly')}
+            >
+              <Text style={{
+                textAlign: 'center',
+                fontSize: 14,
+                fontWeight: '600',
+                color: billing === 'monthly' ? '#FFFFFF' : 'rgba(255,255,255,0.5)',
+              }}>
+                Monthly
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={{
+                flex: 1,
+                paddingVertical: 12,
+                borderRadius: 10,
+                backgroundColor: billing === 'annual' ? 'rgba(255,255,255,0.1)' : 'transparent',
+              }}
+              onPress={() => setBilling('annual')}
+            >
+              <View style={{ alignItems: 'center' }}>
+                <Text style={{
+                  fontSize: 14,
+                  fontWeight: '600',
+                  color: billing === 'annual' ? '#FFFFFF' : 'rgba(255,255,255,0.5)',
+                }}>
+                  Annual
+                </Text>
+                <Text style={{
+                  fontSize: 11,
+                  color: billing === 'annual' ? '#FFD700' : 'transparent',
+                  marginTop: 2,
+                  height: 14, // Reserve consistent height
+                  fontWeight: '600',
+                }}>
+                  2 months free
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Timer Section at Top - Only show when not sold out */}
         {!isMonthlyPlan && (
-          <View style={{
-            paddingTop: 12,
-            paddingBottom: 16,
-            paddingHorizontal: 24,
-            marginTop: (() => {
-              const spotsSold = 1000 - spotsRemaining;
-              return spotsSold > 0 ? -8 : -48; // Adjust spacing based on social proof
-            })(),
-          }}>
+          <TouchableOpacity 
+            style={{
+              paddingTop: 12,
+              paddingBottom: 16,
+              paddingHorizontal: 24,
+              marginTop: (() => {
+                const spotsSold = 1000 - spotsRemaining;
+                return spotsSold > 0 ? -8 : -48; // Adjust spacing based on social proof
+              })(),
+            }}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setShowFounderInfo(true);
+            }}
+            activeOpacity={0.8}
+          >
           
           <View style={{
             flexDirection: 'row',
@@ -189,6 +265,7 @@ const UnifiedBlackPlan = ({
             flexDirection: 'row',
             justifyContent: 'center',
             alignItems: 'center',
+            marginBottom: 12,
           }}>
             <TimeUnit value={countdownTime.days} label="days" />
             <TimeSeparator />
@@ -198,7 +275,67 @@ const UnifiedBlackPlan = ({
             <TimeSeparator />
             <TimeUnit value={countdownTime.seconds} label="sec" isSeconds />
           </View>
-        </View>
+          
+          {/* Tier-specific spots remaining */}
+          <View style={{
+            alignItems: 'center',
+          }}>
+            <Text style={{
+              fontSize: 13,
+              fontWeight: '600',
+              color: '#FF6B6B',
+              letterSpacing: 0.5,
+            }}>
+              {(() => {
+                const userNumber = 1001 - spotsRemaining;
+                const tier = getCurrentTier();
+                
+                if (tier.tier === 'early') {
+                  const spotsLeftInTier = 100 - userNumber;
+                  if (spotsLeftInTier === 0) {
+                    return 'Last Early Bird spot!';
+                  }
+                  return (
+                    <>
+                      Only <Text style={{ textDecorationLine: 'underline' }}>{spotsLeftInTier}</Text> Early Bird spots left
+                    </>
+                  );
+                } else if (tier.tier === 'mid') {
+                  const spotsLeftInTier = 500 - userNumber;
+                  if (spotsLeftInTier === 0) {
+                    return 'Last Mid Tier spot!';
+                  }
+                  return (
+                    <>
+                      Only <Text style={{ textDecorationLine: 'underline' }}>{spotsLeftInTier}</Text> Mid Tier spots left
+                    </>
+                  );
+                } else if (tier.tier === 'final') {
+                  const spotsLeftInTier = 1000 - userNumber;
+                  if (spotsLeftInTier === 0) {
+                    return 'Last founder spot!';
+                  }
+                  return (
+                    <>
+                      Only <Text style={{ textDecorationLine: 'underline' }}>{spotsLeftInTier}</Text> Final Tier spots left
+                    </>
+                  );
+                }
+                return '';
+              })()}
+            </Text>
+            <Text style={{
+              fontSize: 12,
+              fontWeight: '500',
+              color: 'rgba(255,107,107,0.8)',
+              letterSpacing: 0.3,
+              marginTop: 4,
+              textAlign: 'center',
+            }}>
+              (This price and deal is limited)
+            </Text>
+          </View>
+        </TouchableOpacity>
         )}
 
         {/* Pricing Section */}
@@ -223,95 +360,6 @@ const UnifiedBlackPlan = ({
           activeOpacity={0.7}
           disabled={isLifetimeMember}
         >
-          {/* Tier-based urgency badge - Top right corner - Hide when sold out */}
-          {spotsRemaining > 0 && (() => {
-            const tier = getCurrentTier();
-            let badgeColor = '#FF6B6B'; // Red for urgency
-            let badgeText = '';
-            
-            let badgeIcon = '';
-            
-            if (tier.tier === 'early') {
-              badgeIcon = 'star';
-              // AI Max Tier: First 100 spots
-              if (spotsRemaining > 950) {
-                badgeText = 'AI MAX - 100 SPOTS';
-              } else {
-                // Real-time counting from 50 and below
-                badgeText = `AI MAX - ${spotsRemaining - 900} LEFT`;
-              }
-            } else if (tier.tier === 'mid') {
-              badgeIcon = 'rocket';
-              // AI Plus Tier: Spots 101-500
-              const midTierSpotsUsed = 100 - (spotsRemaining - 500); // How many of the 400 mid-tier spots are used
-              const midTierSpotsLeft = 400 - midTierSpotsUsed;
-              
-              if (spotsRemaining > 600) {
-                badgeText = 'AI PLUS - 400 SPOTS';
-              } else if (spotsRemaining > 700) {
-                badgeText = 'AI PLUS - 300 LEFT';
-              } else if (spotsRemaining > 800) {
-                badgeText = 'AI PLUS - 200 LEFT';
-              } else if (spotsRemaining > 500) {
-                // Real-time counting when ≤100 spots left in mid tier
-                badgeText = `AI PLUS - ${spotsRemaining - 500} LEFT`;
-              }
-            } else if (tier.tier === 'final') {
-              badgeIcon = 'flashlight';
-              // AI Light Tier: Spots 501-1000
-              if (spotsRemaining > 400) {
-                badgeText = 'AI LIGHT - 500 LEFT';
-              } else if (spotsRemaining > 300) {
-                badgeText = 'AI LIGHT - 400 LEFT';
-              } else if (spotsRemaining > 200) {
-                badgeText = 'AI LIGHT - 300 LEFT';
-              } else {
-                // Real-time counting for final 200
-                badgeText = `AI LIGHT - ${spotsRemaining} LEFT`;
-              }
-            }
-            
-            // Don't show badge if no text
-            if (!badgeText) return null;
-            
-            return (
-              <TouchableOpacity
-                style={{
-                  position: 'absolute',
-                  top: 12,
-                  right: 12,
-                  backgroundColor: badgeColor,
-                  paddingHorizontal: 8,
-                  paddingVertical: 4,
-                  borderRadius: 8,
-                  zIndex: 10,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                }}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setShowFounderInfo(true);
-                }}
-                activeOpacity={0.8}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <Text style={{
-                  fontSize: 9,
-                  fontWeight: '700',
-                  color: '#FFFFFF',
-                  letterSpacing: 0.3,
-                }}>
-                  {badgeText}
-                </Text>
-                <FontAwesome5 
-                  name={badgeIcon} 
-                  size={8} 
-                  color="#FFFFFF" 
-                  style={{ marginLeft: 4 }}
-                />
-              </TouchableOpacity>
-            );
-          })()}
 
           {/* Title */}
           <View style={{
@@ -325,7 +373,7 @@ const UnifiedBlackPlan = ({
               color: '#FFFFFF',
               letterSpacing: 0.5,
             }}>
-              PRO ACCESS
+              {spotsExhausted ? 'LIFECOMPASS PRO' : 'LIFETIME PRO ACCESS'}
             </Text>
             <Ionicons 
               name="compass" 
@@ -345,7 +393,7 @@ const UnifiedBlackPlan = ({
             color: 'rgba(255,255,255,0.5)',
             marginBottom: isMonthlyPlan ? 32 : 24,
           }}>
-            {isMonthlyPlan ? 'Monthly subscription' : 'Plan your life like a CEO • One-time payment'}
+            {spotsExhausted ? 'Plan your life like a CEO' : 'Plan your life like a CEO • One-time payment'}
           </Text>
 
           {/* Price */}
@@ -370,7 +418,7 @@ const UnifiedBlackPlan = ({
               marginLeft: 6,
               fontWeight: '400',
             }}>
-              {isMonthlyPlan ? '/mo' : 'once'}
+              {spotsExhausted ? (billing === 'annual' ? '/year' : '/mo') : 'once'}
             </Text>
           </View>
 
@@ -391,33 +439,47 @@ const UnifiedBlackPlan = ({
             width: '100%',
             paddingHorizontal: 20,
           }}>
-            {/* Center pill - perfectly centered */}
-            <FeaturePill text="Fortune 500 tools" isSelected={isSelected} />
-            
-            {/* Left pill */}
-            <View style={{ position: 'absolute', left: -10, top: 0 }}>
-              <FeaturePill text="All features" isSelected={isSelected} />
-            </View>
-            
-            {/* Right pill - Clickable AI benefit */}
-            <View style={{ position: 'absolute', right: -10, top: 0 }}>
-              <TouchableOpacity
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  if (onNavigateToAIPlans) {
-                    onNavigateToAIPlans();
-                  }
-                }}
-                activeOpacity={0.7}
-              >
-                <FeaturePill text={(() => {
-                  if (spotsExhausted) return 'AI subscription';
-                  if (spotsRemaining > 900) return '1 Month AI Max';
-                  if (spotsRemaining > 500) return '1 Month AI Plus';
-                  return '1 Month AI Light';
-                })()} isSelected={isSelected} clickable={true} />
-              </TouchableOpacity>
-            </View>
+            {spotsExhausted ? (
+              /* Sold out: Only 2 pills centered - Fortune 500 tools and All features */
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <FeaturePill text="Fortune 500 tools" isSelected={isSelected} />
+                <FeaturePill text="All features" isSelected={isSelected} />
+              </View>
+            ) : (
+              /* Founder: 3 pills with AI benefit */
+              <>
+                {/* Center pill - perfectly centered */}
+                <FeaturePill text="All features" isSelected={isSelected} />
+                
+                {/* Left pill */}
+                <View style={{ position: 'absolute', left: -10, top: 0 }}>
+                  <FeaturePill text="Fortune 500 tools" isSelected={isSelected} />
+                </View>
+                
+                {/* Right pill - Clickable AI benefit */}
+                <View style={{ position: 'absolute', right: -10, top: 0 }}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      if (onNavigateToAIPlans) {
+                        onNavigateToAIPlans();
+                      }
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <FeaturePill text="1 Month AI Light" isSelected={isSelected} clickable={true} />
+                      <Ionicons 
+                        name="arrow-forward" 
+                        size={10} 
+                        color="rgba(255,255,255,0.6)" 
+                        style={{ marginLeft: -8 }}
+                      />
+                    </View>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
           </View>
 
           {/* CTA Button */}
@@ -459,12 +521,21 @@ const UnifiedBlackPlan = ({
               justifyContent: 'center',
               marginTop: 25,
             }}>
-              <View style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginBottom: 8,
-              }}>
+              <TouchableOpacity
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: 8,
+                  paddingVertical: 4,
+                  paddingHorizontal: 8,
+                }}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setShowFounderInfo(true);
+                }}
+                activeOpacity={0.7}
+              >
                 <FontAwesome5 
                   name="crown" 
                   size={11} 
@@ -479,35 +550,28 @@ const UnifiedBlackPlan = ({
                 }}>
                   {(() => {
                     const tier = getCurrentTier();
+                    const userNumber = 1001 - spotsRemaining;
                     if (tier.tier === 'early') {
-                      return 'Limited to first 100 users';
+                      return `You are user ${userNumber} • Early Bird pricing`;
                     } else if (tier.tier === 'mid') {
-                      return 'Limited to first 500 users';
+                      return `You are user ${userNumber} • Mid tier pricing`;
                     } else if (tier.tier === 'final') {
-                      return 'Limited to first 1,000 users';
+                      return `You are user ${userNumber} • Final tier pricing`;
                     }
                     return 'Limited to first 1,000 users';
                   })()}
                 </Text>
-                <TouchableOpacity
+                <Ionicons 
+                  name="information-circle-outline" 
+                  size={14} 
+                  color="rgba(255,255,255,0.4)"
                   style={{ marginLeft: 6 }}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setShowFounderInfo(true);
-                  }}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <Ionicons 
-                    name="information-circle-outline" 
-                    size={14} 
-                    color="rgba(255,255,255,0.4)"
-                  />
-                </TouchableOpacity>
-              </View>
+                />
+              </TouchableOpacity>
               
               <Text style={{
                 fontSize: 10,
-                color: 'rgba(255,255,255,0.4)',
+                color: 'rgba(255,255,255,0.7)',
                 fontWeight: '400',
                 letterSpacing: 0.2,
               }}>
@@ -523,7 +587,7 @@ const UnifiedBlackPlan = ({
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
-            marginTop: 16,
+            marginTop: 4,
             paddingHorizontal: 20,
             paddingVertical: 8,
           }}
@@ -562,7 +626,7 @@ const UnifiedBlackPlan = ({
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
-          marginTop: 12,
+          marginTop: 0,
         }}>
           <Text style={{
             fontSize: 11,
@@ -643,6 +707,19 @@ const UnifiedBlackPlan = ({
               }}>
                 LIMITED TIME & SPOTS
               </Text>
+              
+              <Text style={{
+                fontSize: 12,
+                color: '#FFD700',
+                textAlign: 'center',
+                marginTop: 8,
+                fontWeight: '400',
+              }}>
+                You: #{(() => {
+                  const userNumber = 1001 - spotsRemaining;
+                  return userNumber;
+                })()}
+              </Text>
             </View>
 
             {/* Divider */}
@@ -654,23 +731,14 @@ const UnifiedBlackPlan = ({
 
             {/* Content */}
             <View style={{ alignItems: 'center' }}>
-              <Text style={{
-                fontSize: 14,
-                color: 'rgba(255,255,255,0.8)',
-                lineHeight: 20,
-                textAlign: 'center',
-                marginBottom: 24,
-                fontWeight: '400',
-              }}>
-                Same $3.49 price • Lifetime Pro access{'\n'}1 month AI included
-              </Text>
 
               {/* Tier Cards */}
               <View style={{ width: '100%', marginBottom: 20 }}>
                 {(() => {
                   const currentTier = getCurrentTier();
-                  const isEarlySoldOut = spotsRemaining <= 900;
-                  const isMidSoldOut = spotsRemaining <= 500;
+                  const userNumber = 1001 - spotsRemaining;
+                  const isEarlySoldOut = userNumber > 100;
+                  const isMidSoldOut = userNumber > 500;
                   
                   const tiers = [
                     {
@@ -678,9 +746,10 @@ const UnifiedBlackPlan = ({
                       name: 'Early Bird',
                       icon: 'star',
                       users: 'Users 1-100',
-                      aiBenefit: '1 Month AI Max Included',
-                      aiColor: '#FFD700',
-                      value: '$9.99/month value',
+                      price: '$0.99',
+                      aiBenefit: currentTier.tier === 'early' ? '1 Month AI Light Included' : '',
+                      aiColor: '#4CAF50',
+                      value: '',
                       isSoldOut: isEarlySoldOut,
                       isActive: currentTier.tier === 'early'
                     },
@@ -689,9 +758,10 @@ const UnifiedBlackPlan = ({
                       name: 'Mid Tier',
                       icon: 'rocket',
                       users: 'Users 101-500',
-                      aiBenefit: '1 Month AI Plus Included',
+                      price: '$2.99',
+                      aiBenefit: currentTier.tier === 'mid' ? '1 Month AI Light Included' : '',
                       aiColor: '#4CAF50',
-                      value: '$4.99/month value',
+                      value: '',
                       isSoldOut: isMidSoldOut,
                       isActive: currentTier.tier === 'mid'
                     },
@@ -700,11 +770,27 @@ const UnifiedBlackPlan = ({
                       name: 'Final Tier',
                       icon: 'bolt',
                       users: 'Users 501-1000',
-                      aiBenefit: '1 Month AI Light Included',
-                      aiColor: '#2196F3',
-                      value: '$2.99/month value',
+                      price: '$4.99',
+                      aiBenefit: currentTier.tier === 'final' ? '1 Month AI Light Included' : '',
+                      aiColor: '#4CAF50',
+                      value: '',
                       isSoldOut: false,
                       isActive: currentTier.tier === 'final'
+                    },
+                    {
+                      id: 'monthly',
+                      name: 'Regular Pricing',
+                      icon: 'calendar',
+                      users: 'Users 1000+',
+                      price: '$42',
+                      priceType: '/year',
+                      aiBenefit: '',
+                      aiColor: '#4CAF50',
+                      value: '',
+                      isSoldOut: false,
+                      isActive: false,
+                      isMonthly: true,
+                      isWarning: true
                     }
                   ];
 
@@ -712,12 +798,12 @@ const UnifiedBlackPlan = ({
                     <View
                       key={tier.id}
                       style={{
-                        backgroundColor: tier.isActive ? 'rgba(255,215,0,0.08)' : 'rgba(255,255,255,0.03)',
+                        backgroundColor: tier.isActive ? 'rgba(255,215,0,0.08)' : (tier.isWarning ? 'rgba(255,107,107,0.08)' : 'rgba(255,255,255,0.03)'),
                         borderRadius: 12,
                         padding: 16,
                         marginBottom: 12,
-                        borderWidth: tier.isActive ? 1 : 0,
-                        borderColor: tier.isActive ? 'rgba(255,215,0,0.3)' : 'transparent',
+                        borderWidth: 1,
+                        borderColor: tier.isActive ? 'rgba(255,215,0,0.3)' : (tier.isWarning ? 'rgba(255,107,107,0.4)' : 'rgba(255,255,255,0.2)'),
                         opacity: tier.isSoldOut ? 0.5 : 1,
                       }}
                     >
@@ -734,7 +820,7 @@ const UnifiedBlackPlan = ({
                           <FontAwesome5 
                             name={tier.icon} 
                             size={14} 
-                            color={tier.isSoldOut ? 'rgba(255,255,255,0.3)' : tier.aiColor}
+                            color={tier.isSoldOut ? 'rgba(255,255,255,0.3)' : (tier.isActive ? '#FFD700' : (tier.isWarning ? '#FF6B6B' : 'rgba(255,255,255,0.6)'))}
                             style={{ marginRight: 8 }}
                           />
                           <Text style={{
@@ -755,11 +841,11 @@ const UnifiedBlackPlan = ({
                           borderColor: 'rgba(255,255,255,0.1)',
                         }}>
                           <Text style={{
-                            fontSize: 12,
+                            fontSize: tier.isWarning ? 16 : 12,
                             fontWeight: '600',
-                            color: '#FFFFFF',
+                            color: tier.isWarning ? '#FF6B6B' : '#FFFFFF',
                           }}>
-                            $3.49<Text style={{ fontSize: 9 }}>/OTP*</Text>
+                            {tier.price}<Text style={{ fontSize: tier.isWarning ? 11 : 9 }}>{tier.isMonthly ? '/year' : '/OTP*'}</Text>
                           </Text>
                         </View>
                       </View>
@@ -775,7 +861,7 @@ const UnifiedBlackPlan = ({
                       <Text style={{
                         fontSize: 13,
                         fontWeight: '600',
-                        color: tier.isSoldOut ? 'rgba(255,255,255,0.4)' : tier.aiColor,
+                        color: tier.isSoldOut ? 'rgba(255,255,255,0.4)' : (tier.isActive ? '#FFD700' : 'rgba(255,255,255,0.8)'),
                         marginBottom: 4,
                       }}>
                         {tier.aiBenefit}
@@ -792,25 +878,6 @@ const UnifiedBlackPlan = ({
                 })()}
               </View>
 
-              {/* After 1000 note */}
-              <View style={{
-                backgroundColor: 'rgba(255,255,255,0.02)',
-                borderRadius: 8,
-                padding: 12,
-                width: '100%',
-                marginBottom: 16,
-                borderWidth: 1,
-                borderColor: 'rgba(255,255,255,0.05)',
-              }}>
-                <Text style={{
-                  fontSize: 12,
-                  color: 'rgba(255,255,255,0.6)',
-                  textAlign: 'center',
-                  fontWeight: '500',
-                }}>
-                  After 1000 founders: $3.49/month subscription
-                </Text>
-              </View>
 
               {/* Expiration info */}
               <Text style={{
