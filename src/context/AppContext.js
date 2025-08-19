@@ -28,7 +28,6 @@ const AppContext = createContext();
 
 // Storage keys for app data
 const STORAGE_KEYS = {
-  LIFE_DIRECTION: 'lifeDirection',
   GOALS: 'goals',
   PROJECTS: 'projects',
   TIME_BLOCKS: 'timeBlocks',
@@ -61,8 +60,7 @@ const DEFAULT_SETTINGS = {
     email: '',
     bio: '',
     profileImage: null
-  },
-  lifeDirection: ''
+  }
 };
 
 // Provider component
@@ -100,6 +98,9 @@ export const AppProvider = ({ children }) => {
   });
   const [calendarEvents, setCalendarEvents] = useState([]);
   const [calendarPermissionStatus, setCalendarPermissionStatus] = useState('undetermined');
+
+  // Add user country state
+  const [userCountry, setUserCountry] = useState(null);
   
   // Add refresh counter to trigger UI updates
   const [refreshCounter, setRefreshCounter] = useState(0);
@@ -161,7 +162,13 @@ export const AppProvider = ({ children }) => {
         // Load goals
         const storedGoals = await AsyncStorage.getItem(STORAGE_KEYS.GOALS);
         if (storedGoals) {
-          setGoals(JSON.parse(storedGoals));
+          const parsedGoals = JSON.parse(storedGoals);
+          console.log('[AppContext] Loaded goals from storage:', parsedGoals.map(g => ({ 
+            title: g.title, 
+            targetDate: g.targetDate, 
+            completed: g.completed 
+          })));
+          setGoals(parsedGoals);
         }
         
         // Load projects
@@ -258,6 +265,12 @@ export const AppProvider = ({ children }) => {
           }
           
           setUserSubscriptionStatus(mappedStatus);
+        }
+        
+        // Load user country
+        const storedUserCountry = await AsyncStorage.getItem('userCountry');
+        if (storedUserCountry) {
+          setUserCountry(storedUserCountry);
         }
         
         // Check if goals and projects are linked correctly
@@ -2316,10 +2329,6 @@ export const AppProvider = ({ children }) => {
     }
   };
   
-  // Get life direction
-  const getLifeDirection = () => {
-    return settings.lifeDirection || '';
-  };
   
   // Link projects to goals by title (cleanup function)
   const linkProjectsToGoalsByTitle = async () => {
@@ -2644,16 +2653,36 @@ export const AppProvider = ({ children }) => {
       const storedTomorrowTodos = await AsyncStorage.getItem(STORAGE_KEYS.TOMORROW_TODOS);
       const storedLaterTodos = await AsyncStorage.getItem(STORAGE_KEYS.LATER_TODOS);
       
+      console.log('🔍 refreshData() - Raw AsyncStorage values:');
+      console.log('  - storedGoals:', storedGoals);
+      console.log('  - storedProjects:', storedProjects);
+      console.log('  - storedTasks:', storedTasks);
+      
       if (storedGoals) {
-        setGoals(JSON.parse(storedGoals));
+        const parsedGoals = JSON.parse(storedGoals);
+        console.log('📝 Setting goals to:', parsedGoals.length, 'items');
+        setGoals(parsedGoals);
+      } else {
+        console.log('📝 No stored goals, setting to empty array');
+        setGoals([]);
       }
       
       if (storedProjects) {
-        setProjects(JSON.parse(storedProjects));
+        const parsedProjects = JSON.parse(storedProjects);
+        console.log('📝 Setting projects to:', parsedProjects.length, 'items');
+        setProjects(parsedProjects);
+      } else {
+        console.log('📝 No stored projects, setting to empty array');
+        setProjects([]);
       }
       
       if (storedTasks) {
-        setTasks(JSON.parse(storedTasks));
+        const parsedTasks = JSON.parse(storedTasks);
+        console.log('📝 Setting tasks to:', parsedTasks.length, 'items');
+        setTasks(parsedTasks);
+      } else {
+        console.log('📝 No stored tasks, setting to empty array');
+        setTasks([]);
       }
       
       if (storedTodos) {
@@ -3054,6 +3083,31 @@ export const AppProvider = ({ children }) => {
     }
   };
   
+  // Data cleanup function
+  const cleanupOrphanedData = async () => {
+    try {
+      console.log('[AppContext] Running data cleanup to remove orphaned items...');
+      const auditResult = await DataIntegrityService.auditDataIntegrity();
+      
+      if (auditResult.fixesApplied > 0) {
+        console.log(`[AppContext] Data cleanup applied ${auditResult.fixesApplied} fixes`);
+        
+        // Reload data after cleanup
+        await refreshData();
+        showSuccess(`Cleaned up ${auditResult.fixesApplied} orphaned items`);
+      } else {
+        console.log('[AppContext] No orphaned items found');
+        showSuccess('No orphaned items found - data is clean');
+      }
+      
+      return auditResult;
+    } catch (error) {
+      console.error('[AppContext] Data cleanup failed:', error);
+      showError('Failed to cleanup orphaned data');
+      return { success: false, error: error.message };
+    }
+  };
+
   // Alias mainGoals to goals for backward compatibility
   const mainGoals = goals;
   
@@ -3085,6 +3139,9 @@ export const AppProvider = ({ children }) => {
     
     // User purchase status
     userSubscriptionStatus,
+    
+    // User country
+    userCountry,
     
     // State setters
     setGoals,
@@ -3162,7 +3219,6 @@ export const AppProvider = ({ children }) => {
     // Settings functions
     updateAppSetting,
     updateUserProfile,
-    getLifeDirection,
     
     // User purchase status function
     updatePurchaseStatus,
@@ -3177,6 +3233,7 @@ export const AppProvider = ({ children }) => {
     linkProjectsToGoalsByTitle,
     auditProjectGoalRelationships,
     cleanupOrphanedProjects,
+    cleanupOrphanedData,
     refreshData,
     fixProjectGoalLinks,
     debugProjectGoalLinks

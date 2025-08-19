@@ -108,26 +108,22 @@ const FloatingAIButton = ({ theme }) => {
     };
   }, [navigation]);
   
-  // Pulse animation
+  // Pulse animation (slower than onboarding sparkle icon)
   useEffect(() => {
-    const startPulseAnimation = () => {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, {
-            toValue: 1.1,
-            duration: 1000,
-            useNativeDriver: true
-          }),
-          Animated.timing(pulseAnim, {
-            toValue: 1,
-            duration: 1000,
-            useNativeDriver: true
-          })
-        ])
-      ).start();
-    };
-    
-    startPulseAnimation();
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.2,
+          duration: 1500,
+          useNativeDriver: true
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1500,
+          useNativeDriver: true
+        })
+      ])
+    ).start();
   }, []);
   
   // Press handler - navigate to AI Assistant
@@ -155,7 +151,7 @@ const FloatingAIButton = ({ theme }) => {
     right: safeSpacing.right,
   };
   
-  // Render the white circular button with gold sparkles
+  // Render the white circular button with pulsating sparkles
   return (
     <Animated.View style={[
       styles.container,

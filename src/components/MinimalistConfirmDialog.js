@@ -159,23 +159,25 @@ const MinimalistConfirmDialog = ({
             </View>
 
             {/* Actions */}
-            <View style={styles.actions}>
-              <TouchableOpacity
-                style={[
-                  styles.button,
-                  styles.cancelButton,
-                  { 
-                    backgroundColor: theme.background,
-                    borderColor: theme.border,
-                  }
-                ]}
-                onPress={handleCancel}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.cancelButtonText, { color: theme.textSecondary }]}>
-                  {cancelText}
-                </Text>
-              </TouchableOpacity>
+            <View style={[styles.actions, { justifyContent: cancelText ? 'space-between' : 'center' }]}>
+              {cancelText && (
+                <TouchableOpacity
+                  style={[
+                    styles.button,
+                    styles.cancelButton,
+                    { 
+                      backgroundColor: theme.background,
+                      borderColor: theme.border,
+                    }
+                  ]}
+                  onPress={handleCancel}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.cancelButtonText, { color: theme.textSecondary }]}>
+                    {cancelText}
+                  </Text>
+                </TouchableOpacity>
+              )}
 
               <TouchableOpacity
                 style={[
@@ -183,12 +185,19 @@ const MinimalistConfirmDialog = ({
                   styles.confirmButton,
                   { 
                     backgroundColor: destructive ? '#EF4444' : theme.primary,
+                    flex: cancelText ? 1 : 0,
+                    minWidth: 120,
                   }
                 ]}
                 onPress={handleConfirm}
                 activeOpacity={0.8}
               >
-                <Text style={styles.confirmButtonText}>
+                <Text 
+                  style={styles.confirmButtonText}
+                  numberOfLines={2}
+                  adjustsFontSizeToFit={true}
+                  minimumFontScale={0.8}
+                >
                   {confirmText}
                 </Text>
               </TouchableOpacity>
@@ -282,11 +291,15 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     fontSize: fontSizes.m,
     fontWeight: '600',
+    textAlign: 'center',
+    lineHeight: scaleHeight(20),
   },
   confirmButtonText: {
     fontSize: fontSizes.m,
     fontWeight: '700',
     color: '#FFFFFF',
+    textAlign: 'center',
+    lineHeight: scaleHeight(20),
   },
 });
 

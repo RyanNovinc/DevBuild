@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
   leftContainer: {
     width: 40,
     alignItems: 'flex-start',
-    zIndex: 25, // Higher z-index to be above center container
+    zIndex: 25, // Higher z-index to be above centre container
   },
   backButton: {
     width: 40,

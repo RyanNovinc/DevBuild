@@ -1,6 +1,6 @@
 // src/screens/PricingScreen/components/PlanCards/UnifiedBlackPlan.js
 import React, { useState, useEffect, memo } from 'react';
-import { View, Text, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, Animated, Dimensions } from 'react-native';
 import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useNavigation } from '@react-navigation/native';
@@ -11,6 +11,8 @@ const UnifiedBlackPlan = ({
   handleSelectPlan, 
   handlePurchase,
   isLifetimeMember,
+  isMonthlySubscriber = false, // Add monthly subscriber prop
+  founderNumber = null, // Add founder number prop
   spotsRemaining = 1000,
   responsive = {},
   initialTime,
@@ -21,6 +23,11 @@ const UnifiedBlackPlan = ({
   const isSelected = selectedPlan === 'founding';
   const { isTablet } = responsive;
   const navigation = useNavigation();
+  const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+  
+  // Crown rain animation state
+  const [crowns, setCrowns] = useState([]);
+  const [isAnimating, setIsAnimating] = useState(false);
   
   // Countdown state
   const [countdownTime, setCountdownTime] = useState(initialTime || {
@@ -102,6 +109,70 @@ const UnifiedBlackPlan = ({
     if (spotsExhausted) return 'All Pro features';
     
     return '1 month AI Light included'; // All founder tiers get 1 month AI Light
+  };
+  
+  // Rain animation function (crowns for founders, compass for monthly subscribers)
+  const triggerRainAnimation = () => {
+    if ((!isLifetimeMember && !isMonthlySubscriber) || isAnimating) return; // Prevent if already animating
+    
+    setIsAnimating(true); // Mark animation as started
+    const numberOfIcons = 12;
+    const newIcons = [];
+    
+    for (let i = 0; i < numberOfIcons; i++) {
+      const iconId = Date.now() + i;
+      const randomX = Math.random() * (screenWidth - 30); // 30px for crown width
+      const randomDelay = Math.random() * 1000; // Stagger the drops
+      const randomDuration = 2000 + Math.random() * 1000; // 2-3 seconds fall time
+      
+      const translateY = new Animated.Value(-150);
+      const opacity = new Animated.Value(1);
+      const rotate = new Animated.Value(0);
+      
+      newIcons.push({
+        id: iconId,
+        x: randomX,
+        translateY,
+        opacity,
+        rotate,
+        delay: randomDelay,
+        duration: randomDuration
+      });
+    }
+    
+    setCrowns(newIcons); // Reusing same state array for both types
+    
+    // Animate each icon
+    newIcons.forEach((icon) => {
+      setTimeout(() => {
+        Animated.parallel([
+          Animated.timing(icon.translateY, {
+            toValue: screenHeight + 100,
+            duration: icon.duration,
+            useNativeDriver: true,
+          }),
+          Animated.timing(icon.rotate, {
+            toValue: 1,
+            duration: icon.duration,
+            useNativeDriver: true,
+          }),
+          Animated.sequence([
+            Animated.delay(icon.duration * 0.8), // Fade out in last 20% of animation
+            Animated.timing(icon.opacity, {
+              toValue: 0,
+              duration: icon.duration * 0.2,
+              useNativeDriver: true,
+            })
+          ])
+        ]).start();
+      }, icon.delay);
+    });
+    
+    // Clean up crowns after animation completes
+    setTimeout(() => {
+      setCrowns([]);
+      setIsAnimating(false); // Reset animation state
+    }, 4000); // Clean up after all animations complete
   };
   
   return (
@@ -346,19 +417,25 @@ const UnifiedBlackPlan = ({
             paddingBottom: 50,
             alignItems: 'center',
             borderWidth: 2,
-            borderColor: isSelected ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.15)',
+            borderColor: isLifetimeMember ? 'rgba(255,215,0,0.6)' : isMonthlySubscriber ? `${theme.primary || '#2196F3'}99` : (isSelected ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.15)'),
             borderRadius: 18,
             margin: 2,
             marginTop: isMonthlyPlan ? 24 : 48,
             height: 380,
             position: 'relative',
+            backgroundColor: isLifetimeMember ? 'rgba(255,215,0,0.05)' : isMonthlySubscriber ? `${theme.primary || '#2196F3'}0D` : 'transparent',
           }}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            handleSelectPlan('founding');
+            if (isLifetimeMember || isMonthlySubscriber) {
+              // Trigger rain animation for both lifetime members and monthly subscribers
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+              triggerRainAnimation();
+            } else {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              handleSelectPlan('founding');
+            }
           }}
           activeOpacity={0.7}
-          disabled={isLifetimeMember}
         >
 
           {/* Title */}
@@ -367,33 +444,79 @@ const UnifiedBlackPlan = ({
             marginBottom: isMonthlyPlan ? 16 : 8,
             position: 'relative',
           }}>
-            <Text style={{
-              fontSize: 18,
-              fontWeight: '600',
-              color: '#FFFFFF',
-              letterSpacing: 0.5,
-            }}>
-              {spotsExhausted ? 'LIFECOMPASS PRO' : 'LIFETIME PRO ACCESS'}
-            </Text>
-            <Ionicons 
-              name="compass" 
-              size={16} 
-              color="#2196F3"
-              style={{ 
-                position: 'absolute',
-                left: -20,
-                top: 1,
-              }}
-            />
+            {isLifetimeMember ? (
+              <>
+                <FontAwesome5 
+                  name="crown" 
+                  size={16} 
+                  color="#FFD700"
+                  style={{ marginBottom: 8 }}
+                />
+                <Text style={{
+                  fontSize: 18,
+                  fontWeight: '600',
+                  color: '#FFD700',
+                  letterSpacing: 0.5,
+                  textAlign: 'center',
+                }}>
+                  YOU'RE A FOUNDER
+                </Text>
+              </>
+            ) : isMonthlySubscriber ? (
+              <>
+                <Ionicons 
+                  name="compass" 
+                  size={24} 
+                  color={theme.primary || '#2196F3'}
+                  style={{ marginBottom: 8 }}
+                />
+                <Text style={{
+                  fontSize: 18,
+                  fontWeight: '600',
+                  color: theme.primary || '#2196F3',
+                  letterSpacing: 0.5,
+                  textAlign: 'center',
+                }}>
+                  ACTIVE SUBSCRIBER
+                </Text>
+              </>
+            ) : (
+              <>
+                <Text style={{
+                  fontSize: 18,
+                  fontWeight: '600',
+                  color: '#FFFFFF',
+                  letterSpacing: 0.5,
+                }}>
+                  {spotsExhausted ? 'LIFECOMPASS PRO' : 'LIFETIME PRO ACCESS'}
+                </Text>
+                <Ionicons 
+                  name="compass" 
+                  size={16} 
+                  color="#2196F3"
+                  style={{ 
+                    position: 'absolute',
+                    left: -20,
+                    top: 1,
+                  }}
+                />
+              </>
+            )}
           </View>
           
           {/* Subtitle */}
           <Text style={{
             fontSize: 13,
-            color: 'rgba(255,255,255,0.5)',
+            color: isLifetimeMember ? 'rgba(255,215,0,0.8)' : isMonthlySubscriber ? `${theme.primary || '#2196F3'}CC` : 'rgba(255,255,255,0.5)',
             marginBottom: isMonthlyPlan ? 32 : 24,
+            textAlign: 'center',
           }}>
-            {spotsExhausted ? 'Plan your life like a CEO' : 'Plan your life like a CEO • One-time payment'}
+            {isLifetimeMember 
+              ? `Founder #${founderNumber || '???'} • Lifetime Pro Access`
+              : isMonthlySubscriber
+                ? '' // Empty string for cleaner look
+                : (spotsExhausted ? 'Plan your life like a CEO' : 'Plan your life like a CEO • One-time payment')
+            }
           </Text>
 
           {/* Price */}
@@ -404,22 +527,68 @@ const UnifiedBlackPlan = ({
             marginBottom: isMonthlyPlan ? 24 : 16,
             paddingTop: isMonthlyPlan ? 16 : 8,
           }}>
-            <Text style={{
-              fontSize: 48,
-              fontWeight: '200',
-              color: '#FFFFFF',
-              letterSpacing: -2,
-            }}>
-              {getCurrentPrice()}
-            </Text>
-            <Text style={{
-              fontSize: 16,
-              color: 'rgba(255,255,255,0.4)',
-              marginLeft: 6,
-              fontWeight: '400',
-            }}>
-              {spotsExhausted ? (billing === 'annual' ? '/year' : '/mo') : 'once'}
-            </Text>
+            {isLifetimeMember ? (
+              <View style={{ alignItems: 'center' }}>
+                <Text style={{
+                  fontSize: 36,
+                  fontWeight: '300',
+                  color: '#FFD700',
+                  letterSpacing: -1,
+                  textAlign: 'center',
+                }}>
+                  UNLOCKED
+                </Text>
+                <Text style={{
+                  fontSize: 14,
+                  color: 'rgba(255,215,0,0.7)',
+                  marginTop: 4,
+                  fontWeight: '400',
+                  textAlign: 'center',
+                }}>
+                  All features included forever
+                </Text>
+              </View>
+            ) : isMonthlySubscriber ? (
+              <View style={{ alignItems: 'center' }}>
+                <Text style={{
+                  fontSize: 36,
+                  fontWeight: '300',
+                  color: theme.primary || '#2196F3',
+                  letterSpacing: -1,
+                  textAlign: 'center',
+                }}>
+                  ACTIVE
+                </Text>
+                <Text style={{
+                  fontSize: 14,
+                  color: `${theme.primary || '#2196F3'}B3`,
+                  marginTop: 4,
+                  fontWeight: '400',
+                  textAlign: 'center',
+                }}>
+                  Pro features unlocked
+                </Text>
+              </View>
+            ) : (
+              <>
+                <Text style={{
+                  fontSize: 48,
+                  fontWeight: '200',
+                  color: '#FFFFFF',
+                  letterSpacing: -2,
+                }}>
+                  {getCurrentPrice()}
+                </Text>
+                <Text style={{
+                  fontSize: 16,
+                  color: 'rgba(255,255,255,0.4)',
+                  marginLeft: 6,
+                  fontWeight: '400',
+                }}>
+                  {spotsExhausted ? (billing === 'annual' ? '/year' : '/mo') : 'once'}
+                </Text>
+              </>
+            )}
           </View>
 
 
@@ -439,7 +608,99 @@ const UnifiedBlackPlan = ({
             width: '100%',
             paddingHorizontal: 20,
           }}>
-            {spotsExhausted ? (
+            {isLifetimeMember ? (
+              /* Lifetime member: Special founder features */
+              <View style={{ alignItems: 'center' }}>
+                <Text style={{
+                  fontSize: 14,
+                  color: '#FFD700',
+                  fontWeight: '600',
+                  marginBottom: 8,
+                  textAlign: 'center',
+                }}>
+                  ✓ All Pro Features Unlocked
+                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    if (onNavigateToAIPlans) {
+                      onNavigateToAIPlans();
+                    }
+                  }}
+                  activeOpacity={0.7}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: 'rgba(255,215,0,0.1)',
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
+                    borderRadius: 16,
+                    borderWidth: 1,
+                    borderColor: 'rgba(255,215,0,0.3)',
+                  }}
+                >
+                  <Text style={{
+                    fontSize: 12,
+                    color: '#FFD700',
+                    fontWeight: '500',
+                    marginRight: 4,
+                  }}>
+                    Add AI Plans
+                  </Text>
+                  <Ionicons 
+                    name="arrow-forward" 
+                    size={12} 
+                    color="#FFD700"
+                  />
+                </TouchableOpacity>
+              </View>
+            ) : isMonthlySubscriber ? (
+              /* Monthly subscriber: Focus on AI add-ons */
+              <View style={{ alignItems: 'center' }}>
+                <Text style={{
+                  fontSize: 14,
+                  color: theme.primary || '#2196F3',
+                  fontWeight: '600',
+                  marginBottom: 8,
+                  textAlign: 'center',
+                }}>
+                  ✓ All Pro Features Active
+                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    if (onNavigateToAIPlans) {
+                      onNavigateToAIPlans();
+                    }
+                  }}
+                  activeOpacity={0.7}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: `${theme.primary || '#2196F3'}1A`,
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
+                    borderRadius: 16,
+                    borderWidth: 1,
+                    borderColor: `${theme.primary || '#2196F3'}4D`,
+                  }}
+                >
+                  <Text style={{
+                    fontSize: 12,
+                    color: theme.primary || '#2196F3',
+                    fontWeight: '500',
+                    marginRight: 4,
+                  }}>
+                    Add AI Plans
+                  </Text>
+                  <Ionicons 
+                    name="arrow-forward" 
+                    size={12} 
+                    color={theme.primary || '#2196F3'}
+                  />
+                </TouchableOpacity>
+              </View>
+            ) : spotsExhausted ? (
               /* Sold out: Only 2 pills centered - Fortune 500 tools and All features */
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                 <FeaturePill text="Fortune 500 tools" isSelected={isSelected} />
@@ -483,39 +744,32 @@ const UnifiedBlackPlan = ({
           </View>
 
           {/* CTA Button */}
-          <TouchableOpacity
+          <View
             style={{
-              backgroundColor: '#FFFFFF',
+              backgroundColor: isLifetimeMember ? '#FFD700' : isMonthlySubscriber ? (theme.primary || '#2196F3') : '#FFFFFF',
               borderRadius: 14,
               paddingVertical: 16,
               paddingHorizontal: 48,
-              shadowColor: '#FFFFFF',
+              shadowColor: isLifetimeMember ? '#FFD700' : '#FFFFFF',
               shadowOffset: { width: 0, height: 0 },
               shadowOpacity: 0.1,
               shadowRadius: 10,
+              opacity: isLifetimeMember ? 0.9 : 1,
             }}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              if (handlePurchase) {
-                handlePurchase('founding');
-              } else {
-                handleSelectPlan('founding');
-              }
-            }}
-            disabled={isLifetimeMember}
           >
             <Text style={{
               fontSize: 16,
               fontWeight: '700',
-              color: '#000000',
+              color: isLifetimeMember ? '#000000' : isMonthlySubscriber ? '#FFFFFF' : '#000000',
               letterSpacing: 0.5,
+              textAlign: 'center',
             }}>
-              {isLifetimeMember ? 'YOU HAVE PRO' : 'GET PRO ACCESS'}
+              {isLifetimeMember ? 'FOUNDER MEMBER' : isMonthlySubscriber ? 'SUBSCRIPTION ACTIVE' : 'GET PRO ACCESS'}
             </Text>
-          </TouchableOpacity>
+          </View>
 
-          {/* Limited founders text inside selection area */}
-          {!isMonthlyPlan && (
+          {/* Limited founders text inside selection area - Hide for lifetime members */}
+          {!isMonthlyPlan && !isLifetimeMember && !isMonthlySubscriber && (
             <View style={{
               alignItems: 'center',
               justifyContent: 'center',
@@ -581,75 +835,127 @@ const UnifiedBlackPlan = ({
           )}
         </TouchableOpacity>
         
-        {/* Money Back Guarantee - Clickable */}
-        <TouchableOpacity 
-          style={{
+        {/* Money Back Guarantee - Clickable - Hide for lifetime members and monthly subscribers */}
+        {!isLifetimeMember && !isMonthlySubscriber && (
+          <TouchableOpacity 
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginTop: 4,
+              paddingHorizontal: 20,
+              paddingVertical: 8,
+            }}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setShowGuaranteeInfo(true);
+            }}
+            activeOpacity={0.7}
+          >
+            <Ionicons 
+              name="checkmark-circle" 
+              size={14} 
+              color="#4CAF50"
+              style={{ marginRight: 6 }}
+            />
+            <Text style={{
+              fontSize: 12,
+              color: '#4CAF50',
+              textAlign: 'center',
+              fontWeight: '600',
+              textDecorationLine: 'underline',
+              textDecorationColor: '#4CAF50',
+            }}>
+              100% Money Back Guarantee
+            </Text>
+            <Ionicons 
+              name="information-circle-outline" 
+              size={12} 
+              color="#4CAF50"
+              style={{ marginLeft: 4 }}
+            />
+          </TouchableOpacity>
+        )}
+
+        {/* Security message under the card - Hide for lifetime members and monthly subscribers */}
+        {!isLifetimeMember && !isMonthlySubscriber && (
+          <View style={{
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
-            marginTop: 4,
-            paddingHorizontal: 20,
-            paddingVertical: 8,
-          }}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setShowGuaranteeInfo(true);
-          }}
-          activeOpacity={0.7}
-        >
-          <Ionicons 
-            name="checkmark-circle" 
-            size={14} 
-            color="#4CAF50"
-            style={{ marginRight: 6 }}
-          />
-          <Text style={{
-            fontSize: 12,
-            color: '#4CAF50',
-            textAlign: 'center',
-            fontWeight: '600',
-            textDecorationLine: 'underline',
-            textDecorationColor: '#4CAF50',
+            marginTop: 0,
           }}>
-            100% Money Back Guarantee
-          </Text>
-          <Ionicons 
-            name="information-circle-outline" 
-            size={12} 
-            color="#4CAF50"
-            style={{ marginLeft: 4 }}
-          />
-        </TouchableOpacity>
-
-        {/* Security message under the card */}
-        <View style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginTop: 0,
-        }}>
-          <Text style={{
-            fontSize: 11,
-            color: 'rgba(255,255,255,0.6)',
-            textAlign: 'center',
-          }}>
-            One-time payment • 
-          </Text>
-          <Ionicons 
-            name="shield-checkmark" 
-            size={12} 
-            color="rgba(255,255,255,0.6)"
-            style={{ marginLeft: 4, marginRight: 2 }}
-          />
-          <Text style={{
-            fontSize: 11,
-            color: 'rgba(255,255,255,0.6)',
-            textAlign: 'center',
-          }}>
-            Secure App Store billing
-          </Text>
-        </View>
+            <Text style={{
+              fontSize: 11,
+              color: 'rgba(255,255,255,0.6)',
+              textAlign: 'center',
+            }}>
+              One-time payment • 
+            </Text>
+            <Ionicons 
+              name="shield-checkmark" 
+              size={12} 
+              color="rgba(255,255,255,0.6)"
+              style={{ marginLeft: 4, marginRight: 2 }}
+            />
+            <Text style={{
+              fontSize: 11,
+              color: 'rgba(255,255,255,0.6)',
+              textAlign: 'center',
+            }}>
+              Secure App Store billing
+            </Text>
+          </View>
+        )}
       </View>
+
+      {/* Rain Animation Overlay */}
+      {crowns.length > 0 && (
+        <View style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          pointerEvents: 'none',
+          zIndex: 1000,
+        }}>
+          {crowns.map((icon) => (
+            <Animated.View
+              key={icon.id}
+              style={{
+                position: 'absolute',
+                left: icon.x,
+                top: 0,
+                transform: [
+                  { translateY: icon.translateY },
+                  { 
+                    rotate: icon.rotate.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ['0deg', '360deg']
+                    })
+                  }
+                ],
+                opacity: icon.opacity,
+              }}
+            >
+              {isLifetimeMember ? (
+                <FontAwesome5 
+                  name="crown" 
+                  size={28} 
+                  color="#FFD700"
+                />
+              ) : (
+                <Ionicons 
+                  name="compass" 
+                  size={28} 
+                  color={theme.primary || '#2196F3'}
+                />
+              )}
+            </Animated.View>
+          ))}
+        </View>
+      )}
 
       {/* Founder Info Modal */}
       <Modal

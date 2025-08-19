@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import ResponsiveText from '../components/ResponsiveText';
+import TypingAnimation from '../components/TypingAnimation';
 import NavigationHeader from '../components/NavigationHeader';
 import { getRelevantStats } from '../utils/getLanguageStats';
 import { getAustralianRelevantStats } from '../data/australianGoalStats';
@@ -45,8 +46,11 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
     return t(key, namespace, params);
   };
 
-  // Core state - simplified without AI messaging
-  const [allMessagesComplete, setAllMessagesComplete] = useState(true); // Skip AI messages
+  // Core state - with AI messaging
+  const [messageStep, setMessageStep] = useState(1);
+  const [messageComplete, setMessageComplete] = useState(false);
+  const [showTapToContinue, setShowTapToContinue] = useState(false);
+  const [allMessagesComplete, setAllMessagesComplete] = useState(false); // Start with AI messages
   const [isTransitioning, setIsTransitioning] = useState(false); // Prevent rapid taps
   const [hasCompleted, setHasCompleted] = useState(false); // Prevent multiple completion calls
   
@@ -72,6 +76,9 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
   
   // Icon animation for sparkle icon
   const iconPulse = useRef(new Animated.Value(1)).current;
+  
+  // Ref for typing animation
+  const typingRef = useRef(null);
   
   // Fallback domain and goal data
   const defaultDomain = {
@@ -201,6 +208,23 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
     }
   }, [domain, goal, country, currentLanguage]); // Make sure this effect reruns when domain, goal, or country changes
   
+  // Show tap prompt when message is complete
+  useEffect(() => {
+    if (messageComplete && !allMessagesComplete) {
+      // Delay showing tap prompt to give user time to read
+      const showPromptTimeout = setTimeout(() => {
+        setShowTapToContinue(true);
+        Animated.timing(tapPromptOpacity, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true
+        }).start();
+      }, 1000);
+
+      return () => clearTimeout(showPromptTimeout);
+    }
+  }, [messageComplete, allMessagesComplete]);
+  
   // Removed message handling - skip AI prompts
   
   // Show congrats animation after all messages are complete
@@ -238,13 +262,11 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
   const getCurrentMessage = () => {
     switch(messageStep) {
       case 1:
-        return translate('message1');
+        return "🚀 Your plan is ready!";
       case 2:
-        return translate('message2');
+        return "Now discover the same tools Fortune 500 companies use to make real progress: Kanban boards to organise work, time blocking to schedule progress, and AI assistance to stay on track.";
       case 3:
-        return translate('message3');
-      case 4:
-        return translate('message4');
+        return "Let's turn this plan into reality!";
       default:
         return "";
     }
@@ -282,7 +304,7 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
         useNativeDriver: true
       }).start();
       
-      if (messageStep < 4) {
+      if (messageStep < 3) {
         // Transition to next message
         Animated.timing(messageTextOpacity, {
           toValue: 0,
@@ -302,7 +324,7 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
             setIsTransitioning(false);
           });
         });
-      } else if (messageStep === 4) {
+      } else if (messageStep === 3) {
         // All messages complete, show congratulations
         Animated.timing(messageOpacity, {
           toValue: 0,
@@ -465,7 +487,15 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
   
   return (
     <View style={styles.container}>
-      {/* Removed full-screen touchable - not needed */}
+      {/* Full-screen touchable overlay - only visible before congratulations appears */}
+      {!allMessagesComplete && (
+        <TouchableOpacity
+          style={styles.fullScreenTouchable}
+          activeOpacity={1}
+          onPress={handleScreenTap}
+          pointerEvents="box-none"
+        />
+      )}
       
       <ScrollView 
         contentContainerStyle={[
@@ -490,9 +520,14 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
               </Animated.View>
             </View>
             <Animated.View style={[styles.messageTextContainer, { opacity: messageTextOpacity }]}>
-              <ResponsiveText style={styles.messageText}>
-                🎉 Congratulations! Your personalized life compass is ready.
-              </ResponsiveText>
+              <TypingAnimation
+                ref={typingRef}
+                key={messageStep} // Force re-render when step changes
+                text={getCurrentMessage()}
+                typingSpeed={30}
+                onComplete={() => setMessageComplete(true)}
+                style={styles.messageText}
+              />
             </Animated.View>
           </Animated.View>
         )}
@@ -655,6 +690,26 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
         </SafeAreaView>
       )}
       
+      {/* Tap to continue prompt */}
+      {showTapToContinue && !allMessagesComplete && (
+        <Animated.View 
+          style={[
+            styles.centralTapPrompt,
+            { opacity: tapPromptOpacity }
+          ]}
+        >
+          <ResponsiveText style={styles.tapPromptText}>
+            Tap to continue
+          </ResponsiveText>
+          <Ionicons 
+            name="hand-left" 
+            size={24} 
+            color="rgba(255,255,255,0.7)" 
+            style={styles.tapPromptIcon}
+          />
+        </Animated.View>
+      )}
+      
       {/* Details Modal */}
       <Modal
         visible={showDetailsModal}
@@ -809,6 +864,11 @@ const styles = StyleSheet.create({
   messageTextContainer: {
     flex: 1,
   },
+  messageText: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    lineHeight: 24,
+  },
   centralTapPrompt: {
     position: 'absolute',
     left: 0,
@@ -820,7 +880,7 @@ const styles = StyleSheet.create({
   },
   tapPromptText: {
     fontSize: 16,
-    color: 'rgba(255,255,255,0.7)',
+    color: 'rgba(255, 255, 255, 0.8)',
     marginBottom: 8,
   },
   tapPromptIcon: {

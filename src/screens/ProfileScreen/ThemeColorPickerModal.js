@@ -1443,7 +1443,7 @@ const ThemeColorPickerModal = ({
                               }}
                               accessible={true}
                               accessibilityRole="button"
-                              accessibilityLabel={`Empty custom color slot ${index + 1}`}
+                              accessibilityLabel={`Empty custom colour slot ${index + 1}`}
                               accessibilityHint="Tap to create a new custom theme"
                             >
                               <Ionicons 

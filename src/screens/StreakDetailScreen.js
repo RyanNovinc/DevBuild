@@ -12,7 +12,9 @@ import {
   Platform,
   SafeAreaView,
   Animated,
-  Easing
+  Easing,
+  Alert,
+  KeyboardAvoidingView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -95,11 +97,17 @@ const StreakDetailScreen = ({ navigation, route }) => {
   const [showChecklistModal, setShowChecklistModal] = useState(false);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [showSaveDataModal, setShowSaveDataModal] = useState(false);
+  const [savedInstances, setSavedInstances] = useState([]);
+  const [fileToDelete, setFileToDelete] = useState(null); // {id, name}
+  const [showStorageLimitMsg, setShowStorageLimitMsg] = useState(false);
   const [newItem, setNewItem] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   
-  // Save data browser state
-  const [savedInstances, setSavedInstances] = useState([]);
+  // Header title editing state
+  const [isEditingHeaderTitle, setIsEditingHeaderTitle] = useState(false);
+  const [headerTitleValue, setHeaderTitleValue] = useState('');
+  const [showTitleEditModal, setShowTitleEditModal] = useState(false);
+  
   
   // Main streak data state
   const [streakData, setStreakData] = useState({
@@ -257,57 +265,107 @@ const StreakDetailScreen = ({ navigation, route }) => {
     }
   };
 
-  // Load all saved streak instances for the save data browser (limit to 3)
-  const loadSavedInstances = async () => {
+
+
+
+  // Clean up excess saved files (keep only 3 most recent)
+  const cleanupExcessFiles = async () => {
     try {
       const allKeys = await AsyncStorage.getAllKeys();
-      const widgetDataKeys = allKeys.filter(key => key.startsWith('widget_data_'));
-      const instances = [];
+      const widgetDataKeys = allKeys.filter(key => key.startsWith('widget_data_streak_'));
+      
+      if (widgetDataKeys.length <= 3) {
+        console.log('📂 No cleanup needed, have', widgetDataKeys.length, 'files');
+        return;
+      }
 
+      console.log('🧹 Cleaning up excess files. Found:', widgetDataKeys.length, 'files');
+      
+      // Load all files with their timestamps
+      const filesWithData = [];
       for (const key of widgetDataKeys) {
         try {
           const data = await AsyncStorage.getItem(key);
           if (data) {
             const parsedData = JSON.parse(data);
-            // Only include streak counter data
-            if (parsedData.streakName || parsedData.currentStreak !== undefined) {
-              // Create a better name for saved instances
-              const savedAt = parsedData.savedAt ? new Date(parsedData.savedAt) : new Date();
-              const instanceName = parsedData.streakName && parsedData.streakName !== 'My Streak' 
-                ? `${parsedData.streakName} (${savedAt.toLocaleDateString()})`
-                : `Saved ${savedAt.toLocaleDateString()} ${savedAt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
-              
+            filesWithData.push({
+              key: key,
+              savedAt: parsedData.savedAt || 0,
+              name: parsedData.streakName || 'Unnamed'
+            });
+          }
+        } catch (error) {
+          console.error('Error reading file for cleanup:', key, error);
+        }
+      }
+
+      // Sort by most recent first
+      const sortedFiles = filesWithData.sort((a, b) => b.savedAt - a.savedAt);
+      
+      // Keep only the 3 most recent
+      const filesToKeep = sortedFiles.slice(0, 3);
+      const filesToDelete = sortedFiles.slice(3);
+      
+      console.log('🧹 Keeping:', filesToKeep.map(f => f.name));
+      console.log('🧹 Deleting:', filesToDelete.map(f => f.name));
+
+      // Delete the excess files
+      for (const file of filesToDelete) {
+        await AsyncStorage.removeItem(file.key);
+        console.log('🧹 Deleted:', file.name);
+      }
+
+      console.log('🧹 Cleanup complete. Remaining files:', filesToKeep.length);
+    } catch (error) {
+      console.error('Error during cleanup:', error);
+    }
+  };
+
+  // Load all saved streak instances (limit to 3)
+  const loadSavedInstances = async () => {
+    try {
+      // First, clean up any excess files
+      await cleanupExcessFiles();
+      
+      const allKeys = await AsyncStorage.getAllKeys();
+      const widgetDataKeys = allKeys.filter(key => key.startsWith('widget_data_streak_'));
+      console.log('📂 Found widget data keys:', widgetDataKeys.length, widgetDataKeys);
+      const instances = [];
+
+      for (const key of widgetDataKeys) { // Get all keys, we'll limit after sorting
+        try {
+          const data = await AsyncStorage.getItem(key);
+          if (data) {
+            const parsedData = JSON.parse(data);
+            if (parsedData.streakName && parsedData.streakName.trim()) {
               instances.push({
                 id: key,
-                name: instanceName,
+                name: parsedData.streakName.trim(),
                 currentStreak: parsedData.currentStreak || 0,
                 longestStreak: parsedData.longestStreak || 0,
                 lastUpdated: parsedData.lastCheckIn || 'Never',
-                data: parsedData
+                data: parsedData,
+                savedAt: parsedData.savedAt || Date.now()
               });
             }
           }
         } catch (error) {
           console.error('Error loading instance:', key, error);
+          await AsyncStorage.removeItem(key); // Remove corrupted data
         }
       }
 
-      // Also check old storage for migration
-      const oldData = await AsyncStorage.getItem('streakData');
-      if (oldData && !instances.length) {
-        const parsedOldData = JSON.parse(oldData);
-        instances.push({
-          id: 'legacy_streak',
-          name: parsedOldData.streakName || 'Legacy Streak',
-          currentStreak: parsedOldData.currentStreak || 0,
-          longestStreak: parsedOldData.longestStreak || 0,
-          lastUpdated: parsedOldData.lastCheckIn || 'Never',
-          data: parsedOldData
-        });
-      }
+      console.log('📂 Valid instances found:', instances.length, instances.map(i => i.name));
 
+      // Sort by most recent first
+      const sortedInstances = instances.sort((a, b) => {
+        return (b.savedAt || 0) - (a.savedAt || 0);
+      });
+      
       // Limit to 3 most recent instances
-      setSavedInstances(instances.slice(0, 3));
+      const finalInstances = sortedInstances.slice(0, 3);
+      console.log('📂 Setting instances:', finalInstances.map(i => i.name));
+      setSavedInstances(finalInstances);
     } catch (error) {
       console.error('Error loading saved instances:', error);
     }
@@ -319,52 +377,92 @@ const StreakDetailScreen = ({ navigation, route }) => {
       setStreakData(instance.data);
       await saveStreakData(instance.data);
       setShowSaveDataModal(false);
-      showSuccess(`Loaded "${instance.name}" streak data`);
+      showSuccess(`Loaded "${instance.name}" successfully!`);
     } catch (error) {
       console.error('Error loading saved instance:', error);
       showError('Failed to load streak data');
     }
   };
 
-  // Handle going back with automatic saving
-  const handleGoBack = async () => {
-    setIsSaving(true);
+  // Delete a saved instance
+  const deleteSavedInstance = async (instanceId, instanceName) => {
     try {
-      // Update the widget in the dashboard via callback first
-      if (onStreakDataUpdate) {
-        onStreakDataUpdate(streakData);
-      }
+      console.log('🗑️ Deleting instance:', instanceId, instanceName);
       
-      // Save current data as a separate instance using the function from StreakCounter
-      if (saveCurrentStreakInstance) {
-        await saveCurrentStreakInstance(streakData);
-      } else {
-        // Fallback: save directly if function not available
-        const timestamp = Date.now();
-        const saveId = `widget_data_streak_${timestamp}`;
-        
-        const dataToSave = {
-          ...streakData,
-          lastUpdated: new Date().toISOString(),
-          savedAt: timestamp
-        };
-        
-        await AsyncStorage.setItem(saveId, JSON.stringify(dataToSave));
-        console.log('Streak data auto-saved with ID:', saveId);
-      }
+      // Check if it exists before deletion
+      const beforeData = await AsyncStorage.getItem(instanceId);
+      console.log('🗑️ Before deletion - exists:', !!beforeData);
       
-      // Add a minimum delay to ensure the user sees the saving indicator
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await AsyncStorage.removeItem(instanceId);
+      
+      // Check if it's actually gone
+      const afterData = await AsyncStorage.getItem(instanceId);
+      console.log('🗑️ After deletion - exists:', !!afterData);
+      
+      console.log('🗑️ Instance deleted, refreshing list...');
+      await loadSavedInstances(); // Refresh the list
+      console.log('🗑️ List refreshed');
+      showSuccess(`"${instanceName}" deleted successfully!`);
     } catch (error) {
-      console.error('Error auto-saving streak data:', error);
-    } finally {
-      setIsSaving(false);
-      navigation.goBack();
+      console.error('Error deleting saved instance:', error);
+      showError('Failed to delete saved data');
     }
   };
 
-  // Start fresh with new streak
+  // Save current streak data to files
+  const saveCurrentDataToFiles = async () => {
+    try {
+      // Clean up excess files first
+      await cleanupExcessFiles();
+      
+      const allKeys = await AsyncStorage.getAllKeys();
+      const savedFiles = allKeys.filter(key => key.startsWith('widget_data_streak_'));
+      
+      if (savedFiles.length >= 3) {
+        Alert.alert(
+          '📁 Storage Limit Reached',
+          'You\'ve reached the maximum of 3 saved streaks.\n\nTo save new data, please delete an existing streak first.',
+          [
+            { text: 'Got it', style: 'default' }
+          ],
+          { 
+            cancelable: true,
+            userInterfaceStyle: 'light'
+          }
+        );
+        return;
+      }
+
+      const timestamp = Date.now();
+      const saveId = `widget_data_streak_${timestamp}`;
+      const dataToSave = {
+        ...streakData,
+        savedAt: timestamp,
+        lastUpdated: new Date().toISOString()
+      };
+      
+      await AsyncStorage.setItem(saveId, JSON.stringify(dataToSave));
+      await loadSavedInstances(); // Refresh the list
+      showSuccess('Streak data saved successfully!');
+    } catch (error) {
+      console.error('Error saving streak data:', error);
+      showError('Failed to save streak data');
+    }
+  };
+
+  // Start fresh streak
   const startFreshStreak = async () => {
+    // Clean up excess files first
+    await cleanupExcessFiles();
+    
+    const allKeys = await AsyncStorage.getAllKeys();
+    const savedFiles = allKeys.filter(key => key.startsWith('widget_data_streak_'));
+    
+    if (savedFiles.length >= 3) {
+      setShowStorageLimitMsg(true);
+      return;
+    }
+
     const freshData = {
       streakName: 'My Streak',
       streakIcon: 'flame',
@@ -381,11 +479,57 @@ const StreakDetailScreen = ({ navigation, route }) => {
         { id: '3', text: 'Stay consistent', completed: false }
       ]
     };
+    
     setStreakData(freshData);
     await saveStreakData(freshData);
     setShowSaveDataModal(false);
-    showSuccess('Started fresh streak');
+    showSuccess('Fresh streak started!');
   };
+
+  // Handle going back with automatic saving
+  const handleGoBack = async () => {
+    setIsSaving(true);
+    try {
+      // Update the widget in the dashboard via callback first
+      if (onStreakDataUpdate) {
+        onStreakDataUpdate(streakData);
+      }
+      
+      // Silently check if we can save (3-file limit) - no popup here
+      const canSave = await checkSavedInstancesLimit();
+      
+      if (canSave) {
+        // Save current data as a separate instance using the function from StreakCounter
+        if (saveCurrentStreakInstance) {
+          await saveCurrentStreakInstance(streakData);
+        } else {
+          // Fallback: save directly if function not available
+          const timestamp = Date.now();
+          const saveId = `widget_data_streak_${timestamp}`;
+          
+          const dataToSave = {
+            ...streakData,
+            lastUpdated: new Date().toISOString(),
+            savedAt: timestamp
+          };
+          
+          await AsyncStorage.setItem(saveId, JSON.stringify(dataToSave));
+          console.log('Streak data auto-saved with ID:', saveId);
+        }
+      } else {
+        console.log('Auto-save skipped - storage limit reached');
+      }
+      
+      // Add a minimum delay to ensure the user sees the saving indicator
+      await new Promise(resolve => setTimeout(resolve, 800));
+    } catch (error) {
+      console.error('Error auto-saving streak data:', error);
+    } finally {
+      setIsSaving(false);
+      navigation.goBack();
+    }
+  };
+
 
   const updateStreak = async () => {
     try {
@@ -522,6 +666,56 @@ const StreakDetailScreen = ({ navigation, route }) => {
       console.error('Error resetting streak:', error);
       showError('Failed to reset streak');
     }
+  };
+
+  // Handle header title editing
+  const handleHeaderTitlePress = () => {
+    setHeaderTitleValue(streakData.streakName);
+    setShowTitleEditModal(true);
+  };
+
+  const handleHeaderTitleSave = async () => {
+    const trimmedTitle = headerTitleValue.trim();
+    if (trimmedTitle === '') {
+      showError('Title cannot be empty');
+      return;
+    }
+    
+    const updatedData = {
+      ...streakData,
+      streakName: trimmedTitle
+    };
+    
+    const success = await saveStreakData(updatedData);
+    if (success) {
+      setStreakData(updatedData);
+      setShowTitleEditModal(false);
+      showSuccess('Title updated');
+      
+      // Update the widget via callback
+      if (onStreakDataUpdate) {
+        onStreakDataUpdate(updatedData);
+      }
+      
+      // Check if we can save a new instance (3-file limit)
+      const canSave = await checkSavedInstancesLimit();
+      
+      if (canSave) {
+        // Immediately save this as a new instance so it appears in saved data
+        if (saveCurrentStreakInstance) {
+          try {
+            await saveCurrentStreakInstance(updatedData);
+          } catch (error) {
+            console.error('Error auto-saving after title change:', error);
+          }
+        }
+      }
+    }
+  };
+
+  const handleHeaderTitleCancel = () => {
+    setHeaderTitleValue('');
+    setShowTitleEditModal(false);
   };
 
   // Update checklist items
@@ -742,7 +936,7 @@ const StreakDetailScreen = ({ navigation, route }) => {
             </Text>
             
             <Text style={[styles.infoText, { color: theme.text }]}>
-              • Customize your tracker with different colors and icons
+              • Customize your tracker with different colours and icons
             </Text>
             
             <Text style={[styles.infoText, { color: theme.text }]}>
@@ -970,6 +1164,218 @@ const StreakDetailScreen = ({ navigation, route }) => {
     </Modal>
   );
 
+  // Clean, professional save data modal
+  const renderSaveDataModal = () => (
+    <Modal
+      visible={showSaveDataModal}
+      animationType="fade"
+      transparent={true}
+      onRequestClose={() => setShowSaveDataModal(false)}
+    >
+      <View style={styles.cleanModalOverlay}>
+        <View style={styles.cleanModalContainer}>
+          {/* Header */}
+          <View style={styles.cleanModalHeader}>
+            <View style={styles.cleanModalIconContainer}>
+              <Ionicons 
+                name={
+                  fileToDelete ? "trash-outline" : 
+                  showStorageLimitMsg ? "archive" : 
+                  "folder-outline"
+                } 
+                size={24} 
+                color={
+                  fileToDelete ? "#EF4444" : 
+                  showStorageLimitMsg ? "#F97316" : 
+                  "#8E8E93"
+                } 
+              />
+            </View>
+            <Text style={styles.cleanModalTitle}>
+              {fileToDelete ? "Delete File?" : 
+               showStorageLimitMsg ? "Storage Limit Reached" : 
+               "Streak Files"}
+            </Text>
+            <Text style={styles.cleanModalSubtitle}>
+              {fileToDelete 
+                ? `Are you sure you want to delete "${fileToDelete.name}"? This cannot be undone.`
+                : showStorageLimitMsg 
+                ? "You've reached the maximum of 3 saved streaks. Please delete an existing streak to continue."
+                : "Manage your saved streaks (3 max)"
+              }
+            </Text>
+          </View>
+          
+          {/* Action Buttons - Different content based on state */}
+          <View style={styles.cleanActionButtonsContainer}>
+            {fileToDelete ? (
+              // Delete confirmation buttons
+              <>
+                <TouchableOpacity 
+                  style={[styles.cleanActionButton, styles.cancelButton]}
+                  onPress={() => setFileToDelete(null)}
+                >
+                  <Text style={styles.cleanActionButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[styles.cleanActionButton, styles.deleteButton]}
+                  onPress={async () => {
+                    await deleteSavedInstance(fileToDelete.id, fileToDelete.name);
+                    setFileToDelete(null);
+                  }}
+                >
+                  <Ionicons name="trash-outline" size={18} color="#FFFFFF" />
+                  <Text style={styles.cleanActionButtonText}>Delete</Text>
+                </TouchableOpacity>
+              </>
+            ) : showStorageLimitMsg ? (
+              // Storage limit message - single button
+              <TouchableOpacity 
+                style={[styles.cleanActionButton, styles.storageOkButton]}
+                onPress={() => setShowStorageLimitMsg(false)}
+              >
+                <Text style={styles.cleanActionButtonText}>Got it</Text>
+              </TouchableOpacity>
+            ) : (
+              // Normal action buttons
+              <>
+                <TouchableOpacity 
+                  style={[styles.cleanActionButton, styles.saveButton]}
+                  onPress={saveCurrentDataToFiles}
+                >
+                  <Ionicons name="bookmark-outline" size={18} color="#FFFFFF" />
+                  <Text style={styles.cleanActionButtonText}>Save Current</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[styles.cleanActionButton, styles.freshButton]}
+                  onPress={startFreshStreak}
+                >
+                  <Ionicons name="add-outline" size={18} color="#FFFFFF" />
+                  <Text style={styles.cleanActionButtonText}>Start Fresh</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+          
+          {/* Files List - Only show when in normal mode */}
+          {!fileToDelete && !showStorageLimitMsg && (
+            <View style={styles.cleanFilesContainer}>
+              {savedInstances.length > 0 ? (
+              savedInstances.map((instance, index) => (
+                <TouchableOpacity
+                  key={instance.id}
+                  style={styles.cleanFileItem}
+                  onPress={() => loadSavedInstance(instance)}
+                >
+                  <View style={styles.cleanFileIconContainer}>
+                    <Ionicons name="document-outline" size={20} color="#8E8E93" />
+                  </View>
+                  <View style={styles.cleanFileInfo}>
+                    <Text style={styles.cleanFileName}>{instance.name}</Text>
+                    <Text style={styles.cleanFileStats}>
+                      {instance.currentStreak} days • Best: {instance.longestStreak}
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.cleanDeleteButton}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      setFileToDelete({ id: instance.id, name: instance.name });
+                    }}
+                  >
+                    <Ionicons name="trash-outline" size={16} color="#EF4444" />
+                  </TouchableOpacity>
+                </TouchableOpacity>
+              ))
+            ) : (
+              <View style={styles.cleanEmptyState}>
+                <Ionicons name="folder-open-outline" size={32} color="#48484A" />
+                <Text style={styles.cleanEmptyText}>No saved files</Text>
+              </View>
+            )}
+            </View>
+          )}
+          
+          {/* Close Button */}
+          <TouchableOpacity 
+            style={styles.cleanCloseButton}
+            onPress={() => {
+              setFileToDelete(null); // Reset delete state
+              setShowStorageLimitMsg(false); // Reset storage limit state
+              setShowSaveDataModal(false);
+            }}
+          >
+            <Text style={styles.cleanCloseButtonText}>Close</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+
+  // Title Edit Modal
+  const renderTitleEditModal = () => (
+    <Modal
+      visible={showTitleEditModal}
+      animationType="fade"
+      transparent={true}
+      onRequestClose={handleHeaderTitleCancel}
+    >
+      <KeyboardAvoidingView 
+        style={styles.cleanModalOverlay} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
+        <View style={styles.titleEditModalContainer}>
+          {/* Header */}
+          <View style={styles.titleEditModalHeader}>
+            <View style={styles.cleanModalIconContainer}>
+              <Ionicons name="create-outline" size={24} color="#3B82F6" />
+            </View>
+            <Text style={styles.cleanModalTitle}>Edit Streak Name</Text>
+            <Text style={styles.cleanModalSubtitle}>
+              Choose a memorable name for your streak
+            </Text>
+          </View>
+
+          {/* Text Input */}
+          <View style={styles.titleEditInputContainer}>
+            <TextInput
+              style={styles.titleEditInput}
+              value={headerTitleValue}
+              onChangeText={setHeaderTitleValue}
+              autoFocus
+              maxLength={40}
+              placeholder="Enter streak name"
+              placeholderTextColor="#8E8E93"
+              multiline={false}
+              returnKeyType="done"
+              onSubmitEditing={handleHeaderTitleSave}
+            />
+          </View>
+
+          {/* Action Buttons */}
+          <View style={styles.titleEditActions}>
+            <TouchableOpacity 
+              style={[styles.cleanActionButton, styles.cancelButton]}
+              onPress={handleHeaderTitleCancel}
+            >
+              <Text style={styles.cleanActionButtonText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.cleanActionButton, styles.titleSaveButton]}
+              onPress={handleHeaderTitleSave}
+            >
+              <Text style={styles.cleanActionButtonText}>Save</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+
+
   // Reset confirmation modal
   const renderResetConfirmationModal = () => (
     <Modal
@@ -1016,70 +1422,7 @@ const StreakDetailScreen = ({ navigation, route }) => {
     </Modal>
   );
 
-  // Save data browser modal
-  const renderSaveDataModal = () => (
-    <Modal
-      visible={showSaveDataModal}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={() => setShowSaveDataModal(false)}
-    >
-      <View style={[styles.modalOverlay, { backgroundColor: theme.overlay }]}>
-        <View style={[styles.modalContent, styles.saveDataModalContent, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          <View style={styles.modalHeader}>
-            <Text style={[styles.modalTitle, { color: theme.text }]}>Load Saved Data</Text>
-            <TouchableOpacity onPress={() => setShowSaveDataModal(false)}>
-              <Ionicons name="close" size={24} color={theme.textSecondary} />
-            </TouchableOpacity>
-          </View>
-          
-          <Text style={[styles.saveDataDescription, { color: theme.textSecondary }]}>
-            Choose from your saved streak data or start fresh
-          </Text>
-          
-          <ScrollView style={styles.savedInstancesContainer}>
-            {savedInstances.length > 0 ? (
-              savedInstances.map((instance, index) => (
-                <TouchableOpacity
-                  key={instance.id}
-                  style={[styles.savedInstanceItem, { backgroundColor: theme.cardAlt, borderColor: theme.border }]}
-                  onPress={() => loadSavedInstance(instance)}
-                >
-                  <View style={styles.savedInstanceInfo}>
-                    <Text style={[styles.savedInstanceName, { color: theme.text }]}>
-                      {instance.name}
-                    </Text>
-                    <Text style={[styles.savedInstanceStats, { color: theme.textSecondary }]}>
-                      Current: {instance.currentStreak} days • Best: {instance.longestStreak} days
-                    </Text>
-                    <Text style={[styles.savedInstanceDate, { color: theme.textSecondary }]}>
-                      Last updated: {instance.lastUpdated === 'Never' ? 'Never' : new Date(instance.lastUpdated).toLocaleDateString()}
-                    </Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
-                </TouchableOpacity>
-              ))
-            ) : (
-              <View style={styles.noSavedDataContainer}>
-                <Ionicons name="folder-open-outline" size={48} color={theme.textSecondary} />
-                <Text style={[styles.noSavedDataText, { color: theme.textSecondary }]}>
-                  No saved streak data found
-                </Text>
-              </View>
-            )}
-          </ScrollView>
-          
-          <TouchableOpacity 
-            style={[styles.startFreshButton, { backgroundColor: streakData.streakColor }]}
-            onPress={startFreshStreak}
-          >
-            <Ionicons name="add-circle" size={20} color="#FFFFFF" />
-            <Text style={styles.startFreshButtonText}>Start Fresh Streak</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </Modal>
-  );
+
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
@@ -1111,9 +1454,11 @@ const StreakDetailScreen = ({ navigation, route }) => {
         </TouchableOpacity>
         
         <View style={styles.titleContainer}>
-          <Text style={[styles.headerTitle, { color: theme.text }]}>
-            {streakData.streakName}
-          </Text>
+          <TouchableOpacity onPress={handleHeaderTitlePress} style={styles.headerTitleTouchable}>
+            <Text style={[styles.headerTitle, { color: theme.text }]}>
+              {streakData.streakName}
+            </Text>
+          </TouchableOpacity>
           {isSaving && (
             <View style={styles.savingIndicator}>
               <Ionicons name="cloud-upload-outline" size={16} color={streakData.streakColor} />
@@ -1123,17 +1468,6 @@ const StreakDetailScreen = ({ navigation, route }) => {
         </View>
         
         <View style={styles.headerButtons}>
-          <TouchableOpacity
-            style={styles.infoIconButton}
-            onPress={() => setShowInfoModal(true)}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            accessible={true}
-            accessibilityRole="button"
-            accessibilityLabel="View information about this tracker"
-          >
-            <Ionicons name="information-circle-outline" size={22} color={theme.textSecondary} />
-          </TouchableOpacity>
-          
           <TouchableOpacity
             style={styles.saveDataButton}
             onPress={() => {
@@ -1146,6 +1480,17 @@ const StreakDetailScreen = ({ navigation, route }) => {
             accessibilityLabel="Load saved streak data"
           >
             <Ionicons name="folder-outline" size={22} color={theme.textSecondary} />
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.infoIconButton}
+            onPress={() => setShowInfoModal(true)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="View information about this tracker"
+          >
+            <Ionicons name="information-circle-outline" size={22} color={theme.textSecondary} />
           </TouchableOpacity>
           
           <TouchableOpacity
@@ -1501,6 +1846,9 @@ const StreakDetailScreen = ({ navigation, route }) => {
       {renderChecklistModal()}
       {renderResetConfirmationModal()}
       {renderSaveDataModal()}
+      {renderTitleEditModal()}
+      
+      
     </SafeAreaView>
   );
 };
@@ -1550,11 +1898,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.05)'
   },
   headerButtons: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: spacing.xs,
+    marginTop: spacing.xs,
   },
   infoIconButton: {
-    marginRight: spacing.s,
     width: 36,
     height: 36,
     borderRadius: 18,
@@ -1563,7 +1913,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.05)'
   },
   saveDataButton: {
-    marginRight: spacing.s,
     width: 36,
     height: 36,
     borderRadius: 18,
@@ -2104,64 +2453,242 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.m,
     fontWeight: '600',
   },
-  // Save data modal styles
-  saveDataModalContent: {
-    maxHeight: '80%',
+  // Header title editing styles
+  headerTitleEditContainer: {
+    flex: 1,
+    alignItems: 'center',
   },
-  saveDataDescription: {
-    fontSize: fontSizes.s,
-    textAlign: 'center',
-    marginBottom: spacing.l,
-  },
-  savedInstancesContainer: {
-    maxHeight: 300,
-    marginBottom: spacing.l,
-  },
-  savedInstanceItem: {
+  headerTitleInputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: spacing.m,
-    borderRadius: scaleWidth(12),
-    marginBottom: spacing.s,
+    justifyContent: 'center',
+  },
+  headerTitleInput: {
     borderWidth: 1,
-  },
-  savedInstanceInfo: {
-    flex: 1,
-  },
-  savedInstanceName: {
-    fontSize: fontSizes.m,
+    borderRadius: 6,
+    paddingHorizontal: spacing.s,
+    paddingVertical: spacing.xs,
+    minWidth: 120,
+    maxWidth: 160,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    fontSize: fontSizes.l,
     fontWeight: '600',
-    marginBottom: spacing.xxs,
+    marginRight: spacing.s,
   },
-  savedInstanceStats: {
-    fontSize: fontSizes.s,
-    marginBottom: spacing.xxs,
+  headerTitleButtonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  savedInstanceDate: {
-    fontSize: fontSizes.xs,
+  headerTitleActionButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: spacing.xs,
   },
-  noSavedDataContainer: {
+  headerCancelButton: {
+    borderWidth: 1,
+    backgroundColor: 'transparent',
+  },
+  headerSaveButton: {
+    // backgroundColor set dynamically
+  },
+  headerTitleTouchable: {
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.s,
+    borderRadius: 6,
+  },
+  // Clean, professional modal styles
+  cleanModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.xl,
   },
-  noSavedDataText: {
+  cleanModalContainer: {
+    backgroundColor: '#1C1C1E',
+    borderRadius: 24,
+    width: '100%',
+    maxWidth: 380,
+    maxHeight: '80%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.4,
+    shadowRadius: 25,
+    elevation: 25,
+  },
+  cleanModalHeader: {
+    alignItems: 'center',
+    paddingTop: spacing.xl * 1.5,
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.l,
+  },
+  cleanModalIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#2C2C2E',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.m,
+  },
+  cleanModalTitle: {
+    fontSize: fontSizes.xl,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: spacing.xs,
+  },
+  cleanModalSubtitle: {
     fontSize: fontSizes.s,
-    marginTop: spacing.m,
+    color: '#8E8E93',
     textAlign: 'center',
   },
-  startFreshButton: {
+  cleanActionButtonsContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: spacing.xl,
+    marginBottom: spacing.l,
+    gap: spacing.m,
+  },
+  cleanActionButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: spacing.m,
-    borderRadius: scaleWidth(12),
+    borderRadius: 12,
+    gap: spacing.xs,
   },
-  startFreshButtonText: {
+  saveButton: {
+    backgroundColor: '#3B82F6',
+  },
+  freshButton: {
+    backgroundColor: '#10B981',
+  },
+  cancelButton: {
+    backgroundColor: '#6B7280',
+  },
+  deleteButton: {
+    backgroundColor: '#EF4444',
+  },
+  storageOkButton: {
+    backgroundColor: '#F97316',
+  },
+  titleSaveButton: {
+    backgroundColor: '#3B82F6',
+  },
+  cleanActionButtonText: {
     color: '#FFFFFF',
+    fontSize: fontSizes.s,
     fontWeight: '600',
+  },
+  cleanFilesContainer: {
+    paddingHorizontal: spacing.xl,
+    marginBottom: spacing.xl,
+    maxHeight: 240,
+  },
+  cleanFileItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.m,
+    backgroundColor: '#2C2C2E',
+    borderRadius: 12,
+    marginBottom: spacing.s,
+  },
+  cleanFileIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#3A3A3C',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.m,
+  },
+  cleanFileInfo: {
+    flex: 1,
+  },
+  cleanFileName: {
     fontSize: fontSizes.m,
-    marginLeft: spacing.xs,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 2,
+  },
+  cleanFileStats: {
+    fontSize: fontSizes.xs,
+    color: '#8E8E93',
+  },
+  cleanDeleteButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#FF453A20',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cleanEmptyState: {
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  cleanEmptyText: {
+    fontSize: fontSizes.m,
+    color: '#8E8E93',
+    marginTop: spacing.s,
+  },
+  cleanCloseButton: {
+    margin: spacing.xl,
+    paddingVertical: spacing.m,
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#3A3A3C',
+    backgroundColor: '#1C1C1E',
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+  },
+  cleanCloseButtonText: {
+    fontSize: fontSizes.m,
+    fontWeight: '600',
+    color: '#8E8E93',
+  },
+  // Title Edit Modal styles
+  titleEditModalContainer: {
+    backgroundColor: '#1C1C1E',
+    borderRadius: 24,
+    maxWidth: 340,
+    width: '90%',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 20,
+  },
+  titleEditModalHeader: {
+    alignItems: 'center',
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.l,
+    paddingHorizontal: spacing.xl,
+  },
+  titleEditInputContainer: {
+    paddingHorizontal: spacing.xl,
+    marginBottom: spacing.l,
+  },
+  titleEditInput: {
+    backgroundColor: '#2C2C2E',
+    borderRadius: 12,
+    paddingHorizontal: spacing.m,
+    paddingVertical: spacing.m,
+    fontSize: fontSizes.l,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    borderWidth: 2,
+    borderColor: '#3B82F6',
+  },
+  titleEditActions: {
+    flexDirection: 'row',
+    gap: spacing.m,
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.xl,
   },
 });
 

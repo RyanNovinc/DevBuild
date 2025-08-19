@@ -39,8 +39,10 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
   const [showClarificationModal, setShowClarificationModal] = useState(false);
   const [selectedClarification, setSelectedClarification] = useState(null);
   
-  // Get 3 goals from the domain
-  const goals = domain.goals.slice(0, 3);
+  // Get 3 goals from the domain - defensive copy to prevent mutations
+  const goals = domain.goals && Array.isArray(domain.goals) 
+    ? [...domain.goals].slice(0, 3) 
+    : [];
   
   // Helper function to get specific clarification message for each goal
   const getClarificationMessage = (goalName) => {
@@ -104,7 +106,7 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
       'Start Investment Portfolio': 'Starting an investment portfolio',
       'Learn Foreign Language': 'Learning a foreign language',
       'Improve Work-Life Balance': 'Improving work-life balance',
-      'Build Home Organization': 'Building better home organization',
+      'Build Home Organization': 'Building better home organisation',
       'Live Sustainably/Zero-Waste': 'Living sustainably and reducing waste',
       'Master Work-Life Balance': 'Mastering work-life balance',
       'Build Career-Advancing Skills': 'Building career-advancing skills',
@@ -163,9 +165,9 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
       'Plan Dream Wedding': 'Planning your dream wedding',
       // Community & Environment Goals
       'Find Quality Shared Housing': 'Finding quality shared housing',
-      'Create Organized Living Space': 'Creating an organized living space',
+      'Create Organized Living Space': 'Creating an organised living space',
       'Buy First Home': 'Buying your first home',
-      'Organize Living Space': 'Organizing your living space',
+      'Organize Living Space': 'Organising your living space',
       'Create Eco-Friendly Home': 'Creating an eco-friendly home',
       'Create Affordable Home Office Space': 'Creating an affordable home office space',
       'Plan Path to Homeownership': 'Planning a path to homeownership',
@@ -814,7 +816,7 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
     if (name.includes('education') || name.includes('learning') || name.includes('study')) return 'school';
     if (name.includes('communication') || name.includes('speaking') || name.includes('talking')) return 'chatbubble';
     if (name.includes('creativity') || name.includes('artistic') || name.includes('creative')) return 'color-palette';
-    if (name.includes('productivity') || name.includes('organization') || name.includes('efficiency')) return 'checkmark-circle';
+    if (name.includes('productivity') || name.includes('organisation') || name.includes('efficiency')) return 'checkmark-circle';
     if (name.includes('spiritual') || name.includes('religion') || name.includes('faith')) return 'flower';
     
     // Default fallback
@@ -1074,7 +1076,7 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
       case "Purpose & Meaning-Build Purpose-Driven Side Business":
         return "Fantastic choice! Building a purpose-driven side business will combine financial goals with meaningful impact while developing entrepreneurial skills.";
       case "Purpose & Meaning-Use Skills for Community Volunteering":
-        return "Perfect decision! Using your professional skills for volunteering will maximize your impact, advance your career, and create a sense of meaningful contribution.";
+        return "Perfect decision! Using your professional skills for volunteering will maximise your impact, advance your career, and create a sense of meaningful contribution.";
       case "Purpose & Meaning-Volunteer Using Professional Skills":
         return "Excellent choice! Volunteering with your professional skills will amplify your impact, build your network, and add meaningful purpose to your career development.";
       case "Purpose & Meaning-Reduce Environmental Impact":
@@ -1110,13 +1112,13 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
       case "Community & Environment-Create Home Office Setup":
         return "Excellent decision! Creating a proper home office setup will increase your productivity, improve your professional presence, and enhance your work-from-home experience.";
       case "Community & Environment-Improve Home Energy Efficiency":
-        return "Smart goal! Improving your home's energy efficiency will reduce utility bills, increase property value, and minimize your environmental footprint.";
+        return "Smart goal! Improving your home's energy efficiency will reduce utility bills, increase property value, and minimise your environmental footprint.";
       case "Community & Environment-Live Zero-Waste Lifestyle":
         return "Inspiring choice! Living a zero-waste lifestyle will dramatically reduce your environmental impact while often saving money and creating mindful consumption habits.";
       case "Community & Environment-Find Quality Shared Housing":
         return "Practical choice! Finding quality shared housing will help you save money, build social connections, and live in a better location while maintaining financial flexibility.";
       case "Community & Environment-Create Organized Living Space":
-        return "Great decision! Creating an organized living space will save you time daily, reduce stress, and create a more peaceful environment that supports your other goals.";
+        return "Great decision! Creating an organised living space will save you time daily, reduce stress, and create a more peaceful environment that supports your other goals.";
       
       // Indian specific messages
       case "Career & Work-Switch to Tech Career":
@@ -1162,7 +1164,7 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
       case "Purpose & Meaning-Practice Mindfulness":
         return "Wise wellness practice! Mindfulness reduces stress, improves focus, and enhances emotional well-being through greater awareness of thoughts and feelings.";
       case "Community & Environment-Organize Living Space":
-        return "Practical life improvement! An organized living space reduces daily stress, improves efficiency, and creates a peaceful environment that supports well-being.";
+        return "Practical life improvement! An organised living space reduces daily stress, improves efficiency, and creates a peaceful environment that supports well-being.";
       case "Community & Environment-Reduce Environmental Impact":
         return "Responsible environmental choice! Eco-friendly practices help protect the planet while often saving money through reduced consumption and waste.";
       case "Community & Environment-Declutter and Simplify":
@@ -1188,7 +1190,7 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
       case "Health & Wellness-Optimize Nutrition":
         return "Energy foundation! Irish professionals report 62% higher energy through structured nutrition, with exceptional local food quality supporting optimal health and performance.";
       case "Relationships-Plan Dream Wedding":
-        return "Wonderful milestone! Wedding planning in Ireland balances rich cultural traditions with personal preferences to create meaningful celebrations that honor both heritage and individuality.";
+        return "Wonderful milestone! Wedding planning in Ireland balances rich cultural traditions with personal preferences to create meaningful celebrations that honour both heritage and individuality.";
       case "Relationships-Strengthen Family Relationships":
         return "Important connection! Strong family bonds provide emotional support and stability while allowing for personal growth and independence in modern Irish family structures.";
       case "Relationships-Improve Romantic Relationship":
@@ -1212,7 +1214,7 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
       case "Purpose & Meaning-Practice Mindfulness":
         return "Wellness foundation! Mindfulness practices reduce stress, improve focus, and enhance emotional well-being through greater awareness and present-moment living.";
       case "Community & Environment-Organize Living Space":
-        return "Life improvement! An organized home reduces daily stress, improves efficiency, and creates a peaceful environment supporting overall well-being and productivity.";
+        return "Life improvement! An organised home reduces daily stress, improves efficiency, and creates a peaceful environment supporting overall well-being and productivity.";
       case "Community & Environment-Reduce Environmental Impact":
         return "Responsible choice! Ireland's growing sustainability movement shows 64% of consumers purchase eco-friendly products, making environmental responsibility both impactful and socially supported.";
       case "Community & Environment-Declutter and Simplify":
@@ -1534,7 +1536,7 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
             {t('tapToContinue', 'common')}
           </ResponsiveText>
           <Ionicons 
-            name="chevron-down" 
+            name="hand-left" 
             size={24} 
             color="rgba(255,255,255,0.7)" 
             style={styles.tapPromptIcon} 
@@ -1558,8 +1560,8 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
           />
           <ResponsiveText style={styles.infoMessageText}>
   {currentLanguage === 'ja' 
-    ? "このガイドは用意された目標を使用してアプリの機能を紹介します。後で完全にカスタマイズされた目標を作成できます。"
-    : "This walkthrough uses preset goals to show you how the app works. You'll have full freedom to create your own goals later."
+    ? "お探しの目標が見つかりませんか？アプリ内でカスタム目標を作成できます。"
+    : "Don't see what you want? You can create custom goals once you're in the app."
   }
 </ResponsiveText>
         </Animated.View>
@@ -1821,7 +1823,7 @@ const styles = StyleSheet.create({
   },
   tapPromptText: {
     fontSize: 16,
-    color: 'rgba(255,255,255,0.7)',
+    color: 'rgba(255, 255, 255, 0.8)',
     marginBottom: 8,
   },
   tapPromptIcon: {

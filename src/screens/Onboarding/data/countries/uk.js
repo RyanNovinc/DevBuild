@@ -251,7 +251,7 @@ export const DOMAIN_DEFINITIONS = [
                     completed: false
                   },
                   {
-                    name: "Create security assessment report for local business or volunteer organization",
+                    name: "Create security assessment report for local business or volunteer organisation",
                     summary: "Security report",
                     explanation: "Real-world security assessments provide portfolio pieces and practical experience. Many small businesses need affordable security expertise, creating opportunities for skill development.",
                     timeframe: "1 month",
@@ -342,7 +342,7 @@ export const DOMAIN_DEFINITIONS = [
           },
           {
             name: "First-Time Buyer Preparation",
-            description: "Prepare for home purchase process and maximize government support",
+            description: "Prepare for home purchase process and maximise government support",
             explanation: "Average first-time buyer age is 33.5, aligning perfectly with this demographic. Housing remains top financial priority despite challenges.",
             tasks: [
               {
@@ -405,7 +405,7 @@ export const DOMAIN_DEFINITIONS = [
       },
       {
         name: "Maximize ISA Savings",
-        description: "Fully utilize £20,000 annual ISA allowance for tax-free wealth building",
+        description: "Fully utilise £20,000 annual ISA allowance for tax-free wealth building",
         icon: "trending-up",
         explanation: "42% of UK adults have ISAs with average value £33,278. Tax-free growth becomes crucial as more pushed into higher brackets. Flexible between cash ISA and stocks & shares ISA.",
         projects: [
@@ -432,12 +432,12 @@ export const DOMAIN_DEFINITIONS = [
             explanation: "Achievable through £1,667/month or using bonuses/windfalls. Critical for wealth building given low savings rates and higher tax thresholds.",
             tasks: [
               {
-                name: "Plan ISA contributions around bonuses, pay rises, and windfalls to maximize allowance",
+                name: "Plan ISA contributions around bonuses, pay rises, and windfalls to maximise allowance",
                 summary: "Plan ISA",
                 completed: false
               },
               {
-                name: "Review and optimize ISA portfolio annually for best returns and risk balance",
+                name: "Review and optimise ISA portfolio annually for best returns and risk balance",
                 summary: "Review ISA",
                 completed: false
               }
@@ -554,7 +554,7 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Find alcohol-free alternatives and social activities that don't center around drinking",
+                name: "Find alcohol-free alternatives and social activities that don't centre around drinking",
                 summary: "Find alternatives",
                 completed: false
               }
@@ -1249,7 +1249,7 @@ export const DOMAIN_DEFINITIONS = [
         projects: [
           {
             name: "Skills-Based Volunteering Setup",
-            description: "Find organization that can utilize your professional skills for community benefit",
+            description: "Find organisation that can utilise your professional skills for community benefit",
             explanation: "31% now volunteer remotely, enabling flexibility. Reach Volunteering provides skill-based matching. 21% support local community groups.",
             tasks: [
               {
@@ -1258,7 +1258,7 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Contact chosen organization and establish regular monthly volunteering commitment",
+                name: "Contact chosen organisation and establish regular monthly volunteering commitment",
                 summary: "Contact org",
                 completed: false
               }
@@ -1275,7 +1275,7 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Take on additional responsibility or project leadership role within volunteer organization",
+                name: "Take on additional responsibility or project leadership role within volunteer organisation",
                 summary: "Leadership role",
                 completed: false
               }
@@ -1453,7 +1453,7 @@ export const DOMAIN_DEFINITIONS = [
       },
       {
         name: "Take Community Leadership Role",
-        description: "Assume local leadership position in community organization or local government",
+        description: "Assume local leadership position in community organisation or local government",
         icon: "people",
         explanation: "Only 5% from deprived areas take leadership roles versus 13% from affluent areas. Addresses representation while developing leadership skills.",
         projects: [
@@ -1480,7 +1480,7 @@ export const DOMAIN_DEFINITIONS = [
             explanation: "2-3 hours monthly initially, building involvement over 1-2 years. Aligns professional skills with community needs for mutual benefit.",
             tasks: [
               {
-                name: "Apply for and secure leadership role on community board, council, or organization",
+                name: "Apply for and secure leadership role on community board, council, or organisation",
                 summary: "Secure role",
                 completed: false
               },
@@ -1499,7 +1499,7 @@ export const DOMAIN_DEFINITIONS = [
     name: "Community & Environment",
     icon: "home",
     color: "#6366f1", // Indigo
-    description: "Building community connections, improving your environment, and organizing your spaces",
+    description: "Building community connections, improving your environment, and organising your spaces",
     goals: [
       {
         name: "Create Home Office Setup",
@@ -1535,7 +1535,7 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Optimize home office for comfort during long work sessions (ergonomics, air quality, organization)",
+                name: "Optimize home office for comfort during long work sessions (ergonomics, air quality, organisation)",
                 summary: "Optimize comfort",
                 completed: false
               }
@@ -1587,7 +1587,7 @@ export const DOMAIN_DEFINITIONS = [
       },
       {
         name: "Live Zero-Waste Lifestyle",
-        description: "Implement comprehensive zero-waste system to minimize household waste and environmental impact",
+        description: "Implement comprehensive zero-waste system to minimise household waste and environmental impact",
         icon: "leaf",
         explanation: "Addresses UK's 222M tonnes annual waste. Food waste reduction alone saves £1,000/year. Growing Zero Waste movement with annual campaigns provides support.",
         projects: [

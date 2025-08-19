@@ -317,7 +317,7 @@ export const CANADA_GOAL_STATS = {
     "Master Four-Season Outdoor Activities": {
       title: "Canadian Vacation Deprivation Affects Professional Development",
       figure: "57%",
-      description: "Despite Canada's tourism sector contributing $129.7 billion to the economy in 2024, over half of Canadian professionals don't utilize their full vacation entitlement. Research indicates travel-engaged professionals demonstrate enhanced leadership skills.",
+      description: "Despite Canada's tourism sector contributing $129.7 billion to the economy in 2024, over half of Canadian professionals don't utilise their full vacation entitlement. Research indicates travel-engaged professionals demonstrate enhanced leadership skills.",
       source: "Vacation Tracker PTO Statistics Canada",
       link: "https://vacationtracker.io/blog/pto-statistics-for-canada/",
       details: {
@@ -400,7 +400,7 @@ export const CANADA_GOAL_STATS = {
     "Find Inspiring Housemates": {
       title: "Canadian Home Office Setup Drives 90% Productivity Success Rate",
       figure: "90%",
-      description: "Statistics Canada's 2021 study found that 90% of teleworkers accomplished at least as much work per hour at home as in traditional offices, with 32% reporting increased productivity. However, 10% of those with inadequate physical workspaces saw decreased productivity, highlighting the critical importance of organized home office setups.",
+      description: "Statistics Canada's 2021 study found that 90% of teleworkers accomplished at least as much work per hour at home as in traditional offices, with 32% reporting increased productivity. However, 10% of those with inadequate physical workspaces saw decreased productivity, highlighting the critical importance of organised home office setups.",
       source: "Statistics Canada",
       link: "https://www150.statcan.gc.ca/n1/pub/45-28-0001/2021001/article/00012-eng.htm",
       details: {
@@ -408,7 +408,7 @@ export const CANADA_GOAL_STATS = {
         publication: "Statistics Canada Telework and Productivity Study",
         authors: "Statistics Canada Labour Statistics Division",
         date: "2021",
-        description: "The study revealed that inadequate physical workspace was cited by 10.1% of less productive workers as a primary barrier. Given Canada's smaller urban living spaces in Toronto and Vancouver, optimizing limited space becomes crucial. ServiceNow's 2020 study found proper workspace organization could recover productivity equivalent to $1,100 CAD annually per worker in major Canadian markets.",
+        description: "The study revealed that inadequate physical workspace was cited by 10.1% of less productive workers as a primary barrier. Given Canada's smaller urban living spaces in Toronto and Vancouver, optimizing limited space becomes crucial. ServiceNow's 2020 study found proper workspace organisation could recover productivity equivalent to $1,100 CAD annually per worker in major Canadian markets.",
         link: "https://www150.statcan.gc.ca/n1/pub/45-28-0001/2021001/article/00012-eng.htm"
       }
     },
@@ -430,7 +430,7 @@ export const CANADA_GOAL_STATS = {
     "Master Time Management System": {
       title: "Canada's Greenest Employers Attract Top Talent in 2024",
       figure: "69%",
-      description: "Canada's Greenest Employers competition, now in its 18th year, recognizes organizations that create environmental awareness cultures. Companies like RONA, BCIT, and major Canadian banks use environmental initiatives to attract talent, particularly appealing to younger professionals who prioritize sustainability.",
+      description: "Canada's Greenest Employers competition, now in its 18th year, recognizes organizations that create environmental awareness cultures. Companies like RONA, BCIT, and major Canadian banks use environmental initiatives to attract talent, particularly appealing to younger professionals who prioritise sustainability.",
       source: "Canada's Top 100 Employers",
       link: "https://www.canadastop100.com/environmental/",
       details: {

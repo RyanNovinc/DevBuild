@@ -868,7 +868,7 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
           publication: "Adventure Travel Trade Association South Africa",
           authors: "ATTASA Safety and Development Team",
           date: "2024",
-          description: "Study demonstrates 90% safety improvement and 70% cost reduction for South African professionals participating in organized travel groups. Community-based travel leverages Ubuntu spirit, shared resources, and local knowledge while providing accessible adventure and cultural exploration opportunities.",
+          description: "Study demonstrates 90% safety improvement and 70% cost reduction for South African professionals participating in organised travel groups. Community-based travel leverages Ubuntu spirit, shared resources, and local knowledge while providing accessible adventure and cultural exploration opportunities.",
           link: "https://www.attasa.co.za/"
         }
       }
@@ -1073,7 +1073,7 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
       {
         title: "Productivity ROI: Organized Workspaces Increase Efficiency by 85% and Reduce Stress",
         figure: "85%",
-        description: "South African professionals with organized workspaces demonstrate 85% higher productivity and significantly reduced stress levels. Proper organization provides mental clarity and operational efficiency essential for professional success and personal well-being in demanding transformation environments.",
+        description: "South African professionals with organised workspaces demonstrate 85% higher productivity and significantly reduced stress levels. Proper organisation provides mental clarity and operational efficiency essential for professional success and personal well-being in demanding transformation environments.",
         source: "South African Institute of Environmental Design",
         link: "https://www.saied.co.za/",
         details: {
@@ -1081,14 +1081,14 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
           publication: "South African Institute of Environmental Design",
           authors: "SAIED Productivity Research Team",
           date: "2024",
-          description: "Research demonstrates 85% productivity improvement for South African professionals maintaining organized workspaces. Proper organization creates mental clarity, reduces decision fatigue, and enhances operational efficiency essential for professional success and stress management in transformation environments.",
+          description: "Research demonstrates 85% productivity improvement for South African professionals maintaining organised workspaces. Proper organisation creates mental clarity, reduces decision fatigue, and enhances operational efficiency essential for professional success and stress management in transformation environments.",
           link: "https://www.saied.co.za/"
         }
       },
       {
         title: "Space Optimization: Organized Homes Save R3,500+ Monthly Through Efficient Resource Management",
         figure: "R3,500+",
-        description: "South African professionals with organized living spaces save R3,500+ monthly through reduced waste, efficient shopping, and better resource management. Organization systems prevent duplicate purchases and enable strategic household management essential for financial optimization and transformation goals.",
+        description: "South African professionals with organised living spaces save R3,500+ monthly through reduced waste, efficient shopping, and better resource management. Organization systems prevent duplicate purchases and enable strategic household management essential for financial optimization and transformation goals.",
         source: "Home Economics Association of South Africa",
         link: "https://www.heasa.co.za/",
         details: {
@@ -1096,14 +1096,14 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
           publication: "Home Economics Association of South Africa",
           authors: "HEASA Resource Management Research",
           date: "2024",
-          description: "Analysis demonstrates monthly savings exceeding R3,500 for South African professionals maintaining organized living spaces. Organization systems prevent waste, enable efficient shopping, and support strategic household management essential for financial optimization and transformation goal achievement.",
+          description: "Analysis demonstrates monthly savings exceeding R3,500 for South African professionals maintaining organised living spaces. Organization systems prevent waste, enable efficient shopping, and support strategic household management essential for financial optimization and transformation goal achievement.",
           link: "https://www.heasa.co.za/"
         }
       },
       {
         title: "Mental Health Advantage: Organized Environments Improve Focus and Decision-Making by 90%",
         figure: "90%",
-        description: "South African professionals in organized environments demonstrate 90% better focus and decision-making capabilities. Clutter-free spaces reduce cognitive load and mental fatigue, providing clear thinking essential for professional effectiveness and creative problem-solving in competitive transformation markets.",
+        description: "South African professionals in organised environments demonstrate 90% better focus and decision-making capabilities. Clutter-free spaces reduce cognitive load and mental fatigue, providing clear thinking essential for professional effectiveness and creative problem-solving in competitive transformation markets.",
         source: "Environmental Psychology Research Institute South Africa",
         link: "https://www.eprisa.co.za/",
         details: {
@@ -1111,7 +1111,7 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
           publication: "Environmental Psychology Research Institute South Africa",
           authors: "EPRISA Cognitive Research Division",
           date: "2024",
-          description: "Study demonstrates 90% focus and decision-making improvement for South African professionals in organized environments. Clutter-free spaces reduce cognitive load and mental fatigue while enhancing clear thinking essential for professional effectiveness and creative problem-solving capabilities in transformation contexts.",
+          description: "Study demonstrates 90% focus and decision-making improvement for South African professionals in organised environments. Clutter-free spaces reduce cognitive load and mental fatigue while enhancing clear thinking essential for professional effectiveness and creative problem-solving capabilities in transformation contexts.",
           link: "https://www.eprisa.co.za/"
         }
       }

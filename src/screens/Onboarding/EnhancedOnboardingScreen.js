@@ -12,7 +12,8 @@ import {
   SafeAreaView,
   Alert,
   Easing,
-  InteractionManager
+  InteractionManager,
+  TouchableOpacity
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppContext } from '../../context/AppContext';
@@ -66,41 +67,42 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
     refreshData
   });
   
-  // Screen state - Start at country selection (skip welcome)
+  // Screen state - Start at domain selection (skip country selection)
   const [currentScreen, setCurrentScreen] = useState(0);
   const [isNavigating, setIsNavigating] = useState(false);
   const [showCreatingGoal, setShowCreatingGoal] = useState(false);
   
   // User selections
-  const [selectedCountry, setSelectedCountry] = useState(null); // No default - starts at 0%
+  const [selectedCountry, setSelectedCountry] = useState(null); // No default - force selection
   const [selectedDomain, setSelectedDomain] = useState(null);
   const [selectedGoal, setSelectedGoal] = useState(null);
   const [previewDomain, setPreviewDomain] = useState(null);
   
   // Domain wheel state - persists when navigating back
   const [segmentsRevealed, setSegmentsRevealed] = useState(false);
+  const [isWelcomeState, setIsWelcomeState] = useState(true);
   
   // Simple progress bar state - explicit control
-  const [progressPercentage, setProgressPercentage] = useState(0); // Always starts at 0
+  const [progressPercentage, setProgressPercentage] = useState(25); // Starts at 25% (domain selection)
   
   // Animation values with safe creation
   const fadeAnim = useRef(createSafeAnimatedValue(1)).current;
   const slideAnim = useRef(createSafeAnimatedValue(0)).current;
-  const progressAnim = useRef(createSafeAnimatedValue(0)).current; // Animation for progress bar - starts at 0%
+  const progressAnim = useRef(createSafeAnimatedValue(0.25)).current; // Animation for progress bar - starts at 25%
   const progressTextOpacity = useRef(createSafeAnimatedValue(0)).current; // Animation for progress text
   const progressTextScale = useRef(createSafeAnimatedValue(0.8)).current; // Scale animation for progress text
   const spinAnim = useRef(createSafeAnimatedValue(0)).current; // Spinning animation for loading
   
-  // Built-in domain reference for color consistency - matches Profile Screen order
+  // Built-in domain reference for color consistency - matches Profile Screen DomainBalanceWheel.js
   const STANDARD_DOMAINS = [
-    { name: "Career & Work", icon: "briefcase", color: "#4f46e5" },
-    { name: "Health & Wellness", icon: "fitness", color: "#06b6d4" },
-    { name: "Relationships", icon: "people", color: "#ec4899" },
-    { name: "Personal Growth", icon: "school", color: "#8b5cf6" },
-    { name: "Financial Security", icon: "cash", color: "#10b981" },
-    { name: "Recreation & Leisure", icon: "bicycle", color: "#f59e0b" },
-    { name: "Purpose & Meaning", icon: "compass", color: "#ef4444" },
-    { name: "Community & Environment", icon: "home", color: "#6366f1" },
+    { name: "Career & Work", icon: "briefcase", color: "#3B82F6" },
+    { name: "Health & Wellness", icon: "fitness", color: "#22C55E" },
+    { name: "Relationships", icon: "people", color: "#EC4899" },
+    { name: "Personal Growth", icon: "school", color: "#F97316" },
+    { name: "Financial Security", icon: "cash", color: "#EAB308" },
+    { name: "Recreation & Leisure", icon: "bicycle", color: "#8B5CF6" },
+    { name: "Purpose & Meaning", icon: "compass", color: "#EF4444" },
+    { name: "Community & Environment", icon: "home", color: "#06B6D4" },
     { name: "Other", icon: "star", color: "#14b8a6" }
   ];
 
@@ -112,7 +114,12 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
     STANDARD_DOMAINS.forEach(standardDomain => {
       const matchingDomain = countryDomains.find(d => d.name === standardDomain.name);
       if (matchingDomain) {
-        orderedDomains.push(matchingDomain);
+        // Use standard colors and icons while preserving country-specific data like goals
+        orderedDomains.push({
+          ...matchingDomain,
+          color: standardDomain.color,
+          icon: standardDomain.icon
+        });
       }
     });
     
@@ -128,7 +135,7 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
   
   // Function to get domain definitions based on selected country
   const getDomainDefinitions = () => {
-    const countryDomains = getCountryData(selectedCountry || 'australia');
+    const countryDomains = getCountryData(selectedCountry || 'other'); // Default to 'other' if no country selected
     return standardizeDomainOrder(countryDomains);
   };
 
@@ -168,7 +175,22 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
     }
   }, [selectedCountry]);
   
-  // Removed AsyncStorage country loading - onboarding always starts fresh at 0%
+  // Load saved country on component mount
+  useEffect(() => {
+    const loadSavedCountry = async () => {
+      try {
+        const savedCountry = await AsyncStorage.getItem('userCountry');
+        if (savedCountry) {
+          console.log("Loading saved country:", savedCountry);
+          setSelectedCountry(savedCountry);
+        }
+      } catch (error) {
+        console.log("Error loading saved country:", error);
+      }
+    };
+    
+    loadSavedCountry();
+  }, []); // Run once on mount
   
   // Handle back button - IMPROVED VERSION
   useEffect(() => {
@@ -238,12 +260,14 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
     safeAnimatedCall(slideAnim, 'setValue', 20);
     
     // Handle screen-specific progress updates
-    if (currentScreen === 2) {
-      // Goals screen - show 66%
-      updateProgress(66);
+    if (currentScreen === 1) {
+      // Goals screen - show 50%
+      updateProgress(50);
+    } else if (currentScreen === 2) {
+      // Projects breakdown screen - show 75%
+      updateProgress(75);
     }
-    // Projects screen stays at 66% until confetti starts - then goes to 100%
-    // Domain screen (currentScreen === 1) stays at 33% - no update needed
+    // Completion screen progress goes to 100% when confetti starts
     
     // Always show the percentage text
     safeAnimatedCall(progressTextOpacity, 'setValue', 0);
@@ -270,8 +294,8 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
   
   // Go to next screen
   const goToNextScreen = () => {
-    if (currentScreen === 3) {
-      // Show creating goal loading state when transitioning from ProjectsBreakdown to Completion
+    if (currentScreen === 2) {
+      // Show creating goal loading state when transitioning from Breakdown to Completion
       setShowCreatingGoal(true);
       
       // Start spinning animation
@@ -289,9 +313,9 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
         spinAnim.stopAnimation();
         spinAnim.setValue(0);
         setShowCreatingGoal(false);
-        setCurrentScreen(4);
+        setCurrentScreen(3);
       }, 2000); // 2 second loading
-    } else if (currentScreen < 4) {
+    } else if (currentScreen < 3) {
       setCurrentScreen(prevScreen => prevScreen + 1);
     } else {
       completeOnboarding();
@@ -309,16 +333,15 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
       // Update progress bar based on where we're going back to
       const targetScreen = currentScreen - 1;
       if (targetScreen === 0) {
-        // Going back to country selection - always reset to 0% and clear country selection
-        setSelectedCountry(null);
-        setSegmentsRevealed(false); // Reset domain wheel when changing country
-        updateProgress(0);
+        // Going back to domain selection - 25%
+        setSegmentsRevealed(false); // Reset domain wheel when going back
+        updateProgress(25);
       } else if (targetScreen === 1) {
-        // Going back to domain selection - 33%
-        updateProgress(33);
+        // Going back to goals selection - 50%
+        updateProgress(50);
       } else if (targetScreen === 2) {
-        // Going back to goals selection - 66%
-        updateProgress(66);
+        // Going back to projects breakdown - 75%
+        updateProgress(75);
       }
       
       // Short timeout to allow any pending state updates to complete
@@ -434,7 +457,7 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
       const standardDomain = getStandardDomain(defaultDomain.name) || {
         name: "Personal Growth",
         icon: "school",
-        color: "#8b5cf6"
+        color: "#F97316"
       };
       
       const finalDomain = {
@@ -486,31 +509,9 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
               }
             ]}
           >
-            {/* Country Selection Page */}
-            {currentScreen === 0 && (
-              <CountrySelectionPage
-                onCountrySelected={(country) => {
-                  // Update progress immediately when country is selected
-                  setSelectedCountry(country);
-                  updateProgress(33); // 33% when country selected
-                }}
-                onContinue={(country) => {
-                  // The country is passed back from the component
-                  // We just need to synchronize our state and go to the next screen
-                  if (country) {
-                    setSelectedCountry(country);
-                  }
-                  // Navigate to next screen
-                  goToNextScreen();
-                }}
-                onBack={goToPreviousScreen}
-                onSkipOnboarding={handleSkipOnboarding}
-                isNavigating={isNavigating}
-              />
-            )}
             
             {/* Domain Selection Page */}
-            {currentScreen === 1 && (
+            {currentScreen === 0 && (
               <DomainSelectionPage
                 domains={getDomainDefinitions()}
                 onDomainSelected={handleDomainSelected}
@@ -520,11 +521,14 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
                 isNavigating={isNavigating}
                 segmentsRevealed={segmentsRevealed}
                 onSegmentsRevealed={setSegmentsRevealed}
+                selectedCountry={selectedCountry}
+                onCountrySelected={setSelectedCountry}
+                onSkipOnboarding={handleSkipOnboarding}
               />
             )}
             
             {/* Goal Selection Page */}
-            {currentScreen === 2 && selectedDomain && (
+            {currentScreen === 1 && selectedDomain && (
               <GoalSelectionPage
                 domain={selectedDomain}
                 onGoalSelected={handleGoalSelected}
@@ -534,7 +538,7 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
             )}
             
             {/* Projects Breakdown Page */}
-            {currentScreen === 3 && selectedDomain && selectedGoal && !showCreatingGoal && (
+            {currentScreen === 2 && selectedDomain && selectedGoal && !showCreatingGoal && (
               <ProjectsBreakdownPage
                 domain={selectedDomain}
                 goal={selectedGoal}
@@ -577,7 +581,7 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
             )}
             
             {/* Completion Page */}
-            {currentScreen === 4 && (
+            {currentScreen === 3 && (
               <CompletionPage
                 domain={selectedDomain}
                 goal={selectedGoal}
@@ -589,8 +593,8 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
             )}
           </Animated.View>
           
-          {/* Progress Percentage Bar - Hidden on completion screen */}
-          {currentScreen < 4 && (
+          {/* Progress Percentage Bar - Hidden on completion screen and welcome state */}
+          {currentScreen < 3 && !isWelcomeState && (
             <View style={styles.progressContainer}>
               <View style={styles.progressBarBackground}>
                 <Animated.View 

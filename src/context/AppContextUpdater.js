@@ -15,6 +15,7 @@ const AppContextUpdater = () => {
     projects, 
     tasks, 
     settings, 
+    userCountry,
     refreshCounter 
   } = appContext;
   
@@ -23,17 +24,26 @@ const AppContextUpdater = () => {
     try {
       console.log('[AppContextUpdater] Generating app context summary...');
       
+      // Ensure we have valid data before proceeding
+      if (!goals && !projects && !tasks) {
+        console.log('[AppContextUpdater] No app data available yet, skipping summary generation');
+        return false;
+      }
+      
       // Log data sizes for debugging
       console.log(`[AppContextUpdater] Data: ${goals?.length || 0} goals, ${projects?.length || 0} projects, ${tasks?.length || 0} tasks`);
       
       // Generate summary from current app context
-      const summary = AppSummaryService.generateAppSummary({
+      const appData = {
         goals: goals || [],
         projects: projects || [],
         tasks: tasks || [],
         settings: settings || {},
+        userCountry: userCountry,
         // Specifically exclude todos and timeblocks as requested
-      });
+      };
+      
+      const summary = await AppSummaryService.generateAppSummary(appData);
       
       // Update the system document
       await DocumentService.updateAppContextDocument(summary);
@@ -43,7 +53,7 @@ const AppContextUpdater = () => {
       console.error('[AppContextUpdater] Failed to update app context summary:', error);
       return false;
     }
-  }, [goals, projects, tasks, settings]);
+  }, [goals, projects, tasks, settings, userCountry]);
   
   // Run an immediate update when the component mounts (after data is loaded)
   useEffect(() => {

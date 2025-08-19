@@ -442,7 +442,7 @@ export const SINGAPORE_GOAL_STATS = {
       {
         title: "Food Innovation Hub: Singapore's Diverse Cuisine Provides 80% Better Nutrition Variety per Dollar",
         figure: "80%",
-        description: "Singapore's multicultural food scene including fresh Asian ingredients and innovative food technology provides 80% better nutritional variety per dollar compared to limited cuisine options. Strategic food choices optimize health while maintaining culinary enjoyment.",
+        description: "Singapore's multicultural food scene including fresh Asian ingredients and innovative food technology provides 80% better nutritional variety per dollar compared to limited cuisine options. Strategic food choices optimise health while maintaining culinary enjoyment.",
         source: "Health Promotion Board Singapore Nutrition Study",
         link: "https://www.hpb.gov.sg/",
         details: {
@@ -662,7 +662,7 @@ export const SINGAPORE_GOAL_STATS = {
         publication: "National Volunteer & Philanthropy Centre",
         authors: "Community Engagement Research Team",
         date: "2024",
-        description: "Analysis demonstrates 460% professional network expansion through structured community service, with Singapore's organized volunteering approach providing leadership development and career advancement while strengthening social cohesion.",
+        description: "Analysis demonstrates 460% professional network expansion through structured community service, with Singapore's organised volunteering approach providing leadership development and career advancement while strengthening social cohesion.",
         link: "https://www.nvpc.org.sg/"
       }
     },
@@ -677,7 +677,7 @@ export const SINGAPORE_GOAL_STATS = {
         publication: "Inter-Religious Organisation Singapore",
         authors: "Interfaith Studies Research Team",
         date: "2024",
-        description: "Research shows 57% decision-making improvement through integration of Singapore's diverse spiritual traditions, providing culturally harmonious approaches to professional development that utilize the country's unique religious diversity for career enhancement.",
+        description: "Research shows 57% decision-making improvement through integration of Singapore's diverse spiritual traditions, providing culturally harmonious approaches to professional development that utilise the country's unique religious diversity for career enhancement.",
         link: "https://www.iro.sg/"
       }
     }
@@ -688,7 +688,7 @@ export const SINGAPORE_GOAL_STATS = {
     "Create Organized, Productive Spaces": {
       title: "Singapore Smart Nation Design Increases Productivity by 43% Through Technology Integration",
       figure: "43%",
-      description: "Singapore professionals working in smart, organized spaces with integrated technology achieve 43% higher productivity levels. Singapore's smart nation initiatives and space optimization expertise create optimal workplace environments that enhance both performance and technological efficiency.",
+      description: "Singapore professionals working in smart, organised spaces with integrated technology achieve 43% higher productivity levels. Singapore's smart nation initiatives and space optimization expertise create optimal workplace environments that enhance both performance and technological efficiency.",
       source: "Smart Nation and Digital Government Office & Building and Construction Authority",
       link: "https://www.smartnation.gov.sg/",
       details: {
@@ -703,7 +703,7 @@ export const SINGAPORE_GOAL_STATS = {
     "Establish Effective Daily Routines": {
       title: "Singapore Efficiency Culture Enables 48% More Productive Daily Routines",
       figure: "48%",
-      description: "Singapore's culture of efficiency and systematic approach to work-life integration enables professionals to establish 48% more effective daily routines. Singapore's MRT system, digital services, and organized urban planning support optimal productivity patterns and life management.",
+      description: "Singapore's culture of efficiency and systematic approach to work-life integration enables professionals to establish 48% more effective daily routines. Singapore's MRT system, digital services, and organised urban planning support optimal productivity patterns and life management.",
       source: "Productivity and Standards Board & Land Transport Authority",
       link: "https://www.enterprisesg.gov.sg/",
       details: {
@@ -711,7 +711,7 @@ export const SINGAPORE_GOAL_STATS = {
         publication: "Enterprise Singapore",
         authors: "Productivity Enhancement Research Team",
         date: "2024",
-        description: "Analysis shows 48% routine effectiveness improvement through Singapore's systematic approach to efficiency, with world-class infrastructure and digital services enabling professionals to optimize time management and productivity patterns.",
+        description: "Analysis shows 48% routine effectiveness improvement through Singapore's systematic approach to efficiency, with world-class infrastructure and digital services enabling professionals to optimise time management and productivity patterns.",
         link: "https://www.enterprisesg.gov.sg/"
       }
     },
@@ -821,7 +821,7 @@ const mapGoalNameToStatKey = (goalName) => {
   }
   
   // Community & Environment domain mappings (new)
-  if (goalLower.includes('organized') || goalLower.includes('productive spaces')) {
+  if (goalLower.includes('organised') || goalLower.includes('productive spaces')) {
     return 'Create Organized, Productive Spaces';
   }
   if (goalLower.includes('routine') || goalLower.includes('daily')) {

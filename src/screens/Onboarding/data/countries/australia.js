@@ -86,7 +86,7 @@ export const DOMAIN_DEFINITIONS = [
           },
           {
             name: "Internal Advancement Strategy",
-            description: "Position yourself for promotion opportunities within current organization",
+            description: "Position yourself for promotion opportunities within current organisation",
             explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
@@ -244,7 +244,7 @@ export const DOMAIN_DEFINITIONS = [
                 explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
                 tasks: [
                   {
-                    name: "Create and analyze 2 complete digital marketing campaigns with ROI measurement",
+                    name: "Create and analyse 2 complete digital marketing campaigns with ROI measurement",
                     summary: "Run campaigns",
                     explanation: "Hands-on campaign experience demonstrates practical application of marketing skills and data analysis capabilities. ROI measurement skills are essential for proving marketing effectiveness to employers and advancing in digital marketing roles.",
                     timeframe: "3 months",
@@ -336,7 +336,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Open high-interest savings account and set up automatic weekly transfers",
                 summary: "Setup savings",
-                explanation: "High-interest accounts maximize emergency fund growth while automatic transfers ensure consistent progress toward savings goals. Automation removes willpower barriers and builds disciplined saving habits.",
+                explanation: "High-interest accounts maximise emergency fund growth while automatic transfers ensure consistent progress toward savings goals. Automation removes willpower barriers and builds disciplined saving habits.",
                 timeframe: "1 week",
                 completed: false
               }
@@ -344,7 +344,7 @@ export const DOMAIN_DEFINITIONS = [
           },
           {
             name: "Expense Optimization",
-            description: "Reduce unnecessary spending to maximize savings rate",
+            description: "Reduce unnecessary spending to maximise savings rate",
             explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
@@ -1286,7 +1286,7 @@ export const DOMAIN_DEFINITIONS = [
                     completed: false
                   },
                   {
-                    name: "Volunteer to help organize events, tournaments, or group activities",
+                    name: "Volunteer to help organise events, tournaments, or group activities",
                     summary: "Organize events",
                     timeframe: "3 months",
                     completed: false
@@ -1353,7 +1353,7 @@ export const DOMAIN_DEFINITIONS = [
         projects: [
           {
             name: "Skills-Based Volunteering Setup",
-            description: "Find organization that can use your professional skills for meaningful impact",
+            description: "Find organisation that can use your professional skills for meaningful impact",
             explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
@@ -1363,7 +1363,7 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Contact chosen organization and establish regular monthly volunteering commitment",
+                name: "Contact chosen organisation and establish regular monthly volunteering commitment",
                 summary: "Start volunteering",
                 timeframe: "2 weeks",
                 completed: false
@@ -1382,7 +1382,7 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Take on additional responsibility or leadership role within volunteer organization",
+                name: "Take on additional responsibility or leadership role within volunteer organisation",
                 summary: "Take leadership",
                 timeframe: "6 months",
                 completed: false
@@ -1560,7 +1560,7 @@ export const DOMAIN_DEFINITIONS = [
             explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
-                name: "Identify ways to increase meaningful impact within your current role or organization",
+                name: "Identify ways to increase meaningful impact within your current role or organisation",
                 summary: "Find impact",
                 timeframe: "2 weeks",
                 completed: false
@@ -1606,7 +1606,7 @@ export const DOMAIN_DEFINITIONS = [
             explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
-                name: "Volunteer for local campaign, initiative, or community organization in leadership capacity",
+                name: "Volunteer for local campaign, initiative, or community organisation in leadership capacity",
                 summary: "Lead campaign",
                 timeframe: "3 months",
                 completed: false
@@ -1627,7 +1627,7 @@ export const DOMAIN_DEFINITIONS = [
     name: "Community & Environment",
     icon: "home",
     color: "#6366f1", // Indigo
-    description: "Building community connections, improving your environment, and organizing your spaces",
+    description: "Building community connections, improving your environment, and organising your spaces",
     goals: [
       {
         name: "Find Quality Shared Housing",
@@ -1722,24 +1722,24 @@ export const DOMAIN_DEFINITIONS = [
         ]
       },
       {
-        name: "Create Organized Living Space",
-        description: "Design efficient, organized home environment that supports productivity and wellbeing",
+        name: "Create Organised Living Space",
+        description: "Design efficient, organised home environment that supports productivity and wellbeing",
         icon: "grid",
         explanation: "A goal represents something meaningful you want to achieve. Breaking goals down into projects and tasks makes it easier and much more likely to reach it.",
         projects: [
           {
-            name: "Home Organization System",
-            description: "Create organized, functional systems that work within your living constraints",
+            name: "Home Organisation System",
+            description: "Create organised, functional systems that work within your living constraints",
             explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
-                name: "Declutter possessions and organize living space for maximum functionality",
+                name: "Declutter possessions and organise living space for maximum functionality",
                 summary: "Declutter space",
                 timeframe: "2 weeks",
                 completed: false
               },
               {
-                name: "Invest in organizational solutions and storage that maximize your available space",
+                name: "Invest in organisational solutions and storage that maximise your available space",
                 summary: "Get storage",
                 timeframe: "1 month",
                 completed: false

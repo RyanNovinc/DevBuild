@@ -8,6 +8,7 @@ import {
   Share,
   TextInput,
   ScrollView,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
@@ -17,15 +18,63 @@ const ReferralDetails = ({ data, onRefresh, showSuccess, showError, theme }) => 
   const { code, link, remainingCount } = data;
   
   const [customMessage, setCustomMessage] = useState(
-    "I've been using LifeCompass to boost my productivity. Join with my code and get 500 AI credits when you sign up!"
+    "I've been using LifeCompass to boost my productivity. Join with my code and get 1 month of AI Light when you sign up!"
   );
+  
+  // Animation values for micro-interactions
+  const [copyAnimation] = useState(new Animated.Value(1));
+  const [shareAnimations] = useState({
+    whatsapp: new Animated.Value(1),
+    email: new Animated.Value(1),
+    default: new Animated.Value(1)
+  });
   
   // NEW: Add state to control message expansion
   const [isMessageExpanded, setIsMessageExpanded] = useState(false);
   
+  // Animation for copy button
+  const animateCopyButton = () => {
+    Animated.sequence([
+      Animated.timing(copyAnimation, {
+        toValue: 0.8,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.spring(copyAnimation, {
+        toValue: 1.1,
+        tension: 200,
+        friction: 4,
+        useNativeDriver: true,
+      }),
+      Animated.timing(copyAnimation, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      })
+    ]).start();
+  };
+  
+  // Animation for share buttons
+  const animateShareButton = (type) => {
+    const animation = shareAnimations[type];
+    Animated.sequence([
+      Animated.timing(animation, {
+        toValue: 0.95,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(animation, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      })
+    ]).start();
+  };
+  
   // Copy referral code to clipboard
   const copyToClipboard = async () => {
     try {
+      animateCopyButton();
       await Clipboard.setStringAsync(code);
       showSuccess('Referral code copied to clipboard!');
     } catch (error) {
@@ -41,10 +90,13 @@ const ReferralDetails = ({ data, onRefresh, showSuccess, showError, theme }) => 
         return;
       }
       
+      // Animate the share button
+      animateShareButton(method);
+      
       const result = await Share.share({
         message: `${customMessage}\n\nUse my referral code: ${code}\n${link}`,
         url: link,
-        title: 'Get 500 AI credits with LifeCompass'
+        title: 'Get 1 month AI Light with LifeCompass'
       });
       
       if (result.action === Share.sharedAction) {
@@ -74,12 +126,15 @@ const ReferralDetails = ({ data, onRefresh, showSuccess, showError, theme }) => 
           <Text style={styles.referralCodeText}>
             {code}
           </Text>
-          <TouchableOpacity
-            style={styles.copyButton}
-            onPress={copyToClipboard}
-          >
-            <Ionicons name="copy-outline" size={20} color="#4CAF50" />
-          </TouchableOpacity>
+          <Animated.View style={{ transform: [{ scale: copyAnimation }] }}>
+            <TouchableOpacity
+              style={styles.copyButton}
+              onPress={copyToClipboard}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="copy-outline" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+          </Animated.View>
         </View>
       </View>
       
@@ -123,29 +178,38 @@ const ReferralDetails = ({ data, onRefresh, showSuccess, showError, theme }) => 
           Share Your Invitation
         </Text>
         
-        <TouchableOpacity
-          style={[styles.shareButton, { backgroundColor: '#25D366' }]}
-          onPress={() => shareReferral('whatsapp')}
-        >
-          <Ionicons name="logo-whatsapp" size={22} color="#FFFFFF" />
-          <Text style={styles.shareButtonText}>Share via WhatsApp</Text>
-        </TouchableOpacity>
+        <Animated.View style={{ transform: [{ scale: shareAnimations.whatsapp }] }}>
+          <TouchableOpacity
+            style={[styles.shareButton, { backgroundColor: '#25D366' }]}
+            onPress={() => shareReferral('whatsapp')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="logo-whatsapp" size={22} color="#FFFFFF" />
+            <Text style={styles.shareButtonText}>Share via WhatsApp</Text>
+          </TouchableOpacity>
+        </Animated.View>
         
-        <TouchableOpacity
-          style={[styles.shareButton, { backgroundColor: '#3F51B5' }]}
-          onPress={() => shareReferral('email')}
-        >
-          <Ionicons name="mail-outline" size={22} color="#FFFFFF" />
-          <Text style={styles.shareButtonText}>Share via Email</Text>
-        </TouchableOpacity>
+        <Animated.View style={{ transform: [{ scale: shareAnimations.email }] }}>
+          <TouchableOpacity
+            style={[styles.shareButton, { backgroundColor: '#3F51B5' }]}
+            onPress={() => shareReferral('email')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="mail-outline" size={22} color="#FFFFFF" />
+            <Text style={styles.shareButtonText}>Share via Email</Text>
+          </TouchableOpacity>
+        </Animated.View>
         
-        <TouchableOpacity
-          style={[styles.shareButton, { backgroundColor: '#607D8B' }]}
-          onPress={() => shareReferral('default')}
-        >
-          <Ionicons name="share-social-outline" size={22} color="#FFFFFF" />
-          <Text style={styles.shareButtonText}>More Options</Text>
-        </TouchableOpacity>
+        <Animated.View style={{ transform: [{ scale: shareAnimations.default }] }}>
+          <TouchableOpacity
+            style={[styles.shareButton, { backgroundColor: '#607D8B' }]}
+            onPress={() => shareReferral('default')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="share-social-outline" size={22} color="#FFFFFF" />
+            <Text style={styles.shareButtonText}>More Options</Text>
+          </TouchableOpacity>
+        </Animated.View>
       </View>
       
       {/* Bottom space */}
@@ -178,23 +242,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 12,
-    borderWidth: 1,
-    borderRadius: 8,
+    padding: 20,
+    borderWidth: 2,
+    borderRadius: 12,
     marginBottom: 0,
-    borderColor: 'rgba(255,255,255,0.1)',
-    backgroundColor: '#2A2A2A',
+    borderColor: '#4CAF50',
+    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+    minHeight: 70,
   },
   referralCodeText: {
-    fontSize: 20,
+    fontSize: 28,
     fontWeight: 'bold',
-    letterSpacing: 1,
+    letterSpacing: 2,
     color: '#4CAF50',
   },
   copyButton: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: '#4CAF50',
+    minWidth: 50,
+    minHeight: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   messageSection: {
     padding: 16,
@@ -250,15 +319,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 14,
-    borderRadius: 8,
+    padding: 18,
+    borderRadius: 12,
     marginBottom: 12,
+    minHeight: 60,
   },
   shareButtonText: {
     color: '#FFFFFF',
     fontWeight: 'bold',
     marginLeft: 8,
-    fontSize: 16,
+    fontSize: 18,
   },
 });
 

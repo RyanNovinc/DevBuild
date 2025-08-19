@@ -226,6 +226,16 @@ const ProGiftSurprise = ({
   
   // Get theme context for real-time theme updates
   const { updateTheme, toggleColoredTheme, isColoredTheme } = useTheme();
+
+  // For AI Plus gifts, automatically show rating prompt after gift is opened
+  useEffect(() => {
+    if (giftOpened && giftType === 'aiPlus') {
+      // Small delay to let the gift opening animation finish
+      setTimeout(() => {
+        setShowRatingPrompt(true);
+      }, 1000);
+    }
+  }, [giftOpened, giftType]);
   
   // Animation values
   const modalOpacity = useRef(new Animated.Value(0)).current;
@@ -547,70 +557,54 @@ const ProGiftSurprise = ({
                 }
               ]}
             >
-              <View style={styles.unlockIcon}>
-                <Ionicons 
-                  name={giftType === 'aiPlus' ? 'sparkles' : 'color-palette'} 
-                  size={48} 
-                  color={giftType === 'aiPlus' ? '#FFFFFF' : selectedCustomColor} 
-                />
-              </View>
-
-              <Text style={[styles.unlockTitle, { color: theme.text }]}>
-                {giftType === 'aiPlus' ? 'Upgraded to AI Plus!' : '🎨 Custom Colors Unlocked!'}
-              </Text>
-
-              <Text style={[styles.unlockSubtitle, { color: theme.textSecondary }]}>
-                {giftType === 'aiPlus' ? '$4.99 value • Early user bonus' : 'Choose any color you want with the color wheel'}
-              </Text>
-
-              {giftType === 'aiPlus' ? (
-                <View style={[styles.messageCard, { backgroundColor: 'rgba(255,255,255,0.03)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' }]}>
-                  <View style={{ alignItems: 'flex-start', width: '100%' }}>
-                    <Text style={[styles.featureItem, { color: theme.text, marginBottom: 8 }]}>
-                      • Additional user context (2x)
-                    </Text>
-                    <Text style={[styles.featureItem, { color: theme.text, marginBottom: 8 }]}>
-                      • More daily usage (3x AI Light)
-                    </Text>
-                    <Text style={[styles.featureItem, { color: theme.text }]}>
-                      • Built for everyday productivity
-                    </Text>
+              {/* Only show upgrade details for color wheel, skip for AI Plus */}
+              {giftType === 'colorWheel' && !showRatingPrompt && (
+                <>
+                  <View style={styles.unlockIcon}>
+                    <Ionicons 
+                      name="color-palette" 
+                      size={48} 
+                      color={selectedCustomColor} 
+                    />
                   </View>
-                </View>
-              ) : (
-                <View style={styles.colorShowcase}>
-                  {/* Simplified Color Wheel Component - hide after Continue is clicked or when closing */}
-                  {!showRatingPrompt && !isClosing && (
-                    <View style={styles.colorWheelContainer}>
-                      <SimplifiedColorWheel
-                        onColorChange={(color) => {
-                          setSelectedCustomColor(color);
-                          // Just update local color - will apply to modal elements
-                        }}
-                        selectedColor={selectedCustomColor}
-                        theme={theme}
-                      />
-                    </View>
-                  )}
-                  
-                </View>
-              )}
 
-              {!showRatingPrompt && (
-                <TouchableOpacity
-                  style={[styles.continueButton, { 
-                    backgroundColor: giftType === 'colorWheel' ? selectedCustomColor : theme.primary 
-                  }]}
-                  onPress={() => {
-                    // Save the selected color to theme when user clicks Continue
-                    if (giftType === 'colorWheel') {
+                  <Text style={[styles.unlockTitle, { color: theme.text }]}>
+                    🎨 Custom Colours Unlocked!
+                  </Text>
+
+                  <Text style={[styles.unlockSubtitle, { color: theme.textSecondary }]}>
+                    Choose any colour you want with the colour wheel
+                  </Text>
+
+                  <View style={styles.colorShowcase}>
+                    {/* Simplified Color Wheel Component - hide after Continue is clicked or when closing */}
+                    {!isClosing && (
+                      <View style={styles.colorWheelContainer}>
+                        <SimplifiedColorWheel
+                          onColorChange={(color) => {
+                            setSelectedCustomColor(color);
+                            // Just update local color - will apply to modal elements
+                          }}
+                          selectedColor={selectedCustomColor}
+                          theme={theme}
+                        />
+                      </View>
+                    )}
+                  </View>
+
+                  <TouchableOpacity
+                    style={[styles.continueButton, { 
+                      backgroundColor: selectedCustomColor 
+                    }]}
+                    onPress={() => {
+                      // Save the selected color to theme when user clicks Continue
                       updateTheme({ primary: selectedCustomColor });
-                    }
-                    setShowRatingPrompt(true);
-                  }}
-                >
-                  <Text style={styles.continueButtonText}>Continue</Text>
-                </TouchableOpacity>
+                      setShowRatingPrompt(true);
+                    }}
+                  >
+                    <Text style={styles.continueButtonText}>Continue</Text>
+                  </TouchableOpacity>
+                </>
               )}
 
               {showRatingPrompt && (
@@ -651,7 +645,7 @@ const ProGiftSurprise = ({
         {showRatingPrompt && (
           <View style={styles.handwrittenOverlay}>
             <Text style={[styles.handwrittenMessage, { color: 'rgba(255,255,255,0.8)' }]}>
-              "Thank you for being one of my first 1000 users. The best way I can express what this means to me is to give you more than you expected. Thank you!"{'\n\n'}P.S. If you enjoy this app please consider leaving a review. It helps me out a lot.{'\n\n'}— Ryan ✍️
+              "Thank you for being one of my first 1000 users. Small touches like custom colours make the app feel truly yours. I hope this adds a bit of joy to your daily planning!"{'\n\n'}P.S. If you enjoy this app please consider leaving a review. It helps me out a lot.{'\n\n'}— Ryan ✍️
             </Text>
           </View>
         )}

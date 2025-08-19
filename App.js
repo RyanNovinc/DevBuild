@@ -167,6 +167,10 @@ import SwipeableTabNavigator from './src/components/SwipeableTabNavigator';
 // Import ProfileProvider
 import { ProfileProvider } from './src/context/ProfileContext';
 
+// Import Global Animation System
+import { GlobalAnimationProvider } from './src/context/GlobalAnimationContext';
+import GlobalAnimationRenderer from './src/components/GlobalAnimationRenderer';
+
 // Prevent warnings from showing on screen during development
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -176,7 +180,9 @@ LogBox.ignoreLogs([
   'RangeError: Maximum call stack size exceeded',
   "Property 'Platform' doesn't exist",
   "The 'navigation' object hasn't been initialized yet",
-  "Cannot read property 'scrollTo' of null"  // Added to suppress the ScrollView error
+  "Cannot read property 'scrollTo' of null",  // Added to suppress the ScrollView error
+  'A props object containing a "key" prop is being spread into JSX',  // React Navigation key spreading warning
+  'Requiring unknown module "undefined"'  // Suppress undefined module warnings
 ]);
 
 // Safely import keyboard manager for iOS
@@ -190,7 +196,8 @@ if (Platform && Platform.OS === 'ios') {
     TextInput.defaultProps.autoComplete = 'off';
     TextInput.defaultProps.textContentType = 'none';
     
-    KeyboardManager = require('react-native-keyboard-manager').KeyboardManager;
+    const KeyboardManagerModule = require('react-native-keyboard-manager');
+    KeyboardManager = KeyboardManagerModule?.KeyboardManager;
     if (KeyboardManager) {
       // First completely disable keyboard manager
       if (typeof KeyboardManager.setEnable === 'function') {
@@ -584,10 +591,23 @@ const GoalsTabNavigator = ({ navigation, route }) => {
   React.useEffect(() => {
     // Store the toggle function globally so it can be accessed by the bottom tab
     global.toggleGoalsView = () => {
+      // Add debouncing to prevent rapid toggles
+      if (global.viewModeToggleInProgress) {
+        return;
+      }
+      
+      global.viewModeToggleInProgress = true;
+      
       setViewMode(prev => {
         const newMode = prev === 'overview' ? 'completed' : 'overview';
+        console.log('Toggling goals view mode from', prev, 'to', newMode);
         return newMode;
       });
+      
+      // Clear the flag after state update is processed
+      setTimeout(() => {
+        global.viewModeToggleInProgress = false;
+      }, 300);
     };
     
     // Store the current view mode globally for tab bar rendering
@@ -607,6 +627,12 @@ const GoalsTabNavigator = ({ navigation, route }) => {
       }
       if (global.goalsViewMode) {
         delete global.goalsViewMode;
+      }
+      if (global.viewModeToggleInProgress) {
+        delete global.viewModeToggleInProgress;
+      }
+      if (global.tabUpdateInProgress) {
+        delete global.tabUpdateInProgress;
       }
     };
   }, [viewMode, navigation]);
@@ -1028,10 +1054,8 @@ function MainTabNavigator({ route }) {
     <View style={s.container}>
       <Animated.View style={[s.contentContainer, { opacity: contentOpacity }]}>
         <SwipeableTabNavigator
-          navigation={tabNavigationRef.current}
-          state={navigationState}
-          swipeThreshold={50}
-          velocityThreshold={300}
+          swipeThreshold={60}
+          velocityThreshold={400}
         >
           <Tab.Navigator
           ref={tabNavigationRef}
@@ -1120,28 +1144,47 @@ function MainTabNavigator({ route }) {
             })}
             listeners={({ navigation, route }) => ({
               tabPress: (e) => {
-                // If we're already on the Goals tab, toggle the view
-                if (navigation.isFocused()) {
-                  e.preventDefault();
-                  if (global.toggleGoalsView) {
-                    global.toggleGoalsView();
-                    // Force navigation update to refresh tab bar
-                    setTimeout(() => {
-                      navigation.setOptions({
-                        tabBarLabel: global.goalsViewMode === 'overview' ? 'Life Plan' : 'Done',
-                        tabBarIcon: ({ focused, color }) => {
-                          const currentMode = global.goalsViewMode || 'overview';
-                          const iconName = currentMode === 'overview' ? 'compass' : 'checkmark-done-circle';
-                          const label = currentMode === 'overview' ? 'Life Plan' : 'Done';
-                          return createTabBarIcon(iconName, label, focused, color);
-                        },
-                        tabBarAccessibilityLabel: global.goalsViewMode === 'overview' ? "Life Plan tab" : "Completed goals tab"
+                try {
+                  // If we're already on the Goals tab, toggle the view
+                  if (navigation.isFocused()) {
+                    e.preventDefault();
+                    if (global.toggleGoalsView && !global.viewModeToggleInProgress) {
+                      global.toggleGoalsView();
+                      // Use InteractionManager to prevent stack overflow during rapid navigation
+                      InteractionManager.runAfterInteractions(() => {
+                        // Add a debounce check to prevent rapid updates
+                        if (!global.tabUpdateInProgress && navigation && navigation.setOptions) {
+                          global.tabUpdateInProgress = true;
+                          try {
+                            navigation.setOptions({
+                              tabBarLabel: global.goalsViewMode === 'overview' ? 'Life Plan' : 'Done',
+                              tabBarIcon: ({ focused, color }) => {
+                                const currentMode = global.goalsViewMode || 'overview';
+                                const iconName = currentMode === 'overview' ? 'compass' : 'checkmark-done-circle';
+                                const label = currentMode === 'overview' ? 'Life Plan' : 'Done';
+                                return createTabBarIcon(iconName, label, focused, color);
+                              },
+                              tabBarAccessibilityLabel: global.goalsViewMode === 'overview' ? "Life Plan tab" : "Completed goals tab"
+                            });
+                          } catch (error) {
+                            console.warn('Error updating tab options:', error);
+                          } finally {
+                            // Clear the flag after a brief delay
+                            setTimeout(() => {
+                              global.tabUpdateInProgress = false;
+                            }, 200);
+                          }
+                        }
                       });
-                    }, 100);
+                    }
+                  } else {
+                    // If we're coming from another tab, navigate normally
+                    if (navigation && navigation.navigate) {
+                      navigation.navigate('GoalsTab');
+                    }
                   }
-                } else {
-                  // If we're coming from another tab, navigate normally
-                  navigation.navigate('GoalsTab');
+                } catch (error) {
+                  console.warn('Error in Goals tab press handler:', error);
                 }
               },
             })} 
@@ -1490,28 +1533,8 @@ function AppContent({ navigationRef }) {
     );
   }
   
-  // Conditional rendering based on onboarding status
-  return (onboardingCompleted && !directFromOnboarding) ? (
-    // If onboarding is completed but NOT directly from onboarding, show the loading screen
-    <LoadingScreen 
-      duration={LOADING_DURATION}
-      destination="Main"
-      fromOnboarding={false}
-      // Pass responsive props to LoadingScreen
-      responsive={{
-        safeSpacing,
-        isSmallDevice,
-        isTablet,
-        fontSizes,
-        spacing
-      }}
-    >
-      {navigationContent}
-    </LoadingScreen>
-  ) : (
-    // If onboarding is not completed OR we're coming directly from onboarding, skip loading
-    navigationContent
-  );
+  // Always show navigation content directly - the transition screen handles the loading state
+  return navigationContent;
 }
 
 // Main App component with proper context providers
@@ -1525,8 +1548,11 @@ const App = () => {
     // Initialize haptic feedback
     if (Platform.OS === 'ios') {
       try {
-        const initializeHaptic = require('./src/screens/Onboarding/utils/hapticUtils').initializeHaptic;
-        initializeHaptic();
+        const hapticUtils = require('./src/screens/Onboarding/utils/hapticUtils');
+        const initializeHaptic = hapticUtils?.initializeHaptic;
+        if (initializeHaptic && typeof initializeHaptic === 'function') {
+          initializeHaptic();
+        }
       } catch (e) {
         console.log('Haptic feedback initialization error:', e);
       }
@@ -1611,7 +1637,11 @@ const App = () => {
                 <AchievementProvider>
                   {/* Add ProfileProvider here */}
                   <ProfileProvider>
-                    <AppContent navigationRef={navigationRef} />
+                    <GlobalAnimationProvider>
+                      <AppContent navigationRef={navigationRef} />
+                      {/* Global Animation Renderer - renders above all screens */}
+                      <GlobalAnimationRenderer />
+                    </GlobalAnimationProvider>
                   </ProfileProvider>
                 </AchievementProvider>
               </AuthProvider>

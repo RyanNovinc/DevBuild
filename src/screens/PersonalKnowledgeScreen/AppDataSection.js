@@ -22,7 +22,7 @@ const AppDataSection = ({ theme }) => {
         </View>
         <View style={styles.appDataItem}>
           <Ionicons name="flag" size={18} color={theme.primary} />
-          <Text style={[styles.appDataItemText, { color: theme.text }]}>Goals & Projects</Text>
+          <Text style={[styles.appDataItemText, { color: theme.text }]}>Goals & Milestones</Text>
         </View>
         <View style={styles.appDataItem}>
           <Ionicons name="calendar" size={18} color={theme.primary} />

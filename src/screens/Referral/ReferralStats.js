@@ -65,7 +65,7 @@ const ReferralStats = ({ data, theme }) => {
             <View style={styles.rewardBadge}>
               <Ionicons name="checkmark-circle" size={14} color="#4CAF50" />
               <Text style={styles.rewardText}>
-                500 Credits Added
+                x1 Month AI Light Added
               </Text>
             </View>
           )}
@@ -110,9 +110,9 @@ const ReferralStats = ({ data, theme }) => {
           </View>
           
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{(stats.plansEarned || 0) * 500}</Text>
-            <Text style={styles.statLabel}>Credits Earned</Text>
-            <Text style={styles.statSubLabel}>AI Assistant</Text>
+            <Text style={styles.statNumber}>{stats.plansEarned || 0}</Text>
+            <Text style={styles.statLabel}>AI Light Months</Text>
+            <Text style={styles.statSubLabel}>Earned</Text>
           </View>
         </View>
       </View>
@@ -122,7 +122,7 @@ const ReferralStats = ({ data, theme }) => {
         <View style={styles.discountHeader}>
           <Ionicons name="diamond" size={20} color="#4CAF50" />
           <Text style={styles.sectionTitle}>
-            Your AI Credits
+            Your AI Light
           </Text>
         </View>
         
@@ -139,10 +139,10 @@ const ReferralStats = ({ data, theme }) => {
             </View>
             <View style={styles.discountInfo}>
               <Text style={styles.discountDescription}>
-                You have {discounts.length * 500} credits ready to use!
+                You have {discounts.length} month{discounts.length !== 1 ? 's' : ''} of AI Light ready to use!
               </Text>
               <Text style={styles.discountSubtext}>
-                AI Assistant conversation credits
+                AI Light subscription access
               </Text>
             </View>
           </View>
@@ -150,10 +150,10 @@ const ReferralStats = ({ data, theme }) => {
           <View style={styles.discountEmpty}>
             <Ionicons name="ticket-outline" size={32} color="#666" />
             <Text style={styles.discountEmptyText}>
-              No credits available yet
+              No AI Light months available yet
             </Text>
             <Text style={styles.discountEmptySubtext}>
-              Share your referral code to earn 500 AI credits!
+              Share your referral code to earn x1 month of AI Light!
             </Text>
           </View>
         )}

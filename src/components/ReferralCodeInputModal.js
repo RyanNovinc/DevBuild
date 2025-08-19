@@ -182,7 +182,7 @@ const ReferralCodeInputModal = ({ visible, onClose, theme, onSuccess }) => {
         
         Alert.alert(
           'Success! 🎉',
-          'Referral code saved! You\'ll get 500 AI credits when you sign up. The person who referred you will also get 500 credits!',
+          'Referral code saved! You\'ll get x1 month of AI Light when you sign up. The person who referred you will also get x1 month too!',
           [{ text: 'Awesome!', style: 'default' }]
         );
       } else {
@@ -266,7 +266,7 @@ const ReferralCodeInputModal = ({ visible, onClose, theme, onSuccess }) => {
               Enter Referral Code
             </Text>
             <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-              Get 500 AI credits when you sign up with a referral code
+              Get x1 month of AI Light when you sign up with a referral code
             </Text>
           </View>
 

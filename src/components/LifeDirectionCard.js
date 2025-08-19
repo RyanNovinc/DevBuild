@@ -440,7 +440,7 @@ const LifeDirectionCard = forwardRef(({ lifeDirection, onSave, navigation }, ref
           Edit Your Direction
         </Text>
         <Text style={[styles.stepDescription, { color: theme.textSecondary }]}>
-          Update your strategic direction statement below:
+          Update your life direction statement below:
         </Text>
         
         <View style={[styles.directionPreviewContainer, {

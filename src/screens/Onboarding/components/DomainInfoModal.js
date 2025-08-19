@@ -56,10 +56,6 @@ const DomainInfoModal = ({ visible, onClose }) => {
 
           {/* Content */}
           <View style={styles.modalContent}>
-            <ResponsiveText style={styles.subtitle}>
-              Widely-Accepted Life Domains
-            </ResponsiveText>
-            
             <ResponsiveText style={styles.description}>
               These 8 domains are based on the "Wheel of Life" framework, backed by 30+ years of psychological research and validation studies.
             </ResponsiveText>
@@ -123,13 +119,6 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     padding: 24,
-  },
-  subtitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#60a5fa',
-    marginBottom: 16,
-    textAlign: 'center',
   },
   description: {
     fontSize: 15,

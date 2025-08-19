@@ -543,10 +543,22 @@ const ReferralScreen = ({ navigation }) => {
         {/* Hero Content */}
         <View style={styles.heroContent}>
           <Text style={styles.heroTitle}>
-            Give 500 Credits, Get 500 Credits
+            Refer Friends, Earn Together
           </Text>
           <Text style={styles.heroSubtitle}>
-            Share LifeCompass with friends and you'll both get 500 AI credits when they sign up
+            Both get 1 month <Text 
+              style={[styles.heroSubtitle, { textDecorationLine: 'underline', color: '#FFD700' }]}
+              onPress={() => {
+                navigation.navigate('PricingScreen', {
+                  initialTab: 'subscription',
+                  highlightPlan: 'compass',
+                  pulseCredits: true,
+                  fromReferral: true
+                });
+              }}
+            >
+              AI Light
+            </Text> when they sign up
           </Text>
         </View>
         
@@ -556,14 +568,44 @@ const ReferralScreen = ({ navigation }) => {
         </View>
       </View>
       
-      {/* Remaining Counter */}
-      <View style={styles.remainingContainer}>
-        <Text style={styles.remainingText}>
-          <Ionicons name="people" size={16} color="#4CAF50" /> Referrals Remaining: {' '}
-          <Text style={{ fontWeight: 'bold', color: '#4CAF50' }}>
-            {referralData.remainingCount}/3
-          </Text>
-        </Text>
+      {/* Progress & Stats Section */}
+      <View style={styles.statsContainer}>
+        {/* Progress Ring */}
+        <View style={styles.progressSection}>
+          <View style={styles.progressRingContainer}>
+            <View style={styles.progressRing}>
+              <View style={[styles.progressFill, {
+                transform: [{
+                  rotate: `${((3 - referralData.remainingCount) / 3) * 360}deg`
+                }]
+              }]} />
+              <View style={styles.progressInner}>
+                <Text style={styles.progressNumber}>
+                  {3 - referralData.remainingCount}
+                </Text>
+                <Text style={styles.progressLabel}>of 3</Text>
+              </View>
+            </View>
+          </View>
+          <View style={styles.progressText}>
+            <Text style={styles.progressTitle}>Referral Progress</Text>
+            <Text style={styles.progressSubtitle}>
+              {referralData.remainingCount} remaining
+            </Text>
+          </View>
+        </View>
+
+        {/* Quick Stats */}
+        <View style={styles.quickStats}>
+          <View style={styles.quickStat}>
+            <Text style={styles.quickStatNumber}>{referralData.stats.converted}</Text>
+            <Text style={styles.quickStatLabel}>Converted</Text>
+          </View>
+          <View style={styles.quickStat}>
+            <Text style={styles.quickStatNumber}>{referralData.stats.plansEarned}</Text>
+            <Text style={styles.quickStatLabel}>Earned</Text>
+          </View>
+        </View>
       </View>
       
       {/* Tab Bar */}
@@ -611,7 +653,8 @@ const ReferralScreen = ({ navigation }) => {
             {/* How It Works Page */}
             <View key="info" style={styles.pageContainer}>
               <ReferralInfo 
-                theme={theme} 
+                theme={theme}
+                navigation={navigation}
               />
             </View>
           </PagerView>
@@ -761,22 +804,22 @@ const ReferralScreen = ({ navigation }) => {
                 <View style={styles.celebrationStat}>
                   <Text style={styles.celebrationStatLabel}>You Earned</Text>
                   <Text style={styles.celebrationStatValue}>
-                    {(celebrationData?.newPlansEarned || 0) * 500} credits
+                    {celebrationData?.newPlansEarned || 0} month{(celebrationData?.newPlansEarned || 0) !== 1 ? 's' : ''}
                   </Text>
-                  <Text style={styles.celebrationStatSubtext}>AI Assistant</Text>
+                  <Text style={styles.celebrationStatSubtext}>AI Light</Text>
                 </View>
                 
                 <View style={styles.celebrationStat}>
                   <Text style={styles.celebrationStatLabel}>You Gifted</Text>
                   <Text style={styles.celebrationStatValue}>
-                    {(celebrationData?.newPlansGifted || 0) * 500} credits
+                    {celebrationData?.newPlansGifted || 0} month{(celebrationData?.newPlansGifted || 0) !== 1 ? 's' : ''}
                   </Text>
-                  <Text style={styles.celebrationStatSubtext}>AI Assistant</Text>
+                  <Text style={styles.celebrationStatSubtext}>AI Light</Text>
                 </View>
               </Animated.View>
               
               <Text style={styles.celebrationMessage}>
-                Keep sharing LifeCompass with friends to earn even more AI credits! 🚀
+                Keep sharing LifeCompass with friends to earn even more AI Light months! 🚀
               </Text>
             </View>
             
@@ -831,15 +874,15 @@ const styles = StyleSheet.create({
     marginLeft: 30,
   },
   heroTitle: {
-    fontSize: 22,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   heroSubtitle: {
-    fontSize: 14,
+    fontSize: 16,
     color: 'rgba(255, 255, 255, 0.9)',
-    lineHeight: 18,
+    lineHeight: 22,
   },
   heroIconContainer: {
     width: 70,
@@ -853,18 +896,88 @@ const styles = StyleSheet.create({
     bottom: 10,
     right: 0,
   },
-  remainingContainer: {
-    paddingVertical: 10,
+  // Progress & Stats Section
+  statsContainer: {
+    paddingVertical: 16,
     paddingHorizontal: 16,
     backgroundColor: '#1E1E1E',
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.05)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  remainingText: {
-    fontSize: 14,
-    textAlign: 'center',
+  progressSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  progressRingContainer: {
+    marginRight: 16,
+  },
+  progressRing: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+    borderWidth: 3,
+    borderColor: 'rgba(76, 175, 80, 0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  progressFill: {
+    position: 'absolute',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 3,
+    borderColor: 'transparent',
+    borderTopColor: '#4CAF50',
+    borderRightColor: '#4CAF50',
+  },
+  progressInner: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  progressNumber: {
+    fontSize: 18,
+    fontWeight: 'bold',
     color: '#4CAF50',
-    fontWeight: '500',
+  },
+  progressLabel: {
+    fontSize: 10,
+    color: '#9E9E9E',
+  },
+  progressText: {
+    flex: 1,
+  },
+  progressTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 2,
+  },
+  progressSubtitle: {
+    fontSize: 14,
+    color: '#9E9E9E',
+  },
+  quickStats: {
+    flexDirection: 'row',
+    gap: 20,
+  },
+  quickStat: {
+    alignItems: 'center',
+  },
+  quickStatNumber: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFD700',
+  },
+  quickStatLabel: {
+    fontSize: 12,
+    color: '#9E9E9E',
+    marginTop: 2,
   },
   // Tab Bar Styles
   tabBarContainer: {

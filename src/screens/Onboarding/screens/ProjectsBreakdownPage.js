@@ -77,7 +77,7 @@ const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, onConfettiSta
     
     // Format for display
     if (currentLanguage === 'ja') {
-      return `${goalName}\nプロジェクトとタスク`;
+      return `${goalName}\nマイルストーンとタスク`;
     } else {
       return `${goalName}\nBreakdown`;
     }
@@ -507,7 +507,7 @@ const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, onConfettiSta
       }
     } else if (projectName.includes("System") || projectName.includes("Automation")) {
       if (domainName === "Financial Security") {
-        return "Financial systems reduce the mental load of money management. This approach creates reliable structures that optimize your finances even when you're not actively thinking about them.";
+        return "Financial systems reduce the mental load of money management. This approach creates reliable structures that optimise your finances even when you're not actively thinking about them.";
       } else if (domainName === "Community & Environment") {
         return "Community and environmental systems create lasting positive impact. This approach builds connections and sustainable practices that benefit both personal wellbeing and collective good.";
       } else {
@@ -532,15 +532,15 @@ const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, onConfettiSta
     } else {
       // Generic fallback based on domain
       if (domainName === "Career & Work") {
-        return "This project uses proven professional development strategies to advance your career goals. The focused approach targets key aspects of workplace success that often yield the highest returns.";
+        return "This milestone uses proven professional development strategies to advance your career goals. The focused approach targets key aspects of workplace success that often yield the highest returns.";
       } else if (domainName === "Health & Wellness") {
-        return "This project applies evidence-based health improvement techniques that create sustainable results. The approach focuses on practical changes that fit into real life rather than idealized regimens.";
+        return "This milestone applies evidence-based health improvement techniques that create sustainable results. The approach focuses on practical changes that fit into real life rather than idealized regimens.";
       } else if (domainName === "Relationships") {
-        return "This project uses relationship psychology principles to strengthen meaningful connections. The approach targets specific aspects of interaction that research shows most impact relationship quality.";
+        return "This milestone uses relationship psychology principles to strengthen meaningful connections. The approach targets specific aspects of interaction that research shows most impact relationship quality.";
       } else if (domainName === "Personal Growth") {
-        return "This project applies effective personal development strategies that create lasting growth. The approach balances aspiration with practicality to ensure consistent progress.";
+        return "This milestone applies effective personal development strategies that create lasting growth. The approach balances aspiration with practicality to ensure consistent progress.";
       } else {
-        return "This project uses a proven approach that breaks down your goal into manageable steps. By focusing on this specific aspect first, you'll build momentum that carries over to other areas.";
+        return "This milestone uses a proven approach that breaks down your goal into manageable steps. By focusing on this specific aspect first, you'll build momentum that carries over to other areas.";
       }
     }
   };
@@ -596,7 +596,7 @@ const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, onConfettiSta
         return "Start with the end in mind by clearly defining what success looks like. Work backward to identify key milestones. Keep your initial plan simple with room to adapt as you learn.";
       }
     } else {
-      return "Begin by completing the first task in this project. Schedule a specific time to work on it. Consider who might be able to provide guidance or support as you get started.";
+      return "Begin by completing the first task in this milestone. Schedule a specific time to work on it. Consider who might be able to provide guidance or support as you get started.";
     }
   };
   
@@ -797,7 +797,7 @@ const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, onConfettiSta
                 >
                   <TouchableOpacity
                     activeOpacity={0.9}
-                    onPress={() => handleSelectHierarchyItem(project, 'project')}
+                    onPress={() => handleSelectHierarchyItem(project, 'milestone')}
                     style={styles.projectTouchable}
                   >
                     <LinearGradient
@@ -815,14 +815,14 @@ const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, onConfettiSta
                           { backgroundColor: domain.color }
                         ]}
                       >
-                        <Ionicons name="document-text" size={20} color="#FFFFFF" />
+                        <Ionicons name="diamond" size={20} color="#FFFFFF" />
                       </View>
                       <View style={styles.hierarchyTextContainer}>
                         <ResponsiveText style={styles.hierarchyProjectText}>
                           {project.name}
                         </ResponsiveText>
                         <ResponsiveText style={styles.hierarchyItemType}>
-                          {translate('common', 'project').toUpperCase()}
+                          {(translate('common', 'milestone') || 'Milestone').toUpperCase()}
                         </ResponsiveText>
                       </View>
                     </LinearGradient>
@@ -940,9 +940,7 @@ const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, onConfettiSta
               { 
                 opacity: explanationCardOpacity,
                 transform: [{ translateY: explanationCardY }],
-                borderColor: selectedItem.type === 'goal' ? domain.color : 
-                             selectedItem.type === 'project' ? '#4dabf7' :
-                             '#8D96A8'
+                borderColor: domain.color
               }
             ]}
           >
@@ -957,16 +955,14 @@ const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, onConfettiSta
                   style={[
                     styles.explanationIconContainer,
                     { 
-                      backgroundColor: selectedItem.type === 'goal' ? domain.color : 
-                                      selectedItem.type === 'project' ? '#4dabf7' :
-                                      '#8D96A8'
+                      backgroundColor: domain.color
                     }
                   ]}
                 >
                   <Ionicons 
                     name={
                       selectedItem.type === 'goal' ? 'flag' : 
-                      selectedItem.type === 'project' ? 'document-text' : 
+                      selectedItem.type === 'milestone' ? 'diamond' : 
                       'checkmark-circle'
                     } 
                     size={selectedItem.type === 'task' ? 18 : 24} 
@@ -976,11 +972,13 @@ const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, onConfettiSta
                 
                 <View style={styles.explanationTitleContainer}>
                   <ResponsiveText style={styles.explanationTitle}>
-                    {selectedItem.name}
+                    {selectedItem.type === 'goal' ? 'Goal Overview:' :
+                     selectedItem.type === 'milestone' ? 'Why Milestones?' :
+                     'Full Task Details:'}
                   </ResponsiveText>
                   <ResponsiveText style={styles.explanationType}>
-                    {selectedItem.type === 'goal' ? translate('common', 'goal') : 
-                     selectedItem.type === 'project' ? translate('common', 'project') : 
+                    {selectedItem.type === 'goal' ? selectedItem.name : 
+                     selectedItem.type === 'milestone' ? selectedItem.name : 
                      translate('common', 'task')}
                   </ResponsiveText>
                 </View>
@@ -998,18 +996,24 @@ const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, onConfettiSta
                 showsVerticalScrollIndicator={false}
               >
                 {/* Basic explanation */}
-                <ResponsiveText style={styles.explanationText}>
-                  {selectedItem.type === 'task' ? 
-                    translate('common', 'taskExplanation', {}) || "This task breaks down your project into a specific, actionable step you can complete. Tasks are concrete actions that move you toward your goals." : 
-                    selectedItem.explanation || `${
-                      selectedItem.type === 'goal' ? 'A goal represents something meaningful you want to achieve. Breaking goals down into projects and tasks makes it easier and much more likely to reach it.' :
-                      selectedItem.type === 'project' ? 'A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.' :
-                      'A task is a specific action you complete to make progress. Tasks are concrete, doable steps that move you forward through each project toward your goal.'
+                {selectedItem.type === 'task' ? (
+                  <>
+                    <ResponsiveText style={styles.explanationText}>
+                      {selectedItem.name}
+                    </ResponsiveText>
+                  </>
+                ) : (
+                  <ResponsiveText style={styles.explanationText}>
+                    {`${
+                      selectedItem.type === 'goal' ? 'Research by Dr. Gail Matthews at Dominican University found that people with written goals achieve a 76% success rate versus 43% for unwritten goals.\n\nYou\'ve just taken the most important step - getting your goal out of your head and onto paper. This alone puts you ahead of most people who keep goals as vague intentions.' :
+                      selectedItem.type === 'milestone' ? 'This is a common approach in project management: breaking down goals into smaller chunks. This approach:\n\n• Prevents overwhelm by giving you clear checkpoints\n• Maintains momentum through regular wins  \n• Makes big goals feel manageable\n\nEach milestone represents meaningful progress you can see and celebrate.' :
+                      'This is where planning becomes action. Each task is designed to create tangible progress - no busy work, no filler. When you complete this, you\'ll know with certainty you\'ve moved closer to your goal.'
                     }`}
-                </ResponsiveText>
+                  </ResponsiveText>
+                )}
                 
-                {/* Show more/less button - only for goals and projects */}
-                {selectedItem.type !== 'task' && (
+                {/* Show more/less button - for all types */}
+                {(
                   <TouchableOpacity 
                     style={styles.expandButton}
                     onPress={toggleExpanded}
@@ -1027,11 +1031,11 @@ const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, onConfettiSta
                 )}
                 
                 {/* Expanded content - only visible when expanded */}
-                {isExpanded && selectedItem.type !== 'task' && (
+                {isExpanded && (
                   <View style={styles.expandedContent}>
                     <View style={[
                       styles.divider,
-                      { backgroundColor: selectedItem.type === 'goal' ? `${domain.color}40` : 'rgba(77, 171, 247, 0.25)' }
+                      { backgroundColor: `${domain.color}40` }
                     ]} />
                     
                     {selectedItem.type === 'goal' ? (
@@ -1045,24 +1049,26 @@ const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, onConfettiSta
                           {getBenefitsForGoal(selectedItem, domain.name)}
                         </ResponsiveText>
                       </>
-                    ) : (
+                    ) : selectedItem.type === 'milestone' ? (
                       <>
-                        <View style={[styles.expandedSectionTitleContainer, { borderLeftColor: '#4dabf7' }]}>
+                        <View style={[styles.expandedSectionTitleContainer, { borderLeftColor: domain.color }]}>
                           <ResponsiveText style={styles.expandedSectionTitle}>
                             {translate('common', 'whyThisApproachWorks')}
                           </ResponsiveText>
                         </View>
                         <ResponsiveText style={styles.expandedText}>
-                          {getProjectApproachInfo(selectedItem, domain.name)}
+                          Research in psychology shows that most positive emotions don't come from achieving goals - they come from making progress toward goals that matter to you. Your brain generates these good feelings as you move forward on something meaningful. That's why checking off this milestone will feel more satisfying than random tasks - it's connected to something you actually care about.
                         </ResponsiveText>
-                        
-                        <View style={[styles.expandedSectionTitleContainer, { borderLeftColor: '#4dabf7' }]}>
+                      </>
+                    ) : (
+                      <>
+                        <View style={[styles.expandedSectionTitleContainer, { borderLeftColor: domain.color }]}>
                           <ResponsiveText style={styles.expandedSectionTitle}>
-                            {translate('common', 'gettingStarted')}
+                            Why This Task Matters
                           </ResponsiveText>
                         </View>
                         <ResponsiveText style={styles.expandedText}>
-                          {getProjectStartInfo(selectedItem, domain.name)}
+                          This is where planning becomes action. Each task is designed to create tangible progress - no busy work, no filler. When you complete this, you'll know with certainty you've moved closer to your goal.
                         </ResponsiveText>
                       </>
                     )}
@@ -1095,7 +1101,7 @@ const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, onConfettiSta
             {translate('common', 'tapToContinue')}
           </ResponsiveText>
           <Ionicons 
-            name="chevron-down" 
+            name="hand-left" 
             size={24} 
             color="rgba(255,255,255,0.7)" 
             style={styles.tapPromptIcon} 
@@ -1170,7 +1176,7 @@ const styles = StyleSheet.create({
   },
   tapPromptText: {
     fontSize: 16,
-    color: 'rgba(255,255,255,0.7)',
+    color: 'rgba(255, 255, 255, 0.8)',
     marginBottom: 8,
   },
   tapPromptIcon: {

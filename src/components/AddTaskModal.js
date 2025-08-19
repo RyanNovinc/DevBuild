@@ -489,6 +489,17 @@ const AddTaskModal = ({
                       style={styles.scrollContent}
                       showsVerticalScrollIndicator={false}
                     >
+                      {/* Warning message when no goals exist */}
+                      {goals.length === 0 && (
+                        <View style={[styles.warningContainer, { backgroundColor: theme.warningBackground || 'rgba(255, 193, 7, 0.1)', borderColor: theme.warning || '#FFC107' }]}>
+                          <Ionicons name="warning-outline" size={20} color={theme.warning || '#FFC107'} />
+                          <Text style={[styles.warningText, { color: theme.warning || '#FFC107' }]}>
+                            No goals found. Tasks created without goals will be standalone and may be harder to organize. 
+                            Consider creating a goal first for better structure.
+                          </Text>
+                        </View>
+                      )}
+                      
                       {/* Goal Selection - First */}
                       <View style={[styles.inputSection, { zIndex: 3 }]}>
                         <Text style={[styles.inputLabel, { color: theme.text }]}>
@@ -534,18 +545,27 @@ const AddTaskModal = ({
                           }
                         ]}>
                           <ScrollView nestedScrollEnabled={true}>
-                            {goals.map((goal) => (
-                              <TouchableOpacity
-                                key={goal.id}
-                                style={[styles.dropdownItem, { borderBottomColor: theme.border }]}
-                                onPress={() => selectGoal(goal)}
-                              >
-                                <View style={[styles.goalDot, { backgroundColor: goal.color }]} />
-                                <Text style={[styles.dropdownItemText, { color: theme.text }]}>
-                                  {goal.title}
+                            {goals.length === 0 ? (
+                              <View style={[styles.emptyStateContainer, { borderBottomColor: theme.border }]}>
+                                <Ionicons name="information-circle" size={20} color={theme.textSecondary} />
+                                <Text style={[styles.emptyStateText, { color: theme.textSecondary }]}>
+                                  No goals available. Create a goal first to organize your tasks, or create standalone tasks.
                                 </Text>
-                              </TouchableOpacity>
-                            ))}
+                              </View>
+                            ) : (
+                              goals.map((goal) => (
+                                <TouchableOpacity
+                                  key={goal.id}
+                                  style={[styles.dropdownItem, { borderBottomColor: theme.border }]}
+                                  onPress={() => selectGoal(goal)}
+                                >
+                                  <View style={[styles.goalDot, { backgroundColor: goal.color }]} />
+                                  <Text style={[styles.dropdownItemText, { color: theme.text }]}>
+                                    {goal.title}
+                                  </Text>
+                                </TouchableOpacity>
+                              ))
+                            )}
                           </ScrollView>
                         </Animated.View>
                       </View>
@@ -659,11 +679,11 @@ const AddTaskModal = ({
                           styles.addButton,
                           { 
                             backgroundColor: theme.primary,
-                            opacity: title.trim() && selectedGoalId && selectedProjectId ? 1 : 0.5
+                            opacity: title.trim() ? 1 : 0.5
                           }
                         ]}
                         onPress={handleAddTask}
-                        disabled={!title.trim() || !selectedGoalId || !selectedProjectId}
+                        disabled={!title.trim()}
                         accessible={true}
                         accessibilityRole="button"
                         accessibilityLabel="Add task to list"
@@ -853,6 +873,19 @@ const styles = StyleSheet.create({
     fontSize: scaleFontSize(14),
     flex: 1,
   },
+  emptyStateContainer: {
+    paddingHorizontal: spacing.m,
+    paddingVertical: spacing.l,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  emptyStateText: {
+    fontSize: scaleFontSize(14),
+    flex: 1,
+    marginLeft: spacing.s,
+    fontStyle: 'italic',
+  },
   goalDot: {
     width: scaleWidth(12),
     height: scaleWidth(12),
@@ -930,6 +963,20 @@ const styles = StyleSheet.create({
   switchTabText: {
     fontSize: scaleFontSize(16),
     fontWeight: '500',
+  },
+  warningContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    padding: spacing.m,
+    borderRadius: scaleWidth(8),
+    borderWidth: 1,
+    marginBottom: spacing.m,
+  },
+  warningText: {
+    fontSize: scaleFontSize(14),
+    flex: 1,
+    marginLeft: spacing.s,
+    lineHeight: 20,
   },
   saveAllButton: {
     flexDirection: 'row',

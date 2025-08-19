@@ -11,6 +11,7 @@ import {
   Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import MinimalistConfirmDialog from './MinimalistConfirmDialog';
 
 const { width } = Dimensions.get('window');
 
@@ -46,9 +47,13 @@ const KanbanBoard = ({
   isFullScreen = false, // Whether the kanban is in fullscreen mode
   wipLimit = 3, // WIP limit for "In Progress" column
   onWipLimitChange, // Function to handle WIP limit changes
-  onShowWipEducation // Function to show WIP limit education modal
+  onShowWipEducation, // Function to show WIP limit education modal
+  navigation, // Navigation object for redirecting to LifePlan screen
+  onNavigateToLifePlan // Function to navigate to LifePlan screen with auto-open add button
 }) => {
   const [draggingItem, setDraggingItem] = useState(null);
+  const [wipDialog, setWipDialog] = useState({ visible: false, type: '', item: null, targetStatus: '' });
+  const [wipLimitDialog, setWipLimitDialog] = useState({ visible: false, currentCount: 0, attemptedLimit: 0 });
   
   // Refs for scroll views to maintain scroll positions
   const horizontalScrollRef = useRef(null);
@@ -129,14 +134,13 @@ const KanbanBoard = ({
     if (newStatus === 'in_progress') {
       const inProgressItems = getItemsByStatus('in_progress');
       if (inProgressItems.length >= wipLimit) {
-        Alert.alert(
-          'Work-in-Progress Limit Reached',
-          `You currently have ${inProgressItems.length} of ${wipLimit} projects in progress. To maintain focus and productivity, complete or move some projects before starting new work.`,
-          [
-            { text: 'Learn More', onPress: () => onShowWipEducation && onShowWipEducation() },
-            { text: 'OK', style: 'default' }
-          ]
-        );
+        setWipDialog({
+          visible: true,
+          type: 'milestone',
+          item: milestone,
+          targetStatus: newStatus,
+          inProgressCount: inProgressItems.length
+        });
         return;
       }
     }
@@ -162,14 +166,13 @@ const KanbanBoard = ({
     if (newStatus === 'in_progress') {
       const inProgressItems = getItemsByStatus('in_progress');
       if (inProgressItems.length >= wipLimit) {
-        Alert.alert(
-          'Work-in-Progress Limit Reached',
-          `You currently have ${inProgressItems.length} of ${wipLimit} tasks in progress. To maintain focus and productivity, complete or move some tasks before starting new work.`,
-          [
-            { text: 'Learn More', onPress: () => onShowWipEducation && onShowWipEducation() },
-            { text: 'OK', style: 'default' }
-          ]
-        );
+        setWipDialog({
+          visible: true,
+          type: 'task',
+          item: task,
+          targetStatus: newStatus,
+          inProgressCount: inProgressItems.length
+        });
         return;
       }
     }
@@ -181,6 +184,13 @@ const KanbanBoard = ({
   // Function to render a column
   const renderColumn = (title, status, headerColor) => {
     const items = getItemsByStatus(status);
+    
+    // Check if there are any tasks in ANY section (for prefilled text logic)
+    const hasTasksInAnySection = !isMilestoneLevel && (
+      getItemsByStatus('todo').length > 0 ||
+      getItemsByStatus('in_progress').length > 0 ||
+      getItemsByStatus('done').length > 0
+    );
     
     return (
       <View style={[
@@ -227,8 +237,23 @@ const KanbanBoard = ({
                 <TouchableOpacity
                   style={[styles.wipControlButton, { opacity: wipLimit <= 1 ? 0.3 : 1 }]}
                   onPress={() => {
-                    if (wipLimit > 1 && onWipLimitChange) {
-                      onWipLimitChange(wipLimit - 1);
+                    if (wipLimit > 1) {
+                      const inProgressItems = getItemsByStatus('in_progress');
+                      const newLimit = wipLimit - 1;
+                      
+                      // Check if new limit would be below current in-progress count
+                      if (newLimit < inProgressItems.length) {
+                        setWipLimitDialog({
+                          visible: true,
+                          currentCount: inProgressItems.length,
+                          attemptedLimit: newLimit
+                        });
+                        return;
+                      }
+                      
+                      if (onWipLimitChange) {
+                        onWipLimitChange(newLimit);
+                      }
                     }
                   }}
                   disabled={wipLimit <= 1}
@@ -576,20 +601,46 @@ const KanbanBoard = ({
               </TouchableOpacity>
             ))
           ) : (
-            <SafeText style={styles.emptyText}>
-              No items
-            </SafeText>
+            <View style={styles.emptyContainer}>
+              <SafeText style={styles.emptyText}>
+                No items
+              </SafeText>
+              {/* Show suggestion to go to LifePlan screen for tasks only if there are NO tasks in any section */}
+              {!isMilestoneLevel && !hasTasksInAnySection && (
+                <TouchableOpacity 
+                  style={styles.emptyActionButton}
+                  onPress={() => {
+                    if (onNavigateToLifePlan) {
+                      onNavigateToLifePlan();
+                    } else if (navigation) {
+                      navigation.navigate('GoalsTab', { 
+                        screen: 'LifePlanOverview',
+                        params: { autoOpenAdd: true }
+                      });
+                    }
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons 
+                    name="compass-outline" 
+                    size={16} 
+                    color="rgba(255,255,255,0.8)" 
+                  />
+                  <SafeText style={styles.emptyActionText}>
+                    Go to Life Plan to create tasks
+                  </SafeText>
+                </TouchableOpacity>
+              )}
+            </View>
           )}
           
-          {/* Add button - only for the first column */}
-          {status === 'todo' && (
+          {/* Add button - only for the first column and milestones */}
+          {status === 'todo' && isMilestoneLevel && (
             <TouchableOpacity 
               style={styles.addButton}
               onPress={() => {
-                if (isMilestoneLevel && onPressAddMilestone) {
+                if (onPressAddMilestone) {
                   onPressAddMilestone();
-                } else if (!isMilestoneLevel && onPressAddTask) {
-                  onPressAddTask();
                 }
               }}
               activeOpacity={0.7}
@@ -600,7 +651,7 @@ const KanbanBoard = ({
                 color="rgba(255,255,255,0.8)" 
               />
               <SafeText style={styles.addButtonText}>
-                {isMilestoneLevel ? 'Add Milestone' : 'Add Task'}
+                Add Milestone
               </SafeText>
             </TouchableOpacity>
           )}
@@ -627,6 +678,31 @@ const KanbanBoard = ({
         {renderColumn('In Progress', 'in_progress', '#64B5F6')}
         {renderColumn('Done', 'done', '#81C784')}
       </ScrollView>
+
+      {/* WIP Limit Dialog */}
+      <MinimalistConfirmDialog
+        visible={wipDialog.visible}
+        title="Focus Mode Active"
+        message={`You have ${wipDialog.inProgressCount}/${wipLimit} ${wipDialog.type === 'task' ? 'tasks' : 'projects'} in progress. Complete current work before starting new items.`}
+        confirmText="Learn More"
+        cancelText="Got it"
+        onConfirm={() => onShowWipEducation && onShowWipEducation()}
+        onCancel={() => {}}
+        onClose={() => setWipDialog({ visible: false, type: '', item: null, targetStatus: '', inProgressCount: 0 })}
+        icon="trending-up-outline"
+      />
+
+      {/* WIP Limit Validation Dialog */}
+      <MinimalistConfirmDialog
+        visible={wipLimitDialog.visible}
+        title="Cannot Reduce Limit"
+        message={`You currently have ${wipLimitDialog.currentCount} items in progress. Complete some work before reducing the limit to ${wipLimitDialog.attemptedLimit}.`}
+        confirmText="Got it"
+        cancelText={null}
+        onConfirm={() => {}}
+        onClose={() => setWipLimitDialog({ visible: false, currentCount: 0, attemptedLimit: 0 })}
+        icon="alert-circle-outline"
+      />
     </View>
   );
 };
@@ -802,12 +878,35 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: 'rgba(255,255,255,0.1)',
   },
+  emptyContainer: {
+    paddingVertical: 24,
+    alignItems: 'center',
+  },
   emptyText: {
     textAlign: 'center',
     fontStyle: 'italic',
-    padding: 24,
+    marginBottom: 16,
     color: 'rgba(255,255,255,0.5)',
     fontSize: 14,
+  },
+  emptyActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  emptyActionText: {
+    marginLeft: 8,
+    fontWeight: '500',
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 13,
+    letterSpacing: 0.3,
   },
   addButton: {
     flexDirection: 'row',

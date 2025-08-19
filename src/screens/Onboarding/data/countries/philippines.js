@@ -109,7 +109,7 @@ export const DOMAIN_DEFINITIONS = [
       },
       {
         name: "Advance to Management Role",
-        description: "Progress into leadership position within current company or new organization",
+        description: "Progress into leadership position within current company or new organisation",
         icon: "people",
         explanation: "Leadership opportunities are growing in Philippines as companies expand and professionalize. Your experience positions you perfectly for management roles that offer better compensation and career security.",
         projects: [
@@ -179,7 +179,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Calculate emergency fund and open savings",
                 summary: "Calculate fund",
-                explanation: "Emergency fund calculation provides clear savings target while high-yield accounts maximize growth. Consider both local and dollar accounts for currency diversification.",
+                explanation: "Emergency fund calculation provides clear savings target while high-yield accounts maximise growth. Consider both local and dollar accounts for currency diversification.",
                 timeframe: "1 week",
                 completed: false
               },
@@ -194,7 +194,7 @@ export const DOMAIN_DEFINITIONS = [
           },
           {
             name: "Expense Management",
-            description: "Optimize spending to maximize emergency fund contributions",
+            description: "Optimize spending to maximise emergency fund contributions",
             explanation: "Strategic expense management helps Filipino professionals save more despite inflation and economic pressures.",
             tasks: [
               {
@@ -485,7 +485,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Plan Dream Wedding",
         description: "Organize meaningful wedding celebration within budget while building strong partnership",
         icon: "heart",
-        explanation: "Filipino weddings celebrate love and family unity while being mindful of costs. Smart couples are creating beautiful celebrations that honor traditions while staying financially responsible for their future together.",
+        explanation: "Filipino weddings celebrate love and family unity while being mindful of costs. Smart couples are creating beautiful celebrations that honour traditions while staying financially responsible for their future together.",
         projects: [
           {
             name: "Wedding Planning and Budgeting",
@@ -493,7 +493,7 @@ export const DOMAIN_DEFINITIONS = [
             explanation: "Wedding planning requires balancing family expectations with budget constraints while creating meaningful celebration that starts marriage on solid financial foundation.",
             tasks: [
               {
-                name: "Set realistic wedding budget and prioritize most important celebration elements",
+                name: "Set realistic wedding budget and prioritise most important celebration elements",
                 summary: "Plan budget",
                 explanation: "Wedding budget planning prevents debt while ensuring celebration includes elements most important to couple and families, creating joy without financial stress.",
                 timeframe: "1 month",
@@ -963,7 +963,7 @@ export const DOMAIN_DEFINITIONS = [
         projects: [
           {
             name: "Community Service Setup",
-            description: "Find meaningful volunteer opportunities that utilize professional skills",
+            description: "Find meaningful volunteer opportunities that utilise professional skills",
             explanation: "Skills-based volunteering provides maximum community impact while building professional experience and networking opportunities.",
             tasks: [
               {
@@ -988,7 +988,7 @@ export const DOMAIN_DEFINITIONS = [
             explanation: "Community impact measurement demonstrates value creation while building leadership experience and professional reputation for social responsibility.",
             tasks: [
               {
-                name: "Track volunteer impact and look for leadership opportunities within organization",
+                name: "Track volunteer impact and look for leadership opportunities within organisation",
                 summary: "Track impact",
                 explanation: "Impact tracking demonstrates community value while identifying leadership opportunities that build management experience and professional reputation.",
                 timeframe: "3 months",
@@ -997,7 +997,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Organize community initiatives or fundraising events to expand impact",
                 summary: "Organize initiatives",
-                explanation: "Community organizing builds leadership skills while creating larger positive impact and professional network that supports career advancement and personal fulfillment.",
+                explanation: "Community organising builds leadership skills while creating larger positive impact and professional network that supports career advancement and personal fulfillment.",
                 timeframe: "6 months",
                 completed: false
               }
@@ -1111,28 +1111,28 @@ export const DOMAIN_DEFINITIONS = [
     name: "Community & Environment",
     icon: "home",
     color: "#6366f1", // Indigo
-    description: "Building community connections, improving your environment, and organizing your spaces",
+    description: "Building community connections, improving your environment, and organising your spaces",
     goals: [
       {
         name: "Organize Living Space",
-        description: "Create efficient, organized home environment that supports productivity and wellbeing",
+        description: "Create efficient, organised home environment that supports productivity and wellbeing",
         icon: "grid",
-        explanation: "Organized living space improves mental clarity and productivity while creating peaceful environment during stressful times. Smart organization also saves money by reducing lost items and improving efficiency.",
+        explanation: "Organized living space improves mental clarity and productivity while creating peaceful environment during stressful times. Smart organisation also saves money by reducing lost items and improving efficiency.",
         projects: [
           {
             name: "Home Organization System",
-            description: "Implement comprehensive organization system for all living areas",
-            explanation: "Home organization reduces stress while improving productivity and creating peaceful environment that supports professional success.",
+            description: "Implement comprehensive organisation system for all living areas",
+            explanation: "Home organisation reduces stress while improving productivity and creating peaceful environment that supports professional success.",
             tasks: [
               {
-                name: "Declutter all living areas and organize belongings using systematic approach",
+                name: "Declutter all living areas and organise belongings using systematic approach",
                 summary: "Declutter home",
-                explanation: "Home decluttering creates peaceful environment while improving organization and reducing stress that supports professional productivity and personal wellbeing.",
+                explanation: "Home decluttering creates peaceful environment while improving organisation and reducing stress that supports professional productivity and personal wellbeing.",
                 timeframe: "2 weeks",
                 completed: false
               },
               {
-                name: "Implement storage solutions and organization systems for long-term maintenance",
+                name: "Implement storage solutions and organisation systems for long-term maintenance",
                 summary: "Storage systems",
                 explanation: "Organization systems maintain decluttered environment while creating efficient storage that supports productivity and reduces time wasted searching for items.",
                 timeframe: "1 month",
@@ -1146,7 +1146,7 @@ export const DOMAIN_DEFINITIONS = [
             explanation: "Environment design supports both work productivity and personal relaxation while creating spaces that enhance professional and personal effectiveness.",
             tasks: [
               {
-                name: "Design dedicated work area with proper lighting, seating, and organization",
+                name: "Design dedicated work area with proper lighting, seating, and organisation",
                 summary: "Create workspace",
                 explanation: "Dedicated workspace improves professional productivity while creating boundaries between work and personal life that support mental health and effectiveness.",
                 timeframe: "1 week",
@@ -1182,9 +1182,9 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Implement waste reduction and recycling systems to minimize environmental footprint",
+                name: "Implement waste reduction and recycling systems to minimise environmental footprint",
                 summary: "Waste reduction",
-                explanation: "Waste reduction practices minimize environmental impact while often reducing household costs through more efficient resource utilization and consumption patterns.",
+                explanation: "Waste reduction practices minimise environmental impact while often reducing household costs through more efficient resource utilization and consumption patterns.",
                 timeframe: "2 weeks",
                 completed: false
               }
@@ -1242,7 +1242,7 @@ export const DOMAIN_DEFINITIONS = [
           },
           {
             name: "Simplified Living System",
-            description: "Maintain simplified lifestyle through mindful consumption and organization habits",
+            description: "Maintain simplified lifestyle through mindful consumption and organisation habits",
             explanation: "Simplified living reduces stress while providing financial benefits through reduced consumption and greater appreciation for possessions that remain.",
             tasks: [
               {

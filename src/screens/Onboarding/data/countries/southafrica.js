@@ -259,7 +259,7 @@ export const DOMAIN_DEFINITIONS = [
       },
       {
         name: "Advance to Management Role",
-        description: "Progress into leadership position within current company or new organization",
+        description: "Progress into leadership position within current company or new organisation",
         icon: "people",
         explanation: "Leadership opportunities are growing in South Africa as companies expand and modernize. Your experience positions you perfectly for management roles with better compensation and career security.",
         projects: [
@@ -329,7 +329,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Calculate emergency fund + load shedding buffer",
                 summary: "Calculate fund",
-                explanation: "Comprehensive emergency fund calculation includes load shedding backup power costs while high-yield accounts maximize growth and accessibility.",
+                explanation: "Comprehensive emergency fund calculation includes load shedding backup power costs while high-yield accounts maximise growth and accessibility.",
                 timeframe: "1 week",
                 completed: false
               },
@@ -344,7 +344,7 @@ export const DOMAIN_DEFINITIONS = [
           },
           {
             name: "Expense Management",
-            description: "Optimize spending to maximize emergency fund contributions",
+            description: "Optimize spending to maximise emergency fund contributions",
             explanation: "Strategic expense management helps South African professionals save more despite inflation pressures and rising utility costs.",
             tasks: [
               {
@@ -1563,7 +1563,7 @@ export const DOMAIN_DEFINITIONS = [
         projects: [
           {
             name: "Community Service Setup",
-            description: "Find meaningful volunteer opportunities that utilize professional skills",
+            description: "Find meaningful volunteer opportunities that utilise professional skills",
             explanation: "Skills-based volunteering provides maximum community impact while building professional experience and networking opportunities.",
             tasks: [
               {
@@ -1597,7 +1597,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Organize initiatives to expand impact",
                 summary: "Organize initiatives",
-                explanation: "Community organizing builds leadership skills while creating larger positive impact and professional network that supports career advancement.",
+                explanation: "Community organising builds leadership skills while creating larger positive impact and professional network that supports career advancement.",
                 timeframe: "6 months",
                 completed: false
               }
@@ -1711,28 +1711,28 @@ export const DOMAIN_DEFINITIONS = [
     name: "Community & Environment",
     icon: "home",
     color: "#6366f1", // Indigo
-    description: "Building community connections, improving your environment, and organizing your spaces",
+    description: "Building community connections, improving your environment, and organising your spaces",
     goals: [
       {
         name: "Organize Living Space",
-        description: "Create efficient, organized home environment that supports productivity and wellbeing",
+        description: "Create efficient, organised home environment that supports productivity and wellbeing",
         icon: "grid",
-        explanation: "Organized living space improves mental clarity and productivity while creating peaceful environment during stressful times. Smart organization also saves money by reducing lost items and improving efficiency.",
+        explanation: "Organized living space improves mental clarity and productivity while creating peaceful environment during stressful times. Smart organisation also saves money by reducing lost items and improving efficiency.",
         projects: [
           {
             name: "Home Organization System",
-            description: "Implement comprehensive organization system for all living areas",
-            explanation: "Home organization reduces stress while improving productivity and creating peaceful environment that supports professional success and personal wellbeing.",
+            description: "Implement comprehensive organisation system for all living areas",
+            explanation: "Home organisation reduces stress while improving productivity and creating peaceful environment that supports professional success and personal wellbeing.",
             tasks: [
               {
-                name: "Declutter and organize all living areas",
+                name: "Declutter and organise all living areas",
                 summary: "Declutter home",
-                explanation: "Home decluttering creates peaceful environment while improving organization and reducing stress that supports professional productivity.",
+                explanation: "Home decluttering creates peaceful environment while improving organisation and reducing stress that supports professional productivity.",
                 timeframe: "2 weeks",
                 completed: false
               },
               {
-                name: "Implement storage and organization systems",
+                name: "Implement storage and organisation systems",
                 summary: "Storage systems",
                 explanation: "Organization systems maintain decluttered environment while creating efficient storage that supports productivity and reduces wasted time.",
                 timeframe: "1 month",

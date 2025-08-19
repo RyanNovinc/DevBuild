@@ -109,7 +109,7 @@ export const DOMAIN_DEFINITIONS = [
       },
       {
         name: "Advance to Management Role",
-        description: "Progress into leadership position within current company or new organization",
+        description: "Progress into leadership position within current company or new organisation",
         icon: "people",
         explanation: "Leadership opportunities are exploding in Ireland's red-hot economy! Management roles offer 30-50% salary increases and accelerated career growth. With 3.5% unemployment, smart professionals are securing high-impact leadership positions.",
         projects: [
@@ -179,14 +179,14 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Calculate 6-month emergency fund target",
                 summary: "Calculate fund target",
-                explanation: "Knowing your exact emergency fund target provides clear savings goal while identifying essential expenses helps optimize your budget for faster saving.",
+                explanation: "Knowing your exact emergency fund target provides clear savings goal while identifying essential expenses helps optimise your budget for faster saving.",
                 timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Open savings account with auto-transfers",
                 summary: "Automate savings",
-                explanation: "High-yield accounts maximize growth while automatic transfers ensure consistent progress toward your emergency fund without relying on willpower.",
+                explanation: "High-yield accounts maximise growth while automatic transfers ensure consistent progress toward your emergency fund without relying on willpower.",
                 timeframe: "2 weeks",
                 completed: false
               }
@@ -198,7 +198,7 @@ export const DOMAIN_DEFINITIONS = [
             explanation: "Achieving your emergency fund target provides financial security while freeing you to pursue other goals without worrying about unexpected expenses.",
             tasks: [
               {
-                name: "Track progress and optimize expenses",
+                name: "Track progress and optimise expenses",
                 summary: "Track progress",
                 explanation: "Regular progress tracking maintains motivation while expense optimization helps you save more and reach your emergency fund target faster.",
                 timeframe: "Ongoing",
@@ -298,7 +298,7 @@ export const DOMAIN_DEFINITIONS = [
             explanation: "Optimizing your income streams helps you earn more while ensuring sustainable balance between multiple commitments and personal life.",
             tasks: [
               {
-                name: "Optimize pricing to maximize earnings",
+                name: "Optimize pricing to maximise earnings",
                 summary: "Optimize earnings",
                 explanation: "Smart pricing and efficient processes help you earn more per hour while building sustainable additional income that doesn't overwhelm your schedule.",
                 timeframe: "3 months",
@@ -995,9 +995,9 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Encourage others to volunteer and organize community service events",
+                name: "Encourage others to volunteer and organise community service events",
                 summary: "Inspire others",
-                explanation: "Inspiring others to volunteer multiplies community impact while organizing events develops leadership skills and creates positive change.",
+                explanation: "Inspiring others to volunteer multiplies community impact while organising events develops leadership skills and creates positive change.",
                 timeframe: "12 months",
                 completed: false
               }
@@ -1111,30 +1111,30 @@ export const DOMAIN_DEFINITIONS = [
     name: "Community & Environment",
     icon: "home",
     color: "#6366f1", // Indigo
-    description: "Building community connections, improving your environment, and organizing your spaces",
+    description: "Building community connections, improving your environment, and organising your spaces",
     goals: [
       {
         name: "Organize Living Space",
-        description: "Create efficient, organized home environment that supports productivity and wellbeing",
+        description: "Create efficient, organised home environment that supports productivity and wellbeing",
         icon: "grid",
-        explanation: "Organized living space improves mental clarity and productivity while creating peaceful environment that supports focus and relaxation. Good organization saves time and reduces stress.",
+        explanation: "Organized living space improves mental clarity and productivity while creating peaceful environment that supports focus and relaxation. Good organisation saves time and reduces stress.",
         projects: [
           {
             name: "Home Organization System",
-            description: "Implement comprehensive organization system for all living areas",
-            explanation: "Systematic home organization creates peaceful environment while efficient systems maintain order and support productivity.",
+            description: "Implement comprehensive organisation system for all living areas",
+            explanation: "Systematic home organisation creates peaceful environment while efficient systems maintain order and support productivity.",
             tasks: [
               {
-                name: "Declutter all living areas and organize belongings systematically",
+                name: "Declutter all living areas and organise belongings systematically",
                 summary: "Declutter home",
-                explanation: "Home decluttering creates peaceful space while systematic organization ensures everything has designated place that supports efficiency and tidiness.",
+                explanation: "Home decluttering creates peaceful space while systematic organisation ensures everything has designated place that supports efficiency and tidiness.",
                 timeframe: "3 weeks",
                 completed: false
               },
               {
                 name: "Implement storage solutions and maintenance routines",
                 summary: "Create systems",
-                explanation: "Storage solutions maintain organization while maintenance routines ensure living space stays organized and continues supporting productivity.",
+                explanation: "Storage solutions maintain organisation while maintenance routines ensure living space stays organised and continues supporting productivity.",
                 timeframe: "2 weeks",
                 completed: false
               }

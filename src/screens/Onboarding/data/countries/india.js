@@ -86,7 +86,7 @@ export const DOMAIN_DEFINITIONS = [
           },
           {
             name: "Hybrid Work Implementation",
-            description: "Successfully transition to and optimize flexible work arrangement",
+            description: "Successfully transition to and optimise flexible work arrangement",
             explanation: "73% productivity improvement reported by hybrid workers validates this arrangement. Success requires structured approach to maintain performance and relationships.",
             tasks: [
               {
@@ -155,7 +155,7 @@ export const DOMAIN_DEFINITIONS = [
                   {
                     name: "Apply for AI/ML roles at companies",
                     summary: "Apply positions",
-                    explanation: "India's unicorn ecosystem and global capability centers offer diverse AI opportunities. Strategic applications across company types maximize success probability.",
+                    explanation: "India's unicorn ecosystem and global capability centers offer diverse AI opportunities. Strategic applications across company types maximise success probability.",
                     timeframe: "2 months",
                     completed: false
                   }
@@ -336,7 +336,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Open high-yield account with auto-transfers",
                 summary: "Setup auto-savings",
-                explanation: "Automation removes willpower barriers and ensures consistent progress. High-yield accounts maximize emergency fund growth while maintaining liquidity.",
+                explanation: "Automation removes willpower barriers and ensures consistent progress. High-yield accounts maximise emergency fund growth while maintaining liquidity.",
                 timeframe: "1 week",
                 completed: false
               }
@@ -951,7 +951,7 @@ export const DOMAIN_DEFINITIONS = [
             explanation: "In India's hierarchical corporate culture, articulation equals advancement. English fluency and presentation skills directly impact salary negotiations and leadership opportunities.",
             tasks: [
               {
-                name: "Join Toastmasters or similar public speaking organization for structured practice",
+                name: "Join Toastmasters or similar public speaking organisation for structured practice",
                 summary: "Join speaking group",
                 explanation: "Structured environment provides regular practice opportunities and constructive feedback essential for developing confident public speaking abilities.",
                 timeframe: "1 month",
@@ -1126,7 +1126,7 @@ export const DOMAIN_DEFINITIONS = [
           },
           {
             name: "Solo Travel Execution and Growth",
-            description: "Execute solo travel plans and maximize personal development benefits",
+            description: "Execute solo travel plans and maximise personal development benefits",
             explanation: "Solo travel represents ultimate self-discovery and independence, creating powerful narratives for personal confidence and professional growth.",
             tasks: [
               {
@@ -1340,7 +1340,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Implement environmental initiative and track progress toward 1,000+ people impact target",
                 summary: "Execute project",
-                explanation: "Successful environmental project execution demonstrates project management capabilities while creating measurable positive impact in community or organization.",
+                explanation: "Successful environmental project execution demonstrates project management capabilities while creating measurable positive impact in community or organisation.",
                 timeframe: "12 months",
                 completed: false
               },
@@ -1411,13 +1411,13 @@ export const DOMAIN_DEFINITIONS = [
     name: "Community & Environment",
     icon: "home",
     color: "#6366f1", // Indigo
-    description: "Building community connections, improving your environment, and organizing your spaces",
+    description: "Building community connections, improving your environment, and organising your spaces",
     goals: [
       {
         name: "Organize Living Space",
-        description: "Create a clean, organized, and functional home environment that supports your lifestyle",
+        description: "Create a clean, organised, and functional home environment that supports your lifestyle",
         icon: "desktop",
-        explanation: "An organized living space reduces stress, improves efficiency, and creates a peaceful environment that supports well-being.",
+        explanation: "An organised living space reduces stress, improves efficiency, and creates a peaceful environment that supports well-being.",
         projects: [
           {
             name: "Smart Home Office Design",
@@ -1465,7 +1465,7 @@ export const DOMAIN_DEFINITIONS = [
       },
       {
         name: "Reduce Environmental Impact",
-        description: "Adopt eco-friendly practices that minimize your carbon footprint and support sustainability",
+        description: "Adopt eco-friendly practices that minimise your carbon footprint and support sustainability",
         icon: "leaf",
         explanation: "Environmental responsibility helps protect the planet while often saving money through reduced consumption and waste.",
         projects: [
@@ -1477,7 +1477,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Install smart thermostats, lighting controls, and energy monitoring systems",
                 summary: "Smart systems",
-                explanation: "Smart energy systems optimize consumption patterns automatically while providing real-time feedback for energy-conscious behavior changes.",
+                explanation: "Smart energy systems optimise consumption patterns automatically while providing real-time feedback for energy-conscious behavior changes.",
                 timeframe: "2 months",
                 completed: false
               },
@@ -1515,14 +1515,14 @@ export const DOMAIN_DEFINITIONS = [
       },
       {
         name: "Declutter and Simplify",
-        description: "Remove excess belongings and create a simpler, more organized lifestyle",
+        description: "Remove excess belongings and create a simpler, more organised lifestyle",
         icon: "archive",
         explanation: "Decluttering creates more space, reduces stress, and helps focus on what truly matters in life by removing excess possessions.",
         projects: [
           {
             name: "Physical Minimalism Implementation",
             description: "Systematically reduce physical possessions to essential items that add value",
-            explanation: "Physical decluttering creates organized living space while challenging consumerist pressures and family gift-giving traditions in Indian context.",
+            explanation: "Physical decluttering creates organised living space while challenging consumerist pressures and family gift-giving traditions in Indian context.",
             tasks: [
               {
                 name: "Audit all possessions and categorize items by frequency of use and emotional value",
@@ -1534,7 +1534,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Reduce possessions by 50% through donation, sale, and thoughtful disposal",
                 summary: "Physical declutter",
-                explanation: "Strategic possession reduction creates more organized living space while requires diplomatic navigation of family sentiments about belongings and gifts.",
+                explanation: "Strategic possession reduction creates more organised living space while requires diplomatic navigation of family sentiments about belongings and gifts.",
                 timeframe: "3 months",
                 completed: false
               }
@@ -1542,20 +1542,20 @@ export const DOMAIN_DEFINITIONS = [
           },
           {
             name: "Digital Minimalism Achievement",
-            description: "Eliminate digital clutter and create organized digital environment",
+            description: "Eliminate digital clutter and create organised digital environment",
             explanation: "Digital decluttering particularly beneficial for Indian professionals in technology sectors where information overload impacts focus and decision-making.",
             tasks: [
               {
                 name: "Organize digital files, delete unnecessary data, and streamline digital tools usage",
-                summary: "Digital organization",
-                explanation: "Digital organization improves focus capabilities while reducing multitasking inefficiency that impacts productivity and work quality in information-heavy roles.",
+                summary: "Digital organisation",
+                explanation: "Digital organisation improves focus capabilities while reducing multitasking inefficiency that impacts productivity and work quality in information-heavy roles.",
                 timeframe: "2 months",
                 completed: false
               },
               {
                 name: "Maintain minimalist lifestyle through mindful consumption and regular decluttering reviews",
                 summary: "Minimalism maintenance",
-                explanation: "Sustained minimalism requires ongoing mindful consumption decisions and regular reviews to prevent clutter accumulation while maintaining organized lifestyle benefits.",
+                explanation: "Sustained minimalism requires ongoing mindful consumption decisions and regular reviews to prevent clutter accumulation while maintaining organised lifestyle benefits.",
                 timeframe: "Ongoing",
                 completed: false
               }

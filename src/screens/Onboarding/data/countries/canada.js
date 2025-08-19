@@ -55,7 +55,7 @@ export const DOMAIN_DEFINITIONS = [
                   {
                     name: "Network with Canadian AI/ML community through Vector Institute events and job placement programs",
                     summary: "Network AI",
-                    explanation: "Vector Institute is Canada's premier AI research organization with strong industry connections. Networking through their events provides access to Canada's AI ecosystem and often leads to job opportunities with leading tech companies.",
+                    explanation: "Vector Institute is Canada's premier AI research organisation with strong industry connections. Networking through their events provides access to Canada's AI ecosystem and often leads to job opportunities with leading tech companies.",
                     timeframe: "2 months",
                     completed: false
                   }
@@ -102,7 +102,7 @@ export const DOMAIN_DEFINITIONS = [
                     completed: false
                   },
                   {
-                    name: "Conduct security assessment for local Canadian business or organization",
+                    name: "Conduct security assessment for local Canadian business or organisation",
                     summary: "Security audit",
                     explanation: "Real-world security assessment experience provides practical portfolio pieces while building relationships with local Canadian businesses. Many small/medium businesses need affordable security expertise.",
                     timeframe: "1 month",
@@ -240,7 +240,7 @@ export const DOMAIN_DEFINITIONS = [
             explanation: "This goal becomes actionable through performance reviews, skill certifications, or strategic job changes that leverage current market conditions.",
             tasks: [
               {
-                name: "Identify specific advancement opportunities within current organization or industry",
+                name: "Identify specific advancement opportunities within current organisation or industry",
                 summary: "Find opportunities",
                 explanation: "Canadian job market rewards internal advancement and industry expertise. Identifying specific opportunities allows strategic skill development and positioning for promotions or lateral moves with salary increases.",
                 timeframe: "2 weeks",
@@ -336,7 +336,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Open high-interest savings account and set up automatic weekly transfers",
                 summary: "Setup savings",
-                explanation: "High-interest savings accounts earning 2.85-3.7% maximize emergency fund growth while maintaining accessibility. Automatic transfers ensure consistent progress without relying on willpower or memory.",
+                explanation: "High-interest savings accounts earning 2.85-3.7% maximise emergency fund growth while maintaining accessibility. Automatic transfers ensure consistent progress without relying on willpower or memory.",
                 timeframe: "1 week",
                 completed: false
               }
@@ -344,7 +344,7 @@ export const DOMAIN_DEFINITIONS = [
           },
           {
             name: "Expense Optimization for Savings",
-            description: "Reduce unnecessary spending to maximize emergency fund contributions",
+            description: "Reduce unnecessary spending to maximise emergency fund contributions",
             explanation: "Average $450/month savings achievable through expense reduction. This goal transforms financial anxiety into systematic security building over 2-3 years.",
             tasks: [
               {
@@ -377,7 +377,7 @@ export const DOMAIN_DEFINITIONS = [
             explanation: "Home Buyers' Plan allows $60,000 RRSP withdrawal, First Home Savings Account provides $40,000 contribution room, 30-year amortizations now available for first-time buyers.",
             tasks: [
               {
-                name: "Open First Home Savings Account and maximize annual contributions for tax-free home savings",
+                name: "Open First Home Savings Account and maximise annual contributions for tax-free home savings",
                 summary: "Open FHSA",
                 explanation: "FHSA provides $40,000 contribution room with tax deduction benefits and tax-free withdrawals for home purchases. This unique Canadian program significantly accelerates down payment savings.",
                 timeframe: "2 weeks",
@@ -386,7 +386,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Research First Home Owner programs and down payment assistance in target provinces",
                 summary: "Research programs",
-                explanation: "Provincial programs vary significantly across Canada and can provide substantial down payment assistance or reduced qualification requirements. Research helps maximize available government support.",
+                explanation: "Provincial programs vary significantly across Canada and can provide substantial down payment assistance or reduced qualification requirements. Research helps maximise available government support.",
                 timeframe: "2 weeks",
                 completed: false
               }
@@ -427,7 +427,7 @@ export const DOMAIN_DEFINITIONS = [
             explanation: "Even partial repayment provides psychological relief and improved cash flow, transformative for financial confidence and life decision-making.",
             tasks: [
               {
-                name: "List all student debts with balances and interest rates to prioritize repayment strategy",
+                name: "List all student debts with balances and interest rates to prioritise repayment strategy",
                 summary: "List debts",
                 explanation: "Complete debt inventory provides clarity on repayment priorities and enables strategic planning. Understanding interest rates helps focus efforts on highest-cost debt for maximum financial impact.",
                 timeframe: "1 day",
@@ -602,7 +602,7 @@ export const DOMAIN_DEFINITIONS = [
           },
           {
             name: "Health Monitoring and Optimization",
-            description: "Use technology and regular assessments to optimize health outcomes",
+            description: "Use technology and regular assessments to optimise health outcomes",
             explanation: "Digital health monitoring through wearables combined with universal healthcare creates comprehensive approach to wellness optimization.",
             tasks: [
               {
@@ -1247,7 +1247,7 @@ export const DOMAIN_DEFINITIONS = [
                 explanation: "21 million+ ski visits in 2022/23 set records. 2.8 million active skiers/snowboarders. Winter sports build Canadian cultural connections.",
                 tasks: [
                   {
-                    name: "Take skiing or snowboarding lessons at local Canadian resort or community center",
+                    name: "Take skiing or snowboarding lessons at local Canadian resort or community centre",
                     summary: "Learn skiing",
                     completed: false
                   },
@@ -1326,7 +1326,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Four-Season Activity Development",
                 description: "Master different activities for each distinct Canadian season",
-                explanation: "Canada's four distinct seasons each offer unique opportunities. Year-round activity skills maximize Canadian lifestyle.",
+                explanation: "Canada's four distinct seasons each offer unique opportunities. Year-round activity skills maximise Canadian lifestyle.",
                 tasks: [
                   {
                     name: "Identify and learn one activity for each Canadian season (winter, spring, summer, fall)",
@@ -1602,7 +1602,7 @@ export const DOMAIN_DEFINITIONS = [
               },
               {
                 name: "Creative Impact Amplification",
-                description: "Scale creative services to maximize both income and social impact",
+                description: "Scale creative services to maximise both income and social impact",
                 explanation: "Creative services for purpose-driven organizations combine artistic fulfillment with meaningful contribution to causes.",
                 tasks: [
                   {
@@ -1705,7 +1705,7 @@ export const DOMAIN_DEFINITIONS = [
     name: "Community & Environment",
     icon: "home",
     color: "#6366f1", // Indigo
-    description: "Building community connections, improving your environment, and organizing your spaces",
+    description: "Building community connections, improving your environment, and organising your spaces",
     goals: [
       {
         name: "Create Affordable Home Office Space",
@@ -1761,7 +1761,7 @@ export const DOMAIN_DEFINITIONS = [
             explanation: "This goal requires strategic planning including maximizing government programs, considering smaller markets, and exploring co-ownership models over 2-3 years.",
             tasks: [
               {
-                name: "Research and maximize First Home Savings Account, Home Buyers' Plan, and regional programs",
+                name: "Research and maximise First Home Savings Account, Home Buyers' Plan, and regional programs",
                 summary: "Research programs",
                 completed: false
               },

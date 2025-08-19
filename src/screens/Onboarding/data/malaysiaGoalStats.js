@@ -677,7 +677,7 @@ export const MALAYSIAN_GOAL_STATS = {
         publication: "International Islamic University Malaysia",
         authors: "Interfaith Studies Research Team",
         date: "2024",
-        description: "Research shows 55% decision-making improvement through integration of Malaysia's diverse spiritual traditions, providing culturally inclusive approaches to professional development that respect and utilize the country's rich religious heritage for career enhancement.",
+        description: "Research shows 55% decision-making improvement through integration of Malaysia's diverse spiritual traditions, providing culturally inclusive approaches to professional development that respect and utilise the country's rich religious heritage for career enhancement.",
         link: "https://www.iium.edu.my/"
       }
     }
@@ -688,7 +688,7 @@ export const MALAYSIAN_GOAL_STATS = {
     "Organize Living Space": {
       title: "Malaysian Green Building Council: Organized Workspaces Increase Productivity by 35% in Tropical Climate",
       figure: "35%",
-      description: "Malaysian professionals working in well-organized, climate-appropriate spaces achieve 35% higher productivity levels. Malaysia's tropical climate considerations combined with effective organization create optimal conditions for professional performance while managing heat and humidity challenges.",
+      description: "Malaysian professionals working in well-organised, climate-appropriate spaces achieve 35% higher productivity levels. Malaysia's tropical climate considerations combined with effective organisation create optimal conditions for professional performance while managing heat and humidity challenges.",
       source: "Malaysian Green Building Council & Construction Industry Development Board",
       link: "https://www.mgbc.org.my/",
       details: {
@@ -696,7 +696,7 @@ export const MALAYSIAN_GOAL_STATS = {
         publication: "Malaysian Green Building Council",
         authors: "Sustainable Design Research Team",
         date: "2024",
-        description: "Research demonstrates 35% productivity improvement through organized workspace design adapted to Malaysia's tropical climate, with effective ventilation, lighting, and organization creating comfortable work environments that enhance both performance and sustainability.",
+        description: "Research demonstrates 35% productivity improvement through organised workspace design adapted to Malaysia's tropical climate, with effective ventilation, lighting, and organisation creating comfortable work environments that enhance both performance and sustainability.",
         link: "https://www.mgbc.org.my/"
       }
     },

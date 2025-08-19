@@ -28,6 +28,8 @@ import FeatureExplorerTracker from '../services/FeatureExplorerTracker';
 import { LoginScreen } from '../components/ai/LoginScreen';
 import { getSubscriptionInfo } from '../services/SubscriptionService';
 import { useAppContext } from '../context/AppContext';
+import ReferralSummaryPopup from '../components/ReferralSummaryPopup';
+import ReferralService from './Referral/ReferralService';
 
 // Import responsive utilities
 import responsive from '../utils/responsive';
@@ -59,6 +61,12 @@ const EditProfileScreen = ({ navigation, route }) => {
   const [profileImage, setProfileImage] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isGoingBack, setIsGoingBack] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showUnsavedChangesModal, setShowUnsavedChangesModal] = useState(false);
+  
+  // Store original values for comparison
+  const [originalProfileName, setOriginalProfileName] = useState('');
+  const [originalProfileImage, setOriginalProfileImage] = useState(null);
   
   // AI login modal state
   const [isLoginModalVisible, setIsLoginModalVisible] = useState(false);
@@ -69,6 +77,10 @@ const EditProfileScreen = ({ navigation, route }) => {
   
   // Subscription and credits state
   const [realSubscriptionInfo, setRealSubscriptionInfo] = useState(null);
+  
+  // Referral popup state
+  const [showReferralPopup, setShowReferralPopup] = useState(false);
+  const [referralStats, setReferralStats] = useState(null);
   
   // Animation for fade out
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -86,10 +98,21 @@ const EditProfileScreen = ({ navigation, route }) => {
   // Initialize form with existing data
   useEffect(() => {
     if (profile) {
-      setProfileName(profile.name || user?.displayName || '');
-      setProfileImage(profile.profileImage || null);
+      const name = profile.name || user?.displayName || '';
+      const image = profile.profileImage || null;
+      setProfileName(name);
+      setProfileImage(image);
+      setOriginalProfileName(name);
+      setOriginalProfileImage(image);
     }
   }, [profile, user]);
+
+  // Check for unsaved changes
+  useEffect(() => {
+    const nameChanged = profileName !== originalProfileName;
+    const imageChanged = profileImage !== originalProfileImage;
+    setHasUnsavedChanges(nameChanged || imageChanged);
+  }, [profileName, profileImage, originalProfileName, originalProfileImage]);
 
   // Load streak data on component mount
   useEffect(() => {
@@ -128,6 +151,27 @@ const EditProfileScreen = ({ navigation, route }) => {
 
     loadSubscriptionInfo();
   }, [isAuthenticated, user?.idToken]);
+
+  // Load referral data when authenticated
+  useEffect(() => {
+    const loadReferralData = async () => {
+      if (isAuthenticated) {
+        try {
+          // Initialize referral system if needed
+          await ReferralService.setupReferralCode(user?.email || user?.username);
+          
+          const stats = await ReferralService.getReferralStats();
+          setReferralStats(stats);
+        } catch (error) {
+          console.error('Error loading referral data:', error);
+          // Set default values if loading fails
+          setReferralStats({ sent: 0, clicked: 0, converted: 0, plansEarned: 0, plansGifted: 0 });
+        }
+      }
+    };
+
+    loadReferralData();
+  }, [isAuthenticated, user?.email, user?.username]);
 
   // Hide bottom navigation and AI button when this screen is active
   useEffect(() => {
@@ -515,6 +559,11 @@ const EditProfileScreen = ({ navigation, route }) => {
       await updateProfile(updatedProfile);
       console.log('EditProfile: Profile saved successfully, starting fade out');
       
+      // Update original values to reflect saved state
+      setOriginalProfileName(profileName.trim());
+      setOriginalProfileImage(profileImage);
+      setHasUnsavedChanges(false);
+      
       // Start fade out animation
       Animated.timing(fadeAnim, {
         toValue: 0,
@@ -539,6 +588,11 @@ const EditProfileScreen = ({ navigation, route }) => {
 
   // Handle back button
   const handleBack = async () => {
+    if (hasUnsavedChanges) {
+      setShowUnsavedChangesModal(true);
+      return;
+    }
+    
     setIsGoingBack(true);
     
     try {
@@ -549,6 +603,56 @@ const EditProfileScreen = ({ navigation, route }) => {
       console.error('Error going back:', error);
       setIsGoingBack(false); // Reset if navigation fails
     }
+  };
+
+  // Handle discard changes
+  const handleDiscardChanges = () => {
+    setShowUnsavedChangesModal(false);
+    setIsGoingBack(true);
+    
+    setTimeout(() => {
+      navigation.goBack();
+    }, 100);
+  };
+
+  // Handle keep editing
+  const handleKeepEditing = () => {
+    setShowUnsavedChangesModal(false);
+  };
+
+  // Handle referral popup
+  const handleReferralClick = () => {
+    setShowReferralPopup(true);
+  };
+
+  const handleReferralPopupClose = () => {
+    setShowReferralPopup(false);
+  };
+
+  const handleNavigateToReferrals = () => {
+    navigation.navigate('ReferralScreen');
+  };
+
+  // Calculate total referral limit based on achievements
+  const getTotalReferralLimit = () => {
+    const currentStreak = streakData.currentStreak;
+    let limit = 3; // Base limit
+    
+    if (currentStreak >= 90) limit += 1; // 90-day achievement adds 1
+    if (currentStreak >= 180) limit += 1; // 180-day achievement adds 1
+    
+    return limit; // Max of 5 total
+  };
+
+  // Calculate referrals remaining vs total limit (0/X format)
+  const getReferralProgress = () => {
+    const total = getTotalReferralLimit();
+    const used = referralStats?.converted || 0;
+    const remaining = Math.max(0, total - used);
+    return { 
+      remaining: remaining, 
+      total: total 
+    };
   };
 
   const profileImageSize = 150;
@@ -664,11 +768,6 @@ const EditProfileScreen = ({ navigation, route }) => {
         {/* AI Account Section */}
         <View style={styles.aiAccountSection}>
           <Text style={[styles.inputLabel, { color: theme.text }]}>AI Account</Text>
-          {!isAuthenticated && (
-            <Text style={[styles.aiAccountDescription, { color: theme.textSecondary }]}>
-              Connect to your AI account to access AI features and assistant
-            </Text>
-          )}
           
           {isAuthenticated ? (
             <View style={styles.aiAccountConnected}>
@@ -736,26 +835,64 @@ const EditProfileScreen = ({ navigation, route }) => {
                   </Text>
                 </View>
               </View>
+
+              {/* Referral Information - Compact */}
+              <TouchableOpacity 
+                style={[styles.referralCard, { backgroundColor: theme.surface, borderColor: theme.border || theme.cardBorder || 'rgba(255,255,255,0.1)' }]}
+                onPress={handleReferralClick}
+                activeOpacity={0.7}
+              >
+                <View style={styles.referralRow}>
+                  <View style={styles.referralLeft}>
+                    <Ionicons name="people" size={18} color={theme.primary} />
+                    <View style={styles.referralTextGroup}>
+                      <Text style={[styles.referralTitle, { color: theme.text }]}>
+                        Referrals
+                      </Text>
+                      <Text style={[styles.referralDescription, { color: theme.textSecondary }]}>
+                        Invite friends and get mutual x1 month of AI free
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.referralRight}>
+                    <Text style={[styles.referralCount, { color: theme.primary }]}>
+                      3/3
+                    </Text>
+                    <Ionicons name="chevron-forward" size={14} color={theme.textSecondary} style={{ opacity: 0.6 }} />
+                  </View>
+                </View>
+              </TouchableOpacity>
             </View>
           ) : (
-            <TouchableOpacity 
-              onPress={handleAILogin}
-              style={[styles.aiAccountCard, styles.loginCard, { backgroundColor: theme.surface, borderColor: theme.primary }]}
-            >
-              <View style={styles.aiAccountInfo}>
-                <View style={styles.aiAccountStatus}>
-                  <View style={[styles.statusIndicator, { backgroundColor: '#FF9800' }]} />
-                  <Text style={[styles.statusText, { color: theme.text }]}>Not Connected</Text>
+            <View style={styles.aiAccountDisconnected}>
+              {/* Status Header */}
+              <View style={[styles.aiStatusHeader, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                <View style={styles.aiStatusInfo}>
+                  <View style={styles.aiAccountStatus}>
+                    <View style={[styles.statusIndicator, { backgroundColor: '#FF9800' }]} />
+                    <Text style={[styles.statusText, { color: theme.text }]}>Not Connected</Text>
+                  </View>
+                  <Text style={[styles.aiStatusDescription, { color: theme.textSecondary }]}>
+                    Connect to access AI features and assistant
+                  </Text>
                 </View>
-                <Text style={[styles.loginPrompt, { color: theme.textSecondary }]}>
-                  Sign in to access AI features
-                </Text>
               </View>
-              <View style={[styles.aiActionButton, styles.loginButton, { backgroundColor: theme.primary }]}>
-                <Ionicons name="log-in-outline" size={16} color="white" />
-                <Text style={[styles.aiActionButtonText, { color: 'white' }]}>Sign In</Text>
+
+              {/* Action Buttons Section */}
+              <View style={styles.aiActionButtons}>
+                {/* Sign In Button */}
+                <TouchableOpacity 
+                  onPress={handleAILogin}
+                  style={[styles.aiPrimaryButton, { backgroundColor: theme.primary }]}
+                >
+                  <Ionicons name="log-in-outline" size={18} color="white" />
+                  <Text style={styles.aiPrimaryButtonText}>Sign In</Text>
+                </TouchableOpacity>
+
+                {/* Claim AI Light Button Placeholder - will be conditionally rendered */}
+                {/* This space reserved for ClaimAILightButton when eligible */}
               </View>
-            </TouchableOpacity>
+            </View>
           )}
         </View>
 
@@ -984,6 +1121,49 @@ const EditProfileScreen = ({ navigation, route }) => {
         </Modal>
       )}
 
+      {/* Unsaved Changes Confirmation Modal */}
+      {showUnsavedChangesModal && (
+        <Modal
+          transparent={true}
+          animationType="fade"
+          visible={showUnsavedChangesModal}
+          onRequestClose={handleKeepEditing}
+        >
+          <View style={styles.unsavedChangesOverlay}>
+            <View style={[styles.unsavedChangesContainer, { backgroundColor: theme.surface }]}>
+              <Text style={[styles.unsavedChangesTitle, { color: theme.text }]}>
+                Unsaved Changes
+              </Text>
+              <Text style={[styles.unsavedChangesMessage, { color: theme.textSecondary }]}>
+                You have unsaved changes. Are you sure you want to go back?
+              </Text>
+              
+              <View style={styles.unsavedChangesButtons}>
+                <TouchableOpacity
+                  style={[styles.unsavedChangesButton, styles.keepEditingButton, { backgroundColor: theme.background }]}
+                  onPress={handleKeepEditing}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.unsavedChangesButtonText, { color: theme.text }]}>
+                    Keep Editing
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[styles.unsavedChangesButton, styles.discardButton]}
+                  onPress={handleDiscardChanges}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.unsavedChangesButtonText, styles.discardButtonText]}>
+                    Discard
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
+
       {/* Bottom Streak Display */}
       <View style={[styles.streakDisplaySection, { backgroundColor: '#000000', borderTopColor: theme.border }]}>
         <View style={styles.streakItem}>
@@ -1013,6 +1193,13 @@ const EditProfileScreen = ({ navigation, route }) => {
         </View>
       </View>
       </Animated.View>
+
+      {/* Referral Summary Popup */}
+      <ReferralSummaryPopup
+        visible={showReferralPopup}
+        onClose={handleReferralPopupClose}
+        onNavigateToReferrals={handleNavigateToReferrals}
+      />
     </SafeAreaView>
   );
 };
@@ -1163,6 +1350,39 @@ const styles = StyleSheet.create({
   },
   loginPrompt: {
     fontSize: fontSizes.sm,
+  },
+  // New AI Account Disconnected Layout
+  aiAccountDisconnected: {
+    gap: spacing.m,
+  },
+  aiStatusHeader: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: spacing.m,
+  },
+  aiStatusInfo: {
+    flex: 1,
+  },
+  aiStatusDescription: {
+    fontSize: fontSizes.sm,
+    lineHeight: 20,
+  },
+  aiActionButtons: {
+    gap: spacing.s,
+  },
+  aiPrimaryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.m,
+    paddingHorizontal: spacing.l,
+    borderRadius: 12,
+    gap: spacing.s,
+  },
+  aiPrimaryButtonText: {
+    color: 'white',
+    fontSize: fontSizes.md,
+    fontWeight: '600',
   },
   aiActionButton: {
     flexDirection: 'row',
@@ -1543,6 +1763,110 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 0.2,
     color: 'rgba(255, 255, 255, 0.7)',
+  },
+  // Unsaved Changes Modal Styles
+  unsavedChangesOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  unsavedChangesContainer: {
+    width: '100%',
+    maxWidth: 320,
+    borderRadius: 16,
+    paddingVertical: 32,
+    paddingHorizontal: 24,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 8,
+  },
+  unsavedChangesTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 12,
+    letterSpacing: 0.3,
+  },
+  unsavedChangesMessage: {
+    fontSize: 15,
+    textAlign: 'center',
+    marginBottom: 32,
+    lineHeight: 22,
+    opacity: 0.8,
+    fontWeight: '400',
+  },
+  unsavedChangesButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  unsavedChangesButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  keepEditingButton: {
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  discardButton: {
+    backgroundColor: '#FF3B30',
+  },
+  unsavedChangesButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    letterSpacing: 0.2,
+  },
+  discardButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  // Referral card styles - COMPACT
+  referralCard: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: spacing.s,
+    marginTop: spacing.s,
+  },
+  referralRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  referralLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  referralTextGroup: {
+    marginLeft: spacing.s,
+    flex: 1,
+  },
+  referralTitle: {
+    fontSize: fontSizes.sm,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  referralDescription: {
+    fontSize: fontSizes.xs,
+    fontWeight: '500',
+  },
+  referralRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  referralCount: {
+    fontSize: fontSizes.lg,
+    fontWeight: 'bold',
+    marginRight: spacing.xs,
   },
 });
 

@@ -138,14 +138,14 @@ export const OTHER_GOAL_STATS = {
       figure: "44x",
       description: "Homeowners accumulate 44 times more wealth than renters over their lifetime through equity building and property appreciation. Strategic homeownership planning provides long-term financial security and stability.",
       source: "Urban Institute Housing Finance Policy Center",
-      link: "https://www.urban.org/policy-centers/housing-finance-policy-center",
+      link: "https://www.urban.org/policy-centers/housing-finance-policy-centre",
       details: {
         title: "Homeownership and Wealth Building Analysis",
         publication: "Urban Institute",
         authors: "Housing Finance Policy Center",
         date: "2023",
         description: "Real estate investment through homeownership creates long-term wealth building opportunities through equity accumulation and property appreciation.",
-        link: "https://www.urban.org/policy-centers/housing-finance-policy-center"
+        link: "https://www.urban.org/policy-centers/housing-finance-policy-centre"
       }
     }
   },
@@ -353,19 +353,19 @@ export const OTHER_GOAL_STATS = {
       figure: "30%",
       description: "Employees in purpose-aligned roles report 30% higher job satisfaction and 40% lower burnout rates. Work aligned with personal values creates sustainable career fulfillment.",
       source: "Harvard Business Review Purpose Research",
-      link: "https://hbr.org/2018/10/creating-a-purpose-driven-organization",
+      link: "https://hbr.org/2018/10/creating-a-purpose-driven-organisation",
       details: {
         title: "Purpose-Driven Work and Employee Engagement",
         publication: "Harvard Business Review",
         authors: "Purpose and Performance Research Team",
         date: "2023",
         description: "Purpose-driven work alignment creates measurable improvements in job satisfaction, engagement, and career sustainability across industries.",
-        link: "https://hbr.org/2018/10/creating-a-purpose-driven-organization"
+        link: "https://hbr.org/2018/10/creating-a-purpose-driven-organisation"
       }
     }
   },
 
-  // Domain: Community & Environment - Universal organization and environment goals
+  // Domain: Community & Environment - Universal organisation and environment goals
   "Community & Environment": {
     "Create Organized Living Space": {
       title: "Organized Environments Improve Cognitive Function by 30% Compared to Clutter",
@@ -378,7 +378,7 @@ export const OTHER_GOAL_STATS = {
         publication: "Journal of Neuroscience",
         authors: "Princeton Neuroscience Institute",
         date: "2023",
-        description: "Physical environment organization creates measurable improvements in cognitive function and mental well-being across populations.",
+        description: "Physical environment organisation creates measurable improvements in cognitive function and mental well-being across populations.",
         link: "https://www.balancecoachingconsulting.com/articles/marie-kondo-philosophy-for-mental-wellness"
       }
     },

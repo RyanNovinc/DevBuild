@@ -96,7 +96,10 @@
       "WebFetch(domain:kanbanize.com)",
       "WebFetch(domain:www.scrum.org)",
       "WebFetch(domain:businessmap.io)",
-      "WebFetch(domain:www.techtarget.com)"
+      "WebFetch(domain:www.techtarget.com)",
+      "Bash(aws apigateway get-resources:*)",
+      "Bash(\"C:\\Program Files\\Amazon\\AWSCLIV2\\aws.exe\" apigateway get-rest-apis --region ap-southeast-2)",
+      "Bash(timeout 10 npx expo start --dev-client --port 8099)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

@@ -440,11 +440,8 @@ const KanbanView = ({ taskScreenProps }) => {
           fullScreenStyles.kanbanContainer, 
           { backgroundColor: '#000000' }
         ]}>
-          {((viewMode === 'projects' && getFilteredProjects().length > 0) || 
-            (viewMode === 'tasks' && getFilteredTasks().length > 0)) ? (
-            <>
-              {/* Exit Full Screen Toggle Button - Bottom Left */}
-              <TouchableOpacity
+          {/* Exit Full Screen Toggle Button - Bottom Left */}
+          <TouchableOpacity
                 style={{
                   position: 'absolute', 
                   bottom: 15, 
@@ -477,14 +474,14 @@ const KanbanView = ({ taskScreenProps }) => {
                 />
               </TouchableOpacity>
 
-              {/* Full-screen Kanban Board */}
-              <View style={[
-                fullScreenStyles.boardContainer,
-                { 
-                  paddingTop: scaleHeight(40),
-                  paddingBottom: insets.bottom
-                }
-              ]}>
+          {/* Full-screen Kanban Board - Always show */}
+          <View style={[
+            fullScreenStyles.boardContainer,
+            { 
+              paddingTop: scaleHeight(40),
+              paddingBottom: insets.bottom
+            }
+          ]}>
                 {(() => {
                   console.log('🎯 KanbanView (fullscreen): Current viewMode is:', viewMode);
                   return viewMode === 'projects';
@@ -555,33 +552,22 @@ const KanbanView = ({ taskScreenProps }) => {
                         wipLimit={settings?.kanbanWipLimit || 3}
                         onWipLimitChange={handleWipLimitChange}
                         onShowWipEducation={handleShowWipEducation}
+                        // Pass navigation for redirecting to LifePlan
+                        navigation={navigation}
                       />
                     );
                   })()
                 )}
-              </View>
-            </>
-          ) : (
-            <View style={[
-              styles.kanbanEmptyContainer, 
-              { 
-                backgroundColor: '#000000'
-              }
-            ]}>
-              <CustomEmptyState
-                title={viewMode === 'projects' ? "No Projects Found" : "No Tasks Found"}
-                message={getEmptyStateMessage()}
-                icon={viewMode === 'projects' ? "folder-open" : "list-outline"}
-                iconColor={theme.primary}
-                buttonText={buttonConfig.text}
-                onButtonPress={buttonConfig.handler}
-                theme={theme}
-                illustration={<EmptyTasksIllustration theme={theme} viewMode={taskScreenProps.viewMode} />}
-                isDarkMode={true}
-              />
-            </View>
-          )}
+          </View>
         </View>
+
+        {/* WIP Education Modal - Include in fullscreen mode */}
+        <WipEducationModal
+          visible={showWipEducation}
+          onClose={() => setShowWipEducation(false)}
+          theme={theme}
+          isDarkMode={isDarkMode}
+        />
       </View>
     );
   }
@@ -592,11 +578,8 @@ const KanbanView = ({ taskScreenProps }) => {
       styles.kanbanContainer, 
       { backgroundColor: '#000000' } // Explicitly set to black
     ]}>
-      {((viewMode === 'projects' && getFilteredProjects().length > 0) || 
-        (viewMode === 'tasks' && getFilteredTasks().length > 0)) ? (
-        <>
-          {/* Regular Kanban Board */}
-          <View style={{ flex: 1, backgroundColor: '#000000' }}>
+      {/* Always show Kanban Board for better UX */}
+      <View style={{ flex: 1, backgroundColor: '#000000' }}>
             {(() => {
               console.log('🎯 KanbanView: Current viewMode is:', viewMode);
               return viewMode === 'projects';
@@ -667,6 +650,8 @@ const KanbanView = ({ taskScreenProps }) => {
                     wipLimit={settings?.kanbanWipLimit || 3}
                     onWipLimitChange={handleWipLimitChange}
                     onShowWipEducation={handleShowWipEducation}
+                    // Pass navigation for redirecting to LifePlan
+                    navigation={navigation}
                   />
                 );
               })()
@@ -706,57 +691,43 @@ const KanbanView = ({ taskScreenProps }) => {
               color={isDarkMode ? '#FFFFFF' : '#333333'} 
             />
           </TouchableOpacity>
-        </>
-      ) : (
-        <View style={[styles.kanbanEmptyContainer, { backgroundColor: '#000000' }]}>
-          <CustomEmptyState
-            title={viewMode === 'projects' ? "No Projects Found" : "No Tasks Found"}
-            message={getEmptyStateMessage()}
-            icon={viewMode === 'projects' ? "folder-open" : "list-outline"}
-            iconColor={theme.primary}
-            buttonText={buttonConfig.text}
-            onButtonPress={buttonConfig.handler}
-            theme={theme}
-            illustration={<EmptyTasksIllustration theme={theme} viewMode={taskScreenProps.viewMode} />}
-            isDarkMode={isDarkMode}
-          />
-          
-          {/* Data Fix Option - Only show in projects view */}
-          {viewMode === 'projects' && totalProjectCount !== visibleItemCount && (
-            <TouchableOpacity 
+      
+      {/* Data Fix Option - Only show in projects view and when there's a data inconsistency */}
+      {viewMode === 'projects' && totalProjectCount !== visibleItemCount && getFilteredProjects().length === 0 && (
+        <View style={{ position: 'absolute', bottom: 80, right: 20 }}>
+          <TouchableOpacity 
+            style={[
+              styles.fixDataButton, 
+              { backgroundColor: theme.warning || '#ff9800' }
+            ]}
+            onPress={verifyProjectDataConsistency}
+            disabled={isVerifying}
+            activeOpacity={0.7}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Fix project count"
+            accessibilityHint="Fixes inconsistencies in project data"
+            accessibilityState={{ disabled: isVerifying }}
+          >
+            <Ionicons 
+              name="refresh-circle" 
+              size={scaleWidth(18)} 
+              color={isDarkMode ? '#000000' : '#FFFFFF'} 
+            />
+            <Text 
               style={[
-                styles.fixDataButton, 
-                { backgroundColor: theme.warning || '#ff9800' }
+                styles.fixDataButtonText, 
+                { 
+                  color: isDarkMode ? '#000000' : '#FFFFFF',
+                  fontSize: fontSizes.s,
+                  marginLeft: spacing.xs
+                }
               ]}
-              onPress={verifyProjectDataConsistency}
-              disabled={isVerifying}
-              activeOpacity={0.7}
-              accessible={true}
-              accessibilityRole="button"
-              accessibilityLabel="Fix project count"
-              accessibilityHint="Fixes inconsistencies in project data"
-              accessibilityState={{ disabled: isVerifying }}
+              maxFontSizeMultiplier={1.3}
             >
-              <Ionicons 
-                name="refresh-circle" 
-                size={scaleWidth(18)} 
-                color={isDarkMode ? '#000000' : '#FFFFFF'} 
-              />
-              <Text 
-                style={[
-                  styles.fixDataButtonText, 
-                  { 
-                    color: isDarkMode ? '#000000' : '#FFFFFF',
-                    fontSize: fontSizes.s,
-                    marginLeft: spacing.xs
-                  }
-                ]}
-                maxFontSizeMultiplier={1.3}
-              >
-                {isVerifying ? 'Checking Data...' : 'Fix Project Count'}
-              </Text>
-            </TouchableOpacity>
-          )}
+              {isVerifying ? 'Checking Data...' : 'Fix Project Count'}
+            </Text>
+          </TouchableOpacity>
         </View>
       )}
 

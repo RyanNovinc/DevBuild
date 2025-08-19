@@ -10,7 +10,7 @@ import {
   Animated,
   BackHandler
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { NavigationContainer } from '@react-navigation/native';
@@ -54,7 +54,7 @@ const TopTab = createMaterialTopTabNavigator();
 /**
  * Simplified TodoListScreen with original structure and navigation
  */
-const TodoListScreen = ({ navigation, route }) => {
+const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen, onFullScreenToggle: externalOnFullScreenToggle }) => {
   const { theme } = useTheme();
   const { showSuccess } = useNotification();
   const { 
@@ -67,9 +67,53 @@ const TodoListScreen = ({ navigation, route }) => {
     subscription
   } = useAppContext();
 
+  // Internal fullscreen state management
+  const [internalIsFullscreen, setInternalIsFullscreen] = useState(false);
+  
+  // Use external props if provided, otherwise use internal state
+  const isFullscreen = externalIsFullscreen !== undefined ? externalIsFullscreen : internalIsFullscreen;
+  const onFullScreenToggle = externalOnFullScreenToggle || (() => setInternalIsFullscreen(!internalIsFullscreen));
+
+  // Handle global fullscreen state for hiding bottom navigation and AI button
+  useEffect(() => {
+    if (isFullscreen) {
+      // Hide AI button
+      if (typeof window !== 'undefined' && window.setAIButtonVisible) {
+        window.setAIButtonVisible(false);
+      }
+      
+      // Set global state to hide bottom tabs
+      if (typeof global !== 'undefined') {
+        global.kanbanFullScreen = true;
+      }
+    } else {
+      // Restore normal state
+      if (typeof window !== 'undefined' && window.setAIButtonVisible) {
+        window.setAIButtonVisible(true);
+      }
+      
+      if (typeof global !== 'undefined') {
+        global.kanbanFullScreen = false;
+      }
+    }
+    
+    // Cleanup function
+    return () => {
+      if (isFullscreen) {
+        if (typeof window !== 'undefined' && window.setAIButtonVisible) {
+          window.setAIButtonVisible(true);
+        }
+        if (typeof global !== 'undefined') {
+          global.kanbanFullScreen = false;
+        }
+      }
+    };
+  }, [isFullscreen]);
+
   // Screen dimensions
   const { width, height } = useScreenDimensions();
   const safeSpacing = useSafeSpacing();
+  const insets = useSafeAreaInsets();
 
   // View mode state (todos vs notes) - initialize from route params
   const [currentView, setCurrentView] = useState(route?.params?.currentView || 'todo');
@@ -111,6 +155,19 @@ const TodoListScreen = ({ navigation, route }) => {
     return () => {
       keyboardDidShowListener?.remove();
       keyboardDidHideListener?.remove();
+    };
+  }, []);
+
+  // Cleanup fullscreen state when component unmounts
+  useEffect(() => {
+    return () => {
+      // Always restore normal state when component unmounts
+      if (typeof window !== 'undefined' && window.setAIButtonVisible) {
+        window.setAIButtonVisible(true);
+      }
+      if (typeof global !== 'undefined') {
+        global.kanbanFullScreen = false;
+      }
     };
   }, []);
 
@@ -413,7 +470,8 @@ const TodoListScreen = ({ navigation, route }) => {
             marginHorizontal: spacing.m,
             marginTop: spacing.xs,
             marginBottom: spacing.s,
-            height: 44,
+            height: isFullscreen ? 0 : 44, // Hide tab bar in fullscreen
+            overflow: 'hidden', // Ensure content is hidden when height is 0
           },
           tabBarIndicatorStyle: {
             backgroundColor: theme.primary,
@@ -608,11 +666,43 @@ const TodoListScreen = ({ navigation, route }) => {
         style={[styles.container, { backgroundColor: theme.background }]}
         edges={['top']}
       >
-
         {/* Content */}
         <View style={[styles.content, { flex: 1 }]}>
           {currentView === 'todo' ? renderTodoTabs() : renderNotesView()}
         </View>
+
+        {/* Floating Fullscreen Button - Bottom Left (exact KanbanView positioning) */}
+        <TouchableOpacity
+          style={{
+            position: 'absolute', 
+            bottom: insets.bottom - 20, 
+            left: 20, 
+            zIndex: 100,
+            backgroundColor: '#333333',
+            borderRadius: 20,
+            padding: 8,
+            minWidth: 44,
+            minHeight: 44,
+            alignItems: 'center',
+            justifyContent: 'center',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.3,
+            shadowRadius: 4,
+            elevation: 4,
+          }}
+          onPress={onFullScreenToggle}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+          accessibilityHint={isFullscreen ? "Exit fullscreen mode" : "Enter fullscreen mode"}
+        >
+          <Ionicons 
+            name={isFullscreen ? "contract" : "expand"} 
+            size={scaleWidth(20)} 
+            color="#FFFFFF" 
+          />
+        </TouchableOpacity>
       </SafeAreaView>
     </GestureHandlerRootView>
   );

@@ -32,49 +32,49 @@ const WHEEL_DOMAINS = [
   {
     name: "Career & Work",
     icon: "briefcase",
-    color: "#4f46e5", // Indigo
+    color: "#3B82F6", // Medium Blue
     description: "Focusing on your professional development, workplace satisfaction, and career progression."
   },
   {
     name: "Health & Wellness",
     icon: "fitness",
-    color: "#06b6d4", // Cyan
+    color: "#22C55E", // Medium Green
     description: "Prioritizing physical fitness, nutrition, sleep quality, and overall mental well-being."
   },
   {
     name: "Relationships",
     icon: "people",
-    color: "#ec4899", // Pink
+    color: "#EC4899", // Medium Pink
     description: "Strengthening connections with family, friends, romantic partners, and building meaningful social bonds."
   },
   {
     name: "Personal Growth",
     icon: "school",
-    color: "#8b5cf6", // Violet
+    color: "#F97316", // Medium Orange
     description: "Developing new skills, expanding knowledge, and fostering character development."
   },
   {
     name: "Financial Security",
     icon: "cash",
-    color: "#10b981", // Emerald
+    color: "#EAB308", // Medium Gold
     description: "Managing money effectively, building savings, making smart investments, and working toward financial freedom."
   },
   {
     name: "Recreation & Leisure",
     icon: "bicycle",
-    color: "#f59e0b", // Amber
+    color: "#8B5CF6", // Medium Purple
     description: "Making time for hobbies, fun activities, relaxation, and travel that bring joy and balance."
   },
   {
     name: "Purpose & Meaning",
     icon: "compass",
-    color: "#ef4444", // Red
+    color: "#EF4444", // Medium Red
     description: "Exploring spirituality, contributing to causes you care about, and aligning actions with your values."
   },
   {
     name: "Community & Environment",
     icon: "home",
-    color: "#6366f1", // Indigo/purple
+    color: "#06B6D4", // Medium Teal
     description: "Building community connections, improving your environment, and organizing your spaces for wellbeing."
   }
   // Note: "Other" domain is not included in the wheel but still available for goal creation

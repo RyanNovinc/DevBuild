@@ -234,7 +234,7 @@ const FeedbackScreen = ({ navigation }) => {
       } else if (feedbackType === 'feature') {
         // Check if this is coming from theme picker
         if (route.params?.fromThemePicker) {
-          return "Enter custom color code (#FFFFFF)...";
+          return "Enter custom colour code (#FFFFFF)...";
         }
         return "Feature ideas...";
       }
@@ -315,7 +315,7 @@ const FeedbackScreen = ({ navigation }) => {
               accessible={true}
               accessibilityRole="header"
             >
-              {route.params?.fromThemePicker ? 'Request Custom Color' : 'Send Feedback'}
+              {route.params?.fromThemePicker ? 'Request Custom Colour' : 'Send Feedback'}
             </Text>
             <View style={[
               styles.headerRight,
@@ -631,7 +631,7 @@ const FeedbackScreen = ({ navigation }) => {
                 maxFontSizeMultiplier={1.3}
               >
                 {route.params?.fromThemePicker 
-                  ? 'Request a custom color' 
+                  ? 'Request a custom colour' 
                   : (feedbackType === 'testimonial' ? 'Share your experience' : 'Tell us more')}
               </Text>
             </View>
@@ -1274,7 +1274,7 @@ const FeedbackScreen = ({ navigation }) => {
             maxFontSizeMultiplier={1.3}
           >
             {route.params?.fromThemePicker 
-              ? "Thank you for suggesting a custom color. We'll review your request and consider adding it in future updates."
+              ? "Thank you for suggesting a custom colour. We'll review your request and consider adding it in future updates."
               : (feedbackType === 'testimonial' 
                 ? "Thank you for sharing your experience with us. Your testimonial helps others discover our app."
                 : `Your feedback helps us improve the ${feedbackTarget === 'app' ? 'app' : 'AI assistant'}. We appreciate your input!`)}

@@ -39,99 +39,102 @@ export const THEME_COLORS = [
 export const STANDARD_DOMAINS = {
   // Domain 1: Career & Professional Growth
   'briefcase': {
-    name: 'Career & Professional Growth',
+    name: 'Career & Work',
     icon: 'briefcase',
-    color: '#2563EB', // Bold Blue
+    color: '#3B82F6', // Medium Blue - matches Domain Balance Wheel
     description: 'Professional goals, business ventures, leadership, skills development'
   },
-  'business': { name: 'Career & Professional Growth', icon: 'briefcase', color: '#2563EB', description: 'Professional goals, business ventures, leadership, skills development' },
-  'trophy': { name: 'Career & Professional Growth', icon: 'briefcase', color: '#2563EB', description: 'Professional goals, business ventures, leadership, skills development' },
-  'podium': { name: 'Career & Professional Growth', icon: 'briefcase', color: '#2563EB', description: 'Professional goals, business ventures, leadership, skills development' },
-  'trending-up': { name: 'Career & Professional Growth', icon: 'briefcase', color: '#2563EB', description: 'Professional goals, business ventures, leadership, skills development' },
+  'business': { name: 'Career & Work', icon: 'briefcase', color: '#3B82F6', description: 'Professional goals, business ventures, leadership, skills development' },
+  'trophy': { name: 'Career & Work', icon: 'briefcase', color: '#3B82F6', description: 'Professional goals, business ventures, leadership, skills development' },
+  'podium': { name: 'Career & Work', icon: 'briefcase', color: '#3B82F6', description: 'Professional goals, business ventures, leadership, skills development' },
+  'trending-up': { name: 'Career & Work', icon: 'briefcase', color: '#3B82F6', description: 'Professional goals, business ventures, leadership, skills development' },
   
   // Domain 2: Financial Security & Wealth
-  'wallet': {
-    name: 'Financial Security & Wealth',
-    icon: 'wallet',
-    color: '#10B981', // Emerald Green
+  'cash': {
+    name: 'Financial Security',
+    icon: 'cash',
+    color: '#EAB308', // Medium Gold - matches Domain Balance Wheel
     description: 'Money management, investments, financial independence, wealth building'
   },
-  'cash': { name: 'Financial Security & Wealth', icon: 'wallet', color: '#10B981', description: 'Money management, investments, financial independence, wealth building' },
-  'card': { name: 'Financial Security & Wealth', icon: 'wallet', color: '#10B981', description: 'Money management, investments, financial independence, wealth building' },
-  'calculator': { name: 'Financial Security & Wealth', icon: 'wallet', color: '#10B981', description: 'Money management, investments, financial independence, wealth building' },
-  'stats-chart': { name: 'Financial Security & Wealth', icon: 'wallet', color: '#10B981', description: 'Money management, investments, financial independence, wealth building' },
+  'wallet': { name: 'Financial Security', icon: 'cash', color: '#EAB308', description: 'Money management, investments, financial independence, wealth building' },
+  'card': { name: 'Financial Security', icon: 'cash', color: '#EAB308', description: 'Money management, investments, financial independence, wealth building' },
+  'calculator': { name: 'Financial Security', icon: 'cash', color: '#EAB308', description: 'Money management, investments, financial independence, wealth building' },
+  'stats-chart': { name: 'Financial Security', icon: 'cash', color: '#EAB308', description: 'Money management, investments, financial independence, wealth building' },
   
-  // Domain 3: Health & Energy
+  // Domain 3: Health & Wellness
   'fitness': {
-    name: 'Health & Energy',
+    name: 'Health & Wellness',
     icon: 'fitness',
-    color: '#EF4444', // Energetic Red
+    color: '#22C55E', // Medium Green - matches Domain Balance Wheel
     description: 'Physical wellbeing, nutrition, exercise, sleep, energy management'
   },
-  'pulse': { name: 'Health & Energy', icon: 'fitness', color: '#EF4444', description: 'Physical wellbeing, nutrition, exercise, sleep, energy management' },
-  'bicycle': { name: 'Health & Energy', icon: 'fitness', color: '#EF4444', description: 'Physical wellbeing, nutrition, exercise, sleep, energy management' },
-  'nutrition': { name: 'Health & Energy', icon: 'fitness', color: '#EF4444', description: 'Physical wellbeing, nutrition, exercise, sleep, energy management' },
-  'medkit': { name: 'Health & Energy', icon: 'fitness', color: '#EF4444', description: 'Physical wellbeing, nutrition, exercise, sleep, energy management' },
+  'pulse': { name: 'Health & Wellness', icon: 'fitness', color: '#22C55E', description: 'Physical wellbeing, nutrition, exercise, sleep, energy management' },
+  'bicycle': { name: 'Recreation & Leisure', icon: 'bicycle', color: '#8B5CF6', description: 'Hobbies, travel, leisure, entertainment, relaxation, stress prevention' },
+  'nutrition': { name: 'Health & Wellness', icon: 'fitness', color: '#22C55E', description: 'Physical wellbeing, nutrition, exercise, sleep, energy management' },
+  'medkit': { name: 'Health & Wellness', icon: 'fitness', color: '#22C55E', description: 'Physical wellbeing, nutrition, exercise, sleep, energy management' },
   
-  // Domain 4: Relationships & Connection
+  // Domain 4: Relationships
   'people': {
-    name: 'Relationships & Connection',
+    name: 'Relationships',
     icon: 'people',
-    color: '#EC4899', // Vibrant Pink
+    color: '#EC4899', // Medium Pink - matches Domain Balance Wheel
     description: 'Family, friendships, romantic partnerships, social networks, community'
   },
-  'heart': { name: 'Relationships & Connection', icon: 'people', color: '#EC4899', description: 'Family, friendships, romantic partnerships, social networks, community' },
-  'chatbubbles': { name: 'Relationships & Connection', icon: 'people', color: '#EC4899', description: 'Family, friendships, romantic partnerships, social networks, community' },
-  'person': { name: 'Relationships & Connection', icon: 'people', color: '#EC4899', description: 'Family, friendships, romantic partnerships, social networks, community' },
-  'people-circle': { name: 'Relationships & Connection', icon: 'people', color: '#EC4899', description: 'Family, friendships, romantic partnerships, social networks, community' },
+  'heart': { name: 'Relationships', icon: 'people', color: '#EC4899', description: 'Family, friendships, romantic partnerships, social networks, community' },
+  'chatbubbles': { name: 'Relationships', icon: 'people', color: '#EC4899', description: 'Family, friendships, romantic partnerships, social networks, community' },
+  'person': { name: 'Relationships', icon: 'people', color: '#EC4899', description: 'Family, friendships, romantic partnerships, social networks, community' },
+  'people-circle': { name: 'Relationships', icon: 'people', color: '#EC4899', description: 'Family, friendships, romantic partnerships, social networks, community' },
   
-  // Domain 5: Learning & Growth
+  // Domain 5: Personal Growth
   'school': {
-    name: 'Learning & Growth',
+    name: 'Personal Growth',
     icon: 'school',
-    color: '#8B5CF6', // Rich Purple
+    color: '#F97316', // Medium Orange - matches Domain Balance Wheel
     description: 'Education, skill development, intellectual curiosity, personal development'
   },
-  'book': { name: 'Learning & Growth', icon: 'school', color: '#8B5CF6', description: 'Education, skill development, intellectual curiosity, personal development' },
-  'library': { name: 'Learning & Growth', icon: 'school', color: '#8B5CF6', description: 'Education, skill development, intellectual curiosity, personal development' },
-  'bulb': { name: 'Learning & Growth', icon: 'school', color: '#8B5CF6', description: 'Education, skill development, intellectual curiosity, personal development' },
-  'create': { name: 'Learning & Growth', icon: 'school', color: '#8B5CF6', description: 'Education, skill development, intellectual curiosity, personal development' },
+  'book': { name: 'Personal Growth', icon: 'school', color: '#F97316', description: 'Education, skill development, intellectual curiosity, personal development' },
+  'library': { name: 'Personal Growth', icon: 'school', color: '#F97316', description: 'Education, skill development, intellectual curiosity, personal development' },
+  'bulb': { name: 'Personal Growth', icon: 'school', color: '#F97316', description: 'Education, skill development, intellectual curiosity, personal development' },
+  'create': { name: 'Personal Growth', icon: 'school', color: '#F97316', description: 'Education, skill development, intellectual curiosity, personal development' },
   
-  // Domain 6: Purpose & Impact
-  'earth': {
-    name: 'Purpose & Impact',
-    icon: 'earth',
-    color: '#0D9488', // Deep Teal
+  // Domain 6: Purpose & Meaning
+  'compass': {
+    name: 'Purpose & Meaning',
+    icon: 'compass',
+    color: '#EF4444', // Medium Red - matches Domain Balance Wheel
     description: 'Values alignment, contribution, meaning, legacy, social impact'
   },
-  'globe': { name: 'Purpose & Impact', icon: 'earth', color: '#0D9488', description: 'Values alignment, contribution, meaning, legacy, social impact' },
-  'leaf': { name: 'Purpose & Impact', icon: 'earth', color: '#0D9488', description: 'Values alignment, contribution, meaning, legacy, social impact' },
-  'hand-left': { name: 'Purpose & Impact', icon: 'earth', color: '#0D9488', description: 'Values alignment, contribution, meaning, legacy, social impact' },
-  'megaphone': { name: 'Purpose & Impact', icon: 'earth', color: '#0D9488', description: 'Values alignment, contribution, meaning, legacy, social impact' },
+  'earth': { name: 'Purpose & Meaning', icon: 'compass', color: '#EF4444', description: 'Values alignment, contribution, meaning, legacy, social impact' },
+  'globe': { name: 'Purpose & Meaning', icon: 'compass', color: '#EF4444', description: 'Values alignment, contribution, meaning, legacy, social impact' },
+  'leaf': { name: 'Purpose & Meaning', icon: 'compass', color: '#EF4444', description: 'Values alignment, contribution, meaning, legacy, social impact' },
+  'hand-left': { name: 'Purpose & Meaning', icon: 'compass', color: '#EF4444', description: 'Values alignment, contribution, meaning, legacy, social impact' },
+  'megaphone': { name: 'Purpose & Meaning', icon: 'compass', color: '#EF4444', description: 'Values alignment, contribution, meaning, legacy, social impact' },
   
-  // Domain 7: Digital Wellbeing & Innovation
-  'laptop': {
-    name: 'Digital Wellbeing & Innovation',
-    icon: 'laptop',
-    color: '#3B82F6', // Bright Blue
-    description: 'Technology boundaries, digital productivity, innovation adoption, AI tools'
+  // Domain 7: Community & Environment
+  'home': {
+    name: 'Community & Environment',
+    icon: 'home',
+    color: '#06B6D4', // Medium Teal - matches Domain Balance Wheel
+    description: 'Living spaces, neighborhood quality, civic engagement, environmental sustainability'
   },
-  'desktop': { name: 'Digital Wellbeing & Innovation', icon: 'laptop', color: '#3B82F6', description: 'Technology boundaries, digital productivity, innovation adoption, AI tools' },
-  'phone-portrait': { name: 'Digital Wellbeing & Innovation', icon: 'laptop', color: '#3B82F6', description: 'Technology boundaries, digital productivity, innovation adoption, AI tools' },
-  'code': { name: 'Digital Wellbeing & Innovation', icon: 'laptop', color: '#3B82F6', description: 'Technology boundaries, digital productivity, innovation adoption, AI tools' },
-  'analytics': { name: 'Digital Wellbeing & Innovation', icon: 'laptop', color: '#3B82F6', description: 'Technology boundaries, digital productivity, innovation adoption, AI tools' },
+  'laptop': { name: 'Community & Environment', icon: 'home', color: '#06B6D4', description: 'Living spaces, neighborhood quality, civic engagement, environmental sustainability' },
+  'desktop': { name: 'Community & Environment', icon: 'home', color: '#06B6D4', description: 'Living spaces, neighborhood quality, civic engagement, environmental sustainability' },
+  'phone-portrait': { name: 'Community & Environment', icon: 'home', color: '#06B6D4', description: 'Living spaces, neighborhood quality, civic engagement, environmental sustainability' },
+  'code': { name: 'Community & Environment', icon: 'home', color: '#06B6D4', description: 'Living spaces, neighborhood quality, civic engagement, environmental sustainability' },
+  'analytics': { name: 'Community & Environment', icon: 'home', color: '#06B6D4', description: 'Living spaces, neighborhood quality, civic engagement, environmental sustainability' },
   
-  // Domain 8: Recreation & Renewal
-  'happy': {
-    name: 'Recreation & Renewal',
-    icon: 'happy',
-    color: '#F59E0B', // Warm Orange
+  // Domain 8: Recreation & Leisure
+  'bicycle': {
+    name: 'Recreation & Leisure',
+    icon: 'bicycle',
+    color: '#8B5CF6', // Medium Purple - matches Domain Balance Wheel
     description: 'Hobbies, travel, leisure, entertainment, relaxation, stress prevention'
   },
-  'airplane': { name: 'Recreation & Renewal', icon: 'happy', color: '#F59E0B', description: 'Hobbies, travel, leisure, entertainment, relaxation, stress prevention' },
-  'restaurant': { name: 'Recreation & Renewal', icon: 'happy', color: '#F59E0B', description: 'Hobbies, travel, leisure, entertainment, relaxation, stress prevention' },
-  'musical-note': { name: 'Recreation & Renewal', icon: 'happy', color: '#F59E0B', description: 'Hobbies, travel, leisure, entertainment, relaxation, stress prevention' },
-  'game-controller': { name: 'Recreation & Renewal', icon: 'happy', color: '#F59E0B', description: 'Hobbies, travel, leisure, entertainment, relaxation, stress prevention' },
+  'happy': { name: 'Recreation & Leisure', icon: 'bicycle', color: '#8B5CF6', description: 'Hobbies, travel, leisure, entertainment, relaxation, stress prevention' },
+  'airplane': { name: 'Recreation & Leisure', icon: 'bicycle', color: '#8B5CF6', description: 'Hobbies, travel, leisure, entertainment, relaxation, stress prevention' },
+  'restaurant': { name: 'Recreation & Leisure', icon: 'bicycle', color: '#8B5CF6', description: 'Hobbies, travel, leisure, entertainment, relaxation, stress prevention' },
+  'musical-note': { name: 'Recreation & Leisure', icon: 'bicycle', color: '#8B5CF6', description: 'Hobbies, travel, leisure, entertainment, relaxation, stress prevention' },
+  'game-controller': { name: 'Recreation & Leisure', icon: 'bicycle', color: '#8B5CF6', description: 'Hobbies, travel, leisure, entertainment, relaxation, stress prevention' },
   
   // Custom domain as fallback
   'star': {
@@ -189,19 +192,19 @@ export const getDomainIcon = (name) => {
 
 // Color psychology rationale for each domain
 export const DOMAIN_COLOR_RATIONALE = {
-  'Career & Professional Growth': 'Blue (#2563EB) evokes trust, reliability and professionalism. Research shows blue improves concentration and productivity, making it ideal for career-focused goals. For System-Driven Achievers, this creates mental clarity and focus.',
+  'Career & Work': 'Blue (#3B82F6) evokes trust, reliability and professionalism. Research shows blue improves concentration and productivity, making it ideal for career-focused goals. For System-Driven Achievers, this creates mental clarity and focus.',
   
-  'Financial Security & Wealth': 'Green (#10B981) has strong associations with wealth, abundance, and growth. Studies show green reduces anxiety around financial decisions while promoting feelings of security and stability.',
+  'Financial Security': 'Gold (#EAB308) has strong associations with wealth, abundance, and prosperity. Studies show gold reduces anxiety around financial decisions while promoting feelings of security and stability.',
   
-  'Health & Energy': 'Red (#EF4444) stimulates energy and physical vitality. This energetic color increases heart rate and respiration, making it perfect for fitness goals and health tracking. The vibrant red motivates action and physical engagement.',
+  'Health & Wellness': 'Green (#22C55E) stimulates growth, vitality and well-being. This energetic color promotes feelings of health and renewal, making it perfect for fitness goals and wellness tracking. The vibrant green motivates healthy lifestyle choices.',
   
-  'Relationships & Connection': 'Pink (#EC4899) represents compassion, nurturing and emotional connection. This color encourages empathy and openness in relationships. Research shows pink reduces aggression and promotes cooperative behavior.',
+  'Relationships': 'Pink (#EC4899) represents compassion, nurturing and emotional connection. This color encourages empathy and openness in relationships. Research shows pink reduces aggression and promotes cooperative behavior.',
   
-  'Learning & Growth': 'Purple (#8B5CF6) traditionally symbolizes wisdom, creativity and transformation. Studies show purple stimulates problem-solving and creative thinking, making it ideal for intellectual pursuits and personal development.',
+  'Personal Growth': 'Orange (#F97316) traditionally symbolizes creativity, enthusiasm and transformation. Studies show orange stimulates problem-solving and creative thinking, making it ideal for intellectual pursuits and personal development.',
   
-  'Purpose & Impact': 'Teal (#0D9488) combines blue\'s trustworthiness with green\'s growth associations. This balanced color evokes clarity of purpose and sustainable impact, perfect for goals related to contribution and meaning.',
+  'Purpose & Meaning': 'Red (#EF4444) evokes passion, purpose and determination. This powerful color creates feelings of drive and conviction, perfect for goals related to contribution, meaning and values alignment.',
   
-  'Digital Wellbeing & Innovation': 'Bright Blue (#3B82F6) represents technology, innovation and communication. This modern blue variation creates feelings of efficiency and forward-thinking while maintaining a sense of calm control around technology.',
+  'Community & Environment': 'Teal (#06B6D4) combines blue\'s trustworthiness with green\'s growth associations. This balanced color evokes clarity of purpose and sustainable impact, perfect for community and environmental goals.',
   
-  'Recreation & Renewal': 'Orange (#F59E0B) stimulates enthusiasm, creativity and joy. Research shows orange increases oxygen supply to the brain, producing an energizing and rejuvenating effect ideal for leisure and recreational activities.'
+  'Recreation & Leisure': 'Purple (#8B5CF6) stimulates creativity, imagination and joy. Research shows purple encourages relaxation and creative expression, producing an energizing and rejuvenating effect ideal for leisure and recreational activities.'
 };

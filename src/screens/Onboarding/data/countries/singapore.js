@@ -223,7 +223,7 @@ export const DOMAIN_DEFINITIONS = [
         projects: [
           {
             name: "Investment Foundation",
-            description: "Learn investing basics and utilize Singapore's investment infrastructure",
+            description: "Learn investing basics and utilise Singapore's investment infrastructure",
             explanation: "Singapore's investment landscape offers CPF optimization, local stocks, and international options through robo-advisors and traditional brokers.",
             tasks: [
               {
@@ -427,7 +427,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Optimize Nutrition",
         description: "Improve diet quality using Singapore's diverse and healthy food options",
         icon: "nutrition",
-        explanation: "Singapore offers incredible healthy food options! From hawker centers with nutritious local dishes to world-class supermarkets. Smart professionals optimize nutrition for energy and mental clarity needed for career success.",
+        explanation: "Singapore offers incredible healthy food options! From hawker centers with nutritious local dishes to world-class supermarkets. Smart professionals optimise nutrition for energy and mental clarity needed for career success.",
         projects: [
           {
             name: "Singapore Nutrition Strategy",
@@ -651,7 +651,7 @@ export const DOMAIN_DEFINITIONS = [
             explanation: "Singapore's multicultural environment requires strong communication skills while business culture values confident presentation abilities.",
             tasks: [
               {
-                name: "Join Toastmasters Singapore or similar organization for structured practice",
+                name: "Join Toastmasters Singapore or similar organisation for structured practice",
                 summary: "Join speaking group",
                 explanation: "Toastmasters provides structured environment for developing public speaking skills while building professional network in Singapore's business community.",
                 timeframe: "1 month",
@@ -963,7 +963,7 @@ export const DOMAIN_DEFINITIONS = [
         projects: [
           {
             name: "Community Service Setup",
-            description: "Find meaningful volunteer opportunities that utilize professional expertise",
+            description: "Find meaningful volunteer opportunities that utilise professional expertise",
             explanation: "Singapore's volunteer sector offers opportunities to apply professional skills while creating meaningful community impact and building networks.",
             tasks: [
               {
@@ -988,7 +988,7 @@ export const DOMAIN_DEFINITIONS = [
             explanation: "Community leadership provides management experience while creating larger positive impact and professional reputation for social responsibility.",
             tasks: [
               {
-                name: "Track volunteer impact and seek leadership opportunities within organization",
+                name: "Track volunteer impact and seek leadership opportunities within organisation",
                 summary: "Track impact",
                 explanation: "Impact tracking demonstrates community value while leadership opportunities build management experience and professional reputation.",
                 timeframe: "6 months",
@@ -997,7 +997,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Organize community initiatives or fundraising events to expand positive impact",
                 summary: "Organize initiatives",
-                explanation: "Community organizing builds leadership skills while creating larger positive impact and professional network supporting career advancement.",
+                explanation: "Community organising builds leadership skills while creating larger positive impact and professional network supporting career advancement.",
                 timeframe: "12 months",
                 completed: false
               }
@@ -1111,30 +1111,30 @@ export const DOMAIN_DEFINITIONS = [
     name: "Community & Environment",
     icon: "home",
     color: "#6366f1", // Indigo
-    description: "Building community connections, improving your environment, and organizing your spaces",
+    description: "Building community connections, improving your environment, and organising your spaces",
     goals: [
       {
         name: "Organize Living Space",
-        description: "Create efficient, organized home environment that maximizes Singapore's limited space",
+        description: "Create efficient, organised home environment that maximizes Singapore's limited space",
         icon: "grid",
-        explanation: "Organized living space becomes crucial in Singapore's compact homes! Smart organization maximizes limited space while creating peaceful environment. Organized professionals are more productive and experience less stress.",
+        explanation: "Organized living space becomes crucial in Singapore's compact homes! Smart organisation maximizes limited space while creating peaceful environment. Organized professionals are more productive and experience less stress.",
         projects: [
           {
             name: "Singapore Space Optimization",
-            description: "Implement space-efficient organization system for Singapore living constraints",
-            explanation: "Singapore's limited living space requires strategic organization while smart design principles maximize functionality and comfort.",
+            description: "Implement space-efficient organisation system for Singapore living constraints",
+            explanation: "Singapore's limited living space requires strategic organisation while smart design principles maximise functionality and comfort.",
             tasks: [
               {
-                name: "Declutter and organize all living areas using Singapore space-saving principles",
+                name: "Declutter and organise all living areas using Singapore space-saving principles",
                 summary: "Declutter home",
-                explanation: "Home decluttering creates peaceful environment while maximizing Singapore's limited space through strategic organization and storage solutions.",
+                explanation: "Home decluttering creates peaceful environment while maximizing Singapore's limited space through strategic organisation and storage solutions.",
                 timeframe: "2 weeks",
                 completed: false
               },
               {
                 name: "Implement multi-functional furniture and vertical storage solutions",
                 summary: "Space solutions",
-                explanation: "Multi-functional solutions maximize Singapore living space while creating organized environment that supports productivity and wellbeing.",
+                explanation: "Multi-functional solutions maximise Singapore living space while creating organised environment that supports productivity and wellbeing.",
                 timeframe: "1 month",
                 completed: false
               }
@@ -1153,7 +1153,7 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Optimize lighting, air circulation, and organization for tropical productivity",
+                name: "Optimize lighting, air circulation, and organisation for tropical productivity",
                 summary: "Optimize environment",
                 explanation: "Environmental optimization addresses Singapore's climate while creating comfortable workspace that supports professional effectiveness and health.",
                 timeframe: "2 weeks",
@@ -1221,20 +1221,20 @@ export const DOMAIN_DEFINITIONS = [
         projects: [
           {
             name: "Systematic Decluttering Process",
-            description: "Remove excess possessions to create organized, peaceful living environment",
+            description: "Remove excess possessions to create organised, peaceful living environment",
             explanation: "Decluttering creates peaceful environment while maximizing Singapore's limited space through strategic possession management.",
             tasks: [
               {
                 name: "Systematically review and declutter belongings in all living areas",
                 summary: "Declutter possessions",
-                explanation: "Systematic decluttering creates organized space while reducing stress and maintenance time required for possession management.",
+                explanation: "Systematic decluttering creates organised space while reducing stress and maintenance time required for possession management.",
                 timeframe: "1 month",
                 completed: false
               },
               {
                 name: "Establish systems to prevent clutter accumulation in the future",
                 summary: "Prevent clutter",
-                explanation: "Clutter prevention systems maintain organized environment while ensuring long-term simplicity and space efficiency benefits.",
+                explanation: "Clutter prevention systems maintain organised environment while ensuring long-term simplicity and space efficiency benefits.",
                 timeframe: "2 weeks",
                 completed: false
               }

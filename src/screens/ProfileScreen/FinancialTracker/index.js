@@ -33,7 +33,8 @@ const FinancialTracker = ({
   widgetId,
   saveWidgetData,
   loadWidgetData,
-  widgetName 
+  widgetName,
+  updateWidgetName
 }) => {
   // Financial data state with empty goals array
   const [financialData, setFinancialData] = useState({
@@ -42,7 +43,8 @@ const FinancialTracker = ({
     savings: [],
     debts: [],
     goals: [], // Empty goals array - no pre-filled goals
-    currency: "$"
+    currency: "$",
+    title: widgetName || "Financial Tracker" // Add title to internal state
   });
   
   // Exchange rates state
@@ -173,7 +175,8 @@ const FinancialTracker = ({
           savings: loadedData.savings || [],
           debts: loadedData.debts || [],
           goals: loadedData.goals || [], // Empty array if no goals exist
-          currency: currency
+          currency: currency,
+          title: loadedData.title || widgetName || "Financial Tracker"
         }));
       } else {
         // Initialize with example data for better UX
@@ -185,6 +188,7 @@ const FinancialTracker = ({
         // Initialize currency from country for new users
         const countryCurrency = await initializeCurrencyFromCountry();
         exampleData.currency = countryCurrency;
+        exampleData.title = widgetName || "Financial Tracker";
         console.log('New financial tracker initialized with currency:', countryCurrency);
         
         setFinancialData(prevData => ({
@@ -240,6 +244,23 @@ const FinancialTracker = ({
     
     setFinancialData(updatedData);
     saveFinancialData(updatedData);
+  };
+
+  // Handle title update
+  const handleTitleUpdate = async (newTitle) => {
+    console.log('handleTitleUpdate called with:', newTitle);
+    
+    const updatedData = {
+      ...financialData,
+      title: newTitle
+    };
+    
+    setFinancialData(updatedData);
+    await saveFinancialData(updatedData);
+    console.log('Title updated and saved:', newTitle);
+    
+    // Return the updated data so the modal can use it immediately
+    return updatedData;
   };
   
   // Handle add new income source
@@ -576,22 +597,25 @@ const FinancialTracker = ({
   };
 
   // Save current financial data as a new instance
-  const saveCurrentFinancialData = async () => {
+  const saveCurrentFinancialData = async (customData = null) => {
     try {
       // Generate a unique ID for the saved instance
       const timestamp = Date.now();
       const saveId = `widget_data_financial_${timestamp}`;
       
+      // Use custom data if provided, otherwise use current state
+      const baseData = customData || financialData;
+      
       // Add timestamp to the data
       const dataToSave = {
-        ...financialData,
+        ...baseData,
         lastUpdated: new Date().toISOString(),
         savedAt: timestamp
       };
       
       // Save to AsyncStorage with unique key
       await AsyncStorage.setItem(saveId, JSON.stringify(dataToSave));
-      console.log('Financial data saved with ID:', saveId);
+      console.log('Financial data saved with ID:', saveId, 'with title:', dataToSave.title);
       
       return saveId;
     } catch (error) {
@@ -634,6 +658,7 @@ const FinancialTracker = ({
     handleAddGoal,
     handleDeleteGoal,
     setCurrency: handleCurrencyChange,
+    onUpdateTitle: handleTitleUpdate,
     loadSavedFinancialData,
     startFreshFinancialData,
     saveCurrentFinancialData
@@ -646,6 +671,8 @@ const FinancialTracker = ({
         theme={theme}
         data={data}
         openDetailModal={() => setShowDetailModal(true)}
+        widgetName={financialData.title}
+        handlers={handlers}
       />
       
       <DetailModal
@@ -654,6 +681,7 @@ const FinancialTracker = ({
         data={data}
         handlers={handlers}
         onClose={() => setShowDetailModal(false)}
+        widgetName={financialData.title}
       />
     </View>
   );

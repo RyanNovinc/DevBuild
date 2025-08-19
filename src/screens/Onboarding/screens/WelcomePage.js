@@ -474,7 +474,7 @@ const WelcomePage = ({ onContinue, onSkipOnboarding }) => {
               <ResponsiveText style={styles.promptText}>
                 {getTapToContinueText()}
               </ResponsiveText>
-              <Ionicons name="chevron-down" size={20} color="#FFFFFF" />
+              <Ionicons name="hand-left" size={24} color="rgba(255,255,255,0.7)" />
             </Animated.View>
           )}
         </View>
@@ -497,7 +497,7 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     alignItems: 'center',
-    justifyContent: 'center', // Match LoadingScreen - center all content
+    justifyContent: 'center', // Match LoadingScreen - centre all content
     paddingHorizontal: 20,
     paddingTop: 40, // Back to original
     paddingBottom: 80,
@@ -564,7 +564,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     marginBottom: 20, // Reduced margin
     minHeight: 120,
-    justifyContent: 'flex-start', // Changed from center to flex-start
+    justifyContent: 'flex-start', // Changed from centre to flex-start
   },
   messageContainer: {
     flexDirection: 'row',
@@ -607,9 +607,8 @@ const styles = StyleSheet.create({
   },
   promptText: {
     fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: 'rgba(255, 255, 255, 0.8)',
     marginBottom: 8,
-    fontWeight: '500',
   },
   skipButtonContainer: {
     position: 'absolute',

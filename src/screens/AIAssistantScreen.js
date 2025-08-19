@@ -54,6 +54,7 @@ import AIChat from '../components/ai/AIChat';
 import AISideMenu from '../components/ai/AISideMenu';
 import AIStatusIndicators from '../components/ai/AIStatusIndicators';
 import AIToast from '../components/ai/AIToast';
+import AIUsageWarning from '../components/ai/AIUsageWarning';
 // REMOVED: AIModelSelector import
 import { Ionicons } from '@expo/vector-icons';
 
@@ -63,7 +64,6 @@ import AddProjectModal from '../components/AddProjectModal';
 import AddTimeBlockModal from '../components/AddTimeBlockModal';
 import AddTaskModal from '../components/AddTaskModal';
 import AddTodoModal from '../components/AddTodoModal';
-import UpdateLifeDirectionModal from '../components/UpdateLifeDirectionModal';
 
 // Import AI-specific modals
 import {
@@ -169,20 +169,61 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
   // NEW: State for unlimited usage status
   const [isUnlimitedMode, setIsUnlimitedMode] = useState(false);
   
-  // Effect to handle authentication changes and credit fetching
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      console.log('User authenticated, fetching credit information...');
-      // You can call credit fetching logic here if needed
-      // For now, credits will be fetched when needed by existing functions
-    } else {
-      console.log('User not authenticated, hiding credit information');
-      // Credits will be 0 due to our authentication check above
-    }
-  }, [isAuthenticated, user]);
+  // NEW: State for usage warnings
+  const [usageWarningType, setUsageWarningType] = useState('none');
+  const [usageWarningTime, setUsageWarningTime] = useState('');
+  const [dismissedWarnings, setDismissedWarnings] = useState(new Set());
   
-  // NEW: State for credit detail modal
-  const [creditDetailVisible, setCreditDetailVisible] = useState(false);
+  // Initialize token manager and check usage status
+  useEffect(() => {
+    const initializeTokenManager = async () => {
+      try {
+        if (isAuthenticated && user) {
+          // Get user's subscription tier from appContext
+          const userTier = appContext?.userSubscriptionStatus || 'light';
+          await AITokenManager.initialize(userTier);
+          
+          // Check current usage status
+          await checkUsageStatus();
+        }
+      } catch (error) {
+        console.error('Error initializing token manager:', error);
+      }
+    };
+    
+    initializeTokenManager();
+  }, [isAuthenticated, user, appContext?.userSubscriptionStatus]);
+  
+  // Function to check usage status and update warnings
+  const checkUsageStatus = async () => {
+    try {
+      const rateLimitStatus = await AITokenManager.getRateLimitStatus();
+      
+      if (!rateLimitStatus) {
+        setUsageWarningType('none');
+        return;
+      }
+      
+      // Create warning key based on window and tokens remaining (simpler than percentage)
+      const tokensRemaining = rateLimitStatus.tokens?.available || 0;
+      const warningKey = `${rateLimitStatus.windowId}_${Math.floor(tokensRemaining / 1000)}k`; // Group by thousands
+      
+      if (rateLimitStatus.usage?.isAtLimit) {
+        setUsageWarningType('limited');
+        setUsageWarningTime(rateLimitStatus.timeUntilReset);
+      } else if (rateLimitStatus.usage?.isNearLimit && !dismissedWarnings.has(warningKey)) {
+        setUsageWarningType('approaching');
+        setUsageWarningTime(rateLimitStatus.timeUntilReset);
+      } else {
+        setUsageWarningType('none');
+      }
+      
+    } catch (error) {
+      console.error('Error checking usage status:', error);
+      setUsageWarningType('none');
+    }
+  };
+  
   
   // Modal states for actions
   const [goalModalVisible, setGoalModalVisible] = useState(false);
@@ -190,7 +231,6 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
   const [timeBlockModalVisible, setTimeBlockModalVisible] = useState(false);
   const [taskModalVisible, setTaskModalVisible] = useState(false);
   const [todoModalVisible, setTodoModalVisible] = useState(false);
-  const [lifeDirectionModalVisible, setLifeDirectionModalVisible] = useState(false);
   const [conversationLimitModalVisible, setConversationLimitModalVisible] = useState(false);
   const [conversationSizeWarningShown, setConversationSizeWarningShown] = useState(false);
   const [currentGoalData, setCurrentGoalData] = useState(null);
@@ -198,7 +238,6 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
   const [currentTimeBlockData, setCurrentTimeBlockData] = useState(null);
   const [currentTaskData, setCurrentTaskData] = useState(null);
   const [currentTodoData, setCurrentTodoData] = useState(null);
-  const [currentLifeDirection, setCurrentLifeDirection] = useState('');
   
   // NEW: Add upgrade modal state
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -233,6 +272,12 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
     showSuggestions = true 
   } = state.conversation || {};
   
+  // Check if any message is currently streaming (only count it as streaming if it has content)
+  const isStreaming = messages.some(message => message.streaming === true && message.text && message.text.length > 0);
+  
+  // Debug logging
+  console.log('[AI Debug] isLoading:', isLoading, 'isStreaming:', isStreaming, 'messages count:', messages.length);
+  
   const { 
     menuState = 'closed',
     modeInfoVisible = false,
@@ -245,19 +290,11 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
     userKnowledgeEnabled = true
   } = state.knowledge || {};
   
-  // Only show real credits for authenticated users
-  // MOCK: For testing, set subscription status to 'unlimited' when logged in as premium
-  const mockSubscriptionStatus = isAuthenticated && user?.email === 'premium.user@example.com' ? 'unlimited' : 'free';
+  // Helper function to count only enabled documents
+  const getEnabledDocumentsCount = () => {
+    return userDocuments.filter(doc => doc.enabled === true).length;
+  };
   
-  const {
-    subscriptionStatus = mockSubscriptionStatus,
-    baseCredits = isAuthenticated ? (state.credits?.baseCredits || 0) : 0,
-    rolledOverCredits = isAuthenticated ? (state.credits?.rolledOverCredits || 0) : 0,
-    creditsUsed = isAuthenticated ? (state.credits?.creditsUsed || 0) : 0,
-    nextRefreshDate = isAuthenticated ? (state.credits?.nextRefreshDate || null) : null
-  } = {};
-  
-  console.log('[AIAssistant] Current subscription status:', subscriptionStatus);
   console.log('[AIAssistant] Is authenticated:', isAuthenticated);
   console.log('[AIAssistant] User email:', user?.email);
   
@@ -307,112 +344,6 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
     }
   };
   
-  // Function to refresh credit data from backend
-  const refreshCreditData = async () => {
-    try {
-      // Show a loading indicator if needed
-      dispatch({ 
-        type: 'SHOW_TOAST', 
-        payload: 'Refreshing credit information...' 
-      });
-      
-      // Get the current user's email
-      let userEmail;
-      try {
-        const user = await Auth.currentAuthenticatedUser();
-        userEmail = user.attributes.email;
-        console.log('Authenticated user found:', userEmail);
-      } catch (error) {
-        console.error('User not authenticated:', error);
-        // Don't proceed if user is not authenticated
-        dispatch({ 
-          type: 'SHOW_TOAST', 
-          payload: 'Please log in to view credit information' 
-        });
-        return;
-      }
-      
-      // Call your GetCreditBalance Lambda through API
-      console.log('Calling credit balance API for user:', userEmail);
-      console.log('API endpoint:', `${API_ENDPOINT}/credits/balance`);
-      
-      const response = await fetch(`${API_ENDPOINT}/credits/balance`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: userEmail
-        })
-      });
-      
-      console.log('Credit API response status:', response.status);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Credit API error response:', errorText);
-        throw new Error(`Credit API error ${response.status}: ${errorText}`);
-      }
-      
-      const result = await response.json();
-      console.log('Raw credit API result:', result);
-      
-      let creditData;
-      if (typeof result.body === 'string') {
-        creditData = JSON.parse(result.body);
-      } else {
-        creditData = result.body || result;
-      }
-      
-      console.log('Parsed credit data:', creditData);
-      
-      // Map subscription tier to base credits
-      let baseAmount = 0.60; // default light tier
-      if (creditData.subscription && creditData.subscription.tier) {
-        if (creditData.subscription.tier === 'standard') {
-          baseAmount = 1.50;
-        } else if (creditData.subscription.tier === 'max') {
-          baseAmount = 5.00;
-        }
-      }
-      
-      // Calculate remaining credits
-      const remaining = creditData.usage ? 
-        (baseAmount * (100 - creditData.usage.percentUsed) / 100) : 
-        baseAmount;
-      
-      // Extract values for the state update
-      const updatedCredits = {
-        subscriptionStatus: creditData.subscription?.status || 'active',
-        baseCredits: baseAmount,
-        rolledOverCredits: 0, // Not returned directly in the response
-        creditsUsed: baseAmount - remaining,
-        nextRefreshDate: creditData.refreshInfo?.nextRefreshDate || null
-      };
-      
-      // Update state with fresh credit data
-      dispatch({
-        type: 'UPDATE_CREDITS',
-        payload: updatedCredits
-      });
-      
-      dispatch({ 
-        type: 'SHOW_TOAST', 
-        payload: 'Credit information updated!' 
-      });
-      
-      return true;
-    } catch (error) {
-      console.error('Error refreshing credit data:', error);
-      
-      dispatch({ 
-        type: 'SHOW_TOAST', 
-        payload: 'Failed to refresh credit information.' 
-      });
-      
-      return false;
-    }
-  };
   
   // NEW: Check unlimited mode status on mount
   useEffect(() => {
@@ -426,11 +357,6 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
     };
     
     checkUnlimitedMode();
-    
-    // Refresh credit data on mount
-    refreshCreditData().catch(err => 
-      console.error('Error in initial credit refresh:', err)
-    );
   }, []);
   
   // NEW: Handle unlimited usage button press
@@ -702,7 +628,7 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
       
       // NEW: Pre-fetch document context for the new conversation
       let documentContext = null;
-      if (userKnowledgeEnabled && userDocuments.length > 0) {
+      if (userKnowledgeEnabled && getEnabledDocumentsCount() > 0) {
         try {
           console.log('Pre-fetching document context for new conversation');
           documentContext = await DocumentService.getDocumentContextForAI();
@@ -908,16 +834,9 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
         console.log('Todo modal should now be visible');
         break;
         
-      case 'updateLifeDirection':
-      case 'updateStrategicDirection':
-        console.log('Processing strategic direction update:', action.data);
-        setCurrentLifeDirection(action.data);
-        setLifeDirectionModalVisible(true);
-        break;
-        
       default:
         console.log(`Unknown action type: ${action.type}`);
-        console.log('Available action types are: createGoal, createProject, createTask, createTimeBlock, createTodo, createTodoGroup, updateLifeDirection, updateStrategicDirection');
+        console.log('Available action types are: createGoal, createProject, createTask, createTimeBlock, createTodo, createTodoGroup');
         // Skip to next action
         processNextAction(actions, currentIndex + 1);
     }
@@ -956,34 +875,43 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
     // Mark that user has interacted with this conversation
     setHasUserInteracted(true);
     
-    // Get tier-specific character limits
-    const characterLimit = AIService.getCharacterLimit(aiModelTier);
-    const warningThreshold = AIService.getWarningThreshold(aiModelTier);
-    
-    // Calculate current conversation size
-    const currentSize = AIService.calculateConversationSize(messages);
-    const newMessageSize = text.trim().length;
-    const totalSize = currentSize + newMessageSize;
-    
-    console.log(`Current conversation size: ${currentSize}/${characterLimit} characters (${aiModelTier} tier)`);
-    console.log(`New message size: ${newMessageSize} characters`);
-    console.log(`Total size would be: ${totalSize}/${characterLimit} characters`);
-    
-    // Check if conversation with this message would exceed the maximum limit
-    if (totalSize > characterLimit) {
-      console.log('Adding this message would exceed the character limit');
+    // Check rate limits first using new token manager
+    try {
+      const canSendResult = await AITokenManager.canSendMessage(text);
       
-      // Show the conversation limit modal
-      setConversationLimitModalVisible(true);
-      return;
-    }
-    
-    // Check if conversation is approaching warning threshold
-    if (currentSize >= warningThreshold && !conversationSizeWarningShown) {
-      console.log('Conversation approaching size limit, size warning will be shown in UI');
+      if (!canSendResult.canSend) {
+        console.log('Message blocked by rate limits:', canSendResult.reason);
+        
+        // Update usage warning immediately
+        if (canSendResult.rateLimit) {
+          if (canSendResult.rateLimit.usage.isAtLimit) {
+            setUsageWarningType('limited');
+            setUsageWarningTime(canSendResult.rateLimit.timeUntilReset);
+          }
+        }
+        
+        // Don't send the message
+        return;
+      }
       
-      // Set flag to show warning in UI
-      setConversationSizeWarningShown(true);
+      // Check conversation length limits (local check)
+      const estimatedTokens = AITokenManager.estimateTokens(text) * 3; // Input + expected output
+      if (AITokenManager.shouldTruncateConversation(conversationId, estimatedTokens)) {
+        console.log('Conversation length limit reached');
+        
+        // Show conversation length warning
+        if (usageWarningType === 'none') {
+          setUsageWarningType('conversation');
+        }
+        
+        // Show the conversation limit modal as fallback
+        setConversationLimitModalVisible(true);
+        return;
+      }
+      
+    } catch (error) {
+      console.error('Error checking rate limits:', error);
+      // Continue with message sending on error (fallback behavior)
     }
     
     // If this was a temporary conversation, mark it as permanent now
@@ -1261,45 +1189,38 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
             
             dispatch({ type: 'SET_SHOW_SUGGESTIONS', payload: false });
             
-            // Record token usage after message completion for non-unlimited mode
+            // Record token usage after message completion using new token manager
             if (!isUnlimitedMode) {
               try {
-                // Get current user's email
-                let userEmail;
-                try {
-                  const user = await Auth.currentAuthenticatedUser();
-                  userEmail = user.attributes.email;
-                } catch (error) {
-                  console.error('User not authenticated for token tracking:', error);
-                  // Skip token tracking if user not authenticated
-                  return;
-                }
+                // Estimate token counts (this would be more accurate from real API response)
+                const inputTokens = Math.round(userMessage.text.length / 4);
+                const outputTokens = Math.round(finalText.length / 4);
                 
-                // Estimate token counts (this would be more accurate from a real API response)
-                const inputTokens = Math.round(userMessage.text.length / 4); // Rough estimate
-                const outputTokens = Math.round(finalText.length / 4); // Rough estimate
+                // Track usage through token manager
+                const trackingResult = await AITokenManager.trackTokenUsage(inputTokens, outputTokens);
                 
-                // Call your API to track credit usage
-                const response = await fetch(`${API_ENDPOINT}/credits/usage`, {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({
-                    userId: userEmail,
-                    inputTokens,
-                    outputTokens,
-                    operation: 'deduct'
-                  })
-                });
-                
-                if (response.ok) {
-                  const result = await response.json();
-                  console.log('Credit usage tracked:', result);
+                if (trackingResult.success) {
+                  console.log('Token usage tracked successfully:', trackingResult);
                   
-                  // Refresh credit data after usage
-                  refreshCreditData();
+                  // Update conversation token count
+                  const currentConversationTokens = AITokenManager.getConversationTokens(conversationId);
+                  const newConversationTokens = currentConversationTokens + inputTokens + outputTokens;
+                  await AITokenManager.updateConversationTokens(conversationId, newConversationTokens);
+                  
+                  // Refresh usage status after tracking
+                  await checkUsageStatus();
+                  
+                } else if (trackingResult.rateLimited) {
+                  console.log('Rate limit hit during token tracking');
+                  // Update UI to show rate limit
+                  setUsageWarningType('limited');
+                  if (trackingResult.windowInfo) {
+                    setUsageWarningTime(trackingResult.windowInfo.timeUntilReset);
+                  }
+                } else {
+                  console.error('Token tracking failed:', trackingResult.error);
                 }
+                
               } catch (error) {
                 console.error('Error tracking token usage:', error);
               }
@@ -1696,82 +1617,6 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
     }
   };
   
-  // Handle Life Direction update
-  const handleLifeDirectionConfirm = async (newLifeDirection) => {
-    console.log('handleLifeDirectionConfirm called with:', newLifeDirection);
-    setLifeDirectionModalVisible(false);
-    
-    try {
-      const { updateAppSetting, goals, projects, tasks, settings } = appContext;
-      
-      if (typeof updateAppSetting === 'function') {
-        // Update in app context
-        await updateAppSetting('lifeDirection', newLifeDirection);
-        
-        console.log(`Updated life direction to: "${newLifeDirection}"`);
-        
-        // Update app summary to reflect the new life direction in AI context
-        try {
-          const AppSummaryService = await import('../services/AppSummaryService');
-          const DocumentService = await import('../services/DocumentService');
-          
-          // Generate new app summary with updated life direction
-          const appData = {
-            goals: goals || [],
-            projects: projects || [],
-            tasks: tasks || [],
-            settings: {
-              ...settings,
-              lifeDirection: newLifeDirection
-            }
-          };
-          
-          const summary = AppSummaryService.default.generateAppSummary(appData);
-          await DocumentService.default.updateAppContextDocument(summary);
-          
-          console.log('App summary updated with new Strategic Direction from AI');
-        } catch (error) {
-          console.error('Error updating app summary after Strategic Direction change:', error);
-          // Don't fail the main operation if summary update fails
-        }
-        
-        const successMessage = {
-          id: (Date.now() + 1).toString(),
-          text: `Your life direction has been updated successfully! This will help guide your goals and decisions moving forward.`,
-          type: 'ai',
-          timestamp: new Date().toISOString()
-        };
-        
-        dispatch({ type: 'ADD_MESSAGE', payload: successMessage });
-        
-        // Navigate to Profile screen with focusLifeDirection flag
-        if (navigation) {
-          console.log('Navigating to Profile screen with focusLifeDirection flag');
-          navigation.navigate('Profile', { focusLifeDirection: true });
-        }
-      } else {
-        throw new Error('updateAppSetting function not available');
-      }
-      
-      // Process next action if any
-      if (pendingActions.length > 0 && actionProgress < pendingActions.length - 1) {
-        setTimeout(() => {
-          processNextAction(pendingActions, actionProgress + 1);
-        }, 500);
-      }
-    } catch (error) {
-      console.error('Error updating life direction:', error);
-      
-      const errorMessage = {
-        id: (Date.now() + 1).toString(),
-        text: `I'm sorry, I couldn't update your life direction: ${error.message}`,
-        type: 'ai',
-        timestamp: new Date().toISOString()
-      };
-      
-      dispatch({ type: 'ADD_MESSAGE', payload: errorMessage });
-    }
-  };
   
   // Handle modal cancellations
   const handleGoalModalCancel = () => {
@@ -1804,11 +1649,6 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
     setPendingActions([]);
   };
   
-  const handleLifeDirectionModalCancel = () => {
-    console.log('Life direction modal cancelled');
-    setLifeDirectionModalVisible(false);
-    setPendingActions([]);
-  };
   
   // Calculate control position adjustments for safe areas and Dynamic Island
   const getControlTopPosition = () => {
@@ -1849,6 +1689,7 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
       <AIChat
         messages={messages}
         isLoading={isLoading}
+        isStreaming={isStreaming}
         showSuggestions={showSuggestions}
         onSendMessage={handleSendMessage}
         onSuggestionPress={(suggestion) => suggestion?.text ? handleSendMessage(suggestion.text) : null}
@@ -1861,35 +1702,28 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
       />
       
       {/* User Knowledge Indicator */}
-      {userKnowledgeEnabled && userDocuments && userDocuments.length > 0 && (
+      {userKnowledgeEnabled && userDocuments && getEnabledDocumentsCount() > 0 && (
         <AIStatusIndicators.KnowledgeIndicator 
-          count={userDocuments.length} 
+          count={getEnabledDocumentsCount()} 
         />
       )}
       
-      {/* Credits Indicator */}
-      <View style={{
-        position: 'absolute',
-        top: Platform.OS === 'ios' ? 50 : 30, // Fixed position
-        left: 0,
-        right: 0,
-        alignItems: 'center',
-        zIndex: 50, // Very low zIndex so system popups appear above everything
-        elevation: 50, // Android elevation to match zIndex
-      }}>
-        <AIStatusIndicators.CreditsIndicator
-          credits={{
-            baseCredits: baseCredits,
-            rolledOverCredits: rolledOverCredits,
-            creditsUsed: creditsUsed,
-            nextRefreshDate: nextRefreshDate
-          }}
-          onPress={() => {
-            console.log('Opening credit detail modal');
-            setCreditDetailVisible(true);
-          }}
-        />
-      </View>
+      {/* AI Usage Warning - Only shows when needed */}
+      <AIUsageWarning 
+        type={usageWarningType}
+        timeUntilReset={usageWarningTime}
+        onDismiss={() => {
+          // Dismiss current warning and remember it using new token-based key
+          const rateLimitStatus = AITokenManager.cachedWindowStatus;
+          if (rateLimitStatus) {
+            const tokensRemaining = rateLimitStatus.tokens?.available || 0;
+            const warningKey = `${rateLimitStatus.windowId}_${Math.floor(tokensRemaining / 1000)}k`;
+            setDismissedWarnings(prev => new Set([...prev, warningKey]));
+          }
+          setUsageWarningType('none');
+        }}
+        onStartNewConversation={createNewConversation}
+      />
       
       {/* Progress Indicator - if processing multiple actions */}
       {pendingActions.length > 1 && (
@@ -2010,7 +1844,7 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
         aiModelTier={aiModelTier}
         userDocuments={userDocuments}
         userKnowledgeEnabled={userKnowledgeEnabled}
-        subscriptionStatus={subscriptionStatus}
+        subscriptionStatus={appContext?.userSubscriptionStatus}
         navigation={navigation}
       />
       
@@ -2054,14 +1888,6 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
         todoData={currentTodoData}
       />
       
-      
-      <UpdateLifeDirectionModal
-        visible={lifeDirectionModalVisible}
-        onClose={handleLifeDirectionModalCancel}
-        onSave={handleLifeDirectionConfirm}
-        currentLifeDirection={currentLifeDirection}
-      />
-      
       {/* Conversation Limit Modal */}
       <AIConversationLimitModal
         visible={conversationLimitModalVisible}
@@ -2073,19 +1899,6 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
         onTruncateConversation={handleTruncateConversation}
       />
       
-      {/* Credit Detail Modal with simplified UI */}
-      <CreditDetailModal
-        visible={creditDetailVisible}
-        onClose={() => setCreditDetailVisible(false)}
-        credits={{
-          baseCredits: baseCredits,
-          rolledOverCredits: rolledOverCredits,
-          creditsUsed: creditsUsed,
-          nextRefreshDate: nextRefreshDate
-        }}
-        isAuthenticated={isAuthenticated}
-        onRefresh={refreshCreditData}
-      />
       
       {/* Mode Info Modal */}
       <AIModeInfoModal

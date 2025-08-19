@@ -410,7 +410,7 @@ export const IRISH_GOAL_STATS = {
       {
         title: "Workplace Support: 89% of Irish Employers Now Offer Mental Health Benefits and EAP Programs",
         figure: "89%",
-        description: "Irish employers increasingly prioritize mental health with 89% offering Employee Assistance Programs and mental health benefits, making professional mental health support more accessible and reducing stigma.",
+        description: "Irish employers increasingly prioritise mental health with 89% offering Employee Assistance Programs and mental health benefits, making professional mental health support more accessible and reducing stigma.",
         source: "Irish Business and Employers Confederation",
         link: "https://www.ibec.ie/",
         details: {
@@ -688,7 +688,7 @@ export const IRISH_GOAL_STATS = {
     "Organize Living Space": {
       title: "Irish Green Building Design Increases Productivity by 39% in Sustainable Workspaces",
       figure: "39%",
-      description: "Irish professionals working in well-designed, organized spaces achieve 39% higher productivity levels, with Ireland's commitment to sustainable building providing ideal workplace environments. Green building practices combined with effective organization create optimal conditions for professional performance.",
+      description: "Irish professionals working in well-designed, organised spaces achieve 39% higher productivity levels, with Ireland's commitment to sustainable building providing ideal workplace environments. Green building practices combined with effective organisation create optimal conditions for professional performance.",
       source: "Irish Green Building Council & Sustainable Energy Authority of Ireland",
       link: "https://www.igbc.ie/",
       details: {
@@ -696,7 +696,7 @@ export const IRISH_GOAL_STATS = {
         publication: "Irish Green Building Council",
         authors: "Sustainable Design Research Team",
         date: "2024",
-        description: "Research demonstrates 39% productivity improvement through organized, sustainable workspace design, with Irish green building initiatives providing frameworks for creating optimal work environments that enhance both performance and environmental sustainability.",
+        description: "Research demonstrates 39% productivity improvement through organised, sustainable workspace design, with Irish green building initiatives providing frameworks for creating optimal work environments that enhance both performance and environmental sustainability.",
         link: "https://www.igbc.ie/"
       }
     },

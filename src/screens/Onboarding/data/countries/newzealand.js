@@ -259,7 +259,7 @@ export const DOMAIN_DEFINITIONS = [
       },
       {
         name: "Advance to Management Role",
-        description: "Progress into leadership position within current company or new organization",
+        description: "Progress into leadership position within current company or new organisation",
         icon: "people",
         explanation: "Leadership opportunities are growing in New Zealand as our economy matures and companies expand. Your experience positions you perfectly for management roles that offer better compensation, job security, and the satisfaction of developing other Kiwis.",
         projects: [
@@ -329,7 +329,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Calculate 6 months expenses and open high-yield savings accounts",
                 summary: "Calculate fund",
-                explanation: "Emergency fund calculation provides clear savings target while high-yield accounts maximize growth. Consider banks offering competitive rates for your emergency savings.",
+                explanation: "Emergency fund calculation provides clear savings target while high-yield accounts maximise growth. Consider banks offering competitive rates for your emergency savings.",
                 timeframe: "1 week",
                 completed: false
               },
@@ -344,7 +344,7 @@ export const DOMAIN_DEFINITIONS = [
           },
           {
             name: "Expense Management",
-            description: "Optimize spending to maximize emergency fund contributions",
+            description: "Optimize spending to maximise emergency fund contributions",
             explanation: "Strategic expense management helps New Zealand professionals save more despite rising costs of living while maintaining quality of life.",
             tasks: [
               {
@@ -811,7 +811,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Wedding Execution",
             description: "Execute wedding plans while managing stress and maintaining relationships",
-            explanation: "Wedding execution requires organization and flexibility while maintaining focus on marriage celebration rather than just event planning stress.",
+            explanation: "Wedding execution requires organisation and flexibility while maintaining focus on marriage celebration rather than just event planning stress.",
             tasks: [
               {
                 name: "Coordinate with chosen vendors and manage wedding logistics systematically",
@@ -979,7 +979,7 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Consider teaching or training opportunities that utilize speaking skills",
+                name: "Consider teaching or training opportunities that utilise speaking skills",
                 summary: "Teaching others",
                 explanation: "Teaching opportunities provide income potential while helping others develop skills, creating positive community impact and further developing your communication expertise.",
                 timeframe: "6 months",
@@ -1276,7 +1276,7 @@ export const DOMAIN_DEFINITIONS = [
           },
           {
             name: "Travel Experience Optimization",
-            description: "Execute travel plans and maximize experiences through preparation and openness",
+            description: "Execute travel plans and maximise experiences through preparation and openness",
             explanation: "Travel execution with preparation and open mindset creates lasting memories while building cultural awareness and personal growth through new experiences.",
             tasks: [
               {
@@ -1563,7 +1563,7 @@ export const DOMAIN_DEFINITIONS = [
         projects: [
           {
             name: "Community Service Setup",
-            description: "Find meaningful volunteer opportunities that utilize professional skills effectively",
+            description: "Find meaningful volunteer opportunities that utilise professional skills effectively",
             explanation: "Skills-based volunteering provides maximum community impact while building professional experience and networking opportunities in supportive New Zealand community environment.",
             tasks: [
               {
@@ -1588,7 +1588,7 @@ export const DOMAIN_DEFINITIONS = [
             explanation: "Community impact measurement demonstrates value creation while building leadership experience and professional reputation for social responsibility in New Zealand society.",
             tasks: [
               {
-                name: "Track volunteer impact and look for leadership opportunities within chosen organization",
+                name: "Track volunteer impact and look for leadership opportunities within chosen organisation",
                 summary: "Track impact",
                 explanation: "Impact tracking demonstrates community value while identifying leadership opportunities that build management experience and professional reputation through service.",
                 timeframe: "3 months",
@@ -1597,7 +1597,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Organize community initiatives or fundraising events to expand positive impact",
                 summary: "Organize initiatives",
-                explanation: "Community organizing builds leadership skills while creating larger positive impact and professional network that supports career advancement and personal fulfillment.",
+                explanation: "Community organising builds leadership skills while creating larger positive impact and professional network that supports career advancement and personal fulfillment.",
                 timeframe: "6 months",
                 completed: false
               }
@@ -1711,28 +1711,28 @@ export const DOMAIN_DEFINITIONS = [
     name: "Community & Environment",
     icon: "home",
     color: "#6366f1", // Indigo
-    description: "Building community connections, improving your environment, and organizing your spaces",
+    description: "Building community connections, improving your environment, and organising your spaces",
     goals: [
       {
         name: "Organize Living Space",
-        description: "Create efficient, organized home environment that supports productivity and wellbeing",
+        description: "Create efficient, organised home environment that supports productivity and wellbeing",
         icon: "grid",
-        explanation: "Organized living space improves mental clarity and productivity while creating peaceful environment that supports both work and relaxation. Good organization also saves money by preventing lost items and improving efficiency.",
+        explanation: "Organized living space improves mental clarity and productivity while creating peaceful environment that supports both work and relaxation. Good organisation also saves money by preventing lost items and improving efficiency.",
         projects: [
           {
             name: "Home Organization System",
-            description: "Implement comprehensive organization system for all living areas systematically",
-            explanation: "Home organization reduces stress while improving productivity and creating peaceful environment that supports professional success and personal wellbeing in daily life.",
+            description: "Implement comprehensive organisation system for all living areas systematically",
+            explanation: "Home organisation reduces stress while improving productivity and creating peaceful environment that supports professional success and personal wellbeing in daily life.",
             tasks: [
               {
-                name: "Declutter all living areas systematically and organize belongings using structured approach",
+                name: "Declutter all living areas systematically and organise belongings using structured approach",
                 summary: "Declutter home",
-                explanation: "Home decluttering creates peaceful environment while improving organization and reducing stress that supports professional productivity and personal wellbeing daily.",
+                explanation: "Home decluttering creates peaceful environment while improving organisation and reducing stress that supports professional productivity and personal wellbeing daily.",
                 timeframe: "2 weeks",
                 completed: false
               },
               {
-                name: "Implement storage solutions and organization systems for long-term maintenance and efficiency",
+                name: "Implement storage solutions and organisation systems for long-term maintenance and efficiency",
                 summary: "Storage systems",
                 explanation: "Organization systems maintain decluttered environment while creating efficient storage that supports productivity and reduces time wasted searching for needed items.",
                 timeframe: "1 month",
@@ -1746,7 +1746,7 @@ export const DOMAIN_DEFINITIONS = [
             explanation: "Environment design supports both work productivity and personal relaxation while creating spaces that enhance professional and personal effectiveness throughout the day.",
             tasks: [
               {
-                name: "Design dedicated work area with proper lighting, seating, and organization for productivity",
+                name: "Design dedicated work area with proper lighting, seating, and organisation for productivity",
                 summary: "Create workspace",
                 explanation: "Dedicated workspace improves professional productivity while creating boundaries between work and personal life that support mental health and work-life balance.",
                 timeframe: "1 week",

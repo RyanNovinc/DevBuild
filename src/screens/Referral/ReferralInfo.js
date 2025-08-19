@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const ReferralInfo = ({ theme }) => {
+const ReferralInfo = ({ theme, navigation }) => {
   // For expandable FAQ sections
   const [expandedFaq, setExpandedFaq] = useState(null);
   
@@ -17,18 +17,21 @@ const ReferralInfo = ({ theme }) => {
   const faqs = [
     {
       id: 1,
-      question: "How do I get my 500 credits?",
-      answer: "Once you successfully refer a friend who signs up, you'll both automatically receive 500 AI credits - no additional steps required!"
+      question: "How do I get my free AI Light month?",
+      answer: "Once you successfully refer a friend who signs up, you'll both automatically receive x1 month of AI Light - no additional steps required!",
+      hasClickableText: true
     },
     {
       id: 2,
-      question: "When are the credits added?",
-      answer: "The 500 AI credits are automatically added to your account immediately after your friend successfully signs up using your referral code!"
+      question: "When is the AI Light month added?",
+      answer: "The free AI Light month is automatically added to your account immediately after your friend successfully signs up using your referral code!",
+      hasClickableText: true
     },
     {
       id: 3,
       question: "Where does my friend enter the referral code?",
-      answer: "Your friend must go to Profile → Settings → Enter Referral Code in the app and input your code BEFORE or during the sign-up process. This ensures you both get the credits!"
+      answer: "Your friend must go to Profile → Settings → Enter Referral Code in the app and input your code BEFORE or during the sign-up process. This ensures you both get the free AI Light month!",
+      hasClickableText: true
     },
     {
       id: 4,
@@ -98,10 +101,34 @@ const ReferralInfo = ({ theme }) => {
             </View>
             <View style={styles.stepContent}>
               <Text style={styles.stepTitle}>
-                Both Get 500 Credits
+                Both Get x1 Month <Text 
+                  style={[styles.stepTitle, { textDecorationLine: 'underline', color: '#4CAF50' }]}
+                  onPress={() => {
+                    navigation.navigate('PricingScreen', {
+                      initialTab: 'subscription',
+                      highlightPlan: 'compass',
+                      pulseCredits: true,
+                      fromReferral: true
+                    });
+                  }}
+                >
+                  AI Light
+                </Text>
               </Text>
               <Text style={styles.stepDescription}>
-                You both receive 500 AI credits - instant rewards for sharing!
+                You both receive x1 month of <Text 
+                  style={[styles.stepDescription, { textDecorationLine: 'underline', color: '#4CAF50' }]}
+                  onPress={() => {
+                    navigation.navigate('PricingScreen', {
+                      initialTab: 'subscription',
+                      highlightPlan: 'compass',
+                      pulseCredits: true,
+                      fromReferral: true
+                    });
+                  }}
+                >
+                  AI Light
+                </Text> - instant rewards for sharing!
               </Text>
             </View>
           </View>
@@ -135,7 +162,31 @@ const ReferralInfo = ({ theme }) => {
               
               {expandedFaq === faq.id && (
                 <Text style={styles.faqAnswer}>
-                  {faq.answer}
+                  {faq.hasClickableText ? (
+                    // Render with clickable AI Light text
+                    faq.answer.split(/(AI Light)/g).map((part, index) => 
+                      part === 'AI Light' ? (
+                        <Text 
+                          key={index}
+                          style={[styles.faqAnswer, { textDecorationLine: 'underline', color: '#4CAF50' }]}
+                          onPress={() => {
+                            navigation.navigate('PricingScreen', {
+                              initialTab: 'subscription',
+                              highlightPlan: 'compass',
+                              pulseCredits: true,
+                              fromReferral: true
+                            });
+                          }}
+                        >
+                          {part}
+                        </Text>
+                      ) : (
+                        <Text key={index}>{part}</Text>
+                      )
+                    )
+                  ) : (
+                    faq.answer
+                  )}
                 </Text>
               )}
             </TouchableOpacity>

@@ -96,7 +96,7 @@ export const NIGERIAN_GOAL_STATS = {
           publication: "National Information Technology Development Agency",
           authors: "NITDA Strategic Planning Team",
           date: "2024",
-          description: "Nigeria's IT sector roadmap demonstrates government commitment to digital transformation with significant investment in fiber infrastructure and skills development. The strategic plan targets training 3 million technical professionals by 2027 through comprehensive programs that support career advancement and international competitiveness.",
+          description: "Nigeria's IT sector roadmap demonstrates government commitment to digital transformation with significant investment in fibre infrastructure and skills development. The strategic plan targets training 3 million technical professionals by 2027 through comprehensive programs that support career advancement and international competitiveness.",
           link: "https://www.nitda.gov.ng/strategic-roadmap/"
         }
       }
@@ -1120,7 +1120,7 @@ export const NIGERIAN_GOAL_STATS = {
       {
         title: "Productivity ROI: Organized Workspaces Increase Efficiency by 75% and Reduce Stress",
         figure: "75%",
-        description: "Nigerian professionals with organized workspaces demonstrate 75% higher productivity and significantly reduced stress levels. Proper organization provides mental clarity and operational efficiency essential for professional success and personal well-being in demanding work environments.",
+        description: "Nigerian professionals with organised workspaces demonstrate 75% higher productivity and significantly reduced stress levels. Proper organisation provides mental clarity and operational efficiency essential for professional success and personal well-being in demanding work environments.",
         source: "Nigerian Institute of Environmental Design",
         link: "https://www.nied.org.ng/",
         details: {
@@ -1128,14 +1128,14 @@ export const NIGERIAN_GOAL_STATS = {
           publication: "Nigerian Institute of Environmental Design",
           authors: "NIED Productivity Research Team",
           date: "2024",
-          description: "Research demonstrates 75% productivity improvement for Nigerian professionals maintaining organized workspaces. Proper organization creates mental clarity, reduces decision fatigue, and enhances operational efficiency essential for professional success and stress management in demanding work environments.",
+          description: "Research demonstrates 75% productivity improvement for Nigerian professionals maintaining organised workspaces. Proper organisation creates mental clarity, reduces decision fatigue, and enhances operational efficiency essential for professional success and stress management in demanding work environments.",
           link: "https://www.nied.org.ng/"
         }
       },
       {
         title: "Space Optimization: Organized Homes Save ₦15K+ Monthly Through Efficient Resource Management",
         figure: "₦15K+",
-        description: "Nigerian professionals with organized living spaces save ₦15K+ monthly through reduced waste, efficient shopping, and better resource management. Organization systems prevent duplicate purchases and enable strategic household management essential for financial optimization.",
+        description: "Nigerian professionals with organised living spaces save ₦15K+ monthly through reduced waste, efficient shopping, and better resource management. Organization systems prevent duplicate purchases and enable strategic household management essential for financial optimization.",
         source: "Nigerian Home Economics Association",
         link: "https://www.nhea.org.ng/",
         details: {
@@ -1143,14 +1143,14 @@ export const NIGERIAN_GOAL_STATS = {
           publication: "Nigerian Home Economics Association",
           authors: "NHEA Resource Management Research",
           date: "2024",
-          description: "Analysis demonstrates monthly savings exceeding ₦15,000 for Nigerian professionals maintaining organized living spaces. Organization systems prevent waste, enable efficient shopping, and support strategic household management essential for financial optimization and resource conservation.",
+          description: "Analysis demonstrates monthly savings exceeding ₦15,000 for Nigerian professionals maintaining organised living spaces. Organization systems prevent waste, enable efficient shopping, and support strategic household management essential for financial optimization and resource conservation.",
           link: "https://www.nhea.org.ng/"
         }
       },
       {
         title: "Mental Health Advantage: Organized Environments Improve Focus and Decision-Making by 80%",
         figure: "80%",
-        description: "Nigerian professionals in organized environments demonstrate 80% better focus and decision-making capabilities. Clutter-free spaces reduce cognitive load and mental fatigue, providing clear thinking essential for professional effectiveness and creative problem-solving.",
+        description: "Nigerian professionals in organised environments demonstrate 80% better focus and decision-making capabilities. Clutter-free spaces reduce cognitive load and mental fatigue, providing clear thinking essential for professional effectiveness and creative problem-solving.",
         source: "Environmental Psychology Research Institute Nigeria",
         link: "https://www.eprin.org.ng/",
         details: {
@@ -1158,7 +1158,7 @@ export const NIGERIAN_GOAL_STATS = {
           publication: "Environmental Psychology Research Institute Nigeria",
           authors: "EPRIN Cognitive Research Division",
           date: "2024",
-          description: "Study demonstrates 80% focus and decision-making improvement for Nigerian professionals in organized environments. Clutter-free spaces reduce cognitive load and mental fatigue while enhancing clear thinking essential for professional effectiveness and creative problem-solving capabilities.",
+          description: "Study demonstrates 80% focus and decision-making improvement for Nigerian professionals in organised environments. Clutter-free spaces reduce cognitive load and mental fatigue while enhancing clear thinking essential for professional effectiveness and creative problem-solving capabilities.",
           link: "https://www.eprin.org.ng/"
         }
       }

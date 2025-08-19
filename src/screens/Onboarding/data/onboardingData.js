@@ -184,9 +184,9 @@ export const DOMAIN_DEFINITIONS = [
             explanation: "Environmental barriers often prevent good exercise intentions from becoming reality. This project helps you create physical spaces that support your fitness activities, making it easier to get started even when motivation is low.",
             tasks: [
               {
-                name: "Clear and organize a specific area in your home for workout activities",
+                name: "Clear and organise a specific area in your home for workout activities",
                 summary: "Setup space",
-                timeframe: "Home organization - 45 mins",
+                timeframe: "Home organisation - 45 mins",
                 completed: false
               },
               {
@@ -249,12 +249,12 @@ export const DOMAIN_DEFINITIONS = [
         name: "Better Sleep Habits",
         description: "Improve sleep quality and consistency",
         icon: "moon-outline",
-        explanation: "Quality sleep affects virtually every aspect of your physical and mental performance. This goal helps you optimize both the duration and quality of your sleep, with benefits that extend to your mood, cognition, and overall health.",
+        explanation: "Quality sleep affects virtually every aspect of your physical and mental performance. This goal helps you optimise both the duration and quality of your sleep, with benefits that extend to your mood, cognition, and overall health.",
         projects: [
           {
             name: "Sleep Environment Optimization",
             description: "Create ideal conditions for restful sleep",
-            explanation: "Your bedroom environment significantly impacts sleep quality. This project helps you transform your sleep space to minimize disruptions and support your body's natural sleep mechanisms.",
+            explanation: "Your bedroom environment significantly impacts sleep quality. This project helps you transform your sleep space to minimise disruptions and support your body's natural sleep mechanisms.",
             tasks: [
               {
                 name: "Purchase blackout curtains or a sleep mask to block light",
@@ -424,7 +424,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Create a contact list of people you want to stay connected with",
                 summary: "Build connection list",
-                timeframe: "Contact organization - 20 mins",
+                timeframe: "Contact organisation - 20 mins",
                 completed: false
               },
               {
@@ -628,7 +628,7 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Cancel one subscription or service you don't fully utilize",
+                name: "Cancel one subscription or service you don't fully utilise",
                 summary: "Cancel unused subscription",
                 timeframe: "Account management - 10 mins",
                 completed: false
@@ -843,7 +843,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Designate a specific area in your home for creative activities",
                 summary: "Set up creative space",
-                timeframe: "Space organization - 30 mins",
+                timeframe: "Space organisation - 30 mins",
                 completed: false
               },
               {
@@ -947,7 +947,7 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Contact one organization to inquire about specific volunteer opportunities",
+                name: "Contact one organisation to inquire about specific volunteer opportunities",
                 summary: "Contact org",
                 timeframe: "Outreach contact - 15 mins",
                 completed: false
@@ -966,7 +966,7 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Set up a recurring donation to one organization aligned with your values",
+                name: "Set up a recurring donation to one organisation aligned with your values",
                 summary: "Start recurring donation",
                 timeframe: "Donation setup - 15 mins",
                 completed: false
@@ -1027,7 +1027,7 @@ export const DOMAIN_DEFINITIONS = [
     name: "Community & Environment",
     icon: "home-outline",
     color: "#0ea5e9", // Sky blue
-    description: "Community connections, environmental improvements, organized spaces",
+    description: "Community connections, environmental improvements, organised spaces",
     goals: [
       {
         name: "Home Organization",
@@ -1056,8 +1056,8 @@ export const DOMAIN_DEFINITIONS = [
           },
           {
             name: "Maintenance Routine Development",
-            description: "Keep spaces organized over time",
-            explanation: "Maintaining organization is easier than repeatedly reorganizing. This project helps you create systems to preserve order, preventing the need for major decluttering sessions in the future.",
+            description: "Keep spaces organised over time",
+            explanation: "Maintaining organisation is easier than repeatedly reorganizing. This project helps you create systems to preserve order, preventing the need for major decluttering sessions in the future.",
             tasks: [
               {
                 name: "Create a 10-minute daily tidying routine for high-traffic areas",
@@ -1154,13 +1154,13 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Delete or archive emails to achieve inbox zero",
                 summary: "Clean email inbox",
-                timeframe: "Email organization - 1 hour",
+                timeframe: "Email organisation - 1 hour",
                 completed: false
               },
               {
                 name: "Organize files on your computer into a logical folder structure",
                 summary: "Organize computer files",
-                timeframe: "File organization - 45 mins",
+                timeframe: "File organisation - 45 mins",
                 completed: false
               }
             ]

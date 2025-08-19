@@ -57,7 +57,7 @@ export const USA_GOAL_STATS = {
     "Master Work-Life Balance": {
       title: "Remote Workers Command 20% Higher Pay While Boosting Company Productivity by 8%",
       figure: "20%",
-      description: "American professionals who secure flexible remote work arrangements command significantly higher salaries while delivering measurable productivity gains for their employers. With 87% of workers preferring remote flexibility over higher office-based pay, skilled professionals can leverage this preference into competitive advantage in today's tight labor market, especially valuable for managing student debt and healthcare costs.",
+      description: "American professionals who secure flexible remote work arrangements command significantly higher salaries while delivering measurable productivity gains for their employers. With 87% of workers preferring remote flexibility over higher office-based pay, skilled professionals can leverage this preference into competitive advantage in today's tight labour market, especially valuable for managing student debt and healthcare costs.",
       source: "U.S. Bureau of Labor Statistics",
       link: "https://www.bls.gov/productivity/notices/2024/productivity-and-remote-work.htm",
       details: {
@@ -219,7 +219,7 @@ export const USA_GOAL_STATS = {
     "Start Creative Side Hustle": {
       title: "57% of Americans Say Career Enjoyment is Essential for Fulfilling Life",
       figure: "57%",
-      description: "Harvard Business Review research confirms that continuous learning through reading directly correlates with leadership success and career advancement. American professionals who prioritize knowledge acquisition through reading report higher career satisfaction and demonstrate increased leadership capabilities in competitive workplace environments.",
+      description: "Harvard Business Review research confirms that continuous learning through reading directly correlates with leadership success and career advancement. American professionals who prioritise knowledge acquisition through reading report higher career satisfaction and demonstrate increased leadership capabilities in competitive workplace environments.",
       source: "Harvard Business Review & Pew Research Center",
       link: "https://hbr.org/2012/08/for-those-who-want-to-lead-rea",
       details: {
@@ -389,7 +389,7 @@ export const USA_GOAL_STATS = {
         publication: "Frontiers in Psychology",
         authors: "Yang M, Fry LW",
         date: "2018",
-        description: "Multi-organization analysis examining correlation between spiritual leadership practices and employee performance metrics. Included 188 subordinate-leader dyads across Chinese firms, measuring intrinsic motivation and task performance.",
+        description: "Multi-organisation analysis examining correlation between spiritual leadership practices and employee performance metrics. Included 188 subordinate-leader dyads across Chinese firms, measuring intrinsic motivation and task performance.",
         link: "https://www.frontiersin.org/journals/psychology/articles/10.3389/fpsyg.2018.02627/full"
       }
     }
@@ -400,7 +400,7 @@ export const USA_GOAL_STATS = {
     "Buy First Home": {
       title: "Organized Workspaces Drive $355 Million in Productivity Gains for Major Companies",
       figure: "$355 million",
-      description: "McKinsey research reveals that employee disengagement costs median S&P 500 companies up to $355 million annually in lost productivity. Well-organized workspaces directly combat this by improving focus and reducing stress. Additional studies show 10-21% productivity improvements through workplace optimization interventions.",
+      description: "McKinsey research reveals that employee disengagement costs median S&P 500 companies up to $355 million annually in lost productivity. Well-organised workspaces directly combat this by improving focus and reducing stress. Additional studies show 10-21% productivity improvements through workplace optimization interventions.",
       source: "McKinsey & Company",
       link: "https://www.mckinsey.com/capabilities/people-and-organizational-performance/our-insights/some-employees-are-destroying-value-others-are-building-it-do-you-know-the-difference",
       details: {
@@ -408,7 +408,7 @@ export const USA_GOAL_STATS = {
         publication: "McKinsey & Company",
         authors: "McKinsey People and Organizational Performance Practice",
         date: "2024",
-        description: "Comprehensive research analyzing 12 factors affecting employee satisfaction and commitment, finding that disengagement costs median S&P 500 companies $228-355 million annually. Well-being interventions including organized workspaces correlate with 10-21% productivity improvements.",
+        description: "Comprehensive research analyzing 12 factors affecting employee satisfaction and commitment, finding that disengagement costs median S&P 500 companies $228-355 million annually. Well-being interventions including organised workspaces correlate with 10-21% productivity improvements.",
         link: "https://www.mckinsey.com/capabilities/people-and-organizational-performance/our-insights/some-employees-are-destroying-value-others-are-building-it-do-you-know-the-difference"
       }
     },

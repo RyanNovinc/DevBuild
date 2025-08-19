@@ -99,11 +99,6 @@ const DayView = ({
   // Get blocks for current day
   const blocksForDay = getTimeBlocksForDate(currentDate);
   
-  // Show empty state if no blocks
-  if (blocksForDay.length === 0) {
-    return <EmptyState />;
-  }
-  
   // Get current hour height based on zoom level
   const hourHeight = getHourHeight();
   

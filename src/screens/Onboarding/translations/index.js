@@ -58,6 +58,7 @@ export default {
       justStartingPoint: "Just a Starting Point",
       reassuranceText: "This framework helps you get started quickly. You can edit, add, or remove any of these projects and tasks after setup.",
       goal: "GOAL",
+      milestone: "MILESTONE", 
       project: "PROJECT",
       task: "TASK",
       continueBtnText: "Looks Good, Continue",

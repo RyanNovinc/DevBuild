@@ -91,12 +91,11 @@ const AIChat = ({
   
   // Common suggestions
   const suggestions = [
-    { id: '1', text: 'Help me define my strategic direction' },
-    { id: '2', text: 'Create a goal for me' },
-    { id: '3', text: 'Help me break down a big goal' },
-    { id: '4', text: 'Schedule time for an activity' },
-    { id: '5', text: 'Tips for staying consistent' },
-    { id: '6', text: 'Add to-dos for today' }
+    { id: '1', text: 'Create a goal for me' },
+    { id: '2', text: 'Help me break down a big goal' },
+    { id: '3', text: 'Schedule time for an activity' },
+    { id: '4', text: 'Tips for staying consistent' },
+    { id: '5', text: 'Add to-dos for today' }
   ];
   
   // Check for screen reader status

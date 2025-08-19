@@ -170,7 +170,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Leadership Skill Development",
                 description: "Build essential leadership capabilities for American workplace advancement",
-                explanation: "86% prioritize soft skills as more important than technical abilities for advancement. Leadership skills critical for promotion.",
+                explanation: "86% prioritise soft skills as more important than technical abilities for advancement. Leadership skills critical for promotion.",
                 tasks: [
                   {
                     name: "Complete leadership training program or join Toastmasters for communication skills",
@@ -237,7 +237,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Skill Application and Recognition",
             description: "Apply new skills in work context and build professional reputation",
-            explanation: "86% prioritize soft skills as more important than technical abilities for advancement. Visibility of skill development crucial for promotion.",
+            explanation: "86% prioritise soft skills as more important than technical abilities for advancement. Visibility of skill development crucial for promotion.",
             tasks: [
               {
                 name: "Volunteer for projects that showcase your new skills to management",
@@ -249,7 +249,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Share knowledge through presentations or mentoring to build professional reputation",
                 summary: "Share knowledge",
-                explanation: "Teaching others establishes you as subject matter expert and builds internal network of allies. Knowledge sharing creates value for the organization while positioning you as thought leader and go-to resource for expertise.",
+                explanation: "Teaching others establishes you as subject matter expert and builds internal network of allies. Knowledge sharing creates value for the organisation while positioning you as thought leader and go-to resource for expertise.",
                 timeframe: "Ongoing",
                 completed: false
               }
@@ -434,7 +434,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Apply for purpose-driven positions or propose impact initiatives at work",
                 summary: "Apply purpose jobs",
-                explanation: "Taking initiative to create or join purpose-driven work demonstrates leadership while addressing values alignment. Proposing new initiatives shows strategic thinking and can lead to promotion opportunities within current organization.",
+                explanation: "Taking initiative to create or join purpose-driven work demonstrates leadership while addressing values alignment. Proposing new initiatives shows strategic thinking and can lead to promotion opportunities within current organisation.",
                 completed: false
               }
             ]
@@ -503,7 +503,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Pay Off High-Interest Debt",
         description: "Eliminate credit card and high-interest debt to unlock financial freedom",
         icon: "card",
-        explanation: "Over 40% prioritize debt settlement as their top financial goal. With average student debt at $33,260 for 25-34 age group plus consumer debt, this addresses their biggest financial burden.",
+        explanation: "Over 40% prioritise debt settlement as their top financial goal. With average student debt at $33,260 for 25-34 age group plus consumer debt, this addresses their biggest financial burden.",
         projects: [
           {
             name: "Strategic Debt Elimination",
@@ -513,7 +513,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "List all debts with balances, interest rates, and minimum payments",
                 summary: "List debts",
-                explanation: "Complete debt inventory provides clarity on your financial situation and enables strategic payoff planning. Understanding interest rates helps prioritize which debts to tackle first for maximum financial impact.",
+                explanation: "Complete debt inventory provides clarity on your financial situation and enables strategic payoff planning. Understanding interest rates helps prioritise which debts to tackle first for maximum financial impact.",
                 timeframe: "1 day",
                 completed: false
               },
@@ -721,7 +721,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Research therapists or counselors covered by insurance or employee benefits",
                 summary: "Find therapist",
-                explanation: "Mental health coverage through insurance or employee benefits makes therapy accessible and affordable. Research helps find qualified therapists who specialize in your specific concerns and accept your insurance.",
+                explanation: "Mental health coverage through insurance or employee benefits makes therapy accessible and affordable. Research helps find qualified therapists who specialise in your specific concerns and accept your insurance.",
                 completed: false
               },
               {
@@ -946,7 +946,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Present data-driven insights to management to demonstrate value",
                 summary: "Present insights",
-                explanation: "Presenting insights to leadership builds visibility and establishes you as a data resource within the organization. Demonstrating business impact through analytics often leads to promotion opportunities and increased responsibilities.",
+                explanation: "Presenting insights to leadership builds visibility and establishes you as a data resource within the organisation. Demonstrating business impact through analytics often leads to promotion opportunities and increased responsibilities.",
                 completed: false
               }
             ]
@@ -992,7 +992,7 @@ export const DOMAIN_DEFINITIONS = [
                   {
                     name: "Implement multiple income streams (ads, affiliate marketing, sponsored content)",
                     summary: "Multiple streams",
-                    explanation: "Diversified income streams reduce dependence on single revenue source and maximize earning potential. Multiple monetization methods provide stability as audience and engagement fluctuate.",
+                    explanation: "Diversified income streams reduce dependence on single revenue source and maximise earning potential. Multiple monetization methods provide stability as audience and engagement fluctuate.",
                     completed: false
                   },
                   {
@@ -1032,7 +1032,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Craft Business Scaling",
                 description: "Scale handmade business to consistent monthly income through efficiency",
-                explanation: "Successful craft businesses balance creativity with business efficiency. Local and online sales channels maximize market reach.",
+                explanation: "Successful craft businesses balance creativity with business efficiency. Local and online sales channels maximise market reach.",
                 tasks: [
                   {
                     name: "Optimize production process and explore local market opportunities",
@@ -1356,8 +1356,8 @@ export const DOMAIN_DEFINITIONS = [
           },
           {
             name: "Travel Execution and Growth",
-            description: "Execute solo trip and maximize personal growth from experience",
-            explanation: "61% prioritize wellness and well-being travel experiences. Desire for authentic cultural experiences over traditional tourism drives solo adventure popularity.",
+            description: "Execute solo trip and maximise personal growth from experience",
+            explanation: "61% prioritise wellness and well-being travel experiences. Desire for authentic cultural experiences over traditional tourism drives solo adventure popularity.",
             tasks: [
               {
                 name: "Book and complete solo adventure trip with focus on personal growth",
@@ -1395,7 +1395,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Schedule 4+ weekly wellness activities and track their impact on wellbeing",
                 summary: "Schedule wellness",
-                explanation: "Regular wellness activities compound benefits for stress management and overall health. Tracking impact provides motivation and helps optimize which activities provide greatest benefit for your specific needs.",
+                explanation: "Regular wellness activities compound benefits for stress management and overall health. Tracking impact provides motivation and helps optimise which activities provide greatest benefit for your specific needs.",
                 completed: false
               }
             ]
@@ -1489,7 +1489,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Research local organizations working on causes you care about",
                 summary: "Research orgs",
-                explanation: "Researching local organizations ensures your volunteer time aligns with personal values and maximizes impact. Understanding organization missions and operations helps identify where your skills can contribute most effectively.",
+                explanation: "Researching local organizations ensures your volunteer time aligns with personal values and maximizes impact. Understanding organisation missions and operations helps identify where your skills can contribute most effectively.",
                 completed: false
               },
               {
@@ -1508,11 +1508,11 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Track volunteer hours and measure impact created for chosen cause",
                 summary: "Track impact",
-                explanation: "Tracking volunteer contribution provides satisfaction and demonstrates impact to others who might be inspired to volunteer. Measuring impact helps optimize your contribution and provides evidence for job applications and personal growth.",
+                explanation: "Tracking volunteer contribution provides satisfaction and demonstrates impact to others who might be inspired to volunteer. Measuring impact helps optimise your contribution and provides evidence for job applications and personal growth.",
                 completed: false
               },
               {
-                name: "Take on leadership role or special project within volunteer organization",
+                name: "Take on leadership role or special project within volunteer organisation",
                 summary: "Lead volunteer",
                 explanation: "Leadership opportunities in volunteer settings build management skills while maximizing your impact for the cause. Special projects provide experience that can enhance your professional resume and career development.",
                 completed: false
@@ -1535,7 +1535,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Assess how well your current role aligns with your personal values",
                 summary: "Assess alignment",
-                explanation: "Values assessment identifies gaps between current work and personal principles that may be causing dissatisfaction. Understanding alignment level helps prioritize changes needed for fulfilling career direction.",
+                explanation: "Values assessment identifies gaps between current work and personal principles that may be causing dissatisfaction. Understanding alignment level helps prioritise changes needed for fulfilling career direction.",
                 completed: false
               },
               {
@@ -1554,7 +1554,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Network with professionals working in purpose-driven organizations",
                 summary: "Network purpose",
-                explanation: "Purpose-driven professionals can provide insights into values-aligned career paths and organization cultures. Their experiences help you understand realistic expectations and transition strategies for meaningful work.",
+                explanation: "Purpose-driven professionals can provide insights into values-aligned career paths and organisation cultures. Their experiences help you understand realistic expectations and transition strategies for meaningful work.",
                 completed: false
               },
               {
@@ -1619,7 +1619,7 @@ export const DOMAIN_DEFINITIONS = [
     name: "Community & Environment",
     icon: "home",
     color: "#6366f1", // Indigo
-    description: "Building community connections, improving your environment, and organizing your spaces",
+    description: "Building community connections, improving your environment, and organising your spaces",
     goals: [
       {
         name: "Buy First Home",
@@ -1635,7 +1635,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Research first-time homebuyer programs and down payment assistance options",
                 summary: "Research programs",
-                explanation: "First-time buyer programs can reduce down payment requirements and provide favorable terms that make homeownership achievable. Research helps identify all available assistance programs to maximize affordability.",
+                explanation: "First-time buyer programs can reduce down payment requirements and provide favorable terms that make homeownership achievable. Research helps identify all available assistance programs to maximise affordability.",
                 completed: false
               },
               {
@@ -1654,7 +1654,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Save for down payment and closing costs in dedicated high-yield account",
                 summary: "Save down payment",
-                explanation: "Dedicated savings account prevents down payment funds from being used for other expenses while earning interest. High-yield accounts maximize growth of home savings while maintaining liquidity for purchase timing.",
+                explanation: "Dedicated savings account prevents down payment funds from being used for other expenses while earning interest. High-yield accounts maximise growth of home savings while maintaining liquidity for purchase timing.",
                 completed: false
               },
               {
@@ -1669,44 +1669,44 @@ export const DOMAIN_DEFINITIONS = [
       },
       {
         name: "Organize Living Space",
-        description: "Declutter and organize home environment for calm and productivity",
+        description: "Declutter and organise home environment for calm and productivity",
         icon: "grid",
         explanation: "64% of millennials/Gen Z actively reducing possessions in 2024. Decluttering is #1 New Year's resolution, with people 'more ruthless than ever' about items.",
         projects: [
           {
             name: "Systematic Decluttering Process",
-            description: "Remove unnecessary items and create organized living systems",
-            explanation: "Post-pandemic accumulation leaving people overwhelmed. Work-from-home makes organized space crucial for productivity and mental health.",
+            description: "Remove unnecessary items and create organised living systems",
+            explanation: "Post-pandemic accumulation leaving people overwhelmed. Work-from-home makes organised space crucial for productivity and mental health.",
             tasks: [
               {
                 name: "Declutter each room systematically using proven methods (KonMari, one-touch rule)",
                 summary: "Declutter rooms",
-                explanation: "Systematic decluttering using proven methods ensures thorough organization and prevents feeling overwhelmed. Structured approaches like KonMari provide clear decision-making frameworks for keeping or discarding items.",
+                explanation: "Systematic decluttering using proven methods ensures thorough organisation and prevents feeling overwhelmed. Structured approaches like KonMari provide clear decision-making frameworks for keeping or discarding items.",
                 completed: false
               },
               {
                 name: "Organize remaining possessions with storage solutions and labeling systems",
                 summary: "Organize storage",
-                explanation: "Proper storage and labeling systems maintain organization long-term and make finding items effortless. Well-organized spaces reduce stress and improve productivity while creating calm, functional living environment.",
+                explanation: "Proper storage and labeling systems maintain organisation long-term and make finding items effortless. Well-organised spaces reduce stress and improve productivity while creating calm, functional living environment.",
                 completed: false
               }
             ]
           },
           {
             name: "Sustainable Organization Maintenance",
-            description: "Create habits and systems that maintain organized living space",
+            description: "Create habits and systems that maintain organised living space",
             explanation: "Minimalism driven by functionality for busy lifestyles. Organized spaces significantly reduce stress and anxiety levels.",
             tasks: [
               {
-                name: "Establish daily and weekly routines to maintain organization",
+                name: "Establish daily and weekly routines to maintain organisation",
                 summary: "Create routines",
-                explanation: "Daily and weekly organizing routines prevent clutter accumulation and maintain the benefits of initial decluttering effort. Consistent habits ensure organized spaces remain functional and stress-free long-term.",
+                explanation: "Daily and weekly organising routines prevent clutter accumulation and maintain the benefits of initial decluttering effort. Consistent habits ensure organised spaces remain functional and stress-free long-term.",
                 completed: false
               },
               {
-                name: "Choose sustainable organizing materials that align with environmental values",
-                summary: "Eco organizing",
-                explanation: "Sustainable organizing solutions support environmental goals while creating functional storage systems. Eco-friendly materials ensure organization efforts align with broader values around consumption and environmental impact.",
+                name: "Choose sustainable organising materials that align with environmental values",
+                summary: "Eco organising",
+                explanation: "Sustainable organising solutions support environmental goals while creating functional storage systems. Eco-friendly materials ensure organisation efforts align with broader values around consumption and environmental impact.",
                 completed: false
               }
             ]
@@ -1717,7 +1717,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Create Eco-Friendly Home",
         description: "Transform living space into energy-efficient, sustainable environment",
         icon: "leaf",
-        explanation: "Millennials prioritize sustainability in housing, seeking energy-efficient appliances and eco-friendly materials. 88% prefer urban living with sustainable amenities.",
+        explanation: "Millennials prioritise sustainability in housing, seeking energy-efficient appliances and eco-friendly materials. 88% prefer urban living with sustainable amenities.",
         projects: [
           {
             name: "Energy Efficiency Improvements",
@@ -1727,7 +1727,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Audit home energy usage and identify opportunities for efficiency improvements",
                 summary: "Energy audit",
-                explanation: "Energy audits reveal specific areas where efficiency improvements can reduce utility costs and environmental impact. Understanding current usage patterns helps prioritize upgrades that provide maximum benefit.",
+                explanation: "Energy audits reveal specific areas where efficiency improvements can reduce utility costs and environmental impact. Understanding current usage patterns helps prioritise upgrades that provide maximum benefit.",
                 completed: false
               },
               {

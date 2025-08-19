@@ -25,6 +25,7 @@ const LanguageSelectionPage = ({ onContinue, onBack }) => {
   const [messageComplete, setMessageComplete] = useState(false);
   const [showContinueButton, setShowContinueButton] = useState(false);
   const [containerAnimationComplete, setContainerAnimationComplete] = useState(false);
+  const [showTapToContinue, setShowTapToContinue] = useState(false);
   
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -33,6 +34,7 @@ const LanguageSelectionPage = ({ onContinue, onBack }) => {
   const aiMessageOpacity = useRef(new Animated.Value(0)).current;
   const buttonOpacity = useRef(new Animated.Value(0)).current;
   const iconPulse = useRef(new Animated.Value(1)).current;
+  const tapPromptOpacity = useRef(new Animated.Value(0)).current;
   
   // Refs for typing animations
   const typingRef = useRef(null);
@@ -111,6 +113,23 @@ const LanguageSelectionPage = ({ onContinue, onBack }) => {
       }).start();
     }
   }, [messageComplete]);
+
+  // Show tap prompt when message is complete
+  useEffect(() => {
+    if (messageComplete) {
+      // Delay showing tap prompt to give user time to read
+      const showPromptTimeout = setTimeout(() => {
+        setShowTapToContinue(true);
+        Animated.timing(tapPromptOpacity, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true
+        }).start();
+      }, 1000);
+
+      return () => clearTimeout(showPromptTimeout);
+    }
+  }, [messageComplete]);
   
   // Update selectedLanguage when context language changes
   useEffect(() => {
@@ -151,6 +170,13 @@ const LanguageSelectionPage = ({ onContinue, onBack }) => {
     
     // If message is complete, handle continue
     if (messageComplete) {
+      // Hide tap prompt
+      Animated.timing(tapPromptOpacity, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: true
+      }).start();
+      
       handleContinue();
     }
   };
@@ -305,6 +331,26 @@ const LanguageSelectionPage = ({ onContinue, onBack }) => {
           <Ionicons name="arrow-forward" size={20} color="#FFFFFF" style={styles.buttonIcon} />
         </TouchableOpacity>
       </Animated.View>
+      
+      {/* Tap to continue prompt */}
+      {showTapToContinue && messageComplete && (
+        <Animated.View 
+          style={[
+            styles.centralTapPrompt,
+            { opacity: tapPromptOpacity }
+          ]}
+        >
+          <Text style={styles.tapPromptText}>
+            Tap to continue
+          </Text>
+          <Ionicons 
+            name="hand-left" 
+            size={24} 
+            color="rgba(255,255,255,0.7)" 
+            style={styles.tapPromptIcon}
+          />
+        </Animated.View>
+      )}
     </View>
   );
 };
@@ -452,7 +498,24 @@ const styles = StyleSheet.create({
   },
   buttonIcon: {
     marginLeft: 8,
-  }
+  },
+  centralTapPrompt: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: '30%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 9, // Lower than the touchable but visible
+  },
+  tapPromptText: {
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 8,
+  },
+  tapPromptIcon: {
+    marginTop: -4,
+  },
 });
 
 export default LanguageSelectionPage;

@@ -142,7 +142,7 @@ export const DOMAIN_DEFINITIONS = [
             explanation: "Strategic career positioning increases promotion likelihood and creates multiple pathways to management roles.",
             tasks: [
               {
-                name: "Identify management opportunities within current organization and required qualifications",
+                name: "Identify management opportunities within current organisation and required qualifications",
                 summary: "Research opportunities",
                 explanation: "Understanding available paths and requirements enables targeted preparation and strategic career development planning.",
                 timeframe: "2 weeks",
@@ -207,7 +207,7 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Review and optimize monthly expenses to increase emergency fund contributions",
+                name: "Review and optimise monthly expenses to increase emergency fund contributions",
                 summary: "Optimize expenses",
                 explanation: "Expense optimization identifies additional money for emergency fund while building good financial habits for long-term wealth building.",
                 timeframe: "2 weeks",
@@ -257,7 +257,7 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Track performance metrics and optimize based on customer feedback and profitability",
+                name: "Track performance metrics and optimise based on customer feedback and profitability",
                 summary: "Optimize performance",
                 explanation: "Performance tracking enables data-driven improvements and ensures side hustle remains profitable and sustainable over time.",
                 timeframe: "Ongoing",
@@ -275,7 +275,7 @@ export const DOMAIN_DEFINITIONS = [
         projects: [
           {
             name: "Financial Preparation for Home Purchase",
-            description: "Build down payment savings and optimize credit for mortgage qualification",
+            description: "Build down payment savings and optimise credit for mortgage qualification",
             explanation: "Strong financial position enables better mortgage terms and wider property selection. Preparation reduces purchase timeline.",
             tasks: [
               {
@@ -650,7 +650,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Certification Planning and Preparation",
             description: "Choose relevant certification and create study plan for successful completion",
-            explanation: "Strategic certification choice and thorough preparation maximize career benefits and ensure successful completion of requirements.",
+            explanation: "Strategic certification choice and thorough preparation maximise career benefits and ensure successful completion of requirements.",
             tasks: [
               {
                 name: "Research industry certifications most valued in your field and career goals",
@@ -671,7 +671,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Certification Achievement",
             description: "Complete certification requirements and leverage credential for career advancement",
-            explanation: "Certification completion and strategic career application maximize return on educational investment and advancement opportunities.",
+            explanation: "Certification completion and strategic career application maximise return on educational investment and advancement opportunities.",
             tasks: [
               {
                 name: "Complete all certification requirements including study, practice, and examination",
@@ -771,7 +771,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Creative Project Execution",
             description: "Work consistently on creative project through completion and sharing",
-            explanation: "Consistent creative work and sharing results maximize personal satisfaction and potential for feedback and improvement.",
+            explanation: "Consistent creative work and sharing results maximise personal satisfaction and potential for feedback and improvement.",
             tasks: [
               {
                 name: "Work on project regularly following timeline with consistent creative practice",
@@ -879,7 +879,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Hobby Development and Community",
             description: "Develop chosen hobby skills and connect with hobby community for enhanced enjoyment",
-            explanation: "Skill development and community connection maximize hobby benefits including stress relief, learning, and social opportunities.",
+            explanation: "Skill development and community connection maximise hobby benefits including stress relief, learning, and social opportunities.",
             tasks: [
               {
                 name: "Commit to regular hobby practice schedule and track skill progression",
@@ -915,7 +915,7 @@ export const DOMAIN_DEFINITIONS = [
         projects: [
           {
             name: "Skills-Based Volunteer Opportunities",
-            description: "Find volunteer roles that utilize your professional skills and expertise",
+            description: "Find volunteer roles that utilise your professional skills and expertise",
             explanation: "Skills-based volunteering maximizes community impact while providing fulfillment through meaningful application of professional capabilities.",
             tasks: [
               {
@@ -997,7 +997,7 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Build skills and network connections in purpose-driven field or organization",
+                name: "Build skills and network connections in purpose-driven field or organisation",
                 summary: "Build connections",
                 explanation: "Skill development and networking create opportunities in purpose-driven fields while building credibility and relationships.",
                 timeframe: "6 months",
@@ -1013,30 +1013,30 @@ export const DOMAIN_DEFINITIONS = [
     name: "Community & Environment",
     icon: "home",
     color: "#10b981", // Green
-    description: "Building community connections, improving your environment, and organizing your spaces",
+    description: "Building community connections, improving your environment, and organising your spaces",
     goals: [
       {
         name: "Create Organized Living Space",
         description: "Organize home environment to improve productivity, reduce stress, and enhance well-being",
         icon: "home",
-        explanation: "Organized living spaces improve focus by 42% and reduce daily stress. Well-organized environments support better productivity and overall well-being.",
+        explanation: "Organized living spaces improve focus by 42% and reduce daily stress. Well-organised environments support better productivity and overall well-being.",
         projects: [
           {
             name: "Space Assessment and Organization Plan",
-            description: "Evaluate current living space and create systematic organization approach",
-            explanation: "Systematic organization approach ensures lasting results and addresses root causes of disorganization rather than temporary fixes.",
+            description: "Evaluate current living space and create systematic organisation approach",
+            explanation: "Systematic organisation approach ensures lasting results and addresses root causes of disorganization rather than temporary fixes.",
             tasks: [
               {
-                name: "Assess each room and identify problem areas, clutter sources, and organization needs",
+                name: "Assess each room and identify problem areas, clutter sources, and organisation needs",
                 summary: "Assess space",
-                explanation: "Thorough assessment identifies specific organization challenges and enables targeted solutions for maximum impact.",
+                explanation: "Thorough assessment identifies specific organisation challenges and enables targeted solutions for maximum impact.",
                 timeframe: "1 week",
                 completed: false
               },
               {
-                name: "Create room-by-room organization plan with specific systems and storage solutions",
-                summary: "Plan organization",
-                explanation: "Detailed planning ensures systematic approach and prevents organization efforts from being overwhelmed or incomplete.",
+                name: "Create room-by-room organisation plan with specific systems and storage solutions",
+                summary: "Plan organisation",
+                explanation: "Detailed planning ensures systematic approach and prevents organisation efforts from being overwhelmed or incomplete.",
                 timeframe: "1 week",
                 completed: false
               }
@@ -1044,20 +1044,20 @@ export const DOMAIN_DEFINITIONS = [
           },
           {
             name: "Organization Implementation",
-            description: "Execute organization plan with sustainable systems for maintaining organized space",
-            explanation: "Implementation with maintenance systems ensures lasting organization results rather than temporary improvements that quickly deteriorate.",
+            description: "Execute organisation plan with sustainable systems for maintaining organised space",
+            explanation: "Implementation with maintenance systems ensures lasting organisation results rather than temporary improvements that quickly deteriorate.",
             tasks: [
               {
-                name: "Implement organization systems room by room, decluttering and creating storage solutions",
+                name: "Implement organisation systems room by room, decluttering and creating storage solutions",
                 summary: "Organize systematically",
-                explanation: "Room-by-room implementation maintains momentum while creating visible progress that motivates continued organization efforts.",
+                explanation: "Room-by-room implementation maintains momentum while creating visible progress that motivates continued organisation efforts.",
                 timeframe: "1 month",
                 completed: false
               },
               {
-                name: "Establish daily and weekly maintenance routines to preserve organized environment",
-                summary: "Maintain organization",
-                explanation: "Maintenance routines prevent organization deterioration and ensure long-term benefits of improved living environment.",
+                name: "Establish daily and weekly maintenance routines to preserve organised environment",
+                summary: "Maintain organisation",
+                explanation: "Maintenance routines prevent organisation deterioration and ensure long-term benefits of improved living environment.",
                 timeframe: "Ongoing",
                 completed: false
               }

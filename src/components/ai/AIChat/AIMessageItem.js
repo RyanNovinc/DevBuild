@@ -812,7 +812,9 @@ const AIMessageItem = ({
             top: scaleHeight(-45), // Position above the message
             right: isUserMessage ? scaleWidth(20) : null, // Align right for user messages
             left: isUserMessage ? null : scaleWidth(20), // Align left for AI messages
-            backgroundColor: '#1E1E1E',
+            backgroundColor: '#000000', // Black background
+            borderWidth: 1,
+            borderColor: '#FFFFFF', // White border
           }
         ]}>
           <TouchableOpacity 
@@ -893,7 +895,7 @@ const styles = StyleSheet.create({
   },
   selectedMessage: {
     borderWidth: 2,
-    borderColor: '#19C37D', // Green highlight color
+    borderColor: '#FFFFFF', // White highlight color - stays with theme
     borderRadius: scaleWidth(18), // Ensure border follows message bubble shape
   },
   messageActions: {

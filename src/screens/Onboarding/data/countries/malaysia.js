@@ -259,7 +259,7 @@ export const DOMAIN_DEFINITIONS = [
       },
       {
         name: "Advance to Management Role",
-        description: "Progress into leadership position within current company or new organization",
+        description: "Progress into leadership position within current company or new organisation",
         icon: "people",
         explanation: "Leadership opportunities are growing in Malaysia as companies expand and professionalize. Your experience positions you perfectly for management roles that offer better compensation and career security.",
         projects: [
@@ -329,7 +329,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Calculate emergency fund and open savings",
                 summary: "Calculate fund",
-                explanation: "Emergency fund calculation provides clear savings target while high-yield accounts maximize growth. Consider both local and foreign currency accounts for currency diversification.",
+                explanation: "Emergency fund calculation provides clear savings target while high-yield accounts maximise growth. Consider both local and foreign currency accounts for currency diversification.",
                 timeframe: "1 week",
                 completed: false
               },
@@ -344,7 +344,7 @@ export const DOMAIN_DEFINITIONS = [
           },
           {
             name: "Expense Management",
-            description: "Optimize spending to maximize emergency fund contributions",
+            description: "Optimize spending to maximise emergency fund contributions",
             explanation: "Strategic expense management helps Malaysian professionals save more despite inflation and rising living costs in urban areas.",
             tasks: [
               {
@@ -785,7 +785,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Plan Dream Wedding",
         description: "Plan and execute beautiful wedding celebration within budget that reflects your values",
         icon: "heart",
-        explanation: "Planning your dream wedding provides exciting milestone to work toward while building life partnership. Malaysian couples are creating memorable celebrations that honor traditions while staying within financial goals.",
+        explanation: "Planning your dream wedding provides exciting milestone to work toward while building life partnership. Malaysian couples are creating memorable celebrations that honour traditions while staying within financial goals.",
         projects: [
           {
             name: "Wedding Planning Foundation",
@@ -885,7 +885,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Improve Romantic Relationship",
         description: "Deepen connection with partner and build stronger romantic partnership",
         icon: "heart",
-        explanation: "Strong romantic relationships provide emotional support and partnership for life goals. Malaysian couples are building relationships that honor cultural values while creating modern partnerships for career and family success.",
+        explanation: "Strong romantic relationships provide emotional support and partnership for life goals. Malaysian couples are building relationships that honour cultural values while creating modern partnerships for career and family success.",
         projects: [
           {
             name: "Relationship Strengthening",
@@ -1063,7 +1063,7 @@ export const DOMAIN_DEFINITIONS = [
                     completed: false
                   },
                   {
-                    name: "Apply skills to analyze Malaysian stocks and investment opportunities",
+                    name: "Apply skills to analyse Malaysian stocks and investment opportunities",
                     summary: "Analyze investments",
                     explanation: "Practical financial analysis application improves personal investment returns while building expertise that employers value in financial services careers.",
                     timeframe: "2 months",
@@ -1563,7 +1563,7 @@ export const DOMAIN_DEFINITIONS = [
         projects: [
           {
             name: "Community Service Setup",
-            description: "Find meaningful volunteer opportunities that utilize professional skills",
+            description: "Find meaningful volunteer opportunities that utilise professional skills",
             explanation: "Skills-based volunteering provides maximum community impact while building professional experience and networking opportunities in Malaysian community context.",
             tasks: [
               {
@@ -1588,7 +1588,7 @@ export const DOMAIN_DEFINITIONS = [
             explanation: "Community impact measurement demonstrates value creation while building leadership experience and professional reputation for social responsibility.",
             tasks: [
               {
-                name: "Track volunteer impact and look for leadership opportunities within organization",
+                name: "Track volunteer impact and look for leadership opportunities within organisation",
                 summary: "Track impact",
                 explanation: "Impact tracking demonstrates community value while identifying leadership opportunities that build management experience and professional reputation.",
                 timeframe: "3 months",
@@ -1597,7 +1597,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Organize community initiatives or fundraising events to expand impact",
                 summary: "Organize initiatives",
-                explanation: "Community organizing builds leadership skills while creating larger positive impact and professional network that supports career advancement and personal fulfillment.",
+                explanation: "Community organising builds leadership skills while creating larger positive impact and professional network that supports career advancement and personal fulfillment.",
                 timeframe: "6 months",
                 completed: false
               }
@@ -1711,28 +1711,28 @@ export const DOMAIN_DEFINITIONS = [
     name: "Community & Environment",
     icon: "home",
     color: "#6366f1", // Indigo
-    description: "Building community connections, improving your environment, and organizing your spaces",
+    description: "Building community connections, improving your environment, and organising your spaces",
     goals: [
       {
         name: "Organize Living Space",
-        description: "Create efficient, organized home environment that supports productivity and wellbeing",
+        description: "Create efficient, organised home environment that supports productivity and wellbeing",
         icon: "grid",
-        explanation: "Organized living space improves mental clarity and productivity while creating peaceful environment during stressful times. Smart organization also saves money by reducing lost items and improving efficiency.",
+        explanation: "Organized living space improves mental clarity and productivity while creating peaceful environment during stressful times. Smart organisation also saves money by reducing lost items and improving efficiency.",
         projects: [
           {
             name: "Home Organization System",
-            description: "Implement comprehensive organization system for all living areas",
-            explanation: "Home organization reduces stress while improving productivity and creating peaceful environment that supports professional success and personal wellbeing.",
+            description: "Implement comprehensive organisation system for all living areas",
+            explanation: "Home organisation reduces stress while improving productivity and creating peaceful environment that supports professional success and personal wellbeing.",
             tasks: [
               {
-                name: "Declutter all living areas and organize belongings using systematic approach",
+                name: "Declutter all living areas and organise belongings using systematic approach",
                 summary: "Declutter home",
-                explanation: "Home decluttering creates peaceful environment while improving organization and reducing stress that supports professional productivity and personal wellbeing.",
+                explanation: "Home decluttering creates peaceful environment while improving organisation and reducing stress that supports professional productivity and personal wellbeing.",
                 timeframe: "2 weeks",
                 completed: false
               },
               {
-                name: "Implement storage solutions and organization systems for long-term maintenance",
+                name: "Implement storage solutions and organisation systems for long-term maintenance",
                 summary: "Storage systems",
                 explanation: "Organization systems maintain decluttered environment while creating efficient storage that supports productivity and reduces time wasted searching for items.",
                 timeframe: "1 month",
@@ -1746,7 +1746,7 @@ export const DOMAIN_DEFINITIONS = [
             explanation: "Environment design supports both work productivity and personal relaxation while creating spaces that enhance professional and personal effectiveness.",
             tasks: [
               {
-                name: "Design dedicated work area with proper lighting, seating, and organization",
+                name: "Design dedicated work area with proper lighting, seating, and organisation",
                 summary: "Create workspace",
                 explanation: "Dedicated workspace improves professional productivity while creating boundaries between work and personal life that support mental health and effectiveness.",
                 timeframe: "1 week",
@@ -1782,9 +1782,9 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Adopt waste reduction and recycling practices to minimize environmental footprint",
+                name: "Adopt waste reduction and recycling practices to minimise environmental footprint",
                 summary: "Waste reduction",
-                explanation: "Waste reduction practices save money while contributing to environmental protection and creating more organized, efficient living environment.",
+                explanation: "Waste reduction practices save money while contributing to environmental protection and creating more organised, efficient living environment.",
                 timeframe: "2 weeks",
                 completed: false
               }
@@ -1827,7 +1827,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Declutter each room systematically, keeping only items that add value or bring joy",
                 summary: "Room decluttering",
-                explanation: "Room-by-room decluttering creates organized living space while helping identify what possessions truly add value to life and career success.",
+                explanation: "Room-by-room decluttering creates organised living space while helping identify what possessions truly add value to life and career success.",
                 timeframe: "1 month",
                 completed: false
               },
@@ -1853,7 +1853,7 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Create maintenance routines that keep living space organized and peaceful",
+                name: "Create maintenance routines that keep living space organised and peaceful",
                 summary: "Maintenance routines",
                 explanation: "Organization maintenance routines ensure simplified living space remains peaceful while supporting productivity and mental clarity for professional success.",
                 timeframe: "2 weeks",

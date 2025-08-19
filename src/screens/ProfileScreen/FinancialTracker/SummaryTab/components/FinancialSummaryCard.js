@@ -25,8 +25,8 @@ const FinancialSummaryCard = ({
   totalExpenses, 
   savingsPercentage, 
   formatCurrency,
-  onCurrencyPress,
-  displayCurrency
+  displayCurrency,
+  onCurrencyPress
 }) => {
   // Get landscape orientation
   const isLandscape = useIsLandscape();
@@ -103,37 +103,33 @@ const FinancialSummaryCard = ({
           </Text>
         </View>
         
-        <TouchableOpacity
-          style={[
-            styles.currencyButton,
-            {
+        {/* Currency Selector */}
+        {onCurrencyPress && (
+          <TouchableOpacity
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
               paddingHorizontal: spacing.s,
               paddingVertical: spacing.xs,
-              borderRadius: scaleWidth(8),
-              backgroundColor: theme.primary ? theme.primary + '15' : '#673AB7' + '15'
-            },
-            ensureAccessibleTouchTarget(scaleWidth(60), scaleHeight(32))
-          ]}
-          onPress={onCurrencyPress}
-          accessible={true}
-          accessibilityRole="button"
-          accessibilityLabel={`Currency: ${displayCurrency}. Tap to change currency`}
-          accessibilityHint="Opens currency selection modal"
-        >
-          <Text 
-            style={[
-              styles.currencyButtonText,
-              { 
-                color: theme.primary || '#673AB7',
-                fontSize: fontSizes.s,
-                fontWeight: '600'
-              }
-            ]}
-            maxFontSizeMultiplier={1.2}
+              borderRadius: 20,
+              borderWidth: 1,
+              borderColor: theme.border,
+              backgroundColor: 'rgba(255,255,255,0.05)'
+            }}
+            onPress={onCurrencyPress}
           >
-            {displayCurrency}
-          </Text>
-        </TouchableOpacity>
+            <Text style={{
+              fontSize: fontSizes.m,
+              fontWeight: '600',
+              color: theme.text,
+              marginRight: 4
+            }}>
+              {displayCurrency}
+            </Text>
+            <Ionicons name="chevron-down" size={16} color={theme.textSecondary} />
+          </TouchableOpacity>
+        )}
+        
       </View>
       
       <View style={styles.summaryContent}>

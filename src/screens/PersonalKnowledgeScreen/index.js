@@ -160,11 +160,12 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
             goals: appContext.goals || [],
             projects: appContext.projects || [],
             tasks: appContext.tasks || [],
-            settings: appContext.settings || {}
+            settings: appContext.settings || {},
+            userCountry: appContext.userCountry
           };
           
           // Generate summary
-          const summary = AppSummaryService.generateAppSummary(appData);
+          const summary = await AppSummaryService.generateAppSummary(appData);
           console.log('🔄 [APP CONTEXT DEBUG] Generated summary length:', summary.length, 'chars');
           
           // Update system document
@@ -236,11 +237,12 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
           goals: appContext.goals || [],
           projects: appContext.projects || [],
           tasks: appContext.tasks || [],
-          settings: appContext.settings || {}
+          settings: appContext.settings || {},
+          userCountry: appContext.userCountry
         };
         
         // Generate fresh summary
-        const summary = AppSummaryService.generateAppSummary(appData);
+        const summary = await AppSummaryService.generateAppSummary(appData);
         console.log('🔄 Generated fresh app summary:', summary.length, 'characters');
         
         // Update system document
@@ -287,11 +289,12 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
               goals: appContext.goals || [],
               projects: appContext.projects || [],
               tasks: appContext.tasks || [],
-              settings: appContext.settings || {}
+              settings: appContext.settings || {},
+              userCountry: appContext.userCountry
             };
             
             // Generate fresh summary
-            const summary = AppSummaryService.generateAppSummary(appData);
+            const summary = await AppSummaryService.generateAppSummary(appData);
             
             // Update system document
             await DocumentService.updateAppContextDocument(summary);
@@ -317,11 +320,12 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
               goals: appContext.goals || [],
               projects: appContext.projects || [],
               tasks: appContext.tasks || [],
-              settings: appContext.settings || {}
+              settings: appContext.settings || {},
+              userCountry: appContext.userCountry
             };
             
             // Generate summary
-            const summary = AppSummaryService.generateAppSummary(appData);
+            const summary = await AppSummaryService.generateAppSummary(appData);
             
             // Create system document
             await DocumentService.updateAppContextDocument(summary);

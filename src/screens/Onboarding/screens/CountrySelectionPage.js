@@ -356,7 +356,7 @@ const CountrySelectionPage = ({ onContinue, onBack, onCountrySelected, onSkipOnb
       const adjustedY = pageY - 40; // Move up by 40px to match finger position better
       setCelebrationPosition({ x: pageX, y: adjustedY });
     } else {
-      // Fallback to center of screen if touch data is not available
+      // Fallback to centre of screen if touch data is not available
       setCelebrationPosition({ x: SCREEN_WIDTH / 2, y: SCREEN_HEIGHT / 2 });
     }
     
@@ -785,7 +785,7 @@ const CountrySelectionPage = ({ onContinue, onBack, onCountrySelected, onSkipOnb
         >
           <Text style={styles.tapPromptText}>Tap to continue</Text>
           <Ionicons 
-            name="chevron-down" 
+            name="hand-left" 
             size={24} 
             color="rgba(255,255,255,0.7)" 
             style={styles.tapPromptIcon} 
@@ -1032,7 +1032,7 @@ const styles = StyleSheet.create({
   },
   tapPromptText: {
     fontSize: 16,
-    color: 'rgba(255,255,255,0.7)',
+    color: 'rgba(255, 255, 255, 0.8)',
     marginBottom: 8,
   },
   tapPromptIcon: {

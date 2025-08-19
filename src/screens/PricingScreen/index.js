@@ -89,9 +89,12 @@ const PricingScreen = ({ navigation, route }) => {
     showSuccess: (msg) => console.log(msg) 
   };
   
-  // Extract initialTab from route params if provided
+  // Extract navigation params if provided
   const initialTabFromParams = route.params?.initialTab;
-  console.log('Initial tab from params:', initialTabFromParams);
+  const highlightPlanFromParams = route.params?.highlightPlan;
+  const pulseCreditsFromParams = route.params?.pulseCredits;
+  const fromReferral = route.params?.fromReferral;
+  console.log('Route params:', route.params);
   
   // Get responsive dimensions and safe areas
   const safeSpacing = useSafeSpacing();
@@ -138,6 +141,7 @@ const PricingScreen = ({ navigation, route }) => {
   const [aiPlansBilling, setAiPlansBilling] = useState('monthly');
   const [isScrolledDown, setIsScrolledDown] = useState(false);
   const [isLifetimeMember, setIsLifetimeMember] = useState(false);
+  const [isMonthlySubscriber, setIsMonthlySubscriber] = useState(false);
   const [showTestModeToggles, setShowTestModeToggles] = useState(__DEV__);
   const [referralCode, setReferralCode] = useState('');
   const [referralsLeft, setReferralsLeft] = useState(3);
@@ -148,11 +152,12 @@ const PricingScreen = ({ navigation, route }) => {
   const [viewMode, setViewMode] = useState('cards');
   const [referralModalVisible, setReferralModalVisible] = useState(false);
   const [hasEnteredReferralCode, setHasEnteredReferralCode] = useState(false);
-  const [highlightPlan, setHighlightPlan] = useState(null);
+  const [highlightPlan, setHighlightPlan] = useState(highlightPlanFromParams || null);
   const [showDevButtons, setShowDevButtons] = useState(false);
-  const [pulseCredits, setPulseCredits] = useState(false);
+  const [pulseCredits, setPulseCredits] = useState(pulseCreditsFromParams || false);
   const [isTestMode, setIsTestMode] = useState(false);
   const [realFounderSpots, setRealFounderSpots] = useState(1000);
+  const [userFounderNumber, setUserFounderNumber] = useState(null);
   
   
   // Removed countdown state - now handled by isolated component
@@ -241,6 +246,19 @@ const PricingScreen = ({ navigation, route }) => {
     }
   }, [initialTabFromParams]);
   
+  // Handle highlight and pulse animations when coming from referrals
+  useEffect(() => {
+    if (fromReferral && highlightPlanFromParams && pulseCreditsFromParams) {
+      // Clear animations after 6 seconds (same as internal navigation)
+      const timer = setTimeout(() => {
+        setHighlightPlan(null);
+        setPulseCredits(false);
+      }, 6000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [fromReferral, highlightPlanFromParams, pulseCreditsFromParams]);
+  
   // Function to fetch the latest count of available founder spots
   const fetchFounderSpotsRemaining = async () => {
     try {
@@ -293,7 +311,9 @@ const PricingScreen = ({ navigation, route }) => {
         const status = await AsyncStorage.getItem('subscriptionStatus');
         
         const isLifetime = status === 'founding';
+        const isMonthlySubscriber = status === 'pro';
         setIsLifetimeMember(isLifetime);
+        setIsMonthlySubscriber(isMonthlySubscriber);
         
         // If lifetime member, get referral code and available referrals
         if (isLifetime) {
@@ -305,6 +325,21 @@ const PricingScreen = ({ navigation, route }) => {
           
           const referralsRemaining = await AsyncStorage.getItem('referralsRemaining') || '3';
           setReferralsLeft(parseInt(referralsRemaining));
+          
+          // Get founder number if available
+          const founderNum = await AsyncStorage.getItem('founderNumber');
+          if (founderNum) {
+            setUserFounderNumber(parseInt(founderNum));
+          } else {
+            // PRODUCTION TODO: This should NEVER generate a random number in production
+            // The founder number should ONLY be set by the backend after successful purchase
+            // For development/testing only - remove this random generation before production
+            if (__DEV__) {
+              const tempFounderNumber = Math.floor(Math.random() * 1000) + 1;
+              setUserFounderNumber(tempFounderNumber);
+              await AsyncStorage.setItem('founderNumber', tempFounderNumber.toString());
+            }
+          }
         }
         
         // Check if user came from a referral
@@ -374,6 +409,15 @@ const PricingScreen = ({ navigation, route }) => {
         
         await AsyncStorage.setItem('referralsRemaining', '3');
         setReferralsLeft(3);
+        
+        // Set a test founder number for lifetime members
+        const testFounderNumber = Math.floor(Math.random() * 1000) + 1;
+        setUserFounderNumber(testFounderNumber);
+        await AsyncStorage.setItem('founderNumber', testFounderNumber.toString());
+      } else {
+        // Clear founder number when toggling off
+        setUserFounderNumber(null);
+        await AsyncStorage.removeItem('founderNumber');
       }
     } catch (error) {
       console.error('Error toggling lifetime member status:', error);
@@ -478,6 +522,14 @@ const PricingScreen = ({ navigation, route }) => {
     // TODO: Integrate with App Store payment processing
     // For now, do nothing when purchase buttons are clicked
     console.log(`Purchase attempt for plan: ${plan}`);
+    
+    // PRODUCTION TODO: After successful purchase, the backend should:
+    // 1. Verify payment with App Store/Google Play
+    // 2. Assign sequential founder number (e.g., next available: 1, 2, 3...)
+    // 3. Return founder number in the purchase response
+    // 4. Store founder number locally: await AsyncStorage.setItem('founderNumber', backendResponse.founderNumber.toString());
+    // 5. Set subscription status: await AsyncStorage.setItem('subscriptionStatus', 'founding');
+    // 6. Update UI state to show founder card
   };
 
 
@@ -514,6 +566,8 @@ const PricingScreen = ({ navigation, route }) => {
               handleSelectPlan={handleSelectPlan}
               handlePurchase={handlePurchase}
               isLifetimeMember={isLifetimeMember}
+              isMonthlySubscriber={isMonthlySubscriber}
+              founderNumber={userFounderNumber}
               spotsRemaining={founderSpotsRemaining}
               initialTime={{
                 days: 26,
@@ -534,8 +588,8 @@ const PricingScreen = ({ navigation, route }) => {
                 setNavigationState(prev => ({ ...prev, index: 1 }));
                 setSelectedPlan('');
                 
-                // Only animate/highlight for founder spots (first 1000), not sold out
-                if (founderSpotsRemaining > 0) {
+                // Only animate/highlight for non-lifetime members with founder spots available
+                if (founderSpotsRemaining > 0 && !isLifetimeMember) {
                   // Force monthly billing since $2.99 value is for monthly plan
                   setAiPlansBilling('monthly');
                   // Highlight the appropriate AI plan based on current founder tier AND pulse credits
@@ -568,8 +622,8 @@ const PricingScreen = ({ navigation, route }) => {
                     setNavigationState(prev => ({ ...prev, index: 1 }));
                     setSelectedPlan('');
                     
-                    // Only animate/highlight for founder spots (first 1000), not sold out
-                    if (founderSpotsRemaining > 0) {
+                    // Only animate/highlight for non-lifetime members with founder spots available
+                    if (founderSpotsRemaining > 0 && !isLifetimeMember) {
                       // Force monthly billing since $2.99 value is for monthly plan
                       setAiPlansBilling('monthly');
                       // Highlight the appropriate AI plan based on current founder tier AND pulse credits
@@ -653,10 +707,16 @@ const PricingScreen = ({ navigation, route }) => {
             }}
             onPress={() => {
               if (activeTab === 'subscription') {
-                // From AI Plans -> Back to main pricing
-                setActiveTab('lifetime');
-                setNavigationState(prev => ({ ...prev, index: 0 }));
-                setSelectedPlan('');
+                // From AI Plans -> Check if we came from referrals
+                if (fromReferral) {
+                  // If we came from referrals, go back to referrals
+                  navigation.goBack();
+                } else {
+                  // Otherwise, go back to main pricing
+                  setActiveTab('lifetime');
+                  setNavigationState(prev => ({ ...prev, index: 0 }));
+                  setSelectedPlan('');
+                }
               } else if (activeTab === 'lifetime' && viewMode === 'table') {
                 // From feature table -> Back to card view
                 setViewMode('cards');
@@ -829,8 +889,8 @@ const PricingScreen = ({ navigation, route }) => {
         }}
       />
       
-      {/* View Toggle - Fixed position for both views - moved lower */}
-      {!selectedPlan && activeTab === 'lifetime' && (
+      {/* View Toggle - Fixed position for both views - moved lower - Hide for lifetime members */}
+      {!selectedPlan && activeTab === 'lifetime' && !isLifetimeMember && (
         <View style={{ 
           position: 'absolute',
           bottom: 5,

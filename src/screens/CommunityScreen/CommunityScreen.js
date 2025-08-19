@@ -26,6 +26,8 @@ import referralService from '../../services/referralService';
 import responsive from '../../utils/responsive';
 import { useTheme } from '../../context/ThemeContext';
 import Confetti from '../../components/Confetti';
+import WhyJoinTabFinal from './WhyJoinTabFinal';
+import CommunityTabRevamped from './CommunityTabRevamped';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -35,8 +37,8 @@ const DISCORD_BLUE = "#5865F2";
 // Create Tab Navigator
 const Tab = createMaterialTopTabNavigator();
 
-// Clean Community Tab Component
-const CommunityTab = ({ 
+// Original Community Tab Component (keeping for reference)
+const CommunityTabOld = ({ 
   founderCode, 
   isVerified, 
   isLoading, 
@@ -80,10 +82,10 @@ const CommunityTab = ({
           <Ionicons name="people" size={32} color={DISCORD_BLUE} />
         </View>
         <Text style={[styles.heroTitle, { color: theme.text }]}>
-          Join Our Community
+          LifeCompass Community
         </Text>
         <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
-          Connect with achievers worldwide
+          Connect with goal-focused people
         </Text>
       </View>
 
@@ -140,8 +142,8 @@ const CommunityTab = ({
               <View style={styles.copyIconContainer}>
                 <Ionicons
                   name={isCopied ? "checkmark" : "copy-outline"}
-                  size={16}
-                  color={isCopied ? "#10B981" : theme.textSecondary}
+                  size={18}
+                  color="#FFFFFF"
                 />
               </View>
             </TouchableOpacity>
@@ -1118,6 +1120,167 @@ const ReferralManagement = ({ theme }) => {
 
 // Verification Tab Component
 const WhyJoinTab = ({ theme }) => {
+  const domains = [
+    {
+      icon: 'briefcase',
+      title: 'Career & Professional Growth',
+      emoji: '💼',
+      color: '#2563EB',
+      channels: [
+        { name: 'skill-development-learning', desc: 'Learn new skills and advance your career' },
+        { name: 'leadership-management', desc: 'Develop leadership and management abilities' },
+        { name: 'entrepreneurship-side-hustles', desc: 'Start your own business or side project' }
+      ]
+    },
+    {
+      icon: 'wallet',
+      title: 'Financial Security & Wealth',
+      emoji: '💰',
+      color: '#10B981',
+      channels: [
+        { name: 'budgeting-debt-management', desc: 'Master your money and eliminate debt' },
+        { name: 'investing-wealth-building', desc: 'Grow your wealth through smart investing' },
+        { name: 'financial-independence-fire', desc: 'Achieve financial independence' }
+      ]
+    },
+    {
+      icon: 'fitness',
+      title: 'Health & Energy',
+      emoji: '🍏',
+      color: '#EF4444',
+      channels: [
+        { name: 'fitness-exercise', desc: 'Build strength and stay active' },
+        { name: 'nutrition-wellness', desc: 'Eat better and feel amazing' },
+        { name: 'mental-health-stress-management', desc: 'Manage stress and boost mental health' }
+      ]
+    },
+    {
+      icon: 'people',
+      title: 'Relationships & Connection',
+      emoji: '👥',
+      color: '#EC4899',
+      channels: [
+        { name: 'family-parenting', desc: 'Strengthen family bonds and parenting skills' },
+        { name: 'dating-romance', desc: 'Find love and build romantic relationships' },
+        { name: 'friendships-social-life', desc: 'Make friends and expand your social circle' }
+      ]
+    },
+    {
+      icon: 'school',
+      title: 'Learning & Growth',
+      emoji: '📚',
+      color: '#8B5CF6',
+      channels: [
+        { name: 'academic-professional-education', desc: 'Advance your education and qualifications' },
+        { name: 'personal-development', desc: 'Grow as a person and reach your potential' },
+        { name: 'creative-skills-hobbies', desc: 'Explore creativity and develop new talents' }
+      ]
+    },
+    {
+      icon: 'earth',
+      title: 'Purpose & Impact',
+      emoji: '🌎',
+      color: '#0D9488',
+      channels: [
+        { name: 'volunteering-community-service', desc: 'Give back to your community' },
+        { name: 'environmental-sustainability', desc: 'Make a positive environmental impact' },
+        { name: 'spiritual-values-development', desc: 'Explore spirituality and core values' }
+      ]
+    },
+    {
+      icon: 'laptop',
+      title: 'Digital Wellbeing & Innovation',
+      emoji: '💻',
+      color: '#3B82F6',
+      channels: [
+        { name: 'productivity-organization', desc: 'Get organized and boost productivity' },
+        { name: 'digital-detox-boundaries', desc: 'Create healthy digital boundaries' },
+        { name: 'tech-skills-ai-tools', desc: 'Master technology and AI tools' }
+      ]
+    },
+    {
+      icon: 'happy',
+      title: 'Recreation & Renewal',
+      emoji: '🏝️',
+      color: '#F59E0B',
+      channels: [
+        { name: 'travel-adventure', desc: 'Explore the world and have adventures' },
+        { name: 'hobbies-creative-pursuits', desc: 'Pursue hobbies and creative interests' },
+        { name: 'entertainment-social-activities', desc: 'Have fun and enjoy social activities' }
+      ]
+    }
+  ];
+
+  const [expandedDomain, setExpandedDomain] = useState(null);
+  const animatedValues = useRef(domains.map(() => new Animated.Value(1))).current;
+  const opacityValues = useRef(domains.map(() => new Animated.Value(1))).current;
+  const channelsAnimation = useRef(new Animated.Value(0)).current;
+
+  const toggleDomain = (index) => {
+    const isCurrentlyExpanded = expandedDomain === index;
+    const newExpandedDomain = isCurrentlyExpanded ? null : index;
+    
+    if (isCurrentlyExpanded) {
+      // Collapsing: animate channels out first, then card
+      Animated.sequence([
+        Animated.timing(channelsAnimation, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.parallel([
+          Animated.spring(animatedValues[index], {
+            toValue: 1,
+            useNativeDriver: false,
+            tension: 100,
+            friction: 8,
+          }),
+          // Show the row partner again
+          ...(expandedDomain !== null ? [
+            Animated.timing(opacityValues[index % 2 === 0 ? index + 1 : index - 1], {
+              toValue: 1,
+              duration: 300,
+              useNativeDriver: true,
+            })
+          ] : [])
+        ])
+      ]).start();
+      
+      setExpandedDomain(null);
+    } else {
+      // Expanding: animate the card to full width and hide row partner
+      const rowPartnerIndex = index % 2 === 0 ? index + 1 : index - 1;
+      const hasRowPartner = rowPartnerIndex < domains.length;
+      
+      setExpandedDomain(index);
+      
+      Animated.sequence([
+        Animated.parallel([
+          Animated.spring(animatedValues[index], {
+            toValue: 2.08, // Expand to full width (48% * 2 + gap)
+            useNativeDriver: false,
+            tension: 100,
+            friction: 8,
+          }),
+          // Hide the row partner
+          ...(hasRowPartner ? [
+            Animated.timing(opacityValues[rowPartnerIndex], {
+              toValue: 0,
+              duration: 200,
+              useNativeDriver: true,
+            })
+          ] : [])
+        ]),
+        // Then animate channels in
+        Animated.timing(channelsAnimation, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        })
+      ]).start();
+    }
+  };
+
   return (
     <ScrollView 
       style={[styles.tabContent, { backgroundColor: theme.background }]}
@@ -1137,7 +1300,7 @@ const WhyJoinTab = ({ theme }) => {
         </Text>
       </View>
 
-      {/* Main Benefits */}
+      {/* Community Benefits Grid */}
       <View style={[styles.mainCard, { 
         backgroundColor: theme.card,
         borderColor: theme.border,
@@ -1146,51 +1309,177 @@ const WhyJoinTab = ({ theme }) => {
           Community Benefits
         </Text>
         
-        <View style={styles.featuresList}>
+        <View style={styles.benefitsGrid}>
           {[
-            { icon: 'trending-up', title: '65% higher achievement rate', color: '#10B981' },
-            { icon: 'people', title: 'Find accountability partners', color: '#3B82F6' },
-            { icon: 'bulb', title: 'Share knowledge & tips', color: '#F59E0B' },
-            { icon: 'heart', title: 'Get emotional support', color: '#EC4899' }
+            { icon: 'trending-up', title: 'Higher Achievement', desc: '65% better success rate', color: '#10B981' },
+            { icon: 'people', title: 'Find Partners', desc: 'Accountability buddies', color: '#3B82F6' },
+            { icon: 'bulb', title: 'Share Knowledge', desc: 'Tips and strategies', color: '#F59E0B' },
+            { icon: 'heart', title: 'Get Support', desc: 'Emotional encouragement', color: '#EC4899' }
           ].map((benefit, index) => (
-            <View key={index} style={styles.featureItem}>
-              <View style={[styles.featureIconSmall, { backgroundColor: `${benefit.color}15` }]}>
-                <Ionicons name={benefit.icon} size={16} color={benefit.color} />
+            <View key={index} style={[styles.benefitCard, { backgroundColor: theme.isDark ? benefit.color + '10' : benefit.color + '08', borderColor: benefit.color + '20' }]}>
+              <View style={[styles.benefitIcon, { backgroundColor: benefit.color + '15' }]}>
+                <Ionicons name={benefit.icon} size={24} color={benefit.color} />
               </View>
-              <Text style={[styles.featureText, { color: theme.text }]}>
-                {benefit.title}
-              </Text>
+              <View style={styles.benefitContent}>
+                <Text style={[styles.benefitTitle, { color: theme.text }]}>
+                  {benefit.title}
+                </Text>
+                <Text style={[styles.benefitDesc, { color: theme.textSecondary }]}>
+                  {benefit.desc}
+                </Text>
+              </View>
             </View>
           ))}
         </View>
       </View>
 
-      {/* Life Domains */}
+      {/* Discord Communities */}
       <View style={styles.featuresSection}>
         <Text style={[styles.sectionTitle, { color: theme.text }]}>
-          8 Life Domains
+          Join Discord Communities
+        </Text>
+        <Text style={[styles.sectionSubtitle, { color: theme.textSecondary }]}>
+          Tap any domain to see available channels
         </Text>
         
-        <View style={styles.featuresList}>
-          {[
-            { icon: 'briefcase', title: 'Career & Professional', color: '#2563EB' },
-            { icon: 'wallet', title: 'Financial Security', color: '#10B981' },
-            { icon: 'fitness', title: 'Health & Energy', color: '#EF4444' },
-            { icon: 'people', title: 'Relationships', color: '#EC4899' },
-            { icon: 'school', title: 'Learning & Growth', color: '#8B5CF6' },
-            { icon: 'earth', title: 'Purpose & Impact', color: '#0D9488' },
-            { icon: 'laptop', title: 'Digital Wellbeing', color: '#3B82F6' },
-            { icon: 'happy', title: 'Recreation & Renewal', color: '#F59E0B' }
-          ].map((domain, index) => (
-            <View key={index} style={styles.featureItem}>
-              <View style={[styles.featureIconSmall, { backgroundColor: `${domain.color}15` }]}>
-                <Ionicons name={domain.icon} size={16} color={domain.color} />
-              </View>
-              <Text style={[styles.featureText, { color: theme.text }]}>
-                {domain.title}
-              </Text>
-            </View>
-          ))}
+        <View style={styles.domainsContainer}>
+          {domains.map((domain, index) => {
+            const isExpanded = expandedDomain === index;
+            const isInExpandedRow = expandedDomain !== null && (Math.floor(expandedDomain / 2) === Math.floor(index / 2));
+            
+            return (
+              <React.Fragment key={index}>
+                <Animated.View
+                  style={{
+                    transform: [{ scaleX: animatedValues[index] }],
+                    opacity: opacityValues[index],
+                    width: '48%',
+                  }}
+                >
+                  <TouchableOpacity
+                    style={[styles.domainCard, {
+                      backgroundColor: theme.card,
+                      borderColor: isExpanded ? domain.color : theme.border,
+                      borderWidth: isExpanded ? 2 : 1,
+                      width: '100%',
+                      shadowColor: isExpanded ? domain.color : 'transparent',
+                      shadowOffset: {
+                        width: 0,
+                        height: isExpanded ? 4 : 2,
+                      },
+                      shadowOpacity: isExpanded ? 0.15 : 0,
+                      shadowRadius: isExpanded ? 8 : 4,
+                      elevation: isExpanded ? 6 : 2,
+                    }]}
+                    onPress={() => toggleDomain(index)}
+                    activeOpacity={0.8}
+                  >
+                    <View style={[styles.domainHeader, isExpanded && styles.domainHeaderExpanded]}>
+                      <View style={[styles.domainIcon, { backgroundColor: domain.color + '15' }]}>
+                        <Text style={styles.domainEmoji}>{domain.emoji}</Text>
+                      </View>
+                      <View style={[styles.domainInfo, isExpanded && styles.domainInfoExpanded]}>
+                        <Text style={[
+                          isExpanded ? styles.domainTitleExpanded : styles.domainTitle, 
+                          { color: theme.text }
+                        ]}>
+                          {domain.title}
+                        </Text>
+                        <Text style={[
+                          isExpanded ? styles.domainChannelCountExpanded : styles.domainChannelCount, 
+                          { color: theme.textSecondary }
+                        ]}>
+                          {domain.channels.length} channels
+                        </Text>
+                      </View>
+                      <Animated.View 
+                        style={[
+                          styles.chevronContainer,
+                          {
+                            transform: [{
+                              rotate: isExpanded ? '180deg' : '0deg'
+                            }]
+                          }
+                        ]}
+                      >
+                        <Ionicons 
+                          name="chevron-down" 
+                          size={18} 
+                          color={isExpanded ? domain.color : theme.textSecondary} 
+                        />
+                      </Animated.View>
+                    </View>
+                  </TouchableOpacity>
+                </Animated.View>
+                
+                {/* Show channels right after expanded card */}
+                {isExpanded && (
+                  <Animated.View 
+                    style={[
+                      styles.channelsContainer, 
+                      { 
+                        backgroundColor: theme.card, 
+                        borderColor: domain.color + '30',
+                        opacity: channelsAnimation,
+                        transform: [
+                          {
+                            translateY: channelsAnimation.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [-20, 0]
+                            })
+                          },
+                          {
+                            scaleY: channelsAnimation.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [0.95, 1]
+                            })
+                          }
+                        ]
+                      }
+                    ]}
+                  >
+                    {domain.channels.map((channel, channelIndex) => (
+                      <Animated.View 
+                        key={channelIndex} 
+                        style={[
+                          styles.channelItem,
+                          {
+                            opacity: channelsAnimation.interpolate({
+                              inputRange: [0, 0.3 + (channelIndex * 0.2), 1],
+                              outputRange: [0, 0, 1]
+                            }),
+                            transform: [{
+                              translateX: channelsAnimation.interpolate({
+                                inputRange: [0, 0.3 + (channelIndex * 0.2), 1],
+                                outputRange: [-20, -20, 0]
+                              })
+                            }, {
+                              translateY: channelsAnimation.interpolate({
+                                inputRange: [0, 0.3 + (channelIndex * 0.2), 1],
+                                outputRange: [10, 10, 0]
+                              })
+                            }]
+                          }
+                        ]}
+                      >
+                        <View style={[styles.channelIcon, { backgroundColor: domain.color + '10' }]}>
+                          <Text style={[styles.channelHash, { color: domain.color }]}>#</Text>
+                        </View>
+                        <View style={styles.channelInfo}>
+                          <Text style={[styles.channelName, { color: theme.text }]}>
+                            {channel.name}
+                          </Text>
+                          <Text style={[styles.channelDesc, { color: theme.textSecondary }]}>
+                            {channel.desc}
+                          </Text>
+                        </View>
+                      </Animated.View>
+                    ))}
+                  </Animated.View>
+                )}
+              </React.Fragment>
+            );
+          })}
         </View>
       </View>
 
@@ -1203,7 +1492,7 @@ const WhyJoinTab = ({ theme }) => {
           Ready to Join?
         </Text>
         <Text style={[styles.ctaDesc, { color: theme.textSecondary }]}>
-          Connect with achievers today
+          Connect with achievers across all life domains
         </Text>
       </View>
 
@@ -1373,7 +1662,7 @@ const CommunityTabScreen = ({ navigation }) => {
   };
 
   return (
-    <CommunityTab
+    <CommunityTabRevamped
       founderCode={founderCode}
       isVerified={isVerified}
       isLoading={isLoading}
@@ -1392,7 +1681,7 @@ const WhyJoinTabScreen = ({ navigation }) => {
   const { theme } = useTheme();
 
   return (
-    <WhyJoinTab theme={theme} />
+    <WhyJoinTabFinal theme={theme} />
   );
 };
 
@@ -1952,17 +2241,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingBottom: 10,
+    paddingBottom: 16,
+    paddingHorizontal: 4,
   },
   backButton: {
-    padding: 10,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.05)',
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '700',
+    letterSpacing: -0.3,
   },
   placeholderRight: {
-    width: 44,
+    width: 48,
   },
   scrollView: {
     flex: 1,
@@ -1973,10 +2266,60 @@ const styles = StyleSheet.create({
   // Hero Section Styles
   heroSection: {
     alignItems: 'center',
-    paddingVertical: 40,
-    paddingHorizontal: 20,
+    paddingVertical: 48,
+    paddingHorizontal: 24,
+    marginHorizontal: 16,
+    marginBottom: 24,
+    borderRadius: 20,
+    backgroundColor: DISCORD_BLUE + '08',
   },
   heroIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+    backgroundColor: DISCORD_BLUE + '15',
+  },
+  heroTitle: {
+    fontSize: 32,
+    fontWeight: '800',
+    marginBottom: 12,
+    letterSpacing: -0.5,
+    textAlign: 'center',
+  },
+  heroSubtitle: {
+    fontSize: 18,
+    textAlign: 'center',
+    lineHeight: 24,
+    opacity: 0.8,
+  },
+
+  // Main Card Styles
+  mainCard: {
+    marginHorizontal: 16,
+    borderRadius: 20,
+    padding: 32,
+    alignItems: 'center',
+    borderWidth: 1,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+
+  // Founder Section Styles
+  founderSection: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  founderIconContainer: {
     width: 64,
     height: 64,
     borderRadius: 32,
@@ -1984,90 +2327,63 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 16,
   },
-  heroTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    marginBottom: 8,
-    letterSpacing: -0.5,
-  },
-  heroSubtitle: {
-    fontSize: 16,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-
-  // Main Card Styles
-  mainCard: {
-    marginHorizontal: 20,
-    borderRadius: 16,
-    padding: 32,
-    alignItems: 'center',
-    borderWidth: 1,
-    marginBottom: 24,
-  },
-
-  // Founder Section Styles
-  founderSection: {
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  founderIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
   founderTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 4,
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 6,
+    textAlign: 'center',
   },
   founderSubtitle: {
-    fontSize: 14,
+    fontSize: 16,
     textAlign: 'center',
+    opacity: 0.7,
   },
 
   // Code Card Styles
   codeCard: {
     width: '100%',
-    borderRadius: 12,
-    padding: 20,
-    borderWidth: 1,
+    borderRadius: 16,
+    padding: 24,
+    borderWidth: 2,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 20,
+    backgroundColor: DISCORD_BLUE + '05',
   },
   codeLabel: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
   },
   codeValue: {
-    fontSize: 18,
-    fontWeight: '700',
-    letterSpacing: 1,
+    fontSize: 24,
+    fontWeight: '800',
+    letterSpacing: 2,
     flex: 1,
     textAlign: 'center',
+    color: DISCORD_BLUE,
   },
   copyIconContainer: {
-    padding: 4,
+    padding: 8,
+    backgroundColor: DISCORD_BLUE,
+    borderRadius: 12,
   },
 
   // Verified Container
   verifiedContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 16,
+    marginTop: 12,
   },
   verifiedText: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginLeft: 6,
+    fontSize: 15,
+    fontWeight: '600',
+    marginLeft: 8,
   },
 
   // Non-Founder Section
@@ -2075,76 +2391,105 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   giftIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   nonFounderTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 8,
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 12,
+    textAlign: 'center',
   },
   nonFounderDescription: {
-    fontSize: 16,
+    fontSize: 18,
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: 32,
+    lineHeight: 24,
+    opacity: 0.8,
   },
   ctaButton: {
     backgroundColor: DISCORD_BLUE,
-    paddingHorizontal: 32,
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingHorizontal: 40,
+    paddingVertical: 16,
+    borderRadius: 16,
+    shadowColor: DISCORD_BLUE,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   ctaButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '700',
   },
 
   // Features Section Styles
   featuresSection: {
-    marginHorizontal: 20,
+    marginHorizontal: 16,
     marginBottom: 24,
+    backgroundColor: 'transparent',
+    borderRadius: 20,
+    padding: 24,
+    borderWidth: 1,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 16,
+    fontSize: 22,
+    fontWeight: '700',
+    marginBottom: 20,
+    textAlign: 'center',
   },
   featuresList: {
-    gap: 12,
+    gap: 16,
   },
   featureItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 16,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.02)',
   },
   featureIconSmall: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
   featureText: {
-    fontSize: 16,
+    fontSize: 17,
     flex: 1,
+    fontWeight: '500',
   },
 
   // Benefits Section Styles
   benefitsCard: {
-    marginHorizontal: 20,
-    borderRadius: 12,
-    padding: 20,
+    marginHorizontal: 16,
+    borderRadius: 20,
+    padding: 24,
     borderWidth: 1,
     marginBottom: 24,
+    shadowColor: '#FFD700',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   benefitsTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: '700',
+    textAlign: 'center',
     marginBottom: 12,
   },
   benefitsList: {
@@ -2160,22 +2505,181 @@ const styles = StyleSheet.create({
   },
 
   // CTA Card Styles
-  ctaCard: {
-    marginHorizontal: 20,
+  // Benefits Grid
+  benefitsGrid: {
+    gap: 12,
+    marginTop: 16,
+  },
+  benefitCard: {
+    width: '100%',
+    borderRadius: 20,
+    padding: 24,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    minHeight: 80,
+  },
+  benefitIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  benefitContent: {
+    flex: 1,
+  },
+  benefitTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 4,
+    lineHeight: 22,
+  },
+  benefitDesc: {
+    fontSize: 15,
+    lineHeight: 20,
+    opacity: 0.8,
+  },
+
+  // Domain Sections
+  sectionSubtitle: {
+    fontSize: 15,
+    textAlign: 'center',
+    marginBottom: 16,
+    opacity: 0.7,
+  },
+  domainsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  domainCard: {
+    width: '48%',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+  },
+  domainHeader: {
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  domainHeaderExpanded: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  domainIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  domainEmoji: {
+    fontSize: 28,
+  },
+  domainInfo: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  domainInfoExpanded: {
+    alignItems: 'flex-start',
+    marginLeft: 12,
+    flex: 1,
+    justifyContent: 'center',
+  },
+  domainTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  domainTitleExpanded: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 3,
+    textAlign: 'left',
+    lineHeight: 22,
+    flexShrink: 1,
+  },
+  domainChannelCount: {
+    fontSize: 13,
+    textAlign: 'center',
+    opacity: 0.7,
+  },
+  domainChannelCountExpanded: {
+    fontSize: 13,
+    textAlign: 'left',
+    opacity: 0.9,
+    fontWeight: '500',
+  },
+  chevronContainer: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+  },
+  channelsContainer: {
+    width: '100%',
+    marginTop: 12,
     borderRadius: 12,
-    padding: 20,
+    borderWidth: 1,
+    padding: 16,
+    gap: 12,
+  },
+  channelItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  channelIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  channelHash: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  channelInfo: {
+    flex: 1,
+  },
+  channelName: {
+    fontSize: 15,
+    fontWeight: '500',
+    marginBottom: 2,
+  },
+  channelDesc: {
+    fontSize: 13,
+    lineHeight: 16,
+  },
+
+  ctaCard: {
+    marginHorizontal: 16,
+    borderRadius: 16,
+    padding: 24,
     borderWidth: 1,
     alignItems: 'center',
     marginBottom: 24,
   },
   ctaTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 4,
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 6,
+    textAlign: 'center',
   },
   ctaDesc: {
-    fontSize: 14,
+    fontSize: 16,
     textAlign: 'center',
+    lineHeight: 20,
   },
 
   // Verification Tab Styles
@@ -3026,15 +3530,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: DISCORD_BLUE,
-    marginHorizontal: 20,
-    paddingVertical: 14,
-    borderRadius: 8,
-    gap: 8,
+    marginHorizontal: 16,
+    paddingVertical: 18,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    gap: 12,
+    marginBottom: 24,
+    shadowColor: DISCORD_BLUE,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   discordButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '700',
   },
   
   // Celebration Modal Styles

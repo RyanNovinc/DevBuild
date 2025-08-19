@@ -8,14 +8,14 @@ import {
   StatusBar,
   ScrollView,
   TouchableOpacity,
-  Animated,
-  Alert
+  Animated
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useAppContext } from '../context/AppContext';
 import { useNotification } from '../context/NotificationContext';
+import { useGlobalAnimation } from '../context/GlobalAnimationContext';
 import DraggableFlatList, { ScaleDecorator } from 'react-native-draggable-flatlist';
 import Confetti from '../components/Confetti';
 import AddSelectionModal from '../components/AddSelectionModal';
@@ -35,17 +35,19 @@ import {
 const LifePlanHeader = ({ isFullscreen, onFullScreenToggle, isEditMode, onEditModeToggle, filter, onClearFilter }) => {
   const { theme } = useTheme();
   
-  // Determine title based on filter
+  // Determine title based on filter - only show when there's meaningful info
   const getTitle = () => {
-    if (isEditMode) return 'Tap & Hold to Reorder';
+    if (isEditMode) return 'Hold & Drag to Rearrange';
     
     switch (filter) {
       case 'goals': return 'Filter: Goals';
       case 'milestones': return 'Filter: Milestones';
       case 'tasks': return 'Filter: Tasks';
-      default: return 'Life Plan Overview';
+      default: return null; // No title for default view
     }
   };
+
+  const title = getTitle();
   
   return (
     <View style={[styles.header, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
@@ -60,12 +62,14 @@ const LifePlanHeader = ({ isFullscreen, onFullScreenToggle, isEditMode, onEditMo
         />
       </TouchableOpacity>
       
-      <Text 
-        style={[styles.headerTitle, { color: filter ? theme.primary : theme.text }]}
-        maxFontSizeMultiplier={1.3}
-      >
-        {getTitle()}
-      </Text>
+      {title && (
+        <Text 
+          style={[styles.headerTitle, { color: filter ? theme.primary : theme.text }]}
+          maxFontSizeMultiplier={1.3}
+        >
+          {title}
+        </Text>
+      )}
       
       {filter && (
         <TouchableOpacity 
@@ -74,7 +78,7 @@ const LifePlanHeader = ({ isFullscreen, onFullScreenToggle, isEditMode, onEditMo
         >
           <Ionicons 
             name="close" 
-            size={20} 
+            size={24} 
             color={theme.primary} 
           />
         </TouchableOpacity>
@@ -86,18 +90,20 @@ const LifePlanHeader = ({ isFullscreen, onFullScreenToggle, isEditMode, onEditMo
           onPress={onEditModeToggle}
         >
           <Ionicons 
-            name="create-outline" 
-            size={20} 
+            name={isEditMode ? "checkmark" : "swap-vertical"} 
+            size={24} 
             color={isEditMode ? '#FFFFFF' : theme.text} 
           />
-          <Text 
-            style={[styles.editButtonText, { 
-              color: isEditMode ? '#FFFFFF' : theme.text 
-            }]}
-            maxFontSizeMultiplier={1.3}
-          >
-            {isEditMode ? 'Done' : 'Edit'}
-          </Text>
+          {isEditMode && (
+            <Text 
+              style={[styles.editButtonText, { 
+                color: '#FFFFFF'
+              }]}
+              maxFontSizeMultiplier={1.3}
+            >
+              Done
+            </Text>
+          )}
         </TouchableOpacity>
       )}
     </View>
@@ -237,7 +243,7 @@ const TaskCard = ({ task, onComplete, onDelete, isEditMode, onDrag, isActive, is
 };
 
 // Milestone Card Component
-const MilestoneCard = ({ milestone, goalColor, tasks, onExpandToggle, onComplete, onEdit, onDelete, isEditMode, expanded, onTaskComplete, onTaskDelete, onDrag, isActive, isDraggable = false, navigation, goalId }) => {
+const MilestoneCard = ({ milestone, goalColor, tasks, onExpandToggle, onComplete, onEdit, onDelete, isEditMode, expanded, onTaskComplete, onTaskDelete, onDrag, isActive, isDraggable = false, navigation, goalId, onTaskReorder }) => {
   const { theme } = useTheme();
   const [showContextMenu, setShowContextMenu] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -493,11 +499,8 @@ const MilestoneCard = ({ milestone, goalColor, tasks, onExpandToggle, onComplete
                   isDraggable={true}
                 />
               )}
-              keyExtractor={(item, index) => item.id || `task-${index}`}
-              onDragEnd={({ data }) => {
-                // Handle task reordering here
-                console.log('Tasks reordered:', data.map(t => t.title));
-              }}
+              keyExtractor={(item, index) => item.id || `task-${item.title}-${index}`}
+              onDragEnd={({ data }) => onTaskReorder && onTaskReorder(data, milestone.id)}
             />
           ) : (
             milestoneTasks.map((task, index) => (
@@ -626,7 +629,7 @@ const getTimeExpression = (goal) => {
 };
 
 // Goal Card Component
-const GoalCard = ({ goal, milestones, tasks, onExpandToggle, onEdit, onDelete, onComplete, isEditMode, expanded, onTaskComplete, onTaskDelete, onMilestoneComplete, onMilestoneEdit, onMilestoneDelete, onDrag, isActive, isDraggable = false, navigation }) => {
+const GoalCard = ({ goal, milestones, tasks, onExpandToggle, onEdit, onDelete, onComplete, isEditMode, expanded, onTaskComplete, onTaskDelete, onMilestoneComplete, onMilestoneEdit, onMilestoneDelete, onDrag, isActive, isDraggable = false, navigation, onMilestoneReorder, onTaskReorder }) => {
   const { theme } = useTheme();
   const goalMilestones = milestones.filter(milestone => milestone.goalId === goal.id);
   
@@ -978,13 +981,11 @@ const GoalCard = ({ goal, milestones, tasks, onExpandToggle, onEdit, onDelete, o
                   isDraggable={true}
                   navigation={navigation}
                   goalId={goal.id}
+                  onTaskReorder={onTaskReorder}
                 />
               )}
-              keyExtractor={(item, index) => item.id || `milestone-${index}`}
-              onDragEnd={({ data }) => {
-                // Handle milestone reordering here
-                console.log('Milestones reordered:', data.map(m => m.title));
-              }}
+              keyExtractor={(item, index) => item.id || `milestone-${item.title}-${index}`}
+              onDragEnd={({ data }) => onMilestoneReorder && onMilestoneReorder(data, goal.id)}
             />
           ) : (
             <>
@@ -1005,6 +1006,7 @@ const GoalCard = ({ goal, milestones, tasks, onExpandToggle, onEdit, onDelete, o
                   isDraggable={false}
                   navigation={navigation}
                   goalId={goal.id}
+                  onTaskReorder={onTaskReorder}
                 />
               ))}
               
@@ -1077,9 +1079,12 @@ const EmptyState = () => {
   
   return (
     <View style={styles.emptyState}>
-      <Ionicons name="compass-outline" size={64} color={theme.textSecondary} />
+      <Ionicons name="compass-outline" size={80} color={theme.textSecondary} />
       <Text style={[styles.emptyStateText, { color: theme.textSecondary }]}>
-        Create a goal to create your own compass
+        Create goals, milestones, and tasks to set your direction
+      </Text>
+      <Text style={[styles.emptyStateSubtext, { color: theme.textSecondary }]}>
+        Build a clear path toward what matters most
       </Text>
     </View>
   );
@@ -1136,12 +1141,16 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const { showSuccess, showError } = useNotification();
+  const { triggerFireworks, triggerConfetti } = useGlobalAnimation();
   
-  // Get filter parameter from route
+  // Get parameters from route
   const filter = route?.params?.filter || null;
+  const autoOpenAdd = route?.params?.autoOpenAdd || false;
   
   // Get data from AppContext
   const appContext = useAppContext() || {};
+  
+  
   const { 
     goals = [], 
     projects: milestones = [], 
@@ -1164,18 +1173,98 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
     setLaterTodos
   } = appContext;
 
+  // Reordering handlers - defined early to avoid hoisting issues
+  const handleGoalReorder = React.useCallback((data) => {
+    console.log('Goals reordered:', data.map(g => g.title));
+    if (setGoals && typeof setGoals === 'function') {
+      try {
+        const reorderedGoals = data.map((goal, index) => ({
+          ...goal,
+          order: index,
+          updatedAt: new Date().toISOString()
+        }));
+        setGoals(reorderedGoals);
+      } catch (error) {
+        console.error('Error reordering goals:', error);
+      }
+    } else {
+      console.warn('setGoals function not available:', { setGoals, type: typeof setGoals });
+    }
+  }, [setGoals]);
+
+  const handleMilestoneReorder = React.useCallback((data, goalId) => {
+    console.log('Milestones reordered:', data.map(m => m.title));
+    if (setProjects && typeof setProjects === 'function') {
+      try {
+        // Add order property to reordered milestones
+        const reorderedMilestones = data.map((milestone, index) => ({
+          ...milestone,
+          order: index,
+          updatedAt: new Date().toISOString()
+        }));
+        
+        // Merge the reordered milestones with other milestones not in this goal
+        const otherMilestones = milestones.filter(m => m.goalId !== goalId);
+        const reorderedAllMilestones = [...otherMilestones, ...reorderedMilestones];
+        setProjects(reorderedAllMilestones);
+      } catch (error) {
+        console.error('Error reordering milestones:', error);
+      }
+    } else {
+      console.warn('setProjects function not available:', { setProjects, type: typeof setProjects });
+    }
+  }, [setProjects, milestones]);
+
+  const handleTaskReorder = React.useCallback((data, milestoneId) => {
+    console.log('Tasks reordered:', data.map(t => t.title));
+    if (setTasks && typeof setTasks === 'function') {
+      try {
+        // Add order property to reordered tasks
+        const reorderedTasks = data.map((task, index) => ({
+          ...task,
+          order: index,
+          updatedAt: new Date().toISOString()
+        }));
+        
+        // Merge the reordered tasks with other tasks not in this milestone
+        const otherTasks = tasks.filter(task => 
+          task.milestoneId !== milestoneId && task.projectId !== milestoneId
+        );
+        const reorderedAllTasks = [...otherTasks, ...reorderedTasks];
+        setTasks(reorderedAllTasks);
+      } catch (error) {
+        console.error('Error reordering tasks:', error);
+      }
+    } else {
+      console.warn('setTasks function not available:', { setTasks, type: typeof setTasks });
+    }
+  }, [setTasks, tasks]);
+
   // Local state
   const [expandedGoals, setExpandedGoals] = useState({});
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showConfetti, setShowConfetti] = useState(false);
-  const [showFireworks, setShowFireworks] = useState(false);
-  const [confettiColors, setConfettiColors] = useState(['#FF6B6B', '#4ECDC4', '#45B7D1']);
-  const [fireworksColors, setFireworksColors] = useState(['#FFD93D', '#FF6B6B', '#4ECDC4']);
   const [internalEditMode, setInternalEditMode] = useState(false);
+  
+  // Modern delete confirmation dialog states
+  const [showFirstDeleteConfirm, setShowFirstDeleteConfirm] = useState(false);
+  const [showFinalDeleteConfirm, setShowFinalDeleteConfirm] = useState(false);
 
   // Use internal edit mode if onEditModeToggle is not provided
   const editMode = onEditModeToggle ? isEditMode : internalEditMode;
   const toggleEditMode = onEditModeToggle || (() => setInternalEditMode(!internalEditMode));
+
+  // Auto-open add modal if parameter is passed
+  useEffect(() => {
+    if (autoOpenAdd && !showAddModal) {
+      setShowAddModal(true);
+      // Clear the parameter to prevent reopening on subsequent renders
+      try {
+        navigation.setParams({ autoOpenAdd: false });
+      } catch (error) {
+        console.warn('Error clearing autoOpenAdd param:', error);
+      }
+    }
+  }, [autoOpenAdd, showAddModal, navigation]);
 
   // Helper function to generate celebration colors based on goal color
   const generateCelebrationColors = (goalColor) => {
@@ -1266,7 +1355,11 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
   };
 
   const handleClearFilter = () => {
-    navigation.setParams({ filter: null });
+    try {
+      navigation.setParams({ filter: null });
+    } catch (error) {
+      console.warn('Error clearing filter param:', error);
+    }
   };
 
   const handleAddButtonPress = () => {
@@ -1365,7 +1458,6 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
         
         // Generate colors based on the goal's domain color
         const colors = generateCelebrationColors(goalColor);
-        setConfettiColors(colors.confetti);
         
         updateMilestone({ 
           ...milestone, 
@@ -1373,7 +1465,9 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
           status: 'done',
           updatedAt: new Date().toISOString()
         });
-        setShowConfetti(true);
+        
+        // Trigger global confetti animation
+        triggerConfetti(colors.confetti, 4000);
         showSuccess('Milestone completed! 🎉');
       } else {
         // Reactivating the milestone
@@ -1433,7 +1527,6 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
         // Complete the goal
         const goalColor = goal.color || goal.domain?.color;
         const colors = generateCelebrationColors(goalColor);
-        setFireworksColors(colors.fireworks);
         
         updateGoal({ 
           ...goal, 
@@ -1442,7 +1535,9 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
           completedAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         });
-        setShowFireworks(true);
+        
+        // Trigger global fireworks animation
+        triggerFireworks(colors.fireworks, 5000);
         showSuccess('Goal completed! 🎆');
       }
     }
@@ -1451,57 +1546,123 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
   const handleGoalDelete = (goalId) => {
     if (deleteGoal) {
       deleteGoal(goalId);
-      setShowFireworks(true);
       showSuccess('Goal deleted');
     }
   };
 
   const handleDeleteAll = () => {
-    const totalItems = goals.length + milestones.length + tasks.length;
+    setShowFirstDeleteConfirm(true);
+  };
+
+  const handleFirstDeleteConfirm = () => {
+    setShowFirstDeleteConfirm(false);
+    // Small delay for better UX
+    setTimeout(() => {
+      setShowFinalDeleteConfirm(true);
+    }, 200);
+  };
+
+  const handleFinalDeleteConfirm = async () => {
+    setShowFinalDeleteConfirm(false);
     
-    Alert.alert(
-      'Delete All Data',
-      `This will permanently delete:\n• ${goals.length} goals\n• ${milestones.length} milestones\n• ${tasks.length} tasks\n\nThis action cannot be undone. Are you sure?`,
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel'
-        },
-        {
-          text: 'Delete All',
-          style: 'destructive',
-          onPress: () => {
-            Alert.alert(
-              'Final Confirmation',
-              'Are you absolutely sure you want to delete ALL your data? This cannot be undone.',
-              [
-                {
-                  text: 'Cancel',
-                  style: 'cancel'
-                },
-                {
-                  text: 'Yes, Delete Everything',
-                  style: 'destructive',
-                  onPress: async () => {
+    // Small delay for better UX before starting deletion
+    setTimeout(async () => {
                     try {
-                      // Clear all data from AsyncStorage
-                      await AsyncStorage.multiRemove([
-                        'goals',
-                        'projects', 
-                        'tasks',
-                        'projectGoalLinkMap',
-                        'todos',
-                        'tomorrowTodos',
-                        'laterTodos'
-                      ]);
+                      // USE THE EXACT SAME DELETION FUNCTIONS THAT WORK!
+                      // Delete each goal individually (this will cascade delete projects and tasks)
+                      const goalIds = [...goals.map(g => g.id)]; // Copy array to avoid mutation issues
+                      console.log(`Deleting ${goalIds.length} goals individually...`);
                       
-                      // Clear all state in the AppContext
-                      setGoals([]);
-                      setProjects([]);
-                      setTasks([]);
+                      for (const goalId of goalIds) {
+                        if (deleteGoal) {
+                          await deleteGoal(goalId);
+                        }
+                      }
+                      
+                      // Delete any remaining standalone projects
+                      const remainingProjectIds = [...milestones.filter(p => !p.goalId).map(p => p.id)];
+                      console.log(`Deleting ${remainingProjectIds.length} remaining standalone projects...`);
+                      
+                      for (const projectId of remainingProjectIds) {
+                        if (deleteMilestone) {
+                          await deleteMilestone(projectId);
+                        }
+                      }
+                      
+                      // Delete any remaining standalone tasks
+                      const remainingTaskIds = [...tasks.filter(t => !t.projectId && !t.goalId).map(t => t.id)];
+                      console.log(`Deleting ${remainingTaskIds.length} remaining standalone tasks...`);
+                      
+                      for (const taskId of remainingTaskIds) {
+                        if (deleteTask) {
+                          await deleteTask(null, taskId); // null projectId for standalone tasks
+                        }
+                      }
+                      
+                      // Clear todos manually since they don't have individual delete functions in context
                       setTodos([]);
                       setTomorrowTodos([]);
                       setLaterTodos([]);
+                      await Promise.all([
+                        AsyncStorage.setItem('todos', '[]'),
+                        AsyncStorage.setItem('tomorrowTodos', '[]'),
+                        AsyncStorage.setItem('laterTodos', '[]')
+                      ]);
+                      
+                      // IMMEDIATE FORCE CLEAR - Execute right after deletions
+                      console.log('🚨 IMMEDIATE FORCE CLEAR - Clearing AppContext arrays directly');
+                      if (appContext) {
+                        // Force clear all arrays immediately and synchronously
+                        if (appContext.setGoals) appContext.setGoals([]);
+                        if (appContext.setProjects) appContext.setProjects([]);
+                        if (appContext.setTasks) appContext.setTasks([]);
+                        if (appContext.setTodos) appContext.setTodos([]);
+                        if (appContext.setTomorrowTodos) appContext.setTomorrowTodos([]);
+                        if (appContext.setLaterTodos) appContext.setLaterTodos([]);
+                        
+                        console.log('💪 IMMEDIATE FORCE CLEAR COMPLETE - All arrays set to empty');
+                      }
+                      
+                      // Set nuclear signal immediately for ProfileScreen
+                      await AsyncStorage.setItem('forceProfileClear', 'true');
+                      console.log('☢️ NUCLEAR SIGNAL SET IMMEDIATELY');
+                      
+                      // VERIFY AsyncStorage is actually empty
+                      console.log('🔍 VERIFYING ASYNCSTORAGE IS ACTUALLY EMPTY...');
+                      const [
+                        storedGoalsAfter,
+                        storedProjectsAfter,
+                        storedTasksAfter
+                      ] = await Promise.all([
+                        AsyncStorage.getItem('goals'),
+                        AsyncStorage.getItem('projects'),
+                        AsyncStorage.getItem('tasks')
+                      ]);
+                      
+                      console.log('📦 AsyncStorage AFTER delete:');
+                      console.log('  - goals:', storedGoalsAfter);
+                      console.log('  - projects:', storedProjectsAfter);
+                      console.log('  - tasks:', storedTasksAfter);
+                      
+                      // CHECK AppContext state
+                      console.log('🎯 CURRENT AppContext state:');
+                      console.log('  - appContext.goals.length:', appContext?.goals?.length || 'undefined');
+                      console.log('  - appContext.projects.length:', appContext?.projects?.length || 'undefined');
+                      console.log('  - appContext.tasks.length:', appContext?.tasks?.length || 'undefined');
+                      
+                      // FORCE ProfileScreen to recalculate by triggering AppContext refresh
+                      if (appContext && appContext.refreshData) {
+                        console.log('🔄 Forcing AppContext refresh...');
+                        await appContext.refreshData();
+                        
+                        // Check again after refresh
+                        console.log('🎯 AppContext state AFTER refresh:');
+                        console.log('  - appContext.goals.length:', appContext?.goals?.length || 'undefined');
+                        console.log('  - appContext.projects.length:', appContext?.projects?.length || 'undefined');
+                        console.log('  - appContext.tasks.length:', appContext?.tasks?.length || 'undefined');
+                      }
+                      
+                      // Remove duplicate force clearing - already done above
                       
                       showSuccess('All data deleted successfully');
                       
@@ -1509,14 +1670,7 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
                       console.error('Error deleting all data:', error);
                       showError('Failed to delete data');
                     }
-                  }
-                }
-              ]
-            );
-          }
-        }
-      ]
-    );
+    }, 300);
   };
 
   return (
@@ -1526,23 +1680,6 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
         barStyle={theme.dark ? 'light-content' : 'dark-content'} 
       />
       
-      {/* Confetti Effects */}
-      <Confetti 
-        active={showConfetti} 
-        colors={confettiColors} 
-        duration={4000}
-        type="confetti"
-        count={50}
-        onComplete={() => setShowConfetti(false)}
-      />
-      
-      <Confetti 
-        active={showFireworks} 
-        colors={fireworksColors} 
-        duration={5000}
-        type="fireworks"
-        onComplete={() => setShowFireworks(false)}
-      />
       
       {/* Header - MAXIMUM TOP */}
       <View style={{ marginTop: -100, paddingTop: insets.top }}>
@@ -1599,13 +1736,12 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
                 isActive={isActive}
                 isDraggable={true}
                 navigation={navigation}
+                onMilestoneReorder={handleMilestoneReorder}
+                onTaskReorder={handleTaskReorder}
               />
             )}
-            keyExtractor={(item) => item.id}
-            onDragEnd={({ data }) => {
-              // Handle goal reordering here
-              console.log('Goals reordered:', data.map(g => g.title));
-            }}
+            keyExtractor={(item) => item.id || `goal-${item.title}-${processedGoals.indexOf(item)}`}
+            onDragEnd={({ data }) => handleGoalReorder(data)}
             ListFooterComponent={() => (
               processedGoals.length > 0 ? (
                 <View style={styles.deleteAllContainer}>
@@ -1778,6 +1914,8 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
                     onMilestoneEdit={handleMilestoneEdit}
                     onMilestoneDelete={handleMilestoneDelete}
                     navigation={navigation}
+                    onMilestoneReorder={handleMilestoneReorder}
+                    onTaskReorder={handleTaskReorder}
                   />
                 );
               })
@@ -1813,6 +1951,32 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
         onClose={() => setShowAddModal(false)}
         onSelectOption={handleModalChoice}
       />
+      
+      {/* First Delete Confirmation Dialog */}
+      <MinimalistConfirmDialog
+        visible={showFirstDeleteConfirm}
+        onClose={() => setShowFirstDeleteConfirm(false)}
+        title="Delete All Data"
+        message={`This will permanently delete:\n\n• ${goals.length} ${goals.length === 1 ? 'goal' : 'goals'}\n• ${milestones.length} ${milestones.length === 1 ? 'milestone' : 'milestones'}\n• ${tasks.length} ${tasks.length === 1 ? 'task' : 'tasks'}\n\nThis action cannot be undone.`}
+        confirmText="Delete All"
+        cancelText="Cancel"
+        onConfirm={handleFirstDeleteConfirm}
+        destructive={true}
+        icon="trash-outline"
+      />
+      
+      {/* Final Delete Confirmation Dialog */}
+      <MinimalistConfirmDialog
+        visible={showFinalDeleteConfirm}
+        onClose={() => setShowFinalDeleteConfirm(false)}
+        title="Final Confirmation"
+        message="You are about to permanently delete all your goals, milestones, and tasks. This action cannot be reversed."
+        confirmText="Delete Everything"
+        cancelText="Cancel"
+        onConfirm={handleFinalDeleteConfirm}
+        destructive={true}
+        icon="warning"
+      />
     </View>
   );
 };
@@ -1841,13 +2005,13 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   headerTitle: {
-    fontSize: 22,
-    fontWeight: '400',
-    letterSpacing: 0.5,
-    lineHeight: 26,
+    fontSize: 16,
+    fontWeight: '500',
+    letterSpacing: 0.3,
+    lineHeight: 20,
     position: 'absolute',
-    left: 0,
-    right: 0,
+    left: 60,
+    right: 60,
     textAlign: 'center',
     zIndex: 1,
   },
@@ -2104,13 +2268,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: 100,
+    paddingHorizontal: 40,
   },
   emptyStateText: {
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: '600',
     textAlign: 'center',
-    marginTop: 16,
-    fontStyle: 'italic',
+    marginTop: 24,
+    lineHeight: 24,
   },
   emptyStateSubtext: {
     fontSize: 14,

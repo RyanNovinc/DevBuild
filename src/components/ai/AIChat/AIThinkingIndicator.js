@@ -1,11 +1,11 @@
-// src/components/ai/AIChat/AIThinkingIndicator.js - Simplified spinning indicator
+// src/components/ai/AIChat/AIThinkingIndicator.js - Compass thinking indicator
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 /**
- * AIThinkingIndicator - Clean spinning icon animation
- * A minimalist indicator that shows when the AI is thinking
+ * AIThinkingIndicator - Compass spinning animation
+ * Shows a compass icon rotating while the AI is thinking
  */
 const AIThinkingIndicator = ({ style = 'default' }) => {
   const spinValue = useRef(new Animated.Value(0)).current;
@@ -15,9 +15,9 @@ const AIThinkingIndicator = ({ style = 'default' }) => {
       Animated.loop(
         Animated.timing(spinValue, {
           toValue: 1,
-          duration: 600, // Complete rotation in 0.6 seconds
+          duration: 2000, // Slower, more contemplative rotation
           useNativeDriver: true,
-          easing: Easing.linear
+          easing: Easing.inOut(Easing.sin) // Smooth easing for compass feel
         })
       ).start();
     };
@@ -52,7 +52,7 @@ const AIThinkingIndicator = ({ style = 'default' }) => {
   return (
     <View style={styles.loadingContainer}>
       <Animated.View style={{ transform: [{ rotate: spin }] }}>
-        <Ionicons name="sync-outline" size={20} color={getColor()} />
+        <Ionicons name="compass-outline" size={24} color={getColor()} />
       </Animated.View>
     </View>
   );

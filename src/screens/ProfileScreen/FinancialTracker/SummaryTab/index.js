@@ -20,7 +20,7 @@ import {
 // Import components
 import FinancialSummaryCard from './components/FinancialSummaryCard';
 import BarChartCard from './components/BarChartCard';
-import AssetsLiabilitiesCard from './components/AssetsLiabilitiesCard';
+import EditableAssetsLiabilitiesCard from './components/EditableAssetsLiabilitiesCard';
 import CurrencyModal from './components/CurrencyModal';
 
 const SummaryTab = ({ theme, data, handlers }) => {
@@ -34,6 +34,7 @@ const SummaryTab = ({ theme, data, handlers }) => {
   
   
   const { 
+    financialData,
     totalIncome, 
     totalExpenses, 
     totalSavings, 
@@ -51,7 +52,7 @@ const SummaryTab = ({ theme, data, handlers }) => {
   } = handlers || {};
   
   // Use currency from props if available, otherwise use local state
-  const displayCurrency = currency || localCurrency;
+  const displayCurrency = financialData?.currency || currency || localCurrency;
   
   // Custom format currency function if we're using local currency
   const formatWithCurrency = (amount) => {
@@ -102,11 +103,11 @@ const SummaryTab = ({ theme, data, handlers }) => {
     barAnim
   };
 
-  // Create specific props for assets liabilities card
+  // Create specific props for editable assets liabilities card
   const assetsCardProps = {
-    ...cardProps,
-    totalSavings,
-    totalDebt
+    theme,
+    data,
+    handlers
   };
 
   // Determine content layout based on device orientation and size
@@ -122,7 +123,7 @@ const SummaryTab = ({ theme, data, handlers }) => {
             <BarChartCard {...barChartCardProps} />
           </View>
           <View style={{ width: '100%' }}>
-            <AssetsLiabilitiesCard {...assetsCardProps} />
+            <EditableAssetsLiabilitiesCard {...assetsCardProps} />
           </View>
         </View>
       );
@@ -139,7 +140,7 @@ const SummaryTab = ({ theme, data, handlers }) => {
             <BarChartCard {...barChartCardProps} />
           </View>
           <View style={{ width: '100%' }}>
-            <AssetsLiabilitiesCard {...assetsCardProps} />
+            <EditableAssetsLiabilitiesCard {...assetsCardProps} />
           </View>
         </View>
       );
@@ -151,7 +152,7 @@ const SummaryTab = ({ theme, data, handlers }) => {
         <>
           <FinancialSummaryCard {...summaryCardProps} />
           <BarChartCard {...barChartCardProps} />
-          <AssetsLiabilitiesCard {...assetsCardProps} />
+          <EditableAssetsLiabilitiesCard {...assetsCardProps} />
         </>
       );
     }

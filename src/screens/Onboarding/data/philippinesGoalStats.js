@@ -885,7 +885,7 @@ export const PHILIPPINE_GOAL_STATS = {
           publication: "Philippine Tour Operators Association",
           authors: "PHILTOA Safety and Development Team",
           date: "2024",
-          description: "Study demonstrates 85% safety improvement and 65% cost reduction for Filipino professionals participating in organized travel groups. Community-based travel leverages bayanihan spirit, shared resources, and local knowledge while providing accessible adventure and cultural exploration opportunities.",
+          description: "Study demonstrates 85% safety improvement and 65% cost reduction for Filipino professionals participating in organised travel groups. Community-based travel leverages bayanihan spirit, shared resources, and local knowledge while providing accessible adventure and cultural exploration opportunities.",
           link: "https://www.philtoa.org.ph/"
         }
       }
@@ -1090,7 +1090,7 @@ export const PHILIPPINE_GOAL_STATS = {
       {
         title: "Productivity ROI: Organized Workspaces Increase Efficiency by 80% and Reduce Stress",
         figure: "80%",
-        description: "Filipino professionals with organized workspaces demonstrate 80% higher productivity and significantly reduced stress levels. Proper organization provides mental clarity and operational efficiency essential for professional success and family harmony in space-constrained urban environments.",
+        description: "Filipino professionals with organised workspaces demonstrate 80% higher productivity and significantly reduced stress levels. Proper organisation provides mental clarity and operational efficiency essential for professional success and family harmony in space-constrained urban environments.",
         source: "Philippine Institute of Environmental Design",
         link: "https://www.pied.org.ph/",
         details: {
@@ -1098,14 +1098,14 @@ export const PHILIPPINE_GOAL_STATS = {
           publication: "Philippine Institute of Environmental Design",
           authors: "PIED Productivity Research Team",
           date: "2024",
-          description: "Research demonstrates 80% productivity improvement for Filipino professionals maintaining organized workspaces. Proper organization creates mental clarity, reduces decision fatigue, and enhances operational efficiency essential for professional success and stress management in urban environments.",
+          description: "Research demonstrates 80% productivity improvement for Filipino professionals maintaining organised workspaces. Proper organisation creates mental clarity, reduces decision fatigue, and enhances operational efficiency essential for professional success and stress management in urban environments.",
           link: "https://www.pied.org.ph/"
         }
       },
       {
         title: "Space Optimization: Organized Homes Save ₱18K+ Monthly Through Efficient Resource Management",
         figure: "₱18K+",
-        description: "Filipino professionals with organized living spaces save ₱18K+ monthly through reduced waste, efficient shopping, and better resource management. Organization systems prevent duplicate purchases and enable strategic household management essential for family financial optimization.",
+        description: "Filipino professionals with organised living spaces save ₱18K+ monthly through reduced waste, efficient shopping, and better resource management. Organization systems prevent duplicate purchases and enable strategic household management essential for family financial optimization.",
         source: "Philippine Home Economics Association",
         link: "https://www.phea.org.ph/",
         details: {
@@ -1113,14 +1113,14 @@ export const PHILIPPINE_GOAL_STATS = {
           publication: "Philippine Home Economics Association",
           authors: "PHEA Resource Management Research",
           date: "2024",
-          description: "Analysis demonstrates monthly savings exceeding ₱18,000 for Filipino professionals maintaining organized living spaces. Organization systems prevent waste, enable efficient shopping, and support strategic household management essential for family financial optimization and resource conservation.",
+          description: "Analysis demonstrates monthly savings exceeding ₱18,000 for Filipino professionals maintaining organised living spaces. Organization systems prevent waste, enable efficient shopping, and support strategic household management essential for family financial optimization and resource conservation.",
           link: "https://www.phea.org.ph/"
         }
       },
       {
         title: "Mental Health Advantage: Organized Environments Improve Focus and Decision-Making by 85%",
         figure: "85%",
-        description: "Filipino professionals in organized environments demonstrate 85% better focus and decision-making capabilities. Clutter-free spaces reduce cognitive load and mental fatigue, providing clear thinking essential for professional effectiveness and creative problem-solving in competitive markets.",
+        description: "Filipino professionals in organised environments demonstrate 85% better focus and decision-making capabilities. Clutter-free spaces reduce cognitive load and mental fatigue, providing clear thinking essential for professional effectiveness and creative problem-solving in competitive markets.",
         source: "Environmental Psychology Research Institute Philippines",
         link: "https://www.eprip.org.ph/",
         details: {
@@ -1128,7 +1128,7 @@ export const PHILIPPINE_GOAL_STATS = {
           publication: "Environmental Psychology Research Institute Philippines",
           authors: "EPRIP Cognitive Research Division",
           date: "2024",
-          description: "Study demonstrates 85% focus and decision-making improvement for Filipino professionals in organized environments. Clutter-free spaces reduce cognitive load and mental fatigue while enhancing clear thinking essential for professional effectiveness and creative problem-solving capabilities.",
+          description: "Study demonstrates 85% focus and decision-making improvement for Filipino professionals in organised environments. Clutter-free spaces reduce cognitive load and mental fatigue while enhancing clear thinking essential for professional effectiveness and creative problem-solving capabilities.",
           link: "https://www.eprip.org.ph/"
         }
       }

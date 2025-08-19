@@ -24,6 +24,9 @@ import { getSubscriptionInfo } from '../../../services/SubscriptionService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL } from '../../../config/apiConfig';
 import ProGiftSurprise from '../../ProGiftSurprise';
+import ReferralSummaryPopup from '../../ReferralSummaryPopup';
+import ReferralService from '../../../screens/Referral/ReferralService';
+import * as FeatureExplorerTracker from '../../../services/FeatureExplorerTracker';
 
 /**
  * ClaimAIAccessButton - Button to claim AI access for founders
@@ -204,6 +207,7 @@ const ClaimAIAccessButton = ({ theme, onClose, subscriptionStatus, realSubscript
  * ClaimAILightButton - Button to claim 1 month AI Light for premium mock users
  */
 const ClaimAILightButton = ({ theme, subscriptionStatus, realSubscriptionInfo }) => {
+  const { isAuthenticated } = useAuth(); // Add auth context
   const [showGiftModal, setShowGiftModal] = useState(false);
   const [shouldShowButton, setShouldShowButton] = useState(false);
 
@@ -214,19 +218,42 @@ const ClaimAILightButton = ({ theme, subscriptionStatus, realSubscriptionInfo })
 
   const checkShouldShowAILightButton = async () => {
     try {
+      console.log('ClaimAILightButton DEBUG:', {
+        subscriptionStatus,
+        realSubscriptionInfo,
+        isProTier: realSubscriptionInfo?.isProTier
+      });
+      
       // Check if user has premium/pro status (mock or real)
       const isPremiumMock = subscriptionStatus === 'pro' || 
                            subscriptionStatus === 'unlimited' ||
                            realSubscriptionInfo?.isProTier;
       
-      // Check if they've already claimed this gift
-      const alreadyClaimedAILight = await AsyncStorage.getItem('aiLightGiftClaimed');
+      // FORCE SHOW for dev testing - only when authenticated
+      const forceShowForDev = true; // Set to false in production
+      const showForDev = forceShowForDev && isAuthenticated; // Only show if authenticated
       
-      // Show button if they're premium and haven't claimed yet
-      if (isPremiumMock && !alreadyClaimedAILight) {
-        setShouldShowButton(true);
+      console.log('ClaimAILightButton isPremiumMock:', isPremiumMock);
+      console.log('ClaimAILightButton showForDev:', showForDev);
+      console.log('ClaimAILightButton isAuthenticated:', isAuthenticated);
+      
+      if (isPremiumMock || showForDev) {
+        // Check if already claimed
+        const alreadyClaimedAILight = await AsyncStorage.getItem('aiLightGiftClaimed');
+        
+        if (!alreadyClaimedAILight) {
+          // Only show if not yet claimed
+          setShouldShowButton(true);
+          console.log('ClaimAILightButton: SHOWING - premium user, not yet claimed');
+        } else {
+          // Already claimed, don't show
+          setShouldShowButton(false);
+          console.log('ClaimAILightButton: NOT showing - already claimed');
+        }
       } else {
+        // For non-premium: don't show
         setShouldShowButton(false);
+        console.log('ClaimAILightButton: NOT showing - not premium');
       }
     } catch (error) {
       console.error('Error checking AI Light eligibility:', error);
@@ -244,7 +271,14 @@ const ClaimAILightButton = ({ theme, subscriptionStatus, realSubscriptionInfo })
     setShouldShowButton(false);
   };
 
-  if (!shouldShowButton) return null;
+  console.log('ClaimAILightButton render check:', { shouldShowButton });
+  
+  if (!shouldShowButton) {
+    console.log('ClaimAILightButton: returning null - shouldShowButton is false');
+    return null;
+  }
+  
+  console.log('ClaimAILightButton: RENDERING BUTTON');
 
   return (
     <>
@@ -252,7 +286,7 @@ const ClaimAILightButton = ({ theme, subscriptionStatus, realSubscriptionInfo })
         style={[styles.claimButton, { 
           backgroundColor: 'rgba(102, 102, 255, 0.1)',
           borderColor: '#6666FF',
-          marginTop: 16
+          marginTop: 10
         }]}
         onPress={handleClaimAILight}
         activeOpacity={0.7}
@@ -297,6 +331,11 @@ const AISideMenu = ({
   const { user, isAuthenticated, logout } = useAuth();
   const { profile } = useProfile();
   const appContext = useAppContext() || {};
+  
+  // Helper function to count only enabled documents
+  const getEnabledDocumentsCount = () => {
+    return userDocuments.filter(doc => doc.enabled === true).length;
+  };
   const { 
     goals = [], 
     projects = [], 
@@ -310,6 +349,10 @@ const AISideMenu = ({
   const [isDismissing, setIsDismissing] = useState(false);
   const [realSubscriptionInfo, setRealSubscriptionInfo] = useState(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showReferralPopup, setShowReferralPopup] = useState(false);
+  const [referralStats, setReferralStats] = useState(null);
+  const [streakData, setStreakData] = useState({ currentStreak: 0 });
+  const [hasAppPurchase, setHasAppPurchase] = useState(false);
   
   // Calculate stats from real data (exact same logic as ProfileScreen)
   const calculateStats = () => {
@@ -402,6 +445,58 @@ const AISideMenu = ({
 
     loadSubscriptionInfo();
   }, [isAuthenticated, user?.idToken]);
+
+  // Load referral and streak data when authenticated
+  useEffect(() => {
+    const loadReferralData = async () => {
+      if (isAuthenticated) {
+        try {
+          // Initialize referral system if needed
+          await ReferralService.setupReferralCode(user?.email || user?.username);
+          
+          const stats = await ReferralService.getReferralStats();
+          setReferralStats(stats);
+          
+          const currentStreak = await FeatureExplorerTracker.getCurrentStreak();
+          setStreakData({ currentStreak });
+        } catch (error) {
+          console.error('Error loading referral data:', error);
+          // Set default values if loading fails
+          setReferralStats({ sent: 0, clicked: 0, converted: 0, plansEarned: 0, plansGifted: 0 });
+          setStreakData({ currentStreak: 0 });
+        }
+      }
+    };
+
+    loadReferralData();
+  }, [isAuthenticated, user?.email, user?.username]);
+
+  // Check if user has purchased the app (first 1000 or subscription)
+  useEffect(() => {
+    const checkAppPurchase = async () => {
+      if (isAuthenticated) {
+        try {
+          // Check if user is part of first 1000 (founder status)
+          const proAccessPurchased = await AsyncStorage.getItem('proAccessPurchased');
+          if (proAccessPurchased === 'true') {
+            setHasAppPurchase(true);
+            return;
+          }
+          
+          // For now, assume free users haven't purchased
+          // In production, this would check actual purchase receipts
+          setHasAppPurchase(false);
+        } catch (error) {
+          console.error('Error checking app purchase status:', error);
+          setHasAppPurchase(false);
+        }
+      } else {
+        setHasAppPurchase(false);
+      }
+    };
+
+    checkAppPurchase();
+  }, [isAuthenticated, subscriptionStatus, realSubscriptionInfo]);
   
   // Get user initials for placeholder
   const getInitials = () => {
@@ -604,6 +699,77 @@ const AISideMenu = ({
   const handleCancelLogout = () => {
     setShowLogoutConfirm(false);
   };
+
+  // Handle referral popup
+  const handleReferralClick = () => {
+    setShowReferralPopup(true);
+  };
+
+  const handleReferralPopupClose = () => {
+    setShowReferralPopup(false);
+  };
+
+  const handleNavigateToReferrals = () => {
+    if (navigation) {
+      onClose(); // Close menu first
+      setTimeout(() => {
+        navigation.navigate('ReferralScreen');
+      }, 300);
+    }
+  };
+
+  // Get streak emoji based on streak length (same logic as ProfileScreen)
+  const getStreakEmoji = (days) => {
+    if (days >= 365) return '👑'; // Crown (365+ days)
+    if (days >= 180) return '🏆'; // Trophy (180-364 days)
+    if (days >= 90) return '⭐'; // Star (90-179 days)
+    if (days >= 30) return '⚡'; // Lightning (30-89 days)
+    if (days >= 7) return '🚀'; // Rocket (7-29 days)
+    return '🔥'; // Flame (1-6 days)
+  };
+
+  // Calculate total referral limit based on achievements
+  const getTotalReferralLimit = () => {
+    const currentStreak = streakData.currentStreak;
+    let limit = 3; // Base limit
+    
+    if (currentStreak >= 90) limit += 1; // 90-day achievement adds 1
+    if (currentStreak >= 180) limit += 1; // 180-day achievement adds 1
+    
+    return limit; // Max of 5 total
+  };
+
+  // Calculate referrals remaining vs total limit (0/X format)
+  const getReferralProgress = () => {
+    const total = getTotalReferralLimit();
+    const used = referralStats?.converted || 0;
+    const remaining = Math.max(0, total - used);
+    
+    console.log('getReferralProgress DEBUG:', {
+      total,
+      used,
+      remaining,
+      referralStats,
+      streakData
+    });
+    
+    return { 
+      remaining: remaining, 
+      total: total 
+    };
+  };
+
+  // FOR TESTING: Uncomment this to add test referral data
+  // const addTestReferralData = async () => {
+  //   try {
+  //     await ReferralService.addTestData();
+  //     const stats = await ReferralService.getReferralStats();
+  //     setReferralStats(stats);
+  //     console.log('[TEST] Added test referral data:', stats);
+  //   } catch (error) {
+  //     console.error('Error adding test data:', error);
+  //   }
+  // };
   
   // Navigate to the watch ads screen
   const goToWatchAdsScreen = () => {
@@ -747,8 +913,8 @@ const AISideMenu = ({
               }]}
             />
             
-            {/* Main scrollable content */}
-            <ScrollView style={{ flex: 1 }}>
+            {/* Top Menu Items - Fixed */}
+            <View style={styles.topMenuSection}>
               {/* New Chat Button */}
               <TouchableOpacity 
                 style={[styles.sideMenuItem, { borderBottomColor: theme.border }]}
@@ -797,10 +963,10 @@ const AISideMenu = ({
               >
                 <Ionicons name="document-outline" size={22} color={theme.textSecondary} style={{ opacity: 0.8 }} />
                 <Text style={[styles.sideMenuItemText, { color: theme.text }]}>Personal Knowledge</Text>
-                {userDocuments.length > 0 && (
+                {getEnabledDocumentsCount() > 0 && (
                   <View style={styles.documentIndicator}>
                     <Text style={[styles.documentCount, { color: theme.textSecondary }]}>
-                      {userDocuments.length} document{userDocuments.length !== 1 ? 's' : ''}
+                      {getEnabledDocumentsCount()} document{getEnabledDocumentsCount() !== 1 ? 's' : ''}
                     </Text>
                     {userKnowledgeEnabled && (
                       <Ionicons name="checkmark-circle" size={14} color="#4CAF50" style={{ opacity: 0.9 }} />
@@ -811,104 +977,152 @@ const AISideMenu = ({
               
               {/* Subtle Section Divider */}
               <View style={styles.sectionDivider} />
-              
+            </View>
+
+            {/* Middle Content Area - Flexible */}
+            <View style={styles.middleContentArea}>
               {/* Enhanced User Info Section - Display comprehensive info in the middle space */}
-              {isAuthenticated && user && (
-                <View style={styles.userInfoSection}>
-                  <View style={styles.userInfoCard}>
-                    {/* User Avatar */}
-                    <View style={styles.avatarContainer}>
-                      {renderProfileImage()}
-                    </View>
-                    
-                    {/* User Info */}
-                    <View style={styles.userDetails}>
-                      <Text style={[styles.userInfoName, { color: theme.text }]}>
-                        {profile?.name || user?.displayName || 'User'}
-                      </Text>
-                      <Text style={[styles.userInfoEmail, { color: theme.textSecondary }]}>
-                        {user?.email || ''}
-                      </Text>
-                    </View>
-                    
-                    {/* Subscription Status - Real Data */}
-                    <View style={styles.planContainer}>
-                      <Text style={[styles.planLabel, { color: theme.textSecondary }]}>
-                        Current Plan
-                      </Text>
-                      <Text style={[styles.planName, { color: theme.text }]}>
-                        {realSubscriptionInfo?.formattedTierName || 
-                         (subscriptionStatus === 'pro' ? 'Pro' : 
-                          subscriptionStatus === 'unlimited' ? 'Premium' : 'Free')}
-                      </Text>
-                    </View>
-                    
-                    {/* Renewal Info - Real Data */}
-                    <View style={styles.renewalContainer}>
-                      <Text style={[styles.renewalLabel, { color: theme.textSecondary }]}>
-                        {(realSubscriptionInfo?.isFreeTier ?? (subscriptionStatus === 'free')) ? 'Credits reset' : 'Renews'}
-                      </Text>
-                      <Text style={[styles.renewalValue, { color: theme.text }]}>
-                        {realSubscriptionInfo?.formattedRefreshDate || 
-                         (subscriptionStatus === 'free' ? '18h' : 'Mar 15')}
-                      </Text>
-                    </View>
-                    
-                    {/* Stats - Minimal Grid with Real Data */}
-                    <View style={styles.statsGrid}>
-                      <View style={styles.statCard}>
-                        <Text style={[styles.statNumber, { color: theme.text }]}>
-                          {stats.goalsCount}
+              {isAuthenticated && user ? (
+                <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+                  <View style={styles.userInfoSection}>
+                    <View style={styles.userInfoCard}>
+                      {/* User Avatar */}
+                      <View style={styles.avatarContainer}>
+                        {renderProfileImage()}
+                      </View>
+                      
+                      {/* User Info */}
+                      <View style={styles.userDetails}>
+                        <Text style={[styles.userInfoName, { color: theme.text }]}>
+                          {profile?.name || user?.displayName || 'User'}
                         </Text>
-                        <Text style={[styles.statLabel, { color: theme.textSecondary }]}>
-                          {stats.goalsCount === 1 ? 'Goal' : 'Goals'}
+                        <Text style={[styles.userInfoEmail, { color: theme.textSecondary }]}>
+                          {user?.email || ''}
                         </Text>
                       </View>
-                      <View style={styles.statCard}>
-                        <Text style={[styles.statNumber, { color: theme.text }]}>
-                          {stats.projectsCount}
+                      
+                      {/* Subscription Status - Real Data */}
+                      <View style={styles.planContainer}>
+                        <Text style={[styles.planLabel, { color: theme.textSecondary }]}>
+                          Current Plan
                         </Text>
-                        <Text style={[styles.statLabel, { color: theme.textSecondary }]}>
-                          {stats.projectsCount === 1 ? 'Milestone' : 'Milestones'}
-                        </Text>
-                      </View>
-                      <View style={styles.statCard}>
-                        <Text style={[styles.statNumber, { color: theme.text }]}>
-                          {stats.tasksCount}
-                        </Text>
-                        <Text style={[styles.statLabel, { color: theme.textSecondary }]}>
-                          {stats.tasksCount === 1 ? 'Task' : 'Tasks'}
+                        <Text style={[styles.planName, { color: theme.text }]}>
+                          {realSubscriptionInfo?.formattedTierName || 
+                           (subscriptionStatus === 'pro' ? 'Pro' : 
+                            subscriptionStatus === 'unlimited' ? 'Premium' : 'Free')}
                         </Text>
                       </View>
+                      
+                      
+                      {/* Stats Grid - Back to 3 columns for core app data */}
+                      <View style={styles.statsGrid}>
+                        <View style={styles.statCard}>
+                          <Text style={[styles.statNumber, { color: theme.text }]}>
+                            {stats.goalsCount}
+                          </Text>
+                          <Text style={[styles.statLabel, { color: theme.textSecondary }]}>
+                            {stats.goalsCount === 1 ? 'Goal' : 'Goals'}
+                          </Text>
+                        </View>
+                        <View style={styles.statCard}>
+                          <Text style={[styles.statNumber, { color: theme.text }]}>
+                            {stats.projectsCount}
+                          </Text>
+                          <Text style={[styles.statLabel, { color: theme.textSecondary }]}>
+                            {stats.projectsCount === 1 ? 'Milestone' : 'Milestones'}
+                          </Text>
+                        </View>
+                        <View style={styles.statCard}>
+                          <Text style={[styles.statNumber, { color: theme.text }]}>
+                            {stats.tasksCount}
+                          </Text>
+                          <Text style={[styles.statLabel, { color: theme.textSecondary }]}>
+                            {stats.tasksCount === 1 ? 'Task' : 'Tasks'}
+                          </Text>
+                        </View>
+                      </View>
+
+                      {/* Streak Section - Bottom of middle section */}
+                      <View style={styles.streakSection}>
+                        <Text style={[styles.streakEmoji]}>
+                          {getStreakEmoji(streakData.currentStreak)}
+                        </Text>
+                        <Text style={[styles.streakText, { color: theme.textSecondary }]}>
+                          {streakData.currentStreak} day streak
+                        </Text>
+                      </View>
+                      
+                      {/* AI Light Claim Button */}
+                      <ClaimAILightButton 
+                        theme={theme}
+                        subscriptionStatus={subscriptionStatus}
+                        realSubscriptionInfo={realSubscriptionInfo}
+                      />
+                      
+                      {/* AI Access Claim Button */}
+                      <ClaimAIAccessButton 
+                        theme={theme}
+                        onClose={onClose}
+                        subscriptionStatus={subscriptionStatus}
+                        realSubscriptionInfo={realSubscriptionInfo}
+                        user={user}
+                      />
+
                     </View>
-                    
-                    {/* AI Light Claim Button */}
-                    <ClaimAILightButton 
-                      theme={theme}
-                      subscriptionStatus={subscriptionStatus}
-                      realSubscriptionInfo={realSubscriptionInfo}
-                    />
-                    
-                    {/* AI Access Claim Button */}
-                    <ClaimAIAccessButton 
-                      theme={theme}
-                      onClose={onClose}
-                      subscriptionStatus={subscriptionStatus}
-                      realSubscriptionInfo={realSubscriptionInfo}
-                      user={user}
-                    />
+
+                    {/* NEW Referral Section - Only for users who purchased app */}
+                    {(realSubscriptionInfo?.isProTier || 
+                      subscriptionStatus === 'pro' || 
+                      subscriptionStatus === 'unlimited' || 
+                      hasAppPurchase) && (
+                      <TouchableOpacity 
+                        style={[styles.newReferralButton, { 
+                          backgroundColor: theme.surface, 
+                          borderColor: theme.border
+                        }]}
+                        onPress={handleReferralClick}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="people" size={20} color={theme.primary} />
+                        <Text style={[styles.newReferralText, { color: theme.text }]}>
+                          Referrals (0/3)
+                        </Text>
+                        <Ionicons name="chevron-forward" size={16} color={theme.textSecondary} />
+                      </TouchableOpacity>
+                    )}
+
                   </View>
+                </ScrollView>
+              ) : (
+                /* Logged Out Section - When user is not authenticated - NOW TRULY CENTERED */
+                <View style={styles.loggedOutSection}>
+                  {/* Centered Status Content */}
+                  <View style={styles.centeredStatusContainer}>
+                    <View style={[styles.statusIndicator, { backgroundColor: '#FF9800' }]} />
+                    <Text style={[styles.centeredStatusText, { color: theme.text }]}>Not Connected</Text>
+                    <Text style={[styles.centeredStatusDescription, { color: theme.textSecondary }]}>
+                      Sign in to access AI features
+                    </Text>
+                  </View>
+
+                  {/* ClaimAILightButton - for eligible users */}
+                  <ClaimAILightButton 
+                    theme={theme}
+                    subscriptionStatus={subscriptionStatus}
+                    realSubscriptionInfo={realSubscriptionInfo}
+                  />
                 </View>
               )}
-            </ScrollView>
+            </View>
             
+
             {/* Fixed Footer Section - NOT part of ScrollView */}
             <View style={{ 
               borderTopWidth: 0.5, 
               borderTopColor: theme.border,
-              paddingTop: 8,
-              paddingBottom: 20,
-              marginBottom: Platform.OS === 'ios' ? 30 : 10,
+              paddingTop: 6,
+              paddingBottom: 16,
+              marginBottom: Platform.OS === 'ios' ? 25 : 8,
               opacity: 0.95
             }}>
               {/* Login/Logout Button */}
@@ -1005,6 +1219,13 @@ const AISideMenu = ({
           </View>
         </Modal>
       )}
+
+      {/* Referral Summary Popup */}
+      <ReferralSummaryPopup
+        visible={showReferralPopup}
+        onClose={handleReferralPopupClose}
+        onNavigateToReferrals={handleNavigateToReferrals}
+      />
     </Modal>
   );
 };
@@ -1040,11 +1261,18 @@ const styles = StyleSheet.create({
     width: '100%',
     // No content, just spacing for status bar
   },
+  topMenuSection: {
+    // Fixed top section with menu items
+  },
+  middleContentArea: {
+    flex: 1,
+    // This takes up all available space between top and bottom
+  },
   sideMenuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 18,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
     borderBottomWidth: 0.5,
     opacity: 0.95,
   },
@@ -1089,24 +1317,22 @@ const styles = StyleSheet.create({
     borderTopColor: 'rgba(255, 255, 255, 0.1)',
     opacity: 0.3,
   },
-  // Professional minimalist user info styles
+  // Professional minimalist user info styles - OPTIMIZED for vertical space
   userInfoSection: {
-    padding: 24,
-    marginVertical: 40,
+    padding: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    flex: 1,
   },
   userInfoCard: {
     alignItems: 'center',
     width: '100%',
   },
   avatarContainer: {
-    marginBottom: 20,
+    marginBottom: 12,
   },
   userDetails: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 16,
   },
   userInfoName: {
     fontSize: 20,
@@ -1123,7 +1349,7 @@ const styles = StyleSheet.create({
   },
   planContainer: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 12,
   },
   planLabel: {
     fontSize: 11,
@@ -1138,44 +1364,30 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 0.2,
   },
-  renewalContainer: {
-    alignItems: 'center',
-    marginBottom: 28,
-  },
-  renewalLabel: {
-    fontSize: 11,
-    fontWeight: '500',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginBottom: 4,
-    opacity: 0.6,
-  },
-  renewalValue: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
   statsGrid: {
     flexDirection: 'row',
     width: '100%',
     justifyContent: 'space-around',
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
   },
   statCard: {
     alignItems: 'center',
     flex: 1,
+    paddingHorizontal: 2,
   },
   statNumber: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '700',
-    marginBottom: 4,
-    letterSpacing: 0.5,
+    marginBottom: 3,
+    letterSpacing: 0.3,
   },
   statLabel: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '500',
     textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    letterSpacing: 0.6,
     opacity: 0.6,
+    textAlign: 'center',
   },
   logoutButton: {
     paddingHorizontal: 8,
@@ -1248,14 +1460,14 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
   },
-  // Claim AI Access Button styles - minimal and professional
+  // Claim AI Access Button styles - minimal and professional (COMPACT)
   claimButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 24,
-    marginHorizontal: 32,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    marginTop: 12,
+    marginHorizontal: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     borderRadius: 8,
   },
   claimButtonContent: {
@@ -1326,6 +1538,130 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     letterSpacing: 0.3,
+  },
+  // Streak section styles
+  streakSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 16,
+    paddingVertical: 8,
+  },
+  streakEmoji: {
+    fontSize: 16,
+    marginRight: 8,
+  },
+  streakText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  // Referral section styles
+  referralSection: {
+    borderWidth: 1,
+    borderRadius: 12,
+    marginTop: 20,
+    marginHorizontal: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    minHeight: 60,
+  },
+  referralContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  referralTextContainer: {
+    flex: 1,
+    marginLeft: 12,
+    marginRight: 8,
+    justifyContent: 'center',
+  },
+  referralTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  referralProgress: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  // Logged Out Section Styles - NOW TRULY CENTERED IN MIDDLE AREA
+  loggedOutSection: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  centeredStatusContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 20,
+  },
+  statusIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginBottom: 12,
+  },
+  centeredStatusText: {
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  centeredStatusDescription: {
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+    opacity: 0.8,
+  },
+  loggedOutHeader: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 16,
+  },
+  loggedOutStatus: {
+    gap: 8,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  loggedOutDescription: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  loggedOutActions: {
+    gap: 10,
+  },
+  signInButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    gap: 8,
+  },
+  signInButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  // NEW Simple Referral Button Styles
+  newReferralButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    marginTop: 16,
+    marginHorizontal: 16,
+    borderWidth: 1,
+    borderRadius: 12,
+    gap: 12,
+  },
+  newReferralText: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

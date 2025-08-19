@@ -325,13 +325,15 @@ export const getDayName = (day, short = false) => {
 };
 
 /**
- * Get an array of dates for a week
+ * Get an array of dates for a week (Monday to Sunday)
  * @param {Date} date - Date within the week
- * @returns {Array} Array of date objects
+ * @returns {Array} Array of date objects starting with Monday
  */
 export const getWeekDates = (date = new Date()) => {
   const day = date.getDay(); // 0 = Sunday, 6 = Saturday
-  const diff = date.getDate() - day;
+  // Convert to Monday-based week: Monday = 0, Sunday = 6
+  const mondayBasedDay = day === 0 ? 6 : day - 1;
+  const diff = date.getDate() - mondayBasedDay;
   
   const weekDates = [];
   

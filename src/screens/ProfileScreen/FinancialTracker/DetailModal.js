@@ -8,9 +8,13 @@ import {
   TouchableOpacity,
   Alert,
   Dimensions,
-  SafeAreaView
+  SafeAreaView,
+  TextInput,
+  KeyboardAvoidingView,
+  Keyboard
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
 // Import tab components
@@ -33,17 +37,27 @@ const { width } = Dimensions.get('window');
 // Create tab navigator for swipe navigation
 const Tab = createMaterialTopTabNavigator();
 
-const DetailModal = ({ visible, theme, data, handlers, onClose }) => {
+const DetailModal = ({ visible, theme, data, handlers, onClose, widgetName }) => {
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
   const [showCurrencyInfoModal, setShowCurrencyInfoModal] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [showSaveDataModal, setShowSaveDataModal] = useState(false);
   const [savedInstances, setSavedInstances] = useState([]);
+  const [fileToDelete, setFileToDelete] = useState(null); // {id, name}
+  const [showStorageLimitMsg, setShowStorageLimitMsg] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showTitleEditModal, setShowTitleEditModal] = useState(false);
+  const [tempTitle, setTempTitle] = useState('');
+  const [currentTitle, setCurrentTitle] = useState(widgetName || 'Financial Tracker');
   
   // Access currency data from props
   const { financialData, formatCurrency } = data;
   const { setCurrency } = handlers || {};
+  
+  // Update current title when widgetName changes
+  useEffect(() => {
+    setCurrentTitle(widgetName || 'Financial Tracker');
+  }, [widgetName]);
   
   // Initialize exchange rates when modal opens
   useEffect(() => {
@@ -78,64 +92,81 @@ const DetailModal = ({ visible, theme, data, handlers, onClose }) => {
     }
   };
 
+  // Handle title editing
+  const handleTitlePress = () => {
+    if (!handlers?.onUpdateTitle) return;
+    
+    setTempTitle(currentTitle);
+    setShowTitleEditModal(true);
+  };
+
+  const handleTitleSave = async () => {
+    // Dismiss keyboard immediately to prevent interference
+    Keyboard.dismiss();
+    
+    if (!tempTitle.trim()) {
+      Alert.alert('Error', 'Please enter a title');
+      return;
+    }
+    
+    if (handlers?.onUpdateTitle) {
+      const newTitle = tempTitle.trim();
+      // Update local state immediately
+      setCurrentTitle(newTitle);
+      // Update the backend and get the updated data
+      const updatedData = await handlers.onUpdateTitle(newTitle);
+      
+      // Save the financial tracker data with the updated title
+      if (handlers.saveCurrentFinancialData && updatedData) {
+        await handlers.saveCurrentFinancialData(updatedData);
+      }
+      
+      // Refresh saved instances to reflect the title change
+      setTimeout(async () => {
+        await loadSavedInstances();
+      }, 100);
+    }
+    setShowTitleEditModal(false);
+  };
+
+  const handleTitleCancel = () => {
+    setShowTitleEditModal(false);
+    setTempTitle('');
+  };
+
   // Load all saved financial tracker instances (limit to 3)
+  // Load saved financial data instances  
   const loadSavedInstances = async () => {
     try {
-      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      const allKeys = await AsyncStorage.getAllKeys();
-      const widgetDataKeys = allKeys.filter(key => key.startsWith('widget_data_'));
+      // First clean up any excess files
+      await cleanupExcessFiles();
+      
+      const keys = await AsyncStorage.getAllKeys();
+      const financialKeys = keys.filter(key => key.startsWith('widget_data_financial_'));
+      
       const instances = [];
 
-      for (const key of widgetDataKeys) {
-        try {
-          const data = await AsyncStorage.getItem(key);
-          if (data) {
-            const parsedData = JSON.parse(data);
-            // Only include financial tracker data
-            if (parsedData.incomeSources !== undefined || parsedData.expenses !== undefined) {
-              const totalIncome = (parsedData.incomeSources || []).reduce((sum, item) => sum + item.amount, 0);
-              const totalExpenses = (parsedData.expenses || []).reduce((sum, item) => sum + item.amount, 0);
-              
-              // Create a better name for saved instances
-              const savedAt = parsedData.savedAt ? new Date(parsedData.savedAt) : new Date();
-              const instanceName = `Financial ${savedAt.toLocaleDateString()} ${savedAt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
-              
-              instances.push({
-                id: key,
-                name: instanceName,
-                totalIncome,
-                totalExpenses,
-                currency: parsedData.currency || '$',
-                lastUpdated: parsedData.lastUpdated || 'Never',
-                data: parsedData
-              });
-            }
-          }
-        } catch (error) {
-          console.error('Error loading instance:', key, error);
+      for (const key of financialKeys) {
+        const dataJson = await AsyncStorage.getItem(key);
+        if (dataJson) {
+          const parsedData = JSON.parse(dataJson);
+          instances.push({
+            id: key,
+            name: parsedData.title || 'Financial Data',
+            lastUpdated: parsedData.lastUpdated || 'Unknown',
+            totalIncome: (parsedData.incomeSources || []).reduce((sum, item) => sum + item.amount, 0),
+            totalExpenses: (parsedData.expenses || []).reduce((sum, item) => sum + item.amount, 0),
+            currency: parsedData.currency || '$'
+          });
         }
       }
-
-      // Also check old storage for migration
-      const oldData = await AsyncStorage.getItem('financialTrackerData');
-      if (oldData && !instances.length) {
-        const parsedOldData = JSON.parse(oldData);
-        const totalIncome = (parsedOldData.incomeSources || []).reduce((sum, item) => sum + item.amount, 0);
-        const totalExpenses = (parsedOldData.expenses || []).reduce((sum, item) => sum + item.amount, 0);
+      
+      // Sort by last updated (newest first) and limit to 3
+      const sortedInstances = instances
+        .sort((a, b) => new Date(b.lastUpdated) - new Date(a.lastUpdated))
+        .slice(0, 3);
         
-        instances.push({
-          id: 'legacy_financial',
-          name: 'Legacy Financial Data',
-          totalIncome,
-          totalExpenses,
-          currency: parsedOldData.currency || '$',
-          lastUpdated: parsedOldData.lastUpdated || 'Never',
-          data: parsedOldData
-        });
-      }
-
-      // Limit to 3 most recent instances
-      setSavedInstances(instances.slice(0, 3));
+      setSavedInstances(sortedInstances);
     } catch (error) {
       console.error('Error loading saved instances:', error);
     }
@@ -144,14 +175,14 @@ const DetailModal = ({ visible, theme, data, handlers, onClose }) => {
   // Load a specific saved instance
   const loadSavedInstance = async (instance) => {
     try {
-      if (handlers.loadSavedFinancialData) {
-        handlers.loadSavedFinancialData(instance.data);
+      const dataJson = await AsyncStorage.getItem(instance.id);
+      if (dataJson && handlers.loadSavedFinancialData) {
+        const parsedData = JSON.parse(dataJson);
+        await handlers.loadSavedFinancialData(parsedData);
         setShowSaveDataModal(false);
-        Alert.alert('Success', `Loaded "${instance.name}" financial data`);
       }
     } catch (error) {
       console.error('Error loading saved instance:', error);
-      Alert.alert('Error', 'Failed to load financial data');
     }
   };
 
@@ -174,17 +205,75 @@ const DetailModal = ({ visible, theme, data, handlers, onClose }) => {
     }
   };
 
+  // Clean up excess files to maintain 3-file limit
+  const cleanupExcessFiles = async () => {
+    try {
+      const keys = await AsyncStorage.getAllKeys();
+      const financialKeys = keys.filter(key => key.startsWith('widget_data_financial_'));
+      
+      if (financialKeys.length > 3) {
+        // Get all files with timestamps
+        const filesWithTime = [];
+        for (const key of financialKeys) {
+          const dataJson = await AsyncStorage.getItem(key);
+          if (dataJson) {
+            const parsedData = JSON.parse(dataJson);
+            filesWithTime.push({
+              id: key,
+              lastUpdated: parsedData.lastUpdated || new Date(0).toISOString()
+            });
+          }
+        }
+        
+        // Sort by last updated and keep only newest 3
+        const sortedFiles = filesWithTime.sort((a, b) => new Date(b.lastUpdated) - new Date(a.lastUpdated));
+        const filesToDelete = sortedFiles.slice(3); // Everything after first 3
+        
+        // Delete excess files
+        for (const file of filesToDelete) {
+          await AsyncStorage.removeItem(file.id);
+        }
+      }
+    } catch (error) {
+      console.error('Error cleaning up excess files:', error);
+    }
+  };
+
+  // Delete saved instance
+  const deleteSavedInstance = async (instanceId, instanceName) => {
+    try {
+      await AsyncStorage.removeItem(instanceId);
+      await loadSavedInstances(); // Refresh the list
+    } catch (error) {
+      console.error('Error deleting instance:', error);
+    }
+  };
+
   // Start fresh with new financial data
   const startFreshFinancialData = async () => {
     try {
+      const savedInstancesCount = savedInstances.length;
+      if (savedInstancesCount >= 3) {
+        setShowStorageLimitMsg(true);
+        return;
+      }
+
       if (handlers.startFreshFinancialData) {
-        handlers.startFreshFinancialData();
+        await handlers.startFreshFinancialData();
+        
+        // Auto-save the fresh data so it appears in saved files
+        if (handlers.saveCurrentFinancialData) {
+          await handlers.saveCurrentFinancialData();
+          // Small delay to ensure data is saved before refreshing
+          setTimeout(async () => {
+            await loadSavedInstances();
+          }, 100);
+        }
+        
         setShowSaveDataModal(false);
-        Alert.alert('Success', 'Started fresh financial tracker');
       }
     } catch (error) {
       console.error('Error starting fresh:', error);
-      Alert.alert('Error', 'Failed to start fresh financial data');
     }
   };
   
@@ -213,9 +302,18 @@ const DetailModal = ({ visible, theme, data, handlers, onClose }) => {
           </TouchableOpacity>
           
           <View style={styles.titleContainer}>
-            <Text style={[styles.detailTitle, { color: theme.text }]}>
-              Financial Tracker
-            </Text>
+            <TouchableOpacity 
+              style={styles.titlePressable}
+              onPress={handleTitlePress}
+              disabled={!handlers?.onUpdateTitle}
+            >
+              <Text style={[styles.detailTitle, { color: theme.text }]}>
+                {currentTitle}
+              </Text>
+              {handlers?.onUpdateTitle && (
+                <Ionicons name="pencil" size={16} color={theme.textSecondary} style={styles.titleEditIcon} />
+              )}
+            </TouchableOpacity>
             {isSaving && (
               <View style={styles.savingIndicator}>
                 <Ionicons name="cloud-upload-outline" size={18} color={theme.primary} />
@@ -224,18 +322,8 @@ const DetailModal = ({ visible, theme, data, handlers, onClose }) => {
             )}
           </View>
           
-          {/* Currency selector in header */}
+          {/* Header actions */}
           <View style={styles.headerRight}>
-            <TouchableOpacity
-              style={[styles.currencyButton, { borderColor: theme.border }]}
-              onPress={() => setShowCurrencyModal(true)}
-            >
-              <Text style={[styles.currencySymbol, { color: theme.text }]}>
-                {financialData.currency}
-              </Text>
-              <Ionicons name="chevron-down" size={16} color={theme.textSecondary} />
-            </TouchableOpacity>
-            
             <TouchableOpacity 
               style={styles.saveDataButton}
               onPress={() => {
@@ -427,68 +515,215 @@ const DetailModal = ({ visible, theme, data, handlers, onClose }) => {
           lastUpdated={lastUpdated}
         />
         
-        {/* Save Data Modal */}
-        <Modal
-          visible={showSaveDataModal}
-          animationType="slide"
-          transparent={true}
-          onRequestClose={() => setShowSaveDataModal(false)}
-        >
-          <View style={styles.saveDataModalOverlay}>
-            <View style={[styles.saveDataModalContent, { backgroundColor: theme.card, borderColor: theme.border }]}>
-              <View style={styles.saveDataModalHeader}>
-                <Text style={[styles.saveDataModalTitle, { color: theme.text }]}>Load Saved Data</Text>
-                <TouchableOpacity onPress={() => setShowSaveDataModal(false)}>
-                  <Ionicons name="close" size={24} color={theme.textSecondary} />
+        {/* Title Edit Modal - EXACT copy from StreakDetailScreen.js */}
+        {showTitleEditModal && (
+          <Modal
+            visible={showTitleEditModal}
+            animationType="fade"
+            transparent={true}
+            onRequestClose={handleTitleCancel}
+          >
+            <KeyboardAvoidingView 
+              style={styles.cleanModalOverlay} 
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              keyboardVerticalOffset={Platform.OS === 'ios' ? 50 : 20}
+              enabled
+            >
+              <View style={styles.titleEditModalContainer}>
+                {/* Header */}
+                <View style={styles.titleEditModalHeader}>
+                  <View style={styles.cleanModalIconContainer}>
+                    <Ionicons name="create-outline" size={24} color="#3B82F6" />
+                  </View>
+                  <Text style={styles.cleanModalTitle}>Edit Financial Tracker Name</Text>
+                  <Text style={styles.cleanModalSubtitle}>
+                    Choose a memorable name for your financial tracker
+                  </Text>
+                </View>
+
+                {/* Text Input */}
+                <View style={styles.titleEditInputContainer}>
+                  <TextInput
+                    style={styles.titleEditInput}
+                    value={tempTitle}
+                    onChangeText={setTempTitle}
+                    autoFocus
+                    maxLength={40}
+                    placeholder="Enter tracker name"
+                    placeholderTextColor="#8E8E93"
+                    multiline={false}
+                    returnKeyType="done"
+                    onSubmitEditing={handleTitleSave}
+                    blurOnSubmit={false}
+                  />
+                </View>
+
+                {/* Action Buttons */}
+                <View style={styles.titleEditActions}>
+                  <TouchableOpacity 
+                    style={[styles.cleanActionButton, styles.cancelButton]}
+                    onPress={handleTitleCancel}
+                  >
+                    <Text style={styles.cleanActionButtonText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.cleanActionButton, styles.titleSaveButton]}
+                    onPress={handleTitleSave}
+                    activeOpacity={0.7}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <Text style={styles.cleanActionButtonText}>Save</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </KeyboardAvoidingView>
+          </Modal>
+        )}
+        
+        {/* Save Data Modal - EXACT copy from StreakDetailScreen.js */}
+        {showSaveDataModal && (
+          <Modal
+            visible={showSaveDataModal}
+            animationType="fade"
+            transparent={true}
+            onRequestClose={() => {
+              setFileToDelete(null);
+              setShowStorageLimitMsg(false);
+              setShowSaveDataModal(false);
+            }}
+          >
+            <View style={styles.cleanModalOverlay}>
+              <View style={styles.cleanModalContainer}>
+                {/* Header */}
+                <View style={styles.cleanModalHeader}>
+                  <View style={styles.cleanModalIconContainer}>
+                    <Ionicons 
+                      name={
+                        fileToDelete ? "trash-outline" : 
+                        showStorageLimitMsg ? "archive" : 
+                        "folder-outline"
+                      } 
+                      size={24} 
+                      color={
+                        fileToDelete ? "#EF4444" : 
+                        showStorageLimitMsg ? "#F97316" : 
+                        "#8E8E93"
+                      } 
+                    />
+                  </View>
+                  <Text style={styles.cleanModalTitle}>
+                    {fileToDelete ? "Delete File?" : 
+                     showStorageLimitMsg ? "Storage Limit Reached" : 
+                     "Financial Files"}
+                  </Text>
+                  <Text style={styles.cleanModalSubtitle}>
+                    {fileToDelete 
+                      ? `Are you sure you want to delete "${fileToDelete.name}"? This cannot be undone.`
+                      : showStorageLimitMsg 
+                      ? "You've reached the maximum of 3 saved financial trackers. Please delete an existing tracker to continue."
+                      : "Manage your saved financial data"}
+                  </Text>
+                </View>
+
+                {/* Action buttons for delete/storage confirmation */}
+                {fileToDelete ? (
+                  <>
+                    {/* Delete confirmation buttons */}
+                    <View style={styles.cleanModalActions}>
+                      <TouchableOpacity 
+                        style={[styles.cleanActionButton, styles.cancelButton]}
+                        onPress={() => setFileToDelete(null)}
+                      >
+                        <Text style={styles.cleanActionButtonText}>Cancel</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        style={[styles.cleanActionButton, styles.deleteButton]}
+                        onPress={async () => {
+                          await deleteSavedInstance(fileToDelete.id, fileToDelete.name);
+                          setFileToDelete(null);
+                        }}
+                      >
+                        <Text style={styles.cleanActionButtonText}>Delete</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                ) : showStorageLimitMsg ? (
+                  // Storage limit message - single button
+                  <View style={styles.cleanModalActions}>
+                    <TouchableOpacity 
+                      style={[styles.cleanActionButton, styles.storageOkButton]}
+                      onPress={() => setShowStorageLimitMsg(false)}
+                    >
+                      <Text style={styles.cleanActionButtonText}>Got it</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  // Normal files view
+                  <>
+                    {/* Files container */}
+                    <View style={styles.cleanFilesContainer}>
+                      {savedInstances.length > 0 ? (
+                        savedInstances.map((instance, index) => (
+                          <TouchableOpacity
+                            key={instance.id}
+                            style={styles.cleanFileItem}
+                            onPress={() => loadSavedInstance(instance)}
+                          >
+                            <View style={styles.cleanFileIconContainer}>
+                              <Ionicons name="document-outline" size={20} color="#8E8E93" />
+                            </View>
+                            <View style={styles.cleanFileInfo}>
+                              <Text style={styles.cleanFileName}>{instance.name}</Text>
+                              <Text style={styles.cleanFileStats}>
+                                Income: {instance.currency}{instance.totalIncome} • Expenses: {instance.currency}{instance.totalExpenses}
+                              </Text>
+                            </View>
+                            <TouchableOpacity
+                              style={styles.cleanDeleteButton}
+                              onPress={(e) => {
+                                e.stopPropagation();
+                                setFileToDelete({ id: instance.id, name: instance.name });
+                              }}
+                            >
+                              <Ionicons name="trash-outline" size={16} color="#EF4444" />
+                            </TouchableOpacity>
+                          </TouchableOpacity>
+                        ))
+                      ) : (
+                        <View style={styles.cleanEmptyState}>
+                          <Ionicons name="folder-open-outline" size={32} color="#48484A" />
+                          <Text style={styles.cleanEmptyText}>No saved files</Text>
+                        </View>
+                      )}
+                    </View>
+
+                    {/* Action buttons */}
+                    <View style={styles.cleanModalActions}>
+                      <TouchableOpacity 
+                        style={[styles.cleanActionButton, styles.saveButton]}
+                        onPress={startFreshFinancialData}
+                      >
+                        <Text style={styles.cleanActionButtonText}>Start Fresh</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                )}
+
+                {/* Close Button */}
+                <TouchableOpacity 
+                  style={styles.cleanCloseButton}
+                  onPress={() => {
+                    setFileToDelete(null); // Reset delete state
+                    setShowStorageLimitMsg(false); // Reset storage limit state
+                    setShowSaveDataModal(false);
+                  }}
+                >
+                  <Text style={styles.cleanCloseButtonText}>Close</Text>
                 </TouchableOpacity>
               </View>
-              
-              <Text style={[styles.saveDataDescription, { color: theme.textSecondary }]}>
-                Choose from your saved financial data or start fresh
-              </Text>
-              
-              <View style={styles.savedInstancesContainer}>
-                {savedInstances.length > 0 ? (
-                  savedInstances.map((instance, index) => (
-                    <TouchableOpacity
-                      key={instance.id}
-                      style={[styles.savedInstanceItem, { backgroundColor: theme.cardAlt || theme.card, borderColor: theme.border }]}
-                      onPress={() => loadSavedInstance(instance)}
-                    >
-                      <View style={styles.savedInstanceInfo}>
-                        <Text style={[styles.savedInstanceName, { color: theme.text }]}>
-                          {instance.name}
-                        </Text>
-                        <Text style={[styles.savedInstanceStats, { color: theme.textSecondary }]}>
-                          Income: {instance.currency}{instance.totalIncome.toLocaleString()} • Expenses: {instance.currency}{instance.totalExpenses.toLocaleString()}
-                        </Text>
-                        <Text style={[styles.savedInstanceDate, { color: theme.textSecondary }]}>
-                          Last updated: {instance.lastUpdated === 'Never' ? 'Never' : new Date(instance.lastUpdated).toLocaleDateString()}
-                        </Text>
-                      </View>
-                      <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
-                    </TouchableOpacity>
-                  ))
-                ) : (
-                  <View style={styles.noSavedDataContainer}>
-                    <Ionicons name="folder-open-outline" size={48} color={theme.textSecondary} />
-                    <Text style={[styles.noSavedDataText, { color: theme.textSecondary }]}>
-                      No saved financial data found
-                    </Text>
-                  </View>
-                )}
-              </View>
-              
-              <TouchableOpacity 
-                style={[styles.startFreshButton, { backgroundColor: theme.primary }]}
-                onPress={startFreshFinancialData}
-              >
-                <Ionicons name="add-circle" size={20} color="#FFFFFF" />
-                <Text style={styles.startFreshButtonText}>Start Fresh Financial Data</Text>
-              </TouchableOpacity>
             </View>
-          </View>
-        </Modal>
+          </Modal>
+        )}
       </SafeAreaView>
     </Modal>
   );
@@ -519,6 +754,15 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
+  titlePressable: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  titleEditIcon: {
+    marginLeft: 8,
+    opacity: 0.6,
+  },
   savingIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -532,20 +776,6 @@ const styles = StyleSheet.create({
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  currencyButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 20,
-    borderWidth: 1,
-    marginRight: 8,
-  },
-  currencySymbol: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginRight: 4,
   },
   saveDataButton: {
     padding: 4,
@@ -644,6 +874,196 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 16,
     marginLeft: 8,
+  },
+  // Clean modal styles - EXACT copy from StreakDetailScreen.js
+  cleanModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  cleanModalContainer: {
+    backgroundColor: '#1C1C1E',
+    borderRadius: 24,
+    maxWidth: 400,
+    width: '100%',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 20,
+  },
+  cleanModalHeader: {
+    alignItems: 'center',
+    paddingTop: 32,
+    paddingBottom: 24,
+    paddingHorizontal: 24,
+  },
+  cleanModalIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#2C2C2E',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  cleanModalTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  cleanModalSubtitle: {
+    fontSize: 14,
+    color: '#8E8E93',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  cleanModalActions: {
+    flexDirection: 'row',
+    paddingHorizontal: 24,
+    paddingBottom: 24,
+    gap: 12,
+  },
+  cleanActionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: 12,
+    gap: 8,
+  },
+  saveButton: {
+    backgroundColor: '#3B82F6',
+  },
+  cancelButton: {
+    backgroundColor: '#6B7280',
+  },
+  deleteButton: {
+    backgroundColor: '#EF4444',
+  },
+  storageOkButton: {
+    backgroundColor: '#F97316',
+  },
+  cleanActionButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  cleanFilesContainer: {
+    paddingHorizontal: 24,
+    marginBottom: 24,
+    maxHeight: 240,
+  },
+  cleanFileItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#2C2C2E',
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  cleanFileIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#3A3A3C',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  cleanFileInfo: {
+    flex: 1,
+  },
+  cleanFileName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 2,
+  },
+  cleanFileStats: {
+    fontSize: 12,
+    color: '#8E8E93',
+  },
+  cleanDeleteButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#FF453A20',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cleanEmptyState: {
+    alignItems: 'center',
+    padding: 40,
+  },
+  cleanEmptyText: {
+    fontSize: 16,
+    color: '#8E8E93',
+    marginTop: 12,
+  },
+  cleanCloseButton: {
+    margin: 24,
+    paddingVertical: 16,
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#3A3A3C',
+    backgroundColor: '#1C1C1E',
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+  },
+  cleanCloseButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#8E8E93',
+  },
+  // Title Edit Modal Styles - EXACT copy from StreakDetailScreen.js
+  titleEditModalContainer: {
+    backgroundColor: '#1C1C1E',
+    borderRadius: 24,
+    maxWidth: 340,
+    width: '90%',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 20,
+  },
+  titleEditModalHeader: {
+    alignItems: 'center',
+    paddingTop: 32,
+    paddingBottom: 24,
+    paddingHorizontal: 24,
+  },
+  titleEditInputContainer: {
+    paddingHorizontal: 24,
+    marginBottom: 24,
+  },
+  titleEditInput: {
+    backgroundColor: '#2C2C2E',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    fontSize: 18,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    borderWidth: 2,
+    borderColor: '#3B82F6',
+  },
+  titleEditActions: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 24,
+    paddingBottom: 24,
+  },
+  titleSaveButton: {
+    backgroundColor: '#3B82F6',
   },
 });
 

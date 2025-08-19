@@ -31,6 +31,7 @@ const SettingsModal = ({
   onClose,
   onToggleAIButton,
   onToggleLifetimeMember,
+  onToggleMonthlySubscriber, // Add monthly subscriber toggle prop
   onShowAIExplanation,
   navigation,
   onLogout,
@@ -465,7 +466,7 @@ const SettingsModal = ({
                       maxFontSizeMultiplier={1.5}
                       numberOfLines={1}
                     >
-                      Get 500 AI credits when you sign up
+                      Get x1 month AI Light when you sign up
                     </Text>
                   </View>
                 </View>
@@ -478,17 +479,27 @@ const SettingsModal = ({
             )}
             
             {/* Pro Badge for Pro Users */}
-            {(screenState.userSubscriptionStatus === 'pro' || screenState.userSubscriptionStatus === 'unlimited') && (
-              <View style={[styles.proBadgeContainer, {
-                backgroundColor: 'rgba(63, 81, 181, 0.1)',
-                borderColor: '#3F51B5',
-                borderWidth: 1,
-                borderRadius: 12,
-                padding: 16,
-                marginBottom: 20,
-                flexDirection: 'row',
-                alignItems: 'center'
-              }]}>
+            {(screenState.userSubscriptionStatus === 'pro' || screenState.userSubscriptionStatus === 'founding' || screenState.userSubscriptionStatus === 'unlimited') && (
+              <TouchableOpacity 
+                style={[styles.proBadgeContainer, {
+                  backgroundColor: 'rgba(63, 81, 181, 0.1)',
+                  borderColor: '#3F51B5',
+                  borderWidth: 1,
+                  borderRadius: 12,
+                  padding: 16,
+                  marginBottom: 20,
+                  flexDirection: 'row',
+                  alignItems: 'center'
+                }]}
+                onPress={() => {
+                  handleClose();
+                  navigation.navigate('PricingScreen', { initialTab: 'subscription' });
+                }}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Pro Member - View AI Plans"
+                accessibilityHint="Opens the AI add-ons pricing screen"
+              >
                 <View style={[styles.settingIconContainer, { 
                   backgroundColor: '#3F51B5',
                   marginRight: 12
@@ -511,40 +522,35 @@ const SettingsModal = ({
                     maxFontSizeMultiplier={1.5}
                     numberOfLines={1}
                   >
-                    {screenState.userSubscriptionStatus === 'pro' ? 'Lifetime Pro access unlocked' : 'Unlimited AI features enabled'}
+                    {screenState.userSubscriptionStatus === 'founding' 
+                      ? 'Lifetime Pro access unlocked' 
+                      : screenState.userSubscriptionStatus === 'pro'
+                        ? 'Monthly Pro subscription active'
+                        : 'Unlimited AI features enabled'
+                    }
                   </Text>
                 </View>
-                {screenState.userSubscriptionStatus === 'pro' && (
-                  <TouchableOpacity 
-                    style={[styles.upgradeButtonSmall, {
-                      backgroundColor: '#3F51B5',
-                      paddingHorizontal: 10,
-                      paddingVertical: 6,
-                      borderRadius: 20,
-                      marginLeft: 'auto'
-                    }]}
-                    onPress={() => {
-                      handleClose();
-                      navigation.navigate('PricingScreen');
-                    }}
-                    accessible={true}
-                    accessibilityRole="button"
-                    accessibilityLabel="Go Unlimited"
-                    accessibilityHint="Opens the pricing screen to upgrade to unlimited"
-                  >
+                {(screenState.userSubscriptionStatus === 'pro' || screenState.userSubscriptionStatus === 'founding') && (
+                  <View style={[styles.upgradeButtonSmall, {
+                    backgroundColor: '#3F51B5',
+                    paddingHorizontal: 10,
+                    paddingVertical: 6,
+                    borderRadius: 20,
+                    marginLeft: 'auto'
+                  }]}>
                     <Text 
                       style={{ color: '#FFFFFF', fontSize: 12, fontWeight: 'bold' }}
                       maxFontSizeMultiplier={1.3}
                     >
-                      Go Unlimited
+                      AI Plans
                     </Text>
-                  </TouchableOpacity>
+                  </View>
                 )}
-              </View>
+              </TouchableOpacity>
             )}
             
             {/* Refer a Friend Button - For Pro Members */}
-            {(screenState.userSubscriptionStatus === 'pro' || screenState.userSubscriptionStatus === 'unlimited') ? (
+            {(screenState.userSubscriptionStatus === 'pro' || screenState.userSubscriptionStatus === 'founding' || screenState.userSubscriptionStatus === 'unlimited') ? (
               <TouchableOpacity 
                 style={[styles.settingButton, { 
                   backgroundColor: theme.card,
@@ -557,8 +563,8 @@ const SettingsModal = ({
                 }}
                 accessible={true}
                 accessibilityRole="button"
-                accessibilityLabel="Give 500, Get 500"
-                accessibilityHint="Share your referral code for mutual AI credits"
+                accessibilityLabel="Give 1 Month, Get 1 Month"
+                accessibilityHint="Refer a friend for mutual free AI Light"
               >
                 <View style={styles.settingButtonContent}>
                   <View style={[styles.settingIconContainer, { 
@@ -572,14 +578,14 @@ const SettingsModal = ({
                       maxFontSizeMultiplier={1.3}
                       numberOfLines={1}
                     >
-                      Give 500, Get 500
+                      Give 1 Month, Get 1 Month
                     </Text>
                     <Text 
                       style={[styles.settingButtonSubtext, { color: theme.textSecondary }]}
                       maxFontSizeMultiplier={1.5}
                       numberOfLines={2} // Allow 2 lines for this longer description
                     >
-                      Share code for mutual 500 AI credits
+                      Refer a friend for mutual free AI
                     </Text>
                   </View>
                 </View>
@@ -609,7 +615,7 @@ const SettingsModal = ({
                   onPress={triggerShake}
                   accessible={true}
                   accessibilityRole="button"
-                  accessibilityLabel="Give 500, Get 500 - Pro feature"
+                  accessibilityLabel="Give 1 Month, Get 1 Month - Pro feature"
                   accessibilityHint="This feature is only available to Pro members"
                 >
                   <View style={styles.settingButtonContent}>
@@ -632,7 +638,7 @@ const SettingsModal = ({
                           maxFontSizeMultiplier={1.3}
                           numberOfLines={1}
                         >
-                          Give 500, Get 500
+                          Give 1 Month, Get 1 Month
                         </Animated.Text>
                         {showProOnlyText && (
                           <Animated.Text 
@@ -656,7 +662,7 @@ const SettingsModal = ({
                         maxFontSizeMultiplier={1.5}
                         numberOfLines={2} // Allow 2 lines for this longer description
                       >
-                        Share code for mutual 500 AI credits
+                        Refer a friend for mutual free AI
                       </Text>
                     </View>
                   </View>
@@ -958,11 +964,21 @@ const SettingsModal = ({
                   style={[styles.testModeTitle, {
                     color: theme.text,
                     fontWeight: 'bold',
-                    marginBottom: 10
+                    marginBottom: 5
                   }]}
                   maxFontSizeMultiplier={1.3}
                 >
                   Development Testing Options
+                </Text>
+                <Text 
+                  style={[styles.settingButtonSubtext, { 
+                    color: theme.textSecondary,
+                    marginBottom: 10,
+                    fontSize: 12
+                  }]}
+                  maxFontSizeMultiplier={1.2}
+                >
+                  Choose one to test different pricing experiences
                 </Text>
                 
                 {/* Lifetime Member Toggle */}
@@ -979,25 +995,65 @@ const SettingsModal = ({
                         maxFontSizeMultiplier={1.3}
                         numberOfLines={1}
                       >
-                        Test as Lifetime Member
+                        Test as Founder Member
                       </Text>
                       <Text 
                         style={[styles.settingButtonSubtext, { color: theme.textSecondary }]}
                         maxFontSizeMultiplier={1.5}
                         numberOfLines={1}
                       >
-                        Test Pro member status
+                        Test founder status & new card design
+                      </Text>
+                    </View>
+                  </View>
+                  <Switch
+                    value={screenState.userSubscriptionStatus === 'founding'}
+                    onValueChange={onToggleLifetimeMember}
+                    trackColor={{ false: theme.border, true: `#3F51B580` }}
+                    thumbColor={screenState.userSubscriptionStatus === 'founding' ? '#3F51B5' : '#f4f3f4'}
+                    accessible={true}
+                    accessibilityRole="switch"
+                    accessibilityLabel="Test as founder member"
+                    accessibilityState={{ checked: screenState.userSubscriptionStatus === 'founding' }}
+                  />
+                </View>
+                
+                {/* Monthly Subscriber Toggle */}
+                <View style={styles.settingToggleContainer}>
+                  <View style={styles.settingToggleContent}>
+                    <View style={[styles.settingIconContainer, { 
+                      backgroundColor: '#2196F320'
+                    }]}>
+                      <Ionicons name="calendar-outline" size={20} color="#2196F3" />
+                    </View>
+                    <View style={styles.settingTextContainer}>
+                      <Text 
+                        style={[styles.settingButtonText, { color: theme.text }]}
+                        maxFontSizeMultiplier={1.3}
+                        numberOfLines={1}
+                      >
+                        Test as Monthly Subscriber
+                      </Text>
+                      <Text 
+                        style={[styles.settingButtonSubtext, { color: theme.textSecondary }]}
+                        maxFontSizeMultiplier={1.5}
+                        numberOfLines={1}
+                      >
+                        Test monthly subscription experience
                       </Text>
                     </View>
                   </View>
                   <Switch
                     value={screenState.userSubscriptionStatus === 'pro'}
-                    onValueChange={onToggleLifetimeMember}
-                    trackColor={{ false: theme.border, true: `#3F51B580` }}
-                    thumbColor={screenState.userSubscriptionStatus === 'pro' ? '#3F51B5' : '#f4f3f4'}
+                    onValueChange={(value) => {
+                      // Toggle between 'pro' (monthly) and 'free'
+                      onToggleMonthlySubscriber(value);
+                    }}
+                    trackColor={{ false: theme.border, true: `#2196F380` }}
+                    thumbColor={screenState.userSubscriptionStatus === 'pro' ? '#2196F3' : '#f4f3f4'}
                     accessible={true}
                     accessibilityRole="switch"
-                    accessibilityLabel="Test as lifetime member"
+                    accessibilityLabel="Test as monthly subscriber"
                     accessibilityState={{ checked: screenState.userSubscriptionStatus === 'pro' }}
                   />
                 </View>
@@ -1087,7 +1143,7 @@ const SettingsModal = ({
                         maxFontSizeMultiplier={1.5}
                         numberOfLines={1}
                       >
-                        Unlock custom theme colors
+                        Choose any theme colour
                       </Text>
                     </View>
                   </View>

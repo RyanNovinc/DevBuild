@@ -139,3 +139,4 @@ You will see how some things are not counted. You must do the same in the app co
 \
 Do a deeper analysis of this
 - I have no goals created, but even so, when I have tasks toggled and I click to add a task it should say something about yo need to do this before creating a task as it still refercnes before you can add projects
+- Did you do the same for the aiassistsntscreen side menu?

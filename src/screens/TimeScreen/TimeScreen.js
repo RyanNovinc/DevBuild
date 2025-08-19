@@ -74,13 +74,56 @@ const Tab = createMaterialTopTabNavigator();
  * TimeScreen - Rewritten to use React Navigation's Tab Navigator
  * with Free Tier limitations implemented
  */
-const TimeScreen = ({ navigation }) => {
+const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScreenToggle: externalOnFullScreenToggle }) => {
   const { theme } = useTheme();
   const isDarkMode = theme.background === '#000000';
   const insets = useSafeAreaInsets();
   const safeSpacing = useSafeSpacing();
   const { width, height } = useScreenDimensions();
   const isLandscape = useIsLandscape();
+  
+  // Internal fullscreen state management
+  const [internalIsFullscreen, setInternalIsFullscreen] = useState(false);
+  
+  // Use external props if provided, otherwise use internal state
+  const isFullscreen = externalIsFullscreen !== undefined ? externalIsFullscreen : internalIsFullscreen;
+  const onFullScreenToggle = externalOnFullScreenToggle || (() => setInternalIsFullscreen(!internalIsFullscreen));
+  
+  // Handle global fullscreen state for hiding bottom navigation and AI button
+  useEffect(() => {
+    if (isFullscreen) {
+      // Hide AI button
+      if (typeof window !== 'undefined' && window.setAIButtonVisible) {
+        window.setAIButtonVisible(false);
+      }
+      
+      // Set global state to hide bottom tabs
+      if (typeof global !== 'undefined') {
+        global.kanbanFullScreen = true;
+      }
+    } else {
+      // Restore normal state
+      if (typeof window !== 'undefined' && window.setAIButtonVisible) {
+        window.setAIButtonVisible(true);
+      }
+      
+      if (typeof global !== 'undefined') {
+        global.kanbanFullScreen = false;
+      }
+    }
+    
+    // Cleanup function
+    return () => {
+      if (isFullscreen) {
+        if (typeof window !== 'undefined' && window.setAIButtonVisible) {
+          window.setAIButtonVisible(true);
+        }
+        if (typeof global !== 'undefined') {
+          global.kanbanFullScreen = false;
+        }
+      }
+    };
+  }, [isFullscreen]);
   
   // Detect Dynamic Island
   const hasDynamicIsland = insets.top >= 59;
@@ -105,7 +148,13 @@ const TimeScreen = ({ navigation }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [weekDates, setWeekDates] = useState([]);
   const [monthDates, setMonthDates] = useState([]);
-  const [selectedWeekDay, setSelectedWeekDay] = useState(0); // 0-6 (Monday-Sunday)
+  // Initialize selectedWeekDay to today's day (Monday-based: Monday=0, Sunday=6)
+  const todayWeekDay = (() => {
+    const today = new Date();
+    const day = today.getDay();
+    return day === 0 ? 6 : day - 1; // Convert Sunday=0 to Sunday=6, others shift by -1
+  })();
+  const [selectedWeekDay, setSelectedWeekDay] = useState(todayWeekDay);
   const [selectedMonthDay, setSelectedMonthDay] = useState(new Date().getDate() - 1); // 0-based index
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [selectedTab, setSelectedTab] = useState('Day'); // Track active tab
@@ -122,10 +171,25 @@ const TimeScreen = ({ navigation }) => {
   useFocusEffect(
     React.useCallback(() => {
       setSelectedTab('Day');
+      // Reset to today's date
+      setCurrentDate(new Date());
       // Force tab navigator to remount with Day as initial tab
       setTabNavigatorKey(prev => prev + 1);
     }, [])
   );
+  
+  // Cleanup fullscreen state when component unmounts
+  useEffect(() => {
+    return () => {
+      // Always restore normal state when component unmounts
+      if (typeof window !== 'undefined' && window.setAIButtonVisible) {
+        window.setAIButtonVisible(true);
+      }
+      if (typeof global !== 'undefined') {
+        global.kanbanFullScreen = false;
+      }
+    };
+  }, []);
   
   // Animation for button press
   const buttonScale = useRef(new Animated.Value(1)).current;
@@ -445,7 +509,7 @@ const TimeScreen = ({ navigation }) => {
     setCurrentDate(new Date());
   };
   
-  // Handle week day selection (just updates the selected index, doesn't change current date)
+  // Handle week day selection
   const handleWeekDaySelect = (index) => {
     const newDate = new Date(weekDates[index]);
     
@@ -456,9 +520,13 @@ const TimeScreen = ({ navigation }) => {
       return;
     }
     
-    // Only update the selected week day index - no need to change currentDate
-    // This prevents any re-rendering and maintains scroll position
+    // Set flag to indicate we're selecting within the current week
+    // This prevents recalculating week dates in the useEffect
+    isSelectingWithinWeekRef.current = true;
+    
+    // Update both the selected week day and current date
     setSelectedWeekDay(index);
+    setCurrentDate(newDate);
   };
   
   // Handle month day selection
@@ -815,7 +883,11 @@ else if (isPremium && tabName === 'Month') {
               {/* Navigation Controls are now moved here */}
               <View style={[
                 styles.navigationContainer,
-                { paddingHorizontal: scaleWidth(10) }
+                { 
+                  paddingHorizontal: scaleWidth(10),
+                  paddingVertical: isFullscreen ? scaleHeight(5) : scaleHeight(10), // Reduced padding in fullscreen
+                  marginBottom: isFullscreen ? scaleHeight(5) : scaleHeight(10), // Reduced margin in fullscreen
+                }
               ]}>
                 <View style={styles.navigationButtonsRow}>
                   <TouchableOpacity 
@@ -900,60 +972,64 @@ else if (isPremium && tabName === 'Month') {
                     />
                   </TouchableOpacity>
 
-                  {/* Calendar Settings Button */}
-                  <TouchableOpacity 
-                    style={[
-                      styles.calendarButton, 
-                      ensureAccessibleTouchTarget(scaleWidth(40), scaleWidth(40)),
-                      { 
-                        backgroundColor: calendarSettings.syncEnabled || calendarSettings.showCalendarEvents 
-                          ? theme.primary + '20' 
-                          : theme.cardElevated,
-                        borderRadius: scaleWidth(20),
-                        borderWidth: calendarSettings.syncEnabled || calendarSettings.showCalendarEvents ? 1 : 0,
-                        borderColor: calendarSettings.syncEnabled || calendarSettings.showCalendarEvents 
+                  {/* Calendar Settings Button (hidden in fullscreen) */}
+                  {!isFullscreen && (
+                    <TouchableOpacity 
+                      style={[
+                        styles.calendarButton, 
+                        ensureAccessibleTouchTarget(scaleWidth(40), scaleWidth(40)),
+                        { 
+                          backgroundColor: calendarSettings.syncEnabled || calendarSettings.showCalendarEvents 
+                            ? theme.primary + '20' 
+                            : theme.cardElevated,
+                          borderRadius: scaleWidth(20),
+                          borderWidth: calendarSettings.syncEnabled || calendarSettings.showCalendarEvents ? 1 : 0,
+                          borderColor: calendarSettings.syncEnabled || calendarSettings.showCalendarEvents 
+                            ? theme.primary 
+                            : 'transparent',
+                        }
+                      ]} 
+                      onPress={() => setShowCalendarSettings(true)}
+                      accessible={true}
+                      accessibilityRole="button"
+                      accessibilityLabel="Calendar settings"
+                      accessibilityHint="Configure calendar integration settings"
+                    >
+                      <Ionicons 
+                        name="calendar" 
+                        size={scaleWidth(20)} 
+                        color={calendarSettings.syncEnabled || calendarSettings.showCalendarEvents 
                           ? theme.primary 
-                          : 'transparent',
-                      }
-                    ]} 
-                    onPress={() => setShowCalendarSettings(true)}
-                    accessible={true}
-                    accessibilityRole="button"
-                    accessibilityLabel="Calendar settings"
-                    accessibilityHint="Configure calendar integration settings"
-                  >
-                    <Ionicons 
-                      name="calendar" 
-                      size={scaleWidth(20)} 
-                      color={calendarSettings.syncEnabled || calendarSettings.showCalendarEvents 
-                        ? theme.primary 
-                        : theme.text
-                      } 
-                    />
-                  </TouchableOpacity>
+                          : theme.text
+                        } 
+                      />
+                    </TouchableOpacity>
+                  )}
 
-                  {/* Share Button - To the right of navigation buttons */}
-                  <TouchableOpacity 
-                    style={[
-                      styles.shareButton, 
-                      ensureAccessibleTouchTarget(scaleWidth(40), scaleWidth(40)),
-                      { 
-                        backgroundColor: theme.cardElevated,
-                        borderRadius: scaleWidth(20),
-                      }
-                    ]} 
-                    onPress={() => handleSharePDF(selectedTab)}
-                    accessible={true}
-                    accessibilityRole="button"
-                    accessibilityLabel="Generate PDF"
-                    accessibilityHint={`Create a PDF of the current ${selectedTab.toLowerCase()} view`}
-                  >
-                    <Ionicons 
-                      name="document-text-outline" 
-                      size={scaleWidth(20)} 
-                      color={theme.text} 
-                    />
-                  </TouchableOpacity>
+                  {/* Share Button - To the right of navigation buttons (hidden in fullscreen) */}
+                  {!isFullscreen && (
+                    <TouchableOpacity 
+                      style={[
+                        styles.shareButton, 
+                        ensureAccessibleTouchTarget(scaleWidth(40), scaleWidth(40)),
+                        { 
+                          backgroundColor: theme.cardElevated,
+                          borderRadius: scaleWidth(20),
+                        }
+                      ]} 
+                      onPress={() => handleSharePDF(selectedTab)}
+                      accessible={true}
+                      accessibilityRole="button"
+                      accessibilityLabel="Generate PDF"
+                      accessibilityHint={`Create a PDF of the current ${selectedTab.toLowerCase()} view`}
+                    >
+                      <Ionicons 
+                        name="document-text-outline" 
+                        size={scaleWidth(20)} 
+                        color={theme.text} 
+                      />
+                    </TouchableOpacity>
+                  )}
                 </View>
               </View>
               
@@ -989,7 +1065,11 @@ else if (isPremium && tabName === 'Month') {
           {/* Navigation Controls are now moved here */}
           <View style={[
             styles.navigationContainer,
-            { paddingHorizontal: scaleWidth(10) }
+            { 
+              paddingHorizontal: scaleWidth(10),
+              paddingVertical: isFullscreen ? scaleHeight(5) : scaleHeight(10), // Reduced padding in fullscreen
+              marginBottom: isFullscreen ? scaleHeight(5) : scaleHeight(10), // Reduced margin in fullscreen
+            }
           ]}>
             <View style={styles.navigationButtonsRow}>
               <TouchableOpacity 
@@ -1074,60 +1154,64 @@ else if (isPremium && tabName === 'Month') {
                 />
               </TouchableOpacity>
 
-              {/* Calendar Settings Button */}
-              <TouchableOpacity 
-                style={[
-                  styles.calendarButton, 
-                  ensureAccessibleTouchTarget(scaleWidth(40), scaleWidth(40)),
-                  { 
-                    backgroundColor: calendarSettings.syncEnabled || calendarSettings.showCalendarEvents 
-                      ? theme.primary + '20' 
-                      : theme.cardElevated,
-                    borderRadius: scaleWidth(20),
-                    borderWidth: calendarSettings.syncEnabled || calendarSettings.showCalendarEvents ? 1 : 0,
-                    borderColor: calendarSettings.syncEnabled || calendarSettings.showCalendarEvents 
+              {/* Calendar Settings Button (hidden in fullscreen) */}
+              {!isFullscreen && (
+                <TouchableOpacity 
+                  style={[
+                    styles.calendarButton, 
+                    ensureAccessibleTouchTarget(scaleWidth(40), scaleWidth(40)),
+                    { 
+                      backgroundColor: calendarSettings.syncEnabled || calendarSettings.showCalendarEvents 
+                        ? theme.primary + '20' 
+                        : theme.cardElevated,
+                      borderRadius: scaleWidth(20),
+                      borderWidth: calendarSettings.syncEnabled || calendarSettings.showCalendarEvents ? 1 : 0,
+                      borderColor: calendarSettings.syncEnabled || calendarSettings.showCalendarEvents 
+                        ? theme.primary 
+                        : 'transparent',
+                    }
+                  ]} 
+                  onPress={() => setShowCalendarSettings(true)}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel="Calendar settings"
+                  accessibilityHint="Configure calendar integration settings"
+                >
+                  <Ionicons 
+                    name="calendar" 
+                    size={scaleWidth(20)} 
+                    color={calendarSettings.syncEnabled || calendarSettings.showCalendarEvents 
                       ? theme.primary 
-                      : 'transparent',
-                  }
-                ]} 
-                onPress={() => setShowCalendarSettings(true)}
-                accessible={true}
-                accessibilityRole="button"
-                accessibilityLabel="Calendar settings"
-                accessibilityHint="Configure calendar integration settings"
-              >
-                <Ionicons 
-                  name="calendar" 
-                  size={scaleWidth(20)} 
-                  color={calendarSettings.syncEnabled || calendarSettings.showCalendarEvents 
-                    ? theme.primary 
-                    : theme.text
-                  } 
-                />
-              </TouchableOpacity>
+                      : theme.text
+                    } 
+                  />
+                </TouchableOpacity>
+              )}
 
-              {/* Share Button - To the left of navigation buttons */}
-              <TouchableOpacity 
-                style={[
-                  styles.shareButton, 
-                  ensureAccessibleTouchTarget(scaleWidth(40), scaleWidth(40)),
-                  { 
-                    backgroundColor: theme.cardElevated,
-                    borderRadius: scaleWidth(20),
-                  }
-                ]} 
-                onPress={() => handleSharePDF(selectedTab)}
-                accessible={true}
-                accessibilityRole="button"
-                accessibilityLabel="Generate PDF"
-                accessibilityHint="Create a PDF of the current week view"
-              >
-                <Ionicons 
-                  name="document-text-outline" 
-                  size={scaleWidth(20)} 
-                  color={theme.text} 
-                />
-              </TouchableOpacity>
+              {/* Share Button - To the left of navigation buttons (hidden in fullscreen) */}
+              {!isFullscreen && (
+                <TouchableOpacity 
+                  style={[
+                    styles.shareButton, 
+                    ensureAccessibleTouchTarget(scaleWidth(40), scaleWidth(40)),
+                    { 
+                      backgroundColor: theme.cardElevated,
+                      borderRadius: scaleWidth(20),
+                    }
+                  ]} 
+                  onPress={() => handleSharePDF(selectedTab)}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel="Generate PDF"
+                  accessibilityHint="Create a PDF of the current week view"
+                >
+                  <Ionicons 
+                    name="document-text-outline" 
+                    size={scaleWidth(20)} 
+                    color={theme.text} 
+                  />
+                </TouchableOpacity>
+              )}
             </View>
           </View>
           
@@ -1163,7 +1247,11 @@ else if (isPremium && tabName === 'Month') {
           {/* Navigation Controls are now moved here */}
           <View style={[
             styles.navigationContainer,
-            { paddingHorizontal: scaleWidth(10) }
+            { 
+              paddingHorizontal: scaleWidth(10),
+              paddingVertical: isFullscreen ? scaleHeight(5) : scaleHeight(10), // Reduced padding in fullscreen
+              marginBottom: isFullscreen ? scaleHeight(5) : scaleHeight(10), // Reduced margin in fullscreen
+            }
           ]}>
             <View style={styles.navigationButtonsRow}>
               <TouchableOpacity 
@@ -1248,60 +1336,64 @@ else if (isPremium && tabName === 'Month') {
                 />
               </TouchableOpacity>
 
-              {/* Calendar Settings Button */}
-              <TouchableOpacity 
-                style={[
-                  styles.calendarButton, 
-                  ensureAccessibleTouchTarget(scaleWidth(40), scaleWidth(40)),
-                  { 
-                    backgroundColor: calendarSettings.syncEnabled || calendarSettings.showCalendarEvents 
-                      ? theme.primary + '20' 
-                      : theme.cardElevated,
-                    borderRadius: scaleWidth(20),
-                    borderWidth: calendarSettings.syncEnabled || calendarSettings.showCalendarEvents ? 1 : 0,
-                    borderColor: calendarSettings.syncEnabled || calendarSettings.showCalendarEvents 
+              {/* Calendar Settings Button (hidden in fullscreen) */}
+              {!isFullscreen && (
+                <TouchableOpacity 
+                  style={[
+                    styles.calendarButton, 
+                    ensureAccessibleTouchTarget(scaleWidth(40), scaleWidth(40)),
+                    { 
+                      backgroundColor: calendarSettings.syncEnabled || calendarSettings.showCalendarEvents 
+                        ? theme.primary + '20' 
+                        : theme.cardElevated,
+                      borderRadius: scaleWidth(20),
+                      borderWidth: calendarSettings.syncEnabled || calendarSettings.showCalendarEvents ? 1 : 0,
+                      borderColor: calendarSettings.syncEnabled || calendarSettings.showCalendarEvents 
+                        ? theme.primary 
+                        : 'transparent',
+                    }
+                  ]} 
+                  onPress={() => setShowCalendarSettings(true)}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel="Calendar settings"
+                  accessibilityHint="Configure calendar integration settings"
+                >
+                  <Ionicons 
+                    name="calendar" 
+                    size={scaleWidth(20)} 
+                    color={calendarSettings.syncEnabled || calendarSettings.showCalendarEvents 
                       ? theme.primary 
-                      : 'transparent',
-                  }
-                ]} 
-                onPress={() => setShowCalendarSettings(true)}
-                accessible={true}
-                accessibilityRole="button"
-                accessibilityLabel="Calendar settings"
-                accessibilityHint="Configure calendar integration settings"
-              >
-                <Ionicons 
-                  name="calendar" 
-                  size={scaleWidth(20)} 
-                  color={calendarSettings.syncEnabled || calendarSettings.showCalendarEvents 
-                    ? theme.primary 
-                    : theme.text
-                  } 
-                />
-              </TouchableOpacity>
+                      : theme.text
+                    } 
+                  />
+                </TouchableOpacity>
+              )}
 
-              {/* Share Button - To the right of navigation buttons */}
-              <TouchableOpacity 
-                style={[
-                  styles.shareButton, 
-                  ensureAccessibleTouchTarget(scaleWidth(40), scaleWidth(40)),
-                  { 
-                    backgroundColor: theme.cardElevated,
-                    borderRadius: scaleWidth(20),
-                  }
-                ]} 
-                onPress={() => handleSharePDF(selectedTab)}
-                accessible={true}
-                accessibilityRole="button"
-                accessibilityLabel="Generate PDF"
-                accessibilityHint="Create a PDF of the current month view"
-              >
-                <Ionicons 
-                  name="document-text-outline" 
-                  size={scaleWidth(20)} 
-                  color={theme.text} 
-                />
-              </TouchableOpacity>
+              {/* Share Button - To the right of navigation buttons (hidden in fullscreen) */}
+              {!isFullscreen && (
+                <TouchableOpacity 
+                  style={[
+                    styles.shareButton, 
+                    ensureAccessibleTouchTarget(scaleWidth(40), scaleWidth(40)),
+                    { 
+                      backgroundColor: theme.cardElevated,
+                      borderRadius: scaleWidth(20),
+                    }
+                  ]} 
+                  onPress={() => handleSharePDF(selectedTab)}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel="Generate PDF"
+                  accessibilityHint="Create a PDF of the current month view"
+                >
+                  <Ionicons 
+                    name="document-text-outline" 
+                    size={scaleWidth(20)} 
+                    color={theme.text} 
+                  />
+                </TouchableOpacity>
+              )}
             </View>
           </View>
           
@@ -1339,20 +1431,53 @@ else if (isPremium && tabName === 'Month') {
       ]}
       edges={['bottom', 'left', 'right']} // Don't include 'top' to handle Dynamic Island manually
     >
-      {/* Date Display - At the top */}
+      {/* Header with Date and Fullscreen Button */}
       <View style={[
         styles.dateDisplay,
         {
-          paddingTop: hasDynamicIsland ? scaleHeight(5) : scaleHeight(10)
+          paddingTop: hasDynamicIsland ? scaleHeight(5) : scaleHeight(10),
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingHorizontal: 16,
+          paddingVertical: isFullscreen ? 4 : 8, // Reduced padding to bring navigation closer
+          position: 'relative',
+          marginBottom: isFullscreen ? 2 : 5, // Smaller margin in fullscreen
         }
       ]}>
+        {/* Fullscreen Button - Left side of flex row */}
+        <TouchableOpacity 
+          style={{
+            padding: 8,
+            zIndex: 2
+          }}
+          onPress={onFullScreenToggle}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+          accessibilityHint={isFullscreen ? "Exit fullscreen mode" : "Enter fullscreen mode"}
+        >
+          <Ionicons 
+            name={isFullscreen ? "contract" : "expand"} 
+            size={24} 
+            color={theme.text} 
+          />
+        </TouchableOpacity>
+
+        {/* Date Text - Absolutely centered, smaller in fullscreen */}
         <Text 
           style={[
             styles.dateText, 
             { 
               color: isToday(currentDate) ? theme.primary : theme.text,
               fontWeight: isToday(currentDate) ? '700' : '600',
-              fontSize: scaleFontSize(18)
+              fontSize: isFullscreen ? scaleFontSize(14) : scaleFontSize(18), // Smaller in fullscreen
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              textAlign: 'center',
+              zIndex: 1,
+              opacity: isFullscreen ? 0.8 : 1 // Slightly faded in fullscreen
             }
           ]}
           maxFontSizeMultiplier={1.3}
@@ -1360,6 +1485,11 @@ else if (isPremium && tabName === 'Month') {
         >
           {getFormattedDate(selectedTab)}
         </Text>
+
+        {/* Spacer for balance (invisible) */}
+        <View style={{ padding: 8, opacity: 0 }}>
+          <Ionicons name="expand" size={24} color="transparent" />
+        </View>
       </View>
 
       {/* Tab Navigator - Below date */}
@@ -1376,7 +1506,8 @@ else if (isPremium && tabName === 'Month') {
               borderRadius: scaleWidth(25),
               marginHorizontal: scaleWidth(20),
               marginBottom: 0,
-              height: scaleHeight(44),
+              height: isFullscreen ? 0 : scaleHeight(44), // Hide tab bar in fullscreen
+              overflow: 'hidden', // Ensure content is hidden when height is 0
             },
             tabBarIndicatorStyle: { 
               backgroundColor: theme.primary,
@@ -1438,24 +1569,40 @@ else if (isPremium && tabName === 'Month') {
         </Tab.Navigator>
       </NavigationContainer>
 
-      {/* Zoom Controls - Moved here, below tabs */}
+
+      {/* Floating Zoom Controls - Bottom center */}
       {selectedTab === 'Day' && (
-        <View style={[
-          styles.zoomControls, 
-          { 
-            backgroundColor: theme.cardElevated,
-            borderColor: theme.border,
-            marginHorizontal: scaleWidth(20),
-            marginTop: scaleHeight(8),
-            borderRadius: scaleWidth(24),
-          }
-        ]}>
+        <View style={{
+          position: 'absolute',
+          bottom: isFullscreen 
+            ? insets.bottom - scaleHeight(10) // Higher in fullscreen
+            : insets.bottom - scaleHeight(25), // Lower in normal mode
+          left: 0,
+          right: 0,
+          alignItems: 'center',
+          zIndex: 100,
+        }}>
+          <View style={[
+            styles.zoomControls, 
+            { 
+              backgroundColor: '#000000', // Black background
+              borderColor: '#404040', // Lighter grey border for better visibility
+              borderRadius: scaleWidth(24),
+              paddingHorizontal: scaleWidth(12),
+              minWidth: scaleWidth(140), // Fixed compact width
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.3,
+              shadowRadius: 8,
+              elevation: 8,
+            }
+          ]}>
           <TouchableOpacity 
             style={[
               styles.zoomButton, 
               ensureAccessibleTouchTarget(scaleWidth(36), scaleWidth(36)),
               { 
-                backgroundColor: theme.background,
+                backgroundColor: '#1C1C1E', // Very dark button background
                 borderRadius: scaleWidth(18),
               }
             ]}
@@ -1469,7 +1616,7 @@ else if (isPremium && tabName === 'Month') {
               style={[
                 styles.zoomButtonText, 
                 { 
-                  color: theme.text,
+                  color: '#FFFFFF', // White text for dark theme
                   fontSize: scaleFontSize(24),
                 }
               ]}
@@ -1482,7 +1629,7 @@ else if (isPremium && tabName === 'Month') {
             style={[
               styles.zoomLevelText, 
               { 
-                color: theme.text,
+                color: '#FFFFFF', // White text for dark theme
                 fontSize: scaleFontSize(16),
               }
             ]}
@@ -1497,7 +1644,7 @@ else if (isPremium && tabName === 'Month') {
               styles.zoomButton, 
               ensureAccessibleTouchTarget(scaleWidth(36), scaleWidth(36)),
               { 
-                backgroundColor: theme.background,
+                backgroundColor: '#1C1C1E', // Very dark button background
                 borderRadius: scaleWidth(18),
               }
             ]}
@@ -1511,7 +1658,7 @@ else if (isPremium && tabName === 'Month') {
               style={[
                 styles.zoomButtonText, 
                 { 
-                  color: theme.text,
+                  color: '#FFFFFF', // White text for dark theme
                   fontSize: scaleFontSize(24),
                 }
               ]}
@@ -1519,11 +1666,13 @@ else if (isPremium && tabName === 'Month') {
               +
             </Text>
           </TouchableOpacity>
+          </View>
         </View>
       )}
 
-      {/* Floating Add Button - Left side like GoalsScreen */}
-      <Animated.View 
+      {/* Floating Add Button - Left side like GoalsScreen (hidden in fullscreen) */}
+      {!isFullscreen && (
+        <Animated.View 
         style={[
           styles.floatingAddButton, 
           {
@@ -1561,6 +1710,7 @@ else if (isPremium && tabName === 'Month') {
           />
         </TouchableOpacity>
       </Animated.View>
+      )}
       
       {/* PDF Generation Loading Modal */}
       {isGeneratingPDF && (
@@ -1587,7 +1737,7 @@ else if (isPremium && tabName === 'Month') {
                 style={[
                   styles.loadingText, 
                   { 
-                    color: theme.text,
+                    color: '#FFFFFF', // White text for dark theme
                     fontSize: scaleFontSize(16),
                   }
                 ]}
@@ -1618,6 +1768,8 @@ else if (isPremium && tabName === 'Month') {
         visible={showCalendarSettings}
         onClose={() => setShowCalendarSettings(false)}
       />
+
+
     </SafeAreaView>
   );
 };
@@ -1637,6 +1789,7 @@ const styles = StyleSheet.create({
     // fontSize set in component
     // fontWeight set in component
   },
+  
   
   // Navigation container moved inside scrollview
   navigationContainer: {

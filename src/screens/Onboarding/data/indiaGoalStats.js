@@ -60,14 +60,14 @@ export const INDIAN_GOAL_STATS = {
         figure: "₹12 LPA",
         description: "Indian technology professionals earn ₹12+ lakhs annually compared to ₹6 lakhs for non-tech roles - a 100% salary premium that provides career security and growth opportunities. Tech skills remain recession-proof with consistent demand across industries.",
         source: "NASSCOM IT Industry Report",
-        link: "https://www.nasscom.in/knowledge-center/publications/technology-sector-india-2024",
+        link: "https://www.nasscom.in/knowledge-centre/publications/technology-sector-india-2024",
         details: {
           title: "Technology Sector in India 2024",
           publication: "NASSCOM",
           authors: "NASSCOM Research Team",
           date: "2024",
           description: "India's IT sector employs 5+ million professionals with average salaries of ₹12+ lakhs for experienced professionals compared to ₹6 lakhs across other sectors. The sector demonstrates consistent growth and resilience with strong demand for skilled professionals across all technology domains.",
-          link: "https://www.nasscom.in/knowledge-center/publications/technology-sector-india-2024"
+          link: "https://www.nasscom.in/knowledge-centre/publications/technology-sector-india-2024"
         }
       },
       {
@@ -96,7 +96,7 @@ export const INDIAN_GOAL_STATS = {
           publication: "TechGig",
           authors: "TechGig Research Team",
           date: "2024",
-          description: "Indian technology companies increasingly prioritize practical skills over formal degrees, with 76% actively hiring candidates who demonstrate competency through projects and certifications. This trend opens tech careers to professionals from diverse educational backgrounds.",
+          description: "Indian technology companies increasingly prioritise practical skills over formal degrees, with 76% actively hiring candidates who demonstrate competency through projects and certifications. This trend opens tech careers to professionals from diverse educational backgrounds.",
           link: "https://www.techgig.com/"
         }
       }
@@ -190,7 +190,7 @@ export const INDIAN_GOAL_STATS = {
           publication: "KPMG India",
           authors: "KPMG Advisory Team",
           date: "2024",
-          description: "Analysis of Indian workforce trends shows management roles provide significantly higher job security with 45% lower layoff risk, as organizations prioritize retaining leadership talent during challenging economic periods.",
+          description: "Analysis of Indian workforce trends shows management roles provide significantly higher job security with 45% lower layoff risk, as organizations prioritise retaining leadership talent during challenging economic periods.",
           link: "https://home.kpmg/in/en/home/insights/2024/future-of-work.html"
         }
       }
@@ -415,14 +415,14 @@ export const INDIAN_GOAL_STATS = {
       figure: "15%",
       description: "Indian professionals investing in skill development through online platforms like Coursera, Udemy, and BYJU's FutureSchool achieve 15% annual salary growth compared to 6% for non-learners. With India's digital skills gap creating opportunities, continuous learning provides measurable career acceleration.",
       source: "NASSCOM Skills Development Report & Coursera India Impact Study",
-      link: "https://www.nasscom.in/knowledge-center/publications/digital-skills-report-india-2024",
+      link: "https://www.nasscom.in/knowledge-centre/publications/digital-skills-report-india-2024",
       details: {
         title: "Digital Skills Impact on Indian Careers",
         publication: "NASSCOM & Coursera India",
         authors: "NASSCOM Research Division",
         date: "2024",
         description: "Comprehensive analysis shows 15% salary growth for professionals completing skill development programs versus 6% baseline. Digital transformation creates 65 million new jobs requiring advanced skills, making continuous learning essential for career security.",
-        link: "https://www.nasscom.in/knowledge-center/publications/digital-skills-report-india-2024"
+        link: "https://www.nasscom.in/knowledge-centre/publications/digital-skills-report-india-2024"
       }
     },
     "Learn New Skill": {
@@ -560,7 +560,7 @@ export const INDIAN_GOAL_STATS = {
     "Organize Living Space": {
       title: "Organized Indian Workspaces Increase Productivity by 47% Despite Space Constraints",
       figure: "47%",
-      description: "IIT Bombay ergonomics research shows Indian professionals with organized workspaces achieve 47% productivity gains even in small spaces. Effective space utilization strategies adapted to Indian housing and office constraints provide significant performance advantages.",
+      description: "IIT Bombay ergonomics research shows Indian professionals with organised workspaces achieve 47% productivity gains even in small spaces. Effective space utilization strategies adapted to Indian housing and office constraints provide significant performance advantages.",
       source: "IIT Bombay Workspace Optimization Study",
       link: "https://www.iitb.ac.in/",
       details: {
@@ -568,7 +568,7 @@ export const INDIAN_GOAL_STATS = {
         publication: "Indian Institute of Technology Bombay",
         authors: "IIT Industrial Design Research Team",
         date: "2024",
-        description: "Research specifically addresses Indian workspace constraints, showing 47% productivity improvement through strategic organization techniques adapted to smaller spaces typical in Indian homes and offices.",
+        description: "Research specifically addresses Indian workspace constraints, showing 47% productivity improvement through strategic organisation techniques adapted to smaller spaces typical in Indian homes and offices.",
         link: "https://www.iitb.ac.in/"
       }
     },
@@ -838,7 +838,7 @@ const mapGoalNameToStatKey = (goalName) => {
   }
   
   // Community & Environment domain mappings (new)
-  if (goalLower.includes('organized') || goalLower.includes('productive spaces')) {
+  if (goalLower.includes('organised') || goalLower.includes('productive spaces')) {
     return 'Create Organized, Productive Spaces';
   }
   if (goalLower.includes('routine') || goalLower.includes('daily')) {

@@ -92,7 +92,7 @@ const UpdateLifeDirectionModal = ({
     if (!lifeDirection.trim()) {
       Alert.alert(
         "Cannot Save Empty Direction",
-        "Please enter your strategic direction statement.",
+        "Please enter your life direction statement.",
         [{ text: "OK" }]
       );
       return;
@@ -241,7 +241,7 @@ const UpdateLifeDirectionModal = ({
               <View style={styles.infoCard}>
                 <Ionicons name="compass" size={24} color={theme.primary} style={styles.infoIcon} />
                 <Text style={[styles.infoText, { color: theme.text }]}>
-                  Your strategic direction statement guides your goals and priorities. What's your purpose? What matters most to you?
+                  Your life direction statement guides your goals and priorities. What's your purpose? What matters most to you?
                 </Text>
               </View>
 

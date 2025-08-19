@@ -13,7 +13,9 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import DocumentService from '../../services/DocumentService';
 import { APP_CONTEXT_DOCUMENT_ID } from '../../services/AppSummaryService';
+import AppSummaryService from '../../services/AppSummaryService';
 import SimpleMarkdownRenderer from '../../components/SimpleMarkdownRenderer';
+import { useAppContext } from '../../context/AppContext';
 
 /**
  * DocumentPreviewModal component for viewing document details and content
@@ -29,29 +31,59 @@ const DocumentPreviewModal = ({ visible, theme, document, onClose, onDelete }) =
   const [isLoading, setIsLoading] = useState(false);
   const [contentError, setContentError] = useState(null);
   
+  // Get app context for regenerating system documents
+  const appContext = useAppContext();
+  
   // Check if this is the system document
   const isSystemDocument = document?.isSystemDocument === true || document?.id === APP_CONTEXT_DOCUMENT_ID;
   
   // Load document content when document changes or modal becomes visible
   useEffect(() => {
-    if (visible && document && document.openaiFileId) {
+    if (visible && document && (document.openaiFileId || isSystemDocument)) {
       loadDocumentContent();
     } else {
       // Reset state when modal is closed
       setDocumentContent(null);
       setContentError(null);
     }
-  }, [visible, document]);
+  }, [visible, document, isSystemDocument]);
   
   // Load document content from service
   const loadDocumentContent = async () => {
-    if (!document || !document.openaiFileId) return;
+    if (!document || (!document.openaiFileId && !isSystemDocument)) return;
     
     try {
       setIsLoading(true);
       setContentError(null);
       
-      const content = await DocumentService.getProcessedDocumentContent(document.openaiFileId);
+      // For system documents, always regenerate fresh content to ensure it's up-to-date
+      if (isSystemDocument && appContext && !appContext.isLoading) {
+        console.log('🔄 Regenerating fresh app context for preview');
+        
+        const appData = {
+          goals: appContext.goals || [],
+          projects: appContext.projects || [],
+          tasks: appContext.tasks || [],
+          settings: appContext.settings || {},
+          userCountry: appContext.userCountry
+        };
+        
+        // Generate fresh summary
+        const freshContent = await AppSummaryService.generateAppSummary(appData);
+        
+        // Update the stored document
+        await DocumentService.updateAppContextDocument(freshContent);
+        
+        // Use the fresh content directly
+        setDocumentContent(freshContent);
+        console.log('✅ Fresh app context content loaded for preview');
+        return;
+      }
+      
+      // For regular documents or when app context is loading, use stored content
+      // Use document.id for system documents, openaiFileId for regular documents
+      const documentIdentifier = isSystemDocument ? document.id : document.openaiFileId;
+      const content = await DocumentService.getProcessedDocumentContent(documentIdentifier);
       
       if (content) {
         setDocumentContent(content);

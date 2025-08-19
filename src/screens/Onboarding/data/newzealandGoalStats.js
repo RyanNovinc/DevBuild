@@ -273,7 +273,7 @@ export const NEW_ZEALAND_GOAL_STATS = {
           publication: "Sorted.org.nz & Investment Platform Research",
           authors: "Commission for Financial Capability",
           date: "2024",
-          description: "New Zealand investment platforms have revolutionized portfolio access with minimum investments as low as NZ$50. These platforms provide diversified portfolio management, international exposure, and automated investing tools enabling systematic wealth building for all income levels. Low-fee structures maximize returns for beginning investors.",
+          description: "New Zealand investment platforms have revolutionized portfolio access with minimum investments as low as NZ$50. These platforms provide diversified portfolio management, international exposure, and automated investing tools enabling systematic wealth building for all income levels. Low-fee structures maximise returns for beginning investors.",
           link: "https://www.sorted.org.nz/"
         }
       },
@@ -677,7 +677,7 @@ export const NEW_ZEALAND_GOAL_STATS = {
         publication: "University of Otago",
         authors: "Environmental Psychology Research Team",
         date: "2024",
-        description: "Research shows 51% decision-making improvement through nature-integrated mindfulness practices unique to New Zealand's environment, providing culturally grounded approaches to professional development that utilize the country's natural advantages.",
+        description: "Research shows 51% decision-making improvement through nature-integrated mindfulness practices unique to New Zealand's environment, providing culturally grounded approaches to professional development that utilise the country's natural advantages.",
         link: "https://www.otago.ac.nz/"
       }
     }
@@ -688,7 +688,7 @@ export const NEW_ZEALAND_GOAL_STATS = {
     "Organize Living Space": {
       title: "New Zealand Green Workplace Design Increases Productivity by 41% Through Sustainability Focus",
       figure: "41%",
-      description: "New Zealand professionals working in organized, environmentally sustainable spaces achieve 41% higher productivity levels. New Zealand's leadership in green building and sustainability creates optimal workplace environments that enhance both performance and environmental consciousness.",
+      description: "New Zealand professionals working in organised, environmentally sustainable spaces achieve 41% higher productivity levels. New Zealand's leadership in green building and sustainability creates optimal workplace environments that enhance both performance and environmental consciousness.",
       source: "New Zealand Green Building Council & Building Research Association",
       link: "https://www.nzgbc.org.nz/",
       details: {
@@ -696,7 +696,7 @@ export const NEW_ZEALAND_GOAL_STATS = {
         publication: "New Zealand Green Building Council",
         authors: "Sustainable Design Research Team",
         date: "2024",
-        description: "Research demonstrates 41% productivity improvement through organized, sustainable workspace design, with New Zealand's green building leadership providing frameworks for creating optimal work environments that enhance performance while supporting environmental values.",
+        description: "Research demonstrates 41% productivity improvement through organised, sustainable workspace design, with New Zealand's green building leadership providing frameworks for creating optimal work environments that enhance performance while supporting environmental values.",
         link: "https://www.nzgbc.org.nz/"
       }
     },
@@ -718,7 +718,7 @@ export const NEW_ZEALAND_GOAL_STATS = {
     "Declutter and Simplify": {
       title: "Kiwi Flexible Work Culture Enables 46% More Productive Daily Routines Through Simplified Living",
       figure: "46%",
-      description: "New Zealand's progressive flexible work policies combined with minimalist living principles enable professionals to establish 46% more effective daily routines. New Zealand's cultural emphasis on work-life balance and environmental consciousness supports simplified approaches that optimize both productivity and wellbeing.",
+      description: "New Zealand's progressive flexible work policies combined with minimalist living principles enable professionals to establish 46% more effective daily routines. New Zealand's cultural emphasis on work-life balance and environmental consciousness supports simplified approaches that optimise both productivity and wellbeing.",
       source: "4 Day Week Global & New Zealand Productivity Commission",
       link: "https://www.4dayweek.com/",
       details: {
@@ -821,7 +821,7 @@ const mapGoalNameToStatKey = (goalName) => {
   }
   
   // Community & Environment domain mappings (new)
-  if (goalLower.includes('organized') || goalLower.includes('productive spaces')) {
+  if (goalLower.includes('organised') || goalLower.includes('productive spaces')) {
     return 'Create Organized, Productive Spaces';
   }
   if (goalLower.includes('routine') || goalLower.includes('daily')) {

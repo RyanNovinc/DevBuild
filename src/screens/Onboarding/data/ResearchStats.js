@@ -1,8 +1,8 @@
 // src/screens/Onboarding/data/ResearchStats.js
-// Research statistics organized by domain and goal for the LifeCompass app
+// Research statistics organised by domain and goal for the LifeCompass app
 
 /**
- * This file contains evidence-based statistics organized in three levels:
+ * This file contains evidence-based statistics organised in three levels:
  * 1. General stats - relevant to all users regardless of domain/goal
  * 2. Domain stats - specific to each of the 8 domains
  * 3. Goal stats - specific to individual goals within domains
@@ -110,7 +110,7 @@ export const RESEARCH_STATS = {
           publication: "LinkedIn Workplace Learning Report",
           authors: "LinkedIn Learning",
           date: "2023",
-          description: "Organizations with strong learning cultures experience 57% higher employee retention rates. Companies providing career advancement opportunities save an estimated $8,053 per employee annually through increased productivity ($6,521), reduced turnover ($916), and lower healthcare costs ($616). When employees influence their learning paths, they're 8x more likely to advance within their organization and 5x more likely to be high performers.",
+          description: "Organizations with strong learning cultures experience 57% higher employee retention rates. Companies providing career advancement opportunities save an estimated $8,053 per employee annually through increased productivity ($6,521), reduced turnover ($916), and lower healthcare costs ($616). When employees influence their learning paths, they're 8x more likely to advance within their organisation and 5x more likely to be high performers.",
           link: "https://learning.linkedin.com/resources/workplace-learning-report"
         }
       },
@@ -140,7 +140,7 @@ export const RESEARCH_STATS = {
           publication: "World Economic Forum Future of Jobs Report",
           authors: "World Economic Forum",
           date: "2023",
-          description: "The accelerating pace of technological change is creating a significant skills gap across industries. Organizations that prioritize continuous learning outperform peers by providing employees with the skills needed to adapt to changing job requirements. Self-directed learning shows particularly strong outcomes, with employees who influence their learning paths being 8x more likely to advance within their organization.",
+          description: "The accelerating pace of technological change is creating a significant skills gap across industries. Organizations that prioritise continuous learning outperform peers by providing employees with the skills needed to adapt to changing job requirements. Self-directed learning shows particularly strong outcomes, with employees who influence their learning paths being 8x more likely to advance within their organisation.",
           link: "https://www.getbridge.com/blog/lms/proving-roi-learning-development-stats/"
         }
       }
@@ -461,7 +461,7 @@ export const RESEARCH_STATS = {
           publication: "Journal of Neuroscience",
           authors: "Princeton University Neuroscience Institute",
           date: "2011",
-          description: "Princeton University research demonstrates that disorganization directly hinders focus and cognitive function. Clean, organized environments improve thought processes, confidence, and task performance. The impact extends beyond productivity - cluttered spaces negatively affect mood, stress levels, memory, and even the ability to process facial expressions.",
+          description: "Princeton University research demonstrates that disorganization directly hinders focus and cognitive function. Clean, organised environments improve thought processes, confidence, and task performance. The impact extends beyond productivity - cluttered spaces negatively affect mood, stress levels, memory, and even the ability to process facial expressions.",
           link: "https://www.balancecoachingconsulting.com/articles/marie-kondo-philosophy-for-mental-wellness"
         }
       },
@@ -476,7 +476,7 @@ export const RESEARCH_STATS = {
           publication: "Marie Kondo Research",
           authors: "Marie Kondo Research Team",
           date: "2022",
-          description: "Research confirms that organization methods like the KonMari Method are 'more psychological than practical,' with measurable mental health benefits from decluttering. Physical clutter creates mental and emotional clutter, with organized spaces facilitating clearer thought processes and increased confidence. 86% of employees prefer working alone in organized spaces for maximum productivity, highlighting the importance of personalized, organized workspace.",
+          description: "Research confirms that organisation methods like the KonMari Method are 'more psychological than practical,' with measurable mental health benefits from decluttering. Physical clutter creates mental and emotional clutter, with organised spaces facilitating clearer thought processes and increased confidence. 86% of employees prefer working alone in organised spaces for maximum productivity, highlighting the importance of personalized, organised workspace.",
           link: "https://www.balancecoachingconsulting.com/articles/marie-kondo-philosophy-for-mental-wellness"
         }
       },
@@ -505,7 +505,7 @@ export const RESEARCH_STATS = {
       {
         title: "Career Development ROI",
         figure: "8x",
-        description: "Employees who direct their own professional development are 8x more likely to advance within their organization.",
+        description: "Employees who direct their own professional development are 8x more likely to advance within their organisation.",
         source: "LinkedIn Workplace Learning Report",
         link: "https://www.ntechworkforce.com/news/whats-the-roi-of-career-advancement-building-the-business-case",
         details: {
@@ -513,7 +513,7 @@ export const RESEARCH_STATS = {
           publication: "LinkedIn Workplace Learning Report",
           authors: "LinkedIn Learning",
           date: "2023",
-          description: "Self-directed professional development shows particularly strong outcomes, with employees who influence their learning paths being 8x more likely to advance within their organization and 5x more likely to be high performers. Organizations that establish clear advancement pathways experience 34% higher retention of top talent and 28% higher productivity metrics.",
+          description: "Self-directed professional development shows particularly strong outcomes, with employees who influence their learning paths being 8x more likely to advance within their organisation and 5x more likely to be high performers. Organizations that establish clear advancement pathways experience 34% higher retention of top talent and 28% higher productivity metrics.",
           link: "https://www.ntechworkforce.com/news/whats-the-roi-of-career-advancement-building-the-business-case"
         }
       }
@@ -884,7 +884,7 @@ export const RESEARCH_STATS = {
           publication: "Journal of Neuroscience",
           authors: "Princeton University Neuroscience Institute",
           date: "2011",
-          description: "Princeton University research demonstrates that disorganization directly hinders focus and cognitive function. Clean, organized environments improve thought processes, confidence, and task performance. The impact extends beyond productivity - cluttered spaces negatively affect mood, stress levels, memory, and even the ability to process facial expressions.",
+          description: "Princeton University research demonstrates that disorganization directly hinders focus and cognitive function. Clean, organised environments improve thought processes, confidence, and task performance. The impact extends beyond productivity - cluttered spaces negatively affect mood, stress levels, memory, and even the ability to process facial expressions.",
           link: "https://www.balancecoachingconsulting.com/articles/marie-kondo-philosophy-for-mental-wellness"
         }
       }
@@ -910,7 +910,7 @@ export const RESEARCH_STATS = {
       {
         title: "Environment Design Impact",
         figure: "86%",
-        description: "86% of employees prefer working in organized, peaceful spaces for maximum productivity.",
+        description: "86% of employees prefer working in organised, peaceful spaces for maximum productivity.",
         source: "Marie Kondo Research",
         link: "https://www.balancecoachingconsulting.com/articles/marie-kondo-philosophy-for-mental-wellness",
         details: {
@@ -918,7 +918,7 @@ export const RESEARCH_STATS = {
           publication: "Marie Kondo Research",
           authors: "Marie Kondo Research Team",
           date: "2022",
-          description: "Research confirms that organization methods like the KonMari Method are 'more psychological than practical,' with measurable mental health benefits from decluttering. Physical clutter creates mental and emotional clutter, with organized spaces facilitating clearer thought processes and increased confidence. Environmental psychology research shows that natural elements, proper lighting, and personalized spaces significantly increase both wellbeing and productivity.",
+          description: "Research confirms that organisation methods like the KonMari Method are 'more psychological than practical,' with measurable mental health benefits from decluttering. Physical clutter creates mental and emotional clutter, with organised spaces facilitating clearer thought processes and increased confidence. Environmental psychology research shows that natural elements, proper lighting, and personalized spaces significantly increase both wellbeing and productivity.",
           link: "https://www.balancecoachingconsulting.com/articles/marie-kondo-philosophy-for-mental-wellness"
         }
       }

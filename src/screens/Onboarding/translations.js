@@ -27,7 +27,8 @@ const translations = {
       today: "Today",
       thisWeek: "This Week",
       thisMonth: "This Month",
-      goal: "Goal",
+      goal: "Goal", 
+      milestone: "Milestone",
       project: "Project",
       task: "Task",
       showLess: "Show Less",
@@ -54,16 +55,16 @@ const translations = {
       initialMessage: "Pick one area of your life to focus on first. You can always explore other areas later.",
       secondMessage: "This is just your starting point - let's dive in.",
       justStartingPoint: "Just a Starting Point",
-      frameworkHelp: "This framework helps you get started quickly. You can edit, add, or remove any of these projects and tasks after setup."
+      frameworkHelp: "This framework helps you get started quickly. You can edit, add, or remove any of these milestones and tasks after setup."
     },
     goal: {
       title: "{{domain}} Goals",
-      initialMessage: "Now let's pick a specific goal within {{domain}}. Getting clear on exactly what you want to achieve makes all the difference.",
-      dontWorry: "Remember, this isn't set in stone. You can add more goals once you're in the app."
+      initialMessage: "Time to pick your {{domain}} goal. Choose something that matters to you.",
+      dontWorry: "Don't see what you want? You can create custom goals once you're in the app."
     },
     projects: {
       title: "{{goalName}} Breakdown", 
-      message1: "Here's how we'll break down your goal into manageable projects and tasks. Each element works together to help you achieve what matters to you."
+      message1: "Strategic goal achievement starts here: breaking your goal into defined milestones with specific tasks for each phase."
     },
     completion: {
       title: "All Set!",
@@ -127,6 +128,7 @@ const translations = {
       thisWeek: "今週",
       thisMonth: "今月",
       goal: "目標",
+      milestone: "マイルストーン", 
       project: "プロジェクト",
       task: "タスク",
       showLess: "表示を減らす",

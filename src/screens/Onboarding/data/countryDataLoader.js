@@ -92,19 +92,26 @@ export const getCountryData = (countryCode) => {
  */
 export const getAvailableCountries = () => {
   return [
+    // Primary markets (highest priority)
     { code: 'australia', name: 'Australia', flag: '🇦🇺', dataAvailable: true },
-    { code: 'canada', name: 'Canada', flag: '🇨🇦', dataAvailable: true }, // Canadian-specific data
-    { code: 'india', name: 'India', flag: '🇮🇳', dataAvailable: true }, // Indian-specific data
-    { code: 'ireland', name: 'Ireland', flag: '🇮🇪', dataAvailable: true }, // Irish-specific data
-    { code: 'malaysia', name: 'Malaysia', flag: '🇲🇾', dataAvailable: true }, // Malaysian-specific data
-    { code: 'newzealand', name: 'New Zealand', flag: '🇳🇿', dataAvailable: true }, // New Zealand-specific data
-    { code: 'nigeria', name: 'Nigeria', flag: '🇳🇬', dataAvailable: true }, // Nigerian-specific data
-    { code: 'philippines', name: 'Philippines', flag: '🇵🇭', dataAvailable: true }, // Philippines-specific data
-    { code: 'singapore', name: 'Singapore', flag: '🇸🇬', dataAvailable: true }, // Singapore-specific data
-    { code: 'southafrica', name: 'South Africa', flag: '🇿🇦', dataAvailable: true }, // South African-specific data
-    { code: 'uk', name: 'United Kingdom', flag: '🇬🇧', dataAvailable: true }, // UK-specific data
-    { code: 'usa', name: 'United States', flag: '🇺🇸', dataAvailable: true }, // USA-specific data
-    { code: 'other', name: 'Other', flag: '🌍', dataAvailable: true }, // Universal data for other countries
+    { code: 'usa', name: 'United States', flag: '🇺🇸', dataAvailable: true },
+    { code: 'canada', name: 'Canada', flag: '🇨🇦', dataAvailable: true },
+    { code: 'uk', name: 'United Kingdom', flag: '🇬🇧', dataAvailable: true },
+    { code: 'newzealand', name: 'New Zealand', flag: '🇳🇿', dataAvailable: true },
+    
+    // Secondary markets (medium priority)
+    { code: 'ireland', name: 'Ireland', flag: '🇮🇪', dataAvailable: true },
+    { code: 'singapore', name: 'Singapore', flag: '🇸🇬', dataAvailable: true },
+    { code: 'southafrica', name: 'South Africa', flag: '🇿🇦', dataAvailable: true },
+    
+    // Emerging markets (lower priority)
+    { code: 'india', name: 'India', flag: '🇮🇳', dataAvailable: true },
+    { code: 'malaysia', name: 'Malaysia', flag: '🇲🇾', dataAvailable: true },
+    { code: 'philippines', name: 'Philippines', flag: '🇵🇭', dataAvailable: true },
+    { code: 'nigeria', name: 'Nigeria', flag: '🇳🇬', dataAvailable: true },
+    
+    // Fallback for all other countries
+    { code: 'other', name: 'Other', flag: '🌍', dataAvailable: true },
   ];
 };
 

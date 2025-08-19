@@ -121,10 +121,10 @@ const ReferralDiscountBanner = ({
         
         <View style={styles.textContainer}>
           <Text style={styles.title}>
-            🎉 Referral Credits Available!
+            🎉 Referral AI Light Available!
           </Text>
           <Text style={styles.subtitle}>
-            You have 500 AI credits from referrals ready to use!
+            You have x1 month of AI Light from referrals ready to use!
           </Text>
         </View>
         
@@ -150,7 +150,7 @@ const ReferralDiscountBanner = ({
         <View style={styles.appliedBanner}>
           <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
           <Text style={styles.appliedText}>
-            Credits activated! 500 AI credits added to your account
+            AI Light activated! x1 month of AI Light added to your account
           </Text>
         </View>
       )}

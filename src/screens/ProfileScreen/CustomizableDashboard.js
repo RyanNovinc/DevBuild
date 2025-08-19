@@ -197,6 +197,29 @@ const CustomizableDashboard = ({ theme, navigation }) => {
     }
   };
 
+  const updateWidgetName = async (widgetId, newName) => {
+    try {
+      console.log(`updateWidgetName called for widget ${widgetId} with name: ${newName}`);
+      console.log('Current dashboardItems:', dashboardItems);
+      
+      // Update the widget name in the dashboardItems state
+      const updatedItems = dashboardItems.map(widget => 
+        widget.id === widgetId 
+          ? { ...widget, name: newName }
+          : widget
+      );
+      
+      console.log('Updated dashboardItems:', updatedItems);
+      
+      setDashboardItems(updatedItems);
+      await saveDashboardConfig(updatedItems);
+      
+      console.log(`Widget ${widgetId} name successfully updated to: ${newName}`);
+    } catch (error) {
+      console.error(`Error updating widget ${widgetId} name:`, error);
+    }
+  };
+
   // Check Custom Streak unlock state
   useEffect(() => {
     const checkCustomStreakUnlockState = async () => {
@@ -867,6 +890,7 @@ const CustomizableDashboard = ({ theme, navigation }) => {
               widgetName={widget.name}
               saveWidgetData={saveWidgetData}
               loadWidgetData={loadWidgetData}
+              updateWidgetName={(newName) => updateWidgetName(widget.id, newName)}
             />
           </Animated.View>
         </PanGestureHandler>
