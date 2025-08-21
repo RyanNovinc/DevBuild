@@ -22,7 +22,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "AI Tools Mastery for Canadian Market",
                 description: "Master practical AI applications essential for Canada's digital transformation",
-                explanation: "AI skills command 35% salary premiums. Federal government investing $2.5 billion in digital skills development with focus on AI capabilities.",
+                explanation: "AI skills may support career development. Individual career outcomes vary significantly - consult career professionals for guidance.",
                 tasks: [
                   {
                     name: "Complete IBM AI Professional Certificate or Google AI Course focusing on business applications",
@@ -48,7 +48,7 @@ export const DOMAIN_DEFINITIONS = [
                   {
                     name: "Create ML portfolio with projects relevant to Canadian industries (energy, finance, healthcare)",
                     summary: "ML portfolio",
-                    explanation: "Portfolio projects targeting Canada's dominant industries (energy, finance, healthcare) demonstrate sector-specific knowledge and increase appeal to Canadian employers. These industries offer highest ML salary premiums and job security.",
+                    explanation: "Portfolio projects targeting Canada's dominant industries demonstrate sector-specific knowledge. Individual career outcomes vary significantly - consult career professionals for guidance.",
                     timeframe: "3 months",
                     completed: false
                   },
@@ -92,12 +92,12 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Cybersecurity Expertise Development", 
                 description: "Develop cybersecurity skills addressing Canadian digital protection needs",
-                explanation: "Cybersecurity is critical for Canadian businesses and government. Strong job security with average salaries $70,000-$120,000 CAD.",
+                explanation: "Cybersecurity education provides information about this growing field. Individual career outcomes vary significantly - consult career professionals for guidance.",
                 tasks: [
                   {
                     name: "Complete CompTIA Security+ or CISSP certification focusing on Canadian compliance requirements",
                     summary: "Security cert",
-                    explanation: "Security certifications command $70,000-$120,000 CAD salaries with excellent job security. Focus on Canadian compliance (PIPEDA, provincial regulations) makes you valuable for local organizations.",
+                    explanation: "Security certification education provides information about career paths. Individual career outcomes vary significantly - consult career professionals for guidance.",
                     timeframe: "4 months",
                     completed: false
                   },
@@ -178,7 +178,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Complete foundational courses and earn first industry-recognized certification",
                 summary: "Get certified",
-                explanation: "Industry-recognized certifications provide credible evidence of technical skills to Canadian employers. First certification often leads to immediate job opportunities or internal promotions with salary increases.",
+                explanation: "Industry-recognized certifications may provide evidence of technical skills to Canadian employers. Individual career outcomes vary significantly - consult career professionals for guidance.",
                 timeframe: "4 months",
                 completed: false
               }
@@ -208,27 +208,27 @@ export const DOMAIN_DEFINITIONS = [
         ]
       },
       {
-        name: "Achieve 3.5%+ Salary Increase",
-        description: "Exceed national average salary growth to gain real purchasing power",
+        name: "Learn Career Advancement Strategies",
+        description: "Research career development and salary negotiation concepts",
         icon: "trending-up",
         explanation: "A goal in LifeCompass represents something meaningful you want to achieve in this domain. Goals provide direction and focus, and are broken down into projects and tasks to make them achievable.",
         projects: [
           {
             name: "Performance-Based Salary Strategy",
-            description: "Build case for salary increase through documented performance and market research",
-            explanation: "Exceeding 3.4-3.6% national threshold provides real purchasing power gains when 48% of Gen Z and 46% of millennials feel financially insecure.",
+            description: "Build case for career advancement through documented performance and market research",
+            explanation: "Career advancement research provides information for educational purposes. Individual career outcomes vary significantly - consult career professionals for guidance.",
             tasks: [
               {
                 name: "Research salary benchmarks for your role and industry in Canadian markets",
                 summary: "Research salary",
-                explanation: "Canadian salary data varies significantly by province and industry. Research provides evidence for negotiations and helps identify markets where your skills command premium compensation.",
+                explanation: "Career research provides educational information about salary trends. Individual salary outcomes vary significantly - consult career professionals for guidance.",
                 timeframe: "1 week",
                 completed: false
               },
               {
-                name: "Document achievements and prepare compelling case for salary increase exceeding 3.5%",
+                name: "Document achievements and prepare compelling case for career advancement (consult career advisor for strategies)",
                 summary: "Prepare case",
-                explanation: "Documented achievements provide objective evidence for salary negotiations. Exceeding 3.5% national average ensures real purchasing power gains and keeps pace with Canadian cost of living increases.",
+                explanation: "Learning about achievement documentation is part of career education. Individual career outcomes vary significantly - consult career professionals for guidance.",
                 timeframe: "2 weeks",
                 completed: false
               }
@@ -242,14 +242,14 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Identify specific advancement opportunities within current organisation or industry",
                 summary: "Find opportunities",
-                explanation: "Canadian job market rewards internal advancement and industry expertise. Identifying specific opportunities allows strategic skill development and positioning for promotions or lateral moves with salary increases.",
+                explanation: "Research indicates various factors may correlate with career advancement. Individual career outcomes vary significantly - consult career professionals for guidance.",
                 timeframe: "2 weeks",
                 completed: false
               },
               {
                 name: "Develop high-value skills that command higher compensation in Canadian job market",
                 summary: "Develop skills",
-                explanation: "Skills like AI, data analysis, and bilingual capability command salary premiums in Canadian market. Strategic skill development creates competitive advantage and justifies compensation increases.",
+                explanation: "Research indicates various skills may correlate with career development. Individual career outcomes vary significantly - consult career professionals for guidance.",
                 timeframe: "6 months",
                 completed: false
               }
@@ -313,11 +313,11 @@ export const DOMAIN_DEFINITIONS = [
     name: "Financial Security",
     icon: "cash",
     color: "#10b981", // Green
-    description: "Building wealth, managing expenses, and achieving financial goals",
+    description: "Financial education, budgeting guidance, and goal planning resources",
     goals: [
       {
-        name: "Build $15,000 Emergency Fund",
-        description: "Save four months of expenses using high-interest accounts and disciplined budgeting",
+        name: "Build Emergency Fund",
+        description: "Learn about emergency fund concepts and savings strategies",
         icon: "shield",
         explanation: "60% of young Canadians live paycheck-to-paycheck. This target represents approximately four months of expenses for median earners - enough to weather job transitions.",
         projects: [
@@ -327,7 +327,7 @@ export const DOMAIN_DEFINITIONS = [
             explanation: "High-interest savings accounts earn 2.85-3.7% and Financial Consumer Agency strongly recommends emergency reserves for stability during economic uncertainty.",
             tasks: [
               {
-                name: "Calculate four months of essential expenses to determine your $15,000 emergency fund target",
+                name: "Calculate four months of essential expenses to determine your emergency fund target amount",
                 summary: "Calculate fund",
                 explanation: "Four months of expenses provides sufficient buffer for job transitions and unexpected costs while being achievable for median Canadian earners. Calculating exact needs ensures realistic target setting.",
                 timeframe: "1 day",
@@ -345,19 +345,19 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Expense Optimization for Savings",
             description: "Reduce unnecessary spending to maximise emergency fund contributions",
-            explanation: "Average $450/month savings achievable through expense reduction. This goal transforms financial anxiety into systematic security building over 2-3 years.",
+            explanation: "Emergency fund concepts may provide educational information about financial planning. Individual financial outcomes vary significantly - consult qualified financial advisors for guidance.",
             tasks: [
               {
                 name: "Track all expenses for one month to identify spending patterns and reduction opportunities",
                 summary: "Track expenses",
-                explanation: "Expense tracking reveals unconscious spending patterns and identifies easy wins for cost reduction. Most people discover $200-400 monthly in unnecessary expenses that can be redirected to savings.",
+                explanation: "Expense tracking may reveal spending patterns and potential savings opportunities. Individual financial outcomes vary significantly - consult qualified financial advisors for guidance.",
                 timeframe: "1 month",
                 completed: false
               },
               {
                 name: "Cancel or reduce subscription services and recurring expenses you don't actively use",
                 summary: "Cut subscriptions",
-                explanation: "Subscription audits often reveal $50-200 monthly in forgotten or underused services. Canceling unused subscriptions provides immediate monthly savings that compound over time toward financial goals.",
+                explanation: "Subscription audits may identify potential cost reduction opportunities. Individual savings vary significantly - consult qualified financial advisors for guidance.",
                 timeframe: "1 week",
                 completed: false
               }
@@ -366,20 +366,20 @@ export const DOMAIN_DEFINITIONS = [
         ]
       },
       {
-        name: "Save $25,000 Down Payment for Home",
-        description: "Build foundation for homeownership despite challenging housing market",
+        name: "Save Down Payment for Home",
+        description: "Learn about homeownership planning and savings strategies",
         icon: "home",
-        explanation: "72% of millennials want homeownership but 46% think it's unrealistic. This covers 5% minimum down payment on $500,000 home, making it achievable first milestone.",
+        explanation: "Homeownership research provides information for educational purposes. Individual real estate outcomes vary significantly - consult qualified real estate and financial professionals for guidance.",
         projects: [
           {
             name: "Government Program Optimization",
             description: "Maximize First Home Savings Account and buyer programs for down payment",
-            explanation: "Home Buyers' Plan allows $60,000 RRSP withdrawal, First Home Savings Account provides $40,000 contribution room, 30-year amortizations now available for first-time buyers.",
+            explanation: "Canadian home buyer programs provide various options for consideration. Individual eligibility and outcomes vary - consult qualified financial and real estate professionals for guidance.",
             tasks: [
               {
                 name: "Open First Home Savings Account and maximise annual contributions for tax-free home savings",
                 summary: "Open FHSA",
-                explanation: "FHSA provides $40,000 contribution room with tax deduction benefits and tax-free withdrawals for home purchases. This unique Canadian program significantly accelerates down payment savings.",
+                explanation: "FHSA education provides information about savings concepts for educational purposes. Individual financial outcomes vary - consult qualified financial advisors for guidance.",
                 timeframe: "2 weeks",
                 completed: false
               },
@@ -393,14 +393,14 @@ export const DOMAIN_DEFINITIONS = [
             ]
           },
           {
-            name: "Strategic Down Payment Savings",
-            description: "Create systematic plan to accumulate $25,000 for home purchase",
+            name: "Learn About Home Savings Planning",
+            description: "Understand home savings concepts and planning strategies",
             explanation: "New government programs enhance feasibility, making homeownership an achievable milestone with strategic planning over 2-3 years.",
             tasks: [
               {
-                name: "Calculate monthly savings needed to reach $25,000 target within your timeline",
+                name: "Learn about savings planning and down payment concepts (consult financial advisor for personal guidance)",
                 summary: "Calculate savings",
-                explanation: "Clear monthly savings target makes homeownership goal concrete and achievable. Breaking down large goal into monthly actions prevents overwhelm while tracking progress toward major milestone.",
+                explanation: "Learning about savings planning is part of financial education. Individual financial circumstances vary significantly - consult qualified financial advisors for guidance.",
                 timeframe: "1 day",
                 completed: false
               },
@@ -416,14 +416,14 @@ export const DOMAIN_DEFINITIONS = [
         ]
       },
       {
-        name: "Pay Off $10,000 Student Debt",
-        description: "Eliminate manageable portion of student loans for improved cash flow",
+        name: "Pay Off Student Debt",
+        description: "Learn about debt management strategies and repayment options",
         icon: "card",
-        explanation: "Average debt load $28,000-32,000 takes 9.5 years to repay. Federal student loan interest at 2.45% affects 1.7 million Canadians, causes 17.6% of Ontario insolvencies.",
+        explanation: "Debt management education provides information for educational purposes. Individual financial situations vary significantly - consult qualified financial advisors for guidance.",
         projects: [
           {
-            name: "Strategic Debt Repayment Plan",
-            description: "Create systematic approach to pay off $10,000 of student debt",
+            name: "Learn About Debt Management",
+            description: "Understand debt management strategies and concepts (consult financial advisor)",
             explanation: "Even partial repayment provides psychological relief and improved cash flow, transformative for financial confidence and life decision-making.",
             tasks: [
               {
@@ -434,9 +434,9 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Create monthly payment plan to eliminate $10,000 of highest-priority student debt",
+                name: "Learn about debt repayment planning strategies (consult financial advisor for personal guidance)",
                 summary: "Payment plan",
-                explanation: "Systematic payment plan makes debt elimination achievable and measurable. Focusing on $10,000 portion provides manageable target while creating meaningful cash flow improvement.",
+                explanation: "Learning about debt repayment strategies is part of financial education. Individual financial circumstances vary significantly - consult qualified financial advisors for guidance.",
                 timeframe: "1 week",
                 completed: false
               }
@@ -477,7 +477,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Develop Sustainable Mental Health Practices",
         description: "Build comprehensive mental wellness support using Canadian healthcare resources",
         icon: "happy",
-        explanation: "42% of employees rate wellbeing as fair or poor. 24% experience constant burnout. Federal government investing $500 million in youth mental health programs.",
+        explanation: "Mental health research indicates importance of wellbeing support. Individual health outcomes vary - consult qualified mental health professionals for guidance.",
         projects: [
           {
             name: "Mental Health Support System",
@@ -895,12 +895,12 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Business French Certification",
                 description: "Achieve professional-level French competency for Canadian career advancement",
-                explanation: "Bilingualism opens federal employment with salary bonuses. Remote work enables access to Quebec's $380B economy.",
+                explanation: "Bilingualism may provide career opportunities in Canada. Individual career outcomes vary - consult career professionals for guidance.",
                 tasks: [
                   {
                     name: "Complete advanced Mauril courses and prepare for federal language test (SLE)",
                     summary: "SLE preparation",
-                    explanation: "SLE certification opens federal employment opportunities with bilingual bonuses up to $800 annually. Advanced Mauril courses provide structured preparation for professional-level French competency.",
+                    explanation: "Language certification may support career development. Individual career outcomes vary - consult career professionals for guidance.",
                     completed: false
                   },
                   {
@@ -919,7 +919,7 @@ export const DOMAIN_DEFINITIONS = [
                   {
                     name: "Research Quebec employers in your field and understand bilingual job requirements",
                     summary: "Research Quebec jobs",
-                    explanation: "Quebec's $380B economy offers significant career opportunities for bilingual professionals. Understanding specific job requirements helps target French learning toward career-relevant skills.",
+                    explanation: "Quebec economy may offer career opportunities for bilingual professionals. Individual career outcomes vary - consult career professionals for guidance.",
                     completed: false
                   },
                   {
@@ -1015,7 +1015,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Obtain Professional Certifications",
         description: "Earn industry credentials that advance career in Canadian job market",
         icon: "school",
-        explanation: "49% of employers upskill employees, 43% provide certification funding. $351.2 million committed to youth employment programs creating 90,000 placements.",
+        explanation: "Certification and skill development may support career advancement. Individual career outcomes vary - consult career professionals for guidance.",
         needsClarification: true,
         clarificationOptions: [
           {
@@ -1034,7 +1034,7 @@ export const DOMAIN_DEFINITIONS = [
                     completed: false
                   },
                   {
-                    name: "Complete certification with employer support and negotiate salary increase based on new credentials",
+                    name: "Complete certification with employer support and discuss career advancement based on new credentials",
                     summary: "Get certified",
                     completed: false
                   }
@@ -1043,7 +1043,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Tech Career Advancement",
                 description: "Leverage tech certifications for Canadian job market advancement",
-                explanation: "$351.2 million committed to youth employment programs. Tech certifications provide clear pathway to higher-paying roles.",
+                explanation: "Youth employment programs and tech certifications may support career development. Individual outcomes vary - consult career professionals for guidance.",
                 tasks: [
                   {
                     name: "Build portfolio demonstrating certified skills through practical projects",
@@ -1171,7 +1171,7 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Leverage new certification for promotion, salary increase, or job advancement",
+                name: "Leverage new certification for promotion or job advancement opportunities",
                 summary: "Leverage cert",
                 completed: false
               }
@@ -1191,7 +1191,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Explore Canada Through Epic Adventures",
         description: "Discover diverse Canadian regions through meaningful domestic travel",
         icon: "airplane",
-        explanation: "71% prefer domestic destinations. Travel spending reached $129.6 billion in 2024. 44% plan provincial exploration, 45% want interprovincial adventures.",
+        explanation: "Travel and exploration may contribute to personal growth and wellbeing. Individual experiences vary - plan according to personal circumstances.",
         projects: [
           {
             name: "Canadian Discovery Planning",
@@ -1490,10 +1490,10 @@ export const DOMAIN_DEFINITIONS = [
         ]
       },
       {
-        name: "Build Purpose-Driven Side Business",
-        description: "Create meaningful income stream that aligns with personal values",
+        name: "Learn About Purpose-Driven Business",
+        description: "Explore business development concepts aligned with personal values",
         icon: "storefront",
-        explanation: "28% have side hustles (up from 13% in 2022). 66% of millennials/Gen Z plan to start one. 89-92% consider purpose essential, 49% want to 'be their own boss'.",
+        explanation: "28% have side hustles (up from 13% in 2022). 66% of millennials/Gen Z plan to start one. 89% consider purpose essential, 49% want to 'be their own boss'.",
         needsClarification: true,
         clarificationOptions: [
           {
@@ -1504,7 +1504,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Social Impact Business Development",
                 description: "Launch business addressing Canadian social challenges while generating income",
-                explanation: "89-92% consider purpose essential. Social impact businesses align values with income while addressing real community needs.",
+                explanation: "89% consider purpose essential. Social impact businesses align values with income while addressing real community needs.",
                 tasks: [
                   {
                     name: "Identify social problem in Canadian community and develop business solution",
@@ -1641,15 +1641,15 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Sustainable Business Growth",
             description: "Scale side business to consistent income while maintaining purpose focus",
-            explanation: "Average profitability within 3-6 months makes this achievable alongside full-time work while satisfying desire for meaningful contribution.",
+            explanation: "Learning about business development concepts provides educational value. Individual business outcomes vary significantly - consult qualified business professionals for guidance.",
             tasks: [
               {
-                name: "Complete first 10 sales or projects to establish reputation and sustainable operations",
+                name: "Learn about business development through initial project completion",
                 summary: "First 10 sales",
                 completed: false
               },
               {
-                name: "Optimize business model to balance purpose-driven impact with financial sustainability",
+                name: "Learn about business optimization concepts and sustainable practices",
                 summary: "Optimize model",
                 completed: false
               }
@@ -1711,7 +1711,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Create Affordable Home Office Space",
         description: "Design productive workspace that supports remote work and claims tax benefits",
         icon: "laptop",
-        explanation: "50% of federal office space sits underused, hybrid work standard. CRA's $500 home office deduction recognizes necessity. Proper workspace impacts mental health and performance.",
+        explanation: "Home office setup may support productivity and wellbeing. Individual workspace needs vary - consider personal work requirements and ergonomics.",
         projects: [
           {
             name: "Home Office Setup and Optimization",

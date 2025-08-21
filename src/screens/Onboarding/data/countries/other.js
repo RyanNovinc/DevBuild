@@ -113,7 +113,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Move into Management Role",
         description: "Progress to leadership position through skill development and strategic positioning",
         icon: "people",
-        explanation: "Management skills increase earning potential by 15-25% globally. Leadership roles provide career stability and growth opportunities.",
+        explanation: "Management skills may support career development globally. Individual career outcomes vary significantly - consult career professionals for guidance.",
         projects: [
           {
             name: "Leadership Skills Development",
@@ -165,7 +165,7 @@ export const DOMAIN_DEFINITIONS = [
     name: "Financial Security",
     icon: "wallet",
     color: "#10b981", // Green
-    description: "Build financial stability, savings, and long-term wealth",
+    description: "Financial education, budgeting guidance, and goal planning resources",
     goals: [
       {
         name: "Build 6-Month Emergency Fund",
@@ -209,7 +209,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Review and optimise monthly expenses to increase emergency fund contributions",
                 summary: "Optimize expenses",
-                explanation: "Expense optimization identifies additional money for emergency fund while building good financial habits for long-term wealth building.",
+                explanation: "Expense tracking may help identify savings opportunities for emergency funds. Individual financial circumstances vary - consult qualified financial advisors for guidance.",
                 timeframe: "2 weeks",
                 completed: false
               }
@@ -219,7 +219,7 @@ export const DOMAIN_DEFINITIONS = [
       },
       {
         name: "Start Profitable Side Hustle",
-        description: "Launch additional income stream to increase financial security and opportunities",
+        description: "Launch additional income stream (individual results vary - consult business professionals for guidance)",
         icon: "storefront",
         explanation: "Side hustles generate average 28% additional income globally. Multiple income streams provide financial resilience and entrepreneurial experience.",
         projects: [
@@ -269,9 +269,9 @@ export const DOMAIN_DEFINITIONS = [
       },
       {
         name: "Plan Path to Homeownership",
-        description: "Develop strategic plan for purchasing property as wealth-building investment",
+        description: "Learn about property investment concepts for educational purposes",
         icon: "home",
-        explanation: "Homeownership builds 44x more wealth than renting over lifetime through equity building and property appreciation.",
+        explanation: "Homeownership research provides information for educational purposes. Individual financial circumstances and housing decisions vary significantly - consult qualified financial advisors and real estate professionals for guidance.",
         projects: [
           {
             name: "Financial Preparation for Home Purchase",

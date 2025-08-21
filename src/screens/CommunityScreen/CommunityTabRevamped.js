@@ -323,25 +323,63 @@ const CommunityTabRevamped = ({
               </TouchableOpacity>
             </View>
 
-            {/* Founder Benefits */}
+            {/* Founder Benefits - Enhanced */}
             <View style={[styles.benefitsSection, { backgroundColor: theme.card, borderColor: theme.border }]}>
-              <Text style={[styles.sectionTitle, { color: theme.text }]}>
-                Your Founder Benefits
-              </Text>
-              <View style={styles.benefitsGrid}>
+              <View style={styles.benefitsHeader}>
+                <View style={[styles.benefitsHeaderIcon, { backgroundColor: '#FFD700' + '15' }]}>
+                  <Ionicons name="diamond" size={24} color="#FFD700" />
+                </View>
+                <View style={styles.benefitsHeaderText}>
+                  <Text style={[styles.sectionTitle, { color: theme.text, marginBottom: 4 }]}>
+                    Your Founder Benefits
+                  </Text>
+                  <Text style={[styles.benefitsSubtitle, { color: theme.textSecondary }]}>
+                    Exclusive perks for early supporters
+                  </Text>
+                </View>
+              </View>
+              
+              <View style={styles.benefitsContainer}>
                 {benefits.map((benefit, index) => (
-                  <View key={index} style={styles.benefitItem}>
-                    <View style={[styles.benefitIcon, { backgroundColor: benefit.color + '20' }]}>
-                      <Ionicons name={benefit.icon} size={20} color={benefit.color} />
-                    </View>
-                    <Text style={[styles.benefitTitle, { color: theme.text }]}>
-                      {benefit.title}
-                    </Text>
-                    <Text style={[styles.benefitDesc, { color: theme.textSecondary }]}>
-                      {benefit.description}
-                    </Text>
+                  <View key={index} style={[
+                    styles.benefitCard,
+                    { 
+                      backgroundColor: theme.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                      borderColor: theme.border,
+                    }
+                  ]}>
+                    <LinearGradient
+                      colors={[benefit.color + '15', benefit.color + '05']}
+                      style={styles.benefitGradient}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                    >
+                      <View style={styles.benefitCardContent}>
+                        <View style={[styles.benefitIconContainer, { backgroundColor: benefit.color + '20' }]}>
+                          <Ionicons name={benefit.icon} size={24} color={benefit.color} />
+                        </View>
+                        <View style={styles.benefitTextContainer}>
+                          <Text style={[styles.benefitCardTitle, { color: theme.text }]}>
+                            {benefit.title}
+                          </Text>
+                          <Text style={[styles.benefitCardDesc, { color: theme.textSecondary }]}>
+                            {benefit.description}
+                          </Text>
+                        </View>
+                        <View style={[styles.benefitCheck, { backgroundColor: benefit.color }]}>
+                          <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                        </View>
+                      </View>
+                    </LinearGradient>
                   </View>
                 ))}
+              </View>
+              
+              <View style={[styles.benefitsFooter, { borderTopColor: theme.border }]}>
+                <Ionicons name="information-circle" size={16} color="#10B981" />
+                <Text style={[styles.benefitsFooterText, { color: theme.textSecondary }]}>
+                  All benefits are permanent and exclusive to founders
+                </Text>
               </View>
             </View>
           </>
@@ -710,45 +748,92 @@ const styles = StyleSheet.create({
   actionDesc: {
     fontSize: 12,
   },
-  // Benefits Section
+  // Benefits Section - Enhanced
   benefitsSection: {
     margin: 16,
     padding: 20,
     borderRadius: 16,
     borderWidth: 1,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+  benefitsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 20,
   },
-  benefitsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16,
-  },
-  benefitItem: {
-    width: (SCREEN_WIDTH - 72) / 2,
-    alignItems: 'center',
-  },
-  benefitIcon: {
+  benefitsHeaderIcon: {
     width: 48,
     height: 48,
     borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
+    marginRight: 12,
   },
-  benefitTitle: {
+  benefitsHeaderText: {
+    flex: 1,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  benefitsSubtitle: {
     fontSize: 14,
+    opacity: 0.8,
+  },
+  benefitsContainer: {
+    gap: 12,
+  },
+  benefitCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  benefitGradient: {
+    padding: 16,
+  },
+  benefitCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  benefitIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  benefitTextContainer: {
+    flex: 1,
+  },
+  benefitCardTitle: {
+    fontSize: 16,
     fontWeight: '600',
     marginBottom: 4,
-    textAlign: 'center',
   },
-  benefitDesc: {
-    fontSize: 11,
-    textAlign: 'center',
-    lineHeight: 16,
+  benefitCardDesc: {
+    fontSize: 13,
+    lineHeight: 18,
+    opacity: 0.8,
+  },
+  benefitCheck: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  benefitsFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    gap: 8,
+  },
+  benefitsFooterText: {
+    fontSize: 12,
+    flex: 1,
   },
   // CTA Section
   ctaSection: {

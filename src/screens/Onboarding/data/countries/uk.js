@@ -9,7 +9,7 @@ export const DOMAIN_DEFINITIONS = [
     goals: [
       {
         name: "Get Significant Salary Increase",
-        description: "Achieve 15-20% salary increase through strategic career moves and negotiations",
+        description: "Learn about strategic career development and negotiation concepts",
         icon: "trending-up",
         explanation: "A goal in LifeCompass represents something meaningful you want to achieve in this domain. Goals provide direction and focus, and are broken down into projects and tasks to make them achievable.",
         projects: [
@@ -28,7 +28,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Update CV and LinkedIn profile to highlight achievements and value created",
                 summary: "Update CV",
-                explanation: "Updated profiles highlighting quantifiable achievements attract recruiters and justify higher salary expectations. Professional presentation essential for 15-20% salary increase targets.",
+                explanation: "Updated profiles highlighting quantifiable achievements attract recruiters. Professional presentation may support salary discussions - individual outcomes vary.",
                 timeframe: "2 weeks",
                 completed: false
               }
@@ -36,18 +36,18 @@ export const DOMAIN_DEFINITIONS = [
           },
           {
             name: "Salary Negotiation and Job Search",
-            description: "Execute strategic job search or negotiate salary increase in current role",
+            description: "Execute strategic job search or learn about salary negotiation concepts",
             explanation: "A project in LifeCompass breaks your goal into manageable parts. Each project tackles one major component needed to achieve your goal and contains specific tasks you can complete.",
             tasks: [
               {
-                name: "Apply for roles with 15-20% salary increases or prepare case for current employer",
+                name: "Apply for career advancement roles or prepare case for current employer (consult career advisor for targets)",
                 summary: "Apply roles",
                 explanation: "Strategic applications targeting higher-paying roles provide negotiation leverage and alternative options. Market competition demonstrates your value and strengthens internal promotion discussions.",
                 timeframe: "2 months",
                 completed: false
               },
               {
-                name: "Practice salary negotiation and secure offer with target increase",
+                name: "Practice salary negotiation concepts and career advancement strategies",
                 summary: "Negotiate salary",
                 explanation: "Negotiation skills directly impact lifetime earnings potential. Practice builds confidence to secure target increases and avoid leaving money on the table during job transitions.",
                 timeframe: "1 month",
@@ -111,7 +111,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Build High-Value Digital Skills",
         description: "Develop in-demand technical skills for career advancement and higher earnings",
         icon: "laptop",
-        explanation: "75% of employers can't find right technical skills, while AI skills earn workers 21% more. With 71% of organizations expecting to use AI but only 25% having needed skills, this represents massive opportunity.",
+        explanation: "75% of employers struggle to find technical skills. AI skills may support career development - individual outcomes vary. Consult career professionals for guidance.",
         needsClarification: true,
         clarificationOptions: [
           {
@@ -122,12 +122,12 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "AI Tools Mastery",
                 description: "Learn practical AI applications for daily work productivity",
-                explanation: "AI skills command 21% salary premiums. 71% of organizations plan AI adoption but only 25% have skilled workers, creating massive opportunity.",
+                explanation: "AI skills may support career development. Individual career outcomes vary significantly - consult career professionals for guidance.",
                 tasks: [
                   {
                     name: "Complete ChatGPT, Claude, and Midjourney fundamentals course for workplace applications",
                     summary: "Learn AI tools",
-                    explanation: "AI tools mastery provides immediate productivity gains and 21% salary premiums. Early adoption creates competitive advantage as organizations scramble to implement AI capabilities.",
+                    explanation: "AI tools mastery may provide productivity benefits. Individual career outcomes vary significantly - consult career professionals for guidance.",
                     timeframe: "2 months",
                     completed: false
                   },
@@ -143,12 +143,12 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Machine Learning Foundations",
                 description: "Build technical ML skills for data-driven business insights",
-                explanation: "UK tech sector (£784bn) increasingly requires ML literacy. Entry-level ML roles start at £35,000+, with senior positions reaching £80,000+.",
+                explanation: "UK tech sector (bn) increasingly requires ML literacy. Entry-level ML roles start at , with senior positions reaching .",
                 tasks: [
                   {
                     name: "Complete Google Machine Learning Crash Course and earn professional certificate",
                     summary: "ML certified",
-                    explanation: "Google ML certification provides industry-recognized credentials for technical roles starting at £35,000+. Structured learning provides solid foundation for ML career transition.",
+                    explanation: "Google ML certification provides industry-recognized credentials for technical roles starting at . Structured learning provides solid foundation for ML career transition.",
                     timeframe: "4 months",
                     completed: false
                   },
@@ -171,12 +171,12 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Data Analysis Certification",
                 description: "Master Excel, SQL, and data visualization for business intelligence",
-                explanation: "75% of employers struggle to find data skills. Business analysts earn £25,000-£60,000+ with strong progression opportunities.",
+                explanation: "75% of employers struggle to find data skills. Business analysts earn - with strong progression opportunities.",
                 tasks: [
                   {
                     name: "Complete Microsoft Excel Advanced and SQL fundamentals certification",
                     summary: "Data certified",
-                    explanation: "Excel and SQL skills are foundational for most business analyst roles earning £25,000-£60,000+. These technical skills provide immediate workplace value and career advancement opportunities.",
+                    explanation: "Excel and SQL skills are foundational for most business analyst roles earning -. These technical skills provide immediate workplace value and career advancement opportunities.",
                     timeframe: "3 months",
                     completed: false
                   },
@@ -220,12 +220,12 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Cybersecurity Fundamentals",
                 description: "Learn essential security practices and threat protection",
-                explanation: "Cybersecurity Analyst ranks #1 fastest-growing UK job (57% growth). Average salary £35,000-£65,000 with strong job security.",
+                explanation: "Cybersecurity analysis may offer career opportunities in the UK. Individual career outcomes vary significantly - consult career professionals for guidance.",
                 tasks: [
                   {
                     name: "Complete CompTIA Security+ or similar entry-level cybersecurity certification",
                     summary: "Security cert",
-                    explanation: "CompTIA Security+ certification opens doors to £35,000-£65,000 cybersecurity roles with 57% job growth. Industry-recognized credential provides foundation for security career transition.",
+                    explanation: "CompTIA Security+ certification opens doors to - cybersecurity roles with 57% job growth. Industry-recognized credential provides foundation for security career transition.",
                     timeframe: "4 months",
                     completed: false
                   },
@@ -246,7 +246,7 @@ export const DOMAIN_DEFINITIONS = [
                   {
                     name: "Learn penetration testing basics and practice on ethical hacking platforms",
                     summary: "Learn hacking",
-                    explanation: "Penetration testing skills are highly valued in cybersecurity with specialist roles earning £40,000-£80,000+. Ethical hacking platforms provide safe environment to develop security expertise.",
+                    explanation: "Penetration testing skills are highly valued in cybersecurity with specialist roles earning -. Ethical hacking platforms provide safe environment to develop security expertise.",
                     timeframe: "3 months",
                     completed: false
                   },
@@ -266,19 +266,19 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Digital Skills Certification",
             description: "Complete industry-recognized certification in chosen digital skill area",
-            explanation: "UK tech sector valued at £784 billion (Europe's largest). Programming salaries start at £26,000, rising to £80,000+. Professional certifications achievable in 6-18 months.",
+            explanation: "UK tech sector valued at  billion (Europe's largest). Programming salaries start at  rising to . Professional certifications achievable in 6-18 months.",
             tasks: [
               {
                 name: "Research and enroll in certification program for chosen digital skill",
                 summary: "Research cert",
-                explanation: "Industry-recognized certifications provide credible evidence of technical skills to UK employers. Research helps identify which programs offer best ROI for career advancement and salary increases.",
+                explanation: "Industry-recognized certifications may provide evidence of technical skills to UK employers. Individual career outcomes vary significantly - consult career professionals for guidance.",
                 timeframe: "2 weeks",
                 completed: false
               },
               {
                 name: "Complete certification and add credential to professional profiles",
                 summary: "Complete cert",
-                explanation: "Completed certifications increase visibility to recruiters and justify higher salary expectations. Adding credentials to LinkedIn and CV signals professional development and technical competency.",
+                explanation: "Completed certifications may increase visibility to recruiters and support career development. Individual career outcomes vary significantly - consult career professionals for guidance.",
                 timeframe: "6-12 months",
                 completed: false
               }
@@ -313,29 +313,29 @@ export const DOMAIN_DEFINITIONS = [
     name: "Financial Security",
     icon: "cash",
     color: "#10b981", // Green
-    description: "Building wealth, managing expenses, and achieving financial goals",
+    description: "Financial education, budgeting guidance, and goal planning resources",
     goals: [
       {
         name: "Save for House Deposit",
-        description: "Build £15,000-25,000 first-time buyer deposit using government schemes",
+        description: "Build -25,000 first-time buyer deposit using government schemes",
         icon: "home",
         explanation: "54% of UK mortgages go to first-time buyers, with 341,068 achieving this in 2024 (+19%). Using LISA's 25% government bonus makes this achievable despite high deposit requirements.",
         projects: [
           {
             name: "House Deposit Savings Strategy",
             description: "Maximize LISA contributions and government bonuses for house deposit",
-            explanation: "Regional variation allows flexibility - £26,769 (North East) to £108,848 (London). 56,900 LISA holders withdrew for homes in 2023-24, proving the pathway works.",
+            explanation: "Regional variation allows flexibility -  (North East) to  (London). 56,900 LISA holders withdrew for homes in 2023-24, proving the pathway works.",
             tasks: [
               {
-                name: "Open Lifetime ISA and set up maximum £4,000 annual contributions for 25% government bonus",
+                name: "Open Lifetime ISA and set up maximum  annual contributions for 25% government bonus",
                 summary: "Open LISA",
-                explanation: "LISA provides 25% government bonus on contributions up to £4,000 annually, effectively giving you £1,000 free money each year toward house deposit. This makes homeownership significantly more achievable.",
+                explanation: "LISA provides 25% government bonus on contributions up to  annually, effectively giving you  free money each year toward house deposit. This makes homeownership significantly more achievable.",
                 completed: false
               },
               {
                 name: "Research target areas and calculate realistic deposit needed based on location preferences",
                 summary: "Research areas",
-                explanation: "UK house prices vary dramatically by region - from £26,769 in North East to £108,848 in London. Strategic location research helps identify affordable areas with good prospects.",
+                explanation: "UK house prices vary dramatically by region - from  in North East to  in London. Strategic location research helps identify affordable areas with good prospects.",
                 completed: false
               }
             ]
@@ -363,14 +363,14 @@ export const DOMAIN_DEFINITIONS = [
       },
       {
         name: "Build Emergency Fund",
-        description: "Establish £4,500-6,000 emergency fund covering 3-4 months expenses",
+        description: "Establish -6,000 emergency fund covering 3-4 months expenses",
         icon: "shield",
-        explanation: "44% struggle financially, with 25% having under £100 saved. This goal provides crucial buffer against job loss or unexpected expenses, covering average UK living costs.",
+        explanation: "44% struggle financially, with 25% having under  saved. This goal provides crucial buffer against job loss or unexpected expenses, covering average UK living costs.",
         projects: [
           {
             name: "Emergency Fund Foundation",
             description: "Build financial safety net through systematic saving and expense management",
-            explanation: "Average UK emergency fund is £4,579, but majority lack adequate coverage. At £226 average monthly savings, achievable within 18 months.",
+            explanation: "Average UK emergency fund is  but majority lack adequate coverage. At  average monthly savings, achievable within 18 months.",
             tasks: [
               {
                 name: "Calculate 3-4 months of essential UK expenses (rent, council tax, utilities, food)",
@@ -405,9 +405,9 @@ export const DOMAIN_DEFINITIONS = [
       },
       {
         name: "Maximize ISA Savings",
-        description: "Fully utilise £20,000 annual ISA allowance for tax-free wealth building",
+        description: "Learn about ISA concepts for educational purposes",
         icon: "trending-up",
-        explanation: "42% of UK adults have ISAs with average value £33,278. Tax-free growth becomes crucial as more pushed into higher brackets. Flexible between cash ISA and stocks & shares ISA.",
+        explanation: "42% of UK adults have ISAs with average value . Tax-free growth becomes crucial as more pushed into higher brackets. Flexible between cash ISA and stocks & shares ISA.",
         projects: [
           {
             name: "ISA Optimization Strategy",
@@ -420,7 +420,7 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Set up automatic monthly ISA contributions to reach £20,000 annual allowance",
+                name: "Set up automatic monthly ISA contributions to reach  annual allowance",
                 summary: "Auto ISA",
                 completed: false
               }
@@ -429,7 +429,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Long-Term Wealth Building",
             description: "Use ISA allowance strategically for major financial milestones",
-            explanation: "Achievable through £1,667/month or using bonuses/windfalls. Critical for wealth building given low savings rates and higher tax thresholds.",
+            explanation: "ISA education provides information about savings concepts for educational purposes. Individual financial outcomes vary significantly - consult qualified financial professionals for guidance.",
             tasks: [
               {
                 name: "Plan ISA contributions around bonuses, pay rises, and windfalls to maximise allowance",
@@ -504,7 +504,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Sleep Hygiene Implementation",
             description: "Create environment and routines that support quality sleep",
-            explanation: "25-34 age group shows 56% report high workload stress affecting sleep. Mental Health UK identifies this as key burnout factor costing employers £57.4bn annually.",
+            explanation: "25-34 age group shows 56% report high workload stress affecting sleep. Mental Health UK identifies this as key burnout factor costing employers .4bn annually.",
             tasks: [
               {
                 name: "Establish consistent bedtime routine and sleep schedule aiming for 7-8 hours nightly",
@@ -541,7 +541,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Reduce Alcohol Consumption",
         description: "Cut alcohol intake by 50% or complete structured challenges like Dry January",
         icon: "wine",
-        explanation: "30% of men and 26% of women want to reduce alcohol, with 15.5 million planning alcohol-free January 2025. Multiple motivations: save money (24%), better sleep (18%), fitness (16%).",
+        explanation: "Research indicates various motivations for reducing alcohol consumption including health and wellness benefits. Individual outcomes vary - consult health professionals for guidance.",
         projects: [
           {
             name: "Alcohol Reduction Strategy",
@@ -613,7 +613,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Cohabitation Planning and Execution",
             description: "Plan practical aspects of moving in together and establish household systems",
-            explanation: "Economic pressures (£1,900 average cost to find 'the one') make shared living financially appealing. 35% value relationships more post-COVID.",
+            explanation: "Economic pressures ( average cost to find 'the one') make shared living financially appealing. 35% value relationships more post-COVID.",
             tasks: [
               {
                 name: "Find suitable shared accommodation and plan moving logistics together",
@@ -675,7 +675,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Find Quality Romantic Connection",
         description: "Master 'slow dating' approach for meaningful relationships over casual encounters",
         icon: "heart",
-        explanation: "Dating app fatigue drives shift to quality over quantity. UK dating costs (£1,900 to find partner) make strategic approach essential for meaningful connections.",
+        explanation: "Dating app fatigue drives shift to quality over quantity. UK dating costs ( to find partner) make strategic approach essential for meaningful connections.",
         projects: [
           {
             name: "Strategic Dating Approach",
@@ -777,7 +777,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Programming Fundamentals",
                 description: "Learn core programming concepts and syntax in Python or JavaScript",
-                explanation: "UK tech sector (£784bn) offers strong career prospects. Programming skills provide £26,000-£80,000+ salary potential.",
+                explanation: "UK tech sector (bn) offers strong career prospects. Programming skills provide - salary potential.",
                 tasks: [
                   {
                     name: "Complete Python for Everybody or JavaScript fundamentals course on Coursera/freeCodeCamp",
@@ -873,7 +873,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Language Practice and Application",
             description: "Apply language skills in real-world contexts for practical fluency",
-            explanation: "B1-level achievable in 18 months with consistent practice. Cost-effective at £300-800 total investment through apps and online resources.",
+            explanation: "B1-level achievable in 18 months with consistent practice. Cost-effective at -800 total investment through apps and online resources.",
             tasks: [
               {
                 name: "Find conversation partners, language exchange groups, or online speaking practice",
@@ -915,7 +915,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Speaking Confidence Building",
             description: "Apply speaking skills in real situations to build lasting confidence",
-            explanation: "Toastmasters provides ongoing practice structure at £100-150/year. Measurable through ability to deliver 15-20 minute presentations confidently.",
+            explanation: "Toastmasters provides ongoing practice structure at -150/year. Measurable through ability to deliver 15-20 minute presentations confidently.",
             tasks: [
               {
                 name: "Volunteer for speaking opportunities at work, community groups, or social events",
@@ -943,7 +943,7 @@ export const DOMAIN_DEFINITIONS = [
             explanation: "86% agree financial literacy should be on national curriculum. Strong correlation between knowledge and life satisfaction in UK studies.",
             tasks: [
               {
-                name: "Complete comprehensive financial literacy course covering budgeting, investing, and planning",
+                name: "Complete comprehensive financial literacy course covering budgeting, investment education, and planning concepts",
                 summary: "Financial course",
                 completed: false
               },
@@ -957,10 +957,10 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Practical Financial Application",
             description: "Apply financial knowledge to personal money management and life decisions",
-            explanation: "3-6 month intensive learning creates foundation for all financial goals. Cost-effective at £150-400 total investment in education.",
+            explanation: "3-6 month intensive learning creates foundation for all financial goals. Cost-effective at -400 total investment in education.",
             tasks: [
               {
-                name: "Create comprehensive budget and investment plan using newfound knowledge",
+                name: "Learn about budget and investment planning concepts for educational purposes (consult financial advisor)",
                 summary: "Create budget",
                 completed: false
               },
@@ -985,7 +985,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Complete Active Challenge Events",
         description: "Participate in 3 active challenge events (5K, 10K, obstacle races) within 12 months",
         icon: "trophy",
-        explanation: "31% increase in active event participation with 17% higher spending intentions. Combines fitness with achievement milestones. Entry fees (£15-50) make it accessible.",
+        explanation: "31% increase in active event participation with 17% higher spending intentions. Combines fitness with achievement milestones. Entry fees (-50) make it accessible.",
         projects: [
           {
             name: "Challenge Event Planning",
@@ -1032,7 +1032,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Heritage Site Discovery Planning",
             description: "Plan monthly heritage site visits using National Trust membership and annual leave",
-            explanation: "500+ National Trust properties at £78/year family membership. Day visit spending up 6% to £48.4bn shows trend strength and cultural interest.",
+            explanation: "500+ National Trust properties at /year family membership. Day visit spending up 6% to .4bn shows trend strength and cultural interest.",
             tasks: [
               {
                 name: "Get National Trust membership and create list of 12 heritage sites to visit throughout year",
@@ -1080,7 +1080,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Photography Fundamentals",
                 description: "Master basic photography techniques and equipment",
-                explanation: "Photography is most desired creative skill (33%). Start with smartphone, progress to basic DSLR (£200-500). Instagram sharing culture supports progress tracking.",
+                explanation: "Photography is most desired creative skill (33%). Start with smartphone, progress to basic DSLR (-500). Instagram sharing culture supports progress tracking.",
                 tasks: [
                   {
                     name: "Learn composition basics (rule of thirds, lighting, framing) through daily photo practice",
@@ -1217,7 +1217,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Creative Growth and Sharing",
             description: "Develop advanced skills and share creative work with community",
-            explanation: "Start with smartphone photography, progress to basic DSLR (£200-500). Monthly skill goals maintain momentum and provide clear progression markers.",
+            explanation: "Start with smartphone photography, progress to basic DSLR (-500). Monthly skill goals maintain momentum and provide clear progression markers.",
             tasks: [
               {
                 name: "Complete first major creative project and share with friends or online community",
@@ -1315,7 +1315,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Sustainable Lifestyle Integration",
                 description: "Create long-term sustainable habits across diet, energy, and consumption",
-                explanation: "Plant-based meals reduce food emissions 50%. Home energy efficiency improvements save £300+ annually while reducing carbon impact.",
+                explanation: "Plant-based meals reduce food emissions 50%. Home energy efficiency improvements save  annually while reducing carbon impact.",
                 tasks: [
                   {
                     name: "Reduce meat consumption 50% and switch to renewable energy provider",
@@ -1339,7 +1339,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Zero-Waste Implementation",
                 description: "Systematically eliminate household waste through the 5 R's (Refuse, Reduce, Reuse, Recycle, Rot)",
-                explanation: "UK generates 222M tonnes waste annually. Food waste reduction alone saves £1,000/year per household. 80% waste reduction achievable.",
+                explanation: "Waste reduction practices may provide environmental and potential cost benefits. Individual outcomes vary significantly.",
                 tasks: [
                   {
                     name: "Audit household waste and implement refuse/reduce strategies for single-use items",
@@ -1356,7 +1356,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Sustainable Consumption Mastery",
                 description: "Extend zero-waste principles to all purchasing and consumption decisions",
-                explanation: "Initial setup £150-400 for reusable containers/bags. Ongoing savings £500-1,000 annually through reduced consumption and waste.",
+                explanation: "Initial setup costs vary for reusable containers/bags. Potential ongoing savings through reduced consumption and waste - individual results vary significantly.",
                 tasks: [
                   {
                     name: "Replace household products with sustainable alternatives and eliminate single-use items",
@@ -1510,7 +1510,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Home Office Design and Setup",
             description: "Create functional workspace that supports productivity and wellbeing",
-            explanation: "29% follow hybrid patterns, highest among 25-35s. Average saves £2,500-4,000 annually on commuting. 89% of UK homes lack office space requiring creative solutions.",
+            explanation: "Hybrid work arrangements may provide various benefits including potential commuting cost savings. Individual work arrangements vary - consult with employers about options.",
             tasks: [
               {
                 name: "Designate specific area for work and invest in essential office furniture (desk, chair, lighting)",
@@ -1527,7 +1527,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Work-Life Balance Optimization",
             description: "Use home office setup to create clear boundaries between work and personal life",
-            explanation: "Budget options £200-500, premium £800-1,500. Works for renters through non-permanent solutions that can be adapted to any space.",
+            explanation: "Budget options -500, premium -1,500. Works for renters through non-permanent solutions that can be adapted to any space.",
             tasks: [
               {
                 name: "Establish work hours and routines that use office space to signal start/end of workday",
@@ -1552,7 +1552,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Energy Efficiency Assessment",
             description: "Evaluate current home energy performance and identify improvement opportunities",
-            explanation: "UK has Europe's oldest housing stock with 60% below C rating. Grants available up to £6,000 for qualifying improvements.",
+            explanation: "UK has Europe's oldest housing stock with 60% below C rating. Grants available up to  for qualifying improvements.",
             tasks: [
               {
                 name: "Get home energy assessment and research available grants for efficiency improvements",
@@ -1569,7 +1569,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Long-Term Efficiency Improvements",
             description: "Plan and execute major efficiency upgrades for maximum energy savings",
-            explanation: "Saves £400+ annually on bills. Renter options (LED, smart thermostats) £100-300. Owner upgrades £2,000-8,000 with government support.",
+            explanation: "Saves  annually on bills. Renter options (LED, smart thermostats) -300. Owner upgrades -8,000 with government support.",
             tasks: [
               {
                 name: "Plan major efficiency improvements (insulation, windows, heating) if homeowner",
@@ -1589,7 +1589,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Live Zero-Waste Lifestyle",
         description: "Implement comprehensive zero-waste system to minimise household waste and environmental impact",
         icon: "leaf",
-        explanation: "Addresses UK's 222M tonnes annual waste. Food waste reduction alone saves £1,000/year. Growing Zero Waste movement with annual campaigns provides support.",
+        explanation: "Addresses UK's 222M tonnes annual waste. Food waste reduction alone saves /year. Growing Zero Waste movement with annual campaigns provides support.",
         projects: [
           {
             name: "Zero-Waste Implementation",
@@ -1611,7 +1611,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Sustainable Living Integration",
             description: "Extend zero-waste principles to all areas of life and consumption",
-            explanation: "Initial setup £150-400, ongoing savings £500-1,000 annually. 80% waste reduction achievable within 18 months through systematic approach.",
+            explanation: "Initial setup costs vary, with potential ongoing savings. Waste reduction may be achievable through systematic approach - individual results vary.",
             tasks: [
               {
                 name: "Choose sustainable alternatives for household products and eliminate single-use items",

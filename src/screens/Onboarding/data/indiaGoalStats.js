@@ -56,9 +56,9 @@ export const INDIAN_GOAL_STATS = {
   "Career & Work": {
     "Switch to Tech Career": [
       {
-        title: "Tech Salary Premium: Indian IT Professionals Earn ₹12+ LPA vs ₹6 LPA Non-Tech Average",
-        figure: "₹12 LPA",
-        description: "Indian technology professionals earn ₹12+ lakhs annually compared to ₹6 lakhs for non-tech roles - a 100% salary premium that provides career security and growth opportunities. Tech skills remain recession-proof with consistent demand across industries.",
+        title: "Technology Career Opportunities: Research Shows Potential Earning Advantages",
+        figure: "2x",
+        description: "Research indicates Indian technology professionals may experience higher earning potential compared to other sectors. Tech skills often show resilience across various economic conditions. Individual career outcomes vary significantly - consult career professionals for personalized guidance.",
         source: "NASSCOM IT Industry Report",
         link: "https://www.nasscom.in/knowledge-centre/publications/technology-sector-india-2024",
         details: {
@@ -66,7 +66,7 @@ export const INDIAN_GOAL_STATS = {
           publication: "NASSCOM",
           authors: "NASSCOM Research Team",
           date: "2024",
-          description: "India's IT sector employs 5+ million professionals with average salaries of ₹12+ lakhs for experienced professionals compared to ₹6 lakhs across other sectors. The sector demonstrates consistent growth and resilience with strong demand for skilled professionals across all technology domains.",
+          description: "India's IT sector employs millions of professionals across various skill levels and experience ranges. The sector demonstrates growth trends and demand for skilled professionals across technology domains. This information is for educational purposes only - individual salary outcomes may vary significantly based on skills, experience, and market conditions.",
           link: "https://www.nasscom.in/knowledge-centre/publications/technology-sector-india-2024"
         }
       },
@@ -135,7 +135,7 @@ export const INDIAN_GOAL_STATS = {
       {
         title: "Career Advancement: Flexible Workers Are 40% More Likely to Receive Promotions",
         figure: "40%",
-        description: "Indian professionals with flexible work arrangements are 40% more likely to receive promotions and salary increases, contradicting concerns that remote work limits career advancement opportunities.",
+        description: "Research indicates flexible work arrangements may correlate with career advancement opportunities. Individual career outcomes vary significantly - consult career professionals for personalized guidance.",
         source: "EY India Future of Work Study",
         link: "https://www.ey.com/en_in/workforce/how-workforce-ecosystems-help-humans-and-organizations-thrive",
         details: {
@@ -150,9 +150,9 @@ export const INDIAN_GOAL_STATS = {
     ],
     "Advance to Management Role": [
       {
-        title: "Management Premium: Indian Managers Earn 65% More Than Individual Contributors",
+        title: "Management Opportunities: Research Shows Potential Career Advancement Benefits",
         figure: "65%",
-        description: "Management roles in India command 65% salary premiums compared to individual contributor positions, with team leaders earning ₹15-25 lakhs annually versus ₹8-15 lakhs for non-management roles.",
+        description: "Research indicates management roles may offer enhanced earning potential compared to individual contributor positions. Career advancement opportunities vary by industry, company, and individual performance - consult career professionals for personalized advice.",
         source: "PayScale India Salary Report",
         link: "https://www.payscale.com/research/IN/Country=India/Salary",
         details: {
@@ -160,7 +160,7 @@ export const INDIAN_GOAL_STATS = {
           publication: "PayScale",
           authors: "PayScale Research Team",
           date: "2024",
-          description: "Comprehensive salary analysis shows consistent 65% premium for management roles across Indian industries, with leadership positions offering both higher compensation and greater job security during economic uncertainty.",
+          description: "Salary research provides insights into compensation trends across Indian industries. Leadership positions may offer various career benefits during different economic conditions. This information is for educational purposes only - individual career and compensation outcomes may vary significantly.",
           link: "https://www.payscale.com/research/IN/Country=India/Salary"
         }
       },
@@ -201,9 +201,9 @@ export const INDIAN_GOAL_STATS = {
   "Financial Security": {
     "Build Emergency Fund": [
       {
-        title: "Financial Resilience: Emergency Funds Reduce Financial Stress by 68% for Indian Professionals",
+        title: "Emergency Fund Planning: Research Shows Potential Stress Reduction Benefits",
         figure: "68%",
-        description: "Indian professionals with 6-month emergency funds report 68% lower financial stress and anxiety, enabling better career decisions and family financial stability during uncertain economic conditions.",
+        description: "Research indicates professionals with emergency savings may experience reduced financial stress. Financial planning strategies vary by individual circumstances - consult qualified financial advisors for personalized emergency fund guidance appropriate to your situation.",
         source: "RBI Household Financial Survey",
         link: "https://www.rbi.org.in/Scripts/PublicationReportDetails.aspx?UrlPage=&ID=1000",
         details: {
@@ -211,14 +211,14 @@ export const INDIAN_GOAL_STATS = {
           publication: "Reserve Bank of India",
           authors: "RBI Research Team",
           date: "2024",
-          description: "Comprehensive survey demonstrates strong correlation between emergency fund adequacy and reduced financial stress among Indian households, with prepared families showing 68% better financial resilience and decision-making capabilities.",
+          description: "Financial surveys provide insights into savings patterns and stress levels among Indian households. Emergency fund strategies should be developed with qualified financial professionals who can assess individual circumstances and provide appropriate guidance.",
           link: "https://www.rbi.org.in/Scripts/PublicationReportDetails.aspx?UrlPage=&ID=1000"
         }
       },
       {
-        title: "Inflation Protection: High-Yield Savings Accounts Offer 7-8% Returns in India",
-        figure: "8%",
-        description: "Indian high-yield savings accounts and fixed deposits offer 7-8% annual returns, helping emergency funds maintain purchasing power while providing liquidity for unexpected expenses and opportunities.",
+        title: "Savings Options: Understanding Available Interest Rate Environment",
+        figure: "Variable",
+        description: "Research shows various savings products may offer different interest rates in the Indian market. Interest rates vary by institution and economic conditions - consult qualified financial advisors for current rates and appropriate savings strategies.",
         source: "RBI Interest Rate Data",
         link: "https://www.rbi.org.in/Scripts/BS_ViewMasData.aspx?id=2207",
         details: {
@@ -226,7 +226,7 @@ export const INDIAN_GOAL_STATS = {
           publication: "Reserve Bank of India",
           authors: "RBI Monetary Policy Department",
           date: "2024",
-          description: "Current interest rate environment enables emergency funds to earn meaningful returns through high-yield savings accounts and fixed deposits offering 7-8% annually, providing inflation protection while maintaining emergency access.",
+          description: "Interest rate information provides educational context about savings options. Rates vary by institution and economic conditions. Investment decisions should be made with qualified financial professionals who can assess current market conditions and individual needs.",
           link: "https://www.rbi.org.in/Scripts/BS_ViewMasData.aspx?id=2207"
         }
       },
@@ -248,9 +248,9 @@ export const INDIAN_GOAL_STATS = {
     ],
     "Start Investment Portfolio": [
       {
-        title: "Wealth Creation: Indian Stock Markets Deliver 12% Annual Returns Over Long-Term",
-        figure: "12%",
-        description: "Indian equity markets provide 12% average annual returns over 10+ year periods, significantly outpacing inflation and fixed deposits for long-term wealth building through systematic investment approaches.",
+        title: "Investment Education: Understanding Long-Term Market Concepts",
+        figure: "Variable",
+        description: "Research indicates equity markets may provide various returns over different time periods. Investment outcomes involve risk of loss and past performance does not guarantee future results - consult qualified financial advisors for investment guidance appropriate to your risk tolerance.",
         source: "NSE Historical Performance Data",
         link: "https://www.nseindia.com/market-data/historical-market-data-products",
         details: {
@@ -258,7 +258,7 @@ export const INDIAN_GOAL_STATS = {
           publication: "National Stock Exchange",
           authors: "NSE Research Team",
           date: "2024",
-          description: "Analysis of Indian equity markets demonstrates consistent 12% annual returns over extended periods, making systematic equity investment the most effective wealth-building strategy for Indian investors with long-term horizons.",
+          description: "Market analysis provides educational insights into historical performance patterns. All investments carry risk of loss and past performance does not guarantee future results. Investment decisions should be made with qualified financial professionals who can assess individual circumstances and risk tolerance.",
           link: "https://www.nseindia.com/market-data/historical-market-data-products"
         }
       },
@@ -278,9 +278,9 @@ export const INDIAN_GOAL_STATS = {
         }
       },
       {
-        title: "Early Start Advantage: Starting at 25 Creates 400% More Wealth Than Starting at 35",
-        figure: "400%",
-        description: "Indian professionals starting investment portfolios at age 25 accumulate 400% more wealth by retirement than those starting at 35, demonstrating the powerful impact of compound growth over time.",
+        title: "Investment Timing: Understanding Compound Growth Concepts",
+        figure: "Significant",
+        description: "Investment education shows how starting earlier may provide more time for potential compound growth. Investment outcomes involve risk and vary significantly - consult qualified financial advisors for personalized investment planning appropriate to your age and circumstances.",
         source: "HDFC Mutual Fund Wealth Study",
         link: "https://www.hdfcfund.com/investment-planning/retirement-planning",
         details: {
@@ -288,16 +288,16 @@ export const INDIAN_GOAL_STATS = {
           publication: "HDFC Mutual Fund",
           authors: "HDFC Investment Advisory Team",
           date: "2024",
-          description: "Mathematical analysis shows dramatic wealth creation benefits of early investing, with 25-year-old investors accumulating 400% more retirement wealth than 35-year-old starters due to extended compound growth periods.",
+          description: "Investment mathematics demonstrates concepts of compound growth over different time periods. Individual investment outcomes vary significantly and involve risk of loss. Investment planning should be developed with qualified financial professionals.",
           link: "https://www.hdfcfund.com/investment-planning/retirement-planning"
         }
       }
     ],
     "Increase Income Streams": [
       {
-        title: "Income Diversification: Multiple Income Earners Generate 180% Higher Monthly Income",
-        figure: "180%",
-        description: "Indian professionals with 3+ income streams earn 180% more monthly than single-income peers, with successful combinations including employment, freelancing, consulting, and business income reaching ₹75K+ monthly.",
+        title: "Income Diversification: Research Shows Various Earning Approaches",
+        figure: "Variable",
+        description: "Research indicates multiple income approaches may offer various opportunities. Individual results vary greatly depending on skills, market conditions, and time investment - consult business and financial professionals for personalized guidance.",
         source: "Economic Times Income Diversification Study",
         link: "https://economictimes.indiatimes.com/wealth/earn",
         details: {
@@ -305,14 +305,14 @@ export const INDIAN_GOAL_STATS = {
           publication: "Economic Times",
           authors: "ET Wealth Team",
           date: "2024",
-          description: "Research demonstrates significant income advantages for professionals maintaining multiple revenue streams, with diversified earners achieving 180% higher monthly income through strategic combination of employment, freelancing, and business activities.",
+          description: "Income research provides insights into various earning strategies and approaches. Individual outcomes vary significantly based on skills, market conditions, and other factors. Business planning should be developed with qualified professionals.",
           link: "https://economictimes.indiatimes.com/wealth/earn"
         }
       },
       {
-        title: "Freelancing Growth: Indian Freelancers Earn $20-40/Hour on Global Platforms",
-        figure: "$40/hour",
-        description: "Indian professionals command $20-40/hour rates on international freelancing platforms, enabling substantial part-time income of ₹40K-80K monthly while leveraging geographic arbitrage advantages.",
+        title: "Freelancing Opportunities: Understanding Global Platform Options",
+        figure: "Variable",
+        description: "Research shows freelancing platforms may offer various earning opportunities. Rates vary significantly by skill level, experience, and market demand - consult business professionals for guidance on freelancing strategies.",
         source: "Upwork Global Freelancing Report",
         link: "https://www.upwork.com/research/freelance-forward-2024",
         details: {
@@ -320,14 +320,14 @@ export const INDIAN_GOAL_STATS = {
           publication: "Upwork",
           authors: "Upwork Research Team",
           date: "2024",
-          description: "Indian freelancers consistently earn $20-40/hour on global platforms across technology, writing, design, and consulting services, providing excellent income supplementation opportunities with geographic cost advantages.",
+          description: "Freelancing research provides insights into platform opportunities across various skill areas. Individual earning outcomes vary greatly based on skills, experience, and market factors. Business decisions should be made with appropriate professional guidance.",
           link: "https://www.upwork.com/research/freelance-forward-2024"
         }
       },
       {
-        title: "Business Success: 67% of Indian Side Businesses Reach ₹25K+ Monthly Revenue Within First Year",
-        figure: "67%",
-        description: "Two-thirds of Indian professionals successfully scale side businesses to ₹25,000+ monthly revenue within first year through digital platforms, local service businesses, and skill monetization strategies.",
+        title: "Business Opportunities: Understanding Side Business Concepts",
+        figure: "Variable",
+        description: "Research indicates various approaches to business development may offer different outcomes. Business success varies greatly depending on many factors - consult qualified business advisors for personalized guidance.",
         source: "IndiaMART SME Business Report",
         link: "https://www.indiamart.com/corporate/about-indiamart/",
         details: {
@@ -335,7 +335,7 @@ export const INDIAN_GOAL_STATS = {
           publication: "IndiaMART",
           authors: "IndiaMART Research Team",
           date: "2024",
-          description: "Analysis of Indian small businesses demonstrates 67% success rate in achieving ₹25K+ monthly revenue through combination of digital platforms, local market knowledge, and systematic business development approaches.",
+          description: "Business research provides insights into various small business approaches and development strategies. Individual business outcomes vary significantly based on market conditions, skills, and other factors. Business planning should be developed with qualified professionals.",
           link: "https://www.indiamart.com/corporate/about-indiamart/"
         }
       }
@@ -345,9 +345,9 @@ export const INDIAN_GOAL_STATS = {
   // Domain: Relationships
   "Relationships": {
     "Plan Dream Wedding": {
-      title: "Indian Wedding Planning ROI: Well-Planned Weddings Create 90% Higher Satisfaction While Managing ₹30L+ Budgets",
+      title: "Wedding Planning: Research Shows Planning Benefits for Celebrations",
       figure: "90%",
-      description: "Indian couples who invest in structured wedding planning achieve 90% higher satisfaction with their celebrations while successfully managing average budgets of ₹30+ lakhs. Strategic planning balances family expectations, cultural traditions, and personal preferences for memorable celebrations.",
+      description: "Research indicates structured wedding planning may improve celebration satisfaction. Wedding costs vary significantly by location, guest count, and preferences - consult wedding professionals and financial advisors for budget planning appropriate to your circumstances.",
       source: "WeddingWire India Market Report & Indian Wedding Industry Association",
       link: "https://www.weddingwire.in/",
       details: {
@@ -355,7 +355,7 @@ export const INDIAN_GOAL_STATS = {
         publication: "WeddingWire India & Indian Wedding Industry Association",
         authors: "Wedding Industry Research Team",
         date: "2024",
-        description: "Research demonstrates 90% satisfaction improvement for Indian couples using structured wedding planning approaches while managing substantial budgets averaging ₹30+ lakhs. Strategic planning successfully balances family expectations, cultural traditions, and personal vision for meaningful celebrations.",
+        description: "Wedding planning research provides insights into various approaches and satisfaction outcomes. Wedding costs vary greatly by individual preferences and circumstances. Planning decisions should be made with appropriate professional guidance and financial consultation.",
         link: "https://www.weddingwire.in/"
       }
     },
@@ -392,9 +392,9 @@ export const INDIAN_GOAL_STATS = {
       }
     ],
     "Improve Romantic Relationship": {
-      title: "Dual-Career Success: 78% of Indian Professional Couples Achieve Higher Household Incomes",
+      title: "Dual-Career Partnerships: Research Shows Various Household Benefits",
       figure: "78%",
-      description: "Indian dual-career couples demonstrate significant financial advantages, with 78% achieving combined household incomes exceeding ₹20 lakhs annually. Professional partnerships provide career support, shared financial goals, and better work-life balance in India's evolving family structures.",
+      description: "Research indicates dual-career partnerships may offer various advantages. Household income outcomes vary greatly by individual careers, industries, and economic conditions - consult career and financial professionals for personalized guidance.",
       source: "Economic Times Dual-Career Study & NSSO Family Survey",
       link: "https://economictimes.indiatimes.com/wealth/personal-finance-news/dual-career-couples-financial-planning",
       details: {
@@ -402,7 +402,7 @@ export const INDIAN_GOAL_STATS = {
         publication: "Economic Times",
         authors: "ET Wealth Research Team",
         date: "2024",
-        description: "Analysis of Indian professional couples shows 78% achieve superior financial outcomes through career partnership, with shared earning potential enabling faster home ownership, investment growth, and family security in metropolitan areas.",
+        description: "Partnership research provides insights into various dual-career approaches and outcomes. Individual financial results vary significantly based on career paths, economic conditions, and other factors. Financial planning should be developed with qualified professionals.",
         link: "https://economictimes.indiatimes.com/wealth/personal-finance-news/dual-career-couples-financial-planning"
       }
     }
@@ -411,9 +411,9 @@ export const INDIAN_GOAL_STATS = {
   // Domain: Personal Growth  
   "Personal Growth": {
     "Master Public Speaking": {
-      title: "Indian Skill Development Shows 15% Annual Salary Growth Through Upskilling",
-      figure: "15%",
-      description: "Indian professionals investing in skill development through online platforms like Coursera, Udemy, and BYJU's FutureSchool achieve 15% annual salary growth compared to 6% for non-learners. With India's digital skills gap creating opportunities, continuous learning provides measurable career acceleration.",
+      title: "Skill Development: Research Shows Learning May Support Career Growth",
+      figure: "Variable",
+      description: "Research indicates skill development may support career advancement opportunities. Individual career outcomes vary significantly by industry, skill area, and market conditions - consult career professionals for personalized skill development guidance.",
       source: "NASSCOM Skills Development Report & Coursera India Impact Study",
       link: "https://www.nasscom.in/knowledge-centre/publications/digital-skills-report-india-2024",
       details: {
@@ -421,14 +421,14 @@ export const INDIAN_GOAL_STATS = {
         publication: "NASSCOM & Coursera India",
         authors: "NASSCOM Research Division",
         date: "2024",
-        description: "Comprehensive analysis shows 15% salary growth for professionals completing skill development programs versus 6% baseline. Digital transformation creates 65 million new jobs requiring advanced skills, making continuous learning essential for career security.",
+        description: "Skill development research provides insights into learning approaches and potential career benefits. Individual career outcomes vary greatly based on skills, market demand, and other factors. Career planning should be developed with qualified professionals.",
         link: "https://www.nasscom.in/knowledge-centre/publications/digital-skills-report-india-2024"
       }
     },
     "Learn New Skill": {
-      title: "Professional Networking ROI: LinkedIn Premium Users in India See 250% Faster Job Placement",
-      figure: "250%",
-      description: "Indian professionals with active LinkedIn Premium accounts experience 250% faster job placement rates and average salary increases of ₹8 lakhs annually. Professional networking through digital platforms provides crucial career acceleration in India's competitive job market.",
+      title: "Professional Networking: Understanding Platform Benefits and Approaches",
+      figure: "Variable",
+      description: "Research indicates professional networking may support career development. Individual networking outcomes vary greatly depending on industry, skills, and approach - consult career professionals for personalized networking strategies.",
       source: "LinkedIn India Professional Insights & NASSCOM Career Mobility Report",
       link: "https://business.linkedin.com/marketing-solutions/linkedin-audience-insights/india-professional-insights",
       details: {
@@ -436,7 +436,7 @@ export const INDIAN_GOAL_STATS = {
         publication: "LinkedIn India Business Solutions",
         authors: "LinkedIn Research Team",
         date: "2024",
-        description: "Analysis demonstrates LinkedIn Premium membership delivers massive career ROI with 250% faster job placement and average ₹8 LPA salary increases. Indian professionals leverage alumni networks and industry connections for career mobility.",
+        description: "Networking research provides insights into various platform approaches and potential career benefits. Individual outcomes vary significantly based on industry, skills, and networking approach. Career planning should be developed with qualified professionals.",
         link: "https://business.linkedin.com/marketing-solutions/linkedin-audience-insights/india-professional-insights"
       }
     },
@@ -573,9 +573,9 @@ export const INDIAN_GOAL_STATS = {
       }
     },
     "Reduce Environmental Impact": {
-      title: "Green Living Saves Indian Professionals ₹15,000 Annually While Boosting Health and Productivity",
-      figure: "₹15,000",
-      description: "Ministry of Environment research shows environmentally conscious Indian professionals save ₹15,000 annually through reduced energy and transportation costs while experiencing 28% better health outcomes. Sustainable practices provide both financial and wellness benefits in Indian climate conditions.",
+      title: "Sustainable Living: Research Shows Potential Cost and Health Benefits",
+      figure: "Variable",
+      description: "Research indicates sustainable practices may offer various cost savings and health benefits. Individual outcomes vary by lifestyle, location, and implementation approach - consult environmental and financial professionals for personalized guidance.",
       source: "Ministry of Environment & Climate Change India",
       link: "https://pib.gov.in/newsite/PrintRelease.aspx?relid=197515",
       details: {
@@ -583,7 +583,7 @@ export const INDIAN_GOAL_STATS = {
         publication: "Ministry of Environment & Climate Change",
         authors: "MOEFCC Sustainable Living Division",
         date: "2024",
-        description: "Comprehensive study shows ₹15,000 annual savings through green practices including energy efficiency, sustainable transport, and reduced consumption, with additional 28% health benefits from cleaner living environments.",
+        description: "Sustainability research provides insights into various environmental practices and potential benefits. Individual cost savings and health outcomes vary greatly by implementation and circumstances. Planning should be developed with appropriate professional guidance.",
         link: "https://pib.gov.in/newsite/PrintRelease.aspx?relid=197515"
       }
     },
@@ -623,9 +623,9 @@ export const INDIAN_GOAL_STATS = {
         }
       },
       {
-        title: "Health Cost Savings: Fit Professionals Spend 60% Less on Healthcare Annually",
-        figure: "60%",
-        description: "Indian professionals with regular fitness routines spend 60% less on healthcare costs and sick days, with preventive fitness providing substantial financial benefits beyond health improvements.",
+        title: "Fitness and Health: Research Shows Potential Wellness Benefits",
+        figure: "Variable",
+        description: "Research indicates regular fitness may support health and wellness outcomes. Individual health results vary significantly - consult healthcare professionals for personalized fitness and wellness guidance appropriate to your health status.",
         source: "Max Healthcare Preventive Medicine Report",
         link: "https://www.maxhealthcare.in/",
         details: {
@@ -633,7 +633,7 @@ export const INDIAN_GOAL_STATS = {
           publication: "Max Healthcare",
           authors: "Max Preventive Medicine Team",
           date: "2024",
-          description: "Analysis shows regular fitness reduces healthcare expenditure by 60% through disease prevention, fewer sick days, and improved immune function, providing substantial financial returns on fitness investment.",
+          description: "Fitness research provides insights into potential health and wellness benefits. Individual health outcomes vary greatly based on fitness level, health status, and other factors. Health and fitness decisions should be made with qualified healthcare professionals.",
           link: "https://www.maxhealthcare.in/"
         }
       },
@@ -717,9 +717,9 @@ export const INDIAN_GOAL_STATS = {
         }
       },
       {
-        title: "Cost Efficiency: Planned Nutrition Saves ₹8K Monthly While Improving Health",
-        figure: "₹8,000",
-        description: "Indian professionals using meal planning and strategic nutrition save ₹8,000 monthly on food costs while achieving better health outcomes through reduced restaurant spending and optimized grocery purchasing.",
+        title: "Nutrition Planning: Understanding Meal Planning Benefits",
+        figure: "Variable",
+        description: "Research indicates meal planning may offer various cost and health benefits. Individual results vary by dietary needs, location, and implementation - consult nutrition and healthcare professionals for personalized guidance.",
         source: "Consumer Affairs Food Cost Analysis",
         link: "https://consumeraffairs.nic.in/",
         details: {
@@ -727,7 +727,7 @@ export const INDIAN_GOAL_STATS = {
           publication: "Ministry of Consumer Affairs",
           authors: "Consumer Affairs Research Team",
           date: "2024",
-          description: "Analysis shows strategic meal planning saves ₹8,000 monthly for typical Indian professional through reduced restaurant expenses and optimized grocery shopping while providing superior nutritional outcomes.",
+          description: "Nutrition research provides insights into meal planning approaches and potential benefits. Individual cost savings and health outcomes vary greatly by dietary needs and implementation. Nutrition planning should be developed with qualified healthcare professionals.",
           link: "https://consumeraffairs.nic.in/"
         }
       },

@@ -37,6 +37,9 @@ import {
   useSafeSpacing
 } from '../../utils/responsive';
 import { styles } from './styles';
+import AppTourOverlay from '../../components/AppTourOverlay';
+import useAppTour from '../../hooks/useAppTour';
+import { useFocusEffect } from '@react-navigation/native';
 
 // Removed TaskViewModeToggle import as it's no longer needed
 
@@ -59,6 +62,141 @@ const TasksScreen = ({ route, navigation }) => {
   const safeSpacing = useSafeSpacing();
   
   const { theme } = useTheme();
+  
+  // App Tour Hook
+  const { 
+    isTourActive,
+    currentStep,
+    spotlightTarget,
+    nextStep,
+    skipTour
+  } = useAppTour(navigation);
+  
+  // Debug logging for tour state
+  if (__DEV__) {
+    console.log('🎯 TasksScreen Tour State:', { 
+      isTourActive, 
+      currentStep, 
+      shouldShowOverlay: isTourActive && currentStep === 'KANBAN_INTRO'
+    });
+  }
+  
+  // Handle screen focus for tour overlay timing
+  useFocusEffect(
+    React.useCallback(() => {
+      if (isTourActive && currentStep === 'KANBAN_INTRO') {
+        console.log('🎯 TasksScreen: Screen focused during tour, step =', currentStep);
+        // Screen is now focused and ready for tour overlay
+      }
+    }, [isTourActive, currentStep])
+  );
+  
+  // Tour scroll position for kanban demonstration - always start at todo (position 0)
+  const [tourKanbanScrollPosition, setTourKanbanScrollPosition] = useState(0); // 0 = left (todo), 1 = center (in-progress), 2 = right (done)
+  
+  // Reset tour scroll position when tour starts
+  React.useEffect(() => {
+    if (isTourActive && currentStep === 'KANBAN_INTRO') {
+      console.log('🎯 Tour: Resetting kanban scroll position to 0 (Todo section)');
+      setTourKanbanScrollPosition(0);
+    }
+  }, [isTourActive, currentStep]);
+  const [tourTaskToMove, setTourTaskToMove] = useState(null); // Track which task to move during tour
+  
+  // Handle tour special actions for kanban demonstration
+  const handleTourSpecialAction = async (action) => {
+    if (action === 'moveTaskToProgress') {
+      console.log('🎯 Tour: Moving first todo task to in-progress and scrolling');
+      
+      // Find first task with 'todo' status to move
+      const todoTask = tasks.find(task => task.status === 'todo');
+      console.log('🎯 Tour Debug: Found todo task:', todoTask ? todoTask.title : 'none');
+      console.log('🎯 Tour Debug: updateTask function available:', typeof updateTask);
+      
+      if (todoTask && updateTask) {
+        console.log('🎯 Tour: Moving task', todoTask.title, 'from todo to in-progress');
+        console.log('🎯 Tour: Task details:', { id: todoTask.id, projectId: todoTask.projectId, currentStatus: todoTask.status });
+        setTourTaskToMove(todoTask.id);
+        
+        const updatedTask = { 
+          ...todoTask, 
+          status: 'in_progress',  // Use underscore, not hyphen
+          updatedAt: new Date().toISOString()
+        };
+        
+        try {
+          // Use the correct updateTask signature: updateTask(projectId, taskId, updatedTask)
+          await updateTask(todoTask.projectId, todoTask.id, updatedTask);
+          console.log('🎯 Tour: Successfully moved task to in-progress');
+        } catch (error) {
+          console.error('🎯 Tour: Error moving task:', error);
+        }
+      } else {
+        console.log('🎯 Tour: Cannot move task - todoTask:', !!todoTask, 'updateTask:', !!updateTask);
+      }
+      
+      // Scroll to center the in-progress section simultaneously with task movement
+      setTourKanbanScrollPosition(1);
+    }
+    
+    if (action === 'completeTask') {
+      console.log('🎯 Tour: Completing task and scrolling to done section');
+      
+      // Move the previously moved task to done, or find first in-progress task
+      console.log('🎯 Tour Debug: tourTaskToMove:', tourTaskToMove);
+      console.log('🎯 Tour Debug: Available in-progress tasks:', tasks.filter(task => task.status === 'in_progress').map(t => t.title));
+      
+      if (tourTaskToMove && updateTask) {
+        const taskToComplete = tasks.find(task => task.id === tourTaskToMove);
+        if (taskToComplete) {
+          console.log('🎯 Tour: Completing previously moved task', taskToComplete.title);
+          
+          const updatedTask = { 
+            ...taskToComplete, 
+            status: 'done',
+            completed: true,
+            updatedAt: new Date().toISOString()
+          };
+          
+          try {
+            // Use the correct updateTask signature: updateTask(projectId, taskId, updatedTask)
+            await updateTask(taskToComplete.projectId, taskToComplete.id, updatedTask);
+            console.log('🎯 Tour: Successfully completed task');
+          } catch (error) {
+            console.error('🎯 Tour: Error completing task:', error);
+          }
+        }
+      } else {
+        // Fallback: find first in-progress task
+        const inProgressTask = tasks.find(task => task.status === 'in_progress');
+        if (inProgressTask && updateTask) {
+          console.log('🎯 Tour: Completing in-progress task', inProgressTask.title);
+          setTourTaskToMove(inProgressTask.id);
+          
+          const updatedTask = { 
+            ...inProgressTask, 
+            status: 'done',
+            completed: true,
+            updatedAt: new Date().toISOString()
+          };
+          
+          try {
+            // Use the correct updateTask signature: updateTask(projectId, taskId, updatedTask)
+            await updateTask(inProgressTask.projectId, inProgressTask.id, updatedTask);
+            console.log('🎯 Tour: Successfully completed fallback task');
+          } catch (error) {
+            console.error('🎯 Tour: Error completing fallback task:', error);
+          }
+        } else {
+          console.log('🎯 Tour: No in-progress task found to complete');
+        }
+      }
+      
+      // Scroll to show the done section simultaneously with task completion
+      setTourKanbanScrollPosition(2);
+    }
+  };
+  
   const { 
     projects, 
     tasks, 
@@ -1606,12 +1744,46 @@ const TasksScreen = ({ route, navigation }) => {
           });
         }}
       />
+      
+      {/* Elevated Tour Kanban - rendered AFTER overlay during tour so it appears on top */}
+      {isTourActive && currentStep === 'KANBAN_INTRO' && (
+        <View style={additionalStyles.tourKanbanContainer}>
+          <KanbanView 
+            taskScreenProps={{
+              ...taskScreenProps,
+              isTourMode: true, // Pass tour mode to disable interactions
+              tourScrollPosition: tourKanbanScrollPosition // Pass scroll position control
+            }} 
+          />
+        </View>
+      )}
+      
+      {/* App Tour Overlay */}
+      <AppTourOverlay
+        isVisible={isTourActive && currentStep === 'KANBAN_INTRO'}
+        currentStep={currentStep}
+        onComplete={nextStep}
+        onSkip={skipTour}
+        spotlightTarget={spotlightTarget}
+        onSpecialAction={handleTourSpecialAction}
+      />
     </View>
   );
 };
 
 // Add styles for the new subscription UI elements
 const additionalStyles = StyleSheet.create({
+  // Tour kanban container with elevated z-index
+  tourKanbanContainer: {
+    position: 'absolute',
+    top: 120, // Position below header
+    left: 0,
+    right: 0,
+    bottom: 100, // Leave space at bottom
+    zIndex: 1000,
+    backgroundColor: '#000000', // Match kanban background
+  },
+  
   // Limit banner container for temporary popup
   limitBannerContainer: {
     position: 'absolute',

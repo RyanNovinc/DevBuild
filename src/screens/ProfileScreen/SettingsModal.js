@@ -19,6 +19,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import responsive from '../../utils/responsive';
 import ReferralCodeInputModal from '../../components/ReferralCodeInputModal';
+import TermsOfServiceModal from '../../components/ai/LoginScreen/components/TermsOfServiceModal';
+import PrivacyPolicyModal from '../../components/ai/LoginScreen/components/PrivacyPolicyModal';
 
 const { width } = Dimensions.get('window');
 
@@ -40,7 +42,8 @@ const SettingsModal = ({
   edgeSwipeX,
   onScreenStateUpdate, // Add this prop to update parent state
   onTriggerGiftSurprise, // Add this prop for testing the gift surprise
-  onTriggerAIPlusUpgrade // Add this prop for AI Plus upgrade notification
+  onTriggerAIPlusUpgrade, // Add this prop for AI Plus upgrade notification
+  onTestSecondOnboarding // Add this prop for testing the second onboarding
 }) => {
   const { logout } = useAuth() || {};
   const insets = useSafeAreaInsets();
@@ -61,6 +64,10 @@ const SettingsModal = ({
   
   // Goal limit modal state
   const [goalLimitModalVisible, setGoalLimitModalVisible] = useState(false);
+  
+  // Terms and Privacy modal states
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   
   // Restart onboarding modal state
   const [restartOnboardingModalVisible, setRestartOnboardingModalVisible] = useState(false);
@@ -1153,8 +1160,85 @@ const SettingsModal = ({
                     color={theme.textSecondary} 
                   />
                 </TouchableOpacity>
+
+                {/* Test Second Onboarding Button */}
+                <TouchableOpacity
+                  style={[styles.settingButton, {
+                    backgroundColor: theme.card,
+                    borderColor: theme.border,
+                    marginTop: 8
+                  }]}
+                  onPress={() => {
+                    if (onTestSecondOnboarding) {
+                      onTestSecondOnboarding();
+                      onClose(); // Close the settings modal to see the tour
+                    }
+                  }}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel="Test Second Onboarding"
+                  accessibilityHint="Test the app tour that guides users through main features"
+                >
+                  <View style={styles.settingButtonContent}>
+                    <View style={[styles.settingIconContainer, {
+                      backgroundColor: '#3b82f620'
+                    }]}>
+                      <Ionicons name="map-outline" size={20} color="#3b82f6" />
+                    </View>
+                    <View style={styles.settingTextContainer}>
+                      <Text 
+                        style={[styles.settingButtonText, { color: theme.text }]}
+                        maxFontSizeMultiplier={1.3}
+                        numberOfLines={1}
+                      >
+                        Test App Tour
+                      </Text>
+                      <Text 
+                        style={[styles.settingButtonSubtext, { color: theme.textSecondary }]}
+                        maxFontSizeMultiplier={1.5}
+                        numberOfLines={1}
+                      >
+                        Guided tour of main features
+                      </Text>
+                    </View>
+                  </View>
+                  <Ionicons 
+                    name="chevron-forward" 
+                    size={18} 
+                    color={theme.textSecondary} 
+                  />
+                </TouchableOpacity>
               </View>
             )}
+
+            {/* Terms and Privacy Section */}
+            <View style={[styles.termsSection, { borderTopColor: theme.border }]}>
+              <TouchableOpacity
+                style={[styles.termsLink]}
+                onPress={() => setShowTermsModal(true)}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="View Terms of Service"
+              >
+                <Text style={[styles.termsLinkText, { color: theme.textSecondary }]}>
+                  Terms of Service
+                </Text>
+                <Ionicons name="document-text-outline" size={16} color={theme.textSecondary} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.termsLink]}
+                onPress={() => setShowPrivacyModal(true)}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="View Privacy Policy"
+              >
+                <Text style={[styles.termsLinkText, { color: theme.textSecondary }]}>
+                  Privacy Policy
+                </Text>
+                <Ionicons name="shield-outline" size={16} color={theme.textSecondary} />
+              </TouchableOpacity>
+            </View>
           </ScrollView>
         </Animated.View>
         </PanGestureHandler>
@@ -1320,6 +1404,18 @@ const SettingsModal = ({
             </Animated.View>
           </View>
         </Modal>
+
+        {/* Terms of Service Modal */}
+        <TermsOfServiceModal 
+          visible={showTermsModal}
+          onClose={() => setShowTermsModal(false)}
+        />
+
+        {/* Privacy Policy Modal */}
+        <PrivacyPolicyModal 
+          visible={showPrivacyModal}
+          onClose={() => setShowPrivacyModal(false)}
+        />
       </View>
     </Modal>
   );
@@ -1658,7 +1754,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     letterSpacing: -0.1,
-  }
+  },
+  // Terms and Privacy styles
+  termsSection: {
+    borderTopWidth: 1,
+    paddingTop: 16,
+    marginTop: 24,
+    gap: 8,
+  },
+  termsLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+  },
+  termsLinkText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
 });
 
 export default SettingsModal;

@@ -77,7 +77,7 @@ export const DOMAIN_DEFINITIONS = [
                   {
                     name: "Complete Google Data Analytics Certificate or similar comprehensive program",
                     summary: "Data certified",
-                    explanation: "Google Data Analytics Certificate provides industry-recognized credentials that can lead to $75,000+ starting salaries. Structured programs offer hands-on experience with real datasets and tools used by major companies.",
+                    explanation: "Google Data Analytics Certificate provides industry-recognized credentials. Individual salary outcomes vary significantly - consult career professionals for guidance.",
                     timeframe: "4 months",
                     completed: false
                   },
@@ -147,7 +147,7 @@ export const DOMAIN_DEFINITIONS = [
                   {
                     name: "Complete Stanford Machine Learning Course or Google ML Certificate",
                     summary: "ML certified",
-                    explanation: "Stanford ML Course (Andrew Ng) is gold standard for ML education, while Google certificates provide practical industry skills. These credentials can lead to $95,000+ starting salaries in tech.",
+                    explanation: "Stanford ML Course (Andrew Ng) provides ML education, while Google certificates provide practical industry skills. Individual career outcomes vary significantly - consult career professionals for guidance.",
                     timeframe: "4 months",
                     completed: false
                   },
@@ -175,7 +175,7 @@ export const DOMAIN_DEFINITIONS = [
                   {
                     name: "Complete leadership training program or join Toastmasters for communication skills",
                     summary: "Leadership train",
-                    explanation: "Toastmasters membership costs under $50 annually but provides structured environment to develop public speaking and leadership skills valued by 86% of employers. Communication skills are the top differentiator for promotions.",
+                    explanation: "Toastmasters membership provides structured environment to develop public speaking and leadership skills. Individual career outcomes vary significantly - consult career professionals for guidance.",
                     timeframe: "3 months",
                     completed: false
                   },
@@ -447,7 +447,7 @@ export const DOMAIN_DEFINITIONS = [
     name: "Financial Security",
     icon: "cash",
     color: "#10b981", // Green
-    description: "Building wealth, managing expenses, and achieving financial goals",
+    description: "Financial education, budgeting guidance, and goal planning resources",
     goals: [
       {
         name: "Build 6-Month Emergency Fund",
@@ -470,7 +470,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Open high-yield savings account and set up automatic weekly transfers",
                 summary: "Setup savings",
-                explanation: "High-yield savings accounts earn 10-20x more than traditional savings while automation ensures consistent progress without relying on willpower. Separate emergency fund account reduces temptation to spend money.",
+                explanation: "High-yield savings account research provides information about various savings approaches for educational purposes. Individual financial outcomes vary significantly - consult qualified financial professionals for guidance.",
                 timeframe: "1 week",
                 completed: false
               }
@@ -484,14 +484,14 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Track all expenses for one month to identify areas for cost reduction",
                 summary: "Track expenses",
-                explanation: "Expense tracking reveals spending patterns you're unaware of and identifies easy wins for reducing costs. Most people find $200-500 monthly in unnecessary spending that can be redirected to emergency savings.",
+                explanation: "Expense tracking reveals spending patterns and may identify opportunities for cost reduction. Individual financial results vary - consult financial advisors for guidance.",
                 timeframe: "1 month",
                 completed: false
               },
               {
                 name: "Research ways to increase income through side work or salary negotiation",
                 summary: "Research income",
-                explanation: "Income increases have more impact on emergency fund building than expense cuts alone. Salary negotiation can provide immediate 10-20% boost, while side work offers additional income streams for faster goal achievement.",
+                explanation: "Emergency fund building concepts may involve various income and expense strategies. Individual financial outcomes vary significantly - consult qualified financial professionals for guidance.",
                 timeframe: "2 weeks",
                 completed: false
               }
@@ -503,7 +503,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Pay Off High-Interest Debt",
         description: "Eliminate credit card and high-interest debt to unlock financial freedom",
         icon: "card",
-        explanation: "Over 40% prioritise debt settlement as their top financial goal. With average student debt at $33,260 for 25-34 age group plus consumer debt, this addresses their biggest financial burden.",
+        explanation: "Debt management education provides information for educational purposes. Individual financial situations vary significantly - consult qualified financial advisors for guidance.",
         projects: [
           {
             name: "Strategic Debt Elimination",
@@ -541,7 +541,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Build emergency fund to avoid using credit for unexpected expenses",
                 summary: "Build fund",
-                explanation: "Emergency funds break the debt cycle by eliminating need to use credit for unexpected expenses. Even a small $1,000 emergency fund prevents most financial emergencies from becoming debt.",
+                explanation: "Emergency fund concepts may provide educational information about financial planning. Individual financial outcomes vary - consult qualified financial advisors for guidance.",
                 timeframe: "12 months",
                 completed: false
               }
@@ -551,14 +551,14 @@ export const DOMAIN_DEFINITIONS = [
       },
       {
         name: "Start Long-Term Investing",
-        description: "Begin consistent investing to build wealth for major life goals",
+        description: "Learn about investment concepts for educational purposes",
         icon: "trending-up",
-        explanation: "Housing requires $114,000+ income but average salary only $65,470. Investment growth becomes essential as median first-time homebuyer age has risen to 38 from 28 in 1991.",
+        explanation: "Homeownership research provides information for educational purposes. Individual real estate outcomes vary significantly - consult qualified real estate and financial professionals for guidance.",
         projects: [
           {
             name: "Investment Foundation Setup",
             description: "Open investment accounts and begin systematic investing",
-            explanation: "Traditional wealth-building path (homeownership) now requires capital first. Time is biggest asset for compound growth.",
+            explanation: "Investment education provides information about homeownership and investment concepts for educational purposes. Investment decisions involve significant risk - consult qualified financial professionals for guidance.",
             tasks: [
               {
                 name: "Open investment accounts (401k, IRA, brokerage) and research low-cost index funds",
@@ -568,9 +568,9 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Set up automatic monthly investments of $200+ into diversified portfolio",
+                name: "Learn about automatic investing concepts for educational purposes (consult qualified financial advisor for personal guidance)",
                 summary: "Auto investing",
-                explanation: "Automatic investing ensures consistency and removes emotional decision-making from investing. Dollar-cost averaging through regular investments reduces market timing risk while building wealth systematically.",
+                explanation: "Investment education provides information about systematic approaches for educational purposes. Investment decisions involve significant risk of loss - consult qualified financial advisors for guidance appropriate to your individual circumstances.",
                 timeframe: "1 week",
                 completed: false
               }
@@ -578,20 +578,20 @@ export const DOMAIN_DEFINITIONS = [
           },
           {
             name: "Investment Knowledge Building",
-            description: "Learn investment fundamentals and develop long-term strategy",
-            explanation: "Need $70,000+ for median home down payment. Strategic investing essential for achieving major financial milestones.",
+            description: "Learn investment fundamentals for educational purposes",
+            explanation: "Home purchase planning concepts provide educational information. Individual real estate outcomes vary - consult qualified professionals for guidance.",
             tasks: [
               {
                 name: "Complete investment fundamentals course or read reputable investing books",
                 summary: "Learn investing",
-                explanation: "Investment education prevents costly mistakes and builds confidence for long-term wealth building. Understanding fundamentals like diversification and risk tolerance enables smarter investment decisions throughout life.",
+                explanation: "Investment education provides information on concepts like diversification and risk for educational purposes. Investment decisions should be made with qualified financial advisors who can assess individual circumstances.",
                 timeframe: "2 months",
                 completed: false
               },
               {
-                name: "Create long-term investment plan aligned with major life goals (home, retirement)",
+                name: "Learn about investment planning concepts for educational purposes (consult financial advisor)",
                 summary: "Investment plan",
-                explanation: "Goal-based investing provides purpose and timeline for investment strategy. Different goals require different approaches - home down payment needs shorter-term growth while retirement benefits from longer-term strategies.",
+                explanation: "Investment education provides information about goal-based concepts for educational purposes. Investment decisions involve significant risk - consult qualified financial advisors for personalized guidance.",
                 timeframe: "1 month",
                 completed: false
               }
@@ -916,12 +916,12 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Data Analytics Certification",
             description: "Complete comprehensive data analytics training program",
-            explanation: "44% of companies need these skills and 40% of junior employees want to develop them. Average data analyst salary significantly exceeds national averages.",
+            explanation: "Data analysis skills may support career development opportunities. Individual career outcomes vary significantly - consult career professionals for guidance.",
             tasks: [
               {
                 name: "Enroll in data analytics certification program (Google, Microsoft, or university)",
                 summary: "Get certified",
-                explanation: "Certified data analytics skills command $70,000+ starting salaries and open doors across industries. Structured programs provide hands-on experience with real datasets and industry-standard tools.",
+                explanation: "Data analytics certification may support career development opportunities. Individual career outcomes vary - consult career professionals for guidance.",
                 completed: false
               },
               {
@@ -955,9 +955,9 @@ export const DOMAIN_DEFINITIONS = [
       },
       {
         name: "Start Creative Side Hustle",
-        description: "Generate $500+ monthly income from creative skills and talents",
+        description: "Generate monthly income from creative skills and talents (individual results vary - consult business professionals)",
         icon: "brush",
-        explanation: "36-45% of Americans have side hustles, with 48% of Gen Z and 44% of Millennials participating. Average side hustler earns $891 monthly with creative pursuits averaging $42-53/hour.",
+        explanation: "36-45% of Americans have side hustles, with 48% of Gen Z and 44% of Millennials participating. Individual side hustle income varies significantly - consult business professionals for guidance.",
         needsClarification: true,
         clarificationOptions: [
           {
@@ -986,7 +986,7 @@ export const DOMAIN_DEFINITIONS = [
               },
               {
                 name: "Content Monetization Strategy",
-                description: "Convert content creation into sustainable $500+ monthly income",
+                description: "Convert content creation into sustainable monthly income (individual results vary - consult business professionals)",
                 explanation: "Digital content can generate income through ads, sponsorships, and product sales. Scalable income potential beyond traditional hourly work.",
                 tasks: [
                   {
@@ -996,9 +996,9 @@ export const DOMAIN_DEFINITIONS = [
                     completed: false
                   },
                   {
-                    name: "Reach consistent $500+ monthly revenue through content monetization",
-                    summary: "$500 monthly",
-                    explanation: "$500 monthly represents significant supplemental income that can cover major expenses or accelerate financial goals. Consistent revenue demonstrates viable business model and potential for scaling.",
+                    name: "Learn about content monetization concepts for educational purposes",
+                    summary: "Monthly revenue",
+                    explanation: "Content monetization concepts provide educational information about potential income sources. Individual business results vary significantly - consult qualified business professionals for guidance.",
                     completed: false
                   }
                 ]
@@ -1013,7 +1013,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Handmade Product Business Launch",
                 description: "Create marketable handmade products and establish online sales presence",
-                explanation: "Handmade products averaging $42-53/hour provide strong income potential. Physical products offer tangible creative satisfaction.",
+                explanation: "Handmade product business concepts may provide educational information. Individual business outcomes vary - consult business professionals for guidance.",
                 tasks: [
                   {
                     name: "Develop signature handmade product line and set up Etsy or similar marketplace store",
@@ -1041,9 +1041,9 @@ export const DOMAIN_DEFINITIONS = [
                     completed: false
                   },
                   {
-                    name: "Achieve $500+ monthly revenue through combined online and local sales",
-                    summary: "$500 monthly",
-                    explanation: "Combining online and local sales channels maximizes market reach and revenue potential. $500 monthly from handmade products demonstrates sustainable business that could grow into full-time income.",
+                    name: "Learn about revenue generation through online and local sales concepts",
+                    summary: "Monthly revenue",
+                    explanation: "Combining online and local sales channels may offer business opportunities. Individual business results vary significantly - consult qualified business professionals for guidance.",
                     completed: false
                   }
                 ]
@@ -1058,7 +1058,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Creative Services Business Setup",
                 description: "Establish professional creative services offering and client acquisition system",
-                explanation: "Creative services offer high hourly rates ($42-53/hour average) and flexible scheduling. Professional skills command premium pricing.",
+                explanation: "Creative service business concepts may provide educational information. Individual business outcomes vary - consult business professionals for guidance.",
                 tasks: [
                   {
                     name: "Define service offerings (design, writing, photography) and create professional portfolio",
@@ -1086,9 +1086,9 @@ export const DOMAIN_DEFINITIONS = [
                     completed: false
                   },
                   {
-                    name: "Build recurring client base generating $500+ monthly through creative services",
-                    summary: "$500 monthly",
-                    explanation: "Recurring clients provide income stability and reduce time spent on client acquisition. $500 monthly from creative services represents sustainable side business with potential for full-time transition.",
+                    name: "Learn about building client relationships for service-based businesses",
+                    summary: "Monthly income",
+                    explanation: "Client relationship building may support service-based businesses. Individual business results vary significantly - consult qualified business professionals for guidance.",
                     completed: false
                   }
                 ]
@@ -1128,9 +1128,9 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Optimize pricing and marketing to reach $500+ monthly revenue target",
-                summary: "Reach $500",
-                explanation: "Pricing optimization balances competitiveness with profitability while effective marketing increases visibility and customer acquisition. $500 monthly provides meaningful income supplement that can accelerate financial goals.",
+                name: "Learn about pricing and marketing optimization concepts (consult business advisor)",
+                summary: "Reach target",
+                explanation: "Pricing optimization balances competitiveness with profitability while effective marketing increases visibility and customer acquisition. Individual business results vary - consult business professionals.",
                 completed: false
               }
             ]
@@ -1163,7 +1163,7 @@ export const DOMAIN_DEFINITIONS = [
                   {
                     name: "Implement AI automation tools to streamline repetitive work tasks",
                     summary: "Automate tasks",
-                    explanation: "AI automation frees up time for higher-value work while demonstrating innovation and efficiency. Successful implementation creates tangible productivity gains that justify promotions and salary increases.",
+                    explanation: "AI automation may free up time for higher-value work while demonstrating innovation and efficiency. Individual career outcomes vary significantly - consult career professionals for guidance.",
                     completed: false
                   }
                 ]
@@ -1338,7 +1338,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Solo Travel Planning",
             description: "Research and plan meaningful solo adventure experience",
-            explanation: "Gen Z spends average $11,766 on trips, surpassing all generations. Post-pandemic travel surge with work-from-home flexibility enabling longer trips.",
+            explanation: "Travel planning concepts may contribute to personal growth. Individual travel experiences and budgets vary - plan according to personal circumstances.",
             tasks: [
               {
                 name: "Choose destination and create detailed itinerary for solo adventure trip",
@@ -1379,7 +1379,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Explore Wellness Activities",
         description: "Maintain 4+ weekly wellness activities for holistic health and relaxation",
         icon: "leaf",
-        explanation: "Over 60% of young adults use fitness apps regularly, with fitness/wellness ranking #2 hobby for 25-34 year-olds. Millennials spend $115/month on wellness services.",
+        explanation: "Fitness and wellness activities may support physical and mental health. Individual health outcomes vary - consult health professionals for guidance.",
         projects: [
           {
             name: "Wellness Routine Development",
@@ -1425,7 +1425,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Explore Local Culture",
         description: "Try 24 new local restaurants, events, and cultural activities within 12 months",
         icon: "restaurant",
-        explanation: "Millennials spend $164/month on entertainment, with 79% willing to eat at popular restaurants. Experience economy thrives as 78% prefer memorable experiences over physical items.",
+        explanation: "Entertainment and dining may provide social and recreational experiences. Individual preferences and budgets vary - plan according to personal circumstances.",
         projects: [
           {
             name: "Local Cultural Exploration",
@@ -1503,7 +1503,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Volunteer Impact and Growth",
             description: "Maximize impact of volunteer work and develop leadership opportunities",
-            explanation: "Economic value of volunteer time: $28.54/hour. 18% serve virtually, increasing accessibility for different volunteering approaches.",
+            explanation: "Volunteer activities may provide community connection and personal fulfillment. Individual experiences vary - explore opportunities aligned with personal values.",
             tasks: [
               {
                 name: "Track volunteer hours and measure impact created for chosen cause",
@@ -1630,7 +1630,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Homeownership Preparation Strategy",
             description: "Build financial foundation and knowledge for home purchase",
-            explanation: "Need $114,000 income for median home vs ~$57,000 average salary. Rising interest rates create urgency while remote work opens new geographic possibilities.",
+            explanation: "Homeownership research provides information for educational purposes. Individual real estate outcomes vary significantly - consult qualified real estate and financial professionals for guidance.",
             tasks: [
               {
                 name: "Research first-time homebuyer programs and down payment assistance options",

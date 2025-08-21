@@ -81,7 +81,7 @@ const WHEEL_DOMAINS = [
 ];
 
 // Main component
-const DomainBalanceWheel = ({ theme, navigation }) => {
+const DomainBalanceWheel = ({ theme, navigation, isTourActive = false, currentStep = null }) => {
   // Get screen dimensions and insets
   const { width, height } = Dimensions.get('window');
   const insets = useSafeAreaInsets();
@@ -804,8 +804,14 @@ const DomainBalanceWheel = ({ theme, navigation }) => {
                 
                 // Determine if this domain should be darkened in Active Focus Areas view
                 const hasActiveGoals = getDomainActiveGoalCount(slice.domain) > 0;
-                const shouldDarken = !balanceView && !hasActiveGoals;
-                const baseOpacity = shouldDarken ? 0.2 : (isSelected ? 1 : 0.7);
+                let shouldDarken = !balanceView && !hasActiveGoals;
+                let baseOpacity = shouldDarken ? 0.2 : (isSelected ? 1 : 0.7);
+                
+                // Tour mode: brighten everything when on domain wheel step
+                if (isTourActive && currentStep === 'PROFILE_DOMAIN_WHEEL') {
+                  shouldDarken = false;
+                  baseOpacity = 1; // Full brightness for all domains
+                }
                 
                 // Skip accessibility properties if screen reader is enabled (handled by parent)
                 const sliceAccessibilityProps = isScreenReaderEnabled ? {} : {
@@ -953,7 +959,12 @@ const DomainBalanceWheel = ({ theme, navigation }) => {
           <View style={styles.iconsOverlay} pointerEvents="none">
             {wheelSlices.map((slice, index) => {
               const hasActiveGoals = getDomainActiveGoalCount(slice.domain) > 0;
-              const shouldDarken = !balanceView && !hasActiveGoals;
+              let shouldDarken = !balanceView && !hasActiveGoals;
+              
+              // Tour mode: brighten everything when on domain wheel step
+              if (isTourActive && currentStep === 'PROFILE_DOMAIN_WHEEL') {
+                shouldDarken = false;
+              }
               
               // Calculate the absolute position based on the SVG viewBox and center
               const centerX = SVG_CONTAINER_SIZE / 2;

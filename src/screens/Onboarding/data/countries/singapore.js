@@ -11,7 +11,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Switch to Tech Career",
         description: "Transition into Singapore's booming tech sector with government support",
         icon: "laptop",
-        explanation: "Singapore's tech sector is exploding with incredible opportunities! The government invests S$3.3 billion in tech transformation, creating thousands of high-paying jobs. Smart professionals are pivoting into tech roles that offer career security and growth.",
+        explanation: "Singapore's tech sector may offer career opportunities. Individual career outcomes vary significantly - consult career professionals for guidance.",
         projects: [
           {
             name: "Tech Skills Development",
@@ -37,7 +37,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Tech Career Market Entry",
             description: "Successfully transition into Singapore's tech ecosystem",
-            explanation: "Singapore's tech sector offers excellent career growth with median salaries of S$7,500+ for tech professionals. Strong demand creates opportunities for career switchers.",
+            explanation: "Tech sector education may support career development. Individual career outcomes vary - consult career professionals for guidance.",
             tasks: [
               {
                 name: "Apply for tech roles at SG companies",
@@ -97,9 +97,9 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Scale to S$10,000+ monthly revenue through strategic marketing",
+                name: "Learn about strategic marketing for business growth (consult business advisor for targets)",
                 summary: "Scale revenue",
-                explanation: "S$10K monthly revenue proves business viability and creates substantial additional income while building foundation for full-time entrepreneurship.",
+                explanation: "Strategic marketing concepts may support business development. Individual business results vary significantly - consult qualified business professionals for guidance.",
                 timeframe: "6 months",
                 completed: false
               }
@@ -121,7 +121,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Complete leadership training via SkillsFuture",
                 summary: "Leadership training",
-                explanation: "SkillsFuture provides S$4,000 credit for leadership development programs. Formal training demonstrates commitment to management career path.",
+                explanation: "SkillsFuture programs may support professional development. Individual outcomes vary - consult career professionals for guidance.",
                 timeframe: "3 months",
                 completed: false
               },
@@ -174,12 +174,12 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Emergency Fund Strategy",
             description: "Calculate target amount and establish systematic saving through Singapore's options",
-            explanation: "Singapore's financial infrastructure offers excellent savings options including Singapore Savings Bonds with principal guarantee and attractive returns.",
+            explanation: "Singapore's financial infrastructure may offer various savings options including Singapore Savings Bonds. Investment outcomes involve risk - consult qualified financial advisors for guidance.",
             tasks: [
               {
                 name: "Calculate emergency fund and open SSB account",
                 summary: "Calculate fund target",
-                explanation: "Emergency fund calculation provides clear target while Singapore Savings Bonds offer principal-guaranteed returns perfect for emergency funds.",
+                explanation: "Emergency fund calculation provides clear target. Consider researching savings options - consult qualified financial advisors for guidance appropriate to your circumstances.",
                 timeframe: "1 week",
                 completed: false
               },
@@ -217,9 +217,9 @@ export const DOMAIN_DEFINITIONS = [
       },
       {
         name: "Start Investment Portfolio",
-        description: "Build diversified investment strategy using Singapore's excellent options",
+        description: "Learn about diversified investment concepts for educational purposes",
         icon: "trending-up",
-        explanation: "Singapore offers world-class investment opportunities! CPF provides guaranteed returns while investment options include local stocks, REITs, and international funds. Smart investors build wealth through Singapore's sophisticated financial system.",
+        explanation: "Singapore offers various investment research opportunities. Investment outcomes involve risk and past performance does not guarantee future results - consult qualified financial advisors for guidance appropriate to your circumstances.",
         projects: [
           {
             name: "Investment Foundation",
@@ -234,8 +234,8 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Start with S$5,000 investment in diversified Singapore portfolio",
-                summary: "Start investing",
+                name: "Learn about diversified investment concepts for educational purposes (consult financial advisor)",
+                summary: "Learn investing",
                 explanation: "Starting investment builds experience while diversification across Singapore stocks, REITs, and international options provides balanced growth potential.",
                 timeframe: "1 month",
                 completed: false
@@ -244,11 +244,11 @@ export const DOMAIN_DEFINITIONS = [
           },
           {
             name: "Portfolio Growth Strategy",
-            description: "Systematically build investment wealth through regular contributions",
-            explanation: "Consistent investment contributions leverage dollar-cost averaging while Singapore's stable environment supports long-term wealth building.",
+            description: "Learn about investment concepts for educational purposes",
+            explanation: "Investment education provides information about contribution concepts for educational purposes. Investment decisions involve significant risk - consult qualified financial advisors for guidance.",
             tasks: [
               {
-                name: "Set up automatic monthly investment contributions of S$1,000+",
+                name: "Learn about automatic investment concepts for educational purposes (consult qualified financial advisor for personal guidance)",
                 summary: "Automate investing",
                 explanation: "Automatic investment contributions ensure consistent portfolio growth while taking advantage of market opportunities through systematic investing.",
                 timeframe: "1 week",
@@ -257,7 +257,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Maximize CPF contributions for tax relief",
                 summary: "Optimize CPF",
-                explanation: "CPF voluntary contributions provide tax relief up to S$8,000 annually while building retirement wealth with government-backed guaranteed returns.",
+                explanation: "Research CPF voluntary contribution options for tax considerations. Individual financial circumstances vary - consult qualified financial advisors for guidance appropriate to your situation.",
                 timeframe: "Annually",
                 completed: false
               }
@@ -267,7 +267,7 @@ export const DOMAIN_DEFINITIONS = [
       },
       {
         name: "Increase Income Streams",
-        description: "Develop multiple income sources to accelerate wealth building in Singapore",
+        description: "Learn about multiple income stream concepts for educational purposes",
         icon: "wallet",
         explanation: "Multiple income streams provide security and acceleration toward financial goals! Singapore's excellent infrastructure supports freelancing, business, and investment income. Smart professionals build diverse revenue streams.",
         projects: [
@@ -298,16 +298,16 @@ export const DOMAIN_DEFINITIONS = [
             explanation: "Singapore's infrastructure supports rapid income stream scaling through excellent payment systems, business support, and market access.",
             tasks: [
               {
-                name: "Launch chosen income stream and track monthly revenue growth",
+                name: "Learn about income stream concepts and business tracking (consult business advisor)",
                 summary: "Launch stream",
                 explanation: "Income stream launch provides additional revenue while tracking enables optimization for faster growth in Singapore's competitive market.",
                 timeframe: "3 months",
                 completed: false
               },
               {
-                name: "Scale income to S$3,000+ monthly",
+                name: "Learn about income development concepts (consult business advisor)",
                 summary: "Scale income",
-                explanation: "S$3,000 monthly additional income provides substantial wealth building acceleration while creating financial security and independence options.",
+                explanation: "Business income concepts may provide educational information about financial planning. Individual business results vary significantly - consult qualified professionals for guidance.",
                 timeframe: "6 months",
                 completed: false
               }
@@ -327,7 +327,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Build Fitness Routine",
         description: "Establish sustainable exercise habits using Singapore's excellent fitness infrastructure",
         icon: "barbell",
-        explanation: "Singapore offers world-class fitness infrastructure! ActiveSG provides free membership and S$100 credits to all residents. Smart professionals use Singapore's facilities to build fitness routines that support career success.",
+        explanation: "Singapore fitness facilities may support health and wellness goals. Individual health outcomes vary - consult health professionals for guidance.",
         projects: [
           {
             name: "ActiveSG Fitness Foundation",
@@ -337,7 +337,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Sign up for ActiveSG membership and explore available facilities",
                 summary: "Join ActiveSG",
-                explanation: "ActiveSG membership provides free access to world-class facilities with S$100 welcome credits for programs and activities across Singapore.",
+                explanation: "ActiveSG membership may provide access to fitness facilities. Individual fitness outcomes vary - consult health professionals for guidance.",
                 timeframe: "1 week",
                 completed: false
               },
@@ -1177,7 +1177,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Implement energy and water conservation measures in daily routines",
                 summary: "Conservation habits",
-                explanation: "Conservation practices reduce environmental impact while lowering utility costs in Singapore's expensive living environment.",
+                explanation: "Conservation practices may reduce environmental impact and potentially affect utility costs. Individual cost savings vary significantly.",
                 timeframe: "1 month",
                 completed: false
               },

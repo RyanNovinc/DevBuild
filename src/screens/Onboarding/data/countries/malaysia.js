@@ -11,7 +11,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Switch to Tech Career",
         description: "Transition into high-growth technology roles with remote opportunities",
         icon: "laptop",
-        explanation: "Malaysia's tech sector is absolutely exploding with incredible opportunities! As ASEAN's digital hub with 3,000+ tech companies, smart professionals are pivoting into development, data science, and fintech roles paying RM8K-20K+ monthly with amazing remote opportunities.",
+        explanation: "Malaysia's tech sector may offer opportunities as ASEAN's digital hub. Individual career outcomes vary significantly - consult career professionals for guidance.",
         needsClarification: true,
         clarificationOptions: [
           {
@@ -43,7 +43,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Tech Job Market Entry",
                 description: "Position yourself for junior developer roles in Malaysian tech companies",
-                explanation: "Malaysian fintech giants like GrabPay and Touch 'n Go are paying RM8K-15K for junior developers, reaching RM25K+ for senior roles. Remote international positions offer $40K-70K USD salaries while enjoying Malaysia's low cost of living!",
+                explanation: "Malaysian fintech companies may offer developer opportunities. Individual salary outcomes vary significantly - consult career professionals for guidance.",
                 tasks: [
                   {
                     name: "Get cloud certification (AWS/Google)",
@@ -102,9 +102,9 @@ export const DOMAIN_DEFINITIONS = [
                     completed: false
                   },
                   {
-                    name: "Scale to RM8,000+ through marketing",
+                    name: "Learn about revenue scaling through marketing concepts (consult business advisor for guidance)",
                     summary: "Scale revenue",
-                    explanation: "Reaching RM8K monthly proves your business model works and creates substantial side income. This milestone often leads to full-time entrepreneurship or premium marketing roles.",
+                    explanation: "Business development concepts may provide educational information about revenue building. Individual business results vary significantly - consult qualified business professionals for guidance.",
                     timeframe: "4 months",
                     completed: false
                   }
@@ -141,7 +141,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Business Intelligence Career",
                 description: "Apply data skills in consulting, banking, or fintech roles",
-                explanation: "Data analysts earn RM10K-18K monthly in Malaysian financial services. The skills are transferable globally for international remote opportunities.",
+                explanation: "Data analysts may find opportunities in Malaysian financial services. Individual income outcomes vary significantly - consult career professionals for guidance.",
                 tasks: [
                   {
                     name: "Apply to Malaysian banks, fintech data roles",
@@ -208,10 +208,10 @@ export const DOMAIN_DEFINITIONS = [
         ]
       },
       {
-        name: "Start Profitable Side Business",
-        description: "Launch business leveraging Malaysia's entrepreneurial opportunities and digital growth",
+        name: "Learn About Business Development",
+        description: "Explore business concepts and entrepreneurial opportunities for educational purposes",
         icon: "storefront",
-        explanation: "Your entrepreneurial spirit gives you a huge advantage! Malaysia has incredible business opportunities in fintech, e-commerce, and services. Smart professionals are building businesses that provide financial security and independence.",
+        explanation: "Business education may provide information about entrepreneurial concepts. Individual business outcomes vary significantly - consult qualified business professionals for guidance.",
         projects: [
           {
             name: "Business Opportunity Research",
@@ -240,16 +240,16 @@ export const DOMAIN_DEFINITIONS = [
             explanation: "Malaysian government provides grants and support for new businesses. Focus on digital-first models that can scale quickly across Southeast Asia.",
             tasks: [
               {
-                name: "Launch MVP and get 100 customers",
+                name: "Learn about business launch concepts through MVP development",
                 summary: "Launch MVP",
-                explanation: "Starting small with MVP approach reduces risk while proving your business model works. First 100 customers provide valuable feedback for improvement and growth.",
+                explanation: "Learning about MVP concepts provides business education. Individual business results vary significantly - consult qualified business professionals for guidance.",
                 timeframe: "3 months",
                 completed: false
               },
               {
-                name: "Scale to RM12,000+ through marketing",
-                summary: "Scale revenue",
-                explanation: "RM12K monthly revenue proves business viability and creates substantial additional income. This milestone attracts investors and creates optionality for full-time entrepreneurship.",
+                name: "Learn about marketing concepts for business education (consult business advisor for guidance)",
+                summary: "Marketing education",
+                explanation: "Business development concepts may provide educational information about revenue building. Individual business results vary significantly - consult qualified business professionals for guidance.",
                 timeframe: "6 months",
                 completed: false
               }
@@ -287,7 +287,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Management Position Strategy",
             description: "Position yourself for promotion or management role in new company",
-            explanation: "Management roles in Malaysia offer significant salary increases and job security. Clear strategy maximizes promotion likelihood in competitive market.",
+            explanation: "Management roles in Malaysia may offer career advancement opportunities. Individual career outcomes vary significantly - consult career professionals for guidance.",
             tasks: [
               {
                 name: "Discuss promotion path with manager",
@@ -313,13 +313,13 @@ export const DOMAIN_DEFINITIONS = [
     name: "Financial Security",
     icon: "cash",
     color: "#10b981", // Green
-    description: "Building wealth, managing expenses, and achieving financial goals",
+    description: "Financial education, budgeting guidance, and goal planning resources",
     goals: [
       {
         name: "Build Emergency Fund",
-        description: "Save 6 months expenses in high-yield ringgit and foreign currency accounts",
+        description: "Learn about emergency fund concepts and savings strategies",
         icon: "shield",
-        explanation: "Economic uncertainty makes emergency funds essential for Malaysian professionals. Smart savers are using foreign currency accounts and investment platforms to protect against inflation while maintaining liquidity for emergencies.",
+        explanation: "Emergency fund education provides information about savings concepts. Individual financial circumstances vary significantly - consult qualified financial advisors for guidance.",
         projects: [
           {
             name: "Emergency Fund Strategy",
@@ -367,9 +367,9 @@ export const DOMAIN_DEFINITIONS = [
       },
       {
         name: "Start Investment Portfolio",
-        description: "Build diversified investment strategy using Malaysian and international options",
+        description: "Learn about diversified investment concepts for educational purposes",
         icon: "trending-up",
-        explanation: "Inflation protection requires smart investing beyond traditional savings. Malaysian professionals are using local stocks, REIT investments, and fintech platforms to build wealth and hedge against currency volatility.",
+        explanation: "Investment research provides information on various financial strategies for educational purposes. Investment outcomes involve risk and past performance does not guarantee future results - consult qualified financial advisors for guidance appropriate to your circumstances.",
         projects: [
           {
             name: "Investment Foundation",
@@ -384,8 +384,8 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Start with RM2,000 investment in diversified portfolio",
-                summary: "Start investing",
+                name: "Consider starting investment in diversified portfolio (consult financial advisor for amount)",
+                summary: "Learn investing",
                 explanation: "Starting with modest amount reduces risk while building investment experience. Diversification across Malaysian stocks and international options provides balanced growth potential.",
                 timeframe: "1 month",
                 completed: false
@@ -394,11 +394,11 @@ export const DOMAIN_DEFINITIONS = [
           },
           {
             name: "Portfolio Growth Strategy",
-            description: "Systematically build investment portfolio through regular contributions",
-            explanation: "Consistent investment contributions leverage dollar-cost averaging to build long-term wealth despite market volatility and currency fluctuations.",
+            description: "Learn about investment portfolio concepts for educational purposes",
+            explanation: "Investment education provides information on contribution strategies for educational purposes. Investment outcomes involve risk - consult qualified financial advisors for guidance appropriate to your circumstances.",
             tasks: [
               {
-                name: "Set up automatic monthly investment contributions of RM1,000+",
+                name: "Learn about automatic investment concepts for educational purposes (consult qualified financial advisor for personal guidance)",
                 summary: "Automate investing",
                 explanation: "Automatic investment contributions ensure consistent portfolio growth while taking advantage of market fluctuations through dollar-cost averaging strategies.",
                 timeframe: "1 week",
@@ -417,9 +417,9 @@ export const DOMAIN_DEFINITIONS = [
       },
       {
         name: "Increase Income Streams",
-        description: "Develop multiple income sources to accelerate wealth building",
+        description: "Learn about multiple income stream concepts for educational purposes",
         icon: "wallet",
-        explanation: "Multiple income streams provide security and acceleration toward financial goals. Malaysian professionals are successfully combining employment, freelancing, and business income to reach RM20K+ monthly.",
+        explanation: "Multiple income streams may provide additional financial options. Individual income results vary significantly - consult business professionals for guidance.",
         needsClarification: true,
         clarificationOptions: [
           {
@@ -430,7 +430,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Freelance Business Setup",
                 description: "Establish profitable freelancing practice using professional expertise",
-                explanation: "Malaysian professionals can earn RM4K-12K monthly through freelancing while maintaining full-time employment, leveraging time zone advantages for international clients.",
+                explanation: "Malaysian professionals may explore freelancing opportunities. Individual income results vary significantly - consult business professionals for guidance.",
                 tasks: [
                   {
                     name: "Create professional profiles on Upwork, Fiverr, and local platforms",
@@ -450,8 +450,8 @@ export const DOMAIN_DEFINITIONS = [
               },
               {
                 name: "Freelancing Income Scale",
-                description: "Scale freelancing to consistent RM8,000+ monthly income",
-                explanation: "Successful Malaysian freelancers earn substantial monthly income through premium pricing and efficient service delivery systems, leveraging English proficiency.",
+                description: "Scale freelancing to consistent monthly income (consult business advisor for targets)",
+                explanation: "Freelancing concepts may provide business opportunities. Individual business results vary significantly - consult qualified business professionals for guidance.",
                 tasks: [
                   {
                     name: "Develop premium service packages for higher-value clients",
@@ -461,7 +461,7 @@ export const DOMAIN_DEFINITIONS = [
                     completed: false
                   },
                   {
-                    name: "Build systems for consistent RM8K+ monthly freelancing income",
+                    name: "Learn about freelancing business systems (consult business advisor for guidance)",
                     summary: "Scale systems",
                     explanation: "Systematic approach to freelancing enables predictable income growth while maintaining quality standards that keep clients returning for additional projects.",
                     timeframe: "3 months",
@@ -484,12 +484,12 @@ export const DOMAIN_DEFINITIONS = [
                   {
                     name: "Identify profitable digital product opportunity and create minimum viable product",
                     summary: "Create product",
-                    explanation: "Digital products like courses, templates, and tools can be created once and sold repeatedly to Malaysian professionals seeking solutions to common problems.",
+                    explanation: "Learning about digital product concepts provides business education. Individual business results vary significantly - consult qualified business professionals for guidance.",
                     timeframe: "3 months",
                     completed: false
                   },
                   {
-                    name: "Launch product and achieve RM4,000+ monthly revenue",
+                    name: "Learn about product launch concepts (consult business advisor for guidance)",
                     summary: "Launch product",
                     explanation: "Successful digital product launch provides passive income stream while demonstrating entrepreneurial capabilities that enhance career prospects.",
                     timeframe: "2 months",
@@ -503,9 +503,9 @@ export const DOMAIN_DEFINITIONS = [
                 explanation: "Digital business scaling leverages Malaysian market growth and digital adoption to build substantial income streams across regional markets.",
                 tasks: [
                   {
-                    name: "Optimize marketing to reach RM12,000+ monthly revenue",
+                    name: "Learn about marketing optimization concepts (consult business advisor for guidance)",
                     summary: "Scale marketing",
-                    explanation: "Marketing optimization increases customer acquisition while improving conversion rates, enabling rapid business growth and higher monthly revenue targets.",
+                    explanation: "Marketing education concepts provide information for educational purposes. Individual business results vary significantly - consult qualified business professionals for guidance.",
                     timeframe: "4 months",
                     completed: false
                   },
@@ -527,11 +527,11 @@ export const DOMAIN_DEFINITIONS = [
             projects: [
               {
                 name: "Investment Income Strategy",
-                description: "Build portfolio generating consistent monthly investment income",
-                explanation: "Dividend-paying stocks and REITs provide monthly income while building long-term wealth through capital appreciation in Malaysian and regional markets.",
+                description: "Learn about investment portfolio concepts for educational purposes",
+                explanation: "Investment research provides information on dividend strategies for educational purposes. Investment outcomes involve risk - consult qualified financial advisors for guidance appropriate to your circumstances.",
                 tasks: [
                   {
-                    name: "Build dividend-focused investment portfolio targeting RM2,000+ monthly income",
+                    name: "Learn about dividend investment concepts for educational purposes (consult financial advisor)",
                     summary: "Dividend portfolio",
                     explanation: "Dividend-focused investing provides regular income while maintaining capital growth potential through well-managed Malaysian and international stocks.",
                     timeframe: "6 months",
@@ -549,12 +549,12 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Alternative Investment Exploration",
                 description: "Investigate alternative investments including crypto and peer-to-peer lending",
-                explanation: "Alternative investments provide additional diversification while potentially offering higher returns than traditional investment options available in Malaysia.",
+                explanation: "Investment research provides information on alternative strategies for educational purposes. Investment outcomes involve risk - consult qualified financial advisors for guidance appropriate to your circumstances.",
                 tasks: [
                   {
                     name: "Research cryptocurrency and DeFi opportunities for Malaysian investors",
                     summary: "Crypto research",
-                    explanation: "Cryptocurrency investments offer potential for significant returns while providing hedge against currency volatility, though requiring careful risk management.",
+                    explanation: "Cryptocurrency research provides information for educational purposes. Digital assets involve significant risk including total loss - consult qualified financial advisors for guidance.",
                     timeframe: "2 months",
                     completed: false
                   },
@@ -595,10 +595,10 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Income Stream Execution",
             description: "Execute plan to develop and scale additional income source",
-            explanation: "Consistent execution transforms income stream plans into financial reality that accelerates wealth building goals and provides financial security.",
+            explanation: "Income stream execution concepts may provide educational information about business development. Individual business results vary significantly - consult qualified business professionals for guidance.",
             tasks: [
               {
-                name: "Launch chosen income stream and track monthly revenue growth",
+                name: "Learn about income stream concepts and business tracking (consult business advisor)",
                 summary: "Launch stream",
                 explanation: "Revenue tracking provides feedback on income stream performance while enabling optimization for faster growth and higher monthly earnings.",
                 timeframe: "3 months",
@@ -1052,7 +1052,7 @@ export const DOMAIN_DEFINITIONS = [
             projects: [
               {
                 name: "Financial Analysis Mastery",
-                description: "Learn financial analysis skills for personal wealth building and career advancement",
+                description: "Learn financial analysis skills for educational purposes",
                 explanation: "Financial analysis skills improve personal investment decisions while creating career opportunities in Malaysia's growing financial services sector.",
                 tasks: [
                   {
@@ -1065,7 +1065,7 @@ export const DOMAIN_DEFINITIONS = [
                   {
                     name: "Apply skills to analyse Malaysian stocks and investment opportunities",
                     summary: "Analyze investments",
-                    explanation: "Practical financial analysis application improves personal investment returns while building expertise that employers value in financial services careers.",
+                    explanation: "Financial analysis education may help develop analytical skills that could be valuable in various career paths.",
                     timeframe: "2 months",
                     completed: false
                   }
@@ -1073,13 +1073,13 @@ export const DOMAIN_DEFINITIONS = [
               },
               {
                 name: "Investment Strategy Development",
-                description: "Create systematic approach to building wealth through informed investment decisions",
-                explanation: "Investment strategy development provides framework for long-term wealth building while potentially creating consulting opportunities in Malaysian market.",
+                description: "Learn about investment decision concepts for educational purposes (consult financial advisor)",
+                explanation: "Investment education provides information on strategy concepts for educational purposes. Investment outcomes involve risk - consult qualified financial advisors for guidance.",
                 tasks: [
                   {
-                    name: "Develop personal investment strategy balancing Malaysian and international opportunities",
+                    name: "Learn about investment strategy concepts for educational purposes (consult financial advisor)",
                     summary: "Investment strategy",
-                    explanation: "Personal investment strategy provides roadmap for wealth building while demonstrating financial expertise that creates consulting and career opportunities.",
+                    explanation: "Investment education provides information about strategy concepts for educational purposes. Investment decisions involve significant risk - consult qualified financial advisors for guidance.",
                     timeframe: "1 month",
                     completed: false
                   },
@@ -1441,7 +1441,7 @@ export const DOMAIN_DEFINITIONS = [
                     completed: false
                   },
                   {
-                    name: "Build writing-based income stream targeting RM4,000+ monthly",
+                    name: "Build writing-based income stream (consult business advisor for income targets)",
                     summary: "Scale writing income",
                     explanation: "Writing income scaling provides substantial additional revenue while building expertise that creates ongoing freelancing and career opportunities.",
                     timeframe: "6 months",

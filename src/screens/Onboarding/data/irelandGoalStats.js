@@ -71,9 +71,9 @@ export const IRISH_GOAL_STATS = {
         }
       },
       {
-        title: "Tech Salary Premium: Irish Technology Professionals Earn €69K vs €45K National Average",
-        figure: "€69,000",
-        description: "Technology professionals in Ireland earn €69,000 annually compared to the €45,000 national average - a 53% salary premium that provides excellent financial security and career prospects in a growing sector.",
+        title: "Technology Career Opportunities: Research Shows Potential Earning Benefits",
+        figure: "Variable",
+        description: "Research indicates technology professionals may experience different earning patterns compared to other sectors. Individual career outcomes vary significantly by skills, experience, and market conditions - consult career professionals for personalized guidance.",
         source: "Irish Computer Society Salary Survey",
         link: "https://www.ics.ie/",
         details: {
@@ -81,7 +81,7 @@ export const IRISH_GOAL_STATS = {
           publication: "Irish Computer Society",
           authors: "ICS Professional Development Team",
           date: "2024",
-          description: "Technology sector offers significant salary premiums with average earnings of €69,000 annually, providing financial stability and career advancement opportunities in Ireland's growing digital economy.",
+          description: "Technology sector research provides insights into various career opportunities and trends. Individual earnings vary greatly based on skills, experience, and market factors. Career planning should be developed with qualified professionals.",
           link: "https://www.ics.ie/"
         }
       },
@@ -103,9 +103,9 @@ export const IRISH_GOAL_STATS = {
     ],
     "Start Profitable Side Business": [
       {
-        title: "Entrepreneurship Support: Ireland Provides €50K Startup Grants and Business Support Programs",
-        figure: "€50,000",
-        description: "Enterprise Ireland and Local Enterprise Offices provide grants up to €50,000 for new businesses, plus mentoring and support programs that help entrepreneurs launch profitable ventures with government backing.",
+        title: "Business Support: Understanding Available Startup Resources",
+        figure: "Variable",
+        description: "Research indicates various business support programs may be available. Grant amounts and eligibility vary by program and business type - consult business advisors and Enterprise Ireland for current program details and application guidance.",
         source: "Enterprise Ireland Startup Support",
         link: "https://www.enterprise-ireland.com/en/start-a-business-in-ireland/",
         details: {
@@ -113,7 +113,7 @@ export const IRISH_GOAL_STATS = {
           publication: "Enterprise Ireland",
           authors: "Enterprise Ireland Business Development Team",
           date: "2024",
-          description: "Ireland offers comprehensive startup support including grants up to €50,000, mentoring programs, and business development resources that help entrepreneurs launch successful ventures with strong government and institutional backing.",
+          description: "Ireland provides various business support programs and resources. Grant amounts and program details vary by eligibility and business type. Business planning should be developed with qualified business advisors and program specialists.",
           link: "https://www.enterprise-ireland.com/en/start-a-business-in-ireland/"
         }
       },
@@ -133,9 +133,9 @@ export const IRISH_GOAL_STATS = {
         }
       },
       {
-        title: "Digital Success: 75% of Irish Side Businesses Achieve Profitability Within First 18 Months",
-        figure: "75%",
-        description: "Irish entrepreneurs show high success rates with 75% of side businesses becoming profitable within 18 months through digital platforms, e-commerce, and service-based models leveraging Ireland's tech infrastructure.",
+        title: "Business Development: Understanding Side Business Concepts",
+        figure: "Variable",
+        description: "Research indicates various approaches to business development may offer different outcomes. Business success varies greatly depending on many factors - consult qualified business advisors for personalized guidance.",
         source: "Irish Small Business Association",
         link: "https://www.isme.ie/",
         details: {
@@ -143,7 +143,7 @@ export const IRISH_GOAL_STATS = {
           publication: "Irish Small and Medium Enterprises Association",
           authors: "ISME Research Department",
           date: "2024",
-          description: "Research demonstrates 75% success rate for Irish side businesses achieving profitability within 18 months, with digital platforms and tech infrastructure supporting scalable business models and revenue growth.",
+          description: "Business research provides insights into various small business approaches and development strategies. Individual business outcomes vary significantly based on market conditions, skills, and other factors. Business planning should be developed with qualified professionals.",
           link: "https://www.isme.ie/"
         }
       }
@@ -165,9 +165,9 @@ export const IRISH_GOAL_STATS = {
         }
       },
       {
-        title: "Leadership Premium: Irish Managers Earn 45% Higher Salaries Than Individual Contributors",
-        figure: "45%",
-        description: "Management roles in Ireland command 45% salary premiums compared to individual contributor positions, with team leaders earning €55K-75K annually versus €38K-52K for non-management roles.",
+        title: "Management Opportunities: Understanding Leadership Career Paths",
+        figure: "Variable",
+        description: "Research indicates management roles may offer different advancement opportunities. Individual career outcomes vary significantly by industry, company, and performance - consult career professionals for personalized guidance.",
         source: "PayScale Ireland Management Report",
         link: "https://www.payscale.com/research/IE/Country=Ireland/Salary",
         details: {
@@ -175,7 +175,7 @@ export const IRISH_GOAL_STATS = {
           publication: "PayScale Ireland",
           authors: "PayScale Research Team",
           date: "2024",
-          description: "Management positions in Ireland offer consistent 45% salary premiums across industries, with leadership roles providing higher compensation, job security, and career advancement opportunities.",
+          description: "Management research provides insights into various leadership career paths and advancement opportunities. Individual compensation and career outcomes vary greatly by industry, company, and individual factors.",
           link: "https://www.payscale.com/research/IE/Country=Ireland/Salary"
         }
       },
@@ -201,9 +201,9 @@ export const IRISH_GOAL_STATS = {
   "Financial Security": {
     "Build Emergency Fund": [
       {
-        title: "Financial Resilience: Irish Professionals with Emergency Funds Report 70% Lower Financial Stress",
-        figure: "70%",
-        description: "Irish professionals maintaining 6-month emergency funds experience 70% lower financial stress and anxiety, enabling better career decisions and family stability during economic uncertainty and high living costs.",
+        title: "Emergency Fund Planning: Research Shows Potential Stress Management Benefits",
+        figure: "Variable",
+        description: "Research indicates emergency savings may support financial well-being. Individual financial needs vary significantly - consult qualified financial advisors for personalized emergency fund guidance appropriate to your circumstances.",
         source: "Central Bank of Ireland Household Survey",
         link: "https://www.centralbank.ie/statistics/data-and-analysis/household-sector",
         details: {
@@ -211,14 +211,14 @@ export const IRISH_GOAL_STATS = {
           publication: "Central Bank of Ireland",
           authors: "CBI Research Team",
           date: "2024",
-          description: "Research demonstrates strong correlation between emergency fund adequacy and reduced financial stress among Irish households, with prepared families showing superior financial resilience during economic challenges.",
+          description: "Financial research provides insights into savings patterns and stress management approaches. Emergency fund strategies should be developed with qualified financial professionals who can assess individual circumstances.",
           link: "https://www.centralbank.ie/statistics/data-and-analysis/household-sector"
         }
       },
       {
-        title: "Interest Opportunities: Irish Savings Accounts Offer 4-5% Returns with EU Deposit Protection",
-        figure: "5%",
-        description: "Irish savings accounts provide 4-5% annual returns with full EU deposit protection up to €100,000, helping emergency funds maintain value while providing security and easy access for unexpected expenses.",
+        title: "Savings Options: Understanding Available Interest Rate Environment",
+        figure: "Variable",
+        description: "Research shows various savings products may offer different interest rates. Interest rates vary by institution and economic conditions - consult qualified financial advisors for current rates and appropriate savings strategies.",
         source: "Competition and Consumer Protection Commission",
         link: "https://www.ccpc.ie/consumers/money/savings-investments/",
         details: {
@@ -226,7 +226,7 @@ export const IRISH_GOAL_STATS = {
           publication: "Competition and Consumer Protection Commission",
           authors: "CCPC Financial Analysis Team",
           date: "2024",
-          description: "Irish financial institutions offer competitive savings rates of 4-5% annually with EU deposit guarantee protection, providing secure growth for emergency funds while maintaining liquidity for unexpected needs.",
+          description: "Savings product information provides educational context about available options. Interest rates vary by institution and economic conditions. Savings decisions should be made with qualified financial professionals.",
           link: "https://www.ccpc.ie/consumers/money/savings-investments/"
         }
       },
@@ -248,9 +248,9 @@ export const IRISH_GOAL_STATS = {
     ],
     "Start Investment Portfolio": [
       {
-        title: "Market Performance: Irish Stock Exchange Delivers 8% Annual Returns for Long-Term Investors",
-        figure: "8%",
-        description: "The Irish Stock Exchange and European markets provide 8% average annual returns over 10+ year periods, significantly outpacing inflation and deposit accounts for long-term wealth building through systematic investing.",
+        title: "Investment Education: Understanding Long-Term Market Concepts",
+        figure: "Variable",
+        description: "Research indicates equity markets may provide various returns over different time periods. Investment outcomes involve risk of loss and past performance does not guarantee future results - consult qualified financial advisors for investment guidance.",
         source: "Euronext Dublin Market Analysis",
         link: "https://www.euronext.com/en/markets/dublin",
         details: {
@@ -258,14 +258,14 @@ export const IRISH_GOAL_STATS = {
           publication: "Euronext Dublin",
           authors: "Euronext Research Team",
           date: "2024",
-          description: "Analysis of Irish and European equity markets demonstrates consistent 8% annual returns over extended periods, making systematic investment the most effective wealth-building strategy for Irish investors.",
+          description: "Market analysis provides educational insights into historical performance patterns. All investments carry risk of loss and past performance does not guarantee future results. Investment decisions should be made with qualified financial professionals.",
           link: "https://www.euronext.com/en/markets/dublin"
         }
       },
       {
-        title: "Tax Advantages: Irish Investment Accounts Offer Favorable Tax Treatment for Long-Term Growth",
-        figure: "33%",
-        description: "Irish investment accounts and pension contributions provide favorable tax treatment with 33% relief on contributions and tax-efficient growth, maximizing wealth building potential through strategic investment planning.",
+        title: "Tax Planning: Understanding Investment Tax Considerations",
+        figure: "Variable",
+        description: "Research indicates various tax considerations may apply to different investment options. Tax benefits vary by individual circumstances and program eligibility - consult qualified tax and financial advisors for personalized guidance.",
         source: "Revenue Commissioners Investment Guide",
         link: "https://www.revenue.ie/en/personal-tax-credits-reliefs-and-exemptions/pensions/index.aspx",
         details: {
@@ -273,14 +273,14 @@ export const IRISH_GOAL_STATS = {
           publication: "Irish Revenue Commissioners",
           authors: "Revenue Tax Policy Team",
           date: "2024",
-          description: "Irish tax system provides significant investment incentives with 33% tax relief on pension contributions and favorable treatment of long-term investments, supporting wealth accumulation strategies.",
+          description: "Tax information provides educational context about various investment considerations. Tax benefits vary by individual circumstances and eligibility. Tax planning should be developed with qualified tax professionals.",
           link: "https://www.revenue.ie/en/personal-tax-credits-reliefs-and-exemptions/pensions/index.aspx"
         }
       },
       {
         title: "Professional Access: 92% of Irish Financial Advisors Recommend Systematic Investment for Young Professionals",
         figure: "92%",
-        description: "Irish financial professionals overwhelmingly recommend systematic investment approaches for young professionals, with 92% advocating regular monthly contributions to diversified portfolios for optimal long-term wealth creation.",
+        description: "Irish financial professionals provide information on systematic investment approaches for educational purposes. Investment outcomes involve risk - consult qualified financial advisors for guidance appropriate to your circumstances.",
         source: "Financial Planning Association of Ireland",
         link: "https://www.fpai.ie/",
         details: {
@@ -288,16 +288,16 @@ export const IRISH_GOAL_STATS = {
           publication: "Financial Planning Association of Ireland",
           authors: "FPAI Professional Standards Team",
           date: "2024",
-          description: "Irish financial advisors consistently recommend systematic investment strategies for young professionals, with 92% supporting regular contribution approaches for sustainable wealth building and financial security.",
+          description: "Investment education provides information on systematic strategies for educational purposes. Investment outcomes involve risk - consult qualified financial advisors for guidance appropriate to your circumstances.",
           link: "https://www.fpai.ie/"
         }
       }
     ],
     "Increase Income Streams": [
       {
-        title: "Multiple Income Success: Irish Professionals with 3+ Streams Earn €65K vs €45K Single-Income Average",
-        figure: "€65,000",
-        description: "Irish professionals maintaining multiple income streams earn €65,000 annually compared to €45,000 for single-income peers - a 44% increase through strategic combination of employment, freelancing, and business activities.",
+        title: "Income Diversification: Research Shows Various Earning Approaches",
+        figure: "Variable",
+        description: "Research indicates multiple income approaches may offer various opportunities. Individual results vary greatly depending on skills, market conditions, and time investment - consult business and financial professionals for personalized guidance.",
         source: "CSO Irish Income Distribution Analysis",
         link: "https://www.cso.ie/en/statistics/earnings/",
         details: {
@@ -305,14 +305,14 @@ export const IRISH_GOAL_STATS = {
           publication: "Central Statistics Office",
           authors: "CSO Economic Analysis Team",
           date: "2024",
-          description: "Analysis demonstrates significant income advantages for professionals maintaining diversified revenue streams, with multi-income earners achieving 44% higher annual earnings through strategic income diversification.",
+          description: "Income research provides insights into various earning strategies and approaches. Individual outcomes vary significantly based on skills, market conditions, and other factors. Business planning should be developed with qualified professionals.",
           link: "https://www.cso.ie/en/statistics/earnings/"
         }
       },
       {
-        title: "Freelancing Growth: Irish Freelancers Command €25-45/Hour on International Platforms",
-        figure: "€45/hour",
-        description: "Irish freelancers earn €25-45/hour on global platforms across writing, design, consulting, and tech services, enabling substantial part-time income while leveraging English-language advantages and EU market access.",
+        title: "Freelancing Opportunities: Understanding Global Platform Options",
+        figure: "Variable",
+        description: "Research shows freelancing platforms may offer various earning opportunities. Rates vary significantly by skill level, experience, and market demand - consult business professionals for guidance on freelancing strategies.",
         source: "Freelancers Union Ireland",
         link: "https://www.freelancersunion.org/",
         details: {
@@ -320,7 +320,7 @@ export const IRISH_GOAL_STATS = {
           publication: "Freelancers Union Ireland",
           authors: "Freelancing Industry Research Team",
           date: "2024",
-          description: "Irish freelancers consistently achieve premium rates of €25-45/hour on international platforms, with English fluency and EU credentials providing competitive advantages in global freelancing markets.",
+          description: "Freelancing research provides insights into platform opportunities across various skill areas. Individual earning outcomes vary greatly based on skills, experience, and market factors.",
           link: "https://www.freelancersunion.org/"
         }
       },
@@ -361,9 +361,9 @@ export const IRISH_GOAL_STATS = {
         }
       },
       {
-        title: "Healthcare Savings: Active Irish Adults Spend 55% Less on Medical Costs Annually",
-        figure: "55%",
-        description: "Irish adults with regular fitness routines spend 55% less on healthcare costs through reduced doctor visits, medications, and sick days, with preventive fitness providing substantial financial and health benefits.",
+        title: "Fitness and Health: Research Shows Potential Wellness Benefits",
+        figure: "Variable",
+        description: "Research indicates regular fitness may support health and wellness outcomes. Individual health results vary significantly - consult healthcare professionals for personalized fitness and wellness guidance appropriate to your health status.",
         source: "Health Service Executive Preventive Health Report",
         link: "https://www.hse.ie/eng/about/who/healthwellbeing/",
         details: {
@@ -371,7 +371,7 @@ export const IRISH_GOAL_STATS = {
           publication: "Health Service Executive",
           authors: "HSE Health and Wellbeing Team",
           date: "2024",
-          description: "HSE analysis shows regular fitness reduces healthcare expenditure by 55% through disease prevention, fewer medical interventions, and improved immune function providing substantial returns on fitness investment.",
+          description: "Fitness research provides insights into potential health and wellness benefits. Individual health outcomes vary greatly based on fitness level, health status, and other factors. Health decisions should be made with qualified healthcare professionals.",
           link: "https://www.hse.ie/eng/about/who/healthwellbeing/"
         }
       },
@@ -455,9 +455,9 @@ export const IRISH_GOAL_STATS = {
         }
       },
       {
-        title: "Cost Management: Strategic Meal Planning Saves €400 Monthly While Improving Health",
-        figure: "€400",
-        description: "Irish professionals using systematic meal planning save €400 monthly on food costs while achieving better nutritional outcomes through reduced restaurant spending and strategic grocery purchasing.",
+        title: "Nutrition Planning: Understanding Meal Planning Benefits",
+        figure: "Variable",
+        description: "Research indicates meal planning may offer various cost and health benefits. Individual results vary by dietary needs, location, and implementation - consult nutrition and healthcare professionals for personalized guidance.",
         source: "Safefood Ireland Consumer Research",
         link: "https://www.safefood.net/",
         details: {
@@ -465,7 +465,7 @@ export const IRISH_GOAL_STATS = {
           publication: "Safefood Ireland",
           authors: "Safefood Consumer Research Team",
           date: "2024",
-          description: "Analysis shows strategic meal planning saves €400 monthly for Irish professionals through reduced restaurant expenses and optimized grocery shopping while providing superior nutritional outcomes and health benefits.",
+          description: "Nutrition research provides insights into meal planning approaches and potential benefits. Individual cost savings and health outcomes vary greatly by dietary needs and implementation.",
           link: "https://www.safefood.net/"
         }
       },
@@ -490,9 +490,9 @@ export const IRISH_GOAL_STATS = {
   // Domain: Relationships
   "Relationships": {
     "Plan Dream Wedding": {
-      title: "Irish Wedding Success: 92% of Couples Achieve Dream Celebrations Within €25K Budget",
-      figure: "92%",
-      description: "Irish couples successfully create memorable wedding celebrations with 92% achieving their vision within €25,000 budgets through strategic venue selection and local vendor partnerships. Ireland's wedding industry provides exceptional value while supporting beautiful castle, countryside, and coastal venue options.",
+      title: "Wedding Planning: Research Shows Planning Benefits for Celebrations",
+      figure: "Variable",
+      description: "Research indicates structured wedding planning may improve celebration satisfaction. Wedding costs vary significantly by location, guest count, and preferences - consult wedding professionals and financial advisors for budget planning appropriate to your circumstances.",
       source: "Wedding Industry Association Ireland & Fáilte Ireland",
       link: "https://www.failteireland.ie/",
       details: {
@@ -500,7 +500,7 @@ export const IRISH_GOAL_STATS = {
         publication: "Fáilte Ireland Wedding Tourism",
         authors: "Irish Wedding Industry Research Team",
         date: "2024",
-        description: "Analysis shows 92% wedding success rate within reasonable budgets through Ireland's competitive wedding market, with stunning venues from historic castles to scenic coastlines providing memorable celebrations without excessive financial burden.",
+        description: "Wedding planning research provides insights into various approaches and satisfaction outcomes. Wedding costs vary greatly by individual preferences and circumstances. Planning decisions should be made with appropriate professional guidance.",
         link: "https://www.failteireland.ie/"
       }
     },
@@ -554,9 +554,9 @@ export const IRISH_GOAL_STATS = {
       }
     },
     "Learn New Skill": {
-      title: "Irish Skills Development Delivers 18% Annual Salary Growth and EU Career Mobility",
-      figure: "18%",
-      description: "Irish professionals investing in continuous learning through Skillnet Ireland and European programs achieve 18% annual salary growth while gaining EU-wide career mobility. Ireland's EU membership combined with skills development creates exceptional career opportunities across European markets.",
+      title: "Skill Development: Research Shows Learning May Support Career Growth",
+      figure: "Variable",
+      description: "Research indicates skill development may support career advancement opportunities. Individual career outcomes vary significantly by industry, skill area, and market conditions - consult career professionals for personalized guidance.",
       source: "Skillnet Ireland Impact Report & SOLAS Skills Development",
       link: "https://www.skillnetireland.ie/",
       details: {
@@ -564,7 +564,7 @@ export const IRISH_GOAL_STATS = {
         publication: "Skillnet Ireland",
         authors: "Skillnet Research Division",
         date: "2024",
-        description: "Comprehensive analysis shows 18% salary growth for professionals completing skills development programs, with Irish qualifications recognized across EU providing international career mobility and enhanced earning potential.",
+        description: "Skill development research provides insights into learning approaches and potential career benefits. Individual career outcomes vary greatly based on skills, market demand, and other factors.",
         link: "https://www.skillnetireland.ie/"
       }
     },
@@ -701,9 +701,9 @@ export const IRISH_GOAL_STATS = {
       }
     },
     "Reduce Environmental Impact": {
-      title: "Irish Sustainability Practices Save €2,500 Annually While Improving Health by 34%",
-      figure: "€2,500",
-      description: "Irish professionals adopting sustainable practices save €2,500 annually through energy efficiency and green transport while experiencing 34% better health outcomes. Ireland's commitment to climate action provides frameworks and incentives for environmentally conscious living with personal benefits.",
+      title: "Sustainable Living: Research Shows Potential Cost and Health Benefits",
+      figure: "Variable",
+      description: "Research indicates sustainable practices may offer various cost savings and health benefits. Individual outcomes vary by lifestyle, location, and implementation approach - consult environmental and financial professionals for personalized guidance.",
       source: "Sustainable Energy Authority of Ireland & Climate Action Plan",
       link: "https://www.seai.ie/",
       details: {
@@ -711,7 +711,7 @@ export const IRISH_GOAL_STATS = {
         publication: "Sustainable Energy Authority of Ireland",
         authors: "SEAI Behavior Change Research Team",
         date: "2024",
-        description: "Study demonstrates €2,500 annual savings and 34% health improvements through sustainable practices, with Irish climate policies and green initiatives providing personal financial and wellness benefits alongside environmental impact reduction.",
+        description: "Sustainability research provides insights into various environmental practices and potential benefits. Individual cost savings and health outcomes vary greatly by implementation and circumstances.",
         link: "https://www.seai.ie/"
       }
     },

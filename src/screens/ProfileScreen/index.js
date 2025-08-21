@@ -1,5 +1,5 @@
 // src/screens/ProfileScreen/ProfileScreenNew.js - Streamlined ProfileScreen with reliable loading
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -9,7 +9,8 @@ import {
   StatusBar,
   Alert,  
   TouchableOpacity,
-  Dimensions
+  Dimensions,
+  Animated
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -22,6 +23,9 @@ import { Ionicons } from '@expo/vector-icons';
 // Import the new loading orchestrator
 import useProfileScreenData from '../../hooks/useProfileScreenData';
 
+// Import app tour hook
+import useAppTour from '../../hooks/useAppTour';
+
 // Import profile screen components
 import ProfileHeader from './ProfileHeader';
 import StatsRow from './StatsRow';
@@ -32,6 +36,7 @@ import AIExplanationModal from './AIExplanationModal';
 import DomainColorPickerModal from './DomainColorPickerModal';
 import ThemeColorPickerModal from './ThemeColorPickerModal';
 import ProGiftSurprise from '../../components/ProGiftSurprise';
+import AppTourOverlay from '../../components/AppTourOverlay';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -66,8 +71,54 @@ const ProfileScreen = ({ navigation, route }) => {
     appContextReady
   } = useProfileScreenData(navigation, route);
   
+  // App Tour Hook - MUST be called before any early returns
+  const { 
+    isTourActive,
+    currentStep,
+    spotlightTarget,
+    startTour,
+    nextStep,
+    skipTour
+  } = useAppTour(navigation);
+  
   // Refs
   const scrollViewRef = useRef(null);
+  
+  // Tour animation refs
+  const tourStatsOpacity = useRef(new Animated.Value(1)).current;
+  const tourDomainWheelOpacity = useRef(new Animated.Value(0)).current;
+  
+  // Handle tour step transitions
+  useEffect(() => {
+    if (isTourActive) {
+      if (currentStep === 'PROFILE_GOALS') {
+        // Reset stats opacity for goals step
+        tourStatsOpacity.setValue(1);
+        tourDomainWheelOpacity.setValue(0);
+      } else if (currentStep === 'PROFILE_DOMAIN_WHEEL') {
+        // Fade out stats and fade in domain wheel
+        Animated.sequence([
+          // First fade out stats
+          Animated.timing(tourStatsOpacity, {
+            toValue: 0,
+            duration: 300,
+            useNativeDriver: true
+          }),
+          // Then fade in domain wheel after a short delay
+          Animated.delay(200),
+          Animated.timing(tourDomainWheelOpacity, {
+            toValue: 1,
+            duration: 600,
+            useNativeDriver: true
+          })
+        ]).start();
+      }
+    } else {
+      // Reset when tour is not active
+      tourStatsOpacity.setValue(1);
+      tourDomainWheelOpacity.setValue(0);
+    }
+  }, [isTourActive, currentStep]);
   
   // UI state that's separate from data loading
   const [uiState, setUiState] = useState({
@@ -439,6 +490,12 @@ const ProfileScreen = ({ navigation, route }) => {
     }
   };
   
+  // Handle test second onboarding
+  const handleTestSecondOnboarding = () => {
+    console.log('Starting app tour...');
+    startTour();
+  };
+  
   // Main render
   const isDarkMode = theme.dark;
   
@@ -467,7 +524,7 @@ const ProfileScreen = ({ navigation, route }) => {
           onThemeColorPress={handleThemeColorPress}
         />
         
-        {/* Stats Row */}
+        {/* Stats Row - always rendered in background */}
         <StatsRow
           theme={theme}
           totalDomains={screenState.localDomains ? screenState.localDomains.length : 0}
@@ -476,13 +533,16 @@ const ProfileScreen = ({ navigation, route }) => {
           activeProjects={screenState.activeProjects}
           totalActiveTasks={screenState.totalActiveTasks}
           navigation={navigation}
+          isTourActive={false}
         />
         
-        {/* Domain Balance Wheel */}
+        {/* Domain Balance Wheel - always rendered in background */}
         <View style={[styles.sectionContainer, { marginTop: 16 }]}>
           <DomainBalanceWheel 
             theme={theme}
             navigation={navigation}
+            isTourActive={false}
+            currentStep={null}
           />
         </View>
         
@@ -513,6 +573,7 @@ const ProfileScreen = ({ navigation, route }) => {
         onScreenStateUpdate={handleScreenStateUpdate}
         onTriggerGiftSurprise={triggerGiftSurpriseForTesting}
         onTriggerAIPlusUpgrade={triggerAIPlusUpgrade}
+        onTestSecondOnboarding={handleTestSecondOnboarding}
       />
       
       <AIExplanationModal
@@ -558,6 +619,44 @@ const ProfileScreen = ({ navigation, route }) => {
         giftType="aiPlus"
         showAppStoreRating={false}
       />
+      
+      {/* App Tour Overlay */}
+      <AppTourOverlay
+        isVisible={isTourActive}
+        currentStep={currentStep}
+        onComplete={nextStep}
+        onSkip={skipTour}
+        spotlightTarget={spotlightTarget}
+      />
+      
+      {/* Stats Row - rendered AFTER overlay during tour so it appears on top */}
+      {isTourActive && currentStep === 'PROFILE_GOALS' && (
+        <Animated.View style={[styles.tourStatsContainer, { opacity: tourStatsOpacity }]}>
+          <StatsRow
+            theme={theme}
+            totalDomains={screenState.localDomains ? screenState.localDomains.length : 0}
+            totalActiveGoals={screenState.totalActiveGoals}
+            completedGoals={screenState.completedGoals}
+            activeProjects={screenState.activeProjects}
+            totalActiveTasks={screenState.totalActiveTasks}
+            navigation={navigation}
+            isTourActive={true}
+            useDramaticEntrance={true}
+          />
+        </Animated.View>
+      )}
+      
+      {/* Domain Wheel - rendered AFTER overlay during tour so it appears on top */}
+      {isTourActive && currentStep === 'PROFILE_DOMAIN_WHEEL' && (
+        <Animated.View style={[styles.tourDomainWheelContainer, { opacity: tourDomainWheelOpacity }]}>
+          <DomainBalanceWheel 
+            theme={theme}
+            navigation={navigation}
+            isTourActive={true}
+            currentStep={currentStep}
+          />
+        </Animated.View>
+      )}
     </View>
   );
 };
@@ -565,6 +664,21 @@ const ProfileScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+  },
+  tourStatsContainer: {
+    position: 'absolute',
+    top: 220, // Position where StatsRow normally appears
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+  },
+  tourDomainWheelContainer: {
+    position: 'absolute',
+    top: 320, // Position where DomainWheel normally appears
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+    paddingHorizontal: 16, // Match normal section container
   },
   scrollView: {
     flex: 1,

@@ -43,7 +43,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Tech Job Market Entry",
                 description: "Position yourself for junior developer roles in New Zealand tech companies",
-                explanation: "Auckland fintech and SaaS companies pay $70K-90K for junior developers. Remote international roles offer even better USD salaries while living in beautiful New Zealand.",
+                explanation: "Tech roles may offer career opportunities in New Zealand. Individual career outcomes vary significantly - consult career professionals for guidance.",
                 tasks: [
                   {
                     name: "Get cloud certification (AWS/Google)",
@@ -102,9 +102,9 @@ export const DOMAIN_DEFINITIONS = [
                     completed: false
                   },
                   {
-                    name: "Scale to $3,000+ monthly revenue through marketing optimization",
+                    name: "Learn about revenue scaling through marketing optimization (consult business advisor for targets)",
                     summary: "Scale revenue",
-                    explanation: "Reaching $3K monthly proves your business model works and creates substantial side income. This milestone often leads to full-time entrepreneurship or premium marketing roles.",
+                    explanation: "Revenue scaling concepts may support business development. Individual business results vary significantly - consult qualified business professionals for guidance.",
                     timeframe: "4 months",
                     completed: false
                   }
@@ -141,7 +141,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Business Intelligence Career",
                 description: "Apply data skills in consulting, banking, or fintech roles",
-                explanation: "Data analysts earn $60K-80K in New Zealand financial services. The skills are transferable globally for international remote opportunities with USD salaries.",
+                explanation: "Data analysts may find opportunities in New Zealand financial services. Skills may be transferable globally - individual career outcomes vary. Consult career professionals for guidance.",
                 tasks: [
                   {
                     name: "Apply to NZ banks, fintech data roles",
@@ -247,9 +247,9 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Scale to $5,000+ monthly revenue through strategic marketing",
+                name: "Learn about strategic marketing for business growth (consult business advisor for targets)",
                 summary: "Scale revenue",
-                explanation: "$5K monthly revenue proves business viability and creates substantial additional income. This milestone provides optionality for full-time entrepreneurship while maintaining lifestyle balance.",
+                explanation: "Strategic marketing concepts may support business development. Individual business results vary significantly - consult qualified business professionals for guidance.",
                 timeframe: "6 months",
                 completed: false
               }
@@ -287,7 +287,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Management Position Strategy",
             description: "Position yourself for promotion or management role in new company",
-            explanation: "Management roles in New Zealand offer significant salary increases and job security while maintaining our quality of life. Clear strategy maximizes promotion likelihood in our supportive business culture.",
+            explanation: "Management roles in New Zealand may offer career advancement opportunities. Individual career outcomes vary significantly - consult career professionals for guidance.",
             tasks: [
               {
                 name: "Discuss promotion path with manager",
@@ -313,7 +313,7 @@ export const DOMAIN_DEFINITIONS = [
     name: "Financial Security",
     icon: "cash",
     color: "#10b981", // Green
-    description: "Building wealth, managing expenses, and achieving financial goals",
+    description: "Financial education, budgeting guidance, and goal planning resources",
     goals: [
       {
         name: "Build Emergency Fund",
@@ -350,14 +350,14 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Track expenses for one month and identify areas for cost reduction",
                 summary: "Track expenses",
-                explanation: "Expense tracking reveals spending patterns and opportunities for savings that can be redirected to emergency fund building and investment opportunities.",
+                explanation: "Expense tracking may reveal spending patterns and potential savings opportunities. Individual financial outcomes vary significantly.",
                 timeframe: "1 month",
                 completed: false
               },
               {
                 name: "Negotiate better rates for recurring expenses like power, broadband, and insurance",
                 summary: "Reduce expenses",
-                explanation: "Negotiating better rates on fixed expenses creates permanent monthly savings that compound over time, accelerating emergency fund growth and investment capacity.",
+                explanation: "Negotiating better rates on fixed expenses may reduce costs. Individual cost savings vary significantly.",
                 timeframe: "2 weeks",
                 completed: false
               }
@@ -367,9 +367,9 @@ export const DOMAIN_DEFINITIONS = [
       },
       {
         name: "Start Investment Portfolio",
-        description: "Build diversified investment strategy using New Zealand and international options",
+        description: "Learn about diversified investment concepts for educational purposes",
         icon: "trending-up",
-        explanation: "Inflation protection requires smart investing beyond traditional savings. Kiwi investors are using NZX shares, international funds, and investment platforms to build wealth while taking advantage of our favorable tax environment for long-term investing.",
+        explanation: "Investment research provides information on various financial strategies for educational purposes. Investment outcomes involve risk and past performance does not guarantee future results - consult qualified financial advisors for guidance appropriate to your circumstances.",
         projects: [
           {
             name: "Investment Foundation",
@@ -384,9 +384,9 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Start with $1,000 investment in diversified portfolio",
-                summary: "Start investing",
-                explanation: "Starting with modest amount reduces risk while building investment experience. Diversification across New Zealand and international stocks provides balanced growth potential.",
+                name: "Learn about diversified investment concepts for educational purposes (consult financial advisor)",
+                summary: "Learn investing",
+                explanation: "Investment education provides information about diversification concepts for educational purposes. Investment decisions involve significant risk - consult qualified financial advisors for guidance.",
                 timeframe: "1 month",
                 completed: false
               }
@@ -394,11 +394,11 @@ export const DOMAIN_DEFINITIONS = [
           },
           {
             name: "Portfolio Growth Strategy",
-            description: "Systematically build investment portfolio through regular contributions",
-            explanation: "Consistent investment contributions leverage dollar-cost averaging to build long-term wealth despite market volatility while taking advantage of compound growth over time.",
+            description: "Learn about investment portfolio concepts for educational purposes",
+            explanation: "Investment education provides information on contribution strategies for educational purposes. Investment outcomes involve risk - consult qualified financial advisors for guidance appropriate to your circumstances.",
             tasks: [
               {
-                name: "Set up automatic monthly investment contributions of $500+",
+                name: "Learn about automatic investment concepts for educational purposes (consult qualified financial advisor for personal guidance)",
                 summary: "Automate investing",
                 explanation: "Automatic investment contributions ensure consistent portfolio growth while taking advantage of market fluctuations through dollar-cost averaging strategies over the long term.",
                 timeframe: "1 week",
@@ -417,9 +417,9 @@ export const DOMAIN_DEFINITIONS = [
       },
       {
         name: "Increase Income Streams",
-        description: "Develop multiple income sources to accelerate wealth building",
+        description: "Learn about multiple income stream concepts for educational purposes",
         icon: "wallet",
-        explanation: "Multiple income streams provide security and faster progress toward financial goals. Kiwi professionals are successfully combining employment, side businesses, and investment income to build wealth while maintaining work-life balance.",
+        explanation: "Research indicates multiple income streams may provide financial diversification. Individual career and financial outcomes vary significantly - consult career and financial professionals for guidance.",
         needsClarification: true,
         clarificationOptions: [
           {
@@ -430,7 +430,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Freelance Business Setup",
                 description: "Establish profitable freelancing practice using professional expertise",
-                explanation: "New Zealand professionals can earn $2,000-5,000 monthly through freelancing while maintaining full-time employment and work-life balance.",
+                explanation: "New Zealand professionals may explore freelancing opportunities. Individual income results vary significantly - consult business professionals for guidance.",
                 tasks: [
                   {
                     name: "Create professional profiles on Upwork, Fiverr, and local platforms",
@@ -450,8 +450,8 @@ export const DOMAIN_DEFINITIONS = [
               },
               {
                 name: "Freelancing Income Scale",
-                description: "Scale freelancing to consistent $3,000+ monthly income",
-                explanation: "Successful New Zealand freelancers earn substantial monthly income through premium pricing and efficient service delivery systems that respect work-life balance.",
+                description: "Scale freelancing to consistent monthly income (consult business advisor for targets)",
+                explanation: "New Zealand freelancers may develop income through service delivery systems. Individual income results vary significantly - consult business professionals for guidance.",
                 tasks: [
                   {
                     name: "Develop premium service packages for higher-value clients",
@@ -461,7 +461,7 @@ export const DOMAIN_DEFINITIONS = [
                     completed: false
                   },
                   {
-                    name: "Build systems for consistent $3,000+ monthly freelancing income",
+                    name: "Learn about freelancing business systems (consult business advisor for targets)",
                     summary: "Scale systems",
                     explanation: "Systematic approach to freelancing enables predictable income growth while maintaining quality standards that keep clients returning for additional projects and referrals.",
                     timeframe: "3 months",
@@ -479,7 +479,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Digital Product Development",
                 description: "Create and launch digital products targeting New Zealand and Australian markets",
-                explanation: "Digital products offer scalable income potential with minimal ongoing costs once created and marketed effectively to our local market.",
+                explanation: "Digital products may offer business opportunities through online sales. Individual business results vary significantly - consult qualified business professionals for guidance.",
                 tasks: [
                   {
                     name: "Identify profitable digital product opportunity and create minimum viable product",
@@ -489,7 +489,7 @@ export const DOMAIN_DEFINITIONS = [
                     completed: false
                   },
                   {
-                    name: "Launch product and achieve $2,000+ monthly revenue",
+                    name: "Learn about product launch and revenue concepts (consult business advisor for targets)",
                     summary: "Launch product",
                     explanation: "Successful digital product launch provides passive income stream while demonstrating entrepreneurial capabilities that enhance career prospects and financial security.",
                     timeframe: "2 months",
@@ -503,9 +503,9 @@ export const DOMAIN_DEFINITIONS = [
                 explanation: "Digital business scaling leverages New Zealand's growing digital adoption and our position in the Asia-Pacific region to build substantial income streams.",
                 tasks: [
                   {
-                    name: "Optimize marketing to reach $5,000+ monthly revenue",
+                    name: "Learn about marketing optimization concepts (consult business advisor for targets)",
                     summary: "Scale marketing",
-                    explanation: "Marketing optimization increases customer acquisition while improving conversion rates, enabling rapid business growth and higher monthly revenue targets for financial security.",
+                    explanation: "Marketing optimization concepts may support business development. Individual business results vary significantly - consult qualified business professionals for guidance.",
                     timeframe: "4 months",
                     completed: false
                   },
@@ -527,11 +527,11 @@ export const DOMAIN_DEFINITIONS = [
             projects: [
               {
                 name: "Investment Income Strategy",
-                description: "Build portfolio generating consistent monthly investment income",
-                explanation: "Dividend-paying shares and bonds provide monthly income while building long-term wealth through capital appreciation in New Zealand's stable market.",
+                description: "Learn about investment portfolio concepts for educational purposes",
+                explanation: "Investment research provides information on dividend strategies for educational purposes. Investment outcomes involve risk - consult qualified financial advisors for guidance appropriate to your circumstances.",
                 tasks: [
                   {
-                    name: "Build dividend-focused investment portfolio targeting $1,000+ monthly income",
+                    name: "Learn about dividend investment concepts for educational purposes (consult financial advisor)",
                     summary: "Dividend portfolio",
                     explanation: "Dividend-focused investing provides regular income while maintaining capital growth potential through well-managed New Zealand and international dividend-paying stocks.",
                     timeframe: "6 months",
@@ -549,12 +549,12 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Alternative Investment Exploration",
                 description: "Investigate alternative investments including peer-to-peer lending and cryptocurrency",
-                explanation: "Alternative investments provide additional diversification while potentially offering higher returns than traditional investment options available to New Zealand investors.",
+                explanation: "Investment research provides information on alternative strategies for educational purposes. Investment outcomes involve risk - consult qualified financial advisors for guidance appropriate to your circumstances.",
                 tasks: [
                   {
                     name: "Research cryptocurrency and international investment opportunities for New Zealand investors",
                     summary: "Crypto research",
-                    explanation: "Cryptocurrency investments offer potential for significant returns while providing portfolio diversification, though requiring careful risk management and education.",
+                    explanation: "Cryptocurrency research provides information for educational purposes. Digital assets involve significant risk including total loss - consult qualified financial advisors for guidance.",
                     timeframe: "2 months",
                     completed: false
                   },
@@ -595,10 +595,10 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Income Stream Execution",
             description: "Execute plan to develop and scale additional income source",
-            explanation: "Consistent execution transforms income stream plans into financial reality that accelerates wealth building while maintaining lifestyle quality.",
+            explanation: "Income stream execution concepts may provide educational information about business development. Individual business results vary significantly - consult qualified business professionals for guidance.",
             tasks: [
               {
-                name: "Launch chosen income stream and track monthly revenue growth",
+                name: "Learn about income stream concepts and business tracking (consult business advisor)",
                 summary: "Launch stream",
                 explanation: "Revenue tracking provides feedback on income stream performance while enabling optimization for faster growth and higher monthly earnings toward financial goals.",
                 timeframe: "3 months",
@@ -993,7 +993,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Learn New Skill",
         description: "Master concrete capability that enhances career prospects and personal development",
         icon: "school",
-        explanation: "Continuous learning gives you competitive advantage in New Zealand's evolving economy. Smart Kiwis are acquiring skills that make them more valuable while opening new career opportunities and personal interests that enrich life.",
+        explanation: "Continuous learning may support professional and personal development. Individual learning outcomes vary - consider personal goals and circumstances.",
         needsClarification: true,
         clarificationOptions: [
           {
@@ -1441,7 +1441,7 @@ export const DOMAIN_DEFINITIONS = [
                     completed: false
                   },
                   {
-                    name: "Build writing-based income stream targeting $1,500+ monthly revenue",
+                    name: "Learn about writing-based business concepts (consult business advisor for targets)",
                     summary: "Scale writing income",
                     explanation: "Writing income scaling provides substantial additional revenue while building expertise that creates ongoing freelancing and career opportunities for professional growth.",
                     timeframe: "6 months",

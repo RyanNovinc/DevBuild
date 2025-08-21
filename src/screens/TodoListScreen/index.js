@@ -45,6 +45,9 @@ import SimpleLaterTab from './components/tabs/SimpleLaterTab';
 // Import notes components
 import NotesSection from './components/notes/NotesSection';
 import FullScreenNoteModal from './components/notes/FullScreenNoteModal';
+import NotesToggle from './components/notes/NotesToggle';
+import DailyStandup from './components/notes/DailyStandup';
+import DailyStandupRevamped from './components/notes/DailyStandupRevamped';
 
 // Import achievement tracking
 import FeatureExplorerTracker from '../../services/FeatureExplorerTracker';
@@ -141,6 +144,9 @@ const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen,
   const [editNoteContent, setEditNoteContent] = useState('');
   const [showFullScreenNote, setShowFullScreenNote] = useState(false);
   const [isCreatingNote, setIsCreatingNote] = useState(false);
+
+  // Notes mode state - default to standup per research
+  const [notesMode, setNotesMode] = useState('standup');
 
   // Track keyboard visibility
   useEffect(() => {
@@ -606,38 +612,115 @@ const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen,
     </NavigationContainer>
   );
 
-  // Render Notes view with full functionality
+  // Render Notes view with swipeable tabs between Daily Standup and Free Notes
   const renderNotesView = () => (
-    <View style={{ flex: 1, backgroundColor: theme.background }}>
-      <NotesSection
-        notes={notes}
-        setNotes={setNotes}
-        noteFolders={noteFolders}
-        setNoteFolders={setNoteFolders}
-        activeNoteFolder={activeNoteFolder}
-        setActiveNoteFolder={setActiveNoteFolder}
-        isAddingFolder={isAddingFolder}
-        setIsAddingFolder={setIsAddingFolder}
-        newFolderName={newFolderName}
-        setNewFolderName={setNewFolderName}
-        folderViewMode={folderViewMode}
-        setFolderViewMode={setFolderViewMode}
-        editingNote={editingNote}
-        setEditingNote={setEditingNote}
-        editNoteTitle={editNoteTitle}
-        setEditNoteTitle={setEditNoteTitle}
-        editNoteContent={editNoteContent}
-        setEditNoteContent={setEditNoteContent}
-        showFullScreenNote={showFullScreenNote}
-        setShowFullScreenNote={setShowFullScreenNote}
-        isCreatingNote={isCreatingNote}
-        setIsCreatingNote={setIsCreatingNote}
-        theme={theme}
-        showSuccess={showSuccess}
-      />
+    <>
+      <NavigationContainer independent={true} key={`notes-${notesMode}`}>
+        <TopTab.Navigator
+          initialRouteName={notesMode}
+          screenOptions={({ route }) => ({
+            tabBarActiveTintColor: '#FFFFFF', // White text on active tab for better contrast
+            tabBarInactiveTintColor: theme.textSecondary,
+            tabBarStyle: {
+              backgroundColor: theme.cardElevated,
+              borderBottomColor: theme.border,
+              borderBottomWidth: 0.5,
+              elevation: 0,
+              shadowOpacity: 0,
+              borderRadius: 25,
+              marginHorizontal: spacing.m,
+              marginTop: spacing.xs,
+              marginBottom: spacing.s,
+              height: 44,
+              overflow: 'hidden',
+            },
+            tabBarIndicatorStyle: {
+              backgroundColor: theme.primary,
+              height: 38,
+              borderRadius: 19,
+              margin: 3, // Consistent 3px spacing on all sides
+              width: `${100/2 - 2}%`, // Each tab is 1/2 width minus margin
+            },
+            tabBarLabelStyle: {
+              fontSize: scaleFontSize(16),
+              fontWeight: '600',
+              textTransform: 'none',
+              zIndex: 2, // Ensure text is above indicator
+              marginTop: 1, // Move text down slightly to center it
+            },
+            tabBarItemStyle: {
+              zIndex: 2, // Ensure tab content is above indicator
+            },
+            // Enable swipe but disable problematic animations
+            swipeEnabled: true,
+            animationEnabled: false,
+            tabBarPressColor: 'transparent', // Remove press ripple that might interfere
+            tabBarPressOpacity: 1, // Prevent opacity changes on press
+            lazy: false, // Ensure all tabs are rendered for smooth swiping
+          })}
+          sceneContainerStyle={{ 
+            flex: 1,
+            backgroundColor: theme.background 
+          }}
+          onStateChange={(state) => {
+            if (state?.index !== undefined) {
+              const routes = ['standup', 'freeform'];
+              const newNotesMode = routes[state.index] || 'standup';
+              console.log('Notes tab changed to:', newNotesMode, 'state.index:', state.index);
+              setNotesMode(newNotesMode);
+            }
+          }}
+        >
+          <TopTab.Screen 
+            name="standup" 
+            options={{ tabBarLabel: 'Daily Standup' }}
+          >
+            {() => (
+              <DailyStandupRevamped
+                theme={theme}
+                showSuccess={showSuccess}
+              />
+            )}
+          </TopTab.Screen>
+
+          <TopTab.Screen 
+            name="freeform" 
+            options={{ tabBarLabel: 'Free Notes' }}
+          >
+            {() => (
+              <NotesSection
+                notes={notes}
+                setNotes={setNotes}
+                noteFolders={noteFolders}
+                setNoteFolders={setNoteFolders}
+                activeNoteFolder={activeNoteFolder}
+                setActiveNoteFolder={setActiveNoteFolder}
+                isAddingFolder={isAddingFolder}
+                setIsAddingFolder={setIsAddingFolder}
+                newFolderName={newFolderName}
+                setNewFolderName={setNewFolderName}
+                folderViewMode={folderViewMode}
+                setFolderViewMode={setFolderViewMode}
+                editingNote={editingNote}
+                setEditingNote={setEditingNote}
+                editNoteTitle={editNoteTitle}
+                setEditNoteTitle={setEditNoteTitle}
+                editNoteContent={editNoteContent}
+                setEditNoteContent={setEditNoteContent}
+                showFullScreenNote={showFullScreenNote}
+                setShowFullScreenNote={setShowFullScreenNote}
+                isCreatingNote={isCreatingNote}
+                setIsCreatingNote={setIsCreatingNote}
+                theme={theme}
+                showSuccess={showSuccess}
+              />
+            )}
+          </TopTab.Screen>
+        </TopTab.Navigator>
+      </NavigationContainer>
       
-      {/* Full Screen Note Modal */}
-      {showFullScreenNote && (
+      {/* Full Screen Note Modal - only for freeform notes */}
+      {notesMode === 'freeform' && showFullScreenNote && (
         <FullScreenNoteModal
           editingNote={editingNote}
           setEditingNote={setEditingNote}
@@ -657,7 +740,7 @@ const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen,
           showSuccess={showSuccess}
         />
       )}
-    </View>
+    </>
   );
 
   return (

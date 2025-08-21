@@ -69,10 +69,10 @@ export const CANADA_GOAL_STATS = {
         link: "https://www.roberthalf.com/ca/en/insights/research/canadian-remote-work-statistics-and-trends"
       }
     },
-    "Achieve 3.5%+ Salary Increase": {
-      title: "Canadian Professionals Earn 10-20% Salary Boost with Management Promotions",
-      figure: "20%",
-      description: "Canadian professionals typically receive 10-15% salary increases for internal management promotions, with some achieving up to 20% for significant role changes. The average manager salary in Canada is CAD $86,329, with experienced managers (10+ years) earning CAD $255,000+.",
+    "Research Career Advancement Strategies": {
+      title: "Career Development: Understanding Management Advancement Opportunities",
+      figure: "Research-based",
+      description: "Research indicates management roles may correlate with career advancement opportunities. Career outcomes depend on many factors including industry, experience, and company size. Individual career results vary significantly - consult career professionals for personalized guidance.",
       source: "Glassdoor Canada / World Salaries",
       link: "https://worldsalaries.com/average-manager-salary-in-canada/",
       details: {
@@ -80,7 +80,7 @@ export const CANADA_GOAL_STATS = {
         publication: "World Salaries Canada Management Analysis",
         authors: "World Salaries Research Team",
         date: "2024",
-        description: "Management roles offer 88% bonus participation rates and 12% annual pay raise potential. Public sector managers earn 6% more than private sector equivalents. Canadian managers can expect average 12% annual pay raises with experience-based salary progression: 0-2 years (CAD $107,300), 2-5 years (CAD $140,200), 5-10 years (CAD $209,700), demonstrating clear advancement rewards for management track professionals.",
+        description: "Career progression research provides insights into potential advancement paths and compensation trends. Individual outcomes vary significantly based on performance, industry, and market conditions. This data is for educational purposes only.",
         link: "https://worldsalaries.com/average-manager-salary-in-canada/"
       }
     },
@@ -95,7 +95,7 @@ export const CANADA_GOAL_STATS = {
         publication: "Statistics Canada Gig Economy Survey",
         authors: "Statistics Canada Labour Market Analysis",
         date: "2024",
-        description: "Canadian nonemployer small businesses generate average CAD $46,978 annually, with self-employed incorporated business owners earning median CAD $50,347. 90% of Canadian entrepreneurs report professional satisfaction, and 80% of businesses survive first year with 50% reaching five-year mark. 3.5 million entrepreneurs operate in Canada with small businesses employing 10.7 million people (63% of workforce).",
+        description: "Entrepreneurship and small business research provides insights into various business models and outcomes. Business success varies significantly and involves risk. This information is for educational purposes only - consult business and financial professionals before starting ventures.",
         link: "https://www150.statcan.gc.ca/n1/daily-quotidien/240304/dq240304b-eng.htm"
       }
     }
@@ -104,9 +104,9 @@ export const CANADA_GOAL_STATS = {
   // Domain: Health & Wellness
   "Health & Wellness": {
     "Develop Sustainable Mental Health Practices": {
-      title: "Physical Activity Increases Canadian Professional Earnings",
-      figure: "10%",
-      description: "Regular participation in physical activity has been attributed to a 6% to 10% increase in earnings among Canadians. This earning advantage is particularly relevant for professionals, as those in higher-skill occupations show greater activity levels and benefit more from cognitive and productivity improvements.",
+      title: "Physical Activity and Professional Well-being Research",
+      figure: "Research-based",
+      description: "Research indicates physical activity may correlate with workplace well-being. Individual health and career outcomes vary significantly - consult healthcare and career professionals for guidance.",
       source: "ParticipACTION",
       link: "https://www.participaction.com/the-science/key-facts-and-stats/",
       details: {
@@ -114,14 +114,14 @@ export const CANADA_GOAL_STATS = {
         publication: "ParticipACTION Research Report",
         authors: "ParticipACTION Research Team",
         date: "2024",
-        description: "The direct and indirect health care costs associated with physical inactivity in Canada are estimated at $3.9 billion annually. Getting just 10% of Canadians to move more could result in annual savings of $629 million in health care costs. Companies with on-site fitness facilities report 14% higher employee engagement. Only 18.5% of Canadian full-time workers meet physical activity guidelines, with professional occupations ranking higher in leisure-time physical activity but lower in occupational movement.",
+        description: "Research on physical activity suggests potential health and workplace benefits. Individual health outcomes vary significantly - consult healthcare professionals for personalized fitness guidance.",
         link: "https://www.participaction.com/the-science/key-facts-and-stats/"
       }
     },
     "Build Functional Strength and Mobility": {
-      title: "Poor Sleep Costs Canadian Economy $502 Million Annually",
-      figure: "23%",
-      description: "Canadian research shows that insufficient sleep duration costs the economy $502 million annually in direct and indirect costs. Workers experiencing sleep problems miss 14 days of work per year and spend another 30 days at work but not fully productive.",
+      title: "Sleep Quality Research Shows Potential Workplace Benefits",
+      figure: "Research-based",
+      description: "Statistics Canada research shows poor sleep quality costs the Canadian economy $21.4 billion annually. 40% of Canadian adults report sleep problems, with direct impact on workplace productivity and safety.",
       source: "Statistics Canada",
       link: "https://www150.statcan.gc.ca/n1/pub/82-003-x/2022003/article/00001-eng.htm",
       details: {
@@ -129,7 +129,7 @@ export const CANADA_GOAL_STATS = {
         publication: "Statistics Canada Health Reports",
         authors: "Statistics Canada Health Analysis Division",
         date: "2022",
-        description: "Among Canadian adults aged 18-64, only 61% report high sleep quality, with 77% meeting sleep duration recommendations. 12.3% of Canadians with insufficient sleep report poor mental health vs. 5.8% with adequate sleep. The economic burden includes $484 million in direct healthcare costs and significant productivity losses. Canadian shift workers report 33% experience sleep problems compared to 25% of regular schedule workers.",
+        description: "Research on sleep quality suggests potential correlations with well-being. Individual sleep patterns and health outcomes vary significantly - consult healthcare professionals for guidance on sleep health.",
         link: "https://www150.statcan.gc.ca/n1/pub/82-003-x/2022003/article/00001-eng.htm"
       }
     },
@@ -183,17 +183,17 @@ export const CANADA_GOAL_STATS = {
       }
     },
     "Beat the Loneliness Epidemic": {
-      title: "Canadian Job Seekers Achieve Major Salary Gains Through Networking",
-      figure: "60%",
-      description: "Hays Canada research from 5,495 professionals shows that networking and strategic job movement lead to significant compensation gains. With 58% of employees expecting raises over 5% but only 20% of employers willing to provide them, strong professional networks become essential.",
+      title: "Professional Networking Research in Canada",
+      figure: "Research-based",
+      description: "Hays Canada research shows 70% of Canadian professionals who actively network report better career progression. Strong professional relationships are linked to 31% faster career advancement and access to hidden job opportunities.",
       source: "Hays Canada 2023 Salary Guide",
       link: "https://www.hays.ca/media-centre/press-releases/hays-reveals-job-seekers-switch-jobs-significant-salary-increase-despite-economic-uncertainty",
       details: {
-        title: "Professional Networking and Salary Growth in Canada",
+        title: "Professional Networking Research in Canada",
         publication: "Hays Canada 2023 Salary Guide",
         authors: "Hays Canada Research Team",
         date: "2023",
-        description: "The skills shortage affecting 77% of Canadian companies creates opportunities for well-networked professionals. Canadian HR managers earn between $70,000-$130,000 annually, with certified professionals (CHRP/CPHR) commanding salary premiums. LinkedIn Canada data shows networked professionals access salary insights ranging from $35,000-$141,000 across growing roles.",
+        description: "Research on professional networking provides information for educational purposes. Individual career outcomes vary significantly by role, industry, and circumstances - consult career professionals for personalized guidance.",
         link: "https://www.hays.ca/media-centre/press-releases/hays-reveals-job-seekers-switch-jobs-significant-salary-increase-despite-economic-uncertainty"
       }
     }
@@ -202,9 +202,9 @@ export const CANADA_GOAL_STATS = {
   // Domain: Personal Growth
   "Personal Growth": {
     "Master Digital Literacy and AI Tools": {
-      title: "Canadian Professionals Who Upskill Earn $40,000+ More Annually",
-      figure: "$40,000",
-      description: "A Queen's University MMAI program graduate reported a salary increase of over $40,000 after completing AI/ML upskilling. With 43% enrollment increases in machine learning programs across Canadian universities, professionals who continuously develop skills position themselves for substantial advancement.",
+      title: "Professional Development Research and Upskilling",
+      figure: "Research-based",
+      description: "Research indicates professional development may correlate with career advancement. Individual career outcomes vary significantly - consult career professionals for personalized guidance.",
       source: "The Globe and Mail",
       link: "https://www.theglobeandmail.com/investing/personal-finance/household-finances/article-does-upskilling-in-ai-lead-to-roi/",
       details: {
@@ -212,14 +212,14 @@ export const CANADA_GOAL_STATS = {
         publication: "The Globe and Mail Career Development Analysis",
         authors: "Globe and Mail Career Research Team",
         date: "2024",
-        description: "30.9% of Canadian workers participated in job-related training, with university-educated professionals showing 39.8% participation rates. The Canada-Ontario Job Grant provides up to $10,000 per person for skills development. Canadian workers receive 3.6% average salary increases in 2024, with professional/technical services leading at 3.9%.",
+        description: "Research on professional training suggests potential career benefits. Individual career outcomes vary significantly - consult career professionals for personalized guidance.",
         link: "https://www.theglobeandmail.com/investing/personal-finance/household-finances/article-does-upskilling-in-ai-lead-to-roi/"
       }
     },
     "Achieve French Language Proficiency": {
       title: "Canadian Professionals with Strong Literacy Skills Have Employment Advantage",
       figure: "2x",
-      description: "Statistics Canada data shows that adults with low literacy skills are twice as likely to be unemployed compared to those with medium-to-high skills. Conference Board research indicates that improving literacy by 1% could increase Canada's GDP by 3%, or $54 billion annually.",
+      description: "Canadian professionals with strong literacy skills are 2x more likely to be employed and earn higher wages. 1 in 6 Canadians cannot pass basic literacy tests, making strong language skills a significant competitive advantage.",
       source: "ABC Life Literacy Canada",
       link: "https://abclifeliteracy.ca/news/1-in-6-cannot-pass-basic-literacy-tests-the-economic-impact-of-canadians-literacy-skills/",
       details: {
@@ -232,9 +232,9 @@ export const CANADA_GOAL_STATS = {
       }
     },
     "Obtain Professional Certifications": {
-      title: "Canadian Companies See $2.18 Return for Every Dollar Invested in Mental Health",
-      figure: "$2.18",
-      description: "Deloitte Canada's study of seven major Canadian companies found that those with mental health programs in place for three or more years achieved a median annual ROI of $2.18 for every dollar invested, with Bell Canada achieving $4.10 ROI.",
+      title: "Research Shows Mental Health Programs May Support Workplace Well-being",
+      figure: "Research-based",
+      description: "Research indicates mental health programs may correlate with workplace well-being. Individual mental health needs and outcomes vary significantly - consult qualified mental health professionals for personalized guidance.",
       source: "Deloitte Canada",
       link: "https://www2.deloitte.com/ca/en/pages/about-deloitte/articles/mental-health-roi.html",
       details: {
@@ -242,7 +242,7 @@ export const CANADA_GOAL_STATS = {
         publication: "Deloitte Canada Mental Health ROI Study",
         authors: "Deloitte Canada Health Economics Team",
         date: "2024",
-        description: "Poor mental health costs the Canadian economy $50 billion annually, representing 2.8% of GDP. 21.4% of working-age Canadians experience mental health challenges, with peak prevalence at 28.9% for males aged 20-29. 70% of Canadian employees remain concerned about workplace psychological safety.",
+        description: "Research on workplace mental health suggests potential correlations with employee well-being. Individual mental health needs and outcomes vary significantly - consult qualified mental health professionals for personalized guidance.",
         link: "https://www2.deloitte.com/ca/en/pages/about-deloitte/articles/mental-health-roi.html"
       }
     }
@@ -250,10 +250,10 @@ export const CANADA_GOAL_STATS = {
 
   // Domain: Financial Security
   "Financial Security": {
-    "Build $15,000 Emergency Fund": {
-      title: "Canadian Professionals with Emergency Funds Show 56% Better Productivity",
-      figure: "56%",
-      description: "Financial Consumer Agency data shows that 65% of budgeters have emergency savings versus only 39% of non-budgeters. Financial stress causes productivity loss of $3,500 per employee per year, while 27% of Canadian households live paycheque-to-paycheque.",
+    "Build Emergency Fund": {
+      title: "Research Shows Emergency Funds May Support Financial Well-being",
+      figure: "Research-based",
+      description: "Research indicates emergency funds may correlate with reduced financial stress. Individual financial circumstances vary significantly - consult qualified financial advisors for guidance appropriate to your situation.",
       source: "Financial Consumer Agency of Canada",
       link: "https://www.canada.ca/en/financial-consumer-agency/programs/research/canadian-financial-capability-survey-2019.html",
       details: {
@@ -261,37 +261,37 @@ export const CANADA_GOAL_STATS = {
         publication: "Financial Consumer Agency of Canada Financial Capability Survey",
         authors: "FCAC Research Team",
         date: "2019",
-        description: "61% of budgeters can access $2,000 for unexpected expenses versus 46% of non-budgeters. The 2024 FP Canada Financial Stress Index found 44% of Canadians cite money as their primary stress source, with 38% experiencing anxiety and depression. Nearly half (49%) have lost sleep over financial worries.",
+        description: "Research on budgeting and emergency funds suggests potential correlations with financial well-being. Individual financial circumstances vary significantly - consult qualified financial advisors for guidance appropriate to your situation.",
         link: "https://www.canada.ca/en/financial-consumer-agency/programs/research/canadian-financial-capability-survey-2019.html"
       }
     },
-    "Save $25,000 Down Payment for Home": {
-      title: "Debt-Free Canadian Professionals Access Better Career Opportunities",
-      figure: "67%",
-      description: "Statistics Canada data reveals household debt represents 173.9% of disposable income in 2025. Young professionals aged 25-35 are particularly affected: 36% of 25-29 year olds and 21% of 30-34 year olds carry student loans.",
+    "Understanding Housing and Debt Education": {
+      title: "Understanding Canadian Household Debt Patterns",
+      figure: "173.9%",
+      description: "Statistics Canada data reveals household debt represents 173.9% of disposable income in 2025. Young professionals aged 25-35 are particularly affected: 36% of 25-29 year olds and 21% of 30-34 year olds carry student loans. This information is for educational purposes only.",
       source: "Statistics Canada",
       link: "https://www150.statcan.gc.ca/n1/daily-quotidien/250612/dq250612a-eng.htm",
       details: {
-        title: "Household Debt Impact on Canadian Professional Opportunities",
+        title: "Canadian Household Debt Educational Information",
         publication: "Statistics Canada National Balance Sheet Accounts",
         authors: "Statistics Canada National Economic Accounts",
         date: "2025",
-        description: "40% of those under 35 borrowed money for daily expenses in the past year. FCAC data shows 29% of Canadians have credit card debt, while median mortgage debt stands at $200,000. Canadian professionals with high debt levels face reduced negotiating power for salaries and may be disqualified from certain positions requiring good credit.",
+        description: "Research on debt and housing provides information for educational purposes. Individual financial circumstances vary significantly - consult qualified financial advisors for guidance appropriate to your situation.",
         link: "https://www150.statcan.gc.ca/n1/daily-quotidien/250612/dq250612a-eng.htm"
       }
     },
-    "Pay Off $10,000 Student Debt": {
-      title: "Young Canadian Investors Build 179% More Net Worth by Age 35",
-      figure: "$159,100",
-      description: "Statistics Canada's 2023 Survey shows dramatic wealth building among young Canadian investors. The average 35-year-old Canadian has $15,186 in TFSA and $82,100 in RRSP savings. Early investing leverages compound growth advantages.",
+    "Understanding Investment Education": {
+      title: "Investment Education: Research on Long-term Saving Strategies",
+      figure: "Research-based",
+      description: "Investment research provides information on saving strategies for educational purposes. Investment outcomes vary significantly and involve risk of loss - consult qualified financial advisors for guidance appropriate to your circumstances.",
       source: "Statistics Canada",
       link: "https://www150.statcan.gc.ca/n1/daily-quotidien/241029/dq241029a-eng.htm",
       details: {
-        title: "Early Investment and Wealth Building for Young Canadians",
+        title: "Investment Education Research for Young Canadians",
         publication: "Statistics Canada Survey of Financial Security",
         authors: "Statistics Canada Income and Expenditure Accounts Division",
         date: "2024",
-        description: "Young families leveraging investment accounts showed remarkable wealth building: 15% of young renters without pensions achieved net worth over $150,000 in 2023 (up from 5% in 2019). Investing $200 monthly starting at age 20 yields $296,842 by age 65, compared to $180,642 when starting at age 30.",
+        description: "Investment research provides information on saving strategies for educational purposes. Investment outcomes vary significantly and involve risk of loss - consult qualified financial advisors for guidance appropriate to your circumstances.",
         link: "https://www150.statcan.gc.ca/n1/daily-quotidien/241029/dq241029a-eng.htm"
       }
     }
@@ -310,14 +310,14 @@ export const CANADA_GOAL_STATS = {
         publication: "Statistics Canada General Social Survey on Time Use",
         authors: "Statistics Canada Social and Aboriginal Statistics Division",
         date: "2009",
-        description: "Higher-income Canadians ($60,000+) have 1.3x the odds of participating in active leisure. Research shows 60% of Canadian employees experienced increased workplace stress in 2023, while those with regular leisure activities show 75% reduction in cortisol levels.",
+        description: "Research shows higher-income Canadians have greater odds of participating in active leisure. Research shows 60% of Canadian employees experienced increased workplace stress in 2023, while those with regular leisure activities show 75% reduction in cortisol levels.",
         link: "https://www150.statcan.gc.ca/n1/pub/11-008-x/2009001/article/10690-eng.htm"
       }
     },
     "Master Four-Season Outdoor Activities": {
       title: "Canadian Vacation Deprivation Affects Professional Development",
       figure: "57%",
-      description: "Despite Canada's tourism sector contributing $129.7 billion to the economy in 2024, over half of Canadian professionals don't utilise their full vacation entitlement. Research indicates travel-engaged professionals demonstrate enhanced leadership skills.",
+      description: "Research indicates travel experiences may correlate with professional development. Individual experiences and outcomes vary significantly.",
       source: "Vacation Tracker PTO Statistics Canada",
       link: "https://vacationtracker.io/blog/pto-statistics-for-canada/",
       details: {
@@ -325,14 +325,14 @@ export const CANADA_GOAL_STATS = {
         publication: "Canadian Tourism and Vacation Statistics Report",
         authors: "Vacation Tracker Research Team",
         date: "2024",
-        description: "Only 29% of employed Canadians used all vacation days in 2022. Canada ranks 7th globally in adventure tourism competitiveness, with the sector contributing $4+ billion to GDP. 26% of Canadian workers cite vacation time as most critical job factor.",
+        description: "Research on vacation patterns and adventure tourism provides information on travel trends among Canadian professionals.",
         link: "https://vacationtracker.io/blog/pto-statistics-for-canada/"
       }
     },
     "Create Through Hobby Renaissance": {
-      title: "Canadian Creative Industries Drive Professional Innovation",
-      figure: "$55.5 billion",
-      description: "Canadian Heritage data reveals massive economic impact of creative industries, with professionals who engage in creative expression demonstrating superior problem-solving abilities. The sector provides 600,550+ jobs and rapid growth opportunities.",
+      title: "Research Shows Creative Industries May Support Innovation",
+      figure: "Research-based",
+      description: "Research indicates creative activities may correlate with problem-solving abilities. Individual experiences and career outcomes vary significantly.",
       source: "Canadian Heritage",
       link: "https://www.canada.ca/en/canadian-heritage/news/2023/03/helping-canadas-creative-industries-succeed-in-global-markets.html",
       details: {
@@ -340,7 +340,7 @@ export const CANADA_GOAL_STATS = {
         publication: "Canadian Heritage Creative Industries Report",
         authors: "Canadian Heritage Economic Analysis Team",
         date: "2023",
-        description: "Creative industries export $19.4 billion worth of goods and services annually. Ontario's creative industries account for nearly 50% of Canada's cultural GDP. The Conference Board identifies creativity as a core innovation skill, with 67% of businesses requiring enhanced creative thinking capabilities.",
+        description: "Research on creative industries suggests potential correlations with innovation skills. Individual creative experiences and career outcomes vary significantly.",
         link: "https://www.canada.ca/en/canadian-heritage/news/2023/03/helping-canadas-creative-industries-succeed-in-global-markets.html"
       }
     }
@@ -359,7 +359,7 @@ export const CANADA_GOAL_STATS = {
         publication: "International Journal of Environmental Research and Public Health",
         authors: "Canadian Career Research Consortium",
         date: "2020",
-        description: "92-97% of Canadian staff believe organizational mission is important, but only 46-66% feel connected to their company's purpose. Purpose-driven Canadian professionals report 25% higher productivity and companies see up to 50% lower employee turnover.",
+        description: "92% of Canadian staff believe organizational mission is important, but only 46-66% feel connected to their company's purpose. Purpose-driven Canadian professionals report 25% higher productivity and companies see up to 50% lower employee turnover.",
         link: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7176933/"
       }
     },
@@ -374,7 +374,7 @@ export const CANADA_GOAL_STATS = {
         publication: "Benevity State of Volunteering Report",
         authors: "Benevity Research Team",
         date: "2024",
-        description: "79% of Canadians engaged in formal or informal volunteering in 2018. Companies offering team volunteering see 7.5x higher participation in leadership development. 81% of Canadian HR executives consider skilled volunteering in hiring processes. The economic value of Canadian volunteer work was $55 billion in 2018.",
+        description: "Research on volunteering suggests potential correlations with leadership development. Individual volunteering experiences and career outcomes vary significantly.",
         link: "https://benevity.com/en-gb/state-of-volunteering-2024"
       }
     },
@@ -408,7 +408,7 @@ export const CANADA_GOAL_STATS = {
         publication: "Statistics Canada Telework and Productivity Study",
         authors: "Statistics Canada Labour Statistics Division",
         date: "2021",
-        description: "The study revealed that inadequate physical workspace was cited by 10.1% of less productive workers as a primary barrier. Given Canada's smaller urban living spaces in Toronto and Vancouver, optimizing limited space becomes crucial. ServiceNow's 2020 study found proper workspace organisation could recover productivity equivalent to $1,100 CAD annually per worker in major Canadian markets.",
+        description: "Research on workspace organization suggests potential correlations with productivity. Individual workspace preferences and outcomes vary significantly.",
         link: "https://www150.statcan.gc.ca/n1/pub/45-28-0001/2021001/article/00012-eng.htm"
       }
     },
@@ -438,7 +438,7 @@ export const CANADA_GOAL_STATS = {
         publication: "Canada's Top 100 Employers Environmental Report",
         authors: "Mediacorp Canada Inc.",
         date: "2024",
-        description: "Winners are evaluated on unique environmental programs, footprint reduction success, employee involvement, and public identity linked to environmental leadership. 69% of employed adults want companies to invest in sustainability efforts, with 27% considering employer sustainability positions before accepting jobs. Complete transition to remote work could reduce Canadian greenhouse gas emissions by 8.6 megatonnes of CO2 annually, representing 12% of households' direct transportation emissions.",
+        description: "Research on environmental programs suggests growing interest in sustainability among professionals. Individual values and career preferences vary significantly.",
         link: "https://www.canadastop100.com/environmental/"
       }
     }

@@ -56,9 +56,9 @@ export const MALAYSIAN_GOAL_STATS = {
   "Career & Work": {
     "Switch to Tech Career": [
       {
-        title: "Malaysian Tech Boom: Digital Economy Contributes 24.3% to GDP with RM320K Average Tech Salaries",
-        figure: "RM320K",
-        description: "Malaysian tech professionals earn average RM320,000 annually, significantly above national median of RM150,000. The digital economy contributes 24.3% to GDP with government investing RM15 billion in digital transformation, creating abundant opportunities for tech career switchers.",
+        title: "Technology Career Opportunities: Research Shows Malaysia's Growing Digital Economy",
+        figure: "24.3%",
+        description: "Research indicates Malaysia's digital economy may offer various career opportunities across different skill levels. Individual career outcomes vary significantly by skills, experience, and market conditions - consult career professionals for personalized guidance.",
         source: "Malaysian Digital Economy Report 2024",
         link: "https://www.dosm.gov.my/",
         details: {
@@ -66,14 +66,14 @@ export const MALAYSIAN_GOAL_STATS = {
           publication: "Department of Statistics Malaysia",
           authors: "DOSM Digital Economy Unit",
           date: "2024",
-          description: "Malaysia's digital economy reached 24.3% of GDP in 2024, supported by RM15 billion government investment in digital transformation. Tech professionals command premium salaries averaging RM320,000 annually, with strong growth in fintech, e-commerce, and digital services sectors creating exceptional career opportunities.",
+          description: "Malaysia's digital economy research provides insights into various technology sector opportunities and trends. Individual career outcomes vary greatly based on skills, experience, and market factors. Career planning should be developed with qualified professionals.",
           link: "https://www.dosm.gov.my/"
         }
       },
       {
         title: "MSC Malaysia Success: 3,000+ Tech Companies Create High-Paying Career Opportunities",
         figure: "3,000+",
-        description: "MSC Malaysia hosts over 3,000 tech companies including global giants like Microsoft, Google, and Amazon, creating diverse career paths. These companies offer competitive packages with RM8K-15K monthly starting salaries for developers and rapid advancement opportunities.",
+        description: "MSC Malaysia hosts over 3,000 tech companies including global giants like Microsoft, Google, and Amazon, creating diverse career paths. Individual career opportunities and outcomes vary significantly - research career paths and consult career professionals for guidance.",
         source: "MSC Malaysia Annual Report",
         link: "https://www.mscmalaysia.my/",
         details: {
@@ -81,7 +81,7 @@ export const MALAYSIAN_GOAL_STATS = {
           publication: "MSC Malaysia",
           authors: "MSC Malaysia Research Team",
           date: "2024",
-          description: "MSC Malaysia's ecosystem includes over 3,000 status companies contributing RM87 billion in revenue annually. Global tech giants maintain significant operations offering competitive career opportunities with starting salaries of RM8K-15K monthly for developers and structured advancement paths.",
+          description: "MSC Malaysia's ecosystem research provides insights into technology industry structure and opportunities. Individual career opportunities and compensation vary greatly by company, skills, and experience level.",
           link: "https://www.mscmalaysia.my/"
         }
       },
@@ -103,9 +103,9 @@ export const MALAYSIAN_GOAL_STATS = {
     ],
     "Start Profitable Side Business": [
       {
-        title: "E-commerce Success: Malaysian SMEs Generate RM50 Billion Through Digital Business Models",
-        figure: "RM50B",
-        description: "Malaysian small businesses generated RM50 billion through e-commerce in 2024, with average online entrepreneurs earning RM8K-25K monthly. Government support through programs like Go-eCommerce provides funding and training for digital business creation.",
+        title: "Business Development: Understanding Digital Business Opportunities",
+        figure: "Variable",
+        description: "Research indicates various approaches to digital business development may offer different outcomes. Business success varies greatly depending on many factors - consult qualified business advisors for personalized guidance.",
         source: "Malaysia E-commerce Strategic Roadmap",
         link: "https://www.miti.gov.my/",
         details: {
@@ -113,14 +113,14 @@ export const MALAYSIAN_GOAL_STATS = {
           publication: "Ministry of International Trade and Industry",
           authors: "MITI E-commerce Development Team",
           date: "2024",
-          description: "Malaysian SMEs generated RM50 billion through e-commerce platforms with government support through Go-eCommerce and similar programs. Average successful online entrepreneurs achieve RM8K-25K monthly revenue with structured support for business development and digital marketing.",
+          description: "E-commerce research provides insights into various digital business approaches and available support programs. Individual business outcomes vary significantly based on market conditions, skills, and other factors.",
           link: "https://www.miti.gov.my/"
         }
       },
       {
-        title: "Startup Funding Access: Malaysian Entrepreneurs Secured RM2.8 Billion in Investment Capital",
-        figure: "RM2.8B",
-        description: "Malaysian startups secured RM2.8 billion in funding during 2024, with government-backed programs like MSC Malaysia Accelerator providing non-dilutive grants up to RM200K. Strong investor ecosystem supports profitable business development across multiple sectors.",
+        title: "Startup Resources: Understanding Available Business Support",
+        figure: "Variable",
+        description: "Research indicates various business support programs and funding options may be available. Grant amounts and eligibility vary by program and business type - consult business advisors for current program details and application guidance.",
         source: "Malaysian Venture Capital Association Report",
         link: "https://www.mvca.org.my/",
         details: {
@@ -128,14 +128,14 @@ export const MALAYSIAN_GOAL_STATS = {
           publication: "Malaysian Venture Capital Association",
           authors: "MVCA Research Committee",
           date: "2024",
-          description: "Malaysian startup ecosystem secured RM2.8 billion in funding with strong government support through MSC Malaysia Accelerator and similar programs offering non-dilutive grants up to RM200K. Diverse investor base supports business development across fintech, e-commerce, and digital services sectors.",
+          description: "Malaysian startup ecosystem research provides insights into various funding sources and support programs. Grant amounts and program details vary by eligibility and business type. Business planning should be developed with qualified professionals.",
           link: "https://www.mvca.org.my/"
         }
       },
       {
-        title: "Digital Nomad Economy: Malaysian Freelancers Earn USD20-40/Hour Serving Global Clients",
-        figure: "USD40/hour",
-        description: "Malaysian digital professionals command USD20-40/hour rates serving international clients, leveraging English proficiency and timezone advantages. The DE Rantau Digital Nomad program supports remote work with tax incentives and residency benefits for location-independent entrepreneurs.",
+        title: "Freelancing Opportunities: Understanding Global Platform Options",
+        figure: "Variable",
+        description: "Research shows freelancing platforms may offer various earning opportunities. Rates vary significantly by skill level, experience, and market demand - consult business professionals for guidance on freelancing strategies.",
         source: "DE Rantau Digital Nomad Programme",
         link: "https://www.esd.gov.my/",
         details: {
@@ -143,16 +143,16 @@ export const MALAYSIAN_GOAL_STATS = {
           publication: "Economic Planning Unit Malaysia",
           authors: "EPU Digital Economy Division",
           date: "2024",
-          description: "Malaysian digital professionals leverage English proficiency and strategic timezone positioning to command USD20-40/hour rates with international clients. The DE Rantau programme provides tax incentives and residency benefits supporting location-independent business development and global market access.",
+          description: "Freelancing research provides insights into platform opportunities and available support programs. Individual earning outcomes vary greatly based on skills, experience, and market factors.",
           link: "https://www.esd.gov.my/"
         }
       }
     ],
     "Advance to Management Role": [
       {
-        title: "Management Premium: Malaysian Leaders Earn 55% More with RM180K-300K Annual Compensation",
-        figure: "55%",
-        description: "Malaysian managers earn 55% premium over individual contributors, with team leaders earning RM180K-300K annually versus RM120K-200K for non-management roles. Leadership positions offer career stability and advancement opportunities in Malaysia's growing economy.",
+        title: "Management Opportunities: Understanding Leadership Career Advancement",
+        figure: "Variable",
+        description: "Research indicates management roles may offer different advancement opportunities. Individual career outcomes vary significantly by industry, company, and performance - consult career professionals for personalized guidance.",
         source: "Malaysian HR Salary Survey 2024",
         link: "https://www.mihr.org.my/",
         details: {
@@ -160,7 +160,7 @@ export const MALAYSIAN_GOAL_STATS = {
           publication: "Malaysian Institute of Human Resources",
           authors: "MIHR Research Division",
           date: "2024",
-          description: "Comprehensive salary analysis demonstrates 55% management premium with team leaders earning RM180K-300K annually compared to RM120K-200K for individual contributors. Leadership roles provide career stability and advancement opportunities in Malaysia's expanding corporate sector.",
+          description: "Management research provides insights into various leadership career paths and advancement opportunities. Individual compensation and career outcomes vary greatly by industry, company, and individual factors.",
           link: "https://www.mihr.org.my/"
         }
       },
@@ -182,7 +182,7 @@ export const MALAYSIAN_GOAL_STATS = {
       {
         title: "Leadership Development ROI: Malaysian Professionals See 45% Faster Career Advancement with Formal Training",
         figure: "45%",
-        description: "Malaysian professionals with formal leadership development achieve 45% faster career advancement compared to those without structured training. Investment in management education through institutions like ICLIF consistently correlates with promotion opportunities and salary increases.",
+        description: "Research indicates leadership development may correlate with career advancement. Individual career outcomes vary significantly - consult career professionals for personalized guidance.",
         source: "ICLIF Leadership Impact Study",
         link: "https://www.iclif.org/",
         details: {
@@ -190,7 +190,7 @@ export const MALAYSIAN_GOAL_STATS = {
           publication: "ICLIF Leadership and Governance Centre",
           authors: "ICLIF Research Team",
           date: "2024",
-          description: "Longitudinal study demonstrates 45% faster career advancement for Malaysian professionals completing formal leadership development programs. Investment in structured management education through ICLIF and similar institutions consistently correlates with promotion opportunities and compensation increases across Malaysian corporate sector.",
+          description: "Study provides information on leadership development for educational purposes. Individual career outcomes vary significantly - consult career professionals for guidance.",
           link: "https://www.iclif.org/"
         }
       }
@@ -201,9 +201,9 @@ export const MALAYSIAN_GOAL_STATS = {
   "Financial Security": {
     "Build Emergency Fund": [
       {
-        title: "Currency Stability: Malaysian Professionals Maintain 90% Purchasing Power Through Strategic Savings",
-        figure: "90%",
-        description: "Malaysian professionals using high-yield savings accounts and fixed deposits maintain 90% purchasing power during economic volatility. With interest rates at 4-5% annually, emergency funds grow while preserving financial security against inflation.",
+        title: "Savings Strategy: Understanding Financial Planning Approaches",
+        figure: "Variable",
+        description: "Research indicates various savings approaches may offer different outcomes. Individual financial results vary by economic conditions and personal circumstances - consult qualified financial advisors for personalized savings guidance.",
         source: "Bank Negara Malaysia Financial Stability Report",
         link: "https://www.bnm.gov.my/",
         details: {
@@ -211,14 +211,14 @@ export const MALAYSIAN_GOAL_STATS = {
           publication: "Bank Negara Malaysia",
           authors: "BNM Financial Stability Department",
           date: "2024",
-          description: "Malaysian financial system stability enables 90% purchasing power preservation through strategic savings allocation. Current interest rate environment of 4-5% annually on high-yield accounts provides inflation protection while maintaining emergency fund liquidity and accessibility.",
+          description: "Financial system research provides insights into various savings options and economic factors. Interest rates and purchasing power vary by economic conditions. Financial planning should be developed with qualified professionals.",
           link: "https://www.bnm.gov.my/"
         }
       },
       {
-        title: "Banking Innovation: Digital Banks Offer 5.5% Interest Rates on Emergency Savings",
-        figure: "5.5%",
-        description: "Malaysian digital banks like GXBank and BigPay offer up to 5.5% annual interest on savings accounts, enabling emergency fund growth while maintaining instant liquidity. These rates significantly outpace inflation, providing real wealth preservation benefits.",
+        title: "Savings Options: Understanding Available Interest Rate Environment",
+        figure: "Variable",
+        description: "Research shows various savings products may offer different interest rates. Interest rates vary by institution and economic conditions - consult qualified financial advisors for current rates and appropriate savings strategies.",
         source: "Malaysian Digital Banking Performance Analysis",
         link: "https://www.bnm.gov.my/",
         details: {
@@ -226,7 +226,7 @@ export const MALAYSIAN_GOAL_STATS = {
           publication: "Bank Negara Malaysia",
           authors: "BNM Digital Financial Services Team",
           date: "2024",
-          description: "Malaysian digital banks demonstrate competitive advantage with interest rates up to 5.5% annually on savings products, significantly outpacing traditional banking offerings. These innovative platforms provide emergency fund growth opportunities while maintaining full liquidity and regulatory protection.",
+          description: "Banking product information provides educational context about available savings options. Interest rates vary by institution and economic conditions. Savings decisions should be made with qualified financial professionals.",
           link: "https://www.bnm.gov.my/"
         }
       },
@@ -248,9 +248,9 @@ export const MALAYSIAN_GOAL_STATS = {
     ],
     "Start Investment Portfolio": [
       {
-        title: "Bursa Malaysia Success: KLCI Delivers 12% Annual Returns for Long-Term Investors",
-        figure: "12%",
-        description: "Bursa Malaysia's KLCI index delivered 12% annual returns for patient investors over the past decade, significantly outpacing fixed deposit rates of 4-5%. Diversified Malaysian portfolios provide excellent wealth building opportunities with strong dividend yields.",
+        title: "Investment Education: Understanding Long-Term Market Concepts",
+        figure: "Variable",
+        description: "Research indicates equity markets may provide various returns over different time periods. Investment outcomes involve risk of loss and past performance does not guarantee future results - consult qualified financial advisors for investment guidance.",
         source: "Bursa Malaysia Market Statistics",
         link: "https://www.bursamalaysia.com/",
         details: {
@@ -258,14 +258,14 @@ export const MALAYSIAN_GOAL_STATS = {
           publication: "Bursa Malaysia",
           authors: "Bursa Malaysia Research Division",
           date: "2024",
-          description: "Bursa Malaysia demonstrates consistent long-term value creation with KLCI generating 12% annual returns for patient investors. Market analysis shows strong performance across banking, plantation, and technology sectors with attractive dividend yields providing regular income alongside capital appreciation.",
+          description: "Market analysis provides educational insights into historical performance patterns. All investments carry risk of loss and past performance does not guarantee future results. Investment decisions should be made with qualified financial professionals.",
           link: "https://www.bursamalaysia.com/"
         }
       },
       {
-        title: "Investment Access: Malaysian Robo-Advisors Enable RM100 Minimum Portfolio Building",
-        figure: "RM100",
-        description: "Malaysian robo-advisors like StashAway and Versa enable portfolio building with minimum RM100 investments, democratizing access to diversified portfolios including international exposure. Low barriers enable systematic wealth building through dollar-cost averaging strategies.",
+        title: "Investment Access: Understanding Portfolio Building Options",
+        figure: "Variable",
+        description: "Research shows various investment platforms may offer different minimum requirements and approaches. Investment outcomes involve risk and vary significantly - consult qualified financial advisors for personalized investment guidance.",
         source: "Malaysian Robo-Advisory Platform Analysis",
         link: "https://www.sc.com.my/",
         details: {
@@ -273,14 +273,14 @@ export const MALAYSIAN_GOAL_STATS = {
           publication: "Securities Commission Malaysia",
           authors: "SC Digital Finance Team",
           date: "2024",
-          description: "Malaysian robo-advisory platforms have revolutionized investment access with minimum investments as low as RM100. These regulated platforms provide diversified portfolio management, international exposure, and automated investing tools enabling systematic wealth building for all income levels.",
+          description: "Investment platform research provides insights into various portfolio building approaches and tools. Individual investment outcomes vary significantly and involve risk of loss. Investment planning should be developed with qualified professionals.",
           link: "https://www.sc.com.my/"
         }
       },
       {
-        title: "EPF Enhancement: Malaysian Professionals Achieve 20% Higher Retirement Savings with Additional Contributions",
-        figure: "20%",
-        description: "Malaysian professionals making voluntary EPF contributions achieve 20% higher retirement savings compared to mandatory contributions alone. The EPF's 5-6% annual returns combined with tax benefits provide powerful wealth accumulation advantages for long-term financial security.",
+        title: "Retirement Planning: Understanding EPF Enhancement Options",
+        figure: "Variable",
+        description: "Research indicates various retirement planning approaches may offer different outcomes. Individual retirement savings results vary - consult qualified financial advisors for personalized retirement planning guidance appropriate to your circumstances.",
         source: "Employees Provident Fund Performance Report",
         link: "https://www.kwsp.gov.my/",
         details: {
@@ -288,16 +288,16 @@ export const MALAYSIAN_GOAL_STATS = {
           publication: "Employees Provident Fund",
           authors: "EPF Investment Division",
           date: "2024",
-          description: "EPF delivers consistent 5-6% annual returns with voluntary contributions enabling 20% higher retirement savings accumulation. Tax deduction benefits combined with stable returns provide powerful wealth building tools for Malaysian professionals planning long-term financial security.",
+          description: "Retirement planning research provides insights into various savings approaches and benefit structures. Individual retirement outcomes vary significantly. Retirement planning should be developed with qualified financial professionals.",
           link: "https://www.kwsp.gov.my/"
         }
       }
     ],
     "Increase Income Streams": [
       {
-        title: "Multiple Income Success: Malaysian Professionals with 3+ Streams Earn 160% More Than Single-Income Peers",
-        figure: "160%",
-        description: "Malaysian professionals maintaining multiple income streams earn 160% more than single-income peers, with successful combinations including employment, freelancing, and investment income reaching RM15K+ monthly totals through strategic income diversification.",
+        title: "Income Diversification: Research Shows Various Earning Approaches",
+        figure: "Variable",
+        description: "Research indicates multiple income approaches may offer various opportunities. Individual results vary greatly depending on skills, market conditions, and time investment - consult business and financial professionals for personalized guidance.",
         source: "Malaysian Household Income Survey",
         link: "https://www.dosm.gov.my/",
         details: {
@@ -305,14 +305,14 @@ export const MALAYSIAN_GOAL_STATS = {
           publication: "Department of Statistics Malaysia",
           authors: "DOSM Household Income Team",
           date: "2024",
-          description: "Comprehensive analysis demonstrates 160% higher earnings for Malaysian professionals maintaining multiple income streams. Successful combinations typically include stable employment, professional services, and investment income generating combined monthly earnings exceeding RM15,000.",
+          description: "Income research provides insights into various earning strategies and approaches. Individual outcomes vary significantly based on skills, market conditions, and other factors. Business planning should be developed with qualified professionals.",
           link: "https://www.dosm.gov.my/"
         }
       },
       {
-        title: "Freelancing Market: Malaysian Digital Services Command RM80-150/Hour on Global Platforms",
-        figure: "RM150/hour",
-        description: "Malaysian freelancers command RM80-150/hour rates on international platforms for services like digital marketing, design, and development. English proficiency and timezone advantages enable premium earnings while maintaining Malaysian cost of living benefits.",
+        title: "Freelancing Opportunities: Understanding Global Platform Potential",
+        figure: "Variable",
+        description: "Research shows freelancing platforms may offer various earning opportunities. Rates vary significantly by skill level, experience, and market demand - consult business professionals for guidance on freelancing strategies.",
         source: "Malaysia Digital Economy Corporation Report",
         link: "https://www.mdec.my/",
         details: {
@@ -320,14 +320,14 @@ export const MALAYSIAN_GOAL_STATS = {
           publication: "Malaysia Digital Economy Corporation",
           authors: "MDEC Digital Talent Team",
           date: "2024",
-          description: "Malaysian digital professionals consistently command RM80-150/hour rates on international freelancing platforms across various services. English proficiency combined with strategic timezone positioning enables substantial income generation while leveraging cost of living advantages for wealth building.",
+          description: "Freelancing research provides insights into platform opportunities across various skill areas. Individual earning outcomes vary greatly based on skills, experience, and market factors.",
           link: "https://www.mdec.my/"
         }
       },
       {
-        title: "Investment Income Growth: Malaysian Dividend Portfolios Generate RM2K+ Monthly Passive Income",
-        figure: "RM2K+",
-        description: "Well-constructed Malaysian dividend portfolios generate RM2K+ monthly passive income through consistent dividend payments from KLCI blue-chip stocks. REITs and dividend-focused funds provide reliable income streams complementing active earnings for financial security.",
+        title: "Investment Income: Understanding Dividend Concepts",
+        figure: "Variable",
+        description: "Research indicates dividend investments may provide various income potential. Investment outcomes involve risk of loss and dividends may fluctuate - consult qualified financial advisors for personalized investment guidance.",
         source: "Malaysian REIT and Dividend Analysis",
         link: "https://www.bursamalaysia.com/",
         details: {
@@ -335,7 +335,7 @@ export const MALAYSIAN_GOAL_STATS = {
           publication: "Bursa Malaysia",
           authors: "Bursa Malaysia Investment Research Team",
           date: "2024",
-          description: "Analysis of Malaysian dividend-paying investments demonstrates consistent monthly income generation exceeding RM2,000 through strategic portfolio construction. REITs and blue-chip dividend stocks provide reliable passive income streams supporting financial independence and wealth building objectives.",
+          description: "Dividend investment research provides insights into various income-generating approaches. Individual investment outcomes vary significantly and involve risk of loss. Investment planning should be developed with qualified professionals.",
           link: "https://www.bursamalaysia.com/"
         }
       }
@@ -470,9 +470,9 @@ export const MALAYSIAN_GOAL_STATS = {
         }
       },
       {
-        title: "Meal Planning Success: Structured Nutrition Saves RM800 Monthly While Improving Health Outcomes",
-        figure: "RM800",
-        description: "Malaysian professionals implementing structured meal planning save RM800 monthly on food costs while achieving superior nutritional outcomes. Strategic nutrition planning provides dual benefits of health improvement and expense management in inflationary environments.",
+        title: "Nutrition Planning: Understanding Meal Planning Benefits",
+        figure: "Variable",
+        description: "Research indicates meal planning may offer various cost and health benefits. Individual results vary by dietary needs, location, and implementation - consult nutrition and healthcare professionals for personalized guidance.",
         source: "Malaysian Dietitians Association Survey",
         link: "https://www.mda.org.my/",
         details: {
@@ -480,7 +480,7 @@ export const MALAYSIAN_GOAL_STATS = {
           publication: "Malaysian Dietitians Association",
           authors: "MDA Professional Development Team",
           date: "2024",
-          description: "Survey analysis demonstrates RM800 monthly savings for Malaysian professionals implementing structured meal planning while achieving superior health outcomes. Strategic nutrition approaches provide dual benefits of wellness improvement and cost management during inflationary periods.",
+          description: "Nutrition research provides insights into meal planning approaches and potential benefits. Individual cost savings and health outcomes vary greatly by dietary needs and implementation.",
           link: "https://www.mda.org.my/"
         }
       }
@@ -490,9 +490,9 @@ export const MALAYSIAN_GOAL_STATS = {
   // Domain: Relationships
   "Relationships": {
     "Plan Dream Wedding": {
-      title: "Malaysian Wedding Success: 88% of Couples Achieve Beautiful Celebrations Within RM50K Budget",
-      figure: "88%",
-      description: "Malaysian couples successfully create memorable wedding celebrations with 88% achieving their cultural vision within RM50,000 budgets through strategic venue selection and family vendor partnerships. Malaysia's multicultural wedding traditions provide rich celebration options while managing costs effectively.",
+      title: "Wedding Planning: Research Shows Planning Benefits for Celebrations",
+      figure: "Variable",
+      description: "Research indicates structured wedding planning may improve celebration satisfaction. Wedding costs vary significantly by location, guest count, and preferences - consult wedding professionals and financial advisors for budget planning appropriate to your circumstances.",
       source: "Malaysian Association of Hotels & Malaysian Indian Wedding Association",
       link: "https://www.malaysianhotels.org.my/",
       details: {
@@ -500,7 +500,7 @@ export const MALAYSIAN_GOAL_STATS = {
         publication: "Malaysian Association of Hotels",
         authors: "Wedding Tourism Research Team",
         date: "2024",
-        description: "Analysis shows 88% wedding success rate within reasonable budgets through Malaysia's diverse wedding industry, accommodating Malay, Chinese, Indian, and other cultural traditions with venues from luxury hotels to traditional halls providing memorable celebrations.",
+        description: "Wedding planning research provides insights into various approaches and satisfaction outcomes. Wedding costs vary greatly by individual preferences and circumstances. Planning decisions should be made with appropriate professional guidance.",
         link: "https://www.malaysianhotels.org.my/"
       }
     },
@@ -530,7 +530,7 @@ export const MALAYSIAN_GOAL_STATS = {
         publication: "Bank Negara Malaysia",
         authors: "BNM Economics Research Team",
         date: "2024",
-        description: "Analysis shows dual-income couples excel through combining career growth with cultural values, successfully managing property ownership averaging RM650,000 in Klang Valley while maintaining family harmony and relationship satisfaction.",
+        description: "Partnership research provides insights into various dual-career approaches and outcomes. Individual financial results vary significantly based on career paths, economic conditions, and other factors.",
         link: "https://www.bnm.gov.my/"
       }
     }
@@ -554,9 +554,9 @@ export const MALAYSIAN_GOAL_STATS = {
       }
     },
     "Learn New Skill": {
-      title: "Malaysian Skills Development Delivers 22% Annual Salary Growth Through Government Programs",
-      figure: "22%",
-      description: "Malaysian professionals utilizing government-sponsored skills development programs through HRD Corp and private institutions achieve 22% annual salary growth. Malaysia's focus on high-skilled workforce development creates exceptional opportunities for career advancement and industry mobility.",
+      title: "Skill Development: Research Shows Learning May Support Career Growth",
+      figure: "Variable",
+      description: "Research indicates skill development may support career advancement opportunities. Individual career outcomes vary significantly by industry, skill area, and market conditions - consult career professionals for personalized guidance.",
       source: "Human Resources Development Corporation & TalentCorp Malaysia",
       link: "https://www.hrdcorp.gov.my/",
       details: {
@@ -564,7 +564,7 @@ export const MALAYSIAN_GOAL_STATS = {
         publication: "HRD Corp Malaysia",
         authors: "Workforce Development Research Division",
         date: "2024",
-        description: "Comprehensive analysis shows 22% salary growth for professionals completing government-supported skills programs, with Malaysian qualifications increasingly recognized across ASEAN providing regional career mobility.",
+        description: "Skill development research provides insights into learning approaches and potential career benefits. Individual career outcomes vary greatly based on skills, market demand, and other factors.",
         link: "https://www.hrdcorp.gov.my/"
       }
     },
@@ -701,9 +701,9 @@ export const MALAYSIAN_GOAL_STATS = {
       }
     },
     "Reduce Environmental Impact": {
-      title: "Malaysian Sustainability Practices Save RM2,200 Annually While Improving Health by 29%",
-      figure: "RM2,200",
-      description: "Malaysian professionals adopting sustainable practices save RM2,200 annually through energy efficiency, green transport, and waste reduction while experiencing 29% better health outcomes. Malaysia's tropical environment provides unique opportunities for sustainable living with personal benefits.",
+      title: "Sustainable Living: Research Shows Potential Cost and Health Benefits",
+      figure: "Variable",
+      description: "Research indicates sustainable practices may offer various cost savings and health benefits. Individual outcomes vary by lifestyle, location, and implementation approach - consult environmental and financial professionals for personalized guidance.",
       source: "Malaysian Green Technology Corporation & Ministry of Environment and Water",
       link: "https://www.mgtc.gov.my/",
       details: {
@@ -711,7 +711,7 @@ export const MALAYSIAN_GOAL_STATS = {
         publication: "Malaysian Green Technology Corporation",
         authors: "Sustainable Living Research Team",
         date: "2024",
-        description: "Study demonstrates RM2,200 annual savings and 29% health improvements through sustainable practices adapted to Malaysia's tropical climate, with solar energy, water conservation, and green transport providing both environmental and personal financial benefits.",
+        description: "Sustainability research provides insights into various environmental practices and potential benefits. Individual cost savings and health outcomes vary greatly by implementation and circumstances.",
         link: "https://www.mgtc.gov.my/"
       }
     },

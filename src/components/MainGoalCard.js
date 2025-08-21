@@ -53,7 +53,7 @@ const getTextColorForBackground = (bgColor) => {
   return whiteContrast > blackContrast ? '#FFFFFF' : '#000000';
 };
 
-const MainGoalCard = ({ goal, onPress, onProgressUpdate, onComplete, showCompleteButton }) => {
+const MainGoalCard = ({ goal, onPress, onProgressUpdate, onComplete, showCompleteButton, isTourMode = false }) => {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const [expanded, setExpanded] = useState(false);
@@ -497,7 +497,7 @@ const MainGoalCard = ({ goal, onPress, onProgressUpdate, onComplete, showComplet
                     paddingVertical: scaleHeight(10),
                     borderRadius: scaleWidth(24)
                   }}
-                  onPress={handleComplete}
+                  onPress={isTourMode ? null : handleComplete}
                   accessible={true}
                   accessibilityRole="button"
                   accessibilityLabel="Reactivate this goal"
@@ -518,7 +518,7 @@ const MainGoalCard = ({ goal, onPress, onProgressUpdate, onComplete, showComplet
                     paddingVertical: scaleHeight(10),
                     borderRadius: scaleWidth(24)
                   }}
-                  onPress={handleComplete}
+                  onPress={isTourMode ? null : handleComplete}
                 >
                   <Text style={{
                     color: '#FFFFFF',

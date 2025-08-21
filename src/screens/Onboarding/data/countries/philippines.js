@@ -11,7 +11,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Switch to Tech Career",
         description: "Transition into high-growth technology roles with remote opportunities",
         icon: "laptop",
-        explanation: "Philippines is Asia's fastest-growing tech hub with incredible salary growth. Smart professionals are pivoting into development, data, and digital marketing roles that pay 3-5x traditional jobs and offer global remote opportunities.",
+        explanation: "Philippines may offer tech opportunities. Individual career outcomes vary significantly - consult career professionals for guidance.",
         projects: [
           {
             name: "Tech Skill Development",
@@ -97,9 +97,9 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Scale to ₱150,000+ through marketing",
+                name: "Learn about business scaling concepts (consult business advisor)",
                 summary: "Scale revenue",
-                explanation: "₱150K monthly revenue proves business viability and creates substantial additional income. This milestone attracts investors and creates optionality for full-time entrepreneurship.",
+                explanation: "Business development concepts may provide educational information about revenue building. Individual business results vary significantly - consult qualified business professionals for guidance.",
                 timeframe: "6 months",
                 completed: false
               }
@@ -137,7 +137,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Management Position Strategy",
             description: "Position yourself for promotion or management role in new company",
-            explanation: "Management roles in Philippines offer significant salary increases and job security. Clear strategy maximizes promotion likelihood.",
+            explanation: "Management roles in Philippines may offer career advancement opportunities. Individual career outcomes vary significantly - consult career professionals for guidance.",
             tasks: [
               {
                 name: "Discuss promotion path with manager",
@@ -163,7 +163,7 @@ export const DOMAIN_DEFINITIONS = [
     name: "Financial Security",
     icon: "cash",
     color: "#10b981", // Green
-    description: "Building wealth, managing expenses, and achieving financial goals",
+    description: "Financial education, budgeting guidance, and goal planning resources",
     goals: [
       {
         name: "Build Emergency Fund",
@@ -200,14 +200,14 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Track expenses and find cost cuts",
                 summary: "Track expenses",
-                explanation: "Expense tracking reveals spending patterns and opportunities for savings that can be redirected to emergency fund building and investment opportunities.",
+                explanation: "Expense tracking may reveal spending patterns and potential savings opportunities. Individual financial outcomes vary significantly.",
                 timeframe: "1 month",
                 completed: false
               },
               {
                 name: "Negotiate better rates for recurring expenses",
                 summary: "Reduce expenses",
-                explanation: "Negotiating better rates on fixed expenses creates permanent monthly savings that compound over time, accelerating emergency fund growth and investment capacity.",
+                explanation: "Negotiating better rates on fixed expenses may reduce costs. Individual cost savings vary significantly.",
                 timeframe: "2 weeks",
                 completed: false
               }
@@ -217,9 +217,9 @@ export const DOMAIN_DEFINITIONS = [
       },
       {
         name: "Start Investment Portfolio",
-        description: "Build diversified investment strategy using Philippine and international options",
+        description: "Learn about diversified investment concepts for educational purposes",
         icon: "trending-up",
-        explanation: "Inflation protection requires smart investing beyond traditional savings. Filipino professionals are using PSE stocks, dollar investments, and fintech platforms to build wealth and hedge against peso volatility.",
+        explanation: "Investment research provides information on various financial strategies for educational purposes. Investment outcomes involve risk and past performance does not guarantee future results - consult qualified financial advisors for guidance appropriate to your circumstances.",
         projects: [
           {
             name: "Investment Foundation",
@@ -234,9 +234,9 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Start ₱25,000 diversified investment",
-                summary: "Start investing",
-                explanation: "Starting with modest amount reduces risk while building investment experience. Diversification across Philippine stocks and international options provides balanced growth potential.",
+                name: "Learn about diversified investment concepts for educational purposes (consult financial advisor)",
+                summary: "Learn investing",
+                explanation: "Investment education provides information about diversification concepts for educational purposes. Investment decisions involve significant risk - consult qualified financial advisors for guidance.",
                 timeframe: "1 month",
                 completed: false
               }
@@ -244,11 +244,11 @@ export const DOMAIN_DEFINITIONS = [
           },
           {
             name: "Portfolio Growth Strategy",
-            description: "Systematically build investment portfolio through regular contributions",
-            explanation: "Consistent investment contributions leverage peso-cost averaging to build long-term wealth despite market volatility.",
+            description: "Learn about investment portfolio concepts for educational purposes",
+            explanation: "Investment education provides information on contribution strategies for educational purposes. Investment outcomes involve risk - consult qualified financial advisors for guidance appropriate to your circumstances.",
             tasks: [
               {
-                name: "Set up ₱15,000+ monthly investments",
+                name: "Learn about investment concepts for educational purposes (consult financial advisor)",
                 summary: "Automate investing",
                 explanation: "Automatic investment contributions ensure consistent portfolio growth while taking advantage of market fluctuations through peso-cost averaging strategies.",
                 timeframe: "1 week",
@@ -267,9 +267,9 @@ export const DOMAIN_DEFINITIONS = [
       },
       {
         name: "Increase Income Streams",
-        description: "Develop multiple income sources to accelerate wealth building",
+        description: "Learn about multiple income stream concepts for educational purposes",
         icon: "wallet",
-        explanation: "Multiple income streams provide security and acceleration toward financial goals. Filipino professionals are successfully combining employment, freelancing, and business income to reach ₱200K+ monthly.",
+        explanation: "Multiple income stream concepts may provide educational information about business development. Individual business outcomes vary significantly - consult qualified business professionals for guidance.",
         projects: [
           {
             name: "Income Stream Planning",
@@ -295,7 +295,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Income Stream Execution",
             description: "Execute plan to develop and scale additional income source",
-            explanation: "Consistent execution transforms income stream plans into financial reality that accelerates wealth building goals.",
+            explanation: "Income stream execution concepts may provide educational information about business development. Individual business results vary significantly - consult qualified business professionals for guidance.",
             tasks: [
               {
                 name: "Launch income stream and track growth",
@@ -1117,7 +1117,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Organize Living Space",
         description: "Create efficient, organised home environment that supports productivity and wellbeing",
         icon: "grid",
-        explanation: "Organized living space improves mental clarity and productivity while creating peaceful environment during stressful times. Smart organisation also saves money by reducing lost items and improving efficiency.",
+        explanation: "Organized living space may improve mental clarity and productivity while creating peaceful environment during stressful times. Smart organization may provide various benefits.",
         projects: [
           {
             name: "Home Organization System",
@@ -1171,13 +1171,13 @@ export const DOMAIN_DEFINITIONS = [
         projects: [
           {
             name: "Sustainable Living Practices",
-            description: "Implement environmentally friendly practices that reduce costs and environmental impact",
+            description: "Implement environmentally friendly practices that may reduce environmental impact",
             explanation: "Sustainable practices reduce environmental footprint while often providing cost savings that support financial goals and create positive community impact.",
             tasks: [
               {
                 name: "Reduce energy consumption through efficient appliances and conservation habits",
                 summary: "Energy conservation",
-                explanation: "Energy conservation reduces utility costs while decreasing environmental impact, creating both financial savings and positive environmental contribution.",
+                explanation: "Energy conservation may reduce utility costs while decreasing environmental impact. Individual cost savings vary significantly.",
                 timeframe: "1 month",
                 completed: false
               },

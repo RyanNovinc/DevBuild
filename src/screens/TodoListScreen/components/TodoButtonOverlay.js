@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Share, Clipboard } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { generateExportContent } from '../TodoUtils';
+import ConfirmationModal from './ConfirmationModal';
 
 // Get screen dimensions for responsive layout
 const { width } = Dimensions.get('window');
@@ -46,6 +47,7 @@ const TodoButtonOverlay = React.memo(({
 }) => {
   // State for confirmation setting - DEFAULT TO TRUE so it always asks for confirmation
   const [confirmationEnabled, setConfirmationEnabled] = useState(true);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   
   // Animation values
   const fadeIn = useRef(new Animated.Value(0)).current;
@@ -163,9 +165,9 @@ const TodoButtonOverlay = React.memo(({
       return true;
     });
     
-    // Only count non-group items for the total
-    const totalCount = validTodos.filter(todo => todo && !todo.isGroup).length;
-    const completedCount = validTodos.filter(todo => todo && !todo.isGroup && todo.completed).length;
+    // Count both groups and non-group items for the total
+    const totalCount = validTodos.filter(todo => todo).length;
+    const completedCount = validTodos.filter(todo => todo && todo.completed).length;
     
     return { completedCount, totalCount };
   }, [getCurrentTodos]);
@@ -189,40 +191,14 @@ const TodoButtonOverlay = React.memo(({
   
   // Toggle confirmation setting
   const toggleConfirmationSetting = useCallback(() => {
-    // If turning on confirmations, show an explanation
-    if (!confirmationEnabled) {
-      Alert.alert(
-        "Enable Confirmations",
-        "When enabled, you'll be asked to confirm before actions like deleting todos or moving them between days.",
-        [
-          { text: "Cancel", style: "cancel" },
-          { 
-            text: "Enable", 
-            onPress: () => {
-              setConfirmationEnabled(true);
-              showSuccess('Confirmations enabled');
-            }
-          }
-        ]
-      );
-    } else {
-      // If turning off, show warning first
-      Alert.alert(
-        "Disable Confirmations",
-        "This will disable confirmation dialogs for all actions like deleting or moving todos. Are you sure?",
-        [
-          { text: "Cancel", style: "cancel" },
-          { 
-            text: "Disable", 
-            style: "destructive",
-            onPress: () => {
-              setConfirmationEnabled(false);
-              showSuccess('Confirmations disabled');
-            }
-          }
-        ]
-      );
-    }
+    setShowConfirmationModal(true);
+  }, []);
+
+  // Handle confirmation modal confirm
+  const handleConfirmationToggle = useCallback(() => {
+    const newState = !confirmationEnabled;
+    setConfirmationEnabled(newState);
+    showSuccess(newState ? 'Confirmations enabled' : 'Confirmations disabled');
   }, [confirmationEnabled, showSuccess]);
   
   // Clean up todos - Remove orphaned children and null values
@@ -614,86 +590,97 @@ const TodoButtonOverlay = React.memo(({
   }
 
   return (
-    <Animated.View 
-      style={[
-        styles.container,
-        {
-          opacity: fadeIn,
-          transform: [{ translateY: slideUp }]
-        }
-      ]}
-    >
-      {/* Tally Counter Button */}
-      <TouchableOpacity 
+    <>
+      <Animated.View 
         style={[
-          styles.counterBadge, 
-          // Add visual indicator for confirmation mode
-          confirmationEnabled && styles.counterBadgeConfirmEnabled
+          styles.container,
+          {
+            opacity: fadeIn,
+            transform: [{ translateY: slideUp }]
+          }
         ]}
-        onPress={toggleConfirmationSetting}
-        onLongPress={handleCounterLongPress}
-        activeOpacity={0.7}
-        delayLongPress={800}
       >
-        <Text style={styles.counterText}>
-          {completedCount}/{totalCount}
-        </Text>
+        {/* Tally Counter Button */}
+        <TouchableOpacity 
+          style={[
+            styles.counterBadge, 
+            // Add visual indicator for confirmation mode
+            confirmationEnabled && styles.counterBadgeConfirmEnabled
+          ]}
+          onPress={toggleConfirmationSetting}
+          onLongPress={handleCounterLongPress}
+          activeOpacity={0.7}
+          delayLongPress={800}
+        >
+          <Text style={styles.counterText}>
+            {completedCount}/{totalCount}
+          </Text>
+          
+          {/* Small indicator icon when confirmations are enabled */}
+          {confirmationEnabled && (
+            <View style={styles.confirmationIndicator}>
+              <Ionicons name="shield-checkmark" size={12} color="#FFFFFF" />
+            </View>
+          )}
+        </TouchableOpacity>
         
-        {/* Small indicator icon when confirmations are enabled */}
-        {confirmationEnabled && (
-          <View style={styles.confirmationIndicator}>
-            <Ionicons name="shield-checkmark" size={12} color="#FFFFFF" />
-          </View>
-        )}
-      </TouchableOpacity>
-      
-      {/* Icon-only buttons in a row */}
-      <View style={styles.buttonRow}>
-        {/* Copy Button */}
-        <Animated.View style={{ transform: [{ scale: buttonScale[0] }] }}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={copyTodosToClipboard}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="copy-outline" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-        </Animated.View>
-        
-        {/* Share Button */}
-        <Animated.View style={{ transform: [{ scale: buttonScale[1] }] }}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={shareTodos}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="share-social-outline" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-        </Animated.View>
-        
-        {/* Clear Completed Button */}
-        <Animated.View style={{ transform: [{ scale: buttonScale[2] }] }}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={clearCompleted}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="trash-outline" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-        </Animated.View>
-        
-        {/* Move Button (changes based on active tab) */}
-        <Animated.View style={{ transform: [{ scale: buttonScale[3] }] }}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={handleMove}
-            activeOpacity={0.7}
-          >
-            <Ionicons name={getMoveIcon()} size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-        </Animated.View>
-      </View>
-    </Animated.View>
+        {/* Icon-only buttons in a row */}
+        <View style={styles.buttonRow}>
+          {/* Copy Button */}
+          <Animated.View style={{ transform: [{ scale: buttonScale[0] }] }}>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={copyTodosToClipboard}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="copy-outline" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+          </Animated.View>
+          
+          {/* Share Button */}
+          <Animated.View style={{ transform: [{ scale: buttonScale[1] }] }}>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={shareTodos}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="share-social-outline" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+          </Animated.View>
+          
+          {/* Clear Completed Button */}
+          <Animated.View style={{ transform: [{ scale: buttonScale[2] }] }}>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={clearCompleted}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="trash-outline" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+          </Animated.View>
+          
+          {/* Move Button (changes based on active tab) */}
+          <Animated.View style={{ transform: [{ scale: buttonScale[3] }] }}>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={handleMove}
+              activeOpacity={0.7}
+            >
+              <Ionicons name={getMoveIcon()} size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+      </Animated.View>
+
+      {/* Confirmation Settings Modal */}
+      <ConfirmationModal
+        visible={showConfirmationModal}
+        onClose={() => setShowConfirmationModal(false)}
+        onConfirm={handleConfirmationToggle}
+        confirmationEnabled={confirmationEnabled}
+        theme={theme}
+      />
+    </>
   );
 });
 

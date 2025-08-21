@@ -12,6 +12,7 @@ import {
   AccessibilityInfo
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../../../context/ThemeContext';
 import { useAuth } from '../../../context/AuthContext';
 import { useNotification } from '../../../context/NotificationContext';
@@ -90,6 +91,7 @@ const LoginScreen = ({ navigation, route, onLoginSuccess, onClose, embedded = fa
   // Terms and Privacy Policy acceptance
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
+  const [ageVerified, setAgeVerified] = useState(false);
   
   // Modal visibility states
   const [showTermsModal, setShowTermsModal] = useState(false);
@@ -255,6 +257,12 @@ const LoginScreen = ({ navigation, route, onLoginSuccess, onClose, embedded = fa
       setPhoneNumberError('');
     }
     
+    // Age verification validation
+    if (!ageVerified) {
+      showError('Please confirm you are 13 years of age or older to continue');
+      isValid = false;
+    }
+    
     // Terms and Privacy Policy validation
     if (!acceptedTerms) {
       showError('Please accept the Terms of Service to continue');
@@ -336,6 +344,14 @@ const LoginScreen = ({ navigation, route, onLoginSuccess, onClose, embedded = fa
       const success = await register(email, password, attributes);
       
       if (success) {
+        // Store age verification
+        try {
+          AsyncStorage.setItem('ageVerified', 'true');
+          AsyncStorage.setItem('ageVerificationDate', new Date().toISOString());
+        } catch (error) {
+          console.error('Error storing age verification:', error);
+        }
+        
         showSuccess('Account created successfully! Please check your email for a verification code.');
         setRegistrationSuccess(true);
         
@@ -393,6 +409,7 @@ const LoginScreen = ({ navigation, route, onLoginSuccess, onClose, embedded = fa
     // Reset terms and privacy acceptance
     setAcceptedTerms(false);
     setAcceptedPrivacy(false);
+    setAgeVerified(false);
     
     // Toggle the mode
     setIsLogin(!isLogin);
@@ -1104,9 +1121,35 @@ const LoginScreen = ({ navigation, route, onLoginSuccess, onClose, embedded = fa
               </TouchableOpacity>
             )}
             
-            {/* Terms and Privacy Policy (Registration only) */}
+            {/* Terms, Privacy Policy, and Age Verification (Registration only) */}
             {!isLogin && (
               <View style={styles.termsContainer}>
+                {/* Age Verification */}
+                <View style={styles.checkboxContainer}>
+                  <TouchableOpacity
+                    style={[
+                      styles.checkbox,
+                      { 
+                        backgroundColor: ageVerified ? 'rgba(255,255,255,0.1)' : 'transparent' 
+                      }
+                    ]}
+                    onPress={() => setAgeVerified(!ageVerified)}
+                    accessible={true}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: ageVerified }}
+                    accessibilityLabel="Confirm age 13 or older"
+                  >
+                    {ageVerified && (
+                      <Text style={styles.checkmark}>✓</Text>
+                    )}
+                  </TouchableOpacity>
+                  <View style={styles.termsTextContainer}>
+                    <Text style={styles.termsText}>
+                      I confirm I am 13 years of age or older
+                    </Text>
+                  </View>
+                </View>
+                
                 {/* Terms of Service */}
                 <View style={styles.checkboxContainer}>
                   <TouchableOpacity

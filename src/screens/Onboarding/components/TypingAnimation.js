@@ -10,13 +10,15 @@ import { Text, View } from 'react-native';
  * @param {function} onComplete - Callback when typing is complete
  * @param {boolean} skipTyping - Skip animation and show full text immediately
  * @param {object} style - Additional text styling
+ * @param {number} startDelay - Delay in milliseconds before starting typing animation
  */
 const TypingAnimation = forwardRef(({ 
   text, 
   typingSpeed = 30, 
   onComplete, 
   skipTyping = false,
-  style = {} 
+  style = {},
+  startDelay = 0
 }, ref) => {
   // Use ref for displayed text to prevent re-renders during typing
   const displayedTextRef = useRef('');
@@ -80,17 +82,29 @@ const TypingAnimation = forwardRef(({
         animationStartedRef.current = true;
         
         if (skipTyping) {
-          // Show full text immediately
-          displayedTextRef.current = text;
-          setForceUpdate(prev => prev + 1);
+          // Show full text immediately (after startDelay)
+          const showTextTimeout = setTimeout(() => {
+            if (isMountedRef.current) {
+              displayedTextRef.current = text;
+              setForceUpdate(prev => prev + 1);
+              
+              if (onComplete && !isCompletedRef.current) {
+                isCompletedRef.current = true;
+                onComplete();
+              }
+            }
+          }, startDelay);
           
-          if (onComplete && !isCompletedRef.current) {
-            isCompletedRef.current = true;
-            onComplete();
-          }
+          return () => clearTimeout(showTextTimeout);
         } else {
-          // Start typing animation
-          startTypingAnimation();
+          // Start typing animation after startDelay
+          const typingTimeout = setTimeout(() => {
+            if (isMountedRef.current) {
+              startTypingAnimation();
+            }
+          }, startDelay);
+          
+          return () => clearTimeout(typingTimeout);
         }
       }
     }, 50); // Short delay to ensure component is properly mounted
@@ -127,7 +141,7 @@ const TypingAnimation = forwardRef(({
         typeNextCharacter();
       }
     }
-  }, [text, skipTyping]);
+  }, [text, skipTyping, startDelay]);
   
   // Start typing animation
   const startTypingAnimation = () => {

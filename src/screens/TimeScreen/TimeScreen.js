@@ -268,7 +268,7 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
   const handleZoomOut = () => {
     animateButtonPress();
     
-    const newScale = Math.max(scale - 0.1, 0.2);
+    const newScale = Math.max(scale - 0.1, 0.3);
     
     // Calculate new scroll position to maintain current center view
     if (scrollViewRef.current) {
@@ -333,7 +333,7 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
     focalPoint.current = { x: focalX, y: focalY };
     
     // Calculate new scale with limits
-    const newScale = Math.max(0.2, Math.min(lastScale.current * pinchScale, 3));
+    const newScale = Math.max(0.3, Math.min(lastScale.current * pinchScale, 3));
     
     // Only update if scale has changed significantly
     if (Math.abs(scale - newScale) > 0.01) {

@@ -49,7 +49,10 @@ const KanbanBoard = ({
   onWipLimitChange, // Function to handle WIP limit changes
   onShowWipEducation, // Function to show WIP limit education modal
   navigation, // Navigation object for redirecting to LifePlan screen
-  onNavigateToLifePlan // Function to navigate to LifePlan screen with auto-open add button
+  onNavigateToLifePlan, // Function to navigate to LifePlan screen with auto-open add button
+  // Tour props
+  isTourMode = false, // Whether the board is in tour mode
+  tourScrollPosition = 0 // 0 = left (todo), 1 = center (in-progress), 2 = right (done)
 }) => {
   const [draggingItem, setDraggingItem] = useState(null);
   const [wipDialog, setWipDialog] = useState({ visible: false, type: '', item: null, targetStatus: '' });
@@ -70,6 +73,44 @@ const KanbanBoard = ({
     in_progress: 0,
     done: 0
   });
+  
+  // Handle tour scroll positioning
+  React.useEffect(() => {
+    if (isTourMode && horizontalScrollRef.current) {
+      // Calculate scroll position to center each column
+      // Each column width is approximately 320px + margins
+      const columnWidth = 320 + 32; // column width + margins
+      const screenCenter = width / 2;
+      const columnCenter = columnWidth / 2;
+      
+      let scrollX = 0;
+      if (tourScrollPosition === 0) {
+        // Show "To Do" column at the start (leftmost position)
+        scrollX = 0;
+      } else if (tourScrollPosition === 1) {
+        // Center "In Progress" column (middle)
+        scrollX = columnWidth - (screenCenter - columnCenter);
+      } else if (tourScrollPosition === 2) {
+        // Center "Done" column (rightmost)
+        scrollX = (columnWidth * 2) - (screenCenter - columnCenter);
+      }
+      
+      // Ensure scrollX is not negative
+      scrollX = Math.max(0, scrollX);
+      
+      // Delay to ensure the component is fully rendered
+      setTimeout(() => {
+        if (horizontalScrollRef.current) {
+          horizontalScrollRef.current.scrollTo({ 
+            x: scrollX, 
+            y: 0, 
+            animated: true 
+          });
+          console.log('🎯 Tour: Scrolling kanban to position', tourScrollPosition, 'scrollX:', scrollX, 'columnWidth:', columnWidth);
+        }
+      }, 300);
+    }
+  }, [isTourMode, tourScrollPosition]);
   
   // Function to get the color for a task based on its milestone's goal's color
   const getTaskColor = (task) => {

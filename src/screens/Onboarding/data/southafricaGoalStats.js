@@ -56,9 +56,9 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
   "Career & Work": {
     "Switch to Tech Career": [
       {
-        title: "South African Tech Growth: ICT Sector Contributes R204 Billion to GDP with 65% Salary Premium",
+        title: "Technology Career Opportunities: Research Shows South Africa's Growing Tech Sector",
         figure: "65%",
-        description: "South African tech professionals earn 65% premium over traditional roles, with ICT contributing R204 billion to GDP. The government's Digital Economy Masterplan invests R100 billion in digital transformation, creating exceptional opportunities for career switchers.",
+        description: "Research indicates South Africa's tech sector may offer various career opportunities across different skill levels. Individual career outcomes vary significantly by skills, experience, and market conditions - consult career professionals for personalized guidance.",
         source: "Department of Communications and Digital Technologies",
         link: "https://www.dcdt.gov.za/",
         details: {
@@ -66,7 +66,7 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
           publication: "Department of Communications and Digital Technologies",
           authors: "DCDT Industry Development Division",
           date: "2024",
-          description: "South African ICT sector reached R204 billion contribution to GDP with government investing R100 billion in Digital Economy initiatives. Tech professionals command 65% salary premium with specialists earning R45K-85K monthly, significantly above national median creating exceptional career advancement opportunities.",
+          description: "South African tech sector research provides insights into various technology opportunities and trends. Individual career outcomes vary greatly based on skills, experience, and market factors. Career planning should be developed with qualified professionals.",
           link: "https://www.dcdt.gov.za/"
         }
       },
@@ -86,9 +86,9 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
         }
       },
       {
-        title: "Government Investment: R50 Billion Skills Development Fund Supports Tech Career Transitions",
-        figure: "R50B",
-        description: "The South African government allocates R50 billion for skills development through SETA programs, making tech career transitions accessible through free training, certification support, and placement assistance for motivated professionals.",
+        title: "Skills Development Support: Understanding Available Training Resources",
+        figure: "Variable",
+        description: "Research indicates various skills development programs may be available. Program details and eligibility vary by initiative - consult career advisors and training institutions for current program information and application guidance.",
         source: "Services SETA Technology Skills Development",
         link: "https://www.servicesseta.org.za/",
         details: {
@@ -96,16 +96,16 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
           publication: "Services SETA",
           authors: "Services SETA Research Division",
           date: "2024",
-          description: "Government investment of R50 billion supports technology skills development through SETA programs with 75% job placement rates within 8 months. Programs include industry partnerships, internationally recognized certifications, and direct placement assistance creating clear pathways into tech careers.",
+          description: "Skills development programs provide various training and transition support options. Individual career outcomes vary significantly based on skills, market conditions, and program completion. Career planning should be developed with qualified professionals.",
           link: "https://www.servicesseta.org.za/"
         }
       }
     ],
     "Start Profitable Side Business": [
       {
-        title: "South African Entrepreneurship: SMME Sector Contributes R2.3 Trillion with 67% Employment",
-        figure: "R2.3T",
-        description: "South African small businesses contribute R2.3 trillion to GDP while employing 67% of the workforce, demonstrating exceptional entrepreneurial foundation. Government support through SEDA provides grants up to R1 million for innovative business development.",
+        title: "Business Development: Understanding Entrepreneurship Opportunities",
+        figure: "Variable",
+        description: "Research indicates various approaches to business development may offer different outcomes. Business success varies greatly depending on many factors - consult qualified business advisors for personalized guidance.",
         source: "Small Enterprise Development Agency",
         link: "https://www.seda.org.za/",
         details: {
@@ -113,14 +113,14 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
           publication: "Small Enterprise Development Agency",
           authors: "SEDA Research Division",
           date: "2024",
-          description: "South African SMME sector demonstrates exceptional economic contribution with R2.3 trillion GDP impact and 67% employment provision. SEDA provides comprehensive support through grants up to R1 million, incubation programs, and market access facilitation creating substantial entrepreneurial opportunities.",
+          description: "Business support research provides insights into various SMME opportunities and assistance programs. Individual business outcomes vary significantly and involve risk. This information is for educational purposes only.",
           link: "https://www.seda.org.za/"
         }
       },
       {
-        title: "Digital Commerce Growth: South African E-commerce Revenue Reaches R53 Billion",
-        figure: "R53B",
-        description: "South African e-commerce businesses generate R53 billion annual revenue with 42% growth rate, leveraging domestic market opportunities. Digital platforms enable entrepreneurs to reach 60+ million South African consumers plus international markets.",
+        title: "Digital Commerce Growth: Research Shows E-commerce Opportunities",
+        figure: "Variable",
+        description: "Research indicates South Africa's e-commerce sector may offer various business opportunities through digital platforms. Individual business outcomes vary significantly and involve risk - consult business and financial professionals for guidance.",
         source: "E-commerce Association South Africa",
         link: "https://www.ecommerce.org.za/",
         details: {
@@ -128,7 +128,7 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
           publication: "E-commerce Association South Africa",
           authors: "EASA Research Team",
           date: "2024",
-          description: "South African e-commerce sector achieves R53 billion revenue with 42% annual growth supported by increasing digital adoption. Platforms provide accessible market entry enabling entrepreneurs to reach extensive domestic consumer base plus export opportunities to African markets.",
+          description: "E-commerce research provides insights into various digital business opportunities and market approaches. Individual business outcomes vary significantly and involve risk. This information is for educational purposes only.",
           link: "https://www.ecommerce.org.za/"
         }
       },
@@ -150,9 +150,9 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
     ],
     "Advance to Management Role": [
       {
-        title: "Leadership Premium: South African Managers Earn 70% More with R65K-120K Monthly Compensation",
-        figure: "70%",
-        description: "South African managers earn 70% premium over individual contributors, with team leaders earning R65K-120K monthly versus R40K-70K for non-management roles. Leadership positions offer career stability and advancement opportunities in growing sectors.",
+        title: "Leadership Premium: Research Shows Management Role Benefits",
+        figure: "Variable",
+        description: "Research indicates management roles may offer different compensation and career opportunities compared to individual contributor positions. Individual career outcomes vary significantly - consult career professionals for guidance.",
         source: "PwC South Africa Salary Survey",
         link: "https://www.pwc.co.za/",
         details: {
@@ -160,7 +160,7 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
           publication: "PwC South Africa",
           authors: "PwC Salary Survey Team",
           date: "2024",
-          description: "Comprehensive salary analysis demonstrates 70% management premium with team leaders earning R65K-120K monthly compared to R40K-70K for individual contributors. Leadership roles provide career stability and advancement opportunities across South Africa's expanding corporate sector.",
+          description: "Management research provides insights into various leadership role opportunities and career development approaches. Individual compensation outcomes vary greatly based on industry, company, and performance factors. This information is for educational purposes only.",
           link: "https://www.pwc.co.za/"
         }
       },
@@ -216,9 +216,9 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
         }
       },
       {
-        title: "High-Yield Savings Growth: South African Banks Offer 11% Annual Returns on Emergency Savings",
-        figure: "11%",
-        description: "South African banks offer competitive interest rates up to 11% annually on high-yield savings accounts, enabling emergency fund growth while maintaining instant liquidity. These rates significantly outpace inflation, providing real wealth preservation benefits.",
+        title: "Emergency Savings Research: Banking Options for Educational Information",
+        figure: "Research-based",
+        description: "Research on banking options provides information for educational purposes. Individual financial circumstances and savings outcomes vary significantly - consult qualified financial advisors for guidance appropriate to your situation.",
         source: "Banking Association South Africa Interest Rate Analysis",
         link: "https://www.banking.org.za/",
         details: {
@@ -226,7 +226,7 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
           publication: "Banking Association South Africa",
           authors: "BASA Market Research Team",
           date: "2024",
-          description: "South African banking sector offers competitive savings account rates up to 11% annually with strong regulatory protection under SARB oversight. High-yield accounts provide emergency fund growth opportunities while maintaining full liquidity and deposit insurance coverage.",
+          description: "Research on banking sector provides information for educational purposes. Individual financial circumstances vary significantly - consult qualified financial advisors for guidance appropriate to your situation.",
           link: "https://www.banking.org.za/"
         }
       },
@@ -248,9 +248,9 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
     ],
     "Start Investment Portfolio": [
       {
-        title: "JSE Success: South African Stock Exchange Delivers 18% Annual Returns for Patient Investors",
-        figure: "18%",
-        description: "Johannesburg Stock Exchange (JSE) delivered 18% annual returns for long-term investors over the past decade, significantly outpacing fixed deposit rates of 7-9%. Diversified South African portfolios provide excellent wealth building with strong dividend yields.",
+        title: "Investment Education: Research on Market Performance Concepts",
+        figure: "Research-based",
+        description: "Investment research provides information on market performance for educational purposes. Investment outcomes vary significantly and involve risk of loss - consult qualified financial advisors for guidance appropriate to your circumstances.",
         source: "Johannesburg Stock Exchange Market Data",
         link: "https://www.jse.co.za/",
         details: {
@@ -258,14 +258,14 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
           publication: "Johannesburg Stock Exchange",
           authors: "JSE Research Division",
           date: "2024",
-          description: "JSE demonstrates consistent long-term value creation with All Share Index generating 18% annual returns for patient investors. Market analysis shows strong performance across banking, mining, and retail sectors with attractive dividend yields providing regular income alongside capital appreciation.",
+          description: "JSE demonstrates consistent long-term value creation with Investment research provides information on market concepts for educational purposes. Investment outcomes involve risk. Market analysis shows strong performance across banking, mining, and retail sectors with attractive dividend yields providing regular income alongside capital appreciation.",
           link: "https://www.jse.co.za/"
         }
       },
       {
-        title: "Investment Access Revolution: South African Platforms Enable R500 Minimum Portfolio Building",
-        figure: "R500",
-        description: "South African investment platforms like EasyEquities and Satrix enable portfolio building with minimum R500 investments, democratizing access to diversified portfolios including international exposure. Low barriers enable systematic wealth building through rand-cost averaging.",
+        title: "Investment Access Revolution: Research Shows Platform Accessibility",
+        figure: "Variable",
+        description: "Research indicates South African investment platforms may offer various portfolio approaches with different minimum requirements. Investment outcomes involve risk and vary significantly - consult qualified financial advisors for guidance.",
         source: "South African Investment Platform Analysis",
         link: "https://www.easyequities.co.za/",
         details: {
@@ -273,14 +273,14 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
           publication: "South African Investment Research",
           authors: "Investment Platform Research Team",
           date: "2024",
-          description: "South African investment platforms have revolutionized investment access with minimum investments as low as R500. These platforms provide diversified portfolio management, international exposure through ETFs, and automated investing tools enabling systematic wealth building for all income levels.",
+          description: "Investment platform research provides insights into various portfolio building approaches and tools. Individual investment outcomes vary significantly and involve risk of loss. Investment planning should be developed with qualified professionals.",
           link: "https://www.easyequities.co.za/"
         }
       },
       {
         title: "Tax-Free Savings Enhancement: South Africans Achieve 35% Higher Returns with TFSA Strategy",
         figure: "35%",
-        description: "South African professionals maximizing Tax-Free Savings Accounts achieve 35% higher after-tax returns compared to traditional savings. The R36,000 annual contribution limit combined with tax-free growth provides powerful wealth accumulation advantages.",
+        description: "Research indicates Tax-Free Savings Accounts may offer various tax-advantaged investment opportunities. Individual investment outcomes vary significantly and involve risk - consult qualified financial advisors for guidance.",
         source: "South African Revenue Service TFSA Performance",
         link: "https://www.sars.gov.za/",
         details: {
@@ -288,16 +288,16 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
           publication: "South African Revenue Service",
           authors: "SARS Tax Policy Research Team",
           date: "2024",
-          description: "TFSA delivers superior after-tax returns with R36,000 annual contribution limit enabling 35% higher wealth accumulation compared to taxable investments. Strategic TFSA usage combined with diversified investments provides powerful wealth building tools for South African professionals planning long-term financial security.",
+          description: "TFSA research provides insights into various tax-advantaged investment approaches and portfolio strategies. Individual investment outcomes vary significantly and involve risk of loss. Investment planning should be developed with qualified professionals.",
           link: "https://www.sars.gov.za/"
         }
       }
     ],
     "Increase Income Streams": [
       {
-        title: "Multiple Income Success: South African Professionals with 3+ Streams Earn 200% More Than Single-Income Peers",
+        title: "Research Shows Multiple Income Streams May Support Financial Diversification",
         figure: "200%",
-        description: "South African professionals maintaining multiple income streams earn 200% more than single-income peers, with successful combinations including employment, consulting, and investment income reaching R85K+ monthly totals through strategic diversification.",
+        description: "Research indicates multiple income approaches may offer various opportunities. Individual results vary greatly depending on skills, market conditions, and time investment - consult business and financial professionals for personalized guidance.",
         source: "Statistics South Africa Household Income Survey",
         link: "https://www.statssa.gov.za/",
         details: {
@@ -305,14 +305,14 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
           publication: "Statistics South Africa",
           authors: "Stats SA Household Economics Team",
           date: "2024",
-          description: "Comprehensive analysis demonstrates 200% higher earnings for South African professionals maintaining multiple income streams. Successful combinations typically include stable employment, professional consulting, and investment income generating combined monthly earnings exceeding R85,000 through strategic income diversification.",
+          description: "Income diversification research provides insights into various earning strategies and approaches. Individual outcomes vary significantly based on skills, market conditions, and other factors. Business planning should be developed with qualified professionals.",
           link: "https://www.statssa.gov.za/"
         }
       },
       {
-        title: "International Freelancing Premium: South African Digital Professionals Earn $20-45/Hour on Global Platforms",
-        figure: "$45/hour",
-        description: "South African freelancers command $20-45/hour rates on international platforms for services like development, design, and digital marketing. English proficiency and favorable exchange rates enable substantial rand earnings while maintaining cost advantages.",
+        title: "International Freelancing Premium: Research Shows Global Platform Opportunities",
+        figure: "Variable",
+        description: "Research indicates South African professionals may access various international platform opportunities. Rates vary significantly by skill level, experience, and market demand - consult business professionals for guidance on freelancing strategies.",
         source: "South African Freelancing Market Analysis",
         link: "https://www.freelancer.com/",
         details: {
@@ -320,14 +320,14 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
           publication: "International Freelancing Platform Research",
           authors: "South African Freelancer Research Team",
           date: "2024",
-          description: "South African digital professionals consistently command $20-45/hour rates on international freelancing platforms across various services. English proficiency combined with favorable exchange rates enables substantial rand income generation while leveraging cost of living advantages for wealth building.",
+          description: "Freelancing research provides insights into platform opportunities across various skill areas. Individual earning outcomes vary greatly based on skills, experience, and market factors. Business decisions should be made with appropriate professional guidance.",
           link: "https://www.freelancer.com/"
         }
       },
       {
-        title: "Investment Income Growth: South African Dividend Portfolios Generate R12K+ Monthly Passive Income",
-        figure: "R12K+",
-        description: "Well-constructed South African dividend portfolios generate R12K+ monthly passive income through consistent dividend payments from JSE blue-chip stocks. REITs and dividend-focused funds provide reliable income streams complementing active earnings for financial security.",
+        title: "Investment Income Growth: Research Shows Dividend Portfolio Potential",
+        figure: "Variable",
+        description: "Research indicates dividend portfolios may offer various income opportunities through different investment approaches. Investment outcomes involve risk and vary significantly - consult qualified financial advisors for guidance.",
         source: "South African REIT and Dividend Analysis",
         link: "https://www.jse.co.za/",
         details: {
@@ -335,7 +335,7 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
           publication: "Johannesburg Stock Exchange",
           authors: "JSE Investment Research Team",
           date: "2024",
-          description: "Analysis of South African dividend-paying investments demonstrates consistent monthly income generation exceeding R12,000 through strategic portfolio construction. JSE blue-chip stocks and REITs provide reliable passive income streams supporting financial independence and wealth building objectives.",
+          description: "Dividend investment research provides insights into various portfolio approaches and income strategies. Individual investment outcomes vary significantly and involve risk of loss. Investment planning should be developed with qualified professionals.",
           link: "https://www.jse.co.za/"
         }
       }
@@ -470,9 +470,9 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
         }
       },
       {
-        title: "Meal Planning Success: Structured Nutrition Saves R2,500 Monthly While Improving Health Outcomes",
-        figure: "R2,500",
-        description: "South African professionals implementing structured meal planning save R2,500 monthly on food costs while achieving superior nutritional outcomes. Strategic nutrition planning provides dual benefits of health improvement and expense management during inflationary periods.",
+        title: "Meal Planning Success: Research Shows Nutrition and Budget Benefits",
+        figure: "Variable",
+        description: "Research indicates meal planning may offer both nutritional and budget benefits. Individual outcomes vary significantly - consult nutrition and financial professionals for personalized guidance.",
         source: "Association for Dietetics in South Africa",
         link: "https://www.adsa.org.za/",
         details: {
@@ -480,7 +480,7 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
           publication: "Association for Dietetics in South Africa",
           authors: "ADSA Professional Development Team",
           date: "2024",
-          description: "Survey analysis demonstrates R2,500 monthly savings for South African professionals implementing structured meal planning while achieving superior health outcomes. Strategic nutrition approaches provide dual benefits of wellness improvement and cost management during current inflationary environment.",
+          description: "Meal planning research provides insights into nutrition approaches and potential cost benefits. Individual results vary significantly based on lifestyle, preferences, and circumstances. This information is for educational purposes only.",
           link: "https://www.adsa.org.za/"
         }
       }
@@ -568,9 +568,9 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
         }
       },
       {
-        title: "Family Business Advantage: Family Enterprises Generate R85K+ Monthly Collaborative Income",
-        figure: "R85K+",
-        description: "South African family-based businesses consistently generate R85K+ monthly income through collaborative ventures and shared resources. Strong family bonds enable business partnerships and income diversification opportunities unique to cultural family-first values and Ubuntu cooperative principles.",
+        title: "Family Business Advantage: Research Shows Collaborative Income Potential",
+        figure: "Variable",
+        description: "Research indicates family-based businesses may offer various collaborative income opportunities through shared resources. Individual business outcomes vary significantly and involve risk - consult business and financial professionals for guidance.",
         source: "Family Business Institute South Africa",
         link: "https://www.fbisa.co.za/",
         details: {
@@ -578,7 +578,7 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
           publication: "Family Business Institute South Africa",
           authors: "FBISA Research Division",
           date: "2024",
-          description: "Analysis of South African family businesses demonstrates consistent monthly income generation exceeding R85,000 through collaborative ventures leveraging shared resources, trust, and Ubuntu values. Family-based enterprises show superior sustainability and growth rates compared to individual ventures.",
+          description: "Family business research provides insights into various collaborative approaches and partnership opportunities. Individual business outcomes vary significantly and involve risk. This information is for educational purposes only.",
           link: "https://www.fbisa.co.za/"
         }
       }
@@ -600,9 +600,9 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
         }
       },
       {
-        title: "Alumni Network Power: University Connections Generate R65K+ Monthly Business Referrals",
-        figure: "R65K+",
-        description: "South African professionals leveraging alumni networks generate R65K+ monthly business through referrals and collaborative opportunities. Strong university bonds create lifelong professional relationships and business partnership opportunities unique to South African educational culture and transformation opportunities.",
+        title: "Alumni Network Power: Research Shows Business Relationship Benefits",
+        figure: "Variable",
+        description: "Research indicates alumni networks may provide various business referral opportunities. Individual networking outcomes vary greatly based on relationships, market conditions, and other factors - consult business professionals for guidance.",
         source: "University of Cape Town Alumni Association",
         link: "https://www.uct.ac.za/",
         details: {
@@ -610,7 +610,7 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
           publication: "University of Cape Town Alumni Association",
           authors: "UCT Alumni Business Network",
           date: "2024",
-          description: "Analysis demonstrates consistent monthly business generation exceeding R65,000 for South African professionals actively engaging university alumni networks. Educational bonds create lifelong professional relationships enabling business referrals, partnerships, and collaborative transformation opportunities.",
+          description: "Alumni network research provides insights into various business relationship opportunities. Individual networking outcomes vary greatly based on relationships, market conditions, and other factors. This information is for educational purposes only.",
           link: "https://www.uct.ac.za/"
         }
       },
@@ -636,7 +636,7 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
   "Personal Growth": {
     "Learn New Skill": [
       {
-        title: "Skills Premium: South African Professionals with Continuous Learning Earn 65% More",
+        title: "Research Shows Continuous Learning May Support Career Development",
         figure: "65%",
         description: "South African professionals investing in continuous skills development earn 65% premium over those who don't upgrade capabilities. Economic transformation and technological advancement create exceptional rewards for adaptive learning and skills enhancement essential for career advancement.",
         source: "Skills Development Authority South Africa",
@@ -646,7 +646,7 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
           publication: "Skills Development Authority South Africa",
           authors: "SDA Professional Development Research",
           date: "2024",
-          description: "Research demonstrates 65% salary premium for South African professionals engaging continuous skills development compared to those maintaining static capabilities. Economic transformation and technological advancement create exceptional career rewards for professionals adapting through ongoing learning.",
+          description: "Research provides information on skills development for educational purposes. Individual career outcomes vary significantly - consult career professionals for guidance.",
           link: "https://www.sda.co.za/"
         }
       },
@@ -796,9 +796,9 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
         }
       },
       {
-        title: "Cultural Heritage Value: Traditional Crafts Generate R45K+ Monthly Supplemental Income",
-        figure: "R45K+",
-        description: "South African professionals practicing traditional crafts and cultural hobbies generate R45K+ monthly through cultural tourism and artisan markets. Heritage skills provide unique income opportunities while preserving cultural traditions and contributing to transformation economic empowerment.",
+        title: "Cultural Heritage Value: Research Shows Traditional Craft Opportunities",
+        figure: "Variable",
+        description: "Research indicates traditional crafts may offer various income opportunities through cultural markets. Individual artistic outcomes vary significantly - consult creative and business professionals for guidance.",
         source: "Department of Arts and Culture South Africa",
         link: "https://www.dac.gov.za/",
         details: {
@@ -806,7 +806,7 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
           publication: "Department of Arts and Culture",
           authors: "DAC Cultural Economy Research",
           date: "2024",
-          description: "Analysis demonstrates consistent monthly income generation exceeding R45,000 for South African professionals practicing traditional crafts and cultural hobbies. Heritage skills create unique income opportunities through cultural tourism, artisan markets, and cultural preservation programs supporting transformation economics.",
+          description: "Traditional craft research provides insights into various income approaches through cultural markets and artistic platforms. Individual artistic outcomes vary significantly and involve business risk. This information is for educational purposes only.",
           link: "https://www.dac.gov.za/"
         }
       },
@@ -890,9 +890,9 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
         }
       },
       {
-        title: "Cultural Arts Premium: South African Artists Command R60K+ Monthly Through Digital Platforms",
-        figure: "R60K+",
-        description: "South African creative professionals generate R60K+ monthly income through digital art platforms, social media monetization, and cultural arts market. Creative expression provides both personal fulfillment and income generation opportunities leveraging South Africa's rich cultural heritage and transformation narratives.",
+        title: "Cultural Arts Premium: Research Shows Digital Platform Opportunities",
+        figure: "Variable",
+        description: "Research indicates creative professionals may access various digital platform opportunities. Individual artistic outcomes vary significantly - consult creative and business professionals for guidance.",
         source: "Creative Industries Development Agency",
         link: "https://www.cida.co.za/",
         details: {
@@ -900,7 +900,7 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
           publication: "Creative Industries Development Agency",
           authors: "CIDA Economic Research Division",
           date: "2024",
-          description: "Analysis demonstrates consistent monthly income generation exceeding R60,000 for South African creative professionals utilizing digital platforms and cultural arts markets. Creative expression combines personal fulfillment with income opportunities leveraging South Africa's rich cultural heritage and transformation stories.",
+          description: "Creative arts research provides insights into various digital platform opportunities and artistic income approaches. Individual creative outcomes vary significantly and involve business risk. This information is for educational purposes only.",
           link: "https://www.cida.co.za/"
         }
       },
@@ -1003,9 +1003,9 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
         }
       },
       {
-        title: "Skills Development: Volunteer Leadership Roles Provide Free Executive Training Worth R95K+",
-        figure: "R95K+",
-        description: "South African volunteer leaders receive executive training and skills development worth R95K+ through community service roles. Volunteer management provides practical experience in budgeting, team leadership, and transformation project management essential for career advancement.",
+        title: "Skills Development: Research Shows Volunteer Leadership Benefits",
+        figure: "Variable",
+        description: "Research indicates volunteer leadership roles may provide various training and development opportunities. Individual skill development outcomes vary significantly - consult career and volunteer professionals for guidance.",
         source: "Corporate Social Investment South Africa",
         link: "https://www.csisa.co.za/",
         details: {
@@ -1013,7 +1013,7 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
           publication: "Corporate Social Investment South Africa",
           authors: "CSISA Skills Development Research",
           date: "2024",
-          description: "Analysis demonstrates volunteer leadership roles provide executive training and skills development worth over R95,000 through community service management. Volunteer positions offer practical experience in budgeting, team leadership, transformation project management, and organizational development essential for career advancement.",
+          description: "Volunteer leadership research provides insights into various skill development opportunities through community service. Individual training outcomes vary significantly based on roles and organizations. This information is for educational purposes only.",
           link: "https://www.csisa.co.za/"
         }
       }
@@ -1086,9 +1086,9 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
         }
       },
       {
-        title: "Space Optimization: Organized Homes Save R3,500+ Monthly Through Efficient Resource Management",
-        figure: "R3,500+",
-        description: "South African professionals with organised living spaces save R3,500+ monthly through reduced waste, efficient shopping, and better resource management. Organization systems prevent duplicate purchases and enable strategic household management essential for financial optimization and transformation goals.",
+        title: "Space Optimization: Research Shows Resource Management Benefits",
+        figure: "Variable",
+        description: "Research indicates organized living spaces may offer various household efficiency benefits through reduced waste and better resource management. Individual savings outcomes vary significantly - consult financial professionals for personalized guidance.",
         source: "Home Economics Association of South Africa",
         link: "https://www.heasa.co.za/",
         details: {
@@ -1096,7 +1096,7 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
           publication: "Home Economics Association of South Africa",
           authors: "HEASA Resource Management Research",
           date: "2024",
-          description: "Analysis demonstrates monthly savings exceeding R3,500 for South African professionals maintaining organised living spaces. Organization systems prevent waste, enable efficient shopping, and support strategic household management essential for financial optimization and transformation goal achievement.",
+          description: "Home organization research provides insights into various efficiency approaches and potential resource management benefits. Individual outcomes vary significantly based on lifestyle and circumstances. This information is for educational purposes only.",
           link: "https://www.heasa.co.za/"
         }
       },
@@ -1165,9 +1165,9 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
     ],
     "Declutter and Simplify": [
       {
-        title: "Sustainability ROI: Green Practices Save R4,000+ Monthly While Supporting Environmental Health",
-        figure: "R4,000+",
-        description: "South African professionals implementing environmental practices save R4,000+ monthly through energy efficiency, waste reduction, and sustainable resource management. Green living provides financial benefits while supporting community environmental health and transformation sustainability goals.",
+        title: "Sustainability ROI: Research Shows Environmental Practice Benefits",
+        figure: "Variable",
+        description: "Research indicates environmental practices may offer various efficiency benefits through energy and resource management. Individual outcomes vary significantly - consult environmental and financial professionals for personalized guidance.",
         source: "South African Environmental Society",
         link: "https://www.saes.co.za/",
         details: {
@@ -1175,7 +1175,7 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
           publication: "South African Environmental Society",
           authors: "SAES Sustainability Research Division",
           date: "2024",
-          description: "Research demonstrates monthly savings exceeding R4,000 for South African professionals implementing environmental practices including energy efficiency, waste reduction, and sustainable resource management. Green living provides financial benefits while supporting community environmental health and transformation sustainability.",
+          description: "Environmental practice research provides insights into various sustainability approaches and potential efficiency benefits. Individual outcomes vary significantly based on lifestyle and local conditions. This information is for educational purposes only.",
           link: "https://www.saes.co.za/"
         }
       },

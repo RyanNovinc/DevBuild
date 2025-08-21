@@ -48,6 +48,9 @@ const KanbanView = ({ taskScreenProps }) => {
     visibleItemCount,
     // Props for full-screen mode
     kanbanFullScreen,
+    // Tour props
+    isTourMode = false,
+    tourScrollPosition = 0,
     setKanbanFullScreen,
     // NEW: View mode state
     viewMode,
@@ -514,6 +517,9 @@ const KanbanView = ({ taskScreenProps }) => {
                     wipLimit={settings?.kanbanWipLimit || 3}
                     onWipLimitChange={handleWipLimitChange}
                     onShowWipEducation={handleShowWipEducation}
+                    // Tour props
+                    isTourMode={isTourMode}
+                    tourScrollPosition={tourScrollPosition}
                   />
                 ) : (
                   (() => {
@@ -524,14 +530,14 @@ const KanbanView = ({ taskScreenProps }) => {
                       <KanbanBoard
                         tasks={filteredTasks}
                         theme={theme}
-                    onPressTask={handleKanbanTaskPress}
-                    onUpdateTaskStatus={handleUpdateTaskStatus}
-                    onPressAddTask={handleAddTask}
-                    filterBy={kanbanFilter}
-                    isMilestoneLevel={false}
-                    darkMode={isDarkMode}
-                    customStyles={kanbanCustomStyles}
-                    containerStyle={{ 
+                        onPressTask={handleKanbanTaskPress}
+                        onUpdateTaskStatus={handleUpdateTaskStatus}
+                        onPressAddTask={handleAddTask}
+                        filterBy={kanbanFilter}
+                        isMilestoneLevel={false}
+                        darkMode={isDarkMode}
+                        customStyles={kanbanCustomStyles}
+                        containerStyle={{ 
                       backgroundColor: '#000000',
                       paddingTop: 0,
                       paddingBottom: insets.bottom
@@ -554,6 +560,9 @@ const KanbanView = ({ taskScreenProps }) => {
                         onShowWipEducation={handleShowWipEducation}
                         // Pass navigation for redirecting to LifePlan
                         navigation={navigation}
+                        // Tour props
+                        isTourMode={isTourMode}
+                        tourScrollPosition={tourScrollPosition}
                       />
                     );
                   })()
@@ -612,6 +621,9 @@ const KanbanView = ({ taskScreenProps }) => {
                 wipLimit={settings?.kanbanWipLimit || 3}
                 onWipLimitChange={handleWipLimitChange}
                 onShowWipEducation={handleShowWipEducation}
+                // Tour props
+                isTourMode={isTourMode}
+                tourScrollPosition={tourScrollPosition}
               />
             ) : (
               (() => {
@@ -652,6 +664,9 @@ const KanbanView = ({ taskScreenProps }) => {
                     onShowWipEducation={handleShowWipEducation}
                     // Pass navigation for redirecting to LifePlan
                     navigation={navigation}
+                    // Tour props
+                    isTourMode={isTourMode}
+                    tourScrollPosition={tourScrollPosition}
                   />
                 );
               })()

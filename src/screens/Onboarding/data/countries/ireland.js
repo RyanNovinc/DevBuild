@@ -11,7 +11,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Switch to Tech Career",
         description: "Transition into high-growth technology roles with remote opportunities",
         icon: "laptop",
-        explanation: "Ireland's tech sector is absolutely booming! As Europe's Silicon Valley with Google, Facebook, and 1,500+ tech companies, smart professionals are pivoting into development, data science, and fintech roles paying €45K-80K+ with incredible remote opportunities.",
+        explanation: "Ireland's tech sector offers various career opportunities. Individual career outcomes vary significantly - research career paths and consult career professionals for guidance.",
         projects: [
           {
             name: "Tech Skill Development",
@@ -21,7 +21,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Complete coding bootcamp or certification",
                 summary: "Learn tech skills",
-                explanation: "Tech bootcamps are delivering incredible results with 85%+ job placement rates in Ireland! Graduates land €50K-70K starting roles at Google, Meta, and Dublin's booming fintech scene within 3-6 months of completion.",
+                explanation: "Tech bootcamps may provide career development opportunities. Individual career outcomes vary significantly - research programs and consult career professionals for guidance.",
                 timeframe: "6 months",
                 completed: false
               },
@@ -61,7 +61,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Start Profitable Side Business",
         description: "Launch business leveraging Ireland's entrepreneurial opportunities and EU access",
         icon: "storefront",
-        explanation: "Your entrepreneurial dreams have never been more achievable! Ireland's startup ecosystem raised €1.2B in 2024, with incredible government supports and EU market access. Smart professionals are building businesses that scale to €500M+ across Europe.",
+        explanation: "Ireland's startup ecosystem offers various entrepreneurial opportunities. Individual business outcomes vary significantly - research opportunities and consult business professionals for guidance.",
         projects: [
           {
             name: "Business Opportunity Research",
@@ -71,7 +71,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Research Irish opportunities and validate",
                 summary: "Research opportunity",
-                explanation: "Ireland's €385B economy and EU market access create incredible opportunities for validated business concepts. Customer validation in Ireland's tight-knit business community leads to rapid word-of-mouth growth and scaling success.",
+                explanation: "Ireland's B economy and EU market access create incredible opportunities for validated business concepts. Customer validation in Ireland's tight-knit business community leads to rapid word-of-mouth growth and scaling success.",
                 timeframe: "2 months",
                 completed: false
               },
@@ -97,9 +97,9 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Scale to €3,000+ through marketing",
+                name: "Develop marketing strategies for business growth",
                 summary: "Scale revenue",
-                explanation: "Reaching €3,000 monthly revenue demonstrates business viability while creating substantial additional income that supports financial goals.",
+                explanation: "Growing revenue demonstrates business viability while creating additional income that supports financial goals. Individual results vary - consult business professionals.",
                 timeframe: "6 months",
                 completed: false
               }
@@ -111,7 +111,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Advance to Management Role",
         description: "Progress into leadership position within current company or new organisation",
         icon: "people",
-        explanation: "Leadership opportunities are exploding in Ireland's red-hot economy! Management roles offer 30-50% salary increases and accelerated career growth. With 3.5% unemployment, smart professionals are securing high-impact leadership positions.",
+        explanation: "Leadership opportunities may be available in Ireland's economy. Management roles may offer career growth potential. Individual career outcomes vary significantly - consult career professionals for guidance.",
         projects: [
           {
             name: "Leadership Skills Development",
@@ -163,7 +163,7 @@ export const DOMAIN_DEFINITIONS = [
     name: "Financial Security",
     icon: "cash",
     color: "#10b981", // Green
-    description: "Building wealth, managing expenses, and achieving financial goals",
+    description: "Financial education, budgeting guidance, and goal planning resources",
     goals: [
       {
         name: "Build Emergency Fund",
@@ -217,9 +217,9 @@ export const DOMAIN_DEFINITIONS = [
       },
       {
         name: "Start Investment Portfolio",
-        description: "Build diversified investment strategy using Irish and international options",
+        description: "Learn about diversified investment concepts for educational purposes",
         icon: "trending-up",
-        explanation: "Investing builds long-term wealth and protects against inflation. Starting early gives your money more time to grow through compound returns and market appreciation.",
+        explanation: "Investment education provides information on concepts for educational purposes. Investment outcomes involve risk and past performance does not guarantee future results - consult qualified financial advisors for guidance appropriate to your circumstances.",
         projects: [
           {
             name: "Investment Foundation",
@@ -234,9 +234,9 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Start €500 monthly diversified investing",
-                summary: "Start investing",
-                explanation: "Regular investment contributions build wealth through dollar-cost averaging while diversification reduces risk and maximizes long-term returns.",
+                name: "Learn about diversified investing concepts for educational purposes (consult qualified financial advisor for personal guidance)",
+                summary: "Learn investing",
+                explanation: "Investment education provides information on contribution concepts for educational purposes. Investment outcomes involve risk - consult qualified financial advisors for guidance appropriate to your circumstances.",
                 timeframe: "1 month",
                 completed: false
               }
@@ -244,13 +244,13 @@ export const DOMAIN_DEFINITIONS = [
           },
           {
             name: "Portfolio Growth Strategy",
-            description: "Systematically build investment portfolio through regular contributions",
-            explanation: "Consistent investing builds substantial wealth over time while regular portfolio review ensures your investments stay aligned with your goals.",
+            description: "Learn about investment portfolio concepts for educational purposes",
+            explanation: "Investment education provides information on systematic approaches for educational purposes. Investment outcomes involve risk - consult qualified financial advisors for guidance appropriate to your circumstances.",
             tasks: [
               {
                 name: "Increase investment contributions as income grows",
                 summary: "Scale investing",
-                explanation: "Growing your investment contributions as income increases accelerates wealth building while maintaining sustainable lifestyle spending.",
+                explanation: "Growing investment contributions as circumstances allow may support financial goals. Individual results vary - consult financial advisors for guidance.",
                 timeframe: "Ongoing",
                 completed: false
               },
@@ -267,9 +267,9 @@ export const DOMAIN_DEFINITIONS = [
       },
       {
         name: "Increase Income Streams",
-        description: "Develop multiple income sources to accelerate wealth building",
+        description: "Learn about multiple income stream concepts for educational purposes",
         icon: "wallet",
-        explanation: "Multiple income streams provide security and faster wealth building. Diversifying your income protects against job loss while accelerating progress toward financial goals.",
+        explanation: "Multiple income stream concepts may provide educational information about business development. Individual business results vary significantly - consult qualified business professionals for guidance.",
         projects: [
           {
             name: "Income Stream Development",
@@ -284,9 +284,9 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Launch side income for €1,000+ monthly",
+                name: "Launch side income stream (consult business advisor for income targets)",
                 summary: "Launch income stream",
-                explanation: "Additional income streams provide financial security while accelerating progress toward savings and investment goals through increased cash flow.",
+                explanation: "Additional income streams may provide financial options. Individual results vary significantly - consult business professionals for guidance.",
                 timeframe: "6 months",
                 completed: false
               }
@@ -295,19 +295,19 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Income Optimization",
             description: "Scale additional income sources while maintaining work-life balance",
-            explanation: "Optimizing your income streams helps you earn more while ensuring sustainable balance between multiple commitments and personal life.",
+            explanation: "Income stream optimization concepts may provide educational information about business development. Individual business results vary significantly - consult qualified business professionals for guidance.",
             tasks: [
               {
                 name: "Optimize pricing to maximise earnings",
                 summary: "Optimize earnings",
-                explanation: "Smart pricing and efficient processes help you earn more per hour while building sustainable additional income that doesn't overwhelm your schedule.",
+                explanation: "Pricing and process optimization concepts may support business development. Individual business results vary significantly - consult qualified business professionals for guidance.",
                 timeframe: "3 months",
                 completed: false
               },
               {
-                name: "Reinvest profits for wealth building",
+                name: "Learn about profit reinvestment concepts for educational purposes (consult financial advisor)",
                 summary: "Reinvest profits",
-                explanation: "Reinvesting additional income into savings and investments accelerates wealth building while maintaining lifestyle funded by primary income.",
+                explanation: "Investment education provides information about reinvestment concepts for educational purposes. Investment decisions involve significant risk - consult qualified financial advisors for guidance.",
                 timeframe: "Ongoing",
                 completed: false
               }

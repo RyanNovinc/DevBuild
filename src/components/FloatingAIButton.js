@@ -24,10 +24,11 @@ if (typeof window !== 'undefined') {
   window.aiButtonVisible = true;
 }
 
-const FloatingAIButton = ({ theme }) => {
+const FloatingAIButton = ({ theme, hideDuringTour = false }) => {
   // State hooks
   const [showAIButton, setShowAIButton] = useState(true);
   const [kanbanFullScreenHidden, setKanbanFullScreenHidden] = useState(false);
+  const [isTourActive, setIsTourActive] = useState(false);
   
   // Refs
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -90,6 +91,9 @@ const FloatingAIButton = ({ theme }) => {
       if (typeof window !== 'undefined') {
         setKanbanFullScreenHidden(!window.aiButtonVisible);
       }
+      
+      // Check if app tour is active
+      setIsTourActive(global.isAppTourActive || false);
     };
     
     // Initial check
@@ -136,7 +140,9 @@ const FloatingAIButton = ({ theme }) => {
     hideButtonScreens.includes(currentRouteName) || 
     hideButtonScreens.includes(route.name) || 
     !showAIButton ||
-    kanbanFullScreenHidden;
+    kanbanFullScreenHidden ||
+    hideDuringTour ||
+    isTourActive;
   
   // Don't render anything if button should be hidden
   if (shouldHideButton) {

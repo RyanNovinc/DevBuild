@@ -21,6 +21,8 @@ import MainGoalCard from '../components/MainGoalCard';
 import Confetti from '../components/Confetti';
 import { LinearGradient } from 'expo-linear-gradient';
 import AddSelectionModal from '../components/AddSelectionModal';
+import AppTourOverlay from '../components/AppTourOverlay';
+import useAppTour from '../hooks/useAppTour';
 // import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs'; // Moved to App.js
 // import LifePlanOverviewScreen from './LifePlanOverviewScreen'; // Moved to App.js
 import {
@@ -164,6 +166,25 @@ const GoalsScreen = ({ navigation, route, tabMode }) => {
   const isContextLoading = appContext?.isLoading === true;
   // Add refreshCounter to detect goal updates
   const refreshCounter = appContext?.refreshCounter || 0;
+  
+  // App Tour Hook - MUST be called before any early returns
+  const { 
+    isTourActive,
+    currentStep,
+    spotlightTarget,
+    nextStep,
+    skipTour
+  } = useAppTour(navigation);
+  
+  // Debug logging for tour state
+  if (__DEV__) {
+    console.log('🎯 GoalsScreen Tour State:', { 
+      isTourActive, 
+      currentStep, 
+      shouldShowOverlay: isTourActive && currentStep === 'OVERVIEW_PLAN',
+      hasActiveGoals: screenState.activeGoals?.length > 0
+    });
+  }
   
   // Get notification functions safely
   const notificationContext = useNotification ? useNotification() : null;
@@ -962,6 +983,54 @@ const GoalsScreen = ({ navigation, route, tabMode }) => {
     }
   };
   
+  // Render a tour goal item (disabled interactions except expand/collapse)
+  const renderTourGoalItem = (item, index) => {
+    // Same calculation logic as renderGoalItem
+    const getIconColor = (goalColor) => {
+      if (goalColor === '#FFFFFF') {
+        return '#000000';
+      }
+      return getTextColorForBackground(goalColor);
+    };
+    
+    const goalMilestones = milestones.filter(milestone => milestone.goalId === item.id);
+    const milestoneCount = goalMilestones.length;
+    const completedMilestoneCount = goalMilestones.filter(milestone => milestone.completed).length;
+    
+    const directTasks = tasks.filter(task => 
+      task.goalId === item.id && (!task.projectId || task.projectId === null)
+    );
+    
+    const goalMilestoneIds = goalMilestones.map(milestone => milestone.id);
+    const milestoneTasks = tasks.filter(task => 
+      (task.projectId && goalMilestoneIds.includes(task.projectId)) ||
+      (task.milestoneId && goalMilestoneIds.includes(task.milestoneId))
+    );
+    
+    const goalTasks = [...directTasks, ...milestoneTasks];
+    const taskCount = goalTasks.length;
+    const completedTaskCount = goalTasks.filter(task => task.completed).length;
+    
+    return (
+      <View style={{ marginBottom: spacing.s }}>
+        <MainGoalCard 
+          goal={{
+            ...item,
+            milestoneCount: milestoneCount,
+            completedMilestoneCount: completedMilestoneCount,
+            taskCount: taskCount,
+            completedTaskCount: completedTaskCount
+          }} 
+          onPress={() => handleGoalPress(item)} // Only allow expand/collapse
+          onProgressUpdate={null} // Disable progress updates
+          onComplete={null} // Disable completion during tour
+          getIconColor={getIconColor}
+          isTourMode={true} // Pass tour mode to disable other interactions
+        />
+      </View>
+    );
+  };
+
   // Render a goal item
   const renderGoalItem = ({ item, index }) => {
     // Determine appropriate icon color
@@ -1219,6 +1288,22 @@ const GoalsScreen = ({ navigation, route, tabMode }) => {
           accessibilityLabel="Active goals list"
           accessibilityRole="list"
         />
+        
+        {/* App Tour Overlay */}
+        <AppTourOverlay
+          isVisible={isTourActive && currentStep === 'OVERVIEW_PLAN'}
+          currentStep={currentStep}
+          onComplete={nextStep}
+          onSkip={skipTour}
+          spotlightTarget={spotlightTarget}
+        />
+        
+        {/* Elevated Goal - rendered AFTER overlay during tour so it appears on top */}
+        {isTourActive && currentStep === 'OVERVIEW_PLAN' && screenState.activeGoals.length > 0 && (
+          <View style={styles.tourGoalContainer}>
+            {renderTourGoalItem(screenState.activeGoals[0], 0)}
+          </View>
+        )}
       </View>
     );
   };
@@ -1522,6 +1607,22 @@ const GoalsScreen = ({ navigation, route, tabMode }) => {
           onClose={() => setShowAddSelectionModal(false)}
           onSelectOption={handleSelectionModalChoice}
         />
+        
+        {/* App Tour Overlay for TabMode */}
+        <AppTourOverlay
+          isVisible={isTourActive && currentStep === 'OVERVIEW_PLAN'}
+          currentStep={currentStep}
+          onComplete={nextStep}
+          onSkip={skipTour}
+          spotlightTarget={spotlightTarget}
+        />
+        
+        {/* Elevated Goal for TabMode - rendered AFTER overlay during tour so it appears on top */}
+        {isTourActive && currentStep === 'OVERVIEW_PLAN' && screenState.activeGoals.length > 0 && (
+          <View style={styles.tourGoalContainer}>
+            {renderTourGoalItem(screenState.activeGoals[0], 0)}
+          </View>
+        )}
       </View>
     );
   }
@@ -1545,6 +1646,13 @@ const GoalsScreen = ({ navigation, route, tabMode }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  tourGoalContainer: {
+    position: 'absolute',
+    top: 16, // Position where first goal normally appears
+    left: 16,
+    right: 16,
+    zIndex: 1000,
   },
   filterButtonContainer: {
     flexDirection: 'row',

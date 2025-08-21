@@ -111,7 +111,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Advance to Management Role",
         description: "Move into leadership positions with team management responsibilities and higher compensation",
         icon: "laptop",
-        explanation: "Leadership opportunities are exploding in India's booming corporate sector! Management roles offer 40-60% salary premiums and accelerated career advancement. Smart professionals are positioning themselves for these high-impact positions.",
+        explanation: "Leadership opportunities may be available in India's corporate sector. Individual career outcomes vary significantly - consult career professionals for guidance.",
         needsClarification: true,
         clarificationOptions: [
           {
@@ -122,7 +122,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "AI/ML Technical Foundation",
                 description: "Build comprehensive knowledge in artificial intelligence and machine learning",
-                explanation: "AI/ML roles command 40-60% salary premiums. Government Digital India initiatives create strong demand for AI talent.",
+                explanation: "AI/ML roles may support career development. Individual salary outcomes vary significantly - consult career professionals for guidance.",
                 tasks: [
                   {
                     name: "Learn Python and statistics for data science",
@@ -220,7 +220,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Cybersecurity Foundation Training",
                 description: "Build core cybersecurity knowledge and practical security skills",
-                explanation: "Government investment of ₹1.67B in cyber security creates strong job demand with competitive salaries in this growing field.",
+                explanation: "Research indicates government investment in cyber security may create various job opportunities. Individual career outcomes vary significantly - consult career professionals for guidance.",
                 tasks: [
                   {
                     name: "Get CompTIA Security+ or CEH certification",
@@ -313,7 +313,7 @@ export const DOMAIN_DEFINITIONS = [
     name: "Financial Security",
     icon: "cash",
     color: "#10b981", // Green
-    description: "Building wealth, managing expenses, and achieving financial goals",
+    description: "Financial education, budgeting guidance, and goal planning resources",
     goals: [
       {
         name: "Build Emergency Fund",
@@ -357,7 +357,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Cancel subscriptions and save for fund",
                 summary: "Cut expenses",
-                explanation: "Subscription audit typically reveals ₹2,000-5,000 monthly savings that can significantly accelerate emergency fund building when redirected consistently.",
+                explanation: "Research indicates subscription audits may offer various cost-saving opportunities. Individual savings outcomes vary significantly - consult financial professionals for guidance.",
                 timeframe: "1 week",
                 completed: false
               }
@@ -367,14 +367,14 @@ export const DOMAIN_DEFINITIONS = [
       },
       {
         name: "Start Investment Portfolio",
-        description: "Begin systematic investing in mutual funds and stocks to build long-term wealth",
+        description: "Learn about investment concepts for educational purposes",
         icon: "home",
-        explanation: "Inflation protection requires smart investing beyond traditional savings! Indian professionals are using mutual funds, stocks, and SIPs to build wealth while taking advantage of India's fastest-growing equity markets worldwide.",
+        explanation: "Investment research provides information on various financial strategies for educational purposes. Investment outcomes involve risk and past performance does not guarantee future results - consult qualified financial advisors for guidance appropriate to your circumstances.",
         projects: [
           {
             name: "Home Buying Financial Planning",
             description: "Research property market and create realistic savings timeline",
-            explanation: "Knight Frank data shows 46% of sales above ₹1 crore. Properties requiring ₹20-25 lakh down payments represent the fastest-growing segment.",
+            explanation: "Real estate research provides insights into various property market trends and approaches. Individual property outcomes vary significantly - consult qualified real estate and financial professionals for guidance.",
             tasks: [
               {
                 name: "Research property prices and down payment",
@@ -419,7 +419,7 @@ export const DOMAIN_DEFINITIONS = [
         name: "Increase Income Streams",
         description: "Develop additional revenue sources through freelancing, consulting, or business ventures",
         icon: "storefront",
-        explanation: "Multiple income streams provide financial security and accelerate wealth building through diversified revenue sources beyond primary employment.",
+        explanation: "Multiple income stream concepts may provide educational information about business development. Individual business results vary significantly - consult qualified business professionals for guidance.",
         needsClarification: true,
         clarificationOptions: [
           {
@@ -442,7 +442,7 @@ export const DOMAIN_DEFINITIONS = [
                   {
                     name: "Develop service packages and pricing",
                     summary: "Create packages",
-                    explanation: "Structured service packages enable consistent pricing and help scale beyond hourly work to achieve ₹25,000+ monthly targets.",
+                    explanation: "Research indicates structured service packages may offer various business scaling opportunities. Individual business outcomes vary significantly - consult business professionals for guidance.",
                     timeframe: "2 weeks",
                     completed: false
                   }
@@ -450,8 +450,8 @@ export const DOMAIN_DEFINITIONS = [
               },
               {
                 name: "Freelancing Business Growth",
-                description: "Scale freelancing practice to consistent monthly income through client development",
-                explanation: "Successful freelancing requires systematic client acquisition and retention strategies to achieve target monthly income.",
+                description: "Learn about freelancing business development concepts (consult business advisor)",
+                explanation: "Freelancing concepts may provide business opportunities. Individual business results vary significantly - consult qualified business professionals for guidance.",
                 tasks: [
                   {
                     name: "Build referrals and maintain client relationships",
@@ -461,9 +461,9 @@ export const DOMAIN_DEFINITIONS = [
                     completed: false
                   },
                   {
-                    name: "Optimize rates to reach ₹25,000+ monthly",
+                    name: "Optimize rates for business growth",
                     summary: "Scale income",
-                    explanation: "Strategic rate increases and premium service offerings enable income growth without proportional time increase.",
+                    explanation: "Service optimization may support business development. Individual business results vary significantly - consult business professionals for guidance.",
                     timeframe: "6 months",
                     completed: false
                   }
@@ -510,9 +510,9 @@ export const DOMAIN_DEFINITIONS = [
                     completed: false
                   },
                   {
-                    name: "Optimize products for ₹25,000+ monthly",
+                    name: "Optimize products for business growth",
                     summary: "Revenue optimization",
-                    explanation: "Data-driven product and pricing optimization based on sales performance helps achieve consistent monthly revenue targets.",
+                    explanation: "Product and pricing optimization concepts may support business development. Individual business results vary significantly - consult qualified business professionals for guidance.",
                     timeframe: "3 months",
                     completed: false
                   }
@@ -554,14 +554,14 @@ export const DOMAIN_DEFINITIONS = [
                   {
                     name: "Create recurring revenue through subscriptions",
                     summary: "Recurring revenue",
-                    explanation: "Subscription or ongoing coaching models provide predictable monthly income and higher lifetime customer value than one-time sales.",
+                    explanation: "Subscription business model concepts may provide educational information about business development. Individual business results vary significantly - consult qualified business professionals for guidance.",
                     timeframe: "3 months",
                     completed: false
                   },
                   {
-                    name: "Scale content to reach ₹25,000+ monthly",
+                    name: "Scale content for business growth",
                     summary: "Scale distribution",
-                    explanation: "Systematic content distribution and student acquisition strategies enable consistent monthly income growth in educational business.",
+                    explanation: "Content distribution concepts may support educational business development. Individual business results vary significantly - consult qualified business professionals for guidance.",
                     timeframe: "6 months",
                     completed: false
                   }
@@ -594,8 +594,8 @@ export const DOMAIN_DEFINITIONS = [
           },
           {
             name: "Business Launch and Growth",
-            description: "Execute business plan and scale to target monthly income",
-            explanation: "Systematic approach to business launch and growth enables reaching ₹25,000+ monthly income target within realistic timeline.",
+            description: "Execute business plan for educational business development (consult business advisor)",
+            explanation: "Research indicates systematic business approaches may offer various growth opportunities. Individual business outcomes vary significantly - consult business professionals for guidance.",
             tasks: [
               {
                 name: "Launch MVP and get paying customers",
@@ -605,7 +605,7 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Scale income to ₹25,000+ target",
+                name: "Scale income for business growth",
                 summary: "Scale revenue",
                 explanation: "Strategic growth through customer acquisition, pricing optimization, and service expansion enables target income achievement.",
                 timeframe: "8 months",
@@ -790,7 +790,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Wedding Planning and Budgeting",
             description: "Create comprehensive wedding plan balancing personal preferences with family expectations",
-            explanation: "WeddingWire India data shows strategic planning within ₹20-40 lakh range enables personalized celebrations while managing costs effectively.",
+            explanation: "Research indicates strategic wedding planning may offer various budget management approaches. Individual wedding costs vary significantly - consult wedding and financial professionals for guidance.",
             tasks: [
               {
                 name: "Research venues, vendors, and create detailed budget breakdown for all wedding expenses",
@@ -811,7 +811,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Wedding Execution and Experience",
             description: "Execute wedding celebration that creates meaningful memories within budget",
-            explanation: "45% willing to increase budgets by 50% for unique celebrations shows importance of creating memorable experience over cost cutting.",
+            explanation: "Research on celebration preferences shows importance of creating memorable experiences. Individual budget decisions vary - consult financial advisors for guidance.",
             tasks: [
               {
                 name: "Manage vendor relationships and timeline to ensure smooth wedding execution",
@@ -1422,7 +1422,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Smart Home Office Design",
             description: "Plan and design optimized home workspace using smart technology within budget",
-            explanation: "₹1.5 lakh budget suitable for comprehensive smart office setup including lighting, climate control, and connectivity solutions.",
+            explanation: "Research indicates various budget approaches may be suitable for comprehensive smart office setups. Individual setup costs vary significantly - consult technology and business professionals for guidance.",
             tasks: [
               {
                 name: "Assess current workspace and design smart office layout optimizing productivity and comfort",
@@ -1453,7 +1453,7 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Track and measure productivity improvements to validate 40% productivity increase target",
+                name: "Track and measure productivity improvements (consult business advisor for realistic targets)",
                 summary: "Productivity tracking",
                 explanation: "Objective productivity measurement validates smart office investment while providing evidence of ROI through enhanced work performance and efficiency.",
                 timeframe: "Ongoing",

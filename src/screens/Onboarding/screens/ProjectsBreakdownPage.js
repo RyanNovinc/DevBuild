@@ -55,7 +55,7 @@ const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, onConfettiSta
       'Community & Environment': 'Community & Environment',
       'Build 6-Month Emergency Fund': 'Emergency Fund',
       'Pay Off High-Interest Debt': 'Pay Off Debt',
-      'Save $25,000 Down Payment for Home': 'Save for Home',
+      'Save Down Payment for Home': 'Save for Home',
       'Develop Sustainable Mental Health Practices': 'Mental Health Practices',
       'Master Digital Literacy and AI Tools': 'Digital Literacy & AI',
       'Achieve French Language Proficiency': 'French Proficiency',
@@ -561,7 +561,7 @@ const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, onConfettiSta
         return "Start with just 10-15 minutes of activity 2-3 times per week. Choose exercises you genuinely enjoy rather than what's trendy. Schedule workouts at the same time on the same days to build consistency before increasing duration or intensity.";
       
       case "Financial Security-Savings Automation":
-        return "Begin with a very small automatic transfer amount that you won't notice—even $5-10 per paycheck is fine. Set up a separate account that's slightly harder to access than your checking account. Gradually increase the amount as you adjust to living with less available cash.";
+        return "Consider starting with small automatic transfers to build saving habits. Research savings strategies and consult qualified financial advisors for guidance appropriate to your circumstances.";
       
       case "Relationships-Meaningful Interaction Enhancement":
         return "Start by identifying one conversation partner and one specific time each week for a deeper conversation. Turn off notifications during this time. Prepare 2-3 open-ended questions that go beyond daily logistics to discuss during this time.";
@@ -591,7 +591,7 @@ const ProjectsBreakdownPage = ({ domain, goal, onContinue, onBack, onConfettiSta
       if (domainName === "Career & Work") {
         return "Start by identifying 2-3 people who currently have the role or skills you aspire to. Research their career paths and skill sets. Schedule a conversation with your manager about your career interests and potential growth opportunities.";
       } else if (domainName === "Financial Security") {
-        return "Begin by tracking all expenses for just one week to establish a baseline. Identify your three largest spending categories. Create one specific, measurable goal related to your highest priority financial concern.";
+        return "Consider exploring budgeting concepts and financial goal-setting approaches. Individual financial circumstances vary significantly - consult qualified financial advisors for personalized guidance appropriate to your situation.";
       } else {
         return "Start with the end in mind by clearly defining what success looks like. Work backward to identify key milestones. Keep your initial plan simple with room to adapt as you learn.";
       }

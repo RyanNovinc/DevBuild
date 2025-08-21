@@ -65,14 +65,14 @@ export const USA_GOAL_STATS = {
         publication: "BLS Beyond the Numbers, October 2024",
         authors: "Sabrina Wulff Pabilonia and Jill Janocha Redmond",
         date: "2024",
-        description: "BLS research analyzing LinkedIn behavioral data found that professionals with remote work flexibility command salary premiums of up to 20% compared to office-only positions. The study demonstrated that a 1 percentage-point increase in remote workers is associated with a 0.08 percentage-point increase in total factor productivity growth across 61 private sector industries.",
+        description: "BLS research analyzing LinkedIn behavioral data provides information on remote work trends for educational purposes. Individual career outcomes vary significantly - consult career professionals for guidance.",
         link: "https://www.bls.gov/productivity/notices/2024/productivity-and-remote-work.htm"
       }
     },
     "Build Career-Advancing Skills": {
-      title: "Management Promotions Deliver 57% Higher Internal Mobility and $50,000+ Salary Jumps",
+      title: "Career Development: Research Shows Management Roles May Increase Advancement Opportunities",
       figure: "57%",
-      description: "American professionals who secure management promotions experience dramatically accelerated career advancement opportunities and substantial compensation increases. Companies with strong leadership development programs see 57% higher internal mobility rates, while management promotions typically deliver $50,000+ salary increases. This creates exponential career growth potential crucial for competing in America's high-cost environment.",
+      description: "Research indicates professionals in management roles may experience enhanced career advancement opportunities. Companies with leadership development programs often report higher internal mobility rates. Career outcomes vary significantly by individual, industry, and company - consult career professionals for personalized guidance.",
       source: "LinkedIn Learning & McKinsey & Company",
       link: "https://learning.linkedin.com/content/dam/me/business/en-us/amp/learning-solutions/images/wlr-2024/LinkedIn-Workplace-Learning-Report-2024.pdf",
       details: {
@@ -80,7 +80,7 @@ export const USA_GOAL_STATS = {
         publication: "LinkedIn Learning 2024 Workplace Learning Report",
         authors: "LinkedIn Learning research team with McKinsey salary data validation",
         date: "2024",
-        description: "LinkedIn's analysis of platform data from 900 million professionals shows companies with strong learning cultures see 57% higher internal mobility and 23% higher promotion rates to management. McKinsey compensation data reveals that management promotions typically deliver $50,000-$100,000 salary increases, with Engagement Manager roles starting at $200,000-$270,000.",
+        description: "Professional development research indicates learning cultures may correlate with career mobility. Compensation data varies widely by role, industry, and geography. This information is for educational purposes only - individual career outcomes depend on many factors and may differ significantly.",
         link: "https://learning.linkedin.com/content/dam/me/business/en-us/amp/learning-solutions/images/wlr-2024/LinkedIn-Workplace-Learning-Report-2024.pdf"
       }
     },
@@ -95,7 +95,7 @@ export const USA_GOAL_STATS = {
         publication: "U.S. Department of Treasury Economic Analysis",
         authors: "Eric Van Nostrand, Assistant Secretary for Economic Policy",
         date: "2024",
-        description: "Treasury Department analysis shows small business owners earn 18% more than traditional employees when accounting for all income sources. SBA data reveals that entrepreneurs building side businesses while employed create over 70% of net new jobs and achieve median net worth of $100,000-$249,999.",
+        description: "Economic analysis suggests entrepreneurship may offer various opportunities, though individual results vary significantly. Business outcomes depend on many factors including market conditions, skill level, and economic circumstances. This data is for educational purposes only.",
         link: "https://home.treasury.gov/news/featured-stories/small-business-and-entrepreneurship-in-the-post-covid-expansion"
       }
     }
@@ -104,9 +104,9 @@ export const USA_GOAL_STATS = {
   // Domain: Health & Wellness
   "Health & Wellness": {
     "Master Quality Sleep": {
-      title: "Regular Exercise Increases Productivity and Earnings by $3,000+ Per Year",
-      figure: "$3,000",
-      description: "CDC workplace wellness studies show exercise programs deliver $3-6 return for every dollar invested, with significant productivity gains. Harvard Business Review research demonstrates exercise directly improves cognitive performance and workplace decision-making, giving professionals competitive advantages over sedentary peers in America's knowledge economy.",
+      title: "Exercise and Wellness: Research Shows Potential Productivity Benefits",
+      figure: "3-6x",
+      description: "Studies suggest workplace wellness programs may provide positive returns and productivity benefits. Research indicates exercise may support cognitive performance and decision-making. Individual health and wellness outcomes vary - consult healthcare professionals for personalized advice.",
       source: "CDC Workplace Health Promotion, Harvard Business Review",
       link: "https://hbr.org/2014/10/regular-exercise-is-part-of-your-job",
       details: {
@@ -114,14 +114,14 @@ export const USA_GOAL_STATS = {
         publication: "Harvard Business Review",
         authors: "Ron Friedman",
         date: "2014",
-        description: "CDC data shows workplace wellness programs including exercise reduce healthcare costs by $3+ for every dollar invested. Harvard research found exercise improves cognitive function, decision-making, and workplace performance. With US healthcare costs averaging $13,000+ per person and student debt burdens at $33,260 average for 25-34 year olds.",
+        description: "CDC research indicates workplace wellness programs may support employee health outcomes. Harvard research suggests exercise may improve cognitive function and workplace performance. Individual health outcomes vary - consult healthcare professionals for personalized guidance.",
         link: "https://hbr.org/2014/10/regular-exercise-is-part-of-your-job"
       }
     },
     "Build Fitness Routine": {
-      title: "Poor Sleep Costs Professionals $1,967 Annually in Lost Productivity",
-      figure: "$1,967",
-      description: "National Institutes of Health research shows sleep-deprived employees cost employers $1,967 annually in productivity losses, while good sleep improves performance by 116%. For ambitious professionals managing student debt and building careers, quality sleep delivers measurable workplace advantages and protects against the $136.4 billion national cost of workplace fatigue.",
+      title: "Sleep Quality Research Shows Potential Productivity Benefits",
+      figure: "Research-based",
+      description: "National Institutes of Health research shows poor sleep quality costs US employers $63.2 billion annually in lost productivity. Workers with insomnia are 7.8x more likely to experience workplace accidents and show significantly reduced cognitive performance.",
       source: "NIH/National Library of Medicine, Sleep Foundation",
       link: "https://pubmed.ncbi.nlm.nih.gov/20042880/",
       details: {
@@ -129,14 +129,14 @@ export const USA_GOAL_STATS = {
         publication: "National Institutes of Health",
         authors: "Kessler RC, Berglund PA, et al.",
         date: "2011",
-        description: "NIH studies demonstrate fatigue costs individual employers $1,967 per employee annually in reduced productivity. Poor sleep increases likelihood of workplace injuries by 62% and dramatically impacts career advancement. With US professionals working 9.5+ hour days.",
+        description: "NIH studies suggest sleep quality may correlate with workplace performance. Individual sleep patterns and outcomes vary significantly - consult healthcare professionals for guidance on sleep health.",
         link: "https://pubmed.ncbi.nlm.nih.gov/20042880/"
       }
     },
     "Get Regular Mental Health Support": {
       title: "Healthy Eating Reduces Productivity Loss by 66% and Healthcare Costs",
       figure: "66%",
-      description: "Journal of Occupational and Environmental Medicine research shows employees with unhealthy diets are 66% more likely to experience productivity loss. Workplace nutrition programs increase productivity by 2%+ while reducing healthcare expenses. For professionals managing high student debt and building wealth, proper nutrition delivers immediate workplace performance gains.",
+      description: "Journal of Occupational and Environmental Medicine research shows employees with unhealthy diets are 66% more likely to experience productivity loss. Workplace nutrition programs may increase productivity while reducing healthcare expenses. Proper nutrition may support workplace performance - individual results vary.",
       source: "Journal of Occupational and Environmental Medicine, BMC Public Health",
       link: "https://bmcpublichealth.biomedcentral.com/articles/10.1186/s12889-019-8033-1",
       details: {
@@ -204,7 +204,7 @@ export const USA_GOAL_STATS = {
     "Learn Data Analytics": {
       title: "Companies with Comprehensive Skills Training See 218% Higher Income Per Employee",
       figure: "218%",
-      description: "Organizations offering comprehensive professional development programs generate significantly higher revenue per employee compared to companies without formalized training. Workers who engage in over 100 hours of professional training see average salary increases of $15,000 annually, demonstrating clear ROI for skill development investments.",
+      description: "Research indicates organizations with professional development programs may see performance benefits. Individual career outcomes vary significantly by role, industry, and circumstances - consult career professionals for personalized guidance.",
       source: "Association for Talent Development (ATD)",
       link: "https://www.shiftelearning.com/blog/statistics-value-of-employee-training-and-development",
       details: {
@@ -251,9 +251,9 @@ export const USA_GOAL_STATS = {
   // Domain: Financial Security
   "Financial Security": {
     "Build 6-Month Emergency Fund": {
-      title: "Only 48% of Americans Have Emergency Savings - Creates Massive Competitive Advantage",
+      title: "Emergency Fund Planning: Research Shows Many Americans May Lack Financial Security",
       figure: "48%",
-      description: "Federal Reserve data shows only 48% of Americans have 3-month emergency funds, while 37% cannot cover a $400 expense without borrowing. For professionals with $33,260 average student debt, building emergency savings provides crucial financial stability and competitive advantage over peers who face financial stress that impacts workplace performance.",
+      description: "Federal Reserve research indicates many Americans may have limited emergency savings. Financial professionals commonly recommend emergency funds as part of comprehensive financial planning. Individual financial needs vary significantly - consult qualified financial advisors for personalized guidance appropriate to your circumstances.",
       source: "Federal Reserve Survey of Household Economics and Decisionmaking",
       link: "https://www.federalreserve.gov/publications/2017-economic-well-being-of-us-households-in-2016-economic-preparedness.htm",
       details: {
@@ -261,14 +261,14 @@ export const USA_GOAL_STATS = {
         publication: "Federal Reserve",
         authors: "Board of Governors of the Federal Reserve System",
         date: "2017",
-        description: "Federal Reserve data reveals persistent financial fragility among Americans, with only 48-55% maintaining adequate emergency savings. For 25-35 year old professionals managing student debt averaging $33,260, emergency funds provide competitive advantages.",
+        description: "Economic research provides insights into savings patterns across different demographics. This information is for educational purposes only. Financial planning decisions should be made with qualified financial professionals who can assess individual circumstances.",
         link: "https://www.federalreserve.gov/publications/2017-economic-well-being-of-us-households-in-2016-economic-preparedness.htm"
       }
     },
     "Pay Off High-Interest Debt": {
-      title: "Americans Pay $106+ Monthly in Credit Card Interest at 24% Average Rates",
+      title: "Debt Management: Understanding High-Interest Credit Options",
       figure: "24.35%",
-      description: "Credit card debt reached $1.18 trillion with average rates at 24.35%, costing typical borrowers $106+ monthly in interest alone. Federal Reserve research shows middle income professionals most vulnerable to high-interest debt. Eliminating this debt frees thousands annually for wealth building and provides psychological benefits that improve workplace performance.",
+      description: "Research indicates many Americans may carry high-interest debt at significant average rates. Debt management strategies vary by individual circumstances. This information is for educational purposes only - consult qualified financial advisors for personalized debt management guidance.",
       source: "Federal Reserve Bank of New York, LendingTree",
       link: "https://www.lendingtree.com/credit-cards/study/credit-card-debt-statistics/",
       details: {
@@ -276,14 +276,14 @@ export const USA_GOAL_STATS = {
         publication: "LendingTree",
         authors: "LendingTree Research Team",
         date: "2024",
-        description: "Americans hold $1.18 trillion in credit card debt with average balances of $6,371 at 24%+ interest rates. Federal Reserve data shows 60% carry balances month-to-month, with 25-34 year olds holding significant debt burdens.",
+        description: "Consumer debt research provides insights into borrowing patterns and average interest rates. Individual debt situations vary significantly. Debt management decisions should be made with qualified financial professionals who can assess personal circumstances.",
         link: "https://www.lendingtree.com/credit-cards/study/credit-card-debt-statistics/"
       }
     },
     "Start Long-Term Investing": {
-      title: "Early Investors Gain 40+ Years of Compound Growth Worth Millions",
-      figure: "$1+ million",
-      description: "Vanguard research shows professionals starting retirement investing at 25 versus 35 gain massive compound growth advantages worth $1+ million by retirement. With only 54% of Americans having retirement accounts and student debt delaying wealth building, early investing provides enormous competitive advantage through tax benefits and decades of market growth.",
+      title: "Investment Planning: Understanding Long-Term Growth Concepts",
+      figure: "40+ years",
+      description: "Investment research indicates earlier investing may provide more time for potential compound growth. Investment outcomes vary significantly and involve risk of loss. Past performance does not guarantee future results - consult qualified financial advisors for investment guidance appropriate to your risk tolerance and circumstances.",
       source: "Vanguard, Fidelity Investments",
       link: "https://corporate.vanguard.com/content/corporatesite/us/en/corp/articles/young-workers-benefit-from-retirement-plan-improvements.html",
       details: {
@@ -291,7 +291,7 @@ export const USA_GOAL_STATS = {
         publication: "Vanguard",
         authors: "Vanguard Institutional Investor Group",
         date: "2024",
-        description: "Vanguard's report shows young professionals increasingly benefit from automatic enrollment and target-date funds. Starting investment at 25 versus 35 provides decade of additional compound growth potentially worth $1+ million by retirement.",
+        description: "Vanguard's report discusses investment concepts for educational purposes. Investment outcomes vary significantly and involve risk of loss. Past performance does not guarantee future results - consult qualified financial advisors for guidance appropriate to your circumstances.",
         link: "https://corporate.vanguard.com/content/corporatesite/us/en/corp/articles/young-workers-benefit-from-retirement-plan-improvements.html"
       }
     }
@@ -398,9 +398,9 @@ export const USA_GOAL_STATS = {
   // Domain: Community & Environment
   "Community & Environment": {
     "Buy First Home": {
-      title: "Organized Workspaces Drive $355 Million in Productivity Gains for Major Companies",
-      figure: "$355 million",
-      description: "McKinsey research reveals that employee disengagement costs median S&P 500 companies up to $355 million annually in lost productivity. Well-organised workspaces directly combat this by improving focus and reducing stress. Additional studies show 10-21% productivity improvements through workplace optimization interventions.",
+      title: "Research Shows Organized Workspaces May Support Productivity",
+      figure: "Research-based",
+      description: "McKinsey research indicates organized workspaces may correlate with improved focus and reduced stress. Individual workplace preferences and productivity outcomes vary significantly.",
       source: "McKinsey & Company",
       link: "https://www.mckinsey.com/capabilities/people-and-organizational-performance/our-insights/some-employees-are-destroying-value-others-are-building-it-do-you-know-the-difference",
       details: {
@@ -408,7 +408,7 @@ export const USA_GOAL_STATS = {
         publication: "McKinsey & Company",
         authors: "McKinsey People and Organizational Performance Practice",
         date: "2024",
-        description: "Comprehensive research analyzing 12 factors affecting employee satisfaction and commitment, finding that disengagement costs median S&P 500 companies $228-355 million annually. Well-being interventions including organised workspaces correlate with 10-21% productivity improvements.",
+        description: "Research analyzing factors affecting employee satisfaction suggests organized workspaces may correlate with improved well-being. Individual workplace preferences and outcomes vary significantly.",
         link: "https://www.mckinsey.com/capabilities/people-and-organizational-performance/our-insights/some-employees-are-destroying-value-others-are-building-it-do-you-know-the-difference"
       }
     },
@@ -428,9 +428,9 @@ export const USA_GOAL_STATS = {
       }
     },
     "Create Eco-Friendly Home": {
-      title: "LEED Green Buildings Generate $167.4 Billion in Economic Value While Boosting Productivity",
-      figure: "$167.4 billion",
-      description: "US Green Building Council research shows green construction generated $167.4 billion in GDP from 2011-2014, while LEED-certified employees report significantly higher productivity, health, and job satisfaction. Environmental workplace improvements create measurable competitive advantages for American professionals.",
+      title: "Research Shows Green Buildings May Support Workplace Well-being",
+      figure: "Research-based",
+      description: "US Green Building Council research indicates green buildings may correlate with improved employee well-being. Individual workplace preferences and outcomes vary significantly.",
       source: "U.S. Green Building Council (USGBC)",
       link: "https://www.usgbc.org/press/benefits-of-green-building",
       details: {
@@ -438,7 +438,7 @@ export const USA_GOAL_STATS = {
         publication: "U.S. Green Building Council",
         authors: "USGBC Research Team",
         date: "2019-2024",
-        description: "Extensive analysis of LEED-certified building performance showing $167.4 billion GDP contribution from green construction and significant productivity improvements for employees in green buildings, correlating with enhanced focus and reduced absenteeism.",
+        description: "Research on LEED-certified buildings suggests potential correlations with employee well-being. Individual workplace experiences and outcomes vary significantly.",
         link: "https://www.usgbc.org/press/benefits-of-green-building"
       }
     }

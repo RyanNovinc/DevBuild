@@ -34,6 +34,9 @@ import { useAppContext } from '../../context/AppContext';
 // Import level service
 import LevelService from '../../services/LevelService';
 
+// Import achievement notification manager for testing
+import { showAchievementNotification } from '../../services/AchievementNotificationManager';
+
 // Default theme as fallback - DARK THEME
 const DEFAULT_THEME = {
   background: '#000000',
@@ -49,8 +52,9 @@ const DEFAULT_THEME = {
 const { width } = Dimensions.get('window');
 
 // Grid Achievement Item Component
-const AchievementGridItem = ({ achievement, theme, isUnlocked, onPress, userSubscriptionStatus = 'free' }) => {
+const AchievementGridItem = ({ achievement, theme, isUnlocked, onPress, userSubscriptionStatus = 'free', isHighlighted }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const flashAnim = useRef(new Animated.Value(1)).current;
   
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -59,6 +63,20 @@ const AchievementGridItem = ({ achievement, theme, isUnlocked, onPress, userSubs
       useNativeDriver: true,
     }).start();
   }, []);
+
+  // Gentle pulse animation for highlighted achievement
+  useEffect(() => {
+    if (isHighlighted) {
+      const pulseSequence = Animated.loop(
+        Animated.sequence([
+          Animated.timing(flashAnim, { toValue: 0.7, duration: 800, useNativeDriver: true }),
+          Animated.timing(flashAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
+        ]),
+        { iterations: 3 } // Pulse 3 times
+      );
+      pulseSequence.start();
+    }
+  }, [isHighlighted]);
 
   const getCategoryColor = () => {
     const categoryColors = {
@@ -88,18 +106,21 @@ const AchievementGridItem = ({ achievement, theme, isUnlocked, onPress, userSubs
         }
       ]}
     >
-      <TouchableOpacity
-        style={[
-          styles.achievementGridTouchable,
-          { 
-            backgroundColor: '#0A0A0A',
-            borderColor: (isUnlocked && !isPremiumLocked) ? getCategoryColor() : '#1F1F1F',
-            borderWidth: 1,
-          }
-        ]}
-        onPress={onPress}
-        activeOpacity={0.7}
-      >
+      <Animated.View style={{ opacity: flashAnim }}>
+        <TouchableOpacity
+          style={[
+            styles.achievementGridTouchable,
+            { 
+              backgroundColor: '#0A0A0A',
+              borderColor: isHighlighted 
+                ? '#F59E0B' 
+                : (isUnlocked && !isPremiumLocked) ? getCategoryColor() : '#1F1F1F',
+              borderWidth: isHighlighted ? 3 : 1,
+            }
+          ]}
+          onPress={onPress}
+          activeOpacity={0.7}
+        >
         <View style={[
           styles.achievementGridCircle,
           { 
@@ -153,7 +174,8 @@ const AchievementGridItem = ({ achievement, theme, isUnlocked, onPress, userSubs
             <Ionicons name="star" size={10} color={(isUnlocked && !isPremiumLocked) ? '#000000' : '#F59E0B'} />
           </View>
         )}
-      </TouchableOpacity>
+        </TouchableOpacity>
+      </Animated.View>
     </Animated.View>
   );
 };
@@ -167,7 +189,8 @@ const CategorySection = ({
   onAchievementPress, 
   isExpanded,
   onToggleExpand,
-  userSubscriptionStatus
+  userSubscriptionStatus,
+  highlightedAchievement
 }) => {
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const heightAnim = useRef(new Animated.Value(0)).current;
@@ -258,6 +281,7 @@ const CategorySection = ({
                         isUnlocked={isAchievementUnlocked(item.id)}
                         onPress={() => onAchievementPress(item)}
                         userSubscriptionStatus={userSubscriptionStatus}
+                        isHighlighted={highlightedAchievement === item.id}
                       />
                     ))}
                     {/* Fill empty spaces */}
@@ -300,6 +324,7 @@ const AchievementsScreen = ({ navigation, route }) => {
   const [selectedAchievement, setSelectedAchievement] = useState(null);
   const [isDetailsModalVisible, setIsDetailsModalVisible] = useState(false);
   const [achievementFilter, setAchievementFilter] = useState('all'); // 'all', 'unlocked', 'remaining'
+  const [highlightedAchievement, setHighlightedAchievement] = useState(null); // For flashing newly unlocked achievements
   
   // Swipe animation
   const swipeAnim = useRef(new Animated.Value(0)).current;
@@ -317,6 +342,50 @@ const AchievementsScreen = ({ navigation, route }) => {
   // Get user subscription status
   const appContext = useAppContext();
   const userSubscriptionStatus = appContext?.userSubscriptionStatus || 'free';
+
+  // Handle navigation parameters for deep linking
+  useEffect(() => {
+    if (route?.params) {
+      const { activeTab: paramActiveTab, highlightAchievement, focusCategory } = route.params;
+      
+      // Switch to the specified tab
+      if (paramActiveTab) {
+        setActiveTab(paramActiveTab);
+        
+        // If switching to achievements tab, scroll to it
+        if (paramActiveTab === 'achievements') {
+          setTimeout(() => {
+            scrollViewRef.current?.scrollTo({ x: width, animated: true });
+          }, 100);
+        }
+      }
+      
+      // Expand the category containing the highlighted achievement
+      if (focusCategory) {
+        setExpandedCategories({ [focusCategory]: true });
+      }
+      
+      // If we have a specific achievement to highlight, set it for pulsing effect
+      if (highlightAchievement) {
+        // Set the highlighted achievement for pulsing effect
+        setHighlightedAchievement(highlightAchievement);
+        
+        // Clear the highlight after 5 seconds (3 pulses × ~1.6s each)
+        setTimeout(() => {
+          setHighlightedAchievement(null);
+        }, 5000);
+      }
+      
+      // Clear the navigation params after a longer delay to ensure scroll animation completes
+      setTimeout(() => {
+        navigation.setParams({
+          activeTab: undefined,
+          highlightAchievement: undefined,
+          focusCategory: undefined
+        });
+      }, 1000);
+    }
+  }, [route?.params, navigation]);
 
   // Stats
   const totalPoints = getTotalPoints();
@@ -359,6 +428,29 @@ const AchievementsScreen = ({ navigation, route }) => {
       setAchievementFilter('all');
       setActiveTab('achievements');
       scrollViewRef.current?.scrollTo({ x: width, animated: true });
+    }
+  };
+
+  // Test function to simulate achievement notification
+  const testAchievementNotification = (achievementId) => {
+    const achievement = ACHIEVEMENTS[achievementId];
+    if (achievement) {
+      // Create achievement object with required properties
+      const notificationData = {
+        id: achievementId,
+        title: achievement.title,
+        description: achievement.description,
+        icon: achievement.icon,
+        category: achievement.category,
+        color: achievement.category === 'strategic' ? '#2563eb' :
+               achievement.category === 'consistency' ? '#9333ea' :
+               achievement.category === 'ai' ? '#16a34a' :
+               achievement.category === 'explorer' ? '#db2777' :
+               achievement.category === 'premium' ? '#f59e0b' : '#4CAF50'
+      };
+      
+      console.log('Testing achievement notification:', notificationData);
+      showAchievementNotification(notificationData);
     }
   };
 
@@ -441,6 +533,12 @@ const AchievementsScreen = ({ navigation, route }) => {
           </View>
           <View style={styles.devButtonsRow}>
             <TouchableOpacity 
+              style={[styles.devButton, { backgroundColor: '#16a34a' }]}
+              onPress={() => testAchievementNotification('ai-apprentice')}
+            >
+              <Text style={styles.devButtonText}>Test Toast Nav</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
               style={styles.devButton}
               onPress={() => unlockTestAchievement('7-day-streak')}
             >
@@ -452,6 +550,8 @@ const AchievementsScreen = ({ navigation, route }) => {
             >
               <Text style={styles.devButtonText}>+100 Points</Text>
             </TouchableOpacity>
+          </View>
+          <View style={styles.devButtonsRow}>
             <TouchableOpacity 
               style={styles.devButton}
               onPress={async () => {
@@ -675,6 +775,7 @@ const AchievementsScreen = ({ navigation, route }) => {
               isExpanded={expandedCategories[category.id] || false}
               onToggleExpand={handleCategoryToggle}
               userSubscriptionStatus={userSubscriptionStatus}
+              highlightedAchievement={highlightedAchievement}
             />
           );
         })}

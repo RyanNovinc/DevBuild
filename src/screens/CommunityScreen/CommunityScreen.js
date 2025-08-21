@@ -28,6 +28,7 @@ import { useTheme } from '../../context/ThemeContext';
 import Confetti from '../../components/Confetti';
 import WhyJoinTabFinal from './WhyJoinTabFinal';
 import CommunityTabRevamped from './CommunityTabRevamped';
+import VerificationTabRevamped from './VerificationTabRevamped';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -1500,7 +1501,7 @@ const WhyJoinTab = ({ theme }) => {
   );
 };
 
-const VerificationTab = ({ founderCode, theme }) => {
+const VerificationTabOld = ({ founderCode, theme }) => {
   return (
     <ScrollView 
       style={[styles.tabContent, { backgroundColor: theme.background }]}
@@ -1703,7 +1704,7 @@ const VerificationTabScreen = ({ navigation }) => {
   }, []);
 
   return (
-    <VerificationTab
+    <VerificationTabRevamped
       founderCode={founderCode}
       theme={theme}
     />

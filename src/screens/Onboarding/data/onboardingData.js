@@ -473,7 +473,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Progress Tracking System",
             description: "Monitor your skill development",
-            explanation: "Seeing your improvement maintains motivation during the learning journey. This project helps you measure and document your growth, providing encouragement when progress feels slow and helping identify areas needing more attention.",
+            explanation: "Learning progress tracking may support skill development. Individual learning outcomes vary - consider personal learning style and goals.",
             tasks: [
               {
                 name: "Take photos or video of your current skill level as a baseline",
@@ -595,21 +595,21 @@ export const DOMAIN_DEFINITIONS = [
         name: "Emergency Fund",
         description: "Build financial safety net",
         icon: "shield-outline",
-        explanation: "An emergency fund prevents small financial surprises from becoming major setbacks. This goal helps you create a buffer against unexpected expenses, reducing financial stress and protecting your longer-term financial plans.",
+        explanation: "Financial professionals commonly recommend emergency funds as part of comprehensive financial planning. Individual financial needs vary significantly - consult qualified financial advisors for guidance appropriate to your circumstances.",
         projects: [
           {
             name: "Savings Automation",
             description: "Create systematic savings process",
-            explanation: "Automated saving removes the need for ongoing willpower. This project helps you establish systems that consistently build your emergency fund without requiring repeated decisions or discipline.",
+            explanation: "Systematic saving approaches are commonly discussed by financial professionals. Individual savings strategies should be developed with qualified financial advisors who can assess your circumstances.",
             tasks: [
               {
-                name: "Open a separate savings account specifically for your emergency fund",
+                name: "Consider opening a separate savings account for emergency funds (consult financial advisor)",
                 summary: "Open emergency fund account",
                 timeframe: "Bank setup - 30 mins",
                 completed: false
               },
               {
-                name: "Set up an automatic transfer of a specific amount on each payday",
+                name: "Consider automated savings options (discuss with financial advisor)",
                 summary: "Automate emergency savings",
                 timeframe: "Banking setup - 15 mins",
                 completed: false
@@ -619,16 +619,16 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Expense Reduction Plan",
             description: "Find ways to increase savings rate",
-            explanation: "Reducing unnecessary expenses is often easier than increasing income. This project helps you identify and eliminate spending that provides little value, accelerating your progress toward financial security.",
+            explanation: "Expense analysis is one approach some people consider for budget management. Financial planning strategies should be developed with qualified financial professionals for personalized guidance.",
             tasks: [
               {
-                name: "Review last month's bank and credit card statements to identify unnecessary expenses",
+                name: "Consider reviewing spending patterns (consult financial advisor for guidance)",
                 summary: "Analyze spending patterns",
                 timeframe: "Financial review - 45 mins",
                 completed: false
               },
               {
-                name: "Cancel one subscription or service you don't fully utilise",
+                name: "Consider evaluating subscription services (seek financial advisor input)",
                 summary: "Cancel unused subscription",
                 timeframe: "Account management - 10 mins",
                 completed: false
@@ -641,21 +641,21 @@ export const DOMAIN_DEFINITIONS = [
         name: "Debt Reduction",
         description: "Systematically reduce financial obligations",
         icon: "trending-down-outline",
-        explanation: "Debt payments limit your financial freedom and future options. This goal helps you strategically reduce what you owe, lowering financial stress and freeing up resources for saving and investing.",
+        explanation: "Debt management strategies are commonly discussed by financial professionals. Individual debt situations vary - consult qualified financial advisors for personalized debt management guidance.",
         projects: [
           {
             name: "Debt Assessment & Strategy",
             description: "Create a comprehensive debt payoff plan",
-            explanation: "A clear picture of your debt enables strategic payoff decisions. This project helps you develop a complete understanding of your debt situation and create an efficient plan to address it.",
+            explanation: "Debt analysis is one approach some people consider. Debt management strategies should be developed with qualified financial professionals who can assess individual circumstances.",
             tasks: [
               {
-                name: "Create a spreadsheet listing all debts with amounts, interest rates, and minimum payments",
+                name: "Consider debt analysis approaches (consult financial advisor for guidance)",
                 summary: "Create debt inventory",
                 timeframe: "Financial tracking - 30 mins",
                 completed: false
               },
               {
-                name: "Calculate how much extra you can put toward your highest-priority debt each month",
+                name: "Consider debt payment planning (seek financial advisor input)",
                 summary: "Calculate extra payments",
                 timeframe: "Budget analysis - 15 mins",
                 completed: false
@@ -665,16 +665,16 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Payment Optimization",
             description: "Make your debt payments more effective",
-            explanation: "How you structure your payments significantly impacts your progress. This project helps you make each payment more impactful, helping you become debt-free faster and with less total interest paid.",
+            explanation: "Payment approaches vary by individual circumstances. Debt payment strategies should be developed with qualified financial advisors for guidance appropriate to your situation.",
             tasks: [
               {
-                name: "Call one creditor to negotiate a lower interest rate",
+                name: "Consider discussing rates with creditors (consult financial advisor first)",
                 summary: "Negotiate interest rate",
                 timeframe: "Phone negotiation - 30 mins",
                 completed: false
               },
               {
-                name: "Set up automatic payments for all monthly debt obligations",
+                name: "Consider payment automation options (discuss with financial advisor)",
                 summary: "Automate debt payments",
                 timeframe: "Payment setup - 20 mins",
                 completed: false
@@ -687,15 +687,15 @@ export const DOMAIN_DEFINITIONS = [
         name: "Retirement Planning",
         description: "Prepare for long-term financial security",
         icon: "time-outline",
-        explanation: "Today's decisions shape your financial future decades from now. This goal helps you build resources for your later years, providing security and options rather than limitations and stress as you age.",
+        explanation: "Long-term financial planning is commonly recommended by financial professionals. Retirement planning needs vary significantly by individual circumstances - consult qualified financial advisors for personalized guidance.",
         projects: [
           {
             name: "Retirement Account Optimization",
             description: "Maximize retirement savings",
-            explanation: "Tax-advantaged accounts are powerful tools for long-term saving. This project helps you make the most effective use of retirement accounts, significantly increasing the growth of your investments over time.",
+            explanation: "Retirement account options vary by jurisdiction and individual circumstances. Consult qualified financial advisors to understand tax-advantaged account options appropriate for your situation.",
             tasks: [
               {
-                name: "Review your current retirement account contributions and increase by 1%",
+                name: "Consider retirement planning options (consult financial advisor)",
                 summary: "Increase retirement savings",
                 timeframe: "Account adjustment - 15 mins",
                 completed: false
@@ -711,16 +711,16 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Long-term Financial Roadmap",
             description: "Plan for future financial needs",
-            explanation: "Retirement planning requires understanding your future needs. This project helps you develop clarity about your financial destination, making your current saving and investing decisions more purposeful and effective.",
+            explanation: "Retirement planning approaches vary by individual circumstances and goals. Consult qualified financial advisors for guidance on long-term financial planning appropriate to your situation.",
             tasks: [
               {
-                name: "Use an online retirement calculator to estimate your retirement needs",
+                name: "Consider retirement planning tools (discuss with financial advisor)",
                 summary: "Calculate retirement needs",
                 timeframe: "Online planning - 20 mins",
                 completed: false
               },
               {
-                name: "Research one additional investment vehicle for retirement savings",
+                name: "Consider investment education (consult financial advisor for guidance)",
                 summary: "Research investment options",
                 timeframe: "Financial research - 30 mins",
                 completed: false
@@ -960,7 +960,7 @@ export const DOMAIN_DEFINITIONS = [
             explanation: "Financial giving extends your impact beyond your personal time limits. This project helps you develop a thoughtful approach to sharing resources with organizations making a difference in areas you value.",
             tasks: [
               {
-                name: "Determine a specific percentage or amount of income to donate to causes you care about",
+                name: "Learn about charitable giving concepts and approaches (consult financial advisor for guidance)",
                 summary: "Set giving budget",
                 timeframe: "Financial planning - 20 mins",
                 completed: false

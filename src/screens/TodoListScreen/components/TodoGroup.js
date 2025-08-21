@@ -44,8 +44,9 @@ const TodoGroup = memo(({
   canAddMoreTodos,
   showFeatureLimitBanner
 }) => {
-  // State for adding subtasks
+  // State for adding subtasks and selection
   const [addingSubtask, setAddingSubtask] = useState(false);
+  const [isSelected, setIsSelected] = useState(false);
   
   // Animation values with useRef to prevent recreating on each render
   const fadeAnim = useRef(new Animated.Value(isExpanded ? 1 : 0)).current;
@@ -109,6 +110,17 @@ const TodoGroup = memo(({
   
   // Handle expansion toggle with animation
   const handleExpand = useCallback(() => {
+    // If selected, don't expand - just deselect
+    if (isSelected) {
+      setIsSelected(false);
+      return;
+    }
+    
+    // If completed, don't expand - completed groups show delete button
+    if (group.completed) {
+      return;
+    }
+    
     // Configure layout animation for smooth height transition
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     
@@ -116,7 +128,25 @@ const TodoGroup = memo(({
     if (onToggleExpansion) {
       onToggleExpansion();
     }
-  }, [onToggleExpansion]);
+  }, [onToggleExpansion, isSelected, group.completed]);
+
+  // Handle long press to select the group
+  const handleLongPressGroup = useCallback(() => {
+    setIsSelected(!isSelected);
+    
+    // Also call the original onLongPress if provided
+    if (onLongPress) {
+      onLongPress(group);
+    }
+  }, [onLongPress, group, isSelected]);
+
+  // Handle delete button press
+  const handleDelete = useCallback(() => {
+    if (onDelete) {
+      onDelete(group.id);
+    }
+    setIsSelected(false);
+  }, [onDelete, group.id]);
   
   // Handle adding a subtask with zero-flash optimization
   const handleAddSubtask = useCallback(() => {
@@ -300,17 +330,23 @@ const TodoGroup = memo(({
               shadowOpacity: 0.1,
               shadowRadius: 2,
               elevation: group.completed ? 0 : 2,
+              // Add selection styling
+              ...(isSelected && {
+                backgroundColor: `${theme.primary}20`,
+                borderColor: theme.primary,
+                borderWidth: 2,
+              })
             }
           ]}
           onPress={handleExpand}
-          onLongPress={handleLongPress}
+          onLongPress={handleLongPressGroup}
           delayLongPress={500}
           activeOpacity={0.8}
           accessible={true}
           accessibilityRole="button"
-          accessibilityLabel={`${group.title} group, ${isExpanded ? 'expanded' : 'collapsed'}, ${group.completed ? 'completed' : 'not completed'}`}
-          accessibilityHint={isExpanded ? "Collapse group" : "Expand group"}
-          accessibilityState={{ expanded: isExpanded, checked: group.completed }}
+          accessibilityLabel={`${group.title} group, ${isExpanded ? 'expanded' : 'collapsed'}, ${group.completed ? 'completed' : 'not completed'}${isSelected ? ', selected' : ''}`}
+          accessibilityHint={(isSelected || group.completed) ? "Tap to deselect or use delete button" : (isExpanded ? "Collapse group" : "Expand group")}
+          accessibilityState={{ expanded: isExpanded, checked: group.completed, selected: isSelected }}
         >
           {/* Checkbox */}
           <TouchableOpacity 
@@ -350,7 +386,6 @@ const TodoGroup = memo(({
                 fontWeight: '600'
               }
             ]}
-            numberOfLines={1}
             maxFontSizeMultiplier={1.8}
           >
             {group.title}
@@ -382,34 +417,35 @@ const TodoGroup = memo(({
             </Text>
           </View>
           
-          {/* Add Subtask Button */}
-          <TouchableOpacity
-            style={localStyles.addSubtaskButton}
-            onPress={handleAddSubtask}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            disabled={addingSubtask}
-            accessible={true}
-            accessibilityRole="button"
-            accessibilityLabel="Add subtask"
-            accessibilityHint="Opens input to add a new subtask to this group"
-          >
-            <Ionicons 
-              name="add-outline" 
-              size={20} 
-              color={theme.textSecondary} 
-            />
-          </TouchableOpacity>
           
-          {/* Expand Indicator */}
-          <Animated.View style={{
-            transform: [{ rotate }]
-          }}>
-            <Ionicons 
-              name="chevron-forward" 
-              size={20} 
-              color={theme.textSecondary} 
-            />
-          </Animated.View>
+          {/* Expand Indicator or Delete Button */}
+          {(isSelected || group.completed) ? (
+            <TouchableOpacity
+              style={localStyles.deleteButton}
+              onPress={handleDelete}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Delete group"
+              accessibilityHint="Delete this group and all its tasks"
+            >
+              <Ionicons 
+                name="trash-outline" 
+                size={20} 
+                color={theme.error || '#FF3B30'} 
+              />
+            </TouchableOpacity>
+          ) : (
+            <Animated.View style={{
+              transform: [{ rotate }]
+            }}>
+              <Ionicons 
+                name="chevron-forward" 
+                size={20} 
+                color={theme.textSecondary} 
+              />
+            </Animated.View>
+          )}
         </TouchableOpacity>
       </Swipeable>
       
@@ -608,6 +644,10 @@ const localStyles = StyleSheet.create({
   addTaskText: {
     fontSize: 12,
     fontWeight: '500',
+  },
+  deleteButton: {
+    padding: 8,
+    marginHorizontal: 4,
   },
 });
 

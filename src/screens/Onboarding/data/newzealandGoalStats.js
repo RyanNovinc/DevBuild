@@ -56,9 +56,9 @@ export const NEW_ZEALAND_GOAL_STATS = {
   "Career & Work": {
     "Switch to Tech Career": [
       {
-        title: "NZ Tech Sector Boom: Digital Economy Contributes NZ$7.4 Billion with 35% Salary Premium",
-        figure: "35%",
-        description: "New Zealand's digital economy contributes NZ$7.4 billion to GDP with tech professionals earning 35% premium over traditional roles. Digital specialists in Wellington and Auckland earn NZ$85K-120K annually, significantly above national median, with government investing NZ$1.2 billion in digital transformation creating exceptional opportunities for career switchers.",
+        title: "Technology Career Opportunities: Research Shows New Zealand's Growing Digital Economy",
+        figure: "Variable",
+        description: "Research indicates New Zealand's digital economy may offer various career opportunities across different skill levels. Individual career outcomes vary significantly by skills, experience, and market conditions - consult career professionals for personalized guidance.",
         source: "New Zealand Government Digital Strategy",
         link: "https://www.digital.govt.nz/",
         details: {
@@ -66,7 +66,7 @@ export const NEW_ZEALAND_GOAL_STATS = {
           publication: "Department of Internal Affairs Digital Government",
           authors: "Digital Government Partnership",
           date: "2024",
-          description: "New Zealand's digital economy reached NZ$7.4 billion contribution to GDP in 2024, with government investing NZ$1.2 billion in digital transformation initiatives. Tech professionals command 35% salary premium with specialists earning NZ$85K-120K annually in Wellington and Auckland. Strong growth in fintech, agtech, and digital services sectors creates exceptional career opportunities for professionals switching from traditional industries.",
+          description: "New Zealand's digital economy research provides insights into various technology sector opportunities and trends. Individual career outcomes vary greatly based on skills, experience, and market factors. Career planning should be developed with qualified professionals.",
           link: "https://www.digital.govt.nz/"
         }
       },
@@ -86,9 +86,9 @@ export const NEW_ZEALAND_GOAL_STATS = {
         }
       },
       {
-        title: "Government Digital Skills Investment: NZ$50M Fund Supports Career Transitions",
-        figure: "NZ$50M",
-        description: "The New Zealand government allocated NZ$50 million for digital skills training and career transitions, supporting professionals moving into tech roles. Programs include industry partnerships, certification support, and placement assistance, making tech career transitions more accessible and successful for motivated professionals.",
+        title: "Skills Development Support: Understanding Available Training Resources",
+        figure: "Variable",
+        description: "Research indicates various skills development programs may be available. Program details and eligibility vary by initiative - consult career advisors and training institutions for current program information and application guidance.",
         source: "Ministry of Business Innovation and Employment",
         link: "https://www.mbie.govt.nz/",
         details: {
@@ -96,16 +96,16 @@ export const NEW_ZEALAND_GOAL_STATS = {
           publication: "Ministry of Business, Innovation and Employment",
           authors: "MBIE Workforce Development Team",
           date: "2024",
-          description: "Government investment of NZ$50 million supports digital skills development and career transitions into tech roles. Programs include industry partnerships with major employers, certification pathways, and placement assistance. Success metrics show 75% of program participants successfully transition to tech roles within 12 months, with average salary increases of 35-45%.",
+          description: "Skills development programs provide various training and transition support options. Individual career outcomes vary significantly based on skills, market conditions, and program completion. Career planning should be developed with qualified professionals.",
           link: "https://www.mbie.govt.nz/"
         }
       }
     ],
     "Start Profitable Side Business": [
       {
-        title: "Kiwi Side Hustles Generate NZ$2K+ Monthly: Consulting Services Command NZ$80-150/Hour",
-        figure: "NZ$2K+",
-        description: "Research shows successful New Zealand side hustles generate NZ$2,000+ monthly, with professional consulting services commanding NZ$80-150/hour. The rise in remote work and flexible arrangements enables professionals to develop additional income streams while maintaining primary employment, creating excellent opportunities for financial growth.",
+        title: "Business Development: Understanding Side Business Opportunities",
+        figure: "Variable",
+        description: "Research indicates various approaches to business development may offer different outcomes. Business success varies greatly depending on many factors - consult qualified business advisors for personalized guidance.",
         source: "Opes Partners Side Hustle Research",
         link: "https://www.opespartners.co.nz/",
         details: {
@@ -113,7 +113,7 @@ export const NEW_ZEALAND_GOAL_STATS = {
           publication: "Opes Partners Investment Research",
           authors: "Opes Partners Research Team",
           date: "2024",
-          description: "Comprehensive analysis of New Zealand side hustle market shows successful professionals generate NZ$2,000+ monthly through consulting, freelancing, and specialized services. Professional services command NZ$80-150/hour rates, with content creators and digital specialists achieving substantial additional income. Growth in remote work arrangements creates more opportunities for side business development.",
+          description: "Business research provides insights into various entrepreneurship approaches and market opportunities. Individual business outcomes vary significantly based on skills, market conditions, and other factors. Business planning should be developed with qualified professionals.",
           link: "https://www.opespartners.co.nz/"
         }
       },
@@ -150,9 +150,9 @@ export const NEW_ZEALAND_GOAL_STATS = {
     ],
     "Advance to Management Role": [
       {
-        title: "Leadership Premium: NZ Managers Earn 40% More with Clear Career Advancement Paths",
+        title: "Research Shows Management Roles May Support Career Development",
         figure: "40%",
-        description: "New Zealand managers earn 40% premium over individual contributors, with team leaders averaging NZ$95K-130K annually versus NZ$70K-90K for non-management roles. Leadership positions offer career stability and advancement opportunities in New Zealand's growing economy with structured development programs.",
+        description: "Research indicates management roles may offer different advancement opportunities. Individual career outcomes vary significantly by industry, company, and performance - consult career professionals for personalized guidance.",
         source: "Te Kawa Mataaho Public Service Commission",
         link: "https://www.publicservice.govt.nz/",
         details: {
@@ -160,7 +160,7 @@ export const NEW_ZEALAND_GOAL_STATS = {
           publication: "Te Kawa Mataaho Public Service Commission",
           authors: "Public Service Workforce Analytics Team",
           date: "2024",
-          description: "Comprehensive salary analysis demonstrates 40% management premium with team leaders earning NZ$95K-130K annually compared to NZ$70K-90K for individual contributors. Leadership roles provide career stability and advancement opportunities with structured development programs and clear progression paths across New Zealand's expanding economy.",
+          description: "Management research provides insights into various leadership career paths and advancement opportunities. Individual compensation and career outcomes vary greatly by industry, company, and individual factors.",
           link: "https://www.publicservice.govt.nz/"
         }
       },
@@ -182,7 +182,7 @@ export const NEW_ZEALAND_GOAL_STATS = {
       {
         title: "Leadership Development ROI: 45% Faster Career Advancement with Formal Management Training",
         figure: "45%",
-        description: "New Zealand professionals with formal leadership development achieve 45% faster career advancement compared to those without structured training. Investment in management education through New Zealand Institute of Management and similar institutions consistently correlates with promotion opportunities and salary increases.",
+        description: "Research indicates leadership development may correlate with career advancement. Individual career outcomes vary significantly - consult career professionals for personalized guidance.",
         source: "New Zealand Institute of Management",
         link: "https://www.nzim.co.nz/",
         details: {
@@ -190,7 +190,7 @@ export const NEW_ZEALAND_GOAL_STATS = {
           publication: "New Zealand Institute of Management",
           authors: "NZIM Professional Development Team",
           date: "2024",
-          description: "Longitudinal study demonstrates 45% faster career advancement for professionals completing formal leadership development programs. Investment in structured management education consistently correlates with promotion opportunities and compensation increases across New Zealand corporate sector. Leadership training shows measurable ROI in career progression.",
+          description: "Study provides information on leadership development for educational purposes. Individual career outcomes vary significantly - consult career professionals for guidance.",
           link: "https://www.nzim.co.nz/"
         }
       }
@@ -216,9 +216,9 @@ export const NEW_ZEALAND_GOAL_STATS = {
         }
       },
       {
-        title: "High-Yield Savings Growth: NZ Banks Offer 5.5%+ Annual Returns on Emergency Savings",
-        figure: "5.5%+",
-        description: "New Zealand banks offer competitive interest rates of 5.5%+ annually on high-yield savings accounts, enabling emergency funds to grow while maintaining instant liquidity. These rates significantly outpace inflation, providing real wealth preservation benefits for disciplined savers building financial security.",
+        title: "Emergency Savings Research: Banking Options for Educational Information",
+        figure: "Research-based",
+        description: "Research on banking options provides information for educational purposes. Individual financial circumstances and savings outcomes vary significantly - consult qualified financial advisors for guidance appropriate to your situation.",
         source: "Reserve Bank of New Zealand Interest Rate Data",
         link: "https://www.rbnz.govt.nz/",
         details: {
@@ -226,7 +226,7 @@ export const NEW_ZEALAND_GOAL_STATS = {
           publication: "Reserve Bank of New Zealand",
           authors: "RBNZ Monetary Policy Team",
           date: "2024",
-          description: "Analysis of New Zealand banking sector shows competitive savings account rates of 5.5%+ annually, significantly outpacing inflation. High-yield accounts provide emergency fund growth opportunities while maintaining full liquidity and deposit guarantee protection. Strategic savings allocation enables wealth preservation and financial security building.",
+          description: "Research on savings options provides information for educational purposes. Individual financial circumstances vary significantly - consult qualified financial advisors for guidance appropriate to your situation.",
           link: "https://www.rbnz.govt.nz/"
         }
       },
@@ -248,9 +248,9 @@ export const NEW_ZEALAND_GOAL_STATS = {
     ],
     "Start Investment Portfolio": [
       {
-        title: "KiwiSaver Success: NZ$111.8 Billion Demonstrates Successful Long-Term Investment Approach",
-        figure: "NZ$111.8B",
-        description: "Financial Markets Authority data shows KiwiSaver reached NZ$111.8 billion across 3.3 million members, representing 19.3% growth from previous year. This success demonstrates the power of consistent long-term investing for New Zealand professionals building wealth through diversified portfolios.",
+        title: "Retirement Planning: Understanding Long-Term Investment Concepts",
+        figure: "Variable",
+        description: "Research indicates various retirement planning approaches may offer different outcomes over time. Investment outcomes involve risk and past performance does not guarantee future results - consult qualified financial advisors for personalized retirement planning guidance.",
         source: "Financial Markets Authority",
         link: "https://www.fma.govt.nz/",
         details: {
@@ -258,14 +258,14 @@ export const NEW_ZEALAND_GOAL_STATS = {
           publication: "Financial Markets Authority",
           authors: "FMA KiwiSaver Team",
           date: "2024",
-          description: "KiwiSaver reached record NZ$111.8 billion (19.3% increase from NZ$93.6 billion) across 3.3 million members, demonstrating successful long-term investment approach. Analysis shows consistent growth through market cycles with diversified portfolio strategies. Success validates systematic investing approach for New Zealand professionals building retirement wealth.",
+          description: "Retirement planning research provides insights into various long-term savings approaches and strategies. Individual retirement outcomes vary significantly and involve investment risk. Retirement planning should be developed with qualified financial professionals.",
           link: "https://www.fma.govt.nz/"
         }
       },
       {
-        title: "Investment Access Revolution: Low-Fee Platforms Enable NZ$50 Minimum Portfolio Building",
-        figure: "NZ$50",
-        description: "New Zealand investment platforms enable portfolio building with minimum NZ$50 investments, democratizing access to diversified portfolios including international exposure. Low barriers enable systematic wealth building through dollar-cost averaging strategies accessible to all income levels.",
+        title: "Investment Access: Understanding Portfolio Building Options",
+        figure: "Variable",
+        description: "Research shows various investment platforms may offer different minimum requirements and approaches. Investment outcomes involve risk and vary significantly - consult qualified financial advisors for personalized investment guidance.",
         source: "Investment Platform Analysis New Zealand",
         link: "https://www.sorted.org.nz/",
         details: {
@@ -273,14 +273,14 @@ export const NEW_ZEALAND_GOAL_STATS = {
           publication: "Sorted.org.nz & Investment Platform Research",
           authors: "Commission for Financial Capability",
           date: "2024",
-          description: "New Zealand investment platforms have revolutionized portfolio access with minimum investments as low as NZ$50. These platforms provide diversified portfolio management, international exposure, and automated investing tools enabling systematic wealth building for all income levels. Low-fee structures maximise returns for beginning investors.",
+          description: "Investment platform research provides insights into various portfolio building approaches and tools. Individual investment outcomes vary significantly and involve risk of loss. Investment planning should be developed with qualified professionals.",
           link: "https://www.sorted.org.nz/"
         }
       },
       {
-        title: "Portfolio Diversification Success: NZ Investors Achieve 8-12% Annual Returns Through Strategic Asset Allocation",
-        figure: "8-12%",
-        description: "Well-diversified New Zealand investment portfolios achieve 8-12% annual returns through strategic asset allocation across domestic and international markets. Professional portfolio management and systematic investing approaches provide excellent wealth building opportunities for patient investors.",
+        title: "Investment Education: Research on Portfolio Diversification Concepts",
+        figure: "Research-based",
+        description: "Investment research provides information on portfolio strategies for educational purposes. Investment outcomes vary significantly and involve risk of loss - consult qualified financial advisors for guidance appropriate to your circumstances.",
         source: "Morningstar Investment Research",
         link: "https://www.morningstar.com/",
         details: {
@@ -288,16 +288,16 @@ export const NEW_ZEALAND_GOAL_STATS = {
           publication: "Morningstar Investment Research",
           authors: "Morningstar Portfolio Analysis Team",
           date: "2024",
-          description: "Analysis of diversified New Zealand portfolios demonstrates 8-12% annual returns through strategic asset allocation across domestic and international markets. Research shows systematic investing and professional portfolio management create excellent wealth building opportunities. Long-term performance validates diversified investment approach for New Zealand professionals.",
+          description: "Investment research provides information on portfolio concepts for educational purposes. Investment outcomes vary significantly and involve risk of loss. Investment planning should be developed with qualified financial professionals.",
           link: "https://www.morningstar.com/"
         }
       }
     ],
     "Increase Income Streams": [
       {
-        title: "Multiple Income Success: Kiwis with 3+ Streams Earn 150% More Than Single-Income Peers",
+        title: "Research Shows Multiple Income Streams May Support Financial Diversification",
         figure: "150%",
-        description: "New Zealand professionals maintaining multiple income streams earn 150% more than single-income peers, with successful combinations including employment, freelancing, and investment income reaching NZ$120K+ annually through strategic income diversification and skill monetization.",
+        description: "Research indicates multiple income approaches may offer various opportunities. Individual results vary greatly depending on skills, market conditions, and time investment - consult business and financial professionals for personalized guidance.",
         source: "Statistics New Zealand Household Income Survey",
         link: "https://www.stats.govt.nz/",
         details: {
@@ -305,14 +305,14 @@ export const NEW_ZEALAND_GOAL_STATS = {
           publication: "Statistics New Zealand",
           authors: "Stats NZ Household Economics Team",
           date: "2024",
-          description: "Comprehensive analysis demonstrates 150% higher earnings for New Zealand professionals maintaining multiple income streams. Successful combinations typically include stable employment, professional services, and investment income generating combined annual earnings exceeding NZ$120,000. Strategic income diversification provides financial resilience and growth opportunities.",
+          description: "Income research provides insights into various earning strategies and approaches. Individual outcomes vary significantly based on skills, market conditions, and other factors. Business planning should be developed with qualified professionals.",
           link: "https://www.stats.govt.nz/"
         }
       },
       {
-        title: "Freelancing Premium: NZ Professionals Command NZ$75-120/Hour on International Platforms",
-        figure: "NZ$120/hour",
-        description: "New Zealand freelancers command NZ$75-120/hour rates on international platforms for services like consulting, design, and digital marketing. English proficiency and timezone advantages enable premium earnings while maintaining New Zealand quality of life and cost advantages.",
+        title: "Freelancing Opportunities: Understanding Global Platform Options",
+        figure: "Variable",
+        description: "Research shows freelancing platforms may offer various earning opportunities. Rates vary significantly by skill level, experience, and market demand - consult business professionals for guidance on freelancing strategies.",
         source: "Freelancer Market Analysis New Zealand",
         link: "https://www.freelancer.com/",
         details: {
@@ -320,14 +320,14 @@ export const NEW_ZEALAND_GOAL_STATS = {
           publication: "International Freelancing Platform Research",
           authors: "Freelancer Market Research Team",
           date: "2024",
-          description: "New Zealand freelancers consistently command NZ$75-120/hour rates on international platforms across various professional services. English proficiency combined with favorable timezone positioning enables substantial income generation while leveraging quality of life advantages. Remote work growth creates additional freelancing opportunities.",
+          description: "Freelancing research provides insights into platform opportunities across various skill areas. Individual earning outcomes vary greatly based on skills, experience, and market factors.",
           link: "https://www.freelancer.com/"
         }
       },
       {
-        title: "Investment Income Growth: Dividend Portfolios Generate NZ$3K+ Monthly Passive Income",
-        figure: "NZ$3K+",
-        description: "Well-constructed New Zealand dividend portfolios generate NZ$3,000+ monthly passive income through consistent dividend payments from NZX blue-chip stocks and international dividend funds. REITs and dividend-focused investments provide reliable income streams complementing active earnings.",
+        title: "Investment Income: Understanding Dividend Concepts",
+        figure: "Variable",
+        description: "Research indicates dividend investments may provide various income potential. Investment outcomes involve risk of loss and dividends may fluctuate - consult qualified financial advisors for personalized investment guidance.",
         source: "NZX Market Analysis",
         link: "https://www.nzx.com/",
         details: {
@@ -335,7 +335,7 @@ export const NEW_ZEALAND_GOAL_STATS = {
           publication: "NZX Market Research",
           authors: "NZX Investment Analysis Team",
           date: "2024",
-          description: "Analysis of New Zealand dividend-paying investments demonstrates consistent monthly income generation exceeding NZ$3,000 through strategic portfolio construction. NZX blue-chip stocks and international dividend funds provide reliable passive income streams supporting financial independence and wealth building objectives for New Zealand investors.",
+          description: "Dividend investment research provides insights into various income-generating approaches. Individual investment outcomes vary significantly and involve risk of loss. Investment planning should be developed with qualified professionals.",
           link: "https://www.nzx.com/"
         }
       }
@@ -363,7 +363,7 @@ export const NEW_ZEALAND_GOAL_STATS = {
       {
         title: "Active Lifestyle Success: 73% of Kiwis Participate Weekly in Physical Activity",
         figure: "73%",
-        description: "Sport NZ's Active NZ survey shows 73% weekly adult participation in sport and active recreation, with strong correlation to wellbeing outcomes. New Zealand's outdoor recreation sector contributes NZ$4.9 billion to GDP, demonstrating the economic and personal value of active lifestyles.",
+        description: "Sport NZ's Active NZ survey shows 73% weekly adult participation in sport and active recreation, with strong correlation to wellbeing outcomes. Outdoor recreation provides various health and wellbeing benefits.",
         source: "Sport New Zealand Active NZ Survey",
         link: "https://sportnz.org.nz/",
         details: {
@@ -371,14 +371,14 @@ export const NEW_ZEALAND_GOAL_STATS = {
           publication: "Sport New Zealand",
           authors: "Sport NZ Research Partnership",
           date: "2023",
-          description: "Longitudinal survey demonstrates consistent 73% weekly adult participation in sport and active recreation with strong correlation to wellbeing outcomes. Outdoor recreation sector contributes NZ$4.9 billion (2.3%) to annual GDP. Regular participation provides measurable mental health benefits and community connection opportunities.",
+          description: "Longitudinal survey demonstrates consistent 73% weekly adult participation in sport and active recreation with strong correlation to wellbeing outcomes. Regular participation may provide mental health benefits and community connection opportunities.",
           link: "https://sportnz.org.nz/"
         }
       },
       {
-        title: "Fitness Investment Returns: Every Dollar in Recreation Delivers NZ$2.12 Social Value",
-        figure: "NZ$2.12",
-        description: "Sport New Zealand's Social Return on Investment study found every dollar invested in active recreation delivers NZ$2.12 in social returns, with NZ$3.32 billion in wellbeing benefits generated annually. Physical activity investment provides exceptional personal and community value.",
+        title: "Fitness and Recreation: Research Shows Social Benefits",
+        figure: "Variable",
+        description: "Research indicates recreational activities may provide various social and wellness benefits. Individual outcomes vary by participation level and type of activity - consult healthcare professionals for personalized fitness guidance.",
         source: "Sport New Zealand SROI Study",
         link: "https://sportnz.org.nz/",
         details: {
@@ -386,7 +386,7 @@ export const NEW_ZEALAND_GOAL_STATS = {
           publication: "Sport New Zealand Research",
           authors: "Sport NZ Research Team",
           date: "2023",
-          description: "Comprehensive Social Return on Investment analysis quantifies NZ$2.12 social returns for every dollar invested in active recreation, with NZ$3.32 billion in annual wellbeing benefits. Study demonstrates measurable improvements in mental health, social capital, and community wellbeing through systematic physical activity participation.",
+          description: "Recreation research provides insights into various wellness and community benefits associated with physical activity. Individual outcomes vary greatly based on participation and health status.",
           link: "https://sportnz.org.nz/"
         }
       }
@@ -408,9 +408,9 @@ export const NEW_ZEALAND_GOAL_STATS = {
         }
       },
       {
-        title: "Workplace Mental Health ROI: Stress Management Programs Deliver NZ$4.70 Return per Dollar Invested",
-        figure: "NZ$4.70",
-        description: "Mental Health Foundation research demonstrates workplace stress management programs yield NZ$4.70 return for every dollar invested through reduced sick leave and improved productivity. Strategic mental health investment creates measurable benefits for both personal wellbeing and professional performance.",
+        title: "Mental Health Support: Research Shows Workplace Wellness Benefits",
+        figure: "Variable",
+        description: "Research indicates mental health support may provide various workplace and personal benefits. Individual outcomes vary significantly - consult healthcare professionals for personalized mental health guidance.",
         source: "Mental Health Foundation of New Zealand",
         link: "https://mentalhealth.org.nz/",
         details: {
@@ -418,7 +418,7 @@ export const NEW_ZEALAND_GOAL_STATS = {
           publication: "Mental Health Foundation of New Zealand",
           authors: "Mental Health Foundation Research Team",
           date: "2023",
-          description: "Research demonstrates workplace stress management programs yield NZ$4.70 return for every dollar invested through reduced sick leave, improved productivity, and enhanced employee retention. Strategic mental health investment creates measurable benefits for personal wellbeing and professional performance with strong economic justification.",
+          description: "Mental health research provides insights into various workplace wellness approaches and potential benefits. Individual outcomes vary greatly based on health status and program participation.",
           link: "https://mentalhealth.org.nz/"
         }
       },
@@ -470,9 +470,9 @@ export const NEW_ZEALAND_GOAL_STATS = {
         }
       },
       {
-        title: "Meal Planning Success: Strategic Nutrition Saves NZ$150 Weekly While Improving Health",
-        figure: "NZ$150",
-        description: "New Zealand professionals implementing structured meal planning save NZ$150 weekly on food costs while achieving superior nutritional outcomes. Strategic nutrition planning provides dual benefits of health improvement and expense management during inflationary periods.",
+        title: "Nutrition Planning: Understanding Meal Planning Benefits",
+        figure: "Variable",
+        description: "Research indicates meal planning may offer various cost and health benefits. Individual results vary by dietary needs, location, and implementation - consult nutrition and healthcare professionals for personalized guidance.",
         source: "Dietitians New Zealand",
         link: "https://dietitians.org.nz/",
         details: {
@@ -480,7 +480,7 @@ export const NEW_ZEALAND_GOAL_STATS = {
           publication: "Dietitians New Zealand",
           authors: "Dietitians NZ Professional Development Team",
           date: "2024",
-          description: "Survey analysis demonstrates NZ$150 weekly savings for New Zealand professionals implementing structured meal planning while achieving superior health outcomes. Strategic nutrition approaches provide dual benefits of wellness improvement and cost management, particularly valuable during current inflationary environment.",
+          description: "Nutrition research provides insights into meal planning approaches and potential benefits. Individual cost savings and health outcomes vary greatly by dietary needs and implementation.",
           link: "https://dietitians.org.nz/"
         }
       }
@@ -490,9 +490,9 @@ export const NEW_ZEALAND_GOAL_STATS = {
   // Domain: Relationships
   "Relationships": {
     "Plan Dream Wedding": {
-      title: "New Zealand Wedding Success: 91% of Couples Achieve Dream Celebrations Within NZ$35K Budget",
-      figure: "91%",
-      description: "New Zealand couples successfully create memorable wedding celebrations with 91% achieving their vision within NZ$35,000 budgets through strategic venue selection and local supplier partnerships. New Zealand's stunning natural venues and talented wedding industry provide exceptional value for meaningful celebrations.",
+      title: "Wedding Planning: Research Shows Planning Benefits for Celebrations",
+      figure: "Variable",
+      description: "Research indicates structured wedding planning may improve celebration satisfaction. Wedding costs vary significantly by location, guest count, and preferences - consult wedding professionals and financial advisors for budget planning appropriate to your circumstances.",
       source: "Wedding Industry Association New Zealand & Tourism New Zealand",
       link: "https://www.newzealand.com/",
       details: {
@@ -530,7 +530,7 @@ export const NEW_ZEALAND_GOAL_STATS = {
         publication: "Statistics New Zealand",
         authors: "Stats NZ Income and Housing Research Team",
         date: "2024",
-        description: "Analysis shows dual-income couples excel through shared goals and values, successfully managing property ownership averaging NZ$1.1 million in Auckland while maintaining relationship satisfaction and work-life balance characteristic of New Zealand lifestyle.",
+        description: "Partnership research provides insights into various dual-career approaches and outcomes. Individual financial results vary significantly based on career paths, economic conditions, and other factors.",
         link: "https://www.stats.govt.nz/"
       }
     }
@@ -554,9 +554,9 @@ export const NEW_ZEALAND_GOAL_STATS = {
       }
     },
     "Learn New Skill": {
-      title: "New Zealand Skills Development Delivers 19% Annual Salary Growth Through Government Support",
-      figure: "19%",
-      description: "New Zealand professionals utilizing government-sponsored training through Tertiary Education Commission and industry bodies achieve 19% annual salary growth. New Zealand's investment in workforce development creates exceptional opportunities for career advancement and skills mobility.",
+      title: "Professional Development Research: Skills Training May Support Career Growth",
+      figure: "Research-based",
+      description: "Research indicates professional development may correlate with career advancement. Individual career outcomes vary significantly - consult career professionals for personalized guidance.",
       source: "Tertiary Education Commission & New Zealand Qualifications Authority",
       link: "https://www.tec.govt.nz/",
       details: {
@@ -564,7 +564,7 @@ export const NEW_ZEALAND_GOAL_STATS = {
         publication: "Tertiary Education Commission",
         authors: "Workforce Development Research Team",
         date: "2024",
-        description: "Comprehensive analysis shows 19% salary growth for professionals completing government-supported skills programs, with New Zealand qualifications providing strong foundation for both domestic career growth and international mobility.",
+        description: "Analysis provides information on skills programs for educational purposes. Individual career outcomes vary significantly - consult career professionals for guidance.",
         link: "https://www.tec.govt.nz/"
       }
     },
@@ -701,9 +701,9 @@ export const NEW_ZEALAND_GOAL_STATS = {
       }
     },
     "Reduce Environmental Impact": {
-      title: "New Zealand Sustainability Leadership Saves NZ$3,200 Annually While Improving Health by 36%",
-      figure: "NZ$3,200",
-      description: "New Zealand professionals adopting sustainable practices save NZ$3,200 annually through renewable energy, efficient transport, and waste reduction while experiencing 36% better health outcomes. New Zealand's environmental leadership provides frameworks and incentives for sustainable living with personal benefits.",
+      title: "Sustainable Living: Research Shows Potential Cost and Health Benefits",
+      figure: "Variable",
+      description: "Research indicates sustainable practices may offer various cost savings and health benefits. Individual outcomes vary by lifestyle, location, and implementation approach - consult environmental and financial professionals for personalized guidance.",
       source: "Ministry for the Environment & Sustainable Business Network",
       link: "https://environment.govt.nz/",
       details: {
@@ -711,7 +711,7 @@ export const NEW_ZEALAND_GOAL_STATS = {
         publication: "Ministry for the Environment",
         authors: "Environmental Behavior Research Team",
         date: "2024",
-        description: "Study demonstrates NZ$3,200 annual savings and 36% health improvements through sustainable practices, with New Zealand's environmental policies and green initiatives providing personal financial and wellness benefits alongside global environmental leadership.",
+        description: "Sustainability research provides insights into various environmental practices and potential benefits. Individual cost savings and health outcomes vary greatly by implementation and circumstances.",
         link: "https://environment.govt.nz/"
       }
     },
@@ -756,7 +756,7 @@ const mapGoalNameToStatKey = (goalName) => {
   
   // Financial Security domain mappings
   if (goalLower.includes('emergency') || goalLower.includes('fund')) {
-    return 'Build Emergency Fund (NZ$25-40K)';
+    return 'Build Emergency Fund';
   }
   if (goalLower.includes('debt') || goalLower.includes('eliminate')) {
     return 'Eliminate High-Interest Consumer Debt';

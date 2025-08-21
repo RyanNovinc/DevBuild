@@ -56,9 +56,9 @@ export const SINGAPORE_GOAL_STATS = {
   "Career & Work": {
     "Switch to Tech Career": [
       {
-        title: "Singapore Tech Hub Success: Digital Economy Contributes S$106 Billion with 45% Salary Premium",
+        title: "Technology Career Opportunities: Research Shows Singapore's Digital Economy Growth",
         figure: "45%",
-        description: "Singapore tech professionals earn 45% premium over traditional roles, with digital economy contributing S$106 billion to GDP. The government's Smart Nation initiative invests S$25 billion in digital transformation, creating exceptional opportunities for career switchers.",
+        description: "Research indicates Singapore's tech sector may offer various career opportunities across different skill levels. Individual career outcomes vary significantly by skills, experience, and market conditions - consult career professionals for personalized guidance.",
         source: "Infocomm Media Development Authority",
         link: "https://www.imda.gov.sg/",
         details: {
@@ -66,7 +66,7 @@ export const SINGAPORE_GOAL_STATS = {
           publication: "Infocomm Media Development Authority",
           authors: "IMDA Industry Development Division",
           date: "2024",
-          description: "Singapore's digital economy reached S$106 billion contribution to GDP with government investing S$25 billion in Smart Nation initiatives. Tech professionals command 45% salary premium with specialists earning S$8K-15K monthly, significantly above national median. Strong growth in fintech, healthtech, and AI sectors creates exceptional career opportunities.",
+          description: "Singapore's digital economy research provides insights into various technology sector opportunities and trends. Individual career outcomes vary greatly based on skills, experience, and market factors. Career planning should be developed with qualified professionals.",
           link: "https://www.imda.gov.sg/"
         }
       },
@@ -86,9 +86,9 @@ export const SINGAPORE_GOAL_STATS = {
         }
       },
       {
-        title: "SkillsFuture Enhancement: S$15,000 Credit Supports Tech Career Transitions",
-        figure: "S$15,000",
-        description: "Singapore's SkillsFuture program provides up to S$15,000 in training credits for tech skill development, making career transitions accessible and successful. Enhanced programs include industry mentorship, certification pathways, and placement assistance.",
+        title: "Skills Development Support: Understanding Available Training Resources",
+        figure: "Variable",
+        description: "Research indicates various skills development programs may be available. Program details and eligibility vary by initiative - consult career advisors and training institutions for current program information and application guidance.",
         source: "SkillsFuture Singapore",
         link: "https://www.skillsfuture.gov.sg/",
         details: {
@@ -96,7 +96,7 @@ export const SINGAPORE_GOAL_STATS = {
           publication: "SkillsFuture Singapore",
           authors: "SkillsFuture Research Team",
           date: "2024",
-          description: "SkillsFuture provides comprehensive support with up to S$15,000 in training credits for tech career development. Programs show 82% job placement rates within 6 months with average salary increases of 40-55% for successful career switchers entering technology roles.",
+          description: "Skills development programs provide various training and transition support options. Individual career outcomes vary significantly based on skills, market conditions, and program completion. Career planning should be developed with qualified professionals.",
           link: "https://www.skillsfuture.gov.sg/"
         }
       }
@@ -105,7 +105,7 @@ export const SINGAPORE_GOAL_STATS = {
       {
         title: "Singapore Startup Success: Highest Density of Unicorns per Capita in Southeast Asia",
         figure: "7 unicorns",
-        description: "Singapore hosts 7 unicorn startups, the highest density per capita in Southeast Asia, demonstrating exceptional entrepreneurial success. Government support through Enterprise Singapore provides grants up to S$1 million for innovative business development.",
+        description: "Research indicates various approaches to business development may offer different outcomes. Business success varies greatly depending on many factors - consult qualified business advisors for personalized guidance.",
         source: "Enterprise Singapore Startup Ecosystem Report",
         link: "https://www.enterprisesg.gov.sg/",
         details: {
@@ -113,14 +113,14 @@ export const SINGAPORE_GOAL_STATS = {
           publication: "Enterprise Singapore",
           authors: "Enterprise Singapore Research Division",
           date: "2024",
-          description: "Singapore's startup ecosystem achieved highest unicorn density per capita in Southeast Asia with 7 billion-dollar companies. Government provides comprehensive support through grants up to S$1 million, incubation programs, and international market access creating exceptional entrepreneurial opportunities.",
+          description: "Business research provides insights into various entrepreneurship approaches and support systems. Individual business outcomes vary significantly based on market conditions, skills, and other factors.",
           link: "https://www.enterprisesg.gov.sg/"
         }
       },
       {
-        title: "E-commerce Excellence: Singapore Online Businesses Generate S$24 Billion Revenue",
-        figure: "S$24B",
-        description: "Singapore e-commerce businesses generate S$24 billion annual revenue with 65% growth rate, leveraging strategic position for regional expansion. Digital trade facilitation enables seamless access to 650+ million ASEAN consumers.",
+        title: "E-commerce Excellence: Research Shows Online Business Growth",
+        figure: "Variable",
+        description: "Research indicates Singapore's e-commerce sector may offer various business opportunities through digital platforms. Individual business outcomes vary significantly and involve risk - consult business and financial professionals for guidance.",
         source: "Singapore Business Federation E-commerce Report",
         link: "https://www.sbf.org.sg/",
         details: {
@@ -128,7 +128,7 @@ export const SINGAPORE_GOAL_STATS = {
           publication: "Singapore Business Federation",
           authors: "SBF Digital Economy Team",
           date: "2024",
-          description: "Singapore e-commerce sector demonstrates exceptional growth with S$24 billion annual revenue and 65% growth rate. Strategic location enables regional expansion with government support for digital trade facilitation, providing entrepreneurs access to massive ASEAN consumer markets.",
+          description: "E-commerce research provides insights into various digital business opportunities and market approaches. Individual business outcomes vary significantly and involve risk. This information is for educational purposes only.",
           link: "https://www.sbf.org.sg/"
         }
       },
@@ -150,9 +150,9 @@ export const SINGAPORE_GOAL_STATS = {
     ],
     "Advance to Management Role": [
       {
-        title: "Leadership Premium: Singapore Managers Earn 55% More with S$12K-20K Monthly Compensation",
-        figure: "55%",
-        description: "Singapore managers earn 55% premium over individual contributors, with team leaders earning S$12K-20K monthly versus S$8K-13K for non-management roles. Leadership positions offer career stability and regional advancement opportunities.",
+        title: "Leadership Premium: Research Shows Management Role Benefits",
+        figure: "Variable",
+        description: "Research indicates management roles may offer different compensation and career opportunities compared to individual contributor positions. Individual career outcomes vary significantly - consult career professionals for guidance.",
         source: "Ministry of Manpower Singapore Salary Survey",
         link: "https://www.mom.gov.sg/",
         details: {
@@ -160,7 +160,7 @@ export const SINGAPORE_GOAL_STATS = {
           publication: "Ministry of Manpower Singapore",
           authors: "MOM Labor Market Research Division",
           date: "2024",
-          description: "Comprehensive salary analysis demonstrates 55% management premium with team leaders earning S$12K-20K monthly compared to S$8K-13K for individual contributors. Leadership roles provide career stability and regional advancement opportunities across Singapore's expanding economy.",
+          description: "Management research provides insights into various leadership role opportunities and career development approaches. Individual compensation outcomes vary greatly based on industry, company, and performance factors. This information is for educational purposes only.",
           link: "https://www.mom.gov.sg/"
         }
       },
@@ -216,9 +216,9 @@ export const SINGAPORE_GOAL_STATS = {
         }
       },
       {
-        title: "High-Yield Savings: Singapore Banks Offer 4.5% Annual Returns on Emergency Savings",
-        figure: "4.5%",
-        description: "Singapore banks offer competitive interest rates up to 4.5% annually on high-yield savings accounts, enabling emergency fund growth while maintaining instant liquidity. These rates provide inflation protection with strong regulatory oversight.",
+        title: "Emergency Savings Research: Banking Options for Educational Information",
+        figure: "Research-based",
+        description: "Research on banking options provides information for educational purposes. Individual financial circumstances and savings outcomes vary significantly - consult qualified financial advisors for guidance appropriate to your situation.",
         source: "Association of Banks in Singapore Interest Rate Analysis",
         link: "https://www.abs.org.sg/",
         details: {
@@ -226,7 +226,7 @@ export const SINGAPORE_GOAL_STATS = {
           publication: "Association of Banks in Singapore",
           authors: "ABS Market Research Team",
           date: "2024",
-          description: "Singapore banking sector offers competitive savings account rates up to 4.5% annually with strong regulatory protection under MAS oversight. High-yield accounts provide emergency fund growth opportunities while maintaining full liquidity and deposit insurance coverage.",
+          description: "Research on banking sector provides information for educational purposes. Individual financial circumstances vary significantly - consult qualified financial advisors for guidance appropriate to your situation.",
           link: "https://www.abs.org.sg/"
         }
       },
@@ -248,9 +248,9 @@ export const SINGAPORE_GOAL_STATS = {
     ],
     "Start Investment Portfolio": [
       {
-        title: "STI Success: Singapore Stock Exchange Delivers 10% Annual Returns for Long-Term Investors",
-        figure: "10%",
-        description: "Singapore Straits Times Index (STI) delivered 10% annual returns for patient investors over the past decade, significantly outpacing fixed deposit rates of 1-2%. Diversified Singapore portfolios provide excellent wealth building with strong dividend yields.",
+        title: "Investment Education: Research on Market Performance Concepts",
+        figure: "Research-based",
+        description: "Investment research provides information on market performance for educational purposes. Investment outcomes vary significantly and involve risk of loss - consult qualified financial advisors for guidance appropriate to your circumstances.",
         source: "Singapore Exchange Market Data",
         link: "https://www.sgx.com/",
         details: {
@@ -258,14 +258,14 @@ export const SINGAPORE_GOAL_STATS = {
           publication: "Singapore Exchange",
           authors: "SGX Research Division",
           date: "2024",
-          description: "Singapore Exchange demonstrates consistent long-term value creation with STI generating 10% annual returns for patient investors. Market analysis shows strong performance across banking, REIT, and telecommunications sectors with attractive dividend yields providing regular income.",
+          description: "Investment research provides information on market concepts for educational purposes. Investment outcomes vary significantly and involve risk of loss - consult qualified financial advisors for guidance appropriate to your circumstances.",
           link: "https://www.sgx.com/"
         }
       },
       {
-        title: "Investment Access Revolution: Singapore Robo-Advisors Enable S$100 Minimum Portfolio Building",
-        figure: "S$100",
-        description: "Singapore robo-advisors like StashAway and Syfe enable portfolio building with minimum S$100 investments, democratizing access to diversified portfolios including global exposure. Low barriers enable systematic wealth building through dollar-cost averaging.",
+        title: "Investment Access Revolution: Research Shows Platform Accessibility",
+        figure: "Variable",
+        description: "Research indicates Singapore investment platforms may offer various portfolio approaches with different minimum requirements. Investment outcomes involve risk and vary significantly - consult qualified financial advisors for guidance.",
         source: "Singapore Fintech Investment Platform Analysis",
         link: "https://www.mas.gov.sg/",
         details: {
@@ -273,14 +273,14 @@ export const SINGAPORE_GOAL_STATS = {
           publication: "Monetary Authority of Singapore",
           authors: "MAS Fintech Team",
           date: "2024",
-          description: "Singapore fintech investment platforms have revolutionized investment access with minimum investments as low as S$100. MAS-regulated platforms provide diversified portfolio management, global exposure, and automated investing tools enabling systematic wealth building for all income levels.",
+          description: "Investment platform research provides insights into various portfolio building approaches and tools. Individual investment outcomes vary significantly and involve risk of loss. Investment planning should be developed with qualified professionals.",
           link: "https://www.mas.gov.sg/"
         }
       },
       {
         title: "CPF Enhancement: Singapore Professionals Achieve 30% Higher Retirement Savings with Voluntary Contributions",
         figure: "30%",
-        description: "Singapore professionals making voluntary CPF contributions achieve 30% higher retirement savings compared to mandatory contributions alone. The CPF's 4-6% guaranteed returns combined with tax benefits provide powerful wealth accumulation advantages.",
+        description: "Research on retirement savings options provides information for educational purposes. Investment outcomes vary and involve risk - consult qualified financial advisors for guidance appropriate to your circumstances.",
         source: "Central Provident Fund Board Performance Report",
         link: "https://www.cpf.gov.sg/",
         details: {
@@ -288,16 +288,16 @@ export const SINGAPORE_GOAL_STATS = {
           publication: "Central Provident Fund Board",
           authors: "CPF Investment Division",
           date: "2024",
-          description: "CPF delivers consistent 4-6% guaranteed returns with voluntary contributions enabling 30% higher retirement savings accumulation. Government-backed returns combined with tax benefits provide powerful wealth building tools for Singapore professionals planning long-term financial security.",
+          description: "Research on retirement savings provides information for educational purposes. Investment outcomes vary and involve risk - consult qualified financial advisors for guidance appropriate to your circumstances.",
           link: "https://www.cpf.gov.sg/"
         }
       }
     ],
     "Increase Income Streams": [
       {
-        title: "Multiple Income Success: Singapore Professionals with 3+ Streams Earn 170% More Than Single-Income Peers",
+        title: "Research Shows Multiple Income Streams May Support Financial Diversification",
         figure: "170%",
-        description: "Singapore professionals maintaining multiple income streams earn 170% more than single-income peers, with successful combinations including employment, consulting, and investment income reaching S$15K+ monthly totals through strategic diversification.",
+        description: "Research indicates multiple income approaches may offer various opportunities. Individual results vary greatly depending on skills, market conditions, and time investment - consult business and financial professionals for personalized guidance.",
         source: "Singapore Household Income Survey",
         link: "https://www.singstat.gov.sg/",
         details: {
@@ -305,14 +305,14 @@ export const SINGAPORE_GOAL_STATS = {
           publication: "Singapore Department of Statistics",
           authors: "SingStat Household Economics Team",
           date: "2024",
-          description: "Comprehensive analysis demonstrates 170% higher earnings for Singapore professionals maintaining multiple income streams. Successful combinations typically include stable employment, professional consulting, and investment income generating combined monthly earnings exceeding S$15,000.",
+          description: "Income diversification research provides insights into various earning strategies and approaches. Individual outcomes vary significantly based on skills, market conditions, and other factors. Business planning should be developed with qualified professionals.",
           link: "https://www.singstat.gov.sg/"
         }
       },
       {
-        title: "Regional Consulting Premium: Singapore Professionals Command S$150-300/Hour for Regional Advisory",
-        figure: "S$300/hour",
-        description: "Singapore professionals leverage regional expertise to command S$150-300/hour rates for consulting services across Asia-Pacific markets. Strategic location and business hub status enable premium earnings through regional advisory work.",
+        title: "Regional Consulting Premium: Research Shows Advisory Opportunities",
+        figure: "Variable",
+        description: "Research indicates Singapore professionals may access various consulting opportunities across regional markets. Rates vary significantly by expertise, experience, and market demand - consult business professionals for guidance.",
         source: "Singapore Management Consulting Association",
         link: "https://www.smca.org.sg/",
         details: {
@@ -320,14 +320,14 @@ export const SINGAPORE_GOAL_STATS = {
           publication: "Singapore Management Consulting Association",
           authors: "SMCA Market Research Team",
           date: "2024",
-          description: "Singapore professionals consistently command S$150-300/hour rates for regional consulting services leveraging business hub advantages and cross-cultural expertise. Strategic positioning enables substantial income generation while building international business networks and expertise.",
+          description: "Consulting research provides insights into regional advisory opportunities and business development approaches. Individual consulting outcomes vary greatly based on expertise, experience, and market factors. Business decisions should be made with appropriate professional guidance.",
           link: "https://www.smca.org.sg/"
         }
       },
       {
-        title: "Investment Income Growth: Singapore REIT Portfolios Generate S$2K+ Monthly Passive Income",
-        figure: "S$2K+",
-        description: "Well-constructed Singapore REIT portfolios generate S$2K+ monthly passive income through consistent dividend payments from Asia-Pacific real estate assets. REITs provide reliable income streams complementing active earnings for financial security.",
+        title: "Investment Income Growth: Research Shows REIT Portfolio Potential",
+        figure: "Variable",
+        description: "Research indicates REIT portfolios may offer various income opportunities through different investment approaches. Investment outcomes involve risk and vary significantly - consult qualified financial advisors for guidance.",
         source: "Singapore REIT Association Analysis",
         link: "https://www.reitas.sg/",
         details: {
@@ -335,7 +335,7 @@ export const SINGAPORE_GOAL_STATS = {
           publication: "Singapore REIT Association",
           authors: "REITAS Research Team",
           date: "2024",
-          description: "Analysis of Singapore REIT investments demonstrates consistent monthly income generation exceeding S$2,000 through strategic portfolio construction. REITs provide reliable passive income streams with exposure to Asia-Pacific real estate markets supporting financial independence objectives.",
+          description: "REIT investment research provides insights into various portfolio approaches and income strategies. Individual investment outcomes vary significantly and involve risk of loss. Investment planning should be developed with qualified professionals.",
           link: "https://www.reitas.sg/"
         }
       }
@@ -470,9 +470,9 @@ export const SINGAPORE_GOAL_STATS = {
         }
       },
       {
-        title: "Meal Planning Success: Structured Nutrition Saves S$800 Monthly While Improving Health Outcomes",
-        figure: "S$800",
-        description: "Singapore professionals implementing structured meal planning save S$800 monthly on food costs while achieving superior nutritional outcomes. Strategic nutrition planning provides dual benefits of health improvement and expense management in high-cost environments.",
+        title: "Meal Planning Success: Research Shows Nutrition and Budget Benefits",
+        figure: "Variable",
+        description: "Research indicates meal planning may offer both nutritional and budget benefits. Individual outcomes vary significantly - consult nutrition and financial professionals for personalized guidance.",
         source: "Singapore Nutrition and Dietetics Association",
         link: "https://www.snda.org.sg/",
         details: {
@@ -480,7 +480,7 @@ export const SINGAPORE_GOAL_STATS = {
           publication: "Singapore Nutrition and Dietetics Association",
           authors: "SNDA Professional Development Team",
           date: "2024",
-          description: "Survey analysis demonstrates S$800 monthly savings for Singapore professionals implementing structured meal planning while achieving superior health outcomes. Strategic nutrition approaches provide dual benefits of wellness improvement and cost management in Singapore's premium dining environment.",
+          description: "Meal planning research provides insights into nutrition approaches and potential cost benefits. Individual results vary significantly based on lifestyle, preferences, and circumstances. This information is for educational purposes only.",
           link: "https://www.snda.org.sg/"
         }
       }
@@ -490,9 +490,9 @@ export const SINGAPORE_GOAL_STATS = {
   // Domain: Relationships
   "Relationships": {
     "Plan Dream Wedding": {
-      title: "Singapore Wedding Success: 89% of Couples Achieve Dream Celebrations Within S$45K Budget",
-      figure: "89%",
-      description: "Singapore couples successfully create meaningful wedding celebrations with 89% achieving their vision within S$45,000 budgets through strategic venue selection and multicultural vendor networks. Singapore's diverse wedding industry accommodates traditional and modern preferences while managing premium market costs.",
+      title: "Singapore Wedding Success: Research Shows Celebration Planning Benefits",
+      figure: "Variable",
+      description: "Research indicates Singapore couples may achieve meaningful wedding celebrations through various budget approaches and planning strategies. Individual wedding costs vary significantly - consult wedding and financial professionals for guidance.",
       source: "Singapore Department of Statistics & Urban Redevelopment Authority",
       link: "https://www.singstat.gov.sg/",
       details: {
@@ -500,7 +500,7 @@ export const SINGAPORE_GOAL_STATS = {
         publication: "Singapore Department of Statistics",
         authors: "SingStat Income and Housing Research Team",
         date: "2024",
-        description: "Analysis shows dual-income partnerships provide essential advantages in Singapore's premium economy, with combined earning power enabling property ownership and wealth building in one of the world's most expensive cities.",
+        description: "Analysis shows dual-income partnerships may provide advantages in Singapore's economy. Individual financial outcomes vary significantly - consult qualified financial advisors for guidance.",
         link: "https://www.singstat.gov.sg/"
       }
     },
@@ -539,9 +539,9 @@ export const SINGAPORE_GOAL_STATS = {
   // Domain: Personal Growth
   "Personal Growth": {
     "Develop New Professional Skills": {
-      title: "Singapore Skills Development Delivers 28% Annual Salary Growth Through SkillsFuture Initiative",
-      figure: "28%",
-      description: "Singapore professionals utilizing SkillsFuture credits and government-sponsored training achieve 28% annual salary growth. Singapore's comprehensive skills development ecosystem creates exceptional opportunities for career advancement and industry mobility in the digital economy.",
+      title: "Professional Development Research: Skills Training May Support Career Growth",
+      figure: "Research-based",
+      description: "Research indicates professional development may correlate with career advancement. Individual career outcomes vary significantly - consult career professionals for personalized guidance.",
       source: "SkillsFuture Singapore & Workforce Singapore",
       link: "https://www.skillsfuture.gov.sg/",
       details: {
@@ -549,7 +549,7 @@ export const SINGAPORE_GOAL_STATS = {
         publication: "SkillsFuture Singapore",
         authors: "Skills Development Research Team",
         date: "2024",
-        description: "Comprehensive analysis shows 28% salary growth for professionals utilizing SkillsFuture initiatives, with Singapore's investment in continuous learning creating pathways to high-value roles in finance, technology, and innovation sectors.",
+        description: "Analysis indicates SkillsFuture initiatives may support professional development opportunities in Singapore. Individual career outcomes vary significantly - consult career professionals for guidance.",
         link: "https://www.skillsfuture.gov.sg/"
       }
     },
@@ -716,9 +716,9 @@ export const SINGAPORE_GOAL_STATS = {
       }
     },
     "Reduce Environmental Impact": {
-      title: "Singapore Green Nation Saves S$3,800 Annually While Improving Health by 33%",
-      figure: "S$3,800",
-      description: "Singapore professionals adopting green nation practices save S$3,800 annually through energy efficiency, public transport, and sustainable consumption while experiencing 33% better health outcomes. Singapore's environmental leadership provides frameworks and incentives for sustainable living with personal benefits.",
+      title: "Singapore Green Nation: Research Shows Environmental Practice Benefits",
+      figure: "Variable",
+      description: "Research indicates Singapore's environmental practices may offer various efficiency benefits through energy and resource management. Individual outcomes vary significantly - consult environmental and financial professionals for personalized guidance.",
       source: "National Environment Agency & Public Utilities Board",
       link: "https://www.nea.gov.sg/",
       details: {
@@ -726,7 +726,7 @@ export const SINGAPORE_GOAL_STATS = {
         publication: "National Environment Agency",
         authors: "Sustainable Living Research Team",
         date: "2024",
-        description: "Study demonstrates S$3,800 annual savings and 33% health improvements through participation in Singapore's green initiatives, with solar adoption, water conservation, and efficient transport providing both environmental and personal financial benefits.",
+        description: "Environmental practice research provides insights into various sustainability approaches and potential efficiency benefits. Individual outcomes vary significantly based on lifestyle and local conditions. This information is for educational purposes only.",
         link: "https://www.nea.gov.sg/"
       }
     }
@@ -756,7 +756,7 @@ const mapGoalNameToStatKey = (goalName) => {
   
   // Financial Security domain mappings
   if (goalLower.includes('emergency') || goalLower.includes('fund')) {
-    return 'Build Emergency Fund (S$40-60K)';
+    return 'Build Emergency Fund (Variable Amount)';
   }
   if (goalLower.includes('debt') || goalLower.includes('eliminate')) {
     return 'Eliminate Credit Card/Personal Debt';

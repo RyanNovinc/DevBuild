@@ -1,5 +1,6 @@
 // src/screens/LifePlanOverviewScreen.js
 import React, { useState, useEffect } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { 
   View, 
   Text, 
@@ -23,6 +24,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import MinimalistContextMenu from '../components/MinimalistContextMenu';
 import MinimalistConfirmDialog from '../components/MinimalistConfirmDialog';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import AppTourOverlay from '../components/AppTourOverlay';
+import useAppTour from '../hooks/useAppTour';
 import {
   scaleWidth,
   scaleHeight,
@@ -629,7 +632,7 @@ const getTimeExpression = (goal) => {
 };
 
 // Goal Card Component
-const GoalCard = ({ goal, milestones, tasks, onExpandToggle, onEdit, onDelete, onComplete, isEditMode, expanded, onTaskComplete, onTaskDelete, onMilestoneComplete, onMilestoneEdit, onMilestoneDelete, onDrag, isActive, isDraggable = false, navigation, onMilestoneReorder, onTaskReorder }) => {
+const GoalCard = ({ goal, milestones, tasks, onExpandToggle, onEdit, onDelete, onComplete, isEditMode, expanded, onTaskComplete, onTaskDelete, onMilestoneComplete, onMilestoneEdit, onMilestoneDelete, onDrag, isActive, isDraggable = false, navigation, onMilestoneReorder, onTaskReorder, isTourMode = false, expandedMilestones: externalExpandedMilestones, onMilestoneExpandToggle }) => {
   const { theme } = useTheme();
   const goalMilestones = milestones.filter(milestone => milestone.goalId === goal.id);
   
@@ -680,7 +683,11 @@ const GoalCard = ({ goal, milestones, tasks, onExpandToggle, onEdit, onDelete, o
   // Get time information for due dates
   const timeInfo = getTimeExpression(goal);
   
-  const [expandedMilestones, setExpandedMilestones] = useState({});
+  const [internalExpandedMilestones, setInternalExpandedMilestones] = useState({});
+  
+  // Use external expandedMilestones if provided (for tour mode), otherwise use internal state
+  const expandedMilestones = externalExpandedMilestones || internalExpandedMilestones;
+  const setExpandedMilestones = onMilestoneExpandToggle || setInternalExpandedMilestones;
   const [showContextMenu, setShowContextMenu] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [longPressPosition, setLongPressPosition] = useState({ x: 0, y: 0 });
@@ -765,7 +772,7 @@ const GoalCard = ({ goal, milestones, tasks, onExpandToggle, onEdit, onDelete, o
             onExpandToggle();
           }
         }}
-        onLongPress={handleLongPress}
+        onLongPress={isTourMode ? null : handleLongPress}
         delayLongPress={500}
       >
         {/* Top Row: Domain Icon, Title and Status */}
@@ -1143,6 +1150,48 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
   const { showSuccess, showError } = useNotification();
   const { triggerFireworks, triggerConfetti } = useGlobalAnimation();
   
+  // App Tour Hook - MUST be called before any early returns
+  const { 
+    isTourActive,
+    currentStep,
+    shouldCollapseAll,
+    spotlightTarget,
+    nextStep,
+    skipTour,
+    updateGlobalTourState
+  } = useAppTour(navigation);
+  
+  // Debug logging for tour state
+  if (__DEV__) {
+    console.log('🎯 LifePlanOverviewScreen Tour State:', { 
+      isTourActive, 
+      currentStep, 
+      shouldShowOverlay: isTourActive && currentStep === 'OVERVIEW_PLAN'
+    });
+  }
+  
+  // Handle screen focus for tour overlay timing
+  useFocusEffect(
+    React.useCallback(() => {
+      if (isTourActive && currentStep === 'OVERVIEW_PLAN') {
+        console.log('🎯 LifePlanOverviewScreen: Screen focused during tour, step =', currentStep);
+        // Screen is now focused and ready for tour overlay
+      }
+    }, [isTourActive, currentStep])
+  );
+  
+  // Collapse all goals and milestones when tour requests it
+  useEffect(() => {
+    if (shouldCollapseAll && isTourActive && currentStep === 'OVERVIEW_PLAN') {
+      console.log('🎯 Tour: Collapsing all goals and milestones for clean demo start');
+      setExpandedGoals({});
+      setExpandedMilestones({});
+      
+      // Clear the collapse flag after applying
+      updateGlobalTourState({ shouldCollapseAll: false });
+    }
+  }, [shouldCollapseAll, isTourActive, currentStep]);
+  
   // Get parameters from route
   const filter = route?.params?.filter || null;
   const autoOpenAdd = route?.params?.autoOpenAdd || false;
@@ -1242,8 +1291,50 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
 
   // Local state
   const [expandedGoals, setExpandedGoals] = useState({});
+  const [expandedMilestones, setExpandedMilestones] = useState({});
   const [showAddModal, setShowAddModal] = useState(false);
   const [internalEditMode, setInternalEditMode] = useState(false);
+  
+  // Handle tour special actions
+  const handleTourSpecialAction = (action) => {
+    if (action === 'expandGoal' && processedGoals.length > 0) {
+      console.log('🎯 Tour: Expanding first goal to show milestones');
+      const firstGoal = processedGoals[0];
+      setExpandedGoals(prev => ({
+        ...prev,
+        [firstGoal.id]: true
+      }));
+    }
+    
+    if (action === 'expandMilestone' && processedGoals.length > 0) {
+      console.log('🎯 Tour: Expanding first milestone to show tasks');
+      const firstGoal = processedGoals[0];
+      
+      // Get milestones for this goal
+      const goalMilestones = firstGoal.id === 'standalone-milestones' 
+        ? standaloneMilestones 
+        : firstGoal.id === 'standalone-tasks' 
+        ? [] 
+        : milestones.filter(milestone => milestone.goalId === firstGoal.id);
+        
+      if (goalMilestones.length > 0) {
+        const firstMilestone = goalMilestones[0];
+        console.log('🎯 Tour: Expanding milestone:', firstMilestone.id);
+        setExpandedMilestones(prev => ({
+          ...prev,
+          [firstMilestone.id]: true
+        }));
+      }
+    }
+  };
+  
+  // Handle milestone expansion for tour
+  const handleMilestoneExpandToggle = (milestoneId) => {
+    setExpandedMilestones(prev => ({
+      ...prev,
+      [milestoneId]: !prev[milestoneId]
+    }));
+  };
   
   // Modern delete confirmation dialog states
   const [showFirstDeleteConfirm, setShowFirstDeleteConfirm] = useState(false);
@@ -1977,6 +2068,57 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
         destructive={true}
         icon="warning"
       />
+      
+      {/* App Tour Overlay */}
+      <AppTourOverlay
+        isVisible={isTourActive && currentStep === 'OVERVIEW_PLAN'}
+        currentStep={currentStep}
+        onComplete={nextStep}
+        onSkip={skipTour}
+        spotlightTarget={spotlightTarget}
+        onSpecialAction={handleTourSpecialAction}
+      />
+      
+      {/* Elevated Goal - rendered AFTER overlay during tour so it appears on top */}
+      {isTourActive && currentStep === 'OVERVIEW_PLAN' && processedGoals.length > 0 && (
+        <View style={styles.tourGoalContainer}>
+          <GoalCard
+            goal={processedGoals[0]}
+            milestones={processedGoals[0].id === 'standalone-milestones' ? standaloneMilestones : 
+                       processedGoals[0].id === 'standalone-tasks' ? [] : 
+                       milestones.filter(milestone => milestone.goalId === processedGoals[0].id)}
+            tasks={processedGoals[0].id === 'standalone-tasks' ? standaloneTasks : 
+                   processedGoals[0].id === 'standalone-milestones' ? [] :
+                   (() => {
+                     // Get milestones for this goal
+                     const goalMilestones = milestones.filter(m => m.goalId === processedGoals[0].id);
+                     const goalMilestoneIds = goalMilestones.map(m => m.id);
+                     // Return tasks that belong to this goal directly or via its milestones
+                     return tasks.filter(task => 
+                       task.goalId === processedGoals[0].id || 
+                       (task.projectId && goalMilestoneIds.includes(task.projectId))
+                     );
+                   })()}
+            expanded={expandedGoals[processedGoals[0].id] || false}
+            onExpandToggle={() => handleTourSpecialAction('expandGoal')}
+            onComplete={null} // Disable completion during tour
+            onEdit={null} // Disable editing during tour
+            onDelete={null} // Disable deletion during tour
+            isEditMode={false}
+            onMilestoneComplete={null} // Disable milestone completion during tour
+            onMilestoneEdit={null} // Disable milestone editing during tour
+            onMilestoneDelete={null} // Disable milestone deletion during tour
+            onTaskComplete={null} // Disable task completion during tour
+            onTaskEdit={null} // Disable task editing during tour
+            onTaskDelete={null} // Disable task deletion during tour
+            onMilestoneReorder={null} // Disable reordering during tour
+            onTaskReorder={null} // Disable reordering during tour
+            isTourMode={true} // Pass tour mode to disable other interactions
+            expandedMilestones={expandedMilestones} // Pass external milestone expansion state
+            onMilestoneExpandToggle={handleMilestoneExpandToggle} // Handle milestone expansion
+          />
+        </View>
+      )}
     </View>
   );
 };
@@ -1984,6 +2126,13 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  tourGoalContainer: {
+    position: 'absolute',
+    top: 120, // Position where first goal normally appears
+    left: 16,
+    right: 16,
+    zIndex: 1000,
   },
   header: {
     flexDirection: 'row',

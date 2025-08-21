@@ -43,7 +43,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Tech Job Market Entry",
                 description: "Position yourself for junior developer roles in Nigerian tech companies",
-                explanation: "Nigerian fintech companies pay ₦300K-500K monthly for junior developers. Remote international roles can pay even more in USD.",
+                explanation: "Nigerian fintech companies may offer developer opportunities. Individual salary outcomes vary significantly - consult career professionals for guidance.",
                 tasks: [
                   {
                     name: "Get cloud certification (AWS/Google)",
@@ -102,9 +102,9 @@ export const DOMAIN_DEFINITIONS = [
                     completed: false
                   },
                   {
-                    name: "Scale to ₦200,000+ monthly revenue through marketing optimization",
+                    name: "Learn about revenue scaling through marketing concepts (consult business advisor for guidance)",
                     summary: "Scale revenue",
-                    explanation: "Reaching ₦200K monthly proves your business model works and creates substantial side income. This milestone often leads to full-time entrepreneurship or premium marketing roles.",
+                    explanation: "Business development concepts may provide educational information about revenue building. Individual business results vary significantly - consult qualified business professionals for guidance.",
                     timeframe: "4 months",
                     completed: false
                   }
@@ -141,7 +141,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Business Intelligence Career",
                 description: "Apply data skills in consulting, banking, or fintech roles",
-                explanation: "Data analysts earn �N250K-400K monthly in Nigerian financial services. The skills are transferable globally for international remote opportunities.",
+                explanation: "Data analysts may find opportunities in Nigerian financial services. Individual income outcomes vary significantly - consult career professionals for guidance.",
                 tasks: [
                   {
                     name: "Apply to Nigerian banks, fintech data roles",
@@ -247,9 +247,9 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Scale to ₦300,000+ monthly revenue through strategic marketing",
+                name: "Learn about revenue scaling through strategic marketing concepts (consult business advisor for guidance)",
                 summary: "Scale revenue",
-                explanation: "₦300K monthly revenue proves business viability and creates substantial additional income. This milestone attracts investors and creates optionality for full-time entrepreneurship.",
+                explanation: "Business development concepts may provide educational information about revenue building. Individual business results vary significantly - consult qualified business professionals for guidance.",
                 timeframe: "6 months",
                 completed: false
               }
@@ -287,7 +287,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Management Position Strategy",
             description: "Position yourself for promotion or management role in new company",
-            explanation: "Management roles in Nigeria offer significant salary increases and job security. Clear strategy maximizes promotion likelihood.",
+            explanation: "Management roles in Nigeria may offer career advancement opportunities. Individual career outcomes vary significantly - consult career professionals for guidance.",
             tasks: [
               {
                 name: "Discuss promotion path with manager",
@@ -313,7 +313,7 @@ export const DOMAIN_DEFINITIONS = [
     name: "Financial Security",
     icon: "cash",
     color: "#10b981", // Green
-    description: "Building wealth, managing expenses, and achieving financial goals",
+    description: "Financial education, budgeting guidance, and goal planning resources",
     goals: [
       {
         name: "Build Emergency Fund",
@@ -367,9 +367,9 @@ export const DOMAIN_DEFINITIONS = [
       },
       {
         name: "Start Investment Portfolio",
-        description: "Build diversified investment strategy using Nigerian and international options",
+        description: "Learn about diversified investment concepts for educational purposes",
         icon: "trending-up",
-        explanation: "Inflation protection requires smart investing beyond traditional savings. Nigerian professionals are using local stocks, dollar investments, and fintech platforms to build wealth and hedge against naira volatility.",
+        explanation: "Investment research provides information on various financial strategies for educational purposes. Investment outcomes involve risk and past performance does not guarantee future results - consult qualified financial advisors for guidance appropriate to your circumstances.",
         projects: [
           {
             name: "Investment Foundation",
@@ -384,8 +384,8 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Start with ₦50,000 investment in diversified portfolio",
-                summary: "Start investing",
+                name: "Consider starting investment in diversified portfolio (consult financial advisor for amount)",
+                summary: "Learn investing",
                 explanation: "Starting with modest amount reduces risk while building investment experience. Diversification across Nigerian stocks and international options provides balanced growth potential.",
                 timeframe: "1 month",
                 completed: false
@@ -394,11 +394,11 @@ export const DOMAIN_DEFINITIONS = [
           },
           {
             name: "Portfolio Growth Strategy",
-            description: "Systematically build investment portfolio through regular contributions",
-            explanation: "Consistent investment contributions leverage dollar-cost averaging to build long-term wealth despite market volatility.",
+            description: "Learn about investment portfolio concepts for educational purposes",
+            explanation: "Investment education provides information on contribution strategies for educational purposes. Investment outcomes involve risk - consult qualified financial advisors for guidance appropriate to your circumstances.",
             tasks: [
               {
-                name: "Set up automatic monthly investment contributions of ₦25,000+",
+                name: "Learn about automatic investment concepts for educational purposes (consult qualified financial advisor for personal guidance)",
                 summary: "Automate investing",
                 explanation: "Automatic investment contributions ensure consistent portfolio growth while taking advantage of market fluctuations through dollar-cost averaging strategies.",
                 timeframe: "1 week",
@@ -417,9 +417,9 @@ export const DOMAIN_DEFINITIONS = [
       },
       {
         name: "Increase Income Streams",
-        description: "Develop multiple income sources to accelerate wealth building",
+        description: "Learn about multiple income stream concepts for educational purposes",
         icon: "wallet",
-        explanation: "Multiple income streams provide security and acceleration toward financial goals. Nigerian professionals are successfully combining employment, freelancing, and business income to reach ₦500K+ monthly.",
+        explanation: "Multiple income streams may provide additional financial options. Individual income results vary significantly - consult business professionals for guidance.",
         needsClarification: true,
         clarificationOptions: [
           {
@@ -430,7 +430,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Freelance Business Setup",
                 description: "Establish profitable freelancing practice using professional expertise",
-                explanation: "Nigerian professionals can earn ₦100K-300K monthly through freelancing while maintaining full-time employment.",
+                explanation: "Nigerian professionals may explore freelancing opportunities. Individual income results vary significantly - consult business professionals for guidance.",
                 tasks: [
                   {
                     name: "Create professional profiles on Upwork, Fiverr, and local platforms",
@@ -450,8 +450,8 @@ export const DOMAIN_DEFINITIONS = [
               },
               {
                 name: "Freelancing Income Scale",
-                description: "Scale freelancing to consistent ₦200,000+ monthly income",
-                explanation: "Successful Nigerian freelancers earn substantial monthly income through premium pricing and efficient service delivery systems.",
+                description: "Scale freelancing to consistent monthly income (consult business advisor for targets)",
+                explanation: "Freelancing concepts may provide business opportunities. Individual business results vary significantly - consult qualified business professionals for guidance.",
                 tasks: [
                   {
                     name: "Develop premium service packages for higher-value clients",
@@ -461,7 +461,7 @@ export const DOMAIN_DEFINITIONS = [
                     completed: false
                   },
                   {
-                    name: "Build systems for consistent ₦200K+ monthly freelancing income",
+                    name: "Learn about freelancing business systems (consult business advisor for guidance)",
                     summary: "Scale systems",
                     explanation: "Systematic approach to freelancing enables predictable income growth while maintaining quality standards that keep clients returning for additional projects.",
                     timeframe: "3 months",
@@ -489,7 +489,7 @@ export const DOMAIN_DEFINITIONS = [
                     completed: false
                   },
                   {
-                    name: "Launch product and achieve ₦100,000+ monthly revenue",
+                    name: "Learn about product launch concepts (consult business advisor for guidance)",
                     summary: "Launch product",
                     explanation: "Successful digital product launch provides passive income stream while demonstrating entrepreneurial capabilities that enhance career prospects.",
                     timeframe: "2 months",
@@ -503,9 +503,9 @@ export const DOMAIN_DEFINITIONS = [
                 explanation: "Digital business scaling leverages Nigerian market growth and digital adoption to build substantial income streams.",
                 tasks: [
                   {
-                    name: "Optimize marketing to reach ₦300,000+ monthly revenue",
+                    name: "Learn about marketing optimization concepts (consult business advisor for guidance)",
                     summary: "Scale marketing",
-                    explanation: "Marketing optimization increases customer acquisition while improving conversion rates, enabling rapid business growth and higher monthly revenue targets.",
+                    explanation: "Marketing optimization concepts may support business development. Individual business results vary significantly - consult qualified business professionals for guidance.",
                     timeframe: "4 months",
                     completed: false
                   },
@@ -527,11 +527,11 @@ export const DOMAIN_DEFINITIONS = [
             projects: [
               {
                 name: "Investment Income Strategy",
-                description: "Build portfolio generating consistent monthly investment income",
-                explanation: "Dividend-paying stocks and bonds provide monthly income while building long-term wealth through capital appreciation.",
+                description: "Learn about investment portfolio concepts for educational purposes",
+                explanation: "Investment research provides information on dividend strategies for educational purposes. Investment outcomes involve risk - consult qualified financial advisors for guidance appropriate to your circumstances.",
                 tasks: [
                   {
-                    name: "Build dividend-focused investment portfolio targeting ₦50,000+ monthly income",
+                    name: "Learn about dividend investment concepts for educational purposes (consult financial advisor)",
                     summary: "Dividend portfolio",
                     explanation: "Dividend-focused investing provides regular income while maintaining capital growth potential through well-managed Nigerian and international stocks.",
                     timeframe: "6 months",
@@ -549,12 +549,12 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Alternative Investment Exploration",
                 description: "Investigate alternative investments including crypto and peer-to-peer lending",
-                explanation: "Alternative investments provide additional diversification while potentially offering higher returns than traditional investment options.",
+                explanation: "Investment research provides information on alternative strategies for educational purposes. Investment outcomes involve risk - consult qualified financial advisors for guidance appropriate to your circumstances.",
                 tasks: [
                   {
                     name: "Research cryptocurrency and DeFi opportunities for Nigerian investors",
                     summary: "Crypto research",
-                    explanation: "Cryptocurrency investments offer potential for significant returns while providing hedge against naira volatility, though requiring careful risk management.",
+                    explanation: "Cryptocurrency research provides information for educational purposes. Digital assets involve significant risk including total loss - consult qualified financial advisors for guidance.",
                     timeframe: "2 months",
                     completed: false
                   },
@@ -595,10 +595,10 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Income Stream Execution",
             description: "Execute plan to develop and scale additional income source",
-            explanation: "Consistent execution transforms income stream plans into financial reality that accelerates wealth building goals.",
+            explanation: "Income stream execution concepts may provide educational information about business development. Individual business results vary significantly - consult qualified business professionals for guidance.",
             tasks: [
               {
-                name: "Launch chosen income stream and track monthly revenue growth",
+                name: "Learn about income stream concepts and business tracking (consult business advisor)",
                 summary: "Launch stream",
                 explanation: "Revenue tracking provides feedback on income stream performance while enabling optimization for faster growth and higher monthly earnings.",
                 timeframe: "3 months",
@@ -1002,7 +1002,7 @@ export const DOMAIN_DEFINITIONS = [
             projects: [
               {
                 name: "Financial Analysis Mastery",
-                description: "Learn financial analysis skills for personal wealth building and career advancement",
+                description: "Learn financial analysis skills for educational purposes",
                 explanation: "Financial analysis skills improve personal investment decisions while creating career opportunities in banking and consulting.",
                 tasks: [
                   {
@@ -1023,13 +1023,13 @@ export const DOMAIN_DEFINITIONS = [
               },
               {
                 name: "Investment Strategy Development",
-                description: "Create systematic approach to building wealth through informed investment decisions",
-                explanation: "Investment strategy development provides framework for long-term wealth building while potentially creating consulting opportunities.",
+                description: "Learn about investment decision concepts for educational purposes (consult financial advisor)",
+                explanation: "Investment education provides information on strategy concepts for educational purposes. Investment outcomes involve risk - consult qualified financial advisors for guidance.",
                 tasks: [
                   {
-                    name: "Develop personal investment strategy balancing Nigerian and international opportunities",
+                    name: "Learn about investment strategy concepts for educational purposes (consult financial advisor)",
                     summary: "Investment strategy",
-                    explanation: "Personal investment strategy provides roadmap for wealth building while demonstrating financial expertise that creates consulting and career opportunities.",
+                    explanation: "Investment education provides information about strategy concepts for educational purposes. Investment decisions involve significant risk - consult qualified financial advisors for guidance.",
                     timeframe: "1 month",
                     completed: false
                   },
@@ -1441,7 +1441,7 @@ export const DOMAIN_DEFINITIONS = [
                     completed: false
                   },
                   {
-                    name: "Build writing-based income stream targeting ₦100,000+ monthly",
+                    name: "Build writing-based income stream (consult business advisor for income targets)",
                     summary: "Scale writing income",
                     explanation: "Writing income scaling provides substantial additional revenue while building expertise that creates ongoing freelancing and career opportunities.",
                     timeframe: "6 months",

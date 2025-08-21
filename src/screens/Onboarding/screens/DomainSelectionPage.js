@@ -515,7 +515,7 @@ const styles = StyleSheet.create({
   // UI Elements
   infoButton: {
     position: 'absolute',
-    top: 60,
+    top: 140,
     left: 20,
     width: 40,
     height: 40,

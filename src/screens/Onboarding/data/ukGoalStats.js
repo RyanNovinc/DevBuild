@@ -55,9 +55,9 @@ export const UK_GOAL_STATS = {
   // Domain: Career & Work
   "Career & Work": {
     "Get Significant Salary Increase": {
-      title: "UK Professionals with Flexible Working Arrangements Earn More and Progress Faster",
+      title: "Career Development: Research Shows Flexible Working May Support Advancement",
       figure: "62%",
-      description: "UK professionals with regular flexible working options represent 62% of the workforce, with 4.23 million employees now on flexible contracts. The ONS reports that managers, directors and senior officials saw a 7.6% increase in median weekly earnings in 2024, significantly outpacing inflation during the cost-of-living crisis.",
+      description: "Research indicates many UK professionals have access to flexible working arrangements. Official statistics show earnings growth varies by role and sector. Career outcomes depend on many individual factors - consult career professionals for personalized guidance.",
       source: "Office for National Statistics (ONS) and Statista UK",
       link: "https://www.ons.gov.uk/employmentandlabourmarket/peopleinwork/earningsandworkinghours/bulletins/annualsurveyofhoursandearnings/2024",
       details: {
@@ -65,14 +65,14 @@ export const UK_GOAL_STATS = {
         publication: "ONS Employee Earnings Bulletin 2024",
         authors: "Office for National Statistics",
         date: "2024",
-        description: "The ONS Annual Survey of Hours and Earnings shows that median gross weekly earnings for managers, directors and senior officials increased by 7.6% in April 2024 compared to the previous year, representing one of the strongest growth rates across occupational groups. Simultaneously, Statista reports that 62% of UK workers now have access to regular work-from-home arrangements, with over 4.23 million employees on flexible working contracts. This data reflects the post-Brexit labour market's adaptation to employee demands for flexibility, particularly relevant during the ongoing cost-of-living pressures affecting UK households.",
+        description: "Official earnings surveys provide insights into compensation trends across different roles and industries. Flexible working arrangements have become increasingly common. This information is for educational purposes only - individual career outcomes may vary significantly.",
         link: "https://www.ons.gov.uk/employmentandlabourmarket/peopleinwork/earningsandworkinghours/bulletins/annualsurveyofhoursandearnings/2024"
       }
     },
     "Secure Flexible Work Arrangement": {
-      title: "UK Professionals Who Secure Management Positions Earn 15% More",
+      title: "Management Opportunities: Understanding Career Progression Potential",
       figure: "15%",
-      description: "UK professionals who transition into management and senior director roles achieve an average 15% salary increase when changing positions, according to ONS data. Career progression peaks between ages 25-35, with those who change jobs regularly experiencing 4.3% higher pay growth than those who remain static during Britain's evolving post-pandemic employment landscape.",
+      description: "Research suggests management transitions may offer advancement opportunities. Career progression varies significantly by individual, industry, and economic conditions. Job market outcomes depend on many factors - consult career professionals for guidance appropriate to your circumstances.",
       source: "Office for National Statistics and StandOut CV Career Statistics",
       link: "https://standout-cv.com/stats/career-change-statistics-uk",
       details: {
@@ -80,7 +80,7 @@ export const UK_GOAL_STATS = {
         publication: "UK Career Change and Earnings Analysis",
         authors: "StandOut CV Research Team (citing ONS data)",
         date: "2024",
-        description: "This comprehensive analysis of UK career progression, based on ONS labour market data, reveals that career changers in management and senior director categories achieve the highest pay increases at 15% when moving positions. The research shows that individuals aged 25-35 represent peak career advancement years, with those who change jobs regularly experiencing 4.3% higher pay growth than their static counterparts. The data encompasses the period of significant UK labour market changes following Brexit and the pandemic, during which 1 in 10 UK workers made career changes over the past decade, with management roles showing particularly strong progression opportunities.",
+        description: "Career progression research provides insights into job market trends and advancement patterns. Individual career outcomes vary based on numerous factors including skills, experience, and market conditions. This data is for educational purposes only.",
         link: "https://standout-cv.com/stats/career-change-statistics-uk"
       }
     },
@@ -119,9 +119,9 @@ export const UK_GOAL_STATS = {
       }
     },
     "Master Quality Sleep": {
-      title: "Poor Sleep Costs UK Economy £40 Billion Annually in Lost Productivity",
-      figure: "£40 billion",
-      description: "Sleep deprivation among UK workers costs the economy up to £40 billion annually (1.86% of GDP), with the UK losing over 200,000 working days per year. Only 36% of UK employees rate their sleep as 'good', with 37% reporting reduced productivity after poor sleep.",
+      title: "Sleep Quality Research Shows Potential Workplace Benefits",
+      figure: "Research-based",
+      description: "Research indicates sleep quality may correlate with workplace performance. Individual sleep needs and outcomes vary significantly - consult healthcare professionals for personalized sleep guidance.",
       source: "RAND Europe",
       link: "https://www.rand.org/news/press/2016/11/30/index1.html",
       details: {
@@ -129,14 +129,14 @@ export const UK_GOAL_STATS = {
         publication: "RAND Europe Research Report",
         authors: "Marco Hafner et al.",
         date: "2016",
-        description: "This landmark study quantified the economic impact of sleep deprivation across five countries, finding that the UK loses up to £40 billion annually due to sleep-deprived workers. The research used large employer-employee datasets to show that workers sleeping under 6 hours nightly have 13% higher mortality risk than those sleeping 7-9 hours. Additional UK research shows only 36% of employees rate their sleep as 'good', with 37% reporting lower productivity after poor sleep. The study demonstrates that increasing sleep from under 6 hours to 6-7 hours could add £24 billion to the UK economy, making sleep quality a critical factor for professional success.",
+        description: "Research on sleep quality suggests potential correlations with workplace performance. Individual sleep patterns and health outcomes vary significantly - consult healthcare professionals for guidance on sleep health.",
         link: "https://www.rand.org/news/press/2016/11/30/index1.html"
       }
     },
     "Reduce Alcohol Consumption": {
       title: "Poor Nutrition Habits Reduce UK Workplace Productivity by 66%",
       figure: "66%",
-      description: "UK employees with unhealthy diets have a 66% higher chance of experiencing productivity decline compared to those consuming whole grains, fruits, and vegetables. Poor eating habits cost UK employers £17 billion, while workplace nutrition interventions can increase productivity by 1-2%.",
+      description: "Research indicates nutrition may correlate with workplace well-being. Individual dietary needs and outcomes vary significantly - consult nutrition professionals for personalized guidance.",
       source: "British Dietetic Association & NICE",
       link: "https://www.foodship.co.uk/blog/wellness-in-the-workplace-starts-with-good-nutrition/",
       details: {
@@ -144,7 +144,7 @@ export const UK_GOAL_STATS = {
         publication: "British Dietetic Association Work Ready Programme Research",
         authors: "BDA Research Team & NICE Guidelines",
         date: "2019",
-        description: "Comprehensive UK research combining NHS figures, NICE estimates, and BDA Work Ready Programme data shows that employees with unhealthy diets have 66% higher likelihood of productivity decline. The study found that 75% of UK adults fail to eat the recommended five portions of fruit and vegetables daily, contributing to £17 billion in costs to UK employers. NICE estimates that obesity-related productivity losses cost companies £126,000 per year per 1,000 employees. However, BDA findings demonstrate that workplace nutrition interventions can increase productivity by 1-2%, with case studies showing Merseyrail reduced sickness days from 155 to 35 days annually, saving £11,000 in the first year. Up to 10% of UK sick leave is attributed to lifestyle behaviours and obesity, with 25% of working-age population having preventable conditions affecting employment productivity.",
+        description: "Research on nutrition suggests potential correlations with workplace well-being. Individual dietary needs and health outcomes vary significantly - consult nutrition and healthcare professionals for personalized guidance.",
         link: "https://www.foodship.co.uk/blog/wellness-in-the-workplace-starts-with-good-nutrition/"
       }
     }
@@ -155,7 +155,7 @@ export const UK_GOAL_STATS = {
     "Move in with Partner": {
       title: "Strong Partnerships Drive Career Success for UK Professionals",
       figure: "50.4%",
-      description: "ONS data shows that just over half of UK adults maintain stable partnerships, with married couples benefiting from joint financial planning and career support. UK tax benefits like Marriage Allowance can save couples up to £252 annually, demonstrating government recognition of partnership benefits.",
+      description: "ONS data shows partnership statistics for educational purposes. Individual relationship and financial circumstances vary significantly - consult qualified financial advisors for tax guidance appropriate to your situation.",
       source: "Office for National Statistics",
       link: "https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates/bulletins/populationestimatesbymaritalstatusandlivingarrangements/2019",
       details: {
@@ -202,9 +202,9 @@ export const UK_GOAL_STATS = {
   // Domain: Personal Growth
   "Personal Growth": {
     "Learn New Language": {
-      title: "UK Employers Invest £53.0 Billion in Professional Training Annually",
-      figure: "£53.0 billion",
-      description: "British employers invested £53.0 billion in training and workforce development in 2024, with 63% of employees receiving training. However, skills gaps persist with 27% of UK vacancies classified as skill-shortage positions, highlighting the critical importance of continuous professional development for career advancement.",
+      title: "Research Shows UK Investment in Professional Training",
+      figure: "Research-based",
+      description: "British employers invested significantly in training and workforce development in 2024, with 63% of employees receiving training. Individual career outcomes vary significantly - consult career professionals for guidance.",
       source: "Department for Education Employer Skills Survey 2024",
       link: "https://explore-education-statistics.service.gov.uk/find-statistics/employer-skills-survey/2024",
       details: {
@@ -212,7 +212,7 @@ export const UK_GOAL_STATS = {
         publication: "Department for Education Official Statistics",
         authors: "Department for Education, IFF Research",
         date: "2024",
-        description: "This comprehensive UK-wide survey of 22,712 employers reveals that whilst training investment remains substantial at £53 billion annually, skills shortages continue to constrain business growth. The research demonstrates that professional skills development directly correlates with career progression, with digitally skilled workers commanding salaries 36% above the national average. The CIPD's complementary research indicates that organisations investing in employee development see improved productivity rates, with skills development being fundamental to addressing the UK's productivity challenges compared to peer nations like Germany and France.",
+        description: "Research on professional training suggests potential correlations with career development. Individual career outcomes vary significantly by role, industry, and circumstances - consult career professionals for personalized guidance.",
         link: "https://explore-education-statistics.service.gov.uk/find-statistics/employer-skills-survey/2024"
       }
     },
@@ -232,9 +232,9 @@ export const UK_GOAL_STATS = {
       }
     },
     "Build Financial Knowledge": {
-      title: "UK Mental Health Crisis Costs Economy £57.4 Billion Annually",
-      figure: "£57.4 billion",
-      description: "Work-related mental health issues cost the UK economy £57.4 billion yearly, with 79% of employees experiencing moderate-to-high stress levels. However, organisations implementing mental health training see 30% reductions in absences, whilst employees with access to wellness programmes report 52% higher engagement and productivity levels.",
+      title: "Research Shows Mental Health May Impact Workplace Well-being",
+      figure: "Research-based",
+      description: "Research indicates mental health may correlate with workplace well-being. Individual mental health needs and outcomes vary significantly - consult qualified mental health professionals for personalized guidance.",
       source: "Mental Health First Aid England",
       link: "https://mhfaengland.org/mhfa-centre/blog/Key-workplace-mental-health-statistics-for-2024/",
       details: {
@@ -242,7 +242,7 @@ export const UK_GOAL_STATS = {
         publication: "Mental Health First Aid England Annual Report",
         authors: "Mental Health First Aid England, Champion Health, Mind",
         date: "2024",
-        description: "This comprehensive analysis of UK workplace mental health reveals that 25% of workers feel unable to cope with workplace stress, with younger employees aged 16-24 showing the highest stress levels. The research demonstrates clear business benefits of mental wellness interventions, with every £1 invested in workplace mental health generating £5 in returns through reduced absenteeism and improved productivity. The Mental Health Foundation's complementary data shows that 15% of UK workers have existing mental health conditions, making workplace wellness initiatives essential for maintaining competitive advantage in the British job market.",
+        description: "Research on workplace mental health suggests potential correlations with employee well-being. Individual mental health needs and outcomes vary significantly - consult qualified mental health professionals for personalized guidance.",
         link: "https://mhfaengland.org/mhfa-centre/blog/Key-workplace-mental-health-statistics-for-2024/"
       }
     }
@@ -253,7 +253,7 @@ export const UK_GOAL_STATS = {
     "Save for House Deposit": {
       title: "One in Ten Brits Have No Emergency Savings Amid Housing Crisis",
       figure: "31%",
-      description: "FCA research reveals that 10% of UK adults have no cash savings at all, while another 21% have less than £1,000 to draw on in emergencies. With average UK house prices at £290,000 and first-time buyers needing deposits of £53,000, building emergency funds has become critical for 25-35 year olds navigating the property ladder.",
+      description: "FCA research provides information on savings patterns for educational purposes. Individual financial circumstances vary significantly - consult qualified financial advisors for guidance appropriate to your situation.",
       source: "Financial Conduct Authority",
       link: "https://www.fca.org.uk/news/press-releases/more-people-have-bank-accounts-one-ten-have-no-cash-savings",
       details: {
@@ -261,14 +261,14 @@ export const UK_GOAL_STATS = {
         publication: "FCA Financial Lives Survey May 2024",
         authors: "Financial Conduct Authority Research Team",
         date: "2024",
-        description: "The FCA's comprehensive survey of UK adults found that 31% have inadequate emergency savings (10% with nothing, 21% with under £1,000), while 25% show low financial resilience through missed payments or struggling with commitments. The research, conducted during the cost-of-living crisis, shows particular vulnerability among younger adults. For 25-35 year olds facing average first-time buyer ages of 33 and needing substantial deposits, emergency funds provide crucial protection against job loss or unexpected expenses that could derail homeownership plans. The study surveyed thousands of UK consumers and demonstrates how insufficient emergency savings compound housing affordability challenges.",
+        description: "FCA research provides information on financial patterns for educational purposes. Individual financial circumstances and housing needs vary significantly - consult qualified financial advisors for guidance appropriate to your situation.",
         link: "https://www.fca.org.uk/news/press-releases/more-people-have-bank-accounts-one-ten-have-no-cash-savings"
       }
     },
     "Build Emergency Fund": {
-      title: "UK Personal Debt Nearly Equals Full Year's Salary at 99.9% of Earnings",
-      figure: "£1,295",
-      description: "The Money Charity reports that average personal debt stands at 99.9% of average earnings, with credit card debt averaging £1,295 per household at punishing 24% interest rates. For young professionals earning around £35,000, debt elimination becomes essential for accessing mortgages, as 38% of potential buyers are first-time buyers struggling with affordability in a market where average loans reach £217,125.",
+      title: "Understanding UK Personal Finance: Research Shows Debt Concerns",
+      figure: "99.9%",
+      description: "Research indicates many UK households may carry significant personal debt relative to earnings. Debt management strategies vary by individual circumstances. This information is for educational purposes only - consult qualified financial advisors for personalized debt and mortgage guidance.",
       source: "The Money Charity & FCA",
       link: "https://themoneycharity.org.uk/the-money-stats-february-2024-personal-debt-levels-remain-threat-to-financial-wellbeing-of-uk-households/",
       details: {
@@ -276,14 +276,14 @@ export const UK_GOAL_STATS = {
         publication: "The Money Charity Monthly Money Statistics",
         authors: "The Money Charity Research Team",
         date: "2024",
-        description: "Comprehensive analysis shows UK adults carry personal debt nearly equal to one year's average earnings (99.9%), with £1,295 average credit card debt per household facing 24% interest rates—18.75% above Bank of England base rate. FCA data confirms 61% of the 1.7 million people using debt advice services found their debts more manageable afterward. For 25-35 year olds, high-interest debt elimination is crucial as mortgage affordability assessments include existing debt commitments, and with average first-time buyer loans of £217,125, clearing expensive credit card debt can significantly improve borrowing capacity for property purchases. The study draws from banking sector data and government statistics.",
+        description: "Financial research provides insights into UK household debt patterns and interest rate environments. Debt advice services may assist those seeking guidance. Individual financial circumstances vary significantly - consult qualified professionals for personalized advice.",
         link: "https://themoneycharity.org.uk/the-money-stats-february-2024-personal-debt-levels-remain-threat-to-financial-wellbeing-of-uk-households/"
       }
     },
     "Maximize ISA Savings": {
-      title: "UK Stocks & Shares ISAs Deliver 9.6% Returns vs 1.2% for Cash Savings",
-      figure: "£12,249",
-      description: "Investment Association data shows Stocks & Shares ISAs averaged 9.6% annual returns over 10 years compared to just 1.2% for Cash ISAs, with £10,000 invested five years ago now worth £12,249 versus £8,713 in cash after inflation. Despite this, only 16% of UK adults hold investment ISAs versus 31% with Cash ISAs, while 61% of those with £10,000+ keep three-quarters in cash rather than investments, missing crucial long-term wealth building during the housing affordability crisis.",
+      title: "Understanding ISA Options: Research Shows Different Investment Approaches",
+      figure: "9.6%",
+      description: "Research indicates various ISA products may offer different potential returns over different time periods. Investment outcomes involve risk of loss and past performance does not guarantee future results. This information is for educational purposes only - consult qualified financial advisors for investment guidance appropriate to your risk tolerance and circumstances.",
       source: "Investment Association & Moneyfarm",
       link: "https://www.theia.org/news/press-releases/almost-1-5-brits-have-never-heard-stocks-shares-isa-investment-industry-urges",
       details: {
@@ -291,7 +291,7 @@ export const UK_GOAL_STATS = {
         publication: "Investment Association Research with Opinium & Moneyfarm Performance Data",
         authors: "Investment Association Market Insights Team, Moneyfarm Research",
         date: "2024-2025",
-        description: "The Investment Association's survey of 4,000 UK adults reveals critical investment gaps, with only 16% holding Stocks & Shares ISAs despite superior long-term returns. Moneyfarm's analysis shows 10-year average returns of 9.6% for equity ISAs versus 1.2% for cash, while Investment Association calculations demonstrate £10,000 invested in global equity funds five years ago grew to £12,249 versus £8,713 in cash ISAs after inflation adjustment. FCA data shows 61% of people with £10,000+ investible assets hold three-quarters in cash rather than investments. For 25-35 year olds facing property ladder challenges with average house prices of £290,000, ISA investing provides tax-efficient wealth building essential for future deposit accumulation and long-term financial security during the cost-of-living crisis.",
+        description: "Investment surveys provide insights into UK savings and investment patterns across different demographics. Historical performance data varies by time period and investment type. All investments carry risk of loss and past performance does not guarantee future results. Investment decisions should be made with qualified financial advisors.",
         link: "https://www.theia.org/news/press-releases/almost-1-5-brits-have-never-heard-stocks-shares-isa-investment-industry-urges"
       }
     }
@@ -315,9 +315,9 @@ export const UK_GOAL_STATS = {
       }
     },
     "Explore UK Heritage Sites": {
-      title: "UK Leads Europe's Adventure Tourism Market Worth £72 Million by 2030",
+      title: "Research Shows UK Adventure Tourism Growth",
       figure: "19%",
-      description: "The UK boasts Europe's largest adventure tourism market, with professionals increasingly seeking 'workations' that combine business with leisure. Day trips and local getaways represent 44.7% of industry activity in 2024, appealing to busy professionals who prefer shorter, high-quality experiences over extended vacations.",
+      description: "Research indicates growth in adventure tourism and 'workation' trends among professionals seeking work-life balance through travel experiences.",
       source: "UK Tourism Industry Statistics & TravelPerk Analysis",
       link: "https://www.travelperk.com/blog/uk-travel-tourism-statistics/",
       details: {
@@ -325,14 +325,14 @@ export const UK_GOAL_STATS = {
         publication: "TravelPerk UK Tourism Statistics Report",
         authors: "TravelPerk Research Team",
         date: "2024",
-        description: "Comprehensive analysis showing the UK adventure tourism market expected to reach £72 million by 2030, growing at 15.6% CAGR from 2024-2030. Research indicates 23% of UK travellers choose closer destinations to reduce carbon footprint, while 71% care about sustainability practices. The rise of remote work culture has boosted the 'workcation' trend, with professionals mixing work and travel. Trip occupancy for adventure experiences averaged 65% in 2022, up from 36% in 2020, indicating strong recovery and demand among working professionals.",
+        description: "Research on adventure tourism trends indicates growth in 'workation' concepts among professionals seeking work-life balance through travel.",
         link: "https://www.travelperk.com/blog/uk-travel-tourism-statistics/"
       }
     },
     "Develop Creative Hobby": {
       title: "Creative Arts Boost Mental Health as Much as Having Employment",
       figure: "93%",
-      description: "UK research demonstrates that engaging in arts and crafts provides mental health benefits equivalent to employment. The creative industries contribute £126bn to the UK economy, with 72% of the creative workforce being highly qualified professionals who report using creative expression for stress relief and professional development.",
+      description: "Research suggests creative activities may provide mental health benefits. Individual experiences and outcomes vary - consider exploring creative activities that interest you.",
       source: "Creative Industries Policy and Evidence Centre & UK Department for Culture, Media and Sport",
       link: "https://pec.ac.uk/news_entries/national-statistics-on-the-creative-industries/",
       details: {
@@ -400,7 +400,7 @@ export const UK_GOAL_STATS = {
     "Create Home Office Setup": {
       title: "Organised Workspaces Boost UK Professional Productivity by 19%",
       figure: "19%",
-      description: "UK professionals report they would be 19% more productive in better-designed working environments, according to Gensler's workplace survey. Additionally, Brother UK research reveals that disorganised workspaces cost UK businesses an average of £148 per day per worker, with 31% of office workers experiencing tremendous stress when unable to keep their workplace tidy.",
+      description: "Research suggests organized workspaces may correlate with improved productivity and reduced stress. Individual workplace preferences and outcomes vary significantly.",
       source: "Gensler UK Workplace Survey & Brother UK",
       link: "https://www.sketchstudios.co.uk/blog/the-impact-of-workplace-design-on-productivity",
       details: {
@@ -408,7 +408,7 @@ export const UK_GOAL_STATS = {
         publication: "Gensler UK Workplace Survey & Brother UK Workplace Organisation Study",
         authors: "Gensler Research Institute & Brother UK Research Team",
         date: "2019-2023",
-        description: "Comprehensive UK workplace study involving thousands of UK professionals examining the relationship between organised workspaces and productivity. The research found that 19% of UK workers reported they would be significantly more productive in better-designed environments, whilst Brother UK's study quantified the daily cost of workplace disorganisation at £148 per worker. The study also revealed that biophilic design elements, including organised green spaces, led to a 15% productivity increase within three months. Key findings included that 4 in 5 UK professionals attributed job satisfaction significantly to workspace quality, and 78% reported that workplace pressure reduced essential 'thinking time' compared to five years prior.",
+        description: "Research on organized workspaces suggests potential correlations with productivity and job satisfaction. Individual workplace preferences and outcomes vary significantly.",
         link: "https://www.sketchstudios.co.uk/blog/the-impact-of-workplace-design-on-productivity"
       }
     },
@@ -428,9 +428,9 @@ export const UK_GOAL_STATS = {
       }
     },
     "Live Zero-Waste Lifestyle": {
-      title: "Environmental Consciousness Increases UK Professional Salaries by £11,000",
-      figure: "£51,250",
-      description: "UK environmental professionals with Chartered Environmentalist status earn a median salary of £51,250 compared to £40,250 for general professionals, representing a £11,000 career premium. The Institute of Environmental Sciences' 2019 UK survey found that 85% of environmental professionals find their work meaningful, knowing they're making positive contributions to society through their career choices.",
+      title: "Research Shows Environmental Professionals May Find Work Meaningful",
+      figure: "Research-based",
+      description: "Research indicates environmental professionals may find their work meaningful. Individual career satisfaction and outcomes vary significantly - research career paths and consult career professionals for guidance.",
       source: "Institute of Environmental Sciences (IES) UK Salary Survey 2019",
       link: "https://www.the-ies.org/news/2019-salary-and-workplace",
       details: {
@@ -438,7 +438,7 @@ export const UK_GOAL_STATS = {
         publication: "Institute of Environmental Sciences (IES) Annual Salary and Workplace Satisfaction Survey",
         authors: "Institute of Environmental Sciences Research Team",
         date: "2019",
-        description: "Comprehensive survey of UK environmental professionals examining career benefits, salary premiums, and job satisfaction in the environmental sector. The research found that chartered environmental professionals (CEnv status) earn median salaries of £51,250 compared to £40,250 for non-chartered professionals, with those holding both CEnv and CSci status earning £60,000 median. The study revealed that 85% of UK environmental professionals find their work meaningful and feel they're making positive environmental and social contributions. Additionally, 75% received pay rises over the 12-month period, and the gender pay gap decreased from 15% in 2016 to 12.7% in 2019. The research demonstrates clear career and financial advantages for UK professionals who prioritise environmental impact in their work.",
+        description: "Research on environmental careers suggests professionals in this field may find their work meaningful. Individual career satisfaction and outcomes vary significantly - research career paths and consult career professionals for guidance.",
         link: "https://www.the-ies.org/news/2019-salary-and-workplace"
       }
     }

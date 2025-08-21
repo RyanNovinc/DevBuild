@@ -99,7 +99,15 @@
       "WebFetch(domain:www.techtarget.com)",
       "Bash(aws apigateway get-resources:*)",
       "Bash(\"C:\\Program Files\\Amazon\\AWSCLIV2\\aws.exe\" apigateway get-rest-apis --region ap-southeast-2)",
-      "Bash(timeout 10 npx expo start --dev-client --port 8099)"
+      "Bash(timeout 10 npx expo start --dev-client --port 8099)",
+      "Bash(for:*)",
+      "Bash(npx react-native run-android:*)",
+      "Bash(do echo \"=== Checking $file ===\")",
+      "Bash(do echo \"=== Final check $file ===\")",
+      "Bash(do echo \"=== Final syntax check $file ===\")",
+      "WebFetch(domain:www.dominican.edu)",
+      "WebFetch(domain:www.hbs.edu)",
+      "Bash(git log:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

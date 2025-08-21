@@ -10,11 +10,13 @@ import {
   Linking,
   Modal,
   SafeAreaView,
-  Easing
+  Easing,
+  Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import ResponsiveText from '../components/ResponsiveText';
 import TypingAnimation from '../components/TypingAnimation';
 import NavigationHeader from '../components/NavigationHeader';
@@ -34,6 +36,8 @@ import { getSouthAfricaRelevantStats } from '../data/southafricaGoalStats';
 import { getOtherRelevantStats } from '../data/otherGoalStats';
 // Import useI18n hook
 import { useI18n } from '../context/I18nContext';
+import TermsOfServiceModal from '../../../components/ai/LoginScreen/components/TermsOfServiceModal';
+import PrivacyPolicyModal from '../../../components/ai/LoginScreen/components/PrivacyPolicyModal';
 
 const { width, height } = Dimensions.get('window');
 
@@ -58,6 +62,13 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
   const [statsList, setStatsList] = useState([]);
   const [currentStatIndex, setCurrentStatIndex] = useState(0);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  
+  // State for Terms and Privacy
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const [ageVerified, setAgeVerified] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   
   // Animation values for modals
   const modalFadeAnim = useRef(new Animated.Value(0)).current;
@@ -476,6 +487,14 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
     // Set completion state to prevent further calls
     setHasCompleted(true);
     
+    // Store age verification
+    try {
+      AsyncStorage.setItem('ageVerified', 'true');
+      AsyncStorage.setItem('ageVerificationDate', new Date().toISOString());
+    } catch (error) {
+      console.error('Error storing age verification:', error);
+    }
+    
     // Call the parent's onComplete function
     if (onComplete) {
       onComplete();
@@ -657,8 +676,71 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
       
       {/* Removed tap to continue prompt - not needed */}
       
-      {/* Start Using App Button - Now outside ScrollView to make it sticky */}
-      {allMessagesComplete && (
+      {/* Terms, Privacy, and Age Checkboxes - Only show when not all accepted */}
+      {allMessagesComplete && (!termsAccepted || !privacyAccepted || !ageVerified) && (
+        <SafeAreaView style={styles.termsSection}>
+          <Animated.View style={[styles.termsContainer, { opacity: buttonOpacity }]}>
+            <View style={styles.checkboxContainer}>
+              <TouchableOpacity
+                style={styles.checkboxRow}
+                onPress={() => setAgeVerified(!ageVerified)}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: ageVerified }}
+              >
+                <View style={[styles.checkbox, ageVerified && styles.checkboxChecked]}>
+                  {ageVerified && <Ionicons name="checkmark" size={16} color="#FFFFFF" />}
+                </View>
+                <ResponsiveText style={styles.checkboxText}>
+                  I confirm I am 13 years of age or older
+                </ResponsiveText>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.checkboxRow}
+                onPress={() => setTermsAccepted(!termsAccepted)}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: termsAccepted }}
+              >
+                <View style={[styles.checkbox, termsAccepted && styles.checkboxChecked]}>
+                  {termsAccepted && <Ionicons name="checkmark" size={16} color="#FFFFFF" />}
+                </View>
+                <ResponsiveText style={styles.checkboxText}>
+                  I agree to the{' '}
+                  <ResponsiveText 
+                    style={styles.linkText}
+                    onPress={() => setShowTermsModal(true)}
+                  >
+                    Terms of Service
+                  </ResponsiveText>
+                </ResponsiveText>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.checkboxRow}
+                onPress={() => setPrivacyAccepted(!privacyAccepted)}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: privacyAccepted }}
+              >
+                <View style={[styles.checkbox, privacyAccepted && styles.checkboxChecked]}>
+                  {privacyAccepted && <Ionicons name="checkmark" size={16} color="#FFFFFF" />}
+                </View>
+                <ResponsiveText style={styles.checkboxText}>
+                  I agree to the{' '}
+                  <ResponsiveText 
+                    style={styles.linkText}
+                    onPress={() => setShowPrivacyModal(true)}
+                  >
+                    Privacy Policy
+                  </ResponsiveText>
+                </ResponsiveText>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+        </SafeAreaView>
+      )}
+
+      {/* Start Using App Button - Only show when all requirements are accepted */}
+      {allMessagesComplete && termsAccepted && privacyAccepted && ageVerified && (
         <SafeAreaView style={styles.buttonSafeArea}>
           <Animated.View style={[styles.startButtonContainer, { opacity: buttonOpacity }]}>
             <TouchableOpacity
@@ -809,6 +891,18 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
           </Animated.View>
         </View>
       </Modal>
+
+      {/* Terms of Service Modal */}
+      <TermsOfServiceModal 
+        visible={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+      />
+
+      {/* Privacy Policy Modal */}
+      <PrivacyPolicyModal 
+        visible={showPrivacyModal}
+        onClose={() => setShowPrivacyModal(false)}
+      />
     </View>
   );
 };
@@ -1149,7 +1243,55 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
-  }
+  },
+  // Terms and Privacy Styles
+  termsSection: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  termsContainer: {
+    backgroundColor: 'rgba(30, 58, 138, 0.1)',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.2)',
+  },
+  checkboxContainer: {
+    gap: 12,
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+    marginRight: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: '#3b82f6',
+    borderColor: '#3b82f6',
+  },
+  checkboxText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    flex: 1,
+    lineHeight: 20,
+  },
+  linkText: {
+    color: '#60a5fa',
+    textDecorationLine: 'underline',
+    fontWeight: '500',
+  },
+  disabledButtonText: {
+    color: '#666666',
+  },
 });
 
 export default CompletionPage;

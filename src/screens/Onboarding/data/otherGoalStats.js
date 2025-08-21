@@ -87,7 +87,7 @@ export const OTHER_GOAL_STATS = {
     "Move into Management Role": {
       title: "Management Skills Increase Earning Potential by 15-25% Globally",
       figure: "25%",
-      description: "Leadership and management skills typically increase earning potential by 15-25% across industries worldwide. Management roles provide career stability, growth opportunities, and increased influence in organizational decisions.",
+      description: "Leadership and management skills may support career development across industries. Individual career outcomes vary significantly - consult career professionals for guidance.",
       source: "Harvard Business Review Management Research",
       link: "https://hbr.org/topic/subject/managing-yourself",
       details: {
@@ -95,7 +95,7 @@ export const OTHER_GOAL_STATS = {
         publication: "Harvard Business Review",
         authors: "HBR Editorial Team",
         date: "2023",
-        description: "Management skills create consistent salary premiums across global markets, with leadership roles offering enhanced career security and advancement opportunities.",
+        description: "Management skills may support career development across global markets. Individual career outcomes vary significantly - consult career professionals for guidance.",
         link: "https://hbr.org/topic/subject/managing-yourself"
       }
     }
@@ -136,7 +136,7 @@ export const OTHER_GOAL_STATS = {
     "Plan Path to Homeownership": {
       title: "Homeownership Builds 44x More Wealth Than Renting Over Lifetime",
       figure: "44x",
-      description: "Homeowners accumulate 44 times more wealth than renters over their lifetime through equity building and property appreciation. Strategic homeownership planning provides long-term financial security and stability.",
+      description: "Research provides information on homeownership for educational purposes. Individual financial outcomes vary significantly - consult financial advisors for guidance.",
       source: "Urban Institute Housing Finance Policy Center",
       link: "https://www.urban.org/policy-centers/housing-finance-policy-centre",
       details: {
@@ -144,7 +144,7 @@ export const OTHER_GOAL_STATS = {
         publication: "Urban Institute",
         authors: "Housing Finance Policy Center",
         date: "2023",
-        description: "Real estate investment through homeownership creates long-term wealth building opportunities through equity accumulation and property appreciation.",
+        description: "Real estate research provides information about homeownership concepts for educational purposes. Individual real estate outcomes vary significantly - consult qualified real estate professionals for guidance.",
         link: "https://www.urban.org/policy-centers/housing-finance-policy-centre"
       }
     }
@@ -253,7 +253,7 @@ export const OTHER_GOAL_STATS = {
     "Earn Professional Certification": {
       title: "Professional Certifications Increase Salary by 15-30% Across Industries Globally",
       figure: "30%",
-      description: "Industry certifications typically increase earning potential by 15-30% while demonstrating commitment to professional development. Certifications provide competitive advantages and career advancement opportunities worldwide.",
+      description: "Industry certifications may support professional development and demonstrate commitment to learning. Individual career outcomes vary significantly - consult career professionals for guidance.",
       source: "Global Knowledge IT Skills and Salary Survey",
       link: "https://www.globalknowledge.com/us-en/resources/resource-library/salary-report/",
       details: {

@@ -112,7 +112,7 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
       'Build Career-Advancing Skills': 'Building career-advancing skills',
       'Find Purpose-Driven Work': 'Finding purpose-driven work',
       'Master In-Demand Tech Skills': 'Mastering in-demand tech skills',
-      'Achieve 3.5%+ Salary Increase': 'Achieving a 3.5%+ salary increase',
+      'Achieve Salary Increase': 'Achieving a salary increase',
       'Secure Flexible Work Arrangement': 'Securing flexible work arrangements',
       'Get Significant Salary Increase': 'Getting a significant salary increase',
       'Build High-Value Digital Skills': 'Building high-value digital skills',
@@ -141,7 +141,7 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
       'Strengthen Romantic Relationship': 'Strengthening your romantic relationship',
       // Financial Goals
       'Build 6-Month Emergency Fund': 'Building a 6-month emergency fund',
-      'Build $15,000 Emergency Fund': 'Building a $15,000 emergency fund',
+      'Build Emergency Fund': 'Building an emergency fund',
       'Pay Off High-Interest Debt': 'Paying off high-interest debt',
       'Start Long-Term Investing': 'Starting long-term investing',
       // Personal Growth Goals
@@ -872,25 +872,25 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
       case "Career & Work-Find Purpose-Driven Work":
         return "Inspiring decision! Finding purpose-driven work will increase job satisfaction, align your career with your values, and create more meaningful daily experiences.";
       case "Career & Work-Master In-Demand Tech Skills":
-        return "Excellent choice! Mastering in-demand tech skills will future-proof your career, increase earning potential, and open doors to exciting opportunities.";
-      case "Career & Work-Achieve 3.5%+ Salary Increase":
-        return "Smart goal! Achieving a significant salary increase will improve your financial security, validate your professional growth, and boost confidence.";
+        return "Excellent choice! Mastering in-demand tech skills may improve career prospects - research skill development paths and consult career professionals for guidance.";
+      case "Career & Work-Achieve Salary Increase":
+        return "Smart goal! Achieving a salary increase may improve financial security - research salary negotiation strategies and consult career professionals for guidance.";
       case "Career & Work-Secure Flexible Work Arrangement":
         return "Great decision! Securing flexible work arrangements will improve work-life balance, reduce commuting stress, and increase overall job satisfaction.";
       case "Career & Work-Get Significant Salary Increase":
-        return "Excellent goal! Getting a significant salary increase will improve your financial situation, reflect your increased value, and motivate continued growth.";
+        return "Excellent goal! Getting a salary increase may improve your financial situation - research salary negotiation strategies and consult career professionals for guidance.";
       case "Career & Work-Build High-Value Digital Skills":
-        return "Wise choice! Building high-value digital skills will make you indispensable, increase earning potential, and prepare you for the future economy.";
+        return "Wise choice! Building high-value digital skills may improve career prospects - research skill development and consult career professionals for guidance.";
       case "Career & Work-Secure Flexible Work with New Skills":
         return "Smart goal! Securing flexible work through new skills will combine career advancement with lifestyle improvement for optimal work-life integration.";
       case "Career & Work-Move into Management Role":
-        return "Excellent decision! Moving into management will develop leadership skills, increase earning potential, and expand your career opportunities significantly.";
+        return "Excellent decision! Moving into management may develop leadership skills and career opportunities - consult career professionals for guidance.";
       case "Career & Work-Switch to Tech Career":
-        return "Bold choice! Switching to a tech career will open high-paying opportunities, provide job security, and position you in a growing industry.";
+        return "Bold choice! Switching to a tech career may open new opportunities - research career transitions and consult career professionals for guidance.";
       case "Career & Work-Start Profitable Side Business":
-        return "Entrepreneurial spirit! Starting a profitable side business will create additional income streams, build business skills, and provide financial security through diversification.";
+        return "Entrepreneurial spirit! Starting a side business may create additional income - research business planning and consult business professionals for guidance.";
       case "Career & Work-Advance to Management Role":
-        return "Leadership potential! Advancing to management will increase your earning power, develop valuable leadership skills, and position you for executive opportunities.";
+        return "Leadership potential! Advancing to management may develop leadership skills and career opportunities - consult career professionals for guidance.";
       
       // Health & Wellness Domain
       case "Health & Wellness-Regular Exercise":
@@ -970,25 +970,25 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
       case "Personal Growth-Start Creative Side Hustle":
         return "Fantastic goal! Starting a creative side hustle will provide additional income, develop entrepreneurial skills, and give you a fulfilling outlet for creativity.";
       case "Personal Growth-Learn AI/Machine Learning":
-        return "Smart decision! Learning AI and machine learning will position you at the forefront of technology, increase your earning potential, and future-proof your career.";
+        return "Smart decision! Learning AI and machine learning may improve career prospects - research skill development and consult career professionals for guidance.";
       case "Personal Growth-Master Digital Literacy and AI Tools":
-        return "Wise choice! Mastering digital literacy and AI tools will make you more efficient, increase your value in the workplace, and prepare you for the future economy.";
+        return "Wise choice! Mastering digital literacy and AI tools may improve workplace efficiency - research skill development and consult professionals for guidance.";
       case "Personal Growth-Achieve French Language Proficiency":
         return "Excellent goal! Achieving French proficiency will open cultural and career opportunities, improve cognitive function, and enhance your connection to Canadian culture.";
       case "Personal Growth-Obtain Professional Certifications":
-        return "Smart choice! Obtaining professional certifications will validate your skills, increase earning potential, and demonstrate commitment to career advancement.";
+        return "Smart choice! Obtaining professional certifications may validate your skills - research certification paths and consult career professionals for guidance.";
       case "Personal Growth-Learn New Language":
         return "Wonderful decision! Learning a new language will enhance cognitive function, open cultural opportunities, and make you more valuable in the global marketplace.";
       case "Personal Growth-Master Public Speaking":
         return "Excellent choice! Mastering public speaking will boost confidence, advance your career, and help you communicate ideas more effectively in all areas of life.";
       case "Personal Growth-Build Financial Knowledge":
-        return "Smart goal! Building financial knowledge will help you make better money decisions, build wealth more effectively, and achieve financial independence faster.";
+        return "Smart goal! Building financial knowledge may help with financial decision-making - research financial education and consult qualified financial advisors for guidance.";
       case "Personal Growth-Earn Professional Certification":
-        return "Great decision! Earning professional certification will validate your expertise, increase earning potential, and demonstrate your commitment to excellence.";
+        return "Great decision! Earning professional certification may validate your expertise - research certification paths and consult career professionals for guidance.";
       case "Personal Growth-Launch Creative Project":
-        return "Inspiring choice! Launching a creative project will provide a fulfilling outlet for self-expression, potentially generate income, and build valuable skills.";
+        return "Inspiring choice! Launching a creative project may provide self-expression opportunities - research creative development and consult professionals for guidance.";
       case "Personal Growth-Learn Practical Life Skill":
-        return "Excellent decision! Learning practical life skills will increase self-reliance, save money, and give you confidence to handle various life situations independently.";
+        return "Excellent decision! Learning practical life skills may increase self-reliance and give you confidence to handle various life situations independently.";
       
       // Financial Security Domain
       case "Financial Security-Emergency Fund":
@@ -996,33 +996,33 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
       case "Financial Security-Build Emergency Fund":
         return "Smart decision! Building an emergency fund with both naira and dollar components will protect you against economic uncertainty and currency volatility.";
       case "Financial Security-Start Investment Portfolio":
-        return "Excellent choice! Starting an investment portfolio will help you build long-term wealth, protect against inflation, and create additional income streams.";
+        return "Educational information! Investment research is available on portfolio strategies. Individual results vary - consult qualified financial advisors for guidance appropriate to your circumstances.";
       case "Financial Security-Increase Income Streams":
-        return "Strategic thinking! Developing multiple income streams will provide financial security, reduce risk, and accelerate your wealth-building goals.";
+        return "Strategic thinking! Research indicates multiple income streams may provide diversification - consult career and financial professionals for guidance.";
       case "Financial Security-Debt Reduction":
         return "Excellent decision! Systematically reducing debt will free up your resources and create more options for your future financial decisions.";
       case "Financial Security-Retirement Planning":
-        return "Perfect! Taking retirement planning seriously now will compound over time, potentially giving you more freedom and security in your later years.";
+        return "Perfect! Retirement planning research is available for long-term strategies - consult qualified financial advisors for guidance appropriate to your circumstances.";
       case "Financial Security-Build 6-Month Emergency Fund":
         return "Excellent goal! Building a 6-month emergency fund will provide substantial financial security, reduce stress, and give you confidence to take calculated risks.";
       case "Financial Security-Pay Off High-Interest Debt":
-        return "Smart choice! Paying off high-interest debt will save you significant money over time, improve your credit score, and free up cash flow for other goals.";
+        return "Smart choice! Paying off high-interest debt may help improve your financial situation - consult qualified financial advisors for debt management strategies appropriate to your circumstances.";
       case "Financial Security-Start Long-Term Investing":
-        return "Wise decision! Starting long-term investing will harness the power of compound growth and build wealth for your future financial independence.";
-      case "Financial Security-Build $15,000 Emergency Fund":
-        return "Fantastic goal! Building a $15,000 emergency fund will provide substantial financial security and peace of mind for major unexpected expenses.";
-      case "Financial Security-Save $25,000 Down Payment for Home":
-        return "Excellent choice! Saving for a home down payment will build discipline, reduce future mortgage costs, and move you closer to homeownership.";
-      case "Financial Security-Pay Off $10,000 Student Debt":
-        return "Great decision! Paying off student debt will eliminate monthly payments, reduce financial stress, and free up money for other important goals.";
+        return "Educational information! Long-term investing research is available on growth strategies. Individual results vary - consult qualified financial advisors for guidance appropriate to your circumstances.";
+      case "Financial Security-Build Emergency Fund":
+        return "Fantastic goal! Building an emergency fund may provide financial security for unexpected expenses - consult qualified financial advisors for guidance appropriate to your circumstances.";
+      case "Financial Security-Save Down Payment for Home":
+        return "Excellent choice! Saving for a home down payment may help with homeownership goals - consult qualified financial advisors and mortgage professionals for guidance.";
+      case "Financial Security-Pay Off Student Debt":
+        return "Great decision! Paying off student debt may help reduce financial stress - consult qualified financial advisors for debt management strategies appropriate to your circumstances.";
       case "Financial Security-Save for House Deposit":
-        return "Smart goal! Saving for a house deposit will require discipline but will significantly reduce your future mortgage burden and interest payments.";
+        return "Smart goal! Saving for a house deposit may help with homeownership goals - consult qualified financial advisors and mortgage professionals for guidance.";
       case "Financial Security-Build Emergency Fund":
         return "Wise choice! Building an emergency fund will provide financial security, reduce stress about unexpected expenses, and prevent debt accumulation.";
       case "Financial Security-Maximize ISA Savings":
-        return "Excellent decision! Maximizing ISA savings will help you save tax-efficiently while building wealth and taking advantage of government incentives.";
+        return "Investment education! Research on tax-efficient savings strategies is available. Individual results vary - consult qualified financial advisors for guidance appropriate to your circumstances.";
       case "Financial Security-Start Profitable Side Hustle":
-        return "Fantastic choice! Starting a profitable side hustle will diversify your income, develop new skills, and accelerate your path to financial independence.";
+        return "Fantastic choice! Starting a side hustle may diversify income - research business planning and consult business and financial professionals for guidance.";
       case "Financial Security-Plan Path to Homeownership":
         return "Smart goal! Planning your path to homeownership will help you make informed decisions, avoid mistakes, and achieve this major financial milestone efficiently.";
       
@@ -1090,7 +1090,7 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
       
       // Community & Environment Domain
       case "Community & Environment-Home Organization":
-        return "Great choice! Organizing your living spaces will reduce daily stress, save you time looking for things, and create a more peaceful environment.";
+        return "Great choice! Organizing your living spaces may reduce daily stress and create a more peaceful environment.";
       case "Community & Environment-Daily Routines":
         return "Excellent decision! Optimizing your daily routines will help you use your time more effectively and create space for what truly matters to you.";
       case "Community & Environment-Creating Peaceful Spaces":
@@ -1098,13 +1098,13 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
       case "Community & Environment-Live Sustainably/Zero-Waste":
         return "Excellent choice! Living sustainably and reducing waste will help you align your daily actions with your environmental values while creating a healthier planet for future generations.";
       case "Community & Environment-Buy First Home":
-        return "Fantastic goal! Buying your first home will build equity, provide stability, and give you a space to truly call your own while establishing a foundation for long-term wealth.";
+        return "Fantastic goal! Buying your first home may provide stability and a space to truly call your own - consult qualified financial advisors and real estate professionals for guidance.";
       case "Community & Environment-Organize Living Space":
         return "Great choice! Organizing your living space will improve your daily efficiency, reduce stress, and create a more peaceful environment for relaxation and productivity.";
       case "Community & Environment-Create Eco-Friendly Home":
         return "Excellent decision! Creating an eco-friendly home will reduce your environmental impact, lower utility costs, and provide a healthier living environment for you and your family.";
       case "Community & Environment-Create Affordable Home Office Space":
-        return "Smart choice! Setting up an affordable home office will boost your productivity, improve work-life boundaries, and potentially increase your earning potential.";
+        return "Smart choice! Setting up a home office may boost your productivity and improve work-life boundaries.";
       case "Community & Environment-Navigate Path to Homeownership":
         return "Wise goal! Learning about homeownership will help you make informed decisions, avoid costly mistakes, and build a clear roadmap to achieving this major milestone.";
       case "Community & Environment-Build Eco-Conscious Living Space":
@@ -1116,9 +1116,9 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
       case "Community & Environment-Live Zero-Waste Lifestyle":
         return "Inspiring choice! Living a zero-waste lifestyle will dramatically reduce your environmental impact while often saving money and creating mindful consumption habits.";
       case "Community & Environment-Find Quality Shared Housing":
-        return "Practical choice! Finding quality shared housing will help you save money, build social connections, and live in a better location while maintaining financial flexibility.";
+        return "Practical choice! Finding quality shared housing may help build social connections and provide housing options while maintaining flexibility.";
       case "Community & Environment-Create Organized Living Space":
-        return "Great decision! Creating an organised living space will save you time daily, reduce stress, and create a more peaceful environment that supports your other goals.";
+        return "Great decision! Creating an organised living space may reduce stress and create a more peaceful environment that supports your other goals.";
       
       // Indian specific messages
       case "Career & Work-Switch to Tech Career":
@@ -1126,13 +1126,13 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
       case "Career & Work-Secure Flexible Work Agreement":
         return "Smart decision! Flexible work arrangements are becoming standard in Indian IT companies, offering better work-life balance while maintaining strong career growth potential.";
       case "Career & Work-Advance to Management Role":
-        return "Great leadership goal! Management roles in India offer significant salary premiums and advancement opportunities in the rapidly growing corporate sector.";
+        return "Great leadership goal! Research shows management roles may offer advancement opportunities - consult career professionals for guidance on leadership development.";
       case "Financial Security-Build Emergency Fund":
         return "Wise financial choice! Emergency funds provide essential security and peace of mind, especially important given economic uncertainty and career transitions in India.";
       case "Financial Security-Start Investment Portfolio":
-        return "Excellent wealth-building strategy! Investment portfolios help beat inflation and build long-term wealth through the power of compound growth in Indian equity markets.";
+        return "Investment education! Research on portfolio strategies and market performance is available. Individual results vary - consult qualified financial advisors for guidance appropriate to your circumstances.";
       case "Financial Security-Increase Income Streams":
-        return "Smart diversification! Multiple income streams provide financial security and accelerate wealth building through freelancing, consulting, or business ventures alongside your main career.";
+        return "Strategic diversification! Research indicates multiple income streams may provide diversification - consult career and financial professionals for guidance.";
       case "Health & Wellness-Build Fitness Routine":
         return "Perfect health investment! Regular fitness routines provide energy, stress relief, and improved health outcomes that enhance both personal and professional performance.";
       case "Health & Wellness-Improve Mental Health":
@@ -1174,15 +1174,15 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
       case "Career & Work-Switch to Tech Career":
         return "Brilliant choice! Ireland's tech sector offers exceptional opportunities with Dublin hosting Google, Facebook, Microsoft, and hundreds of innovative startups creating high-demand career paths.";
       case "Career & Work-Start Profitable Side Business":
-        return "Entrepreneurial excellence! Ireland provides €50K startup grants and seamless EU market access to 500+ million customers, making side business success highly achievable.";
+        return "Entrepreneurial excellence! Research indicates Ireland offers startup grants and EU market access opportunities - consult business and financial professionals for guidance.";
       case "Career & Work-Advance to Management Role":
-        return "Leadership potential! Irish companies strongly prefer internal promotions with management roles offering 45% salary premiums and accelerated career advancement opportunities.";
+        return "Leadership potential! Research shows management roles may offer advancement opportunities - consult career professionals for personalized guidance.";
       case "Financial Security-Build Emergency Fund":
         return "Smart financial foundation! Emergency funds provide crucial stability in Ireland's economy, with 5% savings rates and EU deposit protection supporting your financial security.";
       case "Financial Security-Start Investment Portfolio":
-        return "Wealth-building wisdom! Irish and European markets deliver 8% annual returns with favorable tax treatment, making systematic investing ideal for long-term prosperity.";
+        return "Investment education! Research on market performance and tax considerations is available. Individual results vary - consult qualified financial advisors for guidance appropriate to your circumstances.";
       case "Financial Security-Increase Income Streams":
-        return "Strategic diversification! Irish professionals with multiple income streams earn €65K versus €45K average, with freelancing and EU business access creating excellent opportunities.";
+        return "Strategic diversification! Research indicates professionals with multiple income streams may explore income options. Individual results vary - consult career and financial professionals for guidance.";
       case "Health & Wellness-Build Fitness Routine":
         return "Health investment! Regular exercise boosts work productivity by 68% for Irish professionals while reducing healthcare costs through Ireland's excellent indoor fitness infrastructure.";
       case "Health & Wellness-Improve Mental Health":
@@ -1206,7 +1206,7 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
       case "Recreation & Leisure-Pursue Creative Hobby":
         return "Creative fulfillment! Ireland's Creative Ireland Programme demonstrates that creative activities provide wellbeing benefits equivalent to employment while offering stress relief and self-expression.";
       case "Recreation & Leisure-Enjoy Recreation Time":
-        return "Life balance essential! Regular recreation time supports mental health and personal happiness, with Ireland's €14 million investment in outdoor recreation providing excellent activity infrastructure.";
+        return "Life balance essential! Regular recreation time supports mental health and personal happiness, with outdoor recreation providing excellent activity opportunities.";
       case "Purpose & Meaning-Give Back to Community":
         return "Meaningful impact! Ireland has 700,000+ active volunteers making real differences in their communities, with volunteer work providing purpose and stronger community connections.";
       case "Purpose & Meaning-Find Life Purpose":
@@ -1222,103 +1222,103 @@ const GoalSelectionPage = ({ domain, onGoalSelected, onBack, isNavigating = fals
       
       // Nigerian specific messages
       case "Career & Work-Switch to Tech Career":
-        return "Exceptional opportunity! Nigeria's tech sector contributes ₦8.5 trillion to the economy with Lagos hosting 2,000+ startups, creating abundant high-paying opportunities for skilled professionals.";
+        return "Exceptional opportunity! Nigeria's tech sector shows growth with Lagos hosting startups, creating opportunities for skilled professionals - research career paths and consult professionals.";
       case "Career & Work-Start Profitable Side Business":
         return "Entrepreneurial excellence! Nigeria leads Africa with 22.5% of startup funding success, while 75% of employed professionals successfully run additional businesses alongside their careers.";
       case "Career & Work-Advance to Management Role":
-        return "Leadership potential! Nigerian managers earn 60% salary premiums with corporate expansion creating 25% annual growth in management positions for professionals with leadership capabilities.";
+        return "Leadership potential! Research shows management roles may offer career advancement opportunities, with corporate expansion creating growth in leadership positions - consult career professionals for guidance.";
       case "Financial Security-Build Emergency Fund":
-        return "Financial wisdom! Emergency funds provide crucial stability during currency volatility, with Nigerian professionals achieving 70% better financial resilience through strategic savings approaches.";
+        return "Financial wisdom! Emergency funds may provide financial stability during uncertainty - consult qualified financial advisors for savings strategies appropriate to your circumstances.";
       case "Financial Security-Start Investment Portfolio":
-        return "Wealth-building strategy! The NSE delivers 45% annual returns for patient investors, with fintech platforms enabling portfolio building from just ₦5,000 minimum investments.";
+        return "Educational information! Investment research is available on stock exchanges and platforms. Individual results vary - consult qualified financial advisors for investment guidance appropriate to your circumstances.";
       case "Financial Security-Increase Income Streams":
-        return "Strategic diversification! Nigerian professionals with multiple income streams earn 180% more, with freelancers commanding $15-25/hour on international platforms while maintaining cost advantages.";
+        return "Strategic diversification! Research indicates professionals with multiple income streams may explore income options. Individual results vary - consult career and financial professionals for guidance.";
       case "Health & Wellness-Build Fitness Routine":
         return "Productivity investment! Regular exercise increases Nigerian professional productivity by 65% while providing 80% better stress management than sedentary approaches during economic challenges.";
       case "Health & Wellness-Improve Mental Health":
         return "Essential wellness priority! Mental health investment improves career performance by 85% for Nigerian professionals while building resilience essential for thriving during economic transformation.";
       case "Health & Wellness-Optimize Nutrition":
-        return "Energy foundation! Strategic nutrition using traditional Nigerian ingredients provides 60% better value per naira while saving ₦50,000 monthly through structured meal planning approaches.";
+        return "Energy foundation! Strategic nutrition using traditional Nigerian ingredients may provide value through structured meal planning - consult nutrition professionals for guidance.";
       
       // Malaysian specific messages
       case "Career & Work-Switch to Tech Career":
-        return "Tech hub advantage! Malaysia's digital economy contributes 24.3% to GDP with MSC hosting 3,000+ tech companies, offering RM320K average salaries and international career opportunities.";
+        return "Tech hub advantage! Malaysia's digital economy shows growth opportunities - research career paths and consult career professionals for guidance.";
       case "Career & Work-Start Profitable Side Business":
-        return "Entrepreneurial success! Malaysian SMEs generate RM50 billion through e-commerce with 24% of adults successfully operating side businesses generating RM8K-25K monthly additional income.";
+        return "Entrepreneurial success! Research shows e-commerce opportunities - individual results vary. Consult business and financial professionals for guidance.";
       case "Career & Work-Advance to Management Role":
-        return "Leadership advancement! Malaysian managers earn 55% premiums with companies expanding management by 30% annually, creating abundant promotion opportunities for capable professionals.";
+        return "Leadership advancement! Research shows management roles may offer advancement opportunities, with companies expanding leadership positions - consult career professionals for personalized guidance.";
       case "Financial Security-Build Emergency Fund":
-        return "Financial stability! Malaysian professionals maintain 90% purchasing power through strategic savings, with digital banks offering 5.5% interest rates providing inflation protection and growth.";
+        return "Financial stability! Research on savings strategies and banking options is available. Individual results vary - consult qualified financial advisors for guidance appropriate to your circumstances.";
       case "Financial Security-Start Investment Portfolio":
-        return "Investment success! Bursa Malaysia delivers 12% annual returns with robo-advisors enabling RM100 minimum investing, democratizing access to diversified wealth-building portfolios.";
+        return "Investment education! Research on market performance and investment platforms is available. Individual results vary - consult qualified financial advisors for investment guidance appropriate to your circumstances.";
       case "Financial Security-Increase Income Streams":
-        return "Income diversification! Malaysian professionals with multiple streams earn 160% more, with freelancers commanding RM80-150/hour internationally while leveraging cost-of-living advantages.";
+        return "Income diversification! Research indicates professionals with multiple income streams may explore income options. Individual results vary - consult career and financial professionals for guidance.";
       case "Health & Wellness-Build Fitness Routine":
         return "Performance enhancement! Regular fitness increases Malaysian professional productivity by 70% with year-round climate enabling 85% higher exercise consistency and community support.";
       case "Health & Wellness-Improve Mental Health":
         return "Wellness investment! Stress management improves Malaysian professional performance by 80% with diverse cultural support networks providing 75% better stress reduction outcomes.";
       case "Health & Wellness-Optimize Nutrition":
-        return "Nutritional advantage! Traditional Malaysian ingredients provide 65% better nutrition value per ringgit, with structured meal planning saving RM800 monthly while improving health outcomes.";
+        return "Nutritional advantage! Traditional Malaysian ingredients may provide nutrition value through structured meal planning - consult nutrition professionals for guidance.";
       
       // Philippine specific messages  
       case "Career & Work-Switch to Tech Career":
-        return "Growth opportunity! Philippine IT-BPM contributes ₱2.18 trillion to GDP with 85% remote work availability, enabling international client access and premium USD compensation.";
+        return "Growth opportunity! Philippine IT-BPM sector shows growth with remote work availability, enabling international opportunities - research career paths and consult professionals.";
       case "Career & Work-Start Profitable Side Business":
         return "Entrepreneurial spirit! Filipino professionals demonstrate exceptional business capability with 24% operating successful side businesses, leveraging bayanihan community support for sustainable growth.";
       case "Career & Work-Advance to Management Role":
-        return "Leadership success! Philippine managers earn 50% premiums with companies expanding leadership by 35% annually, creating advancement opportunities in the growing economy.";
+        return "Leadership success! Research shows management roles may offer advancement opportunities, with companies expanding leadership positions - consult career professionals for personalized guidance.";
       case "Financial Security-Build Emergency Fund":
-        return "Financial resilience! Philippine professionals with emergency funds show 75% better stability with digital banks offering 8% interest while peso-dollar strategies provide purchasing power protection.";
+        return "Financial resilience! Research on emergency fund strategies is available. Individual results vary - consult qualified financial advisors for guidance appropriate to your circumstances.";
       case "Financial Security-Start Investment Portfolio":
-        return "Wealth building! The PSE delivers 15% annual returns with fintech platforms enabling ₱1,000 minimum investing, making systematic wealth building accessible to all professionals.";
+        return "Investment education! Research on market performance and investment platforms is available. Individual results vary - consult qualified financial advisors for investment guidance appropriate to your circumstances.";
       case "Financial Security-Increase Income Streams":
-        return "Income acceleration! Philippine professionals with multiple streams earn 180% more, with freelancers earning $12-25/hour internationally while maintaining Philippine cost advantages.";
+        return "Income acceleration! Research indicates professionals with multiple income streams may explore income options. Individual results vary - consult career and financial professionals for guidance.";
       case "Health & Wellness-Build Fitness Routine":
         return "Productivity boost! Regular fitness increases Philippine professional productivity by 70% with tropical climate enabling 90% exercise consistency and strong community fitness culture.";
       case "Health & Wellness-Improve Mental Health":
         return "Wellness priority! Mental health investment improves Philippine professional performance by 85% with strong family support networks providing 80% stress reduction benefits.";
       case "Health & Wellness-Optimize Nutrition":
-        return "Health foundation! Traditional Philippine foods provide 70% better nutrition per peso with structured planning saving ₱12,000 monthly while optimizing health outcomes.";
+        return "Health foundation! Traditional Philippine foods may provide nutrition benefits through structured planning - consult nutrition professionals for guidance.";
       
       // Singapore specific messages
       case "Career & Work-Switch to Tech Career":
-        return "Hub excellence! Singapore's digital economy contributes S$106 billion with 90% of tech professionals accessing international opportunities and 45% salary premiums in the region.";
+        return "Hub excellence! Singapore's digital economy shows growth with tech professionals accessing international opportunities - research career paths and consult professionals.";
       case "Career & Work-Start Profitable Side Business":
-        return "Startup success! Singapore hosts the highest density of unicorns per capita in Southeast Asia with government grants up to S$1 million and #2 global ease of doing business.";
+        return "Startup success! Singapore hosts high startup density with government grant programs - research opportunities and consult business professionals for guidance.";
       case "Career & Work-Advance to Management Role":
-        return "Regional leadership! Singapore managers earn 55% premiums with regional headquarters expanding management by 40% annually, creating Asia-Pacific advancement opportunities.";
+        return "Regional leadership! Research shows management roles may offer advancement opportunities, with regional headquarters expanding leadership positions - consult career professionals for guidance.";
       case "Financial Security-Build Emergency Fund":
-        return "Financial stability! Singapore professionals with emergency funds show 85% better crisis resilience with 4.5% savings rates and multi-currency strategies providing purchasing power protection.";
+        return "Financial stability! Research on emergency fund and savings strategies is available. Individual results vary - consult qualified financial advisors for guidance appropriate to your circumstances.";
       case "Financial Security-Start Investment Portfolio":
-        return "Investment access! Singapore's STI delivers 10% annual returns with robo-advisors enabling S$100 minimum investing and CPF voluntary contributions providing 30% higher retirement savings.";
+        return "Investment education! Research on market performance and retirement planning options is available. Individual results vary - consult qualified financial advisors for guidance appropriate to your circumstances.";
       case "Financial Security-Increase Income Streams":
-        return "Premium earnings! Singapore professionals with multiple streams earn 170% more, commanding S$150-300/hour consulting rates while REIT portfolios generate S$2K+ monthly passive income.";
+        return "Income diversification! Research indicates professionals with multiple income streams may explore income options. Individual results vary - consult career and financial professionals for guidance.";
       case "Health & Wellness-Build Fitness Routine":
         return "Performance optimization! Regular fitness increases Singapore professional productivity by 80% with world-class 350km park connector network enabling 95% exercise consistency.";
       case "Health & Wellness-Improve Mental Health":
         return "Wellness excellence! Mental health prioritization improves Singapore professional performance by 90% with multicultural support networks reducing stress by 75% in diverse environments.";
       case "Health & Wellness-Optimize Nutrition":
-        return "Nutritional diversity! Singapore's multicultural cuisine provides 80% better nutrition variety per dollar with structured planning saving S$800 monthly while optimizing health performance.";
+        return "Nutritional diversity! Singapore's multicultural cuisine offers nutrition variety through structured planning - consult nutrition professionals for guidance.";
       
       // South African specific messages
       case "Career & Work-Switch to Tech Career":
-        return "Growth potential! South Africa's ICT sector contributes R204 billion with 80% remote work access enabling international USD/EUR compensation while maintaining cost advantages.";
+        return "Growth potential! South Africa's ICT sector shows growth with remote work access enabling international opportunities - research career paths and consult professionals.";
       case "Career & Work-Start Profitable Side Business":
-        return "Ubuntu entrepreneurship! South African SMMEs contribute R2.3 trillion to GDP with community-based businesses achieving 85% higher success rates through collaborative Ubuntu principles.";
+        return "Ubuntu entrepreneurship! South African SMMEs contribute to GDP with community-based businesses - research opportunities and consult business professionals for guidance.";
       case "Career & Work-Advance to Management Role":
-        return "Leadership opportunity! South African managers earn 70% premiums with corporate transformation creating 45% annual management position growth for capable professionals.";
+        return "Leadership opportunity! Research shows management roles may offer advancement opportunities, with corporate transformation creating leadership positions - consult career professionals for guidance.";
       case "Financial Security-Build Emergency Fund":
-        return "Financial resilience! South African professionals with emergency funds show 90% better crisis management with 11% savings rates and currency diversification providing purchasing power protection.";
+        return "Financial resilience! Research on emergency fund and diversification strategies is available. Individual results vary - consult qualified financial advisors for guidance appropriate to your circumstances.";
       case "Financial Security-Start Investment Portfolio":
-        return "Wealth creation! The JSE delivers 18% annual returns with platforms enabling R500 minimum investing and TFSA strategies providing 35% higher after-tax wealth accumulation.";
+        return "Investment education! Research on market performance and investment strategies is available. Individual results vary - consult qualified financial advisors for guidance appropriate to your circumstances.";
       case "Financial Security-Increase Income Streams":
-        return "Income multiplication! South African professionals with multiple streams earn 200% more, with freelancers earning $20-45/hour internationally while leveraging favorable exchange rates.";
+        return "Income diversification! Research indicates professionals with multiple income streams may explore income options. Individual results vary - consult career and financial professionals for guidance.";
       case "Health & Wellness-Build Fitness Routine":
         return "Performance enhancement! Regular fitness increases South African professional productivity by 85% with year-round climate enabling 100% exercise consistency and strong community culture.";
       case "Health & Wellness-Improve Mental Health":
         return "Wellness foundation! Mental health investment improves South African professional performance by 95% with Ubuntu community support reducing stress by 85% through interconnected networks.";
       case "Health & Wellness-Optimize Nutrition":
-        return "Health optimization! Indigenous South African foods provide 75% better nutrition per rand with structured planning saving R2,500 monthly while supporting local food systems.";
+        return "Health optimization! Indigenous South African foods may provide nutrition benefits through structured planning - consult nutrition professionals for guidance.";
       
       // Fallback for any goals not explicitly covered
       default:

@@ -246,7 +246,7 @@ export const DOMAIN_DEFINITIONS = [
                   {
                     name: "Create and analyse 2 complete digital marketing campaigns with ROI measurement",
                     summary: "Run campaigns",
-                    explanation: "Hands-on campaign experience demonstrates practical application of marketing skills and data analysis capabilities. ROI measurement skills are essential for proving marketing effectiveness to employers and advancing in digital marketing roles.",
+                    explanation: "Hands-on campaign experience demonstrates practical application of marketing skills and data analysis capabilities. ROI measurement education is important for understanding marketing effectiveness concepts.",
                     timeframe: "3 months",
                     completed: false
                   },
@@ -292,7 +292,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Create portfolio showcasing projects and skills learned",
                 summary: "Build portfolio",
-                explanation: "Tech portfolios demonstrate practical application of learned skills through real projects. Employers value portfolios more than certifications alone, as they show problem-solving abilities and hands-on experience with relevant technologies.",
+                explanation: "Tech portfolios may demonstrate practical application of learned skills through real projects. Individual career outcomes vary significantly - consult career professionals for guidance.",
                 timeframe: "1 month",
                 completed: false
               },
@@ -313,11 +313,11 @@ export const DOMAIN_DEFINITIONS = [
     name: "Financial Security",
     icon: "cash",
     color: "#10b981", // Green
-    description: "Building wealth, managing expenses, and achieving financial goals",
+    description: "Financial education, budgeting guidance, and goal planning resources",
     goals: [
       {
         name: "Build 6-Month Emergency Fund",
-        description: "Save 3-6 months expenses using high-interest accounts and disciplined budgeting",
+        description: "Learn about emergency fund concepts and budgeting strategies",
         icon: "shield",
         explanation: "A goal represents something meaningful you want to achieve. Breaking goals down into projects and tasks makes it easier and much more likely to reach it.",
         projects: [
@@ -344,7 +344,7 @@ export const DOMAIN_DEFINITIONS = [
           },
           {
             name: "Expense Optimization",
-            description: "Reduce unnecessary spending to maximise savings rate",
+            description: "Learn expense management and budgeting concepts",
             explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
@@ -357,7 +357,7 @@ export const DOMAIN_DEFINITIONS = [
               {
                 name: "Cancel or reduce 3 subscription services or recurring expenses you don't actively use",
                 summary: "Cut subscriptions",
-                explanation: "Cutting unused subscriptions provides immediate monthly savings that can be redirected to emergency fund. Households can save significantly by auditing and eliminating unnecessary recurring expenses.",
+                explanation: "Learning about subscription management is part of budgeting education. Individual financial circumstances vary significantly - consult qualified financial advisors for personalized guidance.",
                 timeframe: "1 week",
                 completed: false
               }
@@ -366,8 +366,8 @@ export const DOMAIN_DEFINITIONS = [
         ]
       },
       {
-        name: "Start Profitable Side Hustle",
-        description: "Establish side business generating $500+ monthly within 12 months",
+        name: "Explore Side Business Education",
+        description: "Learn about side business development concepts and strategies",
         icon: "storefront",
         explanation: "A goal represents something meaningful you want to achieve. Breaking goals down into projects and tasks makes it easier and much more likely to reach it.",
         projects: [
@@ -394,7 +394,7 @@ export const DOMAIN_DEFINITIONS = [
           },
           {
             name: "Income Stream Optimization",
-            description: "Scale side hustle to consistent monthly income target",
+            description: "Learn about side business development concepts (consult business advisor)",
             explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
@@ -405,9 +405,9 @@ export const DOMAIN_DEFINITIONS = [
                 completed: false
               },
               {
-                name: "Optimize pricing and marketing to reach $500+ monthly target",
-                summary: "Optimize pricing",
-                explanation: "Pricing and marketing optimization maximizes income potential from side hustle activities. Data-driven approach to pricing based on market rates and personal value proposition increases profitability and sustainable growth.",
+                name: "Research pricing and marketing strategies for business education",
+                summary: "Learn pricing",
+                explanation: "Pricing and marketing education provides business knowledge for educational purposes. Individual business results vary significantly - consult qualified business professionals for guidance.",
                 timeframe: "1 month",
                 completed: false
               }
@@ -416,8 +416,8 @@ export const DOMAIN_DEFINITIONS = [
         ]
       },
       {
-        name: "Plan Path to Homeownership",
-        description: "Develop actionable pathway to property through strategic saving and planning",
+        name: "Learn About Home Buying Process",
+        description: "Understand home buying concepts and planning considerations",
         icon: "home",
         explanation: "A goal represents something meaningful you want to achieve. Breaking goals down into projects and tasks makes it easier and much more likely to reach it.",
         projects: [
@@ -448,16 +448,16 @@ export const DOMAIN_DEFINITIONS = [
             explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
             tasks: [
               {
-                name: "Calculate deposit needed (10-20% of target property price) and create savings timeline",
-                summary: "Plan deposit",
-                explanation: "Calculating exact deposit requirements creates specific savings target and realistic timeline for homeownership. Clear financial goals enable strategic planning and motivate consistent saving behaviors toward property purchase.",
+                name: "Learn about deposit requirements (10-20% of property price) and savings planning",
+                summary: "Learn deposit planning",
+                explanation: "Learning about deposit requirements is part of home buying education. Individual financial circumstances and housing markets vary significantly - consult qualified financial advisors and real estate professionals for guidance.",
                 timeframe: "1 week",
                 completed: false
               },
               {
                 name: "Open dedicated house deposit savings account with automatic transfers",
                 summary: "Setup deposit fund",
-                explanation: "Dedicated deposit account separates house savings from other funds and maximizes interest earnings. Automatic transfers ensure consistent progress toward deposit goal without relying on willpower or memory.",
+                explanation: "Learning about savings strategies is part of financial education. Individual financial circumstances vary significantly - consult qualified financial advisors for guidance appropriate to your situation.",
                 timeframe: "1 week",
                 completed: false
               }
@@ -879,7 +879,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             id: "cooking",
             name: "Advanced Cooking & Meal Prep",
-            description: "Master cooking techniques and meal planning to save money and eat healthier",
+            description: "Master cooking techniques and meal planning for health and education",
             projects: [
               {
                 name: "Culinary Skills Development",
@@ -969,11 +969,11 @@ export const DOMAIN_DEFINITIONS = [
           {
             id: "finance",
             name: "Personal Finance Management",
-            description: "Master budgeting, investing, and financial planning skills",
+            description: "Learn budgeting, investing education, and financial planning concepts",
             projects: [
               {
                 name: "Financial Literacy Foundation",
-                description: "Master budgeting, investing basics, and financial planning fundamentals",
+                description: "Learn budgeting, investing education, and financial planning concepts",
                 explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
                 tasks: [
                   {
@@ -983,16 +983,16 @@ export const DOMAIN_DEFINITIONS = [
                     completed: false
                   },
                   {
-                    name: "Learn investment basics and set up diversified portfolio (ETFs, shares, super contributions)",
-                    summary: "Start investing",
+                    name: "Learn investment education concepts (ETFs, shares, super contributions)",
+                    summary: "Investment education",
                     timeframe: "2 months",
                     completed: false
                   }
                 ]
               },
               {
-                name: "Wealth Building Strategy",
-                description: "Implement long-term financial strategy for wealth accumulation and security",
+                name: "Financial Education Strategy",
+                description: "Learn about long-term financial planning concepts and strategies",
                 explanation: "A project breaks your goal into manageable parts. Each project tackles one major component and contains specific tasks you can complete.",
                 tasks: [
                   {
@@ -1002,8 +1002,8 @@ export const DOMAIN_DEFINITIONS = [
                     completed: false
                   },
                   {
-                    name: "Set up automatic investing plan contributing $200+ monthly to diversified portfolio",
-                    summary: "Auto investing",
+                    name: "Learn about systematic investing concepts for educational purposes (consult qualified financial advisor for personal guidance)",
+                    summary: "Investing education",
                     timeframe: "2 weeks",
                     completed: false
                   }

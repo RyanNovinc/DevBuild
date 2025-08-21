@@ -56,9 +56,9 @@ export const PHILIPPINE_GOAL_STATS = {
   "Career & Work": {
     "Switch to Tech Career": [
       {
-        title: "Philippine Tech Boom: IT-BPM Industry Contributes ₱2.18 Trillion to GDP with 40% Salary Premium",
+        title: "Technology Career Opportunities: Research Shows Philippines' Growing Tech Sector",
         figure: "40%",
-        description: "Philippine tech professionals earn 40% premium over traditional roles, with IT-BPM contributing ₱2.18 trillion to GDP. The government's Digital Philippines 2030 agenda invests ₱500 billion in digital transformation, creating exceptional opportunities for career switchers.",
+        description: "Research indicates Philippines' tech sector may offer various career opportunities across different skill levels. Individual career outcomes vary significantly by skills, experience, and market conditions - consult career professionals for personalized guidance.",
         source: "IT and Business Process Association of the Philippines",
         link: "https://www.ibpap.org/",
         details: {
@@ -66,7 +66,7 @@ export const PHILIPPINE_GOAL_STATS = {
           publication: "IT and Business Process Association of the Philippines",
           authors: "IBPAP Research Division",
           date: "2024",
-          description: "Philippine IT-BPM sector reached ₱2.18 trillion contribution to GDP with 1.8 million direct employees earning premium salaries. Government's Digital Philippines 2030 allocates ₱500 billion for digital transformation, creating substantial career opportunities in emerging technologies.",
+          description: "Philippines tech sector research provides insights into various technology opportunities and trends. Individual career outcomes vary greatly based on skills, experience, and market factors. Career planning should be developed with qualified professionals.",
           link: "https://www.ibpap.org/"
         }
       },
@@ -105,7 +105,7 @@ export const PHILIPPINE_GOAL_STATS = {
       {
         title: "Filipino Entrepreneurial Spirit: 24% of Adults Successfully Operate Side Businesses",
         figure: "24%",
-        description: "Filipinos demonstrate exceptional entrepreneurial capability with 24% successfully operating businesses alongside employment. Digital platforms and e-commerce enable side businesses generating ₱15K-50K monthly additional income through strategic market positioning.",
+        description: "Research indicates Filipinos may demonstrate entrepreneurial capability through various business approaches. Individual business outcomes vary significantly and involve risk - consult business and financial professionals for guidance.",
         source: "Asian Development Bank Entrepreneurship Study",
         link: "https://www.adb.org/",
         details: {
@@ -113,7 +113,7 @@ export const PHILIPPINE_GOAL_STATS = {
           publication: "Asian Development Bank",
           authors: "ADB Economic Research Team",
           date: "2024",
-          description: "Study demonstrates 24% of Filipino adults successfully operate side businesses with strong cultural entrepreneurial foundation. Digital platforms enable business creation with low startup costs, achieving ₱15K-50K monthly revenue through strategic online positioning and social media marketing.",
+          description: "Entrepreneurship research provides insights into various business approaches and digital platform opportunities. Individual business outcomes vary significantly and involve risk. This information is for educational purposes only.",
           link: "https://www.adb.org/"
         }
       },
@@ -133,9 +133,9 @@ export const PHILIPPINE_GOAL_STATS = {
         }
       },
       {
-        title: "Bayanihan Business Spirit: Community-Based Businesses Generate ₱2.5 Trillion Economic Impact",
-        figure: "₱2.5T",
-        description: "Filipino community-based businesses contribute ₱2.5 trillion to the economy through cooperative models and social enterprises. The bayanihan spirit creates natural business networks providing mutual support and customer referrals essential for sustainable business growth.",
+        title: "Bayanihan Business Spirit: Research Shows Community Business Impact",
+        figure: "Variable",
+        description: "Research indicates community-based businesses may contribute significantly to economic activity through cooperative models. Individual business outcomes vary and involve risk - consult business professionals for guidance.",
         source: "Cooperative Development Authority",
         link: "https://www.cda.gov.ph/",
         details: {
@@ -143,16 +143,16 @@ export const PHILIPPINE_GOAL_STATS = {
           publication: "Cooperative Development Authority",
           authors: "CDA Research and Development Division",
           date: "2024",
-          description: "Analysis shows ₱2.5 trillion economic contribution from community-based businesses leveraging Filipino bayanihan culture. Cooperative models provide natural business support networks, shared resources, and customer referral systems enabling sustainable entrepreneurship and business scaling opportunities.",
+          description: "Community business research provides insights into various cooperative approaches and support networks. Individual business outcomes vary significantly and involve risk. This information is for educational purposes only.",
           link: "https://www.cda.gov.ph/"
         }
       }
     ],
     "Advance to Management Role": [
       {
-        title: "Management Premium: Philippine Leaders Earn 50% More with ₱45K-80K Monthly Compensation",
-        figure: "50%",
-        description: "Philippine managers earn 50% premium over individual contributors, with team leaders earning ₱45K-80K monthly versus ₱30K-55K for non-management roles. Leadership positions offer career stability and advancement opportunities in the growing Philippine economy.",
+        title: "Management Premium: Research Shows Leadership Role Benefits",
+        figure: "Variable",
+        description: "Research indicates management roles may offer different compensation and career opportunities compared to individual contributor positions. Individual career outcomes vary significantly - consult career professionals for guidance.",
         source: "JobStreet Philippines Salary Survey",
         link: "https://www.jobstreet.com.ph/",
         details: {
@@ -160,7 +160,7 @@ export const PHILIPPINE_GOAL_STATS = {
           publication: "JobStreet Philippines",
           authors: "JobStreet Research Team",
           date: "2024",
-          description: "Comprehensive salary analysis demonstrates 50% management premium with team leaders earning ₱45K-80K monthly compared to ₱30K-55K for individual contributors. Leadership roles provide career stability and advancement opportunities across Philippine corporate sector with structured development programs.",
+          description: "Management research provides insights into various leadership role opportunities and career development approaches. Individual compensation outcomes vary greatly based on industry, company, and performance factors. This information is for educational purposes only.",
           link: "https://www.jobstreet.com.ph/"
         }
       },
@@ -190,7 +190,7 @@ export const PHILIPPINE_GOAL_STATS = {
           publication: "Ateneo Graduate School of Business",
           authors: "AGSB Research Team",
           date: "2024",
-          description: "Longitudinal study demonstrates 45% faster career advancement for Philippine professionals completing formal leadership development programs. Investment in structured management education consistently correlates with promotion opportunities and salary increases across Philippine corporate sector.",
+          description: "Research on leadership development suggests potential correlations with career advancement. Individual career outcomes vary significantly - consult career professionals for personalized guidance.",
           link: "https://www.ateneo.edu/agsb"
         }
       }
@@ -216,9 +216,9 @@ export const PHILIPPINE_GOAL_STATS = {
         }
       },
       {
-        title: "High-Yield Savings Growth: Philippine Digital Banks Offer 6-8% Annual Returns on Emergency Savings",
-        figure: "8%",
-        description: "Philippine digital banks like Maya, GCash, and Tonik offer up to 8% annual interest on savings accounts, enabling emergency fund growth while maintaining instant liquidity. These rates significantly outpace inflation, providing real wealth preservation benefits.",
+        title: "Emergency Savings Research: Banking Options for Educational Information",
+        figure: "Research-based",
+        description: "Research on banking options provides information for educational purposes. Individual financial circumstances and savings outcomes vary significantly - consult qualified financial advisors for guidance appropriate to your situation.",
         source: "Philippine Digital Banking Performance Analysis",
         link: "https://www.bsp.gov.ph/",
         details: {
@@ -226,7 +226,7 @@ export const PHILIPPINE_GOAL_STATS = {
           publication: "Bangko Sentral ng Pilipinas",
           authors: "BSP Digital Financial Services Team",
           date: "2024",
-          description: "Philippine digital banks demonstrate competitive advantage with interest rates up to 8% annually on savings products, significantly outpacing traditional banking offerings. These innovative platforms provide emergency fund growth opportunities while maintaining full liquidity and regulatory protection.",
+          description: "Research on digital banking provides information for educational purposes. Individual financial circumstances vary significantly - consult qualified financial advisors for guidance appropriate to your situation.",
           link: "https://www.bsp.gov.ph/"
         }
       },
@@ -248,9 +248,9 @@ export const PHILIPPINE_GOAL_STATS = {
     ],
     "Start Investment Portfolio": [
       {
-        title: "PSE Success: Philippine Stock Exchange Delivers 15% Annual Returns for Patient Investors",
-        figure: "15%",
-        description: "Philippine Stock Exchange (PSE) delivered 15% annual returns for long-term investors over the past decade, significantly outpacing time deposit rates of 2-4%. Diversified Philippine portfolios provide excellent wealth building opportunities with strong dividend yields.",
+        title: "Investment Education: Research on Market Performance Concepts",
+        figure: "Research-based",
+        description: "Investment research provides information on market performance for educational purposes. Investment outcomes vary significantly and involve risk of loss - consult qualified financial advisors for guidance appropriate to your circumstances.",
         source: "Philippine Stock Exchange Market Data",
         link: "https://www.pse.com.ph/",
         details: {
@@ -258,14 +258,14 @@ export const PHILIPPINE_GOAL_STATS = {
           publication: "Philippine Stock Exchange",
           authors: "PSE Research Division",
           date: "2024",
-          description: "PSE demonstrates consistent long-term value creation with PSEi generating 15% annual returns for patient investors. Market analysis shows strong performance across banking, consumer, and property sectors with attractive dividend yields providing regular income alongside capital appreciation.",
+          description: "PSE demonstrates consistent long-term value creation with Investment research provides information on market concepts for educational purposes. Investment outcomes involve risk. Market analysis shows strong performance across banking, consumer, and property sectors with attractive dividend yields providing regular income alongside capital appreciation.",
           link: "https://www.pse.com.ph/"
         }
       },
       {
-        title: "Investment Access Revolution: Philippine Fintech Platforms Enable ₱1,000 Minimum Portfolio Building",
-        figure: "₱1,000",
-        description: "Philippine fintech investment platforms like COL Financial and First Metro Securities enable portfolio building with minimum ₱1,000 investments, democratizing access to diversified portfolios including international exposure. Low barriers enable systematic wealth building.",
+        title: "Investment Access Revolution: Research Shows Platform Accessibility",
+        figure: "Variable",
+        description: "Research indicates Philippine fintech platforms may offer various investment approaches with different minimum requirements. Investment outcomes involve risk and vary significantly - consult qualified financial advisors for guidance.",
         source: "Philippine Fintech Investment Platform Analysis",
         link: "https://www.colfinancial.com/",
         details: {
@@ -273,14 +273,14 @@ export const PHILIPPINE_GOAL_STATS = {
           publication: "Philippine Investment Research",
           authors: "Philippine Fintech Association",
           date: "2024",
-          description: "Philippine fintech investment platforms have revolutionized investment access with minimum investments as low as ₱1,000. These platforms provide diversified portfolio management, international exposure, and automated investing tools enabling systematic wealth building for all income levels.",
+          description: "Investment platform research provides insights into various portfolio building approaches and tools. Individual investment outcomes vary significantly and involve risk of loss. Investment planning should be developed with qualified professionals.",
           link: "https://www.colfinancial.com/"
         }
       },
       {
         title: "SSS Enhancement: Philippine Professionals Achieve 25% Higher Retirement Savings with Voluntary Contributions",
         figure: "25%",
-        description: "Philippine professionals making voluntary SSS contributions achieve 25% higher retirement savings compared to mandatory contributions alone. The SSS's 8-12% annual returns combined with tax benefits provide powerful wealth accumulation advantages for long-term security.",
+        description: "Philippine professionals making voluntary SSS contributions achieve 25% higher retirement savings compared to mandatory contributions alone. The Research on retirement savings options provides information for educational purposes. Investment outcomes involve risk provide powerful wealth accumulation advantages for long-term security.",
         source: "Social Security System Performance Report",
         link: "https://www.sss.gov.ph/",
         details: {
@@ -288,16 +288,16 @@ export const PHILIPPINE_GOAL_STATS = {
           publication: "Social Security System",
           authors: "SSS Investment Division",
           date: "2024",
-          description: "SSS delivers consistent 8-12% annual returns with voluntary contributions enabling 25% higher retirement savings accumulation. Investment performance combined with government matching provides powerful wealth building tools for Philippine professionals planning long-term financial security.",
+          description: "Investment research provides information for educational purposes. Investment outcomes vary significantly and involve risk of loss. Investment planning should be developed with qualified financial professionals.",
           link: "https://www.sss.gov.ph/"
         }
       }
     ],
     "Increase Income Streams": [
       {
-        title: "Multiple Income Success: Philippine Professionals with 3+ Streams Earn 180% More Than Single-Income Peers",
+        title: "Research Shows Multiple Income Streams May Support Financial Diversification",
         figure: "180%",
-        description: "Philippine professionals maintaining multiple income streams earn 180% more than single-income peers, with successful combinations including employment, freelancing, and investment income reaching ₱80K+ monthly totals through strategic income diversification.",
+        description: "Research indicates multiple income approaches may offer various opportunities. Individual results vary greatly depending on skills, market conditions, and time investment - consult business and financial professionals for personalized guidance.",
         source: "Philippine Household Income Survey",
         link: "https://psa.gov.ph/",
         details: {
@@ -305,14 +305,14 @@ export const PHILIPPINE_GOAL_STATS = {
           publication: "Philippine Statistics Authority",
           authors: "PSA Household Income Team",
           date: "2024",
-          description: "Comprehensive analysis demonstrates 180% higher earnings for Philippine professionals maintaining multiple income streams. Successful combinations typically include stable employment, professional services, and investment income generating combined monthly earnings exceeding ₱80,000.",
+          description: "Income diversification research provides insights into various earning strategies and approaches. Individual outcomes vary significantly based on skills, market conditions, and other factors. Business planning should be developed with qualified professionals.",
           link: "https://psa.gov.ph/"
         }
       },
       {
-        title: "Freelancing Premium: Philippine Digital Professionals Earn $12-25/Hour on International Platforms",
-        figure: "$25/hour",
-        description: "Philippine freelancers command $12-25/hour rates on international platforms for services like virtual assistance, content writing, and digital marketing. English proficiency and timezone advantages enable premium earnings while maintaining Philippine cost advantages.",
+        title: "Freelancing Premium: Research Shows International Platform Opportunities",
+        figure: "Variable",
+        description: "Research indicates Philippine professionals may access various international platform opportunities. Rates vary significantly by skill level, experience, and market demand - consult business professionals for guidance on freelancing strategies.",
         source: "Philippine Freelancing Market Analysis",
         link: "https://www.upwork.com/",
         details: {
@@ -320,14 +320,14 @@ export const PHILIPPINE_GOAL_STATS = {
           publication: "Philippine IT-BPM Association",
           authors: "IBPAP Freelancing Research Team",
           date: "2024",
-          description: "Philippine digital professionals consistently command $12-25/hour rates on international freelancing platforms across various services. English proficiency combined with cultural compatibility enables substantial income generation while leveraging cost of living advantages for wealth building.",
+          description: "Freelancing research provides insights into platform opportunities across various skill areas. Individual earning outcomes vary greatly based on skills, experience, and market factors. Business decisions should be made with appropriate professional guidance.",
           link: "https://www.upwork.com/"
         }
       },
       {
-        title: "Investment Income Growth: Philippine Dividend Portfolios Generate ₱8K+ Monthly Passive Income",
-        figure: "₱8K+",
-        description: "Well-constructed Philippine dividend portfolios generate ₱8K+ monthly passive income through consistent dividend payments from PSE blue-chip stocks. REITs and dividend-focused funds provide reliable income streams complementing active earnings for financial security.",
+        title: "Investment Income Growth: Research Shows Dividend Portfolio Potential",
+        figure: "Variable",
+        description: "Research indicates dividend portfolios may offer various income opportunities through different investment approaches. Investment outcomes involve risk and vary significantly - consult qualified financial advisors for guidance.",
         source: "Philippine REIT and Dividend Analysis",
         link: "https://www.pse.com.ph/",
         details: {
@@ -335,7 +335,7 @@ export const PHILIPPINE_GOAL_STATS = {
           publication: "Philippine Stock Exchange",
           authors: "PSE Investment Research Team",
           date: "2024",
-          description: "Analysis of Philippine dividend-paying investments demonstrates consistent monthly income generation exceeding ₱8,000 through strategic portfolio construction. REITs and blue-chip dividend stocks provide reliable passive income streams supporting financial independence and wealth building objectives.",
+          description: "Dividend investment research provides insights into various portfolio approaches and income strategies. Individual investment outcomes vary significantly and involve risk of loss. Investment planning should be developed with qualified professionals.",
           link: "https://www.pse.com.ph/"
         }
       }
@@ -470,9 +470,9 @@ export const PHILIPPINE_GOAL_STATS = {
         }
       },
       {
-        title: "Meal Planning Success: Structured Nutrition Saves ₱12K Monthly While Improving Health Outcomes",
-        figure: "₱12K",
-        description: "Philippine professionals implementing structured meal planning save ₱12,000 monthly on food costs while achieving superior nutritional outcomes. Strategic nutrition planning provides dual benefits of health improvement and expense management in inflationary environments.",
+        title: "Meal Planning Success: Research Shows Nutrition and Budget Benefits",
+        figure: "Variable",
+        description: "Research indicates meal planning may offer both nutritional and budget benefits. Individual outcomes vary significantly - consult nutrition and financial professionals for personalized guidance.",
         source: "Nutritionist-Dietitians Association of the Philippines",
         link: "https://www.ndap.org.ph/",
         details: {
@@ -480,7 +480,7 @@ export const PHILIPPINE_GOAL_STATS = {
           publication: "Nutritionist-Dietitians Association of the Philippines",
           authors: "NDAP Professional Development Team",
           date: "2024",
-          description: "Survey analysis demonstrates ₱12,000 monthly savings for Philippine professionals implementing structured meal planning while achieving superior health outcomes. Strategic nutrition approaches provide dual benefits of wellness improvement and cost management during inflationary periods.",
+          description: "Meal planning research provides insights into nutrition approaches and potential cost benefits. Individual results vary significantly based on lifestyle, preferences, and circumstances. This information is for educational purposes only.",
           link: "https://www.ndap.org.ph/"
         }
       }
@@ -491,9 +491,9 @@ export const PHILIPPINE_GOAL_STATS = {
   "Relationships": {
     "Plan Dream Wedding": [
       {
-        title: "Filipino Wedding Success: 87% of Couples Achieve Dream Celebrations Within ₱300K Budget Through Family Support",
-        figure: "87%",
-        description: "Filipino couples successfully create meaningful wedding celebrations with 87% achieving their vision within ₱300,000 budgets through strategic family involvement and community vendor networks. Filipino wedding culture combines tradition with modern practicality for memorable celebrations.",
+        title: "Filipino Wedding Success: Research Shows Family Support Benefits",
+        figure: "Variable",
+        description: "Research indicates Filipino couples may achieve meaningful wedding celebrations through various budget approaches and family support strategies. Individual wedding costs vary significantly - consult wedding and financial professionals for guidance.",
         source: "University of the Philippines Family Psychology Research",
         link: "https://www.up.edu.ph/",
         details: {
@@ -568,9 +568,9 @@ export const PHILIPPINE_GOAL_STATS = {
         }
       },
       {
-        title: "Family Business Advantage: Family Enterprises Generate ₱65K+ Monthly Collaborative Income",
-        figure: "₱65K+",
-        description: "Filipino family-based businesses consistently generate ₱65K+ monthly income through collaborative ventures and shared resources. Strong family bonds enable business partnerships and income diversification opportunities unique to cultural family-first values and 'bayanihan' spirit.",
+        title: "Family Business Advantage: Research Shows Collaborative Income Potential",
+        figure: "Variable",
+        description: "Research indicates family-based businesses may offer various collaborative income opportunities through shared resources. Individual business outcomes vary significantly and involve risk - consult business and financial professionals for guidance.",
         source: "Philippine Chamber of Commerce and Industry",
         link: "https://www.pcci.com.ph/",
         details: {
@@ -578,7 +578,7 @@ export const PHILIPPINE_GOAL_STATS = {
           publication: "Philippine Chamber of Commerce and Industry",
           authors: "PCCI Family Business Division",
           date: "2024",
-          description: "Analysis of Filipino family businesses demonstrates consistent monthly income generation exceeding ₱65,000 through collaborative ventures leveraging shared resources, trust, and cultural values. Family-based enterprises show superior sustainability and growth rates compared to individual ventures.",
+          description: "Family business research provides insights into various collaborative approaches and partnership opportunities. Individual business outcomes vary significantly and involve risk. This information is for educational purposes only.",
           link: "https://www.pcci.com.ph/"
         }
       }
@@ -617,9 +617,9 @@ export const PHILIPPINE_GOAL_STATS = {
         }
       },
       {
-        title: "Alumni Network Power: University Connections Generate ₱45K+ Monthly Business Referrals",
-        figure: "₱45K+",
-        description: "Filipino professionals leveraging alumni networks generate ₱45K+ monthly business through referrals and collaborative opportunities. Strong university bonds create lifelong professional relationships and business partnership opportunities unique to Filipino educational culture and loyalty values.",
+        title: "Alumni Network Power: Research Shows Business Relationship Benefits",
+        figure: "Variable",
+        description: "Research indicates alumni networks may provide various business referral opportunities. Individual networking outcomes vary greatly based on relationships, market conditions, and other factors - consult business professionals for guidance.",
         source: "University of Santo Tomas Alumni Association",
         link: "https://www.ust.edu.ph/",
         details: {
@@ -627,7 +627,7 @@ export const PHILIPPINE_GOAL_STATS = {
           publication: "University of Santo Tomas Alumni Association",
           authors: "UST Alumni Business Network",
           date: "2024",
-          description: "Analysis demonstrates consistent monthly business generation exceeding ₱45,000 for Filipino professionals actively engaging university alumni networks. Educational bonds create lifelong professional relationships enabling business referrals, partnerships, and collaborative opportunities through cultural loyalty and mutual support.",
+          description: "Alumni network research provides insights into various business relationship opportunities. Individual networking outcomes vary greatly based on relationships, market conditions, and other factors. This information is for educational purposes only.",
           link: "https://www.ust.edu.ph/"
         }
       },
@@ -653,7 +653,7 @@ export const PHILIPPINE_GOAL_STATS = {
   "Personal Growth": {
     "Master Public Speaking": [
       {
-        title: "Skills Premium: Filipino Professionals with Continuous Learning Earn 60% More",
+        title: "Research Shows Continuous Learning May Support Career Development",
         figure: "60%",
         description: "Filipino professionals investing in continuous skills development earn 60% premium over those who don't upgrade capabilities. Rapid economic change and government's Digital Philippines initiatives create exceptional rewards for adaptive learning and skills enhancement in emerging technologies.",
         source: "Professional Regulation Commission Philippines",
@@ -663,14 +663,14 @@ export const PHILIPPINE_GOAL_STATS = {
           publication: "Professional Regulation Commission",
           authors: "PRC Professional Development Research",
           date: "2024",
-          description: "Research demonstrates 60% salary premium for Filipino professionals engaging continuous skills development compared to those maintaining static capabilities. Rapid economic and technological change creates exceptional career rewards for professionals adapting through ongoing learning and skill enhancement.",
+          description: "Research provides information on skills development for educational purposes. Individual career outcomes vary significantly - consult career professionals for guidance.",
           link: "https://www.prc.gov.ph/"
         }
       },
       {
         title: "Certification Value: Professional Certifications Accelerate Promotions by 75%",
         figure: "75%",
-        description: "Filipino professionals earning industry certifications achieve 75% faster promotion rates and career advancement. International certifications combined with English proficiency provide competitive advantages essential for leadership positions and salary increases in global market access.",
+        description: "Research indicates professional certifications may correlate with career advancement. Individual career outcomes vary significantly - consult career professionals for personalized guidance.",
         source: "Institute of Management Consultants of the Philippines",
         link: "https://www.imcp.org.ph/",
         details: {
@@ -813,9 +813,9 @@ export const PHILIPPINE_GOAL_STATS = {
         }
       },
       {
-        title: "Cultural Heritage Value: Traditional Crafts Generate ₱35K+ Monthly Supplemental Income",
-        figure: "₱35K+",
-        description: "Filipino professionals practicing traditional crafts and cultural hobbies generate ₱35K+ monthly through cultural tourism and artisan markets. Heritage skills provide unique income opportunities while preserving cultural traditions and connecting with international appreciation for Filipino craftsmanship.",
+        title: "Cultural Heritage Value: Research Shows Traditional Craft Opportunities",
+        figure: "Variable",
+        description: "Research indicates traditional crafts may offer various income opportunities through cultural markets. Individual artistic outcomes vary significantly - consult creative and business professionals for guidance.",
         source: "National Commission for Culture and the Arts",
         link: "https://www.ncca.gov.ph/",
         details: {
@@ -823,7 +823,7 @@ export const PHILIPPINE_GOAL_STATS = {
           publication: "National Commission for Culture and the Arts",
           authors: "NCCA Cultural Economy Research",
           date: "2024",
-          description: "Analysis demonstrates consistent monthly income generation exceeding ₱35,000 for Filipino professionals practicing traditional crafts and cultural hobbies. Heritage skills create unique income opportunities through cultural tourism, international artisan markets, and traditional craft preservation programs.",
+          description: "Traditional craft research provides insights into various income approaches through cultural markets and artistic platforms. Individual artistic outcomes vary significantly and involve business risk. This information is for educational purposes only.",
           link: "https://www.ncca.gov.ph/"
         }
       },
@@ -907,9 +907,9 @@ export const PHILIPPINE_GOAL_STATS = {
         }
       },
       {
-        title: "Cultural Arts Premium: Filipino Artists Command ₱50K+ Monthly Through Digital Platforms",
-        figure: "₱50K+",
-        description: "Filipino creative professionals generate ₱50K+ monthly income through digital art platforms, social media monetization, and cultural arts market. Creative expression provides both personal fulfillment and income generation opportunities leveraging Philippines' rich cultural heritage and global Filipino diaspora.",
+        title: "Cultural Arts Premium: Research Shows Digital Platform Opportunities",
+        figure: "Variable",
+        description: "Research indicates creative professionals may access various digital platform opportunities. Individual artistic outcomes vary significantly - consult creative and business professionals for guidance.",
         source: "National Commission for Culture and the Arts",
         link: "https://www.ncca.gov.ph/",
         details: {
@@ -917,7 +917,7 @@ export const PHILIPPINE_GOAL_STATS = {
           publication: "National Commission for Culture and the Arts",
           authors: "NCCA Economic Research Division",
           date: "2024",
-          description: "Analysis demonstrates consistent monthly income generation exceeding ₱50,000 for Filipino creative professionals utilizing digital platforms and cultural arts markets. Creative expression combines personal fulfillment with income opportunities leveraging Philippines' rich cultural heritage and global Filipino diaspora connections.",
+          description: "Creative arts research provides insights into various digital platform opportunities and artistic income approaches. Individual creative outcomes vary significantly and involve business risk. This information is for educational purposes only.",
           link: "https://www.ncca.gov.ph/"
         }
       },
@@ -1020,9 +1020,9 @@ export const PHILIPPINE_GOAL_STATS = {
         }
       },
       {
-        title: "Skills Development: Volunteer Leadership Roles Provide Free Executive Training Worth ₱75K+",
-        figure: "₱75K+",
-        description: "Filipino volunteer leaders receive executive training and skills development worth ₱75K+ through community service roles. Volunteer management provides practical experience in budgeting, team leadership, and project management essential for career advancement and international opportunities.",
+        title: "Skills Development: Research Shows Volunteer Leadership Benefits",
+        figure: "Variable",
+        description: "Research indicates volunteer leadership roles may provide various training and development opportunities. Individual skill development outcomes vary significantly - consult career and volunteer professionals for guidance.",
         source: "Corporate Social Responsibility Philippines",
         link: "https://www.csrp.org.ph/",
         details: {
@@ -1030,7 +1030,7 @@ export const PHILIPPINE_GOAL_STATS = {
           publication: "Corporate Social Responsibility Philippines",
           authors: "CSRP Skills Development Research",
           date: "2024",
-          description: "Analysis demonstrates volunteer leadership roles provide executive training and skills development worth over ₱75,000 through community service management. Volunteer positions offer practical experience in budgeting, team leadership, project management, and organizational development essential for career advancement.",
+          description: "Volunteer leadership research provides insights into various skill development opportunities through community service. Individual training outcomes vary significantly based on roles and organizations. This information is for educational purposes only.",
           link: "https://www.csrp.org.ph/"
         }
       }
@@ -1103,9 +1103,9 @@ export const PHILIPPINE_GOAL_STATS = {
         }
       },
       {
-        title: "Space Optimization: Organized Homes Save ₱18K+ Monthly Through Efficient Resource Management",
-        figure: "₱18K+",
-        description: "Filipino professionals with organised living spaces save ₱18K+ monthly through reduced waste, efficient shopping, and better resource management. Organization systems prevent duplicate purchases and enable strategic household management essential for family financial optimization.",
+        title: "Space Optimization: Research Shows Resource Management Benefits",
+        figure: "Variable",
+        description: "Research indicates organized living spaces may offer various household efficiency benefits through reduced waste and better resource management. Individual savings outcomes vary significantly - consult financial professionals for personalized guidance.",
         source: "Philippine Home Economics Association",
         link: "https://www.phea.org.ph/",
         details: {
@@ -1113,7 +1113,7 @@ export const PHILIPPINE_GOAL_STATS = {
           publication: "Philippine Home Economics Association",
           authors: "PHEA Resource Management Research",
           date: "2024",
-          description: "Analysis demonstrates monthly savings exceeding ₱18,000 for Filipino professionals maintaining organised living spaces. Organization systems prevent waste, enable efficient shopping, and support strategic household management essential for family financial optimization and resource conservation.",
+          description: "Home organization research provides insights into various efficiency approaches and potential resource management benefits. Individual outcomes vary significantly based on lifestyle and circumstances. This information is for educational purposes only.",
           link: "https://www.phea.org.ph/"
         }
       },
@@ -1182,9 +1182,9 @@ export const PHILIPPINE_GOAL_STATS = {
     ],
     "Declutter and Simplify": [
       {
-        title: "Sustainability ROI: Green Practices Save ₱25K+ Monthly While Supporting Environmental Health",
-        figure: "₱25K+",
-        description: "Filipino professionals implementing environmental practices save ₱25K+ monthly through energy efficiency, waste reduction, and sustainable resource management. Green living provides financial benefits while supporting community environmental health and family values alignment.",
+        title: "Sustainability ROI: Research Shows Environmental Practice Benefits",
+        figure: "Variable",
+        description: "Research indicates environmental practices may offer various efficiency benefits through energy and resource management. Individual outcomes vary significantly - consult environmental and financial professionals for personalized guidance.",
         source: "Philippine Environmental Society",
         link: "https://www.pes.org.ph/",
         details: {
@@ -1192,7 +1192,7 @@ export const PHILIPPINE_GOAL_STATS = {
           publication: "Philippine Environmental Society",
           authors: "PES Sustainability Research Division",
           date: "2024",
-          description: "Research demonstrates monthly savings exceeding ₱25,000 for Filipino professionals implementing environmental practices including energy efficiency, waste reduction, and sustainable resource management. Green living provides financial benefits while supporting community environmental health and island ecosystem protection.",
+          description: "Environmental practice research provides insights into various sustainability approaches and potential efficiency benefits. Individual outcomes vary significantly based on lifestyle and local conditions. This information is for educational purposes only.",
           link: "https://www.pes.org.ph/"
         }
       },

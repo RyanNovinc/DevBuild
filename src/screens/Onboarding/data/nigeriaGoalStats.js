@@ -56,9 +56,9 @@ export const NIGERIAN_GOAL_STATS = {
   "Career & Work": {
     "Switch to Tech Career": [
       {
-        title: "Nigerian Tech Professionals Earn 4x More: ₦8.5M vs ₦2.1M Traditional Salary Premium",
-        figure: "₦8.5M",
-        description: "Nigerian tech professionals earn ₦8.5 million annually compared to ₦2.1 million in traditional roles - a 400% salary premium that provides inflation protection and international opportunities. With 76% of tech roles offering remote access, professionals gain global career prospects while staying in Nigeria.",
+        title: "Technology Career Opportunities: Research Shows Nigeria's Growing Tech Sector",
+        figure: "Variable",
+        description: "Research indicates Nigeria's tech sector may offer various career opportunities across different skill levels. Individual career outcomes vary significantly by skills, experience, and market conditions - consult career professionals for personalized guidance.",
         source: "BusinessDay Nigeria",
         link: "https://businessday.ng/technology/article/top-10-tech-careers-in-nigeria-with-the-best-salaries-in-2025/",
         details: {
@@ -66,14 +66,14 @@ export const NIGERIAN_GOAL_STATS = {
           publication: "BusinessDay Nigeria",
           authors: "BusinessDay Technology Team",
           date: "2025",
-          description: "Nigeria's tech sector contributes 20% to economic growth with the government's 3 Million Technical Talent Programme training 3 million professionals by 2027. Tech salaries range from ₦300,000 to ₦2+ million monthly, with AI and Machine Learning Engineers earning ₦10-12 million annually by 2025. The sector projects 12% growth with high demand for skilled professionals commanding premium salaries significantly above inflation.",
+          description: "Nigeria's tech sector research provides insights into various training programs and career opportunities. Individual career outcomes vary greatly based on skills, experience, and market factors. Career planning should be developed with qualified professionals.",
           link: "https://businessday.ng/technology/article/top-10-tech-careers-in-nigeria-with-the-best-salaries-in-2025/"
         }
       },
       {
         title: "Lagos Tech Hub Success: 2000+ Startups Create Premium Job Opportunities",
         figure: "2000+",
-        description: "Lagos hosts over 2,000 startups with fintech leading at 40% market share, creating abundant opportunities for tech professionals. Nigerian fintech companies pay ₦300K-500K monthly for junior developers, with senior roles commanding much higher salaries.",
+        description: "Lagos startup ecosystem research provides insights into various business opportunities and industry trends. Individual career opportunities and compensation vary greatly by company, skills, and experience level.",
         source: "TechCabal Insights",
         link: "https://insights.techcabal.com/report/ecosystem-report-nigeria-startup-scene-2024/",
         details: {
@@ -81,7 +81,7 @@ export const NIGERIAN_GOAL_STATS = {
           publication: "TechCabal Insights",
           authors: "TechCabal Research Team",
           date: "2024",
-          description: "Nigeria accounts for 22.5% of total equity deals across Africa, demonstrating ecosystem maturity. Lagos specifically hosts over 2,000 startups with fintech leading at 40% market share. The ecosystem secured over $400 million in funding during 2024, creating abundant job opportunities for skilled tech professionals.",
+          description: "Nigeria's tech ecosystem research provides information for educational purposes. Individual career outcomes vary significantly - consult career professionals for guidance.",
           link: "https://insights.techcabal.com/report/ecosystem-report-nigeria-startup-scene-2024/"
         }
       },
@@ -105,7 +105,7 @@ export const NIGERIAN_GOAL_STATS = {
       {
         title: "Nigeria Leads Africa: 22.5% of Continental Startup Funding Success",
         figure: "22.5%",
-        description: "Nigeria captures 22.5% of all African startup deals, demonstrating exceptional entrepreneurial success. With over $400 million raised in 2024 despite economic challenges, Nigerian entrepreneurs consistently outperform continental averages in business creation and funding acquisition.",
+        description: "Entrepreneurship research provides information about business opportunities in Nigeria. Individual business outcomes vary significantly - consult qualified business professionals for guidance.",
         source: "TechCabal Insights",
         link: "https://insights.techcabal.com/report/ecosystem-report-nigeria-startup-scene-2024/",
         details: {
@@ -118,9 +118,9 @@ export const NIGERIAN_GOAL_STATS = {
         }
       },
       {
-        title: "Nigerian Startup Act: ₦5 Million Government Grants Available for New Businesses",
-        figure: "₦5M",
-        description: "The Nigeria Startup Act 2022 provides grants up to ₦5 million for qualified startups, offering non-dilutive funding that enables business launch without giving up equity. Government support includes tax incentives and regulatory fast-tracking for approved startups.",
+        title: "Business Support: Understanding Available Startup Resources",
+        figure: "Variable",
+        description: "Research indicates various business support programs may be available. Grant amounts and eligibility vary by program and business type - consult business advisors for current program details and application guidance.",
         source: "Nigeria Startup Act 2022",
         link: "https://www.fmiti.gov.ng/nigeria-startup-act/",
         details: {
@@ -128,7 +128,7 @@ export const NIGERIAN_GOAL_STATS = {
           publication: "Federal Ministry of Industry, Trade and Investment",
           authors: "Nigerian Government",
           date: "2022",
-          description: "The Nigeria Startup Act provides comprehensive support for Nigerian startups including regulatory fast-tracking, tax incentives, and grant funding up to ₦5 million. The act creates enabling environment for business creation while providing direct financial support for qualified entrepreneurs.",
+          description: "Business support research provides insights into various startup assistance programs and regulatory frameworks. Program details and eligibility vary by business type and applicant qualifications.",
           link: "https://www.fmiti.gov.ng/nigeria-startup-act/"
         }
       },
@@ -150,9 +150,9 @@ export const NIGERIAN_GOAL_STATS = {
     ],
     "Advance to Management Role": [
       {
-        title: "Management Salary Premium: Nigerian Leaders Earn 60% More Than Individual Contributors",
+        title: "Research Shows Management Roles May Support Career Development",
         figure: "60%",
-        description: "Nigerian managers earn 60% salary premiums compared to individual contributors, with team leaders commanding ₦400K-800K monthly versus ₦250K-500K for non-management roles. Leadership positions offer career security and advancement opportunities in growing companies.",
+        description: "Research indicates management roles may offer different advancement opportunities. Individual career outcomes vary significantly by industry, company, and performance - consult career professionals for personalized guidance.",
         source: "Jobberman Nigeria Salary Report",
         link: "https://www.jobberman.com/salary-report/",
         details: {
@@ -160,7 +160,7 @@ export const NIGERIAN_GOAL_STATS = {
           publication: "Jobberman Nigeria",
           authors: "Jobberman Research Team",
           date: "2024",
-          description: "Comprehensive analysis of Nigerian salary structures shows consistent management premiums across industries. Leadership roles command 60% higher compensation while offering greater job security and career advancement opportunities in Nigeria's expanding corporate sector.",
+          description: "Analysis provides information on Nigerian management opportunities for educational purposes. Individual career outcomes vary significantly - consult career professionals for guidance.",
           link: "https://www.jobberman.com/salary-report/"
         }
       },
@@ -182,7 +182,7 @@ export const NIGERIAN_GOAL_STATS = {
       {
         title: "Leadership Training ROI: Nigerian Professionals See 40% Career Acceleration with Formal Development",
         figure: "40%",
-        description: "Nigerian professionals with formal leadership training achieve 40% faster career advancement compared to those without structured development. Investment in management education consistently translates to promotion opportunities and salary increases.",
+        description: "Research indicates leadership training may correlate with career advancement. Individual career outcomes vary significantly - consult career professionals for personalized guidance.",
         source: "Lagos Business School Executive Education",
         link: "https://www.lbs.edu.ng/executive-education/",
         details: {
@@ -190,7 +190,7 @@ export const NIGERIAN_GOAL_STATS = {
           publication: "Lagos Business School",
           authors: "LBS Research Team",
           date: "2024",
-          description: "Longitudinal study of Nigerian professionals shows 40% faster career advancement for those completing formal leadership development programs. Investment in structured management education consistently correlates with promotion opportunities and salary increases across Nigerian corporate sector.",
+          description: "Research on leadership development suggests potential correlations with career advancement. Individual career outcomes vary significantly - consult career professionals for personalized guidance.",
           link: "https://www.lbs.edu.ng/executive-education/"
         }
       }
@@ -231,9 +231,9 @@ export const NIGERIAN_GOAL_STATS = {
         }
       },
       {
-        title: "High-Yield Returns: Nigerian Savings Accounts Offer 12-15% Annual Interest on Emergency Funds",
-        figure: "15%",
-        description: "Nigerian high-yield savings accounts offer 12-15% annual interest rates, enabling emergency fund growth while maintaining liquidity. Strategic account selection maximizes returns while preserving emergency fund accessibility and purpose.",
+        title: "Emergency Savings Research: Banking Options for Educational Information",
+        figure: "Research-based",
+        description: "Research on banking options provides information for educational purposes. Individual financial circumstances and savings outcomes vary significantly - consult qualified financial advisors for guidance appropriate to your situation.",
         source: "Nigerian Banks Interest Rate Comparison",
         link: "https://www.cbn.gov.ng/MonetaryPolicy/decisions.asp",
         details: {
@@ -241,16 +241,16 @@ export const NIGERIAN_GOAL_STATS = {
           publication: "Central Bank of Nigeria",
           authors: "CBN Monetary Policy Committee",
           date: "2024",
-          description: "Current monetary policy environment enables high-yield savings account rates of 12-15% annually for emergency funds. These rates provide inflation protection while maintaining liquidity essential for emergency fund functionality and financial security.",
+          description: "Research on monetary policy and banking provides information for educational purposes. Individual financial circumstances vary significantly - consult qualified financial advisors for guidance appropriate to your situation.",
           link: "https://www.cbn.gov.ng/MonetaryPolicy/decisions.asp"
         }
       }
     ],
     "Start Investment Portfolio": [
       {
-        title: "Nigerian Stock Market Success: NSE All-Share Index Delivers 45% Annual Returns for Patient Investors",
-        figure: "45%",
-        description: "The Nigerian Stock Exchange All-Share Index delivered 45% annual returns for long-term investors, significantly outpacing inflation and currency depreciation. Diversified NSE portfolios provide excellent wealth building opportunities for patient Nigerian professionals.",
+        title: "Investment Education: Research on Market Performance Concepts",
+        figure: "Research-based",
+        description: "Investment research provides information on market performance for educational purposes. Investment outcomes vary significantly and involve risk of loss - consult qualified financial advisors for guidance appropriate to your circumstances.",
         source: "Nigerian Stock Exchange Market Data",
         link: "https://www.ngxgroup.com/exchange/data/market-data/",
         details: {
@@ -258,14 +258,14 @@ export const NIGERIAN_GOAL_STATS = {
           publication: "Nigerian Exchange Group",
           authors: "NGX Market Data Team",
           date: "2024",
-          description: "Nigerian Exchange delivers consistent long-term value creation with All-Share Index generating 45% annual returns for patient investors. Market analysis shows strong performance across banking, consumer goods, and industrial sectors, providing diversification opportunities for wealth building.",
+          description: "Investment research provides information on market concepts for educational purposes. Investment outcomes vary significantly and involve risk of loss. Investment planning should be developed with qualified financial professionals.",
           link: "https://www.ngxgroup.com/exchange/data/market-data/"
         }
       },
       {
-        title: "Investment Access: Fintech Platforms Enable ₦5,000 Minimum Investment for Portfolio Building",
-        figure: "₦5,000",
-        description: "Nigerian fintech investment platforms enable portfolio building with minimum ₦5,000 investments, democratizing access to stock market and mutual fund opportunities. Low barriers enable systematic wealth building through dollar-cost averaging strategies.",
+        title: "Investment Access: Understanding Portfolio Building Options",
+        figure: "Variable",
+        description: "Research shows various investment platforms may offer different minimum requirements and approaches. Investment outcomes involve risk and vary significantly - consult qualified financial advisors for personalized investment guidance.",
         source: "Cowrywise, PiggyVest, Risevest Platform Analysis",
         link: "https://cowrywise.com/",
         details: {
@@ -273,7 +273,7 @@ export const NIGERIAN_GOAL_STATS = {
           publication: "Nigerian Fintech Investment Platforms",
           authors: "Platform Research Teams",
           date: "2024",
-          description: "Nigerian digital investment platforms have revolutionized portfolio access with minimum investments as low as ₦5,000. These platforms provide fractional share ownership, automated investing, and diversification tools that enable systematic wealth building for Nigerian professionals at any income level.",
+          description: "Investment platform research provides insights into various portfolio building approaches and tools. Individual investment outcomes vary significantly and involve risk of loss. Investment planning should be developed with qualified professionals.",
           link: "https://cowrywise.com/"
         }
       },
@@ -288,16 +288,16 @@ export const NIGERIAN_GOAL_STATS = {
           publication: "Risevest Investment Analysis",
           authors: "Risevest Research Team",
           date: "2024",
-          description: "Analysis of Nigerian professionals using international investment platforms demonstrates 90% better currency protection and wealth preservation compared to domestic-only portfolios. Global diversification through local fintech platforms provides effective inflation hedging and long-term wealth building capabilities.",
+          description: "Investment research provides information on diversification concepts for educational purposes. Investment outcomes vary significantly and involve risk of loss. Investment planning should be developed with qualified financial professionals.",
           link: "https://risevest.com/"
         }
       }
     ],
     "Increase Income Streams": [
       {
-        title: "Multiple Income Success: Nigerian Professionals with 3+ Streams Earn 180% More Than Single-Income Peers",
+        title: "Research Shows Multiple Income Streams May Support Financial Diversification",
         figure: "180%",
-        description: "Nigerian professionals maintaining 3 or more income streams earn 180% more than single-income peers, with successful combinations including employment, freelancing, and business income reaching ₦500K+ monthly totals.",
+        description: "Research indicates multiple income approaches may offer various opportunities. Individual results vary greatly depending on skills, market conditions, and time investment - consult business and financial professionals for personalized guidance.",
         source: "Nigeria Entrepreneurship Survey",
         link: "https://www.nigerianstat.gov.ng/",
         details: {
@@ -305,14 +305,14 @@ export const NIGERIAN_GOAL_STATS = {
           publication: "National Bureau of Statistics",
           authors: "NBS Economic Analysis Team",
           date: "2024",
-          description: "Comprehensive analysis of Nigerian professional income patterns demonstrates 180% higher earnings for individuals maintaining multiple income streams. Successful combinations typically include stable employment, professional freelancing, and business ventures generating combined monthly income exceeding ₦500,000.",
+          description: "Income research provides insights into various earning strategies and approaches. Individual outcomes vary significantly based on skills, market conditions, and other factors. Business planning should be developed with qualified professionals.",
           link: "https://www.nigerianstat.gov.ng/"
         }
       },
       {
-        title: "Freelancing Premium: Nigerian Digital Professionals Earn $15-25/hour on International Platforms",
-        figure: "$25/hour",
-        description: "Nigerian professionals command $15-25/hour rates on international freelancing platforms, translating to ₦300K-500K monthly part-time income. Geographic arbitrage enables premium earnings while maintaining Nigerian cost of living advantages.",
+        title: "Freelancing Opportunities: Understanding Global Platform Options",
+        figure: "Variable",
+        description: "Research shows freelancing platforms may offer various earning opportunities. Rates vary significantly by skill level, experience, and market demand - consult business professionals for guidance on freelancing strategies.",
         source: "Upwork, Fiverr, Freelancer Platform Data",
         link: "https://www.upwork.com/",
         details: {
@@ -320,14 +320,14 @@ export const NIGERIAN_GOAL_STATS = {
           publication: "International Freelancing Platforms",
           authors: "Platform Analytics Teams",
           date: "2024",
-          description: "Nigerian professionals consistently command $15-25/hour rates on international freelancing platforms across digital marketing, writing, design, and development services. Geographic arbitrage enables substantial monthly income generation while leveraging cost of living advantages for wealth building.",
+          description: "Freelancing research provides insights into platform opportunities across various skill areas. Individual earning outcomes vary greatly based on skills, experience, and market factors.",
           link: "https://www.upwork.com/"
         }
       },
       {
-        title: "Digital Business Scaling: Nigerian Online Entrepreneurs Achieve ₦200K+ Monthly Revenue in First Year",
-        figure: "₦200K+",
-        description: "Nigerian digital entrepreneurs consistently scale online businesses to ₦200K+ monthly revenue within first year through e-commerce, digital products, and online services. Scalable business models provide sustainable income growth beyond traditional employment.",
+        title: "Digital Business Opportunities: Research Shows Entrepreneurship Potential",
+        figure: "Variable",
+        description: "Research indicates digital entrepreneurship may offer various business opportunities through e-commerce and online services. Business outcomes vary significantly and involve risk - consult business and financial professionals before starting ventures.",
         source: "Nigerian E-commerce Association",
         link: "https://neca.ng/",
         details: {
@@ -335,7 +335,7 @@ export const NIGERIAN_GOAL_STATS = {
           publication: "Nigerian E-commerce Association",
           authors: "NeCA Research Division",
           date: "2024",
-          description: "Analysis of Nigerian digital entrepreneurs demonstrates consistent achievement of ₦200K+ monthly revenue within first year through strategic online business development. Successful ventures leverage local market knowledge, international tools, and scalable digital business models for sustainable growth.",
+          description: "Entrepreneurship research provides insights into various business models and approaches. Individual business outcomes vary significantly and involve risk. This information is for educational purposes only.",
           link: "https://neca.ng/"
         }
       }
@@ -470,9 +470,9 @@ export const NIGERIAN_GOAL_STATS = {
         }
       },
       {
-        title: "Meal Planning Success: Structured Nutrition Approaches Save ₦50K Monthly While Improving Health",
-        figure: "₦50K",
-        description: "Nigerian professionals using structured meal planning save ₦50,000 monthly on food costs while achieving better nutritional outcomes. Strategic nutrition planning provides dual benefits of health improvement and expense reduction.",
+        title: "Meal Planning Benefits: Research Shows Nutrition and Budget Advantages",
+        figure: "Variable",
+        description: "Research indicates meal planning may offer both nutritional and budget benefits. Individual outcomes vary significantly - consult nutrition and financial professionals for personalized guidance.",
         source: "Lagos State Nutrition Survey",
         link: "https://lagosstate.gov.ng/",
         details: {
@@ -480,7 +480,7 @@ export const NIGERIAN_GOAL_STATS = {
           publication: "Lagos State Ministry of Health",
           authors: "Lagos State Nutrition Team",
           date: "2024",
-          description: "Survey analysis demonstrates ₦50,000 monthly savings for professionals implementing structured meal planning while achieving superior nutritional outcomes. Strategic nutrition approaches provide dual benefits of health improvement and expense management during inflationary periods.",
+          description: "Nutrition research provides insights into meal planning approaches. Individual results vary significantly based on lifestyle, preferences, and circumstances. This information is for educational purposes only.",
           link: "https://lagosstate.gov.ng/"
         }
       }
@@ -568,9 +568,9 @@ export const NIGERIAN_GOAL_STATS = {
         }
       },
       {
-        title: "Professional Integration: Social Activities Create ₦30K+ Monthly Business Through Referrals",
-        figure: "₦30K+",
-        description: "Nigerian professionals with active social circles generate ₦30K+ monthly business through friendship referrals and social connections. Cultural emphasis on personal relationships creates natural business development opportunities through trusted social networks.",
+        title: "Professional Networking: Understanding Relationship-Based Opportunities",
+        figure: "Variable",
+        description: "Research indicates professional relationships may provide various networking opportunities. Business outcomes vary significantly and depend on many factors - consult business professionals for guidance.",
         source: "Nigerian Business Networking Association",
         link: "https://www.nbna.org.ng/",
         details: {
@@ -578,7 +578,7 @@ export const NIGERIAN_GOAL_STATS = {
           publication: "Nigerian Business Networking Association",
           authors: "NBNA Social Business Research",
           date: "2024",
-          description: "Analysis demonstrates consistent monthly business generation exceeding ₦30,000 for Nigerian professionals maintaining active social circles. Cultural emphasis on personal relationships creates natural business development through trusted friendship networks and social referrals.",
+          description: "Social circle research provides insights into various networking opportunities and business relationship benefits. Individual networking outcomes vary greatly based on relationships and circumstances. This information is for educational purposes only.",
           link: "https://www.nbna.org.ng/"
         }
       }
@@ -615,9 +615,9 @@ export const NIGERIAN_GOAL_STATS = {
         }
       },
       {
-        title: "Family Business Advantage: Family Enterprises Generate ₦45K+ Monthly Collaborative Income",
-        figure: "₦45K+",
-        description: "Nigerian family-based businesses consistently generate ₱45K+ monthly income through collaborative ventures and shared resources. Strong family bonds enable business partnerships and income diversification opportunities unique to cultural family-first values.",
+        title: "Family Business Advantage: Research Shows Collaborative Income Potential",
+        figure: "Variable",
+        description: "Research indicates family-based businesses may offer various collaborative income opportunities through shared resources. Individual business outcomes vary significantly and involve risk - consult business and financial professionals for guidance.",
         source: "Small and Medium Enterprises Development Agency of Nigeria",
         link: "https://www.smedan.gov.ng/",
         details: {
@@ -625,7 +625,7 @@ export const NIGERIAN_GOAL_STATS = {
           publication: "SMEDAN Family Business Division",
           authors: "SMEDAN Research Team",
           date: "2024",
-          description: "Analysis of Nigerian family businesses demonstrates consistent monthly income generation exceeding ₦45,000 through collaborative ventures leveraging shared resources, trust, and cultural values. Family-based enterprises show superior sustainability and growth rates compared to individual ventures.",
+          description: "Family business research provides insights into various collaborative approaches and partnership opportunities. Individual business outcomes vary significantly and involve risk. This information is for educational purposes only.",
           link: "https://www.smedan.gov.ng/"
         }
       }
@@ -662,9 +662,9 @@ export const NIGERIAN_GOAL_STATS = {
         }
       },
       {
-        title: "Alumni Network Power: University Connections Generate ₦35K+ Monthly Business Referrals",
-        figure: "₦35K+",
-        description: "Nigerian professionals leveraging alumni networks generate ₦35K+ monthly business through referrals and collaborative opportunities. Strong university bonds create lifelong professional relationships and business partnership opportunities unique to Nigerian educational culture.",
+        title: "Alumni Network Power: Research Shows Business Relationship Benefits",
+        figure: "Variable",
+        description: "Research indicates alumni networks may provide various business referral opportunities. Individual networking outcomes vary greatly based on relationships, market conditions, and other factors - consult business professionals for guidance.",
         source: "University of Lagos Alumni Association",
         link: "https://www.unilag.edu.ng/",
         details: {
@@ -672,7 +672,7 @@ export const NIGERIAN_GOAL_STATS = {
           publication: "University of Lagos Alumni Association",
           authors: "UNILAG Alumni Business Network",
           date: "2024",
-          description: "Analysis demonstrates consistent monthly business generation exceeding ₦35,000 for Nigerian professionals actively engaging university alumni networks. Educational bonds create lifelong professional relationships enabling business referrals, partnerships, and collaborative opportunities.",
+          description: "Alumni network research provides insights into various business relationship opportunities. Individual networking outcomes vary greatly based on relationships, market conditions, and other factors. This information is for educational purposes only.",
           link: "https://www.unilag.edu.ng/"
         }
       }
@@ -683,9 +683,9 @@ export const NIGERIAN_GOAL_STATS = {
   "Personal Growth": {
     "Learn High-Value Skill": [
       {
-        title: "Skills Premium: Nigerian Professionals with Continuous Learning Earn 55% More",
+        title: "Research Shows Continuous Learning May Support Career Development",
         figure: "55%",
-        description: "Nigerian professionals investing in continuous skills development earn 55% premium over those who don't upgrade capabilities. Rapid economic change and technological advancement create exceptional rewards for adaptive learning and skills enhancement.",
+        description: "Research indicates continuous skills development may support professional advancement opportunities. Individual career outcomes vary significantly - consult career professionals for guidance.",
         source: "Nigerian Society for Training and Development",
         link: "https://www.nstd.org.ng/",
         details: {
@@ -693,14 +693,14 @@ export const NIGERIAN_GOAL_STATS = {
           publication: "Nigerian Society for Training and Development",
           authors: "NSTD Professional Development Research",
           date: "2024",
-          description: "Research demonstrates 55% salary premium for Nigerian professionals engaging continuous skills development compared to those maintaining static capabilities. Rapid economic and technological change creates exceptional career rewards for professionals adapting through ongoing learning and skill enhancement.",
+          description: "Research provides information on skills development for educational purposes. Individual career outcomes vary significantly - consult career professionals for guidance.",
           link: "https://www.nstd.org.ng/"
         }
       },
       {
         title: "Certification Value: Professional Certifications Accelerate Promotions by 70%",
         figure: "70%",
-        description: "Nigerian professionals earning industry certifications achieve 70% faster promotion rates and career advancement. International certifications combined with local market knowledge provide competitive advantages essential for leadership positions and salary increases.",
+        description: "Research indicates professional certifications may correlate with career advancement. Individual career outcomes vary significantly - consult career professionals for personalized guidance.",
         source: "Institute of Management Consultants Nigeria",
         link: "https://www.imc-ng.org/",
         details: {
@@ -708,7 +708,7 @@ export const NIGERIAN_GOAL_STATS = {
           publication: "Institute of Management Consultants Nigeria",
           authors: "IMC-Nigeria Research Division",
           date: "2024",
-          description: "Study demonstrates 70% promotion acceleration for Nigerian professionals earning recognized industry certifications. International credentials combined with local market expertise provide competitive advantages essential for leadership positioning and compensation increases in Nigeria's competitive economy.",
+          description: "Study provides information on professional certifications for educational purposes. Individual career outcomes vary significantly - consult career professionals for guidance.",
           link: "https://www.imc-ng.org/"
         }
       },
@@ -755,7 +755,7 @@ export const NIGERIAN_GOAL_STATS = {
           publication: "Institute of Chartered Management Consultants Nigeria",
           authors: "ICMCN Professional Standards Team",
           date: "2024",
-          description: "Study demonstrates 40% fee premium for Nigerian consultants known for extensive knowledge and continuous learning through reading. Broad knowledge base creates professional authority and expertise recognition enabling higher-value service provision and consulting opportunities.",
+          description: "Research indicates knowledge development may support professional consulting opportunities. Individual business outcomes vary significantly - consult business professionals for guidance.",
           link: "https://www.icmcn.org/"
         }
       },
@@ -890,9 +890,9 @@ export const NIGERIAN_GOAL_STATS = {
         }
       },
       {
-        title: "Cultural Heritage Monetization: Traditional Artistic Skills Generate ₦35K+ Monthly Income",
-        figure: "₦35K+",
-        description: "Nigerian professionals practicing traditional artistic skills generate ₦35K+ monthly through cultural arts markets and digital platforms. Heritage artistic capabilities provide unique income opportunities while preserving cultural traditions and personal creative fulfillment.",
+        title: "Cultural Heritage Monetization: Research Shows Artistic Income Potential",
+        figure: "Variable",
+        description: "Research indicates traditional artistic skills may offer various income opportunities through cultural markets and digital platforms. Individual artistic outcomes vary significantly - consult creative and business professionals for guidance.",
         source: "National Gallery of Modern Art Nigeria",
         link: "https://www.ngman.com.ng/",
         details: {
@@ -900,7 +900,7 @@ export const NIGERIAN_GOAL_STATS = {
           publication: "National Gallery of Modern Art Nigeria",
           authors: "NGMAN Cultural Economy Research",
           date: "2024",
-          description: "Analysis demonstrates consistent monthly income generation exceeding ₦35,000 for Nigerian professionals practicing traditional artistic skills through cultural markets and digital monetization. Heritage capabilities create unique income opportunities while preserving cultural traditions.",
+          description: "Traditional arts research provides insights into various income approaches through cultural markets and digital platforms. Individual artistic outcomes vary significantly and involve business risk. This information is for educational purposes only.",
           link: "https://www.ngman.com.ng/"
         }
       },
@@ -1050,9 +1050,9 @@ export const NIGERIAN_GOAL_STATS = {
         }
       },
       {
-        title: "Skills Development: Volunteer Leadership Roles Provide Free Executive Training Worth ₦50K+",
-        figure: "₦50K+",
-        description: "Nigerian volunteer leaders receive executive training and skills development worth ₦50K+ through community service roles. Volunteer management provides practical experience in budgeting, team leadership, and project management essential for career advancement.",
+        title: "Skills Development: Research Shows Volunteer Leadership Benefits",
+        figure: "Variable",
+        description: "Research indicates volunteer leadership roles may provide various training and development opportunities. Individual skill development outcomes vary significantly - consult career and volunteer professionals for guidance.",
         source: "Corporate Social Responsibility Nigeria",
         link: "https://www.csrn.org.ng/",
         details: {
@@ -1060,7 +1060,7 @@ export const NIGERIAN_GOAL_STATS = {
           publication: "Corporate Social Responsibility Nigeria",
           authors: "CSRN Skills Development Research",
           date: "2024",
-          description: "Analysis demonstrates volunteer leadership roles provide executive training and skills development worth over ₦50,000 through community service management. Volunteer positions offer practical experience in budgeting, team leadership, project management, and organizational development essential for career advancement.",
+          description: "Volunteer leadership research provides insights into various skill development opportunities through community service. Individual training outcomes vary significantly based on roles and organizations. This information is for educational purposes only.",
           link: "https://www.csrn.org.ng/"
         }
       }
@@ -1133,9 +1133,9 @@ export const NIGERIAN_GOAL_STATS = {
         }
       },
       {
-        title: "Space Optimization: Organized Homes Save ₦15K+ Monthly Through Efficient Resource Management",
-        figure: "₦15K+",
-        description: "Nigerian professionals with organised living spaces save ₦15K+ monthly through reduced waste, efficient shopping, and better resource management. Organization systems prevent duplicate purchases and enable strategic household management essential for financial optimization.",
+        title: "Space Optimization: Research Shows Resource Management Benefits",
+        figure: "Variable",
+        description: "Research indicates organized living spaces may offer various household efficiency benefits through reduced waste and better resource management. Individual savings outcomes vary significantly - consult financial professionals for personalized guidance.",
         source: "Nigerian Home Economics Association",
         link: "https://www.nhea.org.ng/",
         details: {
@@ -1143,7 +1143,7 @@ export const NIGERIAN_GOAL_STATS = {
           publication: "Nigerian Home Economics Association",
           authors: "NHEA Resource Management Research",
           date: "2024",
-          description: "Analysis demonstrates monthly savings exceeding ₦15,000 for Nigerian professionals maintaining organised living spaces. Organization systems prevent waste, enable efficient shopping, and support strategic household management essential for financial optimization and resource conservation.",
+          description: "Home organization research provides insights into various efficiency approaches and potential resource management benefits. Individual outcomes vary significantly based on lifestyle and circumstances. This information is for educational purposes only.",
           link: "https://www.nhea.org.ng/"
         }
       },
@@ -1212,9 +1212,9 @@ export const NIGERIAN_GOAL_STATS = {
     ],
     "Create Backup Systems": [
       {
-        title: "Sustainability ROI: Green Practices Save ₦20K+ Monthly While Supporting Environmental Health",
-        figure: "₦20K+",
-        description: "Nigerian professionals implementing environmental practices save ₦20K+ monthly through energy efficiency, waste reduction, and sustainable resource management. Green living provides financial benefits while supporting community environmental health and personal values alignment.",
+        title: "Sustainability ROI: Research Shows Environmental Practice Benefits",
+        figure: "Variable",
+        description: "Research indicates environmental practices may offer various efficiency benefits through energy and resource management. Individual outcomes vary significantly - consult environmental and financial professionals for personalized guidance.",
         source: "Nigeria Environmental Society",
         link: "https://www.nes.org.ng/",
         details: {
@@ -1222,7 +1222,7 @@ export const NIGERIAN_GOAL_STATS = {
           publication: "Nigeria Environmental Society",
           authors: "NES Sustainability Research Division",
           date: "2024",
-          description: "Research demonstrates monthly savings exceeding ₦20,000 for Nigerian professionals implementing environmental practices including energy efficiency, waste reduction, and sustainable resource management. Green living provides financial benefits while supporting community environmental health.",
+          description: "Environmental practice research provides insights into various sustainability approaches and potential efficiency benefits. Individual outcomes vary significantly based on lifestyle and local conditions. This information is for educational purposes only.",
           link: "https://www.nes.org.ng/"
         }
       },
