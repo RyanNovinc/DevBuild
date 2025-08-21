@@ -107,7 +107,8 @@
       "Bash(do echo \"=== Final syntax check $file ===\")",
       "WebFetch(domain:www.dominican.edu)",
       "WebFetch(domain:www.hbs.edu)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(chmod:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
