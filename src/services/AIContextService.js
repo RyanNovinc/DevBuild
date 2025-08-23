@@ -584,14 +584,14 @@ class AIContextService {
     
     // Check for action markers in the text
     const hasCreateGoalMarker = response.includes('[[CREATE_GOAL]]');
-    const hasCreateProjectMarker = response.includes('[[CREATE_PROJECT]]');
+    const hasCreateMilestoneMarker = response.includes('[[CREATE_MILESTONE]]');
     const hasCreateTaskMarker = response.includes('[[CREATE_TASK]]');
     const hasCreateTimeBlockMarker = response.includes('[[CREATE_TIME_BLOCK]]');
     const hasCreateTodoMarker = response.includes('[[CREATE_TODO]]');
     const hasCreateTodoGroupMarker = response.includes('[[CREATE_TODO_GROUP]]');
     const hasUpdateLifeDirectionMarker = response.includes('[[UPDATE_LIFE_DIRECTION]]');
     
-    if (!hasCreateGoalMarker && !hasCreateProjectMarker && !hasCreateTaskMarker && 
+    if (!hasCreateGoalMarker && !hasCreateMilestoneMarker && !hasCreateTaskMarker && 
         !hasCreateTimeBlockMarker && !hasCreateTodoMarker && !hasCreateTodoGroupMarker &&
         !hasUpdateLifeDirectionMarker) {
       // No action markers found
@@ -627,29 +627,29 @@ class AIContextService {
       }
     }
     
-    // Project creation
-    if (hasCreateProjectMarker) {
-      const projectMatches = [...response.matchAll(/\[\[CREATE_PROJECT\]\]([\s\S]*?)(?=\[\[|\s*$)/gi)];
+    // Milestone creation
+    if (hasCreateMilestoneMarker) {
+      const milestoneMatches = [...response.matchAll(/\[\[CREATE_MILESTONE\]\]([\s\S]*?)(?=\[\[|\s*$)/gi)];
       
-      for (const match of projectMatches) {
-        const projectData = this._parseActionData(match[1]);
+      for (const match of milestoneMatches) {
+        const milestoneData = this._parseActionData(match[1]);
         
         actions.push({
-          id: `project_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          type: 'createProject',
-          title: 'Create New Project',
-          description: 'I\'ve prepared a project based on your request. Review and confirm to add it to your projects.',
+          id: `milestone_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          type: 'createMilestone',
+          title: 'Create New Milestone',
+          description: 'I\'ve prepared a milestone based on your request. Review and confirm to add it to your milestones.',
           data: {
-            title: projectData.title || 'New Project',
-            description: projectData.description || '',
-            goalId: projectData.goalid,
-            goalTitle: projectData.goaltitle,
-            domain: projectData.domain || 'General',
-            color: projectData.color || '#4CAF50',
-            dueDate: projectData.duedate || null,
+            title: milestoneData.title || 'New Milestone',
+            description: milestoneData.description || '',
+            goalId: milestoneData.goalid,
+            goalTitle: milestoneData.goaltitle,
+            domain: milestoneData.domain || 'General',
+            color: milestoneData.color || '#4CAF50',
+            dueDate: milestoneData.duedate || null,
             progress: 0,
             completed: false,
-            tasks: this._parseTasks(projectData.tasks) || []
+            tasks: this._parseTasks(milestoneData.tasks) || []
           }
         });
       }
@@ -670,7 +670,7 @@ class AIContextService {
           data: {
             title: taskData.title || 'New Task',
             description: taskData.description || '',
-            projectTitle: taskData.projecttitle || taskData.projectTitle,
+            milestoneTitle: taskData.milestonetitle || taskData.milestoneTitle,
             goalTitle: taskData.goaltitle || taskData.goalTitle,
             status: taskData.status || 'todo',
             completed: false
@@ -909,7 +909,7 @@ class AIContextService {
     
     // Remove all action directives
     const cleanedText = text.replace(/\[\[CREATE_GOAL\]\][\s\S]*?(?=\[\[|\s*$)/gi, '')
-      .replace(/\[\[CREATE_PROJECT\]\][\s\S]*?(?=\[\[|\s*$)/gi, '')
+      .replace(/\[\[CREATE_MILESTONE\]\][\s\S]*?(?=\[\[|\s*$)/gi, '')
       .replace(/\[\[CREATE_TASK\]\][\s\S]*?(?=\[\[|\s*$)/gi, '')
       .replace(/\[\[CREATE_TIME_BLOCK\]\][\s\S]*?(?=\[\[|\s*$)/gi, '')
       .replace(/\[\[CREATE_TODO\]\][\s\S]*?(?=\[\[|\s*$)/gi, '')

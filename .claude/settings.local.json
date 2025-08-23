@@ -108,7 +108,11 @@
       "WebFetch(domain:www.dominican.edu)",
       "WebFetch(domain:www.hbs.edu)",
       "Bash(git log:*)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(cat:*)",
+      "Bash(npx expo:*)",
+      "Bash(timeout:*)",
+      "Bash(npm uninstall:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

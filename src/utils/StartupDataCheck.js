@@ -14,74 +14,74 @@ const checkDataIntegrity = async () => {
     
     // Get all data
     const goalsJson = await AsyncStorage.getItem('goals');
-    const projectsJson = await AsyncStorage.getItem('projects');
+    const milestonesJson = await AsyncStorage.getItem('milestones');
     const tasksJson = await AsyncStorage.getItem('tasks');
     
-    if (!goalsJson || !projectsJson) {
+    if (!goalsJson || !milestonesJson) {
       console.log('✅ No data found, skipping integrity check');
       return { success: true, message: 'No data found' };
     }
     
     // Parse data
     const goals = JSON.parse(goalsJson);
-    const projects = JSON.parse(projectsJson);
+    const milestones = JSON.parse(milestonesJson);
     const tasks = tasksJson ? JSON.parse(tasksJson) : [];
     
-    if (!Array.isArray(goals) || !Array.isArray(projects)) {
+    if (!Array.isArray(goals) || !Array.isArray(milestones)) {
       console.warn('⚠️ Invalid data format detected');
       return { success: false, message: 'Invalid data format' };
     }
     
-    // Check for orphaned projects
+    // Check for orphaned milestones
     const validGoalIds = goals.map(g => g.id);
-    const orphanedProjects = projects.filter(p => p.goalId && !validGoalIds.includes(p.goalId));
+    const orphanedMilestones = milestones.filter(p => p.goalId && !validGoalIds.includes(p.goalId));
     
     // Check for orphaned tasks
-    const validProjectIds = projects
+    const validMilestoneIds = milestones
       .filter(p => !p.goalId || validGoalIds.includes(p.goalId))
       .map(p => p.id);
-    const orphanedTasks = tasks.filter(t => t.projectId && !validProjectIds.includes(t.projectId));
+    const orphanedTasks = tasks.filter(t => t.milestoneId && !validMilestoneIds.includes(t.milestoneId));
     
     console.log(`📊 Data summary:
       - Goals: ${goals.length}
-      - Projects: ${projects.length} (${orphanedProjects.length} orphaned)
+      - Milestones: ${milestones.length} (${orphanedMilestones.length} orphaned)
       - Tasks: ${tasks.length} (${orphanedTasks.length} orphaned)`);
     
     // If we found issues, fix them automatically
-    if (orphanedProjects.length > 0 || orphanedTasks.length > 0) {
+    if (orphanedMilestones.length > 0 || orphanedTasks.length > 0) {
       console.log('🔧 Found data issues, fixing automatically...');
       
       // Create backup
       const timestamp = new Date().getTime();
       await AsyncStorage.setItem(`backup_startup_${timestamp}`, JSON.stringify({
-        goals, projects, tasks
+        goals, milestones, tasks
       }));
       
-      // Fix orphaned projects
-      const cleanProjects = projects.filter(p => !p.goalId || validGoalIds.includes(p.goalId));
+      // Fix orphaned milestones
+      const cleanMilestones = milestones.filter(p => !p.goalId || validGoalIds.includes(p.goalId));
       
-      // Get updated project IDs after cleaning
-      const updatedProjectIds = cleanProjects.map(p => p.id);
+      // Get updated milestone IDs after cleaning
+      const updatedMilestoneIds = cleanMilestones.map(p => p.id);
       
       // Fix orphaned tasks
-      const cleanTasks = tasks.filter(t => !t.projectId || updatedProjectIds.includes(t.projectId));
+      const cleanTasks = tasks.filter(t => !t.milestoneId || updatedMilestoneIds.includes(t.milestoneId));
       
       // Save cleaned data
-      await AsyncStorage.setItem('projects', JSON.stringify(cleanProjects));
+      await AsyncStorage.setItem('milestones', JSON.stringify(cleanMilestones));
       if (cleanTasks.length !== tasks.length) {
         await AsyncStorage.setItem('tasks', JSON.stringify(cleanTasks));
       }
       
       console.log(`✨ Successfully fixed data:
-        - Removed ${orphanedProjects.length} orphaned projects
+        - Removed ${orphanedMilestones.length} orphaned milestones
         - Removed ${orphanedTasks.length} orphaned tasks
         - Backup saved as backup_startup_${timestamp}`);
       
       return {
         success: true,
-        message: `Fixed ${orphanedProjects.length} orphaned projects and ${orphanedTasks.length} orphaned tasks`,
+        message: `Fixed ${orphanedMilestones.length} orphaned milestones and ${orphanedTasks.length} orphaned tasks`,
         fixed: {
-          projects: orphanedProjects.length,
+          milestones: orphanedMilestones.length,
           tasks: orphanedTasks.length
         }
       };
@@ -125,7 +125,7 @@ export const runStartupDataCheck = async () => {
         'There was an issue checking your app data. Please report this if problems persist.',
         [{ text: 'OK' }]
       );
-    } else if (integrityResult.fixed && (integrityResult.fixed.projects > 0 || integrityResult.fixed.tasks > 0)) {
+    } else if (integrityResult.fixed && (integrityResult.fixed.milestones > 0 || integrityResult.fixed.tasks > 0)) {
       // Only show alert if we fixed something significant
       console.log('Data was automatically repaired on startup');
     }

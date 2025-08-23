@@ -1,4 +1,4 @@
-// src/screens/ProjectDetailsScreen/components/GoalSelectorModal.js
+// src/screens/MilestoneDetailsScreen/components/GoalSelectorModal.js
 import React, { useCallback } from 'react';
 import { 
   View, 

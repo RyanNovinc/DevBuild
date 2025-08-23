@@ -1,4 +1,4 @@
-// src/screens/ProjectDetailsScreen/components/AddTaskModal.js
+// src/screens/MilestoneDetailsScreen/components/AddTaskModal.js
 import React, { useState, useEffect } from 'react';
 import { 
   View, 

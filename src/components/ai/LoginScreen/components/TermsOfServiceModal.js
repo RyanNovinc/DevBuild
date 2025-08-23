@@ -694,6 +694,35 @@ const TermsOfServiceModal = ({ visible, onClose }) => {
                 </View>
               </View>
               
+              <Text style={styles.subsectionTitle}>Debt Management Tools Disclaimer</Text>
+              <Text style={styles.sectionText}>
+                Our debt tracking tools, payment strategies, and payoff calculations are educational tools only, based on standard mathematical formulas. These projections:
+              </Text>
+              
+              <View style={styles.bulletContainer}>
+                <View style={styles.bulletPoint}>
+                  <Ionicons name="warning" size={18} color="#ff9500" style={styles.bulletIcon} />
+                  <Text style={styles.bulletText}>Are estimates based on data you provide</Text>
+                </View>
+                <View style={styles.bulletPoint}>
+                  <Ionicons name="warning" size={18} color="#ff9500" style={styles.bulletIcon} />
+                  <Text style={styles.bulletText}>Do not account for changing interest rates, fees, or life circumstances</Text>
+                </View>
+                <View style={styles.bulletPoint}>
+                  <Ionicons name="warning" size={18} color="#ff9500" style={styles.bulletIcon} />
+                  <Text style={styles.bulletText}>Are not personalized financial advice or debt counseling</Text>
+                </View>
+                <View style={styles.bulletPoint}>
+                  <Ionicons name="warning" size={18} color="#ff9500" style={styles.bulletIcon} />
+                  <Text style={styles.bulletText}>Should not replace consultation with qualified debt counselors or financial advisors</Text>
+                </View>
+              </View>
+              
+              <Text style={styles.subsectionTitle}>Payment Strategy Information</Text>
+              <Text style={styles.sectionText}>
+                Payment methods displayed (such as "debt snowball" or "debt avalanche") are widely-known mathematical approaches, not our recommendations. The suitability of any payment strategy depends on your individual financial situation.
+              </Text>
+              
               <Text style={styles.subsectionTitle}>3.2 Your Responsibility</Text>
               <Text style={styles.sectionText}>
                 You are solely responsible for:

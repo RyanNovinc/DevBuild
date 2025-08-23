@@ -60,7 +60,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 // Import modals
 import AddGoalModal from '../components/AddGoalModal';
-import AddProjectModal from '../components/AddProjectModal';
+import AddMilestoneModal from '../components/AddMilestoneModal';
 import AddTimeBlockModal from '../components/AddTimeBlockModal';
 import AddTaskModal from '../components/AddTaskModal';
 import AddTodoModal from '../components/AddTodoModal';
@@ -1857,7 +1857,7 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
         color={theme.primary}
       />
       
-      <AddProjectModal
+      <AddMilestoneModal
         visible={projectModalVisible}
         onClose={handleProjectModalCancel}
         onAdd={handleProjectConfirm}

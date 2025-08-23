@@ -93,7 +93,7 @@ export class OnboardingTransactionService {
       selectedGoal: {
         domain: domain.name,
         goalName: goal.name,
-        projects: goal.projects || []
+        milestones: goal.milestones || goal.projects || []
       }
     };
 

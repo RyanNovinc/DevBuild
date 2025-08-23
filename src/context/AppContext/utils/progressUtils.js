@@ -2,134 +2,134 @@
 // Extracted progress calculation utilities from AppContext.js
 
 /**
- * Calculate goal progress based on its associated projects
+ * Calculate goal progress based on its associated milestones
  * @param {string} goalId - The ID of the goal
- * @param {Array} projects - Array of all projects
+ * @param {Array} milestones - Array of all milestones
  * @returns {number} - Progress percentage (0-100)
  */
-export const calculateGoalProgress = (goalId, projects) => {
-  if (!Array.isArray(projects)) return 0;
+export const calculateGoalProgress = (goalId, milestones) => {
+  if (!Array.isArray(milestones)) return 0;
   
-  const goalProjects = projects.filter(project => project.goalId === goalId);
-  if (goalProjects.length === 0) return 0;
+  const goalMilestones = milestones.filter(milestone => milestone.goalId === goalId);
+  if (goalMilestones.length === 0) return 0;
   
-  const completedProjects = goalProjects.filter(project => 
-    project.progress === 100 || project.completed || project.status === 'done'
+  const completedMilestones = goalMilestones.filter(milestone => 
+    milestone.progress === 100 || milestone.completed || milestone.status === 'done'
   ).length;
   
-  return Math.round((completedProjects / goalProjects.length) * 100);
+  return Math.round((completedMilestones / goalMilestones.length) * 100);
 };
 
 /**
- * Calculate project progress based on its tasks
- * @param {string} projectId - The ID of the project
+ * Calculate milestone progress based on its tasks
+ * @param {string} milestoneId - The ID of the milestone
  * @param {Array} tasks - Array of all tasks
- * @param {Array} projects - Array of all projects (to get project status)
+ * @param {Array} milestones - Array of all milestones (to get milestone status)
  * @returns {number} - Progress percentage (0-100)
  */
-export const calculateProjectProgress = (projectId, tasks, projects) => {
+export const calculateMilestoneProgress = (milestoneId, tasks, milestones) => {
   if (!Array.isArray(tasks)) return 0;
   
-  // Get the current project
-  const project = Array.isArray(projects) 
-    ? projects.find(p => p.id === projectId) 
+  // Get the current milestone
+  const milestone = Array.isArray(milestones) 
+    ? milestones.find(p => p.id === milestoneId) 
     : null;
   
-  // If project is already marked as completed, always return 100%
-  if (project && (project.status === 'done' || project.completed)) return 100;
+  // If milestone is already marked as completed, always return 100%
+  if (milestone && (milestone.status === 'done' || milestone.completed)) return 100;
   
   // Calculate based on tasks
-  const projectTasks = tasks.filter(task => task.projectId === projectId);
-  if (projectTasks.length === 0) return 0;
+  const milestoneTasks = tasks.filter(task => task.milestoneId === milestoneId);
+  if (milestoneTasks.length === 0) return 0;
   
-  const completedTasks = projectTasks.filter(task => 
+  const completedTasks = milestoneTasks.filter(task => 
     task.completed || task.status === 'done'
   ).length;
   
-  return Math.round((completedTasks / projectTasks.length) * 100);
+  return Math.round((completedTasks / milestoneTasks.length) * 100);
 };
 
 /**
- * Update project status based on progress
- * @param {Object} project - The project to update
+ * Update milestone status based on progress
+ * @param {Object} milestone - The milestone to update
  * @param {number} progress - The calculated progress (0-100)
- * @returns {Object} - Updated project with appropriate status
+ * @returns {Object} - Updated milestone with appropriate status
  */
-export const updateProjectStatus = (project, progress) => {
-  if (!project) return null;
+export const updateMilestoneStatus = (milestone, progress) => {
+  if (!milestone) return null;
   
-  // Create a copy of the project
-  const updatedProject = { ...project };
+  // Create a copy of the milestone
+  const updatedMilestone = { ...milestone };
   
   // Update progress
-  updatedProject.progress = progress;
+  updatedMilestone.progress = progress;
   
   // Don't change status if it was explicitly set
-  if (!updatedProject.status) {
+  if (!updatedMilestone.status) {
     // Set status based on progress
     if (progress === 0) {
-      updatedProject.status = 'todo';
-      updatedProject.completed = false;
+      updatedMilestone.status = 'todo';
+      updatedMilestone.completed = false;
     } else if (progress === 100) {
-      updatedProject.status = 'done';
-      updatedProject.completed = true;
+      updatedMilestone.status = 'done';
+      updatedMilestone.completed = true;
     } else {
-      updatedProject.status = 'in_progress';
-      updatedProject.completed = false;
+      updatedMilestone.status = 'in_progress';
+      updatedMilestone.completed = false;
     }
   }
   
   // Update timestamp
-  updatedProject.updatedAt = new Date().toISOString();
+  updatedMilestone.updatedAt = new Date().toISOString();
   
-  return updatedProject;
+  return updatedMilestone;
 };
 
 /**
- * Get projects for a specific goal
+ * Get milestones for a specific goal
  * @param {string} goalId - The ID of the goal
- * @param {Array} projects - Array of all projects
- * @param {Set} deletedProjectIds - Set of deleted project IDs
- * @returns {Array} - Array of projects for the goal
+ * @param {Array} milestones - Array of all milestones
+ * @param {Set} deletedMilestoneIds - Set of deleted milestone IDs
+ * @returns {Array} - Array of milestones for the goal
  */
-export const getProjectsForGoal = (goalId, projects, deletedProjectIds = new Set()) => {
-  if (!goalId || !Array.isArray(projects)) {
+export const getMilestonesForGoal = (goalId, milestones, deletedMilestoneIds = new Set()) => {
+  if (!goalId || !Array.isArray(milestones)) {
     return [];
   }
   
-  return projects.filter(project => 
-    project.goalId === goalId && 
-    !deletedProjectIds.has(project.id)
+  return milestones.filter(milestone => 
+    milestone.goalId === goalId && 
+    !deletedMilestoneIds.has(milestone.id)
   );
 };
 
 /**
- * Get independent projects (not associated with any goal)
- * @param {Array} projects - Array of all projects
- * @param {Set} deletedProjectIds - Set of deleted project IDs
- * @returns {Array} - Array of independent projects
+ * Get independent milestones (not associated with any goal)
+ * @param {Array} milestones - Array of all milestones
+ * @param {Set} deletedMilestoneIds - Set of deleted milestone IDs
+ * @returns {Array} - Array of independent milestones
  */
-export const getIndependentProjects = (projects, deletedProjectIds = new Set()) => {
-  if (!Array.isArray(projects)) {
+export const getIndependentMilestones = (milestones, deletedMilestoneIds = new Set()) => {
+  if (!Array.isArray(milestones)) {
     return [];
   }
   
-  return projects.filter(project => 
-    !project.goalId && 
-    !deletedProjectIds.has(project.id)
+  return milestones.filter(milestone => 
+    !milestone.goalId && 
+    !deletedMilestoneIds.has(milestone.id)
   );
 };
 
 /**
- * Get tasks for a specific project
- * @param {string} projectId - The ID of the project
+ * Get tasks for a specific milestone
+ * @param {string} milestoneId - The ID of the milestone
  * @param {Array} tasks - Array of all tasks
- * @returns {Array} - Array of tasks for the project
+ * @returns {Array} - Array of tasks for the milestone
  */
-export const getTasksForProject = (projectId, tasks) => {
-  if (!projectId || !Array.isArray(tasks)) {
+export const getTasksForMilestone = (milestoneId, tasks) => {
+  if (!milestoneId || !Array.isArray(tasks)) {
     return [];
   }
   
-  return tasks.filter(task => task.projectId === projectId);
+  return tasks.filter(task => task.milestoneId === milestoneId);
 };

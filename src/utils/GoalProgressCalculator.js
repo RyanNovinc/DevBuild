@@ -4,19 +4,19 @@
 /**
  * Calculates a goal's progress based on completed milestones AND direct tasks (flexible hierarchy)
  * @param {string} goalId - The ID of the goal
- * @param {Array} projects - Array of all projects/milestones
+ * @param {Array} milestones - Array of all milestones
  * @param {Array} tasks - Array of all tasks
  * @returns {number} - Progress percentage (0-100)
  */
-export const calculateGoalProgress = (goalId, projects = [], tasks = []) => {
+export const calculateGoalProgress = (goalId, milestones = [], tasks = []) => {
   if (!goalId) return 0;
   
   // Get milestones linked to this goal
-  const linkedMilestones = Array.isArray(projects) ? projects.filter(project => project.goalId === goalId) : [];
+  const linkedMilestones = Array.isArray(milestones) ? milestones.filter(milestone => milestone.goalId === goalId) : [];
   
   // Get direct tasks linked to this goal (no milestone parent)
   const directTasks = Array.isArray(tasks) ? tasks.filter(task => 
-    task.goalId === goalId && (!task.projectId || task.projectId === null)
+    task.goalId === goalId && (!task.milestoneId || task.milestoneId === null)
   ) : [];
   
   const totalMilestones = linkedMilestones.length;
@@ -65,10 +65,10 @@ export const calculateGoalProgress = (goalId, projects = [], tasks = []) => {
  * Calculates domain progress based on goals in that domain
  * @param {string} domainName - The name of the domain
  * @param {Array} goals - Array of all goals
- * @param {Array} projects - Array of all projects 
+ * @param {Array} milestones - Array of all milestones 
  * @returns {number} - Progress percentage (0-100)
  */
-export const calculateDomainProgress = (domainName, goals, projects) => {
+export const calculateDomainProgress = (domainName, goals, milestones) => {
   if (!domainName || !Array.isArray(goals)) return 0;
 
   // Find goals for this domain
@@ -102,7 +102,7 @@ export const calculateDomainProgress = (domainName, goals, projects) => {
   // Calculate progress for each goal
   const goalProgresses = domainGoals.map(goal => {
     if (goal.useMetricsForProgress) {
-      return calculateGoalProgress(goal.id, projects);
+      return calculateGoalProgress(goal.id, milestones);
     } else {
       return goal.progress || 0;
     }
@@ -116,17 +116,17 @@ export const calculateDomainProgress = (domainName, goals, projects) => {
 /**
  * Updates a goal's progress in the goals array
  * @param {Object} goal - The goal to update
- * @param {Array} projects - Array of all projects
+ * @param {Array} milestones - Array of all milestones
  * @returns {Object} - Updated goal with correct progress
  */
-export const updateGoalWithCorrectProgress = (goal, projects) => {
+export const updateGoalWithCorrectProgress = (goal, milestones) => {
   if (!goal || !goal.id) return goal;
   
   // Skip if manual progress is being used
   if (!goal.useMetricsForProgress) return goal;
   
   // Calculate current progress
-  const currentProgress = calculateGoalProgress(goal.id, projects);
+  const currentProgress = calculateGoalProgress(goal.id, milestones);
   
   // Return updated goal with correct progress
   return {
@@ -138,11 +138,11 @@ export const updateGoalWithCorrectProgress = (goal, projects) => {
 /**
  * Updates all goals with correct progress values
  * @param {Array} goals - Array of all goals
- * @param {Array} projects - Array of all projects
+ * @param {Array} milestones - Array of all milestones
  * @returns {Array} - Updated goals with correct progress values
  */
-export const updateAllGoalsProgress = (goals, projects) => {
-  if (!Array.isArray(goals) || !Array.isArray(projects)) return goals;
+export const updateAllGoalsProgress = (goals, milestones) => {
+  if (!Array.isArray(goals) || !Array.isArray(milestones)) return goals;
   
-  return goals.map(goal => updateGoalWithCorrectProgress(goal, projects));
+  return goals.map(goal => updateGoalWithCorrectProgress(goal, milestones));
 };

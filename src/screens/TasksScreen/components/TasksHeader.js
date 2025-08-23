@@ -4,14 +4,14 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { styles } from '../styles';
 
-const TasksHeader = ({ displayedProjectCount, verifyProjectDataConsistency, theme, isDarkMode, viewMode = 'projects' }) => {
+const TasksHeader = ({ displayedMilestoneCount, verifyMilestoneDataConsistency, theme, isDarkMode, viewMode = 'projects' }) => {
   // Determine icon and title based on view mode
   const getHeaderIcon = () => {
     return viewMode === 'projects' ? 'folder-outline' : 'list-outline';
   };
   
   const getHeaderTitle = () => {
-    return viewMode === 'projects' ? 'Projects' : 'Tasks';
+    return viewMode === 'projects' ? 'Milestones' : 'Tasks';
   };
 
   return (

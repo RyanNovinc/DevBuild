@@ -1,4 +1,4 @@
-// src/screens/ProjectDetailsScreen/components/TaskListView.js
+// src/screens/MilestoneDetailsScreen/components/TaskListView.js
 import React from 'react';
 import { 
   View, 

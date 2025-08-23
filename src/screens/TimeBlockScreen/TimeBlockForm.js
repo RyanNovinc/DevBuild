@@ -186,9 +186,9 @@ const TimeBlockForm = ({
   setDomain,
   domainColor,
   setDomainColor,
-  selectedProject,
+  selectedMilestone,
   selectedTask,
-  openProjectModal,
+  openMilestoneModal,
   openTaskModal,
   customColor,
   setCustomColor,
@@ -197,7 +197,9 @@ const TimeBlockForm = ({
   openStartTimePicker,
   openEndTimePicker,
   startTime,
+  setStartTime,
   endTime,
+  setEndTime,
   timeError,
   location,
   setLocation,
@@ -226,8 +228,8 @@ const TimeBlockForm = ({
   formatTime,
   formatDate,
   availableGoals,
-  goalProjects,
-  projectTasks,
+  goalMilestones,
+  milestoneItems,
   handleDelete,
   isCreating,
   theme,
@@ -242,8 +244,23 @@ const TimeBlockForm = ({
   // Duration state for displaying time block length
   const [duration, setDuration] = useState('');
   
+  // Time increment state (15 or 30 minutes) - using ref to prevent re-renders
+  const timeIncrementRef = useRef(30);
+  const [timeIncrementDisplay, setTimeIncrementDisplay] = useState(30);
+  
   // Tab navigation state
   const [index, setIndex] = useState(0);
+  
+  // Scroll position refs to maintain position during re-renders
+  const basicScrollRef = useRef(null);
+  const additionalScrollRef = useRef(null);
+  
+  // Function to toggle time increment without causing re-render
+  const toggleTimeIncrement = () => {
+    const newValue = timeIncrementRef.current === 30 ? 15 : 30;
+    timeIncrementRef.current = newValue;
+    setTimeIncrementDisplay(newValue); // Only update display
+  };
   const [routes] = useState([
     { key: 'basic', title: 'Basic Details' },
     { key: 'additional', title: 'Additional Options' }
@@ -297,9 +314,11 @@ const TimeBlockForm = ({
 
   const renderBasicDetails = () => (
     <ScrollView 
+      ref={basicScrollRef}
       style={[styles.tabContent, { backgroundColor: theme.background }]}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.scrollContent}
+      maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
     >
       <View style={styles.formContainer}>
         {/* Title */}
@@ -327,10 +346,10 @@ const TimeBlockForm = ({
           </View>
         </View>
         
-        {/* Goal & Project Section */}
+        {/* Goal & Milestone Section */}
         <View style={styles.sectionGroup}>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>
-            Link to Goals & Projects
+            Link to Goals & Milestones
           </Text>
           
           <View style={styles.inputGroup}>
@@ -406,12 +425,12 @@ const TimeBlockForm = ({
           </View>
         )}
         
-        {/* Project Selection */}
+        {/* Milestone Selection */}
         {domain && (
           <View style={styles.inputGroup}>
             <View style={styles.inputHeader}>
               <Ionicons name="folder-outline" size={18} color={theme.primary} />
-              <Text style={[styles.inputLabel, { color: theme.text }]}>Project</Text>
+              <Text style={[styles.inputLabel, { color: theme.text }]}>Milestone</Text>
               <Text style={[styles.optionalTag, { color: theme.textSecondary }]}>Optional</Text>
             </View>
             <TouchableOpacity 
@@ -419,33 +438,33 @@ const TimeBlockForm = ({
                 styles.modernSelector, 
                 { 
                   backgroundColor: theme.card, 
-                  borderColor: selectedProject ? domainColor : theme.border,
-                  opacity: goalProjects.length > 0 ? 1 : 0.6
+                  borderColor: selectedMilestone ? domainColor : theme.border,
+                  opacity: goalMilestones.length > 0 ? 1 : 0.6
                 }
               ]}
-              onPress={goalProjects.length > 0 ? openProjectModal : null}
-              activeOpacity={goalProjects.length > 0 ? 0.8 : 1}
+              onPress={goalMilestones.length > 0 ? openMilestoneModal : null}
+              activeOpacity={goalMilestones.length > 0 ? 0.8 : 1}
             >
-              {selectedProject ? (
+              {selectedMilestone ? (
                 <View style={styles.selectedContent}>
-                  <View style={[styles.colorDot, { backgroundColor: selectedProject.color || domainColor }]} />
+                  <View style={[styles.colorDot, { backgroundColor: selectedMilestone.color || domainColor }]} />
                   <Text style={[styles.selectedText, { color: theme.text }]}>
-                    {selectedProject.title}
+                    {selectedMilestone.title}
                   </Text>
                 </View>
               ) : (
                 <View style={styles.placeholderContent}>
                   <Ionicons 
-                    name={goalProjects.length > 0 ? "add-circle-outline" : "close-circle-outline"} 
+                    name={goalMilestones.length > 0 ? "add-circle-outline" : "close-circle-outline"} 
                     size={16} 
                     color={theme.textSecondary} 
                   />
                   <Text style={[styles.placeholderText, { color: theme.textSecondary }]}>
-                    {goalProjects.length > 0 ? 'Select a project' : 'No projects available'}
+                    {goalMilestones.length > 0 ? 'Select a milestone' : 'No milestones available'}
                   </Text>
                 </View>
               )}
-              {goalProjects.length > 0 && (
+              {goalMilestones.length > 0 && (
                 <Ionicons name="chevron-forward-outline" size={16} color={theme.textSecondary} />
               )}
             </TouchableOpacity>
@@ -453,7 +472,7 @@ const TimeBlockForm = ({
         )}
         
         {/* Task Selection */}
-        {domain && selectedProject && (
+        {domain && selectedMilestone && (
           <View style={styles.inputGroup}>
             <View style={styles.inputHeader}>
               <Ionicons name="checkbox-outline" size={18} color={theme.primary} />
@@ -466,11 +485,11 @@ const TimeBlockForm = ({
                 { 
                   backgroundColor: theme.card, 
                   borderColor: selectedTask ? domainColor : theme.border,
-                  opacity: projectTasks.length > 0 ? 1 : 0.6
+                  opacity: milestoneItems.length > 0 ? 1 : 0.6
                 }
               ]}
-              onPress={projectTasks.length > 0 ? openTaskModal : null}
-              activeOpacity={projectTasks.length > 0 ? 0.8 : 1}
+              onPress={milestoneItems.length > 0 ? openTaskModal : null}
+              activeOpacity={milestoneItems.length > 0 ? 0.8 : 1}
             >
               {selectedTask ? (
                 <View style={styles.selectedContent}>
@@ -486,16 +505,16 @@ const TimeBlockForm = ({
               ) : (
                 <View style={styles.placeholderContent}>
                   <Ionicons 
-                    name={projectTasks.length > 0 ? "add-circle-outline" : "close-circle-outline"} 
+                    name={milestoneItems.length > 0 ? "add-circle-outline" : "close-circle-outline"} 
                     size={16} 
                     color={theme.textSecondary} 
                   />
                   <Text style={[styles.placeholderText, { color: theme.textSecondary }]}>
-                    {projectTasks.length > 0 ? 'Select a task' : 'No tasks available'}
+                    {milestoneItems.length > 0 ? 'Select a task' : 'No tasks available'}
                   </Text>
                 </View>
               )}
-              {projectTasks.length > 0 && (
+              {milestoneItems.length > 0 && (
                 <Ionicons name="chevron-forward-outline" size={16} color={theme.textSecondary} />
               )}
             </TouchableOpacity>
@@ -555,35 +574,106 @@ const TimeBlockForm = ({
             </View>
             <View style={[styles.timeCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
               <View style={styles.timeSelectors}>
-                <TouchableOpacity 
-                  style={styles.timeSelector} 
-                  onPress={openStartTimePicker}
-                  activeOpacity={0.8}
-                >
+                <View style={styles.timeSelector}>
                   <Text style={[styles.timeLabel, { color: theme.textSecondary }]}>Start</Text>
-                  <View style={styles.timeDisplay}>
+                  <TouchableOpacity 
+                    style={styles.timeDisplay} 
+                    onPress={openStartTimePicker}
+                    activeOpacity={0.8}
+                  >
                     <Text style={[styles.timeText, { color: theme.text }]}>
                       {formatTime(startTime)}
                     </Text>
+                  </TouchableOpacity>
+                  <View style={styles.timeAdjustButtons}>
+                    <TouchableOpacity 
+                      style={[styles.timeAdjustButton, { 
+                        backgroundColor: `${domain ? domainColor : customColor}10`,
+                        borderColor: `${domain ? domainColor : customColor}30`
+                      }]}
+                      onPress={() => {
+                        requestAnimationFrame(() => {
+                          const newTime = new Date(startTime.getTime() - timeIncrementRef.current * 60 * 1000);
+                          setStartTime(newTime);
+                          // Auto-adjust end time if it would be before new start time
+                          if (endTime <= newTime) {
+                            setEndTime(new Date(newTime.getTime() + 60 * 60 * 1000)); // Add 1 hour
+                          }
+                        });
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="remove" size={12} color={domain ? domainColor : customColor} />
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.timeAdjustButton, { 
+                        backgroundColor: `${domain ? domainColor : customColor}10`,
+                        borderColor: `${domain ? domainColor : customColor}30`
+                      }]}
+                      onPress={() => {
+                        requestAnimationFrame(() => {
+                          const newTime = new Date(startTime.getTime() + timeIncrementRef.current * 60 * 1000);
+                          setStartTime(newTime);
+                        });
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="add" size={12} color={domain ? domainColor : customColor} />
+                    </TouchableOpacity>
                   </View>
-                </TouchableOpacity>
+                </View>
                 
                 <View style={styles.timeSeparator}>
                   <Ionicons name="arrow-forward" size={16} color={theme.textSecondary} />
                 </View>
                 
-                <TouchableOpacity 
-                  style={styles.timeSelector} 
-                  onPress={openEndTimePicker}
-                  activeOpacity={0.8}
-                >
+                <View style={styles.timeSelector}>
                   <Text style={[styles.timeLabel, { color: theme.textSecondary }]}>End</Text>
-                  <View style={styles.timeDisplay}>
+                  <TouchableOpacity 
+                    style={styles.timeDisplay} 
+                    onPress={openEndTimePicker}
+                    activeOpacity={0.8}
+                  >
                     <Text style={[styles.timeText, { color: theme.text }]}>
                       {formatTime(endTime)}
                     </Text>
+                  </TouchableOpacity>
+                  <View style={styles.timeAdjustButtons}>
+                    <TouchableOpacity 
+                      style={[styles.timeAdjustButton, { 
+                        backgroundColor: `${domain ? domainColor : customColor}10`,
+                        borderColor: `${domain ? domainColor : customColor}30`
+                      }]}
+                      onPress={() => {
+                        requestAnimationFrame(() => {
+                          const newTime = new Date(endTime.getTime() - timeIncrementRef.current * 60 * 1000);
+                          // Only allow if new end time is still after start time
+                          if (newTime > startTime) {
+                            setEndTime(newTime);
+                          }
+                        });
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="remove" size={12} color={domain ? domainColor : customColor} />
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.timeAdjustButton, { 
+                        backgroundColor: `${domain ? domainColor : customColor}10`,
+                        borderColor: `${domain ? domainColor : customColor}30`
+                      }]}
+                      onPress={() => {
+                        requestAnimationFrame(() => {
+                          const newTime = new Date(endTime.getTime() + timeIncrementRef.current * 60 * 1000);
+                          setEndTime(newTime);
+                        });
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="add" size={12} color={domain ? domainColor : customColor} />
+                    </TouchableOpacity>
                   </View>
-                </TouchableOpacity>
+                </View>
               </View>
               
               <View style={[styles.durationSection, { borderTopColor: theme.border }]}>
@@ -593,25 +683,25 @@ const TimeBlockForm = ({
                   <Text style={[styles.durationValue, { color: theme.text }]}>
                     {duration}
                   </Text>
+                  <TouchableOpacity 
+                    style={[styles.incrementToggle, { 
+                      backgroundColor: `${domain ? domainColor : customColor}10`,
+                      borderColor: `${domain ? domainColor : customColor}30`,
+                      marginLeft: 8
+                    }]}
+                    onPress={() => {
+                      toggleTimeIncrement();
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.incrementToggleText, { 
+                      color: domain ? domainColor : customColor 
+                    }]}>
+                      {timeIncrementDisplay}m
+                    </Text>
+                  </TouchableOpacity>
                 </View>
                 
-                <View style={styles.quickActions}>
-                  {[30, 60, 120].map((minutes) => (
-                    <TouchableOpacity 
-                      key={minutes}
-                      style={[styles.quickActionButton, { 
-                        backgroundColor: `${domain ? domainColor : customColor}10`,
-                        borderColor: `${domain ? domainColor : customColor}30`
-                      }]}
-                      onPress={() => handleQuickDuration(minutes)}
-                      activeOpacity={0.8}
-                    >
-                      <Text style={[styles.quickActionText, { color: domain ? domainColor : customColor }]}>
-                        {minutes < 60 ? `${minutes}m` : `${minutes/60}h`}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
               </View>
             </View>
           </View>
@@ -630,9 +720,11 @@ const TimeBlockForm = ({
 
   const renderAdditionalOptions = () => (
     <ScrollView 
+      ref={additionalScrollRef}
       style={[styles.tabContent, { backgroundColor: theme.background }]}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.scrollContent}
+      maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
     >
       <View style={styles.formContainer}>
         {/* Recurring Options */}
@@ -751,6 +843,85 @@ const TimeBlockForm = ({
                 ]} />
               </TouchableOpacity>
             </View>
+            
+            {enableNotification && (
+              <View style={[styles.expandedContent, { backgroundColor: theme.card }]}>
+                <Text style={[styles.expandedLabel, { color: theme.textSecondary }]}>Remind me</Text>
+                <View style={styles.notificationTimeGrid}>
+                  {[
+                    { key: '5', label: '5 min', minutes: 5 },
+                    { key: '15', label: '15 min', minutes: 15 },
+                    { key: '30', label: '30 min', minutes: 30 },
+                    { key: '60', label: '1 hour', minutes: 60 },
+                    { key: 'custom', label: 'Custom', minutes: null }
+                  ].map((time) => (
+                    <TouchableOpacity 
+                      key={time.key}
+                      style={[
+                        styles.notificationTimeCard, 
+                        { 
+                          backgroundColor: notificationTime === time.key ? 
+                            `${domain ? domainColor : customColor}15` : theme.background,
+                          borderColor: notificationTime === time.key ? 
+                            (domain ? domainColor : customColor) : theme.border
+                        }
+                      ]}
+                      onPress={() => {
+                        setNotificationTime(time.key);
+                        if (time.key === 'custom') {
+                          setShowCustomTimeInput(true);
+                        } else {
+                          setShowCustomTimeInput(false);
+                        }
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons 
+                        name={time.key === 'custom' ? 'time-outline' : 'alarm-outline'} 
+                        size={16} 
+                        color={notificationTime === time.key ? 
+                          (domain ? domainColor : customColor) : theme.textSecondary} 
+                      />
+                      <Text style={[
+                        styles.notificationTimeText, 
+                        { color: notificationTime === time.key ? 
+                          (domain ? domainColor : customColor) : theme.text }
+                      ]}>
+                        {time.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                
+                {/* Custom time input */}
+                {showCustomTimeInput && (
+                  <View style={styles.customTimeContainer}>
+                    <Text style={[styles.customTimeLabel, { color: theme.textSecondary }]}>
+                      Minutes before event:
+                    </Text>
+                    <TextInput
+                      style={[styles.customTimeInput, { 
+                        color: theme.text, 
+                        backgroundColor: theme.card, 
+                        borderColor: domain ? domainColor : customColor
+                      }]}
+                      value={customMinutes}
+                      onChangeText={setCustomMinutes}
+                      placeholder="e.g. 10"
+                      placeholderTextColor={theme.textSecondary}
+                      keyboardType="numeric"
+                      onBlur={() => {
+                        if (customMinutes && !isNaN(customMinutes)) {
+                          // Valid number, keep it
+                        } else {
+                          setCustomMinutes('10'); // Default fallback
+                        }
+                      }}
+                    />
+                  </View>
+                )}
+              </View>
+            )}
           </View>
         </View>
 
@@ -838,12 +1009,12 @@ const TimeBlockForm = ({
         navigationState={{ index, routes }}
         renderScene={SceneMap({
           basic: () => (
-            <View style={{ flex: 1, backgroundColor: theme.background }}>
+            <View style={{ flex: 1, backgroundColor: theme.background }} key="basic-tab">
               {renderBasicDetails()}
             </View>
           ),
           additional: () => (
-            <View style={{ flex: 1, backgroundColor: theme.background }}>
+            <View style={{ flex: 1, backgroundColor: theme.background }} key="additional-tab">
               {renderAdditionalOptions()}
             </View>
           )
@@ -892,6 +1063,8 @@ const TimeBlockForm = ({
           />
         )}
         swipeEnabled={true}
+        lazy={false}
+        removeClippedSubviews={false}
         style={{ 
           flex: 1, 
           backgroundColor: 'transparent'
@@ -969,6 +1142,18 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     opacity: 0.6,
+  },
+  incrementToggle: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginLeft: 8,
+  },
+  incrementToggleText: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.3,
   },
   modernInput: {
     borderWidth: 1,
@@ -1110,11 +1295,25 @@ const styles = StyleSheet.create({
   },
   timeDisplay: {
     alignItems: 'center',
+    marginBottom: 8,
   },
   timeText: {
     fontSize: 18,
     fontWeight: '700',
     letterSpacing: 0.3,
+  },
+  timeAdjustButtons: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  timeAdjustButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   timeSeparator: {
     justifyContent: 'center',
@@ -1241,6 +1440,55 @@ const styles = StyleSheet.create({
   frequencyGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  
+  // Notification Time Selection
+  notificationTimeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  notificationTimeCard: {
+    flex: 0,
+    flexBasis: '30%',
+    flexDirection: 'column',
+    alignItems: 'center',
+    padding: 10,
+    marginBottom: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    minHeight: 56,
+    justifyContent: 'center',
+  },
+  notificationTimeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 4,
+    letterSpacing: 0.2,
+    textAlign: 'center',
+  },
+  customTimeContainer: {
+    marginTop: 8,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.1)',
+  },
+  customTimeLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    opacity: 0.7,
+  },
+  customTimeInput: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    fontWeight: '500',
+    textAlign: 'center',
   },
   frequencyCard: {
     flex: 1,

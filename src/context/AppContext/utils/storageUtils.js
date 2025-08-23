@@ -44,7 +44,7 @@ export const loadAppData = async () => {
     // Create array of promises for all data loads
     const dataPromises = [
       loadData(STORAGE_KEYS.GOALS).then(data => ({ goals: data || [] })),
-      loadData(STORAGE_KEYS.PROJECTS).then(data => ({ projects: data || [] })),
+      loadData(STORAGE_KEYS.MILESTONES).then(data => ({ milestones: data || [] })),
       loadData(STORAGE_KEYS.TASKS).then(data => ({ tasks: data || [] })),
       loadData(STORAGE_KEYS.TIME_BLOCKS).then(data => ({ timeBlocks: data || [] })),
       loadData(STORAGE_KEYS.DOMAINS).then(data => ({ domains: data || [] })),
@@ -52,7 +52,7 @@ export const loadAppData = async () => {
       loadData(STORAGE_KEYS.TAGS).then(data => ({ tags: data || [] })),
       loadData(STORAGE_KEYS.NOTES).then(data => ({ notes: data || [] })),
       loadData(STORAGE_KEYS.FILTERS).then(data => ({ filters: data || {} })),
-      loadData(STORAGE_KEYS.PROJECT_GOAL_LINK_MAP).then(data => ({ projectGoalLinkMap: data || {} })),
+      loadData(STORAGE_KEYS.MILESTONE_GOAL_LINK_MAP).then(data => ({ milestoneGoalLinkMap: data || {} })),
       loadData(STORAGE_KEYS.TODOS).then(data => ({ todos: data || [] })),
       loadData(STORAGE_KEYS.TOMORROW_TODOS).then(data => ({ tomorrowTodos: data || [] })),
       loadData(STORAGE_KEYS.LATER_TODOS).then(data => ({ laterTodos: data || [] })),
@@ -69,7 +69,7 @@ export const loadAppData = async () => {
     // Return empty data to prevent crashes
     return {
       goals: [],
-      projects: [],
+      milestones: [],
       tasks: [],
       timeBlocks: [],
       domains: [],
@@ -77,7 +77,7 @@ export const loadAppData = async () => {
       tags: [],
       notes: [],
       filters: {},
-      projectGoalLinkMap: {},
+      milestoneGoalLinkMap: {},
       todos: [],
       tomorrowTodos: [],
       laterTodos: [],

@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CommonActions } from '@react-navigation/native';
 
-const StatsRow = ({ theme, totalActiveGoals, activeProjects, totalActiveTasks, navigation, isTourActive = false, useDramaticEntrance = false }) => {
+const StatsRow = ({ theme, totalActiveGoals, activeMilestones, totalActiveTasks, navigation, isTourActive = false, useDramaticEntrance = false }) => {
   // Animation values for dramatic entrance
   const entranceOpacity = useRef(new Animated.Value(useDramaticEntrance ? 0 : 1)).current;
   const entranceScale = useRef(new Animated.Value(useDramaticEntrance ? 0.8 : 1)).current;
@@ -96,9 +96,9 @@ const StatsRow = ({ theme, totalActiveGoals, activeProjects, totalActiveTasks, n
         activeOpacity={0.7}
       >
         <Ionicons name="folder-outline" size={24} color={theme.primary} />
-        <Text style={[styles.statValue, { color: '#FFFFFF' }]}>{activeProjects}</Text>
+        <Text style={[styles.statValue, { color: '#FFFFFF' }]}>{activeMilestones}</Text>
         <Text style={[styles.statLabel, { color: 'rgba(255,255,255,0.7)' }]}>
-          {activeProjects === 1 ? 'Milestone' : 'Milestones'}
+          {activeMilestones === 1 ? 'Milestone' : 'Milestones'}
         </Text>
       </TouchableOpacity>
       

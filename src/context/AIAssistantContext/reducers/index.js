@@ -346,12 +346,12 @@ export function reducer(state, action) {
           currentGoalData: action.payload,
         },
       };
-    case 'SET_CURRENT_PROJECT_DATA':
+    case 'SET_CURRENT_MILESTONE_DATA':
       return {
         ...state,
         modals: {
           ...state.modals,
-          currentProjectData: action.payload,
+          currentMilestoneData: action.payload,
         },
       };
     case 'SET_CURRENT_TIME_BLOCK_DATA':

@@ -19,10 +19,8 @@ const AdvancedSection = ({
   selectedColor,
   isCreating,
   navigateToProgressView,
-  setNotificationsModal,
   expandedSection,
   setExpandedSection,
-  getActiveNotificationCount,
   getLinkedMilestones,
   milestonesToShare,
   toggleMilestoneSharing,
@@ -188,109 +186,6 @@ const AdvancedSection = ({
           </TouchableOpacity>
         </View>
         
-        {/* Notification Preferences Section */}
-        <View style={[
-          styles.optionSection, 
-          { 
-            borderColor: theme.border,
-            backgroundColor: theme.backgroundSecondary,
-            borderWidth: 1,
-            borderRadius: scaleWidth(12),
-            marginBottom: spacing.m
-          }
-        ]}>
-          <TouchableOpacity 
-            style={[
-              styles.optionHeader,
-              {
-                padding: spacing.m,
-                minHeight: minTouchSize
-              }
-            ]}
-            onPress={() => {
-              if (isCreating) {
-                alert('Save goal first');
-                return;
-              }
-              setNotificationsModal(true);
-            }}
-            accessible={true}
-            accessibilityRole="button"
-            accessibilityLabel="Notification Preferences"
-            accessibilityHint={isCreating ? "Save goal first" : `${getActiveNotificationCount() > 0 ? getActiveNotificationCount() + ' notifications set' : 'Set notification preferences'}`}
-          >
-            <View style={styles.optionTitleRow}>
-              <Ionicons 
-                name="notifications-outline" 
-                size={scaleWidth(22)} 
-                color={selectedColor} 
-                style={{ marginRight: spacing.s }}
-              />
-              <Text 
-                style={[
-                  styles.optionTitle, 
-                  { 
-                    color: theme.text,
-                    fontSize: fontSizes.m
-                  }
-                ]}
-                maxFontSizeMultiplier={1.5}
-              >
-                Notification Preferences
-              </Text>
-            </View>
-            
-            <View style={styles.optionStatusContainer}>
-              {getActiveNotificationCount() > 0 ? (
-                <View style={[
-                  styles.notificationBadge, 
-                  { 
-                    backgroundColor: selectedColor,
-                    // Add border for black color on dark theme
-                    borderWidth: (selectedColor === '#000000' && theme.dark) ? 1 : 0,
-                    borderColor: 'rgba(255,255,255,0.3)',
-                    width: scaleWidth(24),
-                    height: scaleWidth(24),
-                    borderRadius: scaleWidth(12),
-                    marginRight: spacing.xs
-                  }
-                ]}>
-                  <Text style={[
-                    styles.notificationBadgeText,
-                    { 
-                      color: selectedColor === '#FFFFFF' ? '#000000' : getTextColorForBackground(selectedColor),
-                      fontSize: fontSizes.xs
-                    }
-                  ]}
-                  maxFontSizeMultiplier={1.3}
-                  >
-                    {getActiveNotificationCount()}
-                  </Text>
-                </View>
-              ) : (
-                <Text 
-                  style={[
-                    styles.optionStatusText, 
-                    { 
-                      color: theme.textSecondary,
-                      fontSize: fontSizes.s,
-                      marginRight: spacing.xxs
-                    }
-                  ]}
-                  maxFontSizeMultiplier={1.5}
-                >
-                  {isCreating ? 'Save first' : 'Not set'}
-                </Text>
-              )}
-              <Ionicons 
-                name="chevron-forward" 
-                size={scaleWidth(18)} 
-                color={theme.textSecondary} 
-                style={{ marginLeft: spacing.xxs }}
-              />
-            </View>
-          </TouchableOpacity>
-        </View>
 
         {/* Share Goal Section */}
         <View style={[

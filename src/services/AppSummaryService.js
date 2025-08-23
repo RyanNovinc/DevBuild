@@ -55,14 +55,14 @@ class AppSummaryService {
       // Continue with summary generation even if audit fails
     }
     
-    const { goals = [], projects = [], tasks = [], settings = {}, userCountry = null } = appContext;
+    const { goals = [], milestones = [], tasks = [], settings = {}, userCountry = null } = appContext;
     
     // Log data sizes for debugging
-    console.log(`[AppSummaryService] Data received: ${goals.length} goals, ${projects.length} milestones, ${tasks.length} tasks, country: ${userCountry}`);
+    console.log(`[AppSummaryService] Data received: ${goals.length} goals, ${milestones.length} milestones, ${tasks.length} tasks, country: ${userCountry}`);
     
     // Build sections of the summary
     const profileSection = this.generateProfileSection(settings, userCountry);
-    const hierarchySection = this.generateGoalsHierarchy(goals, projects, tasks);
+    const hierarchySection = this.generateGoalsHierarchy(goals, milestones, tasks);
     
     // Combine all sections with a header
     return `# USER APP CONTEXT SUMMARY
@@ -115,11 +115,11 @@ Today's Date: ${getTodaysDateWithTimezone(userCountry)}`;
   /**
    * Generate complete goals hierarchy with milestones and tasks
    * @param {Array} goals - Goals array
-   * @param {Array} projects - Milestones array  
+   * @param {Array} milestones - Milestones array  
    * @param {Array} tasks - Tasks array
    * @returns {string} - Formatted hierarchical text section
    */
-  static generateGoalsHierarchy(goals, projects = [], tasks = []) {
+  static generateGoalsHierarchy(goals, milestones = [], tasks = []) {
     if (!Array.isArray(goals) || goals.length === 0) {
       return '## GOALS & PROGRESS HIERARCHY\nNo goals created yet.';
     }
@@ -158,11 +158,11 @@ Today's Date: ${getTodaysDateWithTimezone(userCountry)}`;
         }
         
         // Get all milestones for this goal
-        const goalMilestones = projects.filter(project => project.goalId === goal.id);
+        const goalMilestones = milestones.filter(milestone => milestone.goalId === goal.id);
         
         // Get standalone tasks (tasks directly under goal with no milestone)
         const standaloneGoalTasks = tasks.filter(task => 
-          task.goalId === goal.id && !task.projectId
+          task.goalId === goal.id && !task.milestoneId
         );
 
         // Show milestones and their tasks
@@ -189,7 +189,7 @@ Today's Date: ${getTodaysDateWithTimezone(userCountry)}`;
             }
             
             // Get all tasks for this milestone
-            const milestoneTasks = tasks.filter(task => task.projectId === milestone.id);
+            const milestoneTasks = tasks.filter(task => task.milestoneId === milestone.id);
             
             if (milestoneTasks.length > 0) {
               milestoneTasks.forEach((task, taskIndex) => {
@@ -269,9 +269,9 @@ Today's Date: ${getTodaysDateWithTimezone(userCountry)}`;
     }
 
     // Show orphaned milestones and tasks (not linked to any goal)
-    const orphanedMilestones = projects.filter(project => !project.goalId || 
-      !goals.some(goal => goal.id === project.goalId));
-    const orphanedTasks = tasks.filter(task => !task.goalId && !task.projectId);
+    const orphanedMilestones = milestones.filter(milestone => !milestone.goalId || 
+      !goals.some(goal => goal.id === milestone.goalId));
+    const orphanedTasks = tasks.filter(task => !task.goalId && !task.milestoneId);
 
     if (orphanedMilestones.length > 0 || orphanedTasks.length > 0) {
       section += `\n\n### STANDALONE ITEMS`;
@@ -299,7 +299,7 @@ Today's Date: ${getTodaysDateWithTimezone(userCountry)}`;
           }
           
           // Show tasks under this orphaned milestone
-          const orphanedMilestoneTasks = tasks.filter(task => task.projectId === milestone.id);
+          const orphanedMilestoneTasks = tasks.filter(task => task.milestoneId === milestone.id);
           orphanedMilestoneTasks.forEach((task, taskIndex) => {
             const taskStatus = task.completed || task.status === 'done' ? 'COMPLETED' : 
                              task.status === 'in_progress' ? 'IN PROGRESS' : 'TO DO';
@@ -406,12 +406,12 @@ Today's Date: ${getTodaysDateWithTimezone(userCountry)}`;
   
   /**
    * Generate milestones section with active milestones only
-   * @param {Array} projects - Milestones array
+   * @param {Array} milestones - Milestones array
    * @param {Array} goals - Goals array for reference
    * @returns {string} - Formatted text section
    */
-  static generateProjectsSection(projects, goals = []) {
-    if (!Array.isArray(projects) || projects.length === 0) {
+  static generateMilestonesSection(milestones, goals = []) {
+    if (!Array.isArray(milestones) || milestones.length === 0) {
       return '## ACTIVE MILESTONES\nNo milestones created yet.';
     }
     
@@ -433,19 +433,19 @@ Today's Date: ${getTodaysDateWithTimezone(userCountry)}`;
     }
     
     // Filter for active milestones using ProfileScreen's exact logic
-    const activeProjects = projects.filter(project => {
+    const activeMilestones = milestones.filter(milestone => {
       // FIRST: Skip milestones that belong to deleted goals (goals that no longer exist)
-      if (project.goalId && !validGoalIds.has(project.goalId)) {
+      if (milestone.goalId && !validGoalIds.has(milestone.goalId)) {
         return false;
       }
       
       // SECOND: Skip milestones that belong to completed goals
-      if (project.goalId && completedGoalIds.has(project.goalId)) {
+      if (milestone.goalId && completedGoalIds.has(milestone.goalId)) {
         return false;
       }
       
       // THIRD: Skip milestones that are themselves completed or done
-      if (project.completed === true || project.status === 'done') {
+      if (milestone.completed === true || milestone.status === 'done') {
         return false;
       }
       
@@ -453,25 +453,25 @@ Today's Date: ${getTodaysDateWithTimezone(userCountry)}`;
       return true;
     });
     
-    if (activeProjects.length === 0) {
+    if (activeMilestones.length === 0) {
       return '## ACTIVE MILESTONES\nNo active milestones.';
     }
     
-    let section = `## ACTIVE MILESTONES (${activeProjects.length})`;
+    let section = `## ACTIVE MILESTONES (${activeMilestones.length})`;
     
-    activeProjects.forEach(project => {
+    activeMilestones.forEach(milestone => {
       // Get current status label
       let statusLabel = 'To Do';
-      if (project.status === 'in_progress') statusLabel = 'In Progress';
+      if (milestone.status === 'in_progress') statusLabel = 'In Progress';
       
-      section += `\n- ${project.title} (Progress: ${project.progress || 0}%, Status: ${statusLabel})`;
+      section += `\n- ${milestone.title} (Progress: ${milestone.progress || 0}%, Status: ${statusLabel})`;
       
       // Include goal association if available
       // First try goalId with the map, then fallback to goalTitle
-      if (project.goalId && goalMap[project.goalId]) {
-        section += `\n  Part of goal: ${goalMap[project.goalId]}`;
-      } else if (project.goalTitle) {
-        section += `\n  Part of goal: ${project.goalTitle}`;
+      if (milestone.goalId && goalMap[milestone.goalId]) {
+        section += `\n  Part of goal: ${goalMap[milestone.goalId]}`;
+      } else if (milestone.goalTitle) {
+        section += `\n  Part of goal: ${milestone.goalTitle}`;
       }
       
       // Include description if available

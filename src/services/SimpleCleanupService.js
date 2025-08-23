@@ -3,14 +3,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /**
  * SimpleCleanupService - Direct cleanup for orphaned data
- * When you have 0 goals but still have projects/tasks
+ * When you have 0 goals but still have milestones/tasks
  */
 class SimpleCleanupService {
   static STORAGE_KEYS = {
     GOALS: 'goals',
-    PROJECTS: 'projects', 
+    MILESTONES: 'milestones', 
     TASKS: 'tasks',
-    PROJECT_GOAL_LINK_MAP: 'projectGoalLinkMap'
+    MILESTONE_GOAL_LINK_MAP: 'milestoneGoalLinkMap'
   };
 
   /**
@@ -21,33 +21,33 @@ class SimpleCleanupService {
     
     try {
       // Load current data
-      const [goalsJson, projectsJson, tasksJson, linkMapJson] = await Promise.all([
+      const [goalsJson, milestonesJson, tasksJson, linkMapJson] = await Promise.all([
         AsyncStorage.getItem(this.STORAGE_KEYS.GOALS),
-        AsyncStorage.getItem(this.STORAGE_KEYS.PROJECTS),
+        AsyncStorage.getItem(this.STORAGE_KEYS.MILESTONES),
         AsyncStorage.getItem(this.STORAGE_KEYS.TASKS),
-        AsyncStorage.getItem(this.STORAGE_KEYS.PROJECT_GOAL_LINK_MAP)
+        AsyncStorage.getItem(this.STORAGE_KEYS.MILESTONE_GOAL_LINK_MAP)
       ]);
 
       const goals = goalsJson ? JSON.parse(goalsJson) : [];
-      const projects = projectsJson ? JSON.parse(projectsJson) : [];
+      const milestones = milestonesJson ? JSON.parse(milestonesJson) : [];
       const tasks = tasksJson ? JSON.parse(tasksJson) : [];
       const linkMap = linkMapJson ? JSON.parse(linkMapJson) : {};
 
-      console.log(`[SimpleCleanup] Current data: ${goals.length} goals, ${projects.length} projects, ${tasks.length} tasks`);
+      console.log(`[SimpleCleanup] Current data: ${goals.length} goals, ${milestones.length} milestones, ${tasks.length} tasks`);
 
       // If no goals exist, everything else should be empty
       if (goals.length === 0) {
         console.log('[SimpleCleanup] No goals found - clearing all related data');
         
         // Log what we're removing
-        if (projects.length > 0) {
-          console.log(`[SimpleCleanup] Removing ${projects.length} orphaned projects:`);
-          projects.forEach(p => console.log(`  - "${p.title}" (${p.id})`));
+        if (milestones.length > 0) {
+          console.log(`[SimpleCleanup] Removing ${milestones.length} orphaned milestones:`);
+          milestones.forEach(p => console.log(`  - "${p.title}" (${p.id})`));
         }
         
         if (tasks.length > 0) {
           console.log(`[SimpleCleanup] Removing ${tasks.length} orphaned tasks:`);
-          tasks.forEach(t => console.log(`  - "${t.name || t.title}" (${t.id}, projectId: ${t.projectId})`));
+          tasks.forEach(t => console.log(`  - "${t.name || t.title}" (${t.id}, milestoneId: ${t.milestoneId})`));
         }
 
         if (Object.keys(linkMap).length > 0) {
@@ -56,9 +56,9 @@ class SimpleCleanupService {
 
         // Clear everything except goals (which is already empty)
         await Promise.all([
-          AsyncStorage.setItem(this.STORAGE_KEYS.PROJECTS, JSON.stringify([])),
+          AsyncStorage.setItem(this.STORAGE_KEYS.MILESTONES, JSON.stringify([])),
           AsyncStorage.setItem(this.STORAGE_KEYS.TASKS, JSON.stringify([])),
-          AsyncStorage.setItem(this.STORAGE_KEYS.PROJECT_GOAL_LINK_MAP, JSON.stringify({}))
+          AsyncStorage.setItem(this.STORAGE_KEYS.MILESTONE_GOAL_LINK_MAP, JSON.stringify({}))
         ]);
 
         console.log('[SimpleCleanup] Nuclear cleanup completed');
@@ -67,13 +67,13 @@ class SimpleCleanupService {
           success: true,
           action: 'nuclear_cleanup',
           removed: {
-            projects: projects.length,
+            milestones: milestones.length,
             tasks: tasks.length,
             linkMapEntries: Object.keys(linkMap).length
           },
           finalCounts: {
             goals: 0,
-            projects: 0,
+            milestones: 0,
             tasks: 0,
             linkMapEntries: 0
           }
@@ -101,31 +101,31 @@ class SimpleCleanupService {
    */
   static async previewCleanup() {
     try {
-      const [goalsJson, projectsJson, tasksJson, linkMapJson] = await Promise.all([
+      const [goalsJson, milestonesJson, tasksJson, linkMapJson] = await Promise.all([
         AsyncStorage.getItem(this.STORAGE_KEYS.GOALS),
-        AsyncStorage.getItem(this.STORAGE_KEYS.PROJECTS),
+        AsyncStorage.getItem(this.STORAGE_KEYS.MILESTONES),
         AsyncStorage.getItem(this.STORAGE_KEYS.TASKS),
-        AsyncStorage.getItem(this.STORAGE_KEYS.PROJECT_GOAL_LINK_MAP)
+        AsyncStorage.getItem(this.STORAGE_KEYS.MILESTONE_GOAL_LINK_MAP)
       ]);
 
       const goals = goalsJson ? JSON.parse(goalsJson) : [];
-      const projects = projectsJson ? JSON.parse(projectsJson) : [];
+      const milestones = milestonesJson ? JSON.parse(milestonesJson) : [];
       const tasks = tasksJson ? JSON.parse(tasksJson) : [];
       const linkMap = linkMapJson ? JSON.parse(linkMapJson) : {};
 
       return {
         current: {
           goals: goals.length,
-          projects: projects.length,
+          milestones: milestones.length,
           tasks: tasks.length,
           linkMapEntries: Object.keys(linkMap).length
         },
         wouldRemove: goals.length === 0 ? {
-          projects: projects.length,
+          milestones: milestones.length,
           tasks: tasks.length,
           linkMapEntries: Object.keys(linkMap).length
         } : null,
-        needsCleanup: goals.length === 0 && (projects.length > 0 || tasks.length > 0 || Object.keys(linkMap).length > 0)
+        needsCleanup: goals.length === 0 && (milestones.length > 0 || tasks.length > 0 || Object.keys(linkMap).length > 0)
       };
     } catch (error) {
       return { error: error.message };

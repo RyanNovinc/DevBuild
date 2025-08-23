@@ -41,7 +41,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
  * Revamped Daily Standup with modern UI/UX
  * Features: Cards UI, Progress indicators, Smooth animations, Better visual hierarchy, Swipeable tabs
  */
-const DailyStandupRevamped = ({ theme, showSuccess }) => {
+const DailyStandupRevamped = ({ theme, showSuccess, isFullscreen }) => {
   // Core state - use local date instead of UTC
   const getLocalDateString = () => {
     const now = new Date();
@@ -912,9 +912,9 @@ const DailyStandupRevamped = ({ theme, showSuccess }) => {
       <ScrollView 
         style={[styles.container, { backgroundColor: theme.background }]}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: isFullscreen ? 0 : scaleHeight(5) }]}
       >
-        {/* Header */}
+        {/* Header - Simplified */}
         <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
           <View style={styles.headerTop}>
             <View>
@@ -924,113 +924,118 @@ const DailyStandupRevamped = ({ theme, showSuccess }) => {
               <Text style={[styles.headerTitle, { color: theme.text }]}>
                 Daily Reflection
               </Text>
-            </View>
-            
-            <View style={styles.headerActions}>
-              <TouchableOpacity
-                style={[styles.iconButton, { backgroundColor: theme.cardElevated }]}
-                onPress={() => setShowPromptSelector(true)}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="color-wand" size={scaleFontSize(18)} color={theme.text} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.iconButton, { backgroundColor: theme.cardElevated }]}
-                onPress={() => setShowHistory(true)}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="calendar" size={scaleFontSize(18)} color={theme.text} />
-              </TouchableOpacity>
+              <Text style={[styles.headerDate, { color: theme.textSecondary }]}>
+                {new Date().toLocaleDateString('en-US', { 
+                  weekday: 'long', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}
+              </Text>
             </View>
           </View>
+        </Animated.View>
 
-          <Text style={[styles.headerDate, { color: theme.textSecondary }]}>
-            {new Date().toLocaleDateString('en-US', { 
-              weekday: 'long', 
-              month: 'long', 
-              day: 'numeric' 
-            })}
-          </Text>
+        {/* Progress & Streak Section - Moved to top for motivation */}
+        <View style={styles.topSection}>
+          {/* Compact Streak Display */}
+          {renderStreakCard()}
           
-          {/* Focus Mode Indicator */}
-          {focusMode && (
+          {/* Focus Mode & Actions Bar */}
+          <Animated.View style={[styles.actionBar, { opacity: fadeAnim }]}>
             <TouchableOpacity 
-              style={[styles.focusIndicator, { backgroundColor: theme.cardElevated }]}
+              style={[styles.focusModeButton, { 
+                backgroundColor: focusMode ? theme.primary + '15' : theme.cardElevated,
+                borderColor: focusMode ? theme.primary + '30' : theme.border
+              }]}
               onPress={() => setShowPromptSelector(true)}
               activeOpacity={0.7}
             >
-              <Text style={[styles.focusIndicatorText, { color: theme.text }]}>
-                {focusMode.isRandomMode ? '🎲' : '🎯'} {focusMode.name}
-                {focusMode.isRandomMode && (
-                  <Text style={[styles.focusIndicatorText, { color: theme.textSecondary, fontSize: scaleFontSize(11) }]}>
-                    {' • Daily Surprise'}
+              <View style={styles.focusModeContent}>
+                <Text style={[styles.focusModeLabel, { color: theme.textSecondary }]}>
+                  Focus Theme
+                </Text>
+                <View style={styles.focusModeValue}>
+                  <Text style={styles.focusModeEmoji}>
+                    {focusMode ? (focusMode.isRandomMode ? '🎲' : '🎯') : '🎯'}
                   </Text>
-                )}
-              </Text>
+                  <Text style={[styles.focusModeText, { color: theme.text }]}>
+                    {focusMode ? focusMode.name : 'Default'}
+                  </Text>
+                  <Ionicons name="chevron-down" size={scaleFontSize(14)} color={theme.textSecondary} />
+                </View>
+              </View>
             </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.historyButton, { backgroundColor: theme.cardElevated, borderColor: theme.border }]}
+              onPress={() => setShowHistory(true)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="calendar-outline" size={scaleFontSize(20)} color={theme.text} />
+              <Text style={[styles.historyButtonText, { color: theme.text }]}>History</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+
+        {/* Reflection Sections */}
+        <View style={styles.reflectionSections}>
+          {/* Morning Section */}
+          {renderSection(
+            'Morning',
+            'sunny',
+            currentPrompts.morning || DEFAULT_PROMPTS.morning,
+            'morning'
           )}
-        </Animated.View>
 
-        {/* Morning Section */}
-        {renderSection(
-          'Morning',
-          'sunny',
-          currentPrompts.morning || DEFAULT_PROMPTS.morning,
-          'morning'
-        )}
+          {/* Evening Section */}
+          {renderSection(
+            'Evening',
+            'moon',
+            currentPrompts.evening || DEFAULT_PROMPTS.evening,
+            'evening'
+          )}
+        </View>
 
-        {/* Evening Section */}
-        {renderSection(
-          'Evening',
-          'moon',
-          currentPrompts.evening || DEFAULT_PROMPTS.evening,
-          'evening'
-        )}
-
-        {/* Research Insight Card */}
+        {/* Research Insight Card - Moved to bottom as supplementary info */}
         {streakData && (
-          <Animated.View style={{ opacity: fadeAnim }}>
+          <Animated.View style={[styles.bottomSection, { opacity: fadeAnim }]}>
+            <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>Daily Insight</Text>
             <TouchableOpacity
               style={[styles.researchCard, { 
-                backgroundColor: theme.background,
-                borderColor: theme.border + '40'
+                backgroundColor: theme.cardElevated,
+                borderColor: theme.border + '20'
               }]}
               onPress={handleShowResearch}
               activeOpacity={0.95}
             >
-              <View style={styles.researchHeader}>
-                <View style={[styles.researchIndicator, { backgroundColor: theme.primary + '15' }]}>
-                  <Text style={[styles.researchIndicatorText, { color: theme.primary }]}>
-                    Research
-                  </Text>
-                </View>
+              <View style={styles.researchContent}>
+                <Text style={[styles.researchStatement, { color: theme.text }]}>
+                  {StandupStreakService.getMotivationalMessage(streakData, researchMessageIndex).split('\n')[0]}
+                </Text>
+                
+                <Text style={[styles.researchSource, { color: theme.textSecondary }]}>
+                  {StandupStreakService.getMotivationalMessage(streakData, researchMessageIndex).split('\n')[1]?.replace('— ', '')}
+                </Text>
               </View>
               
-              <Text style={[styles.researchStatement, { color: theme.text }]}>
-                {StandupStreakService.getMotivationalMessage(streakData, researchMessageIndex).split('\n')[0]}
-              </Text>
-              
-              <Text style={[styles.researchSource, { color: theme.textSecondary }]}>
-                {StandupStreakService.getMotivationalMessage(streakData, researchMessageIndex).split('\n')[1]?.replace('— ', '')}
-              </Text>
-              
-              {/* Refresh button positioned at bottom left */}
-              <TouchableOpacity
-                style={[styles.refreshResearchButton, { backgroundColor: theme.background, borderColor: theme.border }]}
-                onPress={(e) => {
-                  e.stopPropagation(); // Prevent card click when refresh is pressed
-                  refreshResearchMessage();
-                }}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="refresh" size={scaleFontSize(12)} color={theme.textSecondary} />
-              </TouchableOpacity>
+              <View style={styles.researchActions}>
+                <TouchableOpacity
+                  style={[styles.refreshResearchButton, { backgroundColor: theme.background, borderColor: theme.border }]}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    refreshResearchMessage();
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="refresh" size={scaleFontSize(14)} color={theme.textSecondary} />
+                </TouchableOpacity>
+                <View style={[styles.researchBadge, { backgroundColor: theme.primary + '15' }]}>
+                  <Text style={[styles.researchBadgeText, { color: theme.primary }]}>Research</Text>
+                </View>
+              </View>
             </TouchableOpacity>
           </Animated.View>
         )}
-
-        {/* Streak Card - Deprioritized at bottom */}
-        {renderStreakCard()}
 
         {/* Bottom padding */}
         <View style={{ height: scaleHeight(100) }} />
@@ -1190,6 +1195,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
+    paddingTop: scaleHeight(5),
     paddingBottom: scaleHeight(20),
   },
   loadingContainer: {
@@ -1204,56 +1210,108 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: spacing.m,
-    paddingTop: spacing.l,
+    paddingTop: spacing.s,
+    paddingBottom: spacing.s,
   },
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: spacing.xs,
   },
   greeting: {
-    fontSize: scaleFontSize(14),
+    fontSize: scaleFontSize(13),
     fontWeight: '500',
-    marginBottom: 4,
+    marginBottom: 2,
+    opacity: 0.8,
   },
   headerTitle: {
-    fontSize: scaleFontSize(28),
+    fontSize: scaleFontSize(26),
     fontWeight: '700',
     letterSpacing: -0.5,
+    marginBottom: 4,
   },
   headerDate: {
-    fontSize: scaleFontSize(15),
-    fontWeight: '500',
-    marginTop: spacing.xs,
+    fontSize: scaleFontSize(14),
+    fontWeight: '400',
+    opacity: 0.7,
   },
-  headerActions: {
+  topSection: {
+    paddingHorizontal: spacing.m,
+    marginBottom: spacing.m,
+  },
+  actionBar: {
     flexDirection: 'row',
     gap: spacing.s,
+    marginTop: spacing.s,
   },
-  iconButton: {
-    width: scaleWidth(40),
-    height: scaleWidth(40),
-    borderRadius: 20,
-    justifyContent: 'center',
+  focusModeButton: {
+    flex: 1,
+    padding: spacing.m,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  focusModeContent: {
+    gap: 4,
+  },
+  focusModeLabel: {
+    fontSize: scaleFontSize(11),
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    opacity: 0.7,
+  },
+  focusModeValue: {
+    flexDirection: 'row',
     alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
+    gap: 6,
+  },
+  focusModeEmoji: {
+    fontSize: scaleFontSize(16),
+  },
+  focusModeText: {
+    fontSize: scaleFontSize(14),
+    fontWeight: '600',
+    flex: 1,
+  },
+  historyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.m,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 6,
+    minWidth: scaleWidth(100),
+  },
+  historyButtonText: {
+    fontSize: scaleFontSize(14),
+    fontWeight: '500',
+  },
+  reflectionSections: {
+    marginBottom: spacing.m,
+  },
+  bottomSection: {
+    paddingHorizontal: spacing.m,
+    marginBottom: spacing.l,
+  },
+  sectionLabel: {
+    fontSize: scaleFontSize(11),
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: spacing.s,
+    marginLeft: 4,
   },
   streakCard: {
-    margin: spacing.m,
-    marginTop: 0,
+    marginBottom: spacing.s,
     padding: spacing.m,
     borderRadius: 16,
     borderWidth: 1,
-    elevation: 2,
+    elevation: 1,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
   },
   streakContent: {
     flexDirection: 'row',
@@ -1417,54 +1475,59 @@ const styles = StyleSheet.create({
     marginLeft: spacing.s,
   },
   researchCard: {
-    margin: spacing.m,
-    padding: spacing.l,
-    paddingBottom: scaleHeight(50), // Extra bottom padding to prevent refresh button overlap
-    borderRadius: 8,
+    padding: spacing.m,
+    borderRadius: 12,
     borderWidth: 1,
-    position: 'relative',
-    elevation: 0,
-    shadowOpacity: 0,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 3,
   },
-  researchHeader: {
-    marginBottom: spacing.m,
-  },
-  researchIndicator: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: spacing.s,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
-  researchIndicatorText: {
-    fontSize: scaleFontSize(10),
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+  researchContent: {
+    flex: 1,
+    paddingRight: spacing.s,
   },
   researchStatement: {
-    fontSize: scaleFontSize(16),
+    fontSize: scaleFontSize(15),
     fontWeight: '500',
-    lineHeight: scaleFontSize(22),
-    marginBottom: spacing.s,
+    lineHeight: scaleFontSize(21),
+    marginBottom: spacing.xs,
     letterSpacing: -0.2,
   },
   researchSource: {
     fontSize: scaleFontSize(12),
     fontWeight: '400',
     lineHeight: scaleFontSize(16),
+    opacity: 0.8,
+  },
+  researchActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: spacing.m,
+    paddingTop: spacing.s,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(0,0,0,0.05)',
   },
   refreshResearchButton: {
-    position: 'absolute',
-    bottom: spacing.s,
-    left: spacing.s,
-    width: scaleWidth(28),
-    height: scaleWidth(28),
-    borderRadius: 4,
+    width: scaleWidth(32),
+    height: scaleWidth(32),
+    borderRadius: 8,
     borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 0,
-    shadowOpacity: 0,
+  },
+  researchBadge: {
+    paddingHorizontal: spacing.s,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  researchBadgeText: {
+    fontSize: scaleFontSize(10),
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   modalOverlay: {
     flex: 1,
@@ -1584,22 +1647,6 @@ const styles = StyleSheet.create({
     fontSize: scaleFontSize(14),
     fontWeight: '600',
     letterSpacing: 0.2,
-  },
-  focusIndicator: {
-    marginTop: spacing.s,
-    paddingHorizontal: spacing.m,
-    paddingVertical: spacing.s,
-    borderRadius: 16,
-    alignSelf: 'center',
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  focusIndicatorText: {
-    fontSize: scaleFontSize(13),
-    fontWeight: '500',
   },
 });
 

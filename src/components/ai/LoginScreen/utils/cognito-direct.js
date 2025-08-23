@@ -222,6 +222,55 @@ export const cognitoDirectService = {
       }
       resolve(true);
     });
+  },
+
+  /**
+   * Delete current user account
+   */
+  deleteUser: () => {
+    return new Promise((resolve, reject) => {
+      try {
+        console.log('🔧 DIRECT COGNITO: Starting user deletion');
+        
+        const cognitoUser = userPool.getCurrentUser();
+        
+        if (!cognitoUser) {
+          console.log('❌ DIRECT COGNITO: No current user to delete');
+          reject(new Error('No user is currently authenticated'));
+          return;
+        }
+        
+        // Get session first to ensure user is authenticated
+        cognitoUser.getSession((err, session) => {
+          if (err) {
+            console.error('❌ DIRECT COGNITO: Session error during deletion:', err);
+            reject(err);
+            return;
+          }
+          
+          if (!session.isValid()) {
+            console.log('❌ DIRECT COGNITO: Invalid session for deletion');
+            reject(new Error('User session is not valid'));
+            return;
+          }
+          
+          // Delete the user
+          cognitoUser.deleteUser((err, result) => {
+            if (err) {
+              console.error('❌ DIRECT COGNITO: User deletion error:', err);
+              reject(err);
+            } else {
+              console.log('✅ DIRECT COGNITO: User deleted successfully:', result);
+              resolve(true);
+            }
+          });
+        });
+        
+      } catch (error) {
+        console.error('❌ DIRECT COGNITO: Delete user setup error:', error);
+        reject(error);
+      }
+    });
   }
 };
 

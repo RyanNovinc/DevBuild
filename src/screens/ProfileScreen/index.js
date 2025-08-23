@@ -530,7 +530,7 @@ const ProfileScreen = ({ navigation, route }) => {
           totalDomains={screenState.localDomains ? screenState.localDomains.length : 0}
           totalActiveGoals={screenState.totalActiveGoals}
           completedGoals={screenState.completedGoals}
-          activeProjects={screenState.activeProjects}
+          activeMilestones={screenState.activeMilestones}
           totalActiveTasks={screenState.totalActiveTasks}
           navigation={navigation}
           isTourActive={false}
@@ -637,7 +637,7 @@ const ProfileScreen = ({ navigation, route }) => {
             totalDomains={screenState.localDomains ? screenState.localDomains.length : 0}
             totalActiveGoals={screenState.totalActiveGoals}
             completedGoals={screenState.completedGoals}
-            activeProjects={screenState.activeProjects}
+            activeMilestones={screenState.activeMilestones}
             totalActiveTasks={screenState.totalActiveTasks}
             navigation={navigation}
             isTourActive={true}

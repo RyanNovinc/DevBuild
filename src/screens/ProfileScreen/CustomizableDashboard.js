@@ -883,7 +883,7 @@ const CustomizableDashboard = ({ theme, navigation }) => {
             <Component 
               theme={theme} 
               navigation={navigation} 
-              isPremium={hasPremiumAccess}
+              isPremium={isPremiumUser}
               isUnlocked={hasLevelAccess}
               widgetId={widget.id}
               widgetData={widget.data}

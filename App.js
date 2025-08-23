@@ -237,7 +237,6 @@ import TimeScreen from './src/screens/TimeScreen';
 import TasksScreen from './src/screens/TasksScreen';
 import EditProfileScreen from './src/screens/EditProfileScreen';
 import TimeBlockScreen from './src/screens/TimeBlockScreen';
-import ProjectDetailsScreen from './src/screens/ProjectDetailsScreen';
 import MilestoneDetailsScreen from './src/screens/MilestoneDetailsScreen';
 import GoalDetailsScreen from './src/screens/GoalDetailsScreen';
 import TaskDetailsScreen from './src/screens/TaskDetailsScreen';
@@ -713,7 +712,7 @@ const GoalsStack = () => {
       />
       <Stack.Screen 
         name="ProjectDetails" 
-        component={ProjectDetailsScreen}
+        component={MilestoneDetailsScreen}
         options={{
           gestureDirection: 'horizontal',
           transitionSpec: {
@@ -797,7 +796,7 @@ const ProjectsStack = () => {
       />
       <Stack.Screen 
         name="ProjectDetails" 
-        component={ProjectDetailsScreen}
+        component={MilestoneDetailsScreen}
         options={{
           gestureDirection: 'horizontal',
           transitionSpec: {

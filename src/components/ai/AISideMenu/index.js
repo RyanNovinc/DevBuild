@@ -11,7 +11,8 @@ import {
   Easing,
   Platform,
   BackHandler,
-  Image
+  Image,
+  Alert
 } from 'react-native';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
@@ -328,7 +329,7 @@ const AISideMenu = ({
   navigation
 }) => {
   const { theme } = useTheme();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, changePassword, deleteUser } = useAuth();
   const { profile } = useProfile();
   const appContext = useAppContext() || {};
   
@@ -338,7 +339,7 @@ const AISideMenu = ({
   };
   const { 
     goals = [], 
-    projects = [], 
+    milestones = [], 
     tasks = []
   } = appContext;
   const menuAnimX = useRef(new Animated.Value(300)).current;
@@ -349,6 +350,7 @@ const AISideMenu = ({
   const [isDismissing, setIsDismissing] = useState(false);
   const [realSubscriptionInfo, setRealSubscriptionInfo] = useState(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showAccountSettings, setShowAccountSettings] = useState(false);
   const [showReferralPopup, setShowReferralPopup] = useState(false);
   const [referralStats, setReferralStats] = useState(null);
   const [streakData, setStreakData] = useState({ currentStreak: 0 });
@@ -375,24 +377,24 @@ const AISideMenu = ({
     // Count active goals (not completed)
     const activeGoalsCount = goals.filter(goal => !goal.completed).length;
 
-    // Count active projects and create completedProjectsMap for task filtering
-    const completedProjectsMap = {};
-    const activeProjectsCount = projects.filter(project => {
-      // Skip projects that belong to deleted goals
-      if (project.goalId && !validGoalIds.has(project.goalId)) {
-        completedProjectsMap[project.id] = true;
+    // Count active milestones and create completedMilestonesMap for task filtering
+    const completedMilestonesMap = {};
+    const activeMilestonesCount = milestones.filter(milestone => {
+      // Skip milestones that belong to deleted goals
+      if (milestone.goalId && !validGoalIds.has(milestone.goalId)) {
+        completedMilestonesMap[milestone.id] = true;
         return false;
       }
 
-      // Skip projects that belong to completed goals
-      if (project.goalId && completedGoalsMap[project.goalId]) {
-        completedProjectsMap[project.id] = true;
+      // Skip milestones that belong to completed goals
+      if (milestone.goalId && completedGoalsMap[milestone.goalId]) {
+        completedMilestonesMap[milestone.id] = true;
         return false;
       }
 
-      // Skip completed projects
-      if (project.completed === true || project.status === 'done') {
-        completedProjectsMap[project.id] = true;
+      // Skip completed milestones
+      if (milestone.completed === true || milestone.status === 'done') {
+        completedMilestonesMap[milestone.id] = true;
         return false;
       }
 
@@ -401,8 +403,8 @@ const AISideMenu = ({
 
     // Count active tasks with hierarchical filtering
     const activeTasksCount = tasks.filter(task => {
-      // Skip tasks that belong to completed projects
-      if (task.projectId && completedProjectsMap[task.projectId]) {
+      // Skip tasks that belong to completed milestones
+      if (task.projectId && completedMilestonesMap[task.projectId]) {
         return false;
       }
 
@@ -422,7 +424,7 @@ const AISideMenu = ({
 
     return {
       goalsCount: activeGoalsCount,
-      projectsCount: activeProjectsCount,
+      milestonesCount: activeMilestonesCount,
       tasksCount: activeTasksCount
     };
   };
@@ -698,6 +700,174 @@ const AISideMenu = ({
   // Handle cancel logout
   const handleCancelLogout = () => {
     setShowLogoutConfirm(false);
+  };
+
+  // Handle change password
+  const handleChangePassword = () => {
+    setShowAccountSettings(false);
+    onClose(); // Close menu first
+    
+    // Option 1: Navigate to ForgotPassword screen (easier for users)
+    setTimeout(() => {
+      Alert.alert(
+        'Change Password',
+        'Choose how you would like to change your password:',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Reset via Email',
+            onPress: () => {
+              if (navigation) {
+                navigation.navigate('ForgotPassword');
+              }
+            }
+          },
+          {
+            text: 'Change Now',
+            onPress: () => handleDirectPasswordChange()
+          }
+        ]
+      );
+    }, 300);
+  };
+
+  // Handle direct password change (requires current password)
+  const handleDirectPasswordChange = () => {
+    // Note: Alert.prompt is iOS-only, so for Android/cross-platform,
+    // we should navigate to a proper password change screen or use the email reset
+    if (Platform.OS === 'ios') {
+      Alert.prompt(
+        'Current Password',
+        'Enter your current password:',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Next',
+            onPress: (currentPassword) => {
+              if (!currentPassword) {
+                Alert.alert('Error', 'Please enter your current password');
+                return;
+              }
+              
+              Alert.prompt(
+                'New Password',
+                'Enter your new password (min 8 characters):',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'Change Password',
+                    onPress: (newPassword) => handleConfirmPasswordChange(currentPassword, newPassword)
+                  }
+                ],
+                'secure-text'
+              );
+            }
+          }
+        ],
+        'secure-text'
+      );
+    } else {
+      // For Android, direct users to email reset since Alert.prompt isn't available
+      Alert.alert(
+        'Change Password',
+        'Password change via app is only available on iOS. We\'ll redirect you to reset your password via email instead.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Reset via Email',
+            onPress: () => {
+              if (navigation) {
+                navigation.navigate('ForgotPassword');
+              }
+            }
+          }
+        ]
+      );
+    }
+  };
+
+  // Handle confirmed password change
+  const handleConfirmPasswordChange = async (currentPassword, newPassword) => {
+    if (!newPassword || newPassword.length < 8) {
+      Alert.alert('Error', 'New password must be at least 8 characters long');
+      return;
+    }
+
+    try {
+      const success = await changePassword(currentPassword, newPassword);
+      
+      if (success) {
+        Alert.alert(
+          'Success',
+          'Your password has been changed successfully.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      Alert.alert(
+        'Password Change Failed',
+        'There was an error changing your password. Please check your current password and try again.',
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
+  // Handle delete account
+  const handleDeleteAccount = () => {
+    setShowAccountSettings(false);
+    // Show confirmation dialog
+    setTimeout(() => {
+      Alert.alert(
+        'Delete Account',
+        'This will permanently delete your AI account and all associated data. This action cannot be undone.\n\nYour local app data will remain unchanged.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Delete Account', 
+            style: 'destructive',
+            onPress: handleConfirmDeleteAccount
+          }
+        ]
+      );
+    }, 300);
+  };
+
+  // Handle confirmed account deletion
+  const handleConfirmDeleteAccount = async () => {
+    try {
+      onClose(); // Close menu first
+      
+      // Show loading state - need to dismiss manually as we can't wait for deletion
+      const loadingAlert = Alert.alert('Deleting Account', 'Please wait...');
+      
+      // Call AuthContext deleteUser which handles AWS Cognito deletion
+      const success = await deleteUser();
+      
+      if (success) {
+        // Show success message
+        setTimeout(() => {
+          Alert.alert(
+            'Account Deleted',
+            'Your AI account has been successfully deleted. Your local app data remains unchanged.',
+            [{ text: 'OK' }]
+          );
+        }, 500);
+      } else {
+        Alert.alert(
+          'Delete Failed',
+          'There was an error deleting your account. Please try again or contact support.',
+          [{ text: 'OK' }]
+        );
+      }
+      
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      Alert.alert(
+        'Delete Failed',
+        'There was an error deleting your account. Please try again or contact support.',
+        [{ text: 'OK' }]
+      );
+    }
   };
 
   // Handle referral popup
@@ -1026,10 +1196,10 @@ const AISideMenu = ({
                         </View>
                         <View style={styles.statCard}>
                           <Text style={[styles.statNumber, { color: theme.text }]}>
-                            {stats.projectsCount}
+                            {stats.milestonesCount}
                           </Text>
                           <Text style={[styles.statLabel, { color: theme.textSecondary }]}>
-                            {stats.projectsCount === 1 ? 'Milestone' : 'Milestones'}
+                            {stats.milestonesCount === 1 ? 'Milestone' : 'Milestones'}
                           </Text>
                         </View>
                         <View style={styles.statCard}>
@@ -1125,22 +1295,59 @@ const AISideMenu = ({
               marginBottom: Platform.OS === 'ios' ? 25 : 8,
               opacity: 0.95
             }}>
-              {/* Login/Logout Button */}
-              <TouchableOpacity 
-                style={[styles.sideMenuItem, { borderBottomColor: theme.border }]}
-                onPress={handleLoginLogoutAction}
-                activeOpacity={0.7}
-              >
-                <Ionicons 
-                  name={isAuthenticated ? "log-out-outline" : "log-in-outline"} 
-                  size={22} 
-                  color={isAuthenticated ? "#FF3B30" : theme.textSecondary}
-                  style={{ opacity: isAuthenticated ? 1 : 0.8 }}
-                />
-                <Text style={[styles.sideMenuItemText, { color: isAuthenticated ? "#FF3B30" : theme.text }]}>
-                  {isAuthenticated ? "Log Out" : "Login"}
-                </Text>
-              </TouchableOpacity>
+              {/* Login/Logout Button - Split when authenticated */}
+              {isAuthenticated ? (
+                <View style={[styles.sideMenuItem, { borderBottomColor: theme.border, paddingHorizontal: 0 }]}>
+                  {/* Logout Button - Left Half */}
+                  <TouchableOpacity 
+                    style={[styles.splitButtonLeft]}
+                    onPress={handleLoginLogoutAction}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons 
+                      name="log-out-outline" 
+                      size={22} 
+                      color="#FF3B30"
+                    />
+                    <Text style={[styles.splitButtonText, { color: "#FF3B30" }]}>
+                      Log Out
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  {/* Account Settings Button - Right Half */}
+                  <TouchableOpacity 
+                    style={[styles.splitButtonRight, { borderLeftColor: theme.border }]}
+                    onPress={() => setShowAccountSettings(true)}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons 
+                      name="settings-outline" 
+                      size={22} 
+                      color={theme.textSecondary}
+                      style={{ opacity: 0.8 }}
+                    />
+                    <Text style={[styles.splitButtonText, { color: theme.text }]}>
+                      Account Settings
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <TouchableOpacity 
+                  style={[styles.sideMenuItem, { borderBottomColor: theme.border }]}
+                  onPress={handleLoginLogoutAction}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons 
+                    name="log-in-outline" 
+                    size={22} 
+                    color={theme.textSecondary}
+                    style={{ opacity: 0.8 }}
+                  />
+                  <Text style={[styles.sideMenuItemText, { color: theme.text }]}>
+                    Login
+                  </Text>
+                </TouchableOpacity>
+              )}
               
               {/* FREE CREDITS Button - NEW */}
               <TouchableOpacity 
@@ -1212,6 +1419,61 @@ const AISideMenu = ({
                 >
                   <Text style={[styles.logoutButtonText, styles.logoutConfirmText]}>
                     Log Out
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
+
+      {/* Account Settings Modal */}
+      {showAccountSettings && (
+        <Modal
+          transparent={true}
+          animationType="fade"
+          visible={showAccountSettings}
+          onRequestClose={() => setShowAccountSettings(false)}
+        >
+          <View style={styles.logoutModalOverlay}>
+            <View style={[styles.logoutModalContainer, { backgroundColor: theme.surface }]}>
+              <Text style={[styles.logoutModalTitle, { color: theme.text }]}>
+                Account Settings
+              </Text>
+              <Text style={[styles.logoutModalMessage, { color: theme.textSecondary }]}>
+                Manage your AI account settings
+              </Text>
+              
+              <View style={styles.accountSettingsButtons}>
+                <TouchableOpacity
+                  style={[styles.accountSettingsButton, { backgroundColor: theme.background, borderColor: theme.border }]}
+                  onPress={handleChangePassword}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="key-outline" size={18} color={theme.primary} />
+                  <Text style={[styles.accountSettingsButtonText, { color: theme.text }]}>
+                    Change Password
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[styles.accountSettingsButton, styles.deleteAccountButton]}
+                  onPress={handleDeleteAccount}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="trash-outline" size={18} color="#FF3B30" />
+                  <Text style={[styles.accountSettingsButtonText, { color: "#FF3B30" }]}>
+                    Delete Account
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[styles.accountSettingsButton, { backgroundColor: theme.background, borderColor: theme.border }]}
+                  onPress={() => setShowAccountSettings(false)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.accountSettingsButtonText, { color: theme.text }]}>
+                    Cancel
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -1662,6 +1924,52 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontWeight: '600',
+  },
+  // Split button styles
+  splitButtonLeft: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+  },
+  splitButtonRight: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderLeftWidth: 0.5,
+  },
+  splitButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginLeft: 18,
+    letterSpacing: 0.3,
+  },
+  // Account settings modal styles
+  accountSettingsButtons: {
+    width: '100%',
+    gap: 12,
+  },
+  accountSettingsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 8,
+  },
+  deleteAccountButton: {
+    backgroundColor: 'rgba(255, 59, 48, 0.1)',
+    borderColor: 'rgba(255, 59, 48, 0.3)',
+  },
+  accountSettingsButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    letterSpacing: 0.2,
   },
 });
 

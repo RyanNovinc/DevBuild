@@ -5,17 +5,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
  * LegacyDataCleanupService - Cleans up orphaned data from the old dual-storage system
  * 
  * This service removes:
- * - Embedded tasks from projects (projects[].tasks arrays)
- * - Orphaned projects without goals
- * - Orphaned tasks without projects
+ * - Embedded tasks from milestones (milestones[].tasks arrays)
+ * - Orphaned milestones without goals
+ * - Orphaned tasks without milestones
  * - Inconsistent link map entries
  */
 class LegacyDataCleanupService {
   static STORAGE_KEYS = {
     GOALS: 'goals',
-    PROJECTS: 'projects', 
+    MILESTONES: 'milestones', 
     TASKS: 'tasks',
-    PROJECT_GOAL_LINK_MAP: 'projectGoalLinkMap'
+    MILESTONE_GOAL_LINK_MAP: 'milestoneGoalLinkMap'
   };
 
   /**
@@ -26,94 +26,94 @@ class LegacyDataCleanupService {
     
     try {
       // Load all data
-      const [goalsJson, projectsJson, tasksJson, linkMapJson] = await Promise.all([
+      const [goalsJson, milestonesJson, tasksJson, linkMapJson] = await Promise.all([
         AsyncStorage.getItem(this.STORAGE_KEYS.GOALS),
-        AsyncStorage.getItem(this.STORAGE_KEYS.PROJECTS),
+        AsyncStorage.getItem(this.STORAGE_KEYS.MILESTONES),
         AsyncStorage.getItem(this.STORAGE_KEYS.TASKS),
-        AsyncStorage.getItem(this.STORAGE_KEYS.PROJECT_GOAL_LINK_MAP)
+        AsyncStorage.getItem(this.STORAGE_KEYS.MILESTONE_GOAL_LINK_MAP)
       ]);
 
       const goals = goalsJson ? JSON.parse(goalsJson) : [];
-      const projects = projectsJson ? JSON.parse(projectsJson) : [];
+      const milestones = milestonesJson ? JSON.parse(milestonesJson) : [];
       const tasks = tasksJson ? JSON.parse(tasksJson) : [];
       const linkMap = linkMapJson ? JSON.parse(linkMapJson) : {};
 
-      console.log(`[LegacyDataCleanup] Loaded: ${goals.length} goals, ${projects.length} projects, ${tasks.length} tasks`);
+      console.log(`[LegacyDataCleanup] Loaded: ${goals.length} goals, ${milestones.length} milestones, ${tasks.length} tasks`);
 
-      // Step 1: Remove embedded tasks from all projects
-      const cleanedProjects = projects.map(project => {
-        const hadEmbeddedTasks = project.tasks && Array.isArray(project.tasks) && project.tasks.length > 0;
+      // Step 1: Remove embedded tasks from all milestones
+      const cleanedMilestones = milestones.map(milestone => {
+        const hadEmbeddedTasks = milestone.tasks && Array.isArray(milestone.tasks) && milestone.tasks.length > 0;
         if (hadEmbeddedTasks) {
-          console.log(`[LegacyDataCleanup] Removing ${project.tasks.length} embedded tasks from project "${project.title}"`);
-          const { tasks, ...cleanedProject } = project;
-          return cleanedProject;
+          console.log(`[LegacyDataCleanup] Removing ${milestone.tasks.length} embedded tasks from milestone "${milestone.title}"`);
+          const { tasks, ...cleanedMilestone } = milestone;
+          return cleanedMilestone;
         }
-        return project;
+        return milestone;
       });
 
-      // Step 2: Remove orphaned projects (projects without valid goals)
+      // Step 2: Remove orphaned milestones (milestones without valid goals)
       const validGoalIds = new Set(goals.map(g => g.id));
-      const validProjects = cleanedProjects.filter(project => {
-        const hasValidGoal = project.goalId && validGoalIds.has(project.goalId);
+      const validMilestones = cleanedMilestones.filter(milestone => {
+        const hasValidGoal = milestone.goalId && validGoalIds.has(milestone.goalId);
         if (!hasValidGoal) {
-          console.log(`[LegacyDataCleanup] Removing orphaned project "${project.title}" (goal: ${project.goalId})`);
+          console.log(`[LegacyDataCleanup] Removing orphaned milestone "${milestone.title}" (goal: ${milestone.goalId})`);
         }
         return hasValidGoal;
       });
 
-      // Step 3: Remove orphaned tasks (tasks without valid projects)
-      const validProjectIds = new Set(validProjects.map(p => p.id));
-      console.log(`[LegacyDataCleanup] Valid project IDs: ${Array.from(validProjectIds).join(', ')}`);
+      // Step 3: Remove orphaned tasks (tasks without valid milestones)
+      const validMilestoneIds = new Set(validMilestones.map(p => p.id));
+      console.log(`[LegacyDataCleanup] Valid milestone IDs: ${Array.from(validMilestoneIds).join(', ')}`);
       
       const validTasks = tasks.filter(task => {
-        const hasValidProject = task.projectId && validProjectIds.has(task.projectId);
-        if (!hasValidProject) {
-          console.log(`[LegacyDataCleanup] Removing orphaned task "${task.name || task.title}" (projectId: ${task.projectId}, exists: ${validProjectIds.has(task.projectId)})`);
+        const hasValidMilestone = task.milestoneId && validMilestoneIds.has(task.milestoneId);
+        if (!hasValidMilestone) {
+          console.log(`[LegacyDataCleanup] Removing orphaned task "${task.name || task.title}" (milestoneId: ${task.milestoneId}, exists: ${validMilestoneIds.has(task.milestoneId)})`);
         }
-        return hasValidProject;
+        return hasValidMilestone;
       });
       
-      // If no projects exist, remove ALL tasks
-      if (validProjects.length === 0 && tasks.length > 0) {
-        console.log(`[LegacyDataCleanup] No projects exist - removing all ${tasks.length} tasks`);
+      // If no milestones exist, remove ALL tasks
+      if (validMilestones.length === 0 && tasks.length > 0) {
+        console.log(`[LegacyDataCleanup] No milestones exist - removing all ${tasks.length} tasks`);
         tasks.forEach(task => {
-          console.log(`[LegacyDataCleanup] Removing task "${task.name || task.title}" (projectId: ${task.projectId})`);
+          console.log(`[LegacyDataCleanup] Removing task "${task.name || task.title}" (milestoneId: ${task.milestoneId})`);
         });
       }
 
       // Step 4: Clean up link map
       const cleanedLinkMap = {};
-      Object.entries(linkMap).forEach(([projectId, goalId]) => {
-        const projectExists = validProjectIds.has(projectId);
+      Object.entries(linkMap).forEach(([milestoneId, goalId]) => {
+        const milestoneExists = validMilestoneIds.has(milestoneId);
         const goalExists = validGoalIds.has(goalId);
         
-        if (projectExists && goalExists) {
-          cleanedLinkMap[projectId] = goalId;
+        if (milestoneExists && goalExists) {
+          cleanedLinkMap[milestoneId] = goalId;
         } else {
-          console.log(`[LegacyDataCleanup] Removing invalid link map entry: ${projectId} -> ${goalId}`);
+          console.log(`[LegacyDataCleanup] Removing invalid link map entry: ${milestoneId} -> ${goalId}`);
         }
       });
 
       // Step 5: Calculate cleanup summary
       const cleanup = {
-        projectsWithEmbeddedTasksRemoved: projects.filter(p => p.tasks && Array.isArray(p.tasks) && p.tasks.length > 0).length,
-        orphanedProjectsRemoved: cleanedProjects.length - validProjects.length,
+        milestonesWithEmbeddedTasksRemoved: milestones.filter(p => p.tasks && Array.isArray(p.tasks) && p.tasks.length > 0).length,
+        orphanedMilestonesRemoved: cleanedMilestones.length - validMilestones.length,
         orphanedTasksRemoved: tasks.length - validTasks.length,
         linkMapEntriesRemoved: Object.keys(linkMap).length - Object.keys(cleanedLinkMap).length
       };
 
       console.log('[LegacyDataCleanup] Cleanup Summary:');
-      console.log(`- Removed embedded tasks from ${cleanup.projectsWithEmbeddedTasksRemoved} projects`);
-      console.log(`- Removed ${cleanup.orphanedProjectsRemoved} orphaned projects`);
+      console.log(`- Removed embedded tasks from ${cleanup.milestonesWithEmbeddedTasksRemoved} milestones`);
+      console.log(`- Removed ${cleanup.orphanedMilestonesRemoved} orphaned milestones`);
       console.log(`- Removed ${cleanup.orphanedTasksRemoved} orphaned tasks`);
       console.log(`- Removed ${cleanup.linkMapEntriesRemoved} invalid link map entries`);
 
       // Step 6: Save cleaned data back to storage
       await Promise.all([
         AsyncStorage.setItem(this.STORAGE_KEYS.GOALS, JSON.stringify(goals)),
-        AsyncStorage.setItem(this.STORAGE_KEYS.PROJECTS, JSON.stringify(validProjects)),
+        AsyncStorage.setItem(this.STORAGE_KEYS.MILESTONES, JSON.stringify(validMilestones)),
         AsyncStorage.setItem(this.STORAGE_KEYS.TASKS, JSON.stringify(validTasks)),
-        AsyncStorage.setItem(this.STORAGE_KEYS.PROJECT_GOAL_LINK_MAP, JSON.stringify(cleanedLinkMap))
+        AsyncStorage.setItem(this.STORAGE_KEYS.MILESTONE_GOAL_LINK_MAP, JSON.stringify(cleanedLinkMap))
       ]);
 
       console.log('[LegacyDataCleanup] Data cleanup completed successfully');
@@ -129,7 +129,7 @@ class LegacyDataCleanupService {
         cleanup,
         finalCounts: {
           goals: goals.length,
-          projects: validProjects.length,
+          milestones: validMilestones.length,
           tasks: validTasks.length,
           linkMapEntries: Object.keys(cleanedLinkMap).length
         }
@@ -149,16 +149,16 @@ class LegacyDataCleanupService {
    */
   static async needsCleanup() {
     try {
-      const projectsJson = await AsyncStorage.getItem(this.STORAGE_KEYS.PROJECTS);
-      const projects = projectsJson ? JSON.parse(projectsJson) : [];
+      const milestonesJson = await AsyncStorage.getItem(this.STORAGE_KEYS.MILESTONES);
+      const milestones = milestonesJson ? JSON.parse(milestonesJson) : [];
       
-      const projectsWithEmbeddedTasks = projects.filter(p => 
+      const milestonesWithEmbeddedTasks = milestones.filter(p => 
         p.tasks && Array.isArray(p.tasks) && p.tasks.length > 0
       );
 
       return {
-        needsCleanup: projectsWithEmbeddedTasks.length > 0,
-        projectsWithEmbeddedTasks: projectsWithEmbeddedTasks.length
+        needsCleanup: milestonesWithEmbeddedTasks.length > 0,
+        milestonesWithEmbeddedTasks: milestonesWithEmbeddedTasks.length
       };
     } catch (error) {
       console.error('[LegacyDataCleanup] Error checking cleanup needs:', error);

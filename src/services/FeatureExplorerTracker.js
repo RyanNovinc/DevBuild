@@ -613,12 +613,12 @@ export const trackDomainDiversifier = async (goal, allGoals, showSuccess = null)
 };
 
 /**
- * Track when a user has 3+ goals with linked projects
+ * Track when a user has 3+ goals with linked milestones
  * @param {Array} goals - All goals
- * @param {Array} projects - All projects
+ * @param {Array} milestones - All milestones
  * @param {Function} showSuccess - Optional success notification function
  */
-export const trackSystemBuilder = async (goals, projects, showSuccess = null) => {
+export const trackSystemBuilder = async (goals, milestones, showSuccess = null) => {
   try {
     logDebug('Tracking system builder');
     
@@ -631,26 +631,26 @@ export const trackSystemBuilder = async (goals, projects, showSuccess = null) =>
     }
     
     // Skip if we don't have valid arrays
-    if (!Array.isArray(goals) || !Array.isArray(projects)) {
+    if (!Array.isArray(goals) || !Array.isArray(milestones)) {
       return;
     }
     
-    // Count goals that have at least one linked project
-    const goalsWithProjects = new Set();
+    // Count goals that have at least one linked milestone
+    const goalsWithMilestones = new Set();
     
-    // Check each project to see which goal it's linked to
-    projects.forEach(project => {
-      if (project.goalId) {
-        goalsWithProjects.add(project.goalId);
+    // Check each milestone to see which goal it's linked to
+    milestones.forEach(milestone => {
+      if (milestone.goalId) {
+        goalsWithMilestones.add(milestone.goalId);
       }
     });
     
-    const count = goalsWithProjects.size;
-    logDebug(`Goals with linked projects: ${count}`);
+    const count = goalsWithMilestones.size;
+    logDebug(`Goals with linked milestones: ${count}`);
     
-    // Unlock achievement when we have 3 or more goals with projects
+    // Unlock achievement when we have 3 or more goals with milestones
     if (count >= 3) {
-      logDebug('3+ goals with linked projects, unlocking achievement');
+      logDebug('3+ goals with linked milestones, unlocking achievement');
       
       // Set tracking flag
       await AsyncStorage.setItem(TRACKING_KEYS.SYSTEM_BUILDER, 'true');

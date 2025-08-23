@@ -349,7 +349,7 @@ const AIExplanationModal = ({
                   <View style={styles.featuresContainer}>
                     {renderPremiumFeature(
                       "Implementation Power", 
-                      "Creates goals, projects, and tasks directly in your app with one tap",
+                      "Creates goals, milestones, and tasks directly in your app with one tap",
                       "rocket-outline"
                     )}
                     

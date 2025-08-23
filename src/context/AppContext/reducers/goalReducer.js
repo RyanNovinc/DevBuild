@@ -115,9 +115,9 @@ export const goalActions = {
       // Apply domain normalization
       const normalizedGoal = normalizeDomain(updatedGoal);
       
-      // Recalculate progress from projects
-      if (state.projects) {
-        const calculatedProgress = calculateGoalProgress(normalizedGoal.id, state.projects);
+      // Recalculate progress from milestones
+      if (state.milestones) {
+        const calculatedProgress = calculateGoalProgress(normalizedGoal.id, state.milestones);
         normalizedGoal.progress = calculatedProgress;
       }
       

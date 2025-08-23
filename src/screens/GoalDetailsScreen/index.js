@@ -34,7 +34,6 @@ import GoalPreview from './components/GoalPreview';
 import SectionHeader from './components/SectionHeader';
 import GeneralSection from './components/GeneralSection';
 import AdvancedSection from './components/AdvancedSection';
-import NotificationModal from './components/NotificationModal';
 import UnsavedChangesModal from './components/UnsavedChangesModal';
 
 // Import utilities
@@ -125,7 +124,6 @@ const GoalDetailsScreen = ({ route, navigation }) => {
     activeSection: 'general',
     expandedSection: null,
     showDatePicker: false,
-    notificationsModal: false,
     showUnsavedChangesModal: false,
     showDeleteConfirmModal: false,
     isLoading: false,
@@ -532,16 +530,6 @@ const toggleTargetDate = () => {
     }));
   };
   
-  // Handle notification preferences - memoized to prevent re-renders
-  const toggleNotificationPreference = useCallback((prefId) => {
-    setGoalState(prev => ({
-      ...prev,
-      notifPrefs: {
-        ...prev.notifPrefs,
-        [prefId]: !prev.notifPrefs[prefId]
-      }
-    }));
-  }, []);
   
   // Handle toggle for milestone sharing - memoized to prevent re-renders
   const toggleMilestoneSharing = useCallback((milestoneId) => {
@@ -570,13 +558,6 @@ const toggleTargetDate = () => {
     }));
   }, []);
   
-  // Toggle notifications modal - memoized to prevent re-renders
-  const toggleNotificationsModal = useCallback((visible) => {
-    setUiState(prev => ({
-      ...prev,
-      notificationsModal: visible
-    }));
-  }, []);
   
   // Toggle date picker - memoized to prevent re-renders
   const toggleDatePicker = useCallback((visible) => {
@@ -1073,10 +1054,6 @@ const toggleTargetDate = () => {
     }
   };
 
-  // Get active notification count
-  const getActiveNotificationCount = () => {
-    return Object.values(goalState.notifPrefs).filter(value => value).length;
-  };
 
   // Scroll to input on focus - memoized to prevent re-renders
   const handleInputFocus = useCallback((yOffset) => {
@@ -1279,10 +1256,8 @@ const toggleTargetDate = () => {
             selectedColor={goalState.selectedColor}
             isCreating={isCreating}
             navigateToProgressView={navigateToProgressView}
-            setNotificationsModal={(visible) => toggleNotificationsModal(visible)}
             expandedSection={uiState.expandedSection}
             setExpandedSection={toggleExpandedSection}
-            getActiveNotificationCount={getActiveNotificationCount}
             getLinkedMilestones={getLinkedMilestones}
             milestonesToShare={goalState.milestonesToShare}
             toggleMilestoneSharing={toggleMilestoneSharing}
@@ -1298,15 +1273,6 @@ const toggleTargetDate = () => {
         
       </ScrollView>
 
-      {/* Notification Preferences Modal */}
-      <NotificationModal
-        visible={uiState.notificationsModal}
-        theme={theme}
-        selectedColor={goalState.selectedColor}
-        notifPrefs={goalState.notifPrefs}
-        toggleNotificationPreference={toggleNotificationPreference}
-        onClose={() => toggleNotificationsModal(false)}
-      />
 
       {/* Unsaved Changes Modal */}
       <UnsavedChangesModal

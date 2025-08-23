@@ -486,7 +486,26 @@ const AchievementsScreen = ({ navigation, route }) => {
       { id: 'completion-champion', points: 20 },
       { id: 'referral-guide', points: 25 },
       { id: 'system-builder', points: 25 },
-      { id: '30-day-momentum', points: 30 }
+      { id: '30-day-momentum', points: 30 },
+      // Additional achievements for higher stages
+      { id: 'goal-pioneer', points: 5 },
+      { id: 'milestone-marker', points: 10 },
+      { id: 'time-optimizer', points: 15 },
+      { id: 'ai-power-user', points: 20 },
+      { id: 'dashboard-navigator', points: 5 },
+      { id: 'domain-focus-master', points: 10 },
+      { id: 'note-creator', points: 5 },
+      { id: 'todo-organizer', points: 10 },
+      { id: 'day-export-expert', points: 15 },
+      { id: 'week-export-pro', points: 15 },
+      { id: 'month-export-pro', points: 15 },
+      { id: '90-day-transformation', points: 50 },
+      { id: 'half-year-mastermind', points: 75 },
+      { id: 'year-of-progress', points: 100 },
+      { id: 'insider-status', points: 50 },
+      { id: 'community-builder', points: 40 },
+      { id: 'early-adopter', points: 30 },
+      { id: 'feature-influencer', points: 25 }
     ];
 
     let pointsAdded = 0;

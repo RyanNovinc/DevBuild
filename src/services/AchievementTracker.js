@@ -8,7 +8,7 @@ const TRACKING_PREFIX = 'achievement_tracker_';
 // Common tracking keys for different achievement types
 const TRACKING_KEYS = {
   FIRST_GOAL: `${TRACKING_PREFIX}first_goal`,
-  FIRST_PROJECT: `${TRACKING_PREFIX}first_project`,
+  FIRST_MILESTONE: `${TRACKING_PREFIX}first_milestone`,
   FIRST_TASK: `${TRACKING_PREFIX}first_task`,
   FIRST_TIME_BLOCK: `${TRACKING_PREFIX}first_time_block`,
   FIRST_AI_CONVERSATION: `${TRACKING_PREFIX}first_ai_conversation`,
@@ -19,8 +19,8 @@ const TRACKING_KEYS = {
 /**
  * Generic function to track an action that could trigger achievements
  * 
- * @param {string} actionType - Type of action (e.g., 'goal_created', 'project_created')
- * @param {Object} data - Data related to the action (e.g., the goal or project)
+ * @param {string} actionType - Type of action (e.g., 'goal_created', 'milestone_created')
+ * @param {Object} data - Data related to the action (e.g., the goal or milestone)
  * @param {Function} showSuccess - Optional notification function
  * @returns {Promise<boolean>} - Whether tracking was successful
  */
@@ -33,8 +33,8 @@ export const trackAction = async (actionType, data, showSuccess = null) => {
       case 'goal_created':
         return await trackGoalCreation(data, showSuccess);
       
-      case 'project_created':
-        return await trackProjectCreation(data, showSuccess);
+      case 'milestone_created':
+        return await trackMilestoneCreation(data, showSuccess);
       
       case 'task_completed':
         return await trackTaskCompletion(data, showSuccess);
@@ -181,35 +181,35 @@ const trackGoalCreation = async (data, showSuccess) => {
 };
 
 /**
- * Track project creation and trigger achievements
+ * Track milestone creation and trigger achievements
  */
-const trackProjectCreation = async (data, showSuccess) => {
-  // Check if first project has been tracked
-  const hasTrackedFirstProject = await AsyncStorage.getItem(TRACKING_KEYS.FIRST_PROJECT);
+const trackMilestoneCreation = async (data, showSuccess) => {
+  // Check if first milestone has been tracked
+  const hasTrackedFirstMilestone = await AsyncStorage.getItem(TRACKING_KEYS.FIRST_MILESTONE);
   
-  if (hasTrackedFirstProject !== 'true') {
-    console.log('First project creation detected');
+  if (hasTrackedFirstMilestone !== 'true') {
+    console.log('First milestone creation detected');
     
     // Trigger achievement check
     await checkAchievements({
-      type: 'project_created',
-      firstProject: true,
-      linkedToGoal: data.project?.goalId ? true : false,
-      project: data.project
+      type: 'milestone_created',
+      firstMilestone: true,
+      linkedToGoal: data.milestone?.goalId ? true : false,
+      milestone: data.milestone
     }, showSuccess);
     
-    // Mark that we've tracked first project
-    await AsyncStorage.setItem(TRACKING_KEYS.FIRST_PROJECT, 'true');
+    // Mark that we've tracked first milestone
+    await AsyncStorage.setItem(TRACKING_KEYS.FIRST_MILESTONE, 'true');
     
     // Try to refresh achievements context
     await refreshAchievementContext();
   } else {
-    // Check for other project-related achievements
+    // Check for other milestone-related achievements
     await checkAchievements({
-      type: 'project_created',
-      firstProject: false,
-      linkedToGoal: data.project?.goalId ? true : false,
-      project: data.project
+      type: 'milestone_created',
+      firstMilestone: false,
+      linkedToGoal: data.milestone?.goalId ? true : false,
+      milestone: data.milestone
     }, showSuccess);
   }
   

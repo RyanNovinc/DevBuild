@@ -5,7 +5,7 @@
 export const STORAGE_KEYS = {
   LIFE_DIRECTION: 'lifeDirection',
   GOALS: 'goals',
-  PROJECTS: 'projects',
+  MILESTONES: 'milestones',
   TIME_BLOCKS: 'timeBlocks',
   DOMAINS: 'domains',
   SETTINGS: 'settings',
@@ -19,7 +19,7 @@ export const STORAGE_KEYS = {
   TOMORROW_TODOS: 'tomorrowTodos',
   LATER_TODOS: 'laterTodos',
   // Additional keys
-  PROJECT_GOAL_LINK_MAP: 'projectGoalLinkMap',
+  MILESTONE_GOAL_LINK_MAP: 'milestoneGoalLinkMap',
   USER_COUNTRY: 'userCountry'
 };
 

@@ -1,4 +1,4 @@
-// src/screens/ProjectDetailsScreen/components/ProjectPreview.js
+// src/screens/MilestoneDetailsScreen/components/MilestonePreview.js
 import React from 'react';
 import { 
   View, 
@@ -10,7 +10,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { getTextColorForBackground } from '../../GoalDetailsScreen/utils/colorUtils';
 
-const ProjectPreview = ({ 
+const MilestonePreview = ({ 
   scrollY, 
   title, 
   color, 
@@ -24,7 +24,7 @@ const ProjectPreview = ({
 }) => {
   // Calculate progress for display
   const progress = calculateProgress();
-  const displayTitle = title.trim() || 'Give your project a title';
+  const displayTitle = title.trim() || 'Give your milestone a title';
   
   // Use actual progress percentage instead of scroll-based animation
   const progressWidth = progress;
@@ -53,7 +53,7 @@ const ProjectPreview = ({
           }
         ]}
       >
-        {/* Project Icon and Title */}
+        {/* Milestone Icon and Title */}
         <View style={styles.projectHeader}>
           <View style={[
             styles.iconPreview, 
@@ -90,7 +90,7 @@ const ProjectPreview = ({
           )}
         </View>
         
-        {/* Project Status */}
+        {/* Milestone Status */}
         <View style={styles.statusRow}>
           <View style={styles.statusItem}>
             <Ionicons name="checkmark-circle" size={16} color={color} />
@@ -204,4 +204,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ProjectPreview;
+export default MilestonePreview;

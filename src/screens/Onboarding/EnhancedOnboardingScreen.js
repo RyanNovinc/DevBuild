@@ -28,7 +28,7 @@ import { useOnboardingCompletion, ONBOARDING_STATES } from '../../hooks/useOnboa
 import CountrySelectionPage from './screens/CountrySelectionPage';
 import DomainSelectionPage from './screens/DomainSelectionPage';
 import GoalSelectionPage from './screens/GoalSelectionPage';
-import ProjectsBreakdownPage from './screens/ProjectsBreakdownPage';
+import MilestonesBreakdownPage from './screens/ProjectsBreakdownPage';
 import CompletionPage from './screens/CompletionPage';
 import ResponsiveText from './components/ResponsiveText';
 
@@ -539,7 +539,7 @@ const EnhancedOnboardingScreen = ({ navigation, route }) => {
             
             {/* Projects Breakdown Page */}
             {currentScreen === 2 && selectedDomain && selectedGoal && !showCreatingGoal && (
-              <ProjectsBreakdownPage
+              <MilestonesBreakdownPage
                 domain={selectedDomain}
                 goal={selectedGoal}
                 onContinue={goToNextScreen}

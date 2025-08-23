@@ -528,9 +528,10 @@ const styles = StyleSheet.create({
   
   countryButtonContainer: {
     position: 'absolute',
-    top: 60,
+    top: 140,
     right: 20,
     zIndex: 1000,
+    height: 40,
   },
   
   countryButton: {
@@ -538,12 +539,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     paddingHorizontal: 12,
-    paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 2,
     borderColor: 'rgba(255, 255, 255, 0.4)',
     maxWidth: 160,
-    minHeight: 36,
+    height: 40,
+    minHeight: 40,
   },
   
   countryButtonRequired: {
@@ -555,6 +556,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
     shadowRadius: 4,
     elevation: 8,
+    height: 40,
+    minHeight: 40,
   },
   
   countryFlag: {

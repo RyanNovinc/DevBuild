@@ -1,4 +1,4 @@
-// src/screens/ProjectDetailsScreen/components/UnsavedChangesModal.js
+// src/screens/MilestoneDetailsScreen/components/UnsavedChangesModal.js
 import React from 'react';
 import { 
   View, 

@@ -19,7 +19,6 @@ import {
 
 // Import components
 import FinancialSummaryCard from './components/FinancialSummaryCard';
-import BarChartCard from './components/BarChartCard';
 import EditableAssetsLiabilitiesCard from './components/EditableAssetsLiabilitiesCard';
 import CurrencyModal from './components/CurrencyModal';
 
@@ -94,14 +93,6 @@ const SummaryTab = ({ theme, data, handlers }) => {
     onCurrencyPress: () => setShowCurrencyModal(true)
   };
 
-  // Create specific props for bar chart card
-  const barChartCardProps = {
-    ...cardProps,
-    totalIncome,
-    totalExpenses,
-    highestBar,
-    barAnim
-  };
 
   // Create specific props for editable assets liabilities card
   const assetsCardProps = {
@@ -119,9 +110,6 @@ const SummaryTab = ({ theme, data, handlers }) => {
           <View style={{ width: '48%' }}>
             <FinancialSummaryCard {...summaryCardProps} />
           </View>
-          <View style={{ width: '48%' }}>
-            <BarChartCard {...barChartCardProps} />
-          </View>
           <View style={{ width: '100%' }}>
             <EditableAssetsLiabilitiesCard {...assetsCardProps} />
           </View>
@@ -136,9 +124,6 @@ const SummaryTab = ({ theme, data, handlers }) => {
           <View style={{ width: '48%' }}>
             <FinancialSummaryCard {...summaryCardProps} />
           </View>
-          <View style={{ width: '48%' }}>
-            <BarChartCard {...barChartCardProps} />
-          </View>
           <View style={{ width: '100%' }}>
             <EditableAssetsLiabilitiesCard {...assetsCardProps} />
           </View>
@@ -151,7 +136,6 @@ const SummaryTab = ({ theme, data, handlers }) => {
       return (
         <>
           <FinancialSummaryCard {...summaryCardProps} />
-          <BarChartCard {...barChartCardProps} />
           <EditableAssetsLiabilitiesCard {...assetsCardProps} />
         </>
       );

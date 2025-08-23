@@ -1,4 +1,4 @@
-// src/screens/ProjectDetailsScreen/components/TaskDetailModal.js
+// src/screens/MilestoneDetailsScreen/components/TaskDetailModal.js
 import React from 'react';
 import { 
   View, 

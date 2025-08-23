@@ -308,6 +308,31 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Delete user account
+  const deleteUser = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      await authService.deleteUser();
+      
+      // Clear user state after successful deletion
+      setUser(null);
+      setIsAuthenticated(false);
+      
+      // Clear auth-related items from AsyncStorage
+      await AsyncStorage.removeItem('pushToken');
+      
+      return true;
+    } catch (error) {
+      console.error('Delete user error:', error);
+      setError(authService.getErrorMessage(error));
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // DEVELOPER TESTING: Mock login function
   const mockLogin = async (userType = 'free') => {
     try {
@@ -380,6 +405,7 @@ export const AuthProvider = ({ children }) => {
     resendVerificationCode,
     updateUserAttributes,
     changePassword,
+    deleteUser,
     mockLogin, // DEVELOPER TESTING: Mock login function
   };
   

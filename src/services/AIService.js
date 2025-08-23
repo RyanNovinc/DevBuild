@@ -311,10 +311,10 @@ export const getUserContext = async () => {
       userData.goals = JSON.parse(goalsJson);
     }
     
-    // 3. Get all projects
-    const projectsJson = await AsyncStorage.getItem('projects');
-    if (projectsJson) {
-      userData.projects = JSON.parse(projectsJson);
+    // 3. Get all milestones
+    const milestonesJson = await AsyncStorage.getItem('milestones');
+    if (milestonesJson) {
+      userData.milestones = JSON.parse(milestonesJson);
     }
     
     // 4. Get all time blocks
@@ -352,7 +352,7 @@ export const getUserContext = async () => {
       hasProfile: !!userData.profile,
       lifeDirection: userData.lifeDirection ? 'set' : 'not set',
       goalsCount: userData.goals?.length || 0,
-      projectsCount: userData.projects?.length || 0,
+      milestonesCount: userData.milestones?.length || 0,
       timeBlocksCount: userData.timeBlocks?.length || 0,
       todosCount: userData.todos?.length || 0,
       userKnowledgeEnabled: userData.userKnowledgeEnabled
@@ -544,13 +544,13 @@ export const extractActionDirectives = (text) => {
     }
   }
   
-  // Extract project actions
-  const projectMatches = text.match(/\[\[CREATE_PROJECT\]\]([\s\S]*?)(?=\[\[|\s*$)/gi);
-  if (projectMatches) {
-    for (const match of projectMatches) {
+  // Extract milestone actions
+  const milestoneMatches = text.match(/\[\[CREATE_MILESTONE\]\]([\s\S]*?)(?=\[\[|\s*$)/gi);
+  if (milestoneMatches) {
+    for (const match of milestoneMatches) {
       try {
-        const projectData = {};
-        const lines = match.replace(/\[\[CREATE_PROJECT\]\]/i, '').trim().split('\n');
+        const milestoneData = {};
+        const lines = match.replace(/\[\[CREATE_MILESTONE\]\]/i, '').trim().split('\n');
         
         for (const line of lines) {
           const colonIndex = line.indexOf(':');
@@ -558,15 +558,15 @@ export const extractActionDirectives = (text) => {
             const key = line.substring(0, colonIndex).trim().toLowerCase();
             const value = line.substring(colonIndex + 1).trim();
             if (value) {
-              projectData[key] = value;
+              milestoneData[key] = value;
             }
           }
         }
         
         // Parse tasks
         let parsedTasks = [];
-        if (projectData.tasks && typeof projectData.tasks === 'string') {
-          const taskLines = projectData.tasks.split(/[\n,]/).filter(t => t.trim());
+        if (milestoneData.tasks && typeof milestoneData.tasks === 'string') {
+          const taskLines = milestoneData.tasks.split(/[\n,]/).filter(t => t.trim());
           parsedTasks = taskLines.map(taskLine => ({
             id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             title: taskLine.trim().replace(/^[-*•\d.)\s]+/, ''),
@@ -577,9 +577,9 @@ export const extractActionDirectives = (text) => {
         
         // Generate default due date if not provided
         let dueDate = null;
-        if (projectData.duedate || projectData.dueDate) {
+        if (milestoneData.duedate || milestoneData.dueDate) {
           try {
-            dueDate = new Date(projectData.duedate || projectData.dueDate).toISOString();
+            dueDate = new Date(milestoneData.duedate || milestoneData.dueDate).toISOString();
           } catch (error) {
             const defaultDate = new Date();
             defaultDate.setMonth(defaultDate.getMonth() + 1);
@@ -592,7 +592,7 @@ export const extractActionDirectives = (text) => {
         }
         
         // Normalize domain name using the same approach as for goals
-        let domainName = projectData.domain || 'General';
+        let domainName = milestoneData.domain || 'General';
         if (domainName) {
           domainName = domainName.charAt(0).toUpperCase() + domainName.slice(1).toLowerCase();
           
@@ -645,25 +645,25 @@ export const extractActionDirectives = (text) => {
           }
         }
         
-        if (projectData.title) {
+        if (milestoneData.title) {
           actions.push({
-            type: 'createProject',
+            type: 'createMilestone',
             data: {
-              title: projectData.title,
-              description: projectData.description || '',
-              goalTitle: projectData.goaltitle || '',
-              goalId: projectData.goalid || '',
+              title: milestoneData.title,
+              description: milestoneData.description || '',
+              goalTitle: milestoneData.goaltitle || '',
+              goalId: milestoneData.goalid || '',
               dueDate: dueDate,
               tasks: parsedTasks,
               domain: domainName,
-              color: projectData.color || '#3F51B5',
+              color: milestoneData.color || '#3F51B5',
               progress: 0,
               completed: false
             }
           });
         }
       } catch (error) {
-        console.error('Error parsing project action:', error);
+        console.error('Error parsing milestone action:', error);
       }
     }
   }
@@ -693,8 +693,8 @@ export const extractActionDirectives = (text) => {
             data: {
               title: taskData.title,
               description: taskData.description || '',
-              projectId: taskData.projectid || '',
-              projectTitle: taskData.projecttitle || '',
+              milestoneId: taskData.milestoneid || '',
+              milestoneTitle: taskData.milestonetitle || '',
               goalId: taskData.goalid || '',
               goalTitle: taskData.goaltitle || '',
               status: taskData.status || 'todo',
@@ -946,7 +946,7 @@ export const removeActionDirectives = (text) => {
   
   // Remove all action markers
   return text.replace(/\[\[CREATE_GOAL\]\][\s\S]*?(?=\[\[|\s*$)/gi, '')
-    .replace(/\[\[CREATE_PROJECT\]\][\s\S]*?(?=\[\[|\s*$)/gi, '')
+    .replace(/\[\[CREATE_MILESTONE\]\][\s\S]*?(?=\[\[|\s*$)/gi, '')
     .replace(/\[\[CREATE_TASK\]\][\s\S]*?(?=\[\[|\s*$)/gi, '')
     .replace(/\[\[CREATE_TIME_BLOCK\]\][\s\S]*?(?=\[\[|\s*$)/gi, '')
     .replace(/\[\[CREATE_TODO\]\][\s\S]*?(?=\[\[|\s*$)/gi, '')
@@ -1332,8 +1332,8 @@ const generateAIResponseHTTP = async (
         contextMessage += `\nGoals: ${userContext.goals.map(g => g.title).join(', ')}`;
       }
       
-      if (userContext.projects && userContext.projects.length > 0) {
-        contextMessage += `\nProjects: ${userContext.projects.map(p => p.title).join(', ')}`;
+      if (userContext.milestones && userContext.milestones.length > 0) {
+        contextMessage += `\nMilestones: ${userContext.milestones.map(p => p.title).join(', ')}`;
       }
       
       if (userContext.todos && userContext.todos.length > 0) {

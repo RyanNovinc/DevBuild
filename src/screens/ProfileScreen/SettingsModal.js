@@ -21,6 +21,9 @@ import responsive from '../../utils/responsive';
 import ReferralCodeInputModal from '../../components/ReferralCodeInputModal';
 import TermsOfServiceModal from '../../components/ai/LoginScreen/components/TermsOfServiceModal';
 import PrivacyPolicyModal from '../../components/ai/LoginScreen/components/PrivacyPolicyModal';
+import DataExportService from '../../services/DataExportService';
+import DataExportModal from '../../components/DataExportModal';
+import DataDeleteModal from '../../components/DataDeleteModal';
 
 const { width } = Dimensions.get('window');
 
@@ -69,8 +72,192 @@ const SettingsModal = ({
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   
+  // Data export states
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState('');
+  const [showExportModal, setShowExportModal] = useState(false);
+  
+  // Data deletion states
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  
   // Restart onboarding modal state
   const [restartOnboardingModalVisible, setRestartOnboardingModalVisible] = useState(false);
+  
+  // Export user data function
+  const handleExportData = () => {
+    setShowExportModal(true);
+  };
+
+  // Handle export confirmation
+  const handleExportConfirm = async () => {
+    setShowExportModal(false);
+    try {
+      setIsExporting(true);
+      setExportProgress('Preparing your data export...');
+      
+      // Get export summary first
+      const summary = await DataExportService.getExportSummary();
+      
+      if (summary.error) {
+        Alert.alert(
+          'Export Error',
+          'Unable to prepare data export: ' + summary.error,
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+      
+      setExportProgress('Exporting your data...');
+      
+      // Export all user data
+      const result = await DataExportService.exportAllUserData();
+      
+      if (result.success) {
+        setExportProgress('Export complete!');
+        
+        // Clean up old exports to save space
+        await DataExportService.cleanupOldExports();
+        
+        // Give user choice of how to access the data
+        Alert.alert(
+          'Data Export Complete',
+          `Successfully exported all your LifeCompass data!\n\nFile: ${result.fileName}\nSize: ${(result.fileSize / 1024).toFixed(2)} KB\nCategories: ${result.categories}\nConversations: ${result.conversationCount}\n\nHow would you like to access your data?`,
+          [
+            {
+              text: 'Copy to Clipboard',
+              onPress: async () => {
+                try {
+                  await DataExportService.copyToClipboard(result.jsonData);
+                  Alert.alert(
+                    'Copied!',
+                    'Your data has been copied to clipboard. You can now paste it into any text editor, email, or document.',
+                    [{ text: 'OK' }]
+                  );
+                } catch (error) {
+                  Alert.alert(
+                    'Copy Failed',
+                    'Unable to copy to clipboard. You can still share the file.',
+                    [
+                      {
+                        text: 'Share File',
+                        onPress: async () => {
+                          try {
+                            await DataExportService.shareExportFile(result.filePath);
+                          } catch (shareError) {
+                            console.error('Share error:', shareError);
+                          }
+                        }
+                      },
+                      { text: 'OK' }
+                    ]
+                  );
+                }
+              }
+            },
+            {
+              text: 'Share File',
+              onPress: async () => {
+                try {
+                  await DataExportService.shareExportFile(result.filePath);
+                } catch (error) {
+                  Alert.alert(
+                    'Share Failed',
+                    'Unable to share file: ' + error.message,
+                    [{ text: 'OK' }]
+                  );
+                }
+              }
+            },
+            {
+              text: 'Both',
+              onPress: async () => {
+                try {
+                  // Copy to clipboard first
+                  await DataExportService.copyToClipboard(result.jsonData);
+                  // Then share file
+                  await DataExportService.shareExportFile(result.filePath);
+                  Alert.alert(
+                    'Done!',
+                    'Data copied to clipboard AND file shared. Choose your preferred method from the sharing options.',
+                    [{ text: 'OK' }]
+                  );
+                } catch (error) {
+                  Alert.alert(
+                    'Error',
+                    'Some operations failed: ' + error.message,
+                    [{ text: 'OK' }]
+                  );
+                }
+              }
+            }
+          ]
+        );
+      } else {
+        Alert.alert(
+          'Export Failed',
+          'Unable to export your data: ' + result.error,
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      Alert.alert(
+        'Export Error',
+        'An unexpected error occurred during export: ' + error.message,
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setIsExporting(false);
+      setExportProgress('');
+    }
+  };
+  
+  // Delete all user data function  
+  const handleDeleteAllData = () => {
+    setShowDeleteModal(true);
+  };
+
+  // Handle delete confirmation
+  const handleDeleteConfirm = async () => {
+    setShowDeleteModal(false);
+    try {
+      setIsDeleting(true);
+      const result = await DataExportService.deleteAllUserData();
+      
+      if (result.success) {
+        Alert.alert(
+          'Data Deleted Successfully',
+          `All your personal data has been permanently deleted.\n\nDeleted items: ${result.deletedItems}\n\nThe app will now restart with a clean state.`,
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                handleClose();
+                // You might want to navigate to onboarding or restart the app context
+              }
+            }
+          ]
+        );
+      } else {
+        Alert.alert(
+          'Deletion Error',
+          'Some data could not be deleted: ' + result.error,
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      console.error('Deletion error:', error);
+      Alert.alert(
+        'Deletion Error',
+        'An error occurred during deletion: ' + error.message,
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   
   // Referral button text state
   const [showProOnlyText, setShowProOnlyText] = useState(false);
@@ -956,6 +1143,102 @@ const SettingsModal = ({
               </Text>
             </View>
             
+            {/* Data Rights Section */}
+            {/* Export Data Button */}
+            <TouchableOpacity 
+              style={[styles.settingButton, { 
+                backgroundColor: theme.card,
+                borderColor: theme.border,
+                marginBottom: 8,
+                opacity: isExporting ? 0.6 : 1
+              }]}
+              onPress={isExporting ? null : handleExportData}
+              disabled={isExporting}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={isExporting ? 'Exporting data...' : 'Export My Data'}
+              accessibilityHint="Export all your personal data from LifeCompass"
+            >
+              <View style={styles.settingButtonContent}>
+                <View style={[styles.settingIconContainer, { 
+                  backgroundColor: '#FF980020'
+                }]}>
+                  <Ionicons 
+                    name={isExporting ? "hourglass-outline" : "download-outline"} 
+                    size={20} 
+                    color="#FF9800" 
+                  />
+                </View>
+                <View style={styles.settingTextContainer}>
+                  <Text 
+                    style={[styles.settingButtonText, { color: theme.text }]}
+                    maxFontSizeMultiplier={1.3}
+                    numberOfLines={1}
+                  >
+                    {isExporting ? 'Exporting Data...' : 'Export My Data'}
+                  </Text>
+                  <Text 
+                    style={[styles.settingButtonSubtext, { color: theme.textSecondary }]}
+                    maxFontSizeMultiplier={1.5}
+                    numberOfLines={2}
+                  >
+                    {isExporting ? exportProgress : 'Download all your personal data (GDPR/CCPA)'}
+                  </Text>
+                </View>
+              </View>
+              {!isExporting && (
+                <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
+              )}
+            </TouchableOpacity>
+            
+            {/* Delete All Data Button - GDPR/CCPA Right to Erasure */}
+            <TouchableOpacity 
+              style={[styles.settingButton, { 
+                backgroundColor: 'rgba(255, 0, 0, 0.05)',
+                borderColor: 'rgba(255, 0, 0, 0.3)',
+                borderWidth: 1,
+                marginBottom: 16,
+                opacity: isDeleting ? 0.6 : 1
+              }]}
+              onPress={isDeleting ? null : handleDeleteAllData}
+              disabled={isDeleting}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={isDeleting ? 'Deleting data...' : 'Delete All My Data'}
+              accessibilityHint="Permanently delete all personal data (GDPR Right to Erasure)"
+            >
+              <View style={styles.settingButtonContent}>
+                <View style={[styles.settingIconContainer, { 
+                  backgroundColor: 'rgba(255, 0, 0, 0.1)'
+                }]}>
+                  <Ionicons 
+                    name={isDeleting ? "hourglass-outline" : "trash-outline"} 
+                    size={20} 
+                    color="#FF0000" 
+                  />
+                </View>
+                <View style={styles.settingTextContainer}>
+                  <Text 
+                    style={[styles.settingButtonText, { color: '#FF0000' }]}
+                    maxFontSizeMultiplier={1.3}
+                    numberOfLines={1}
+                  >
+                    {isDeleting ? 'Deleting Data...' : 'Delete All My Data'}
+                  </Text>
+                  <Text 
+                    style={[styles.settingButtonSubtext, { color: theme.textSecondary }]}
+                    maxFontSizeMultiplier={1.5}
+                    numberOfLines={2}
+                  >
+                    {isDeleting ? 'Permanently removing all data...' : 'Permanently erase all personal data (GDPR/CCPA)'}
+                  </Text>
+                </View>
+              </View>
+              {!isDeleting && (
+                <Ionicons name="chevron-forward" size={20} color="#FF0000" />
+              )}
+            </TouchableOpacity>
+            
             {/* Test Mode Toggles - Only visible in dev mode - Moved to bottom */}
             {screenState.showTestModeToggles && (
               <View style={[styles.testModeContainer, {
@@ -1415,6 +1698,22 @@ const SettingsModal = ({
         <PrivacyPolicyModal 
           visible={showPrivacyModal}
           onClose={() => setShowPrivacyModal(false)}
+        />
+
+        {/* Data Export Modal */}
+        <DataExportModal
+          visible={showExportModal}
+          theme={theme}
+          onCancel={() => setShowExportModal(false)}
+          onConfirm={handleExportConfirm}
+        />
+
+        {/* Data Delete Modal */}
+        <DataDeleteModal
+          visible={showDeleteModal}
+          theme={theme}
+          onCancel={() => setShowDeleteModal(false)}
+          onConfirm={handleDeleteConfirm}
         />
       </View>
     </Modal>

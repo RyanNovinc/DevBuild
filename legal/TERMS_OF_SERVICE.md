@@ -29,6 +29,16 @@ LifeCompass does not provide financial, investment, legal, tax, or accounting ad
 - Not recommendations or advice from us
 - General educational information only
 
+**Debt Management Tools Disclaimer**: 
+Our debt tracking tools, payment strategies, and payoff calculations are educational tools only, based on standard mathematical formulas. These projections:
+- Are estimates based on data you provide
+- Do not account for changing interest rates, fees, or life circumstances  
+- Are not personalized financial advice or debt counseling
+- Should not replace consultation with qualified debt counselors or financial advisors
+
+**Payment Strategy Information**: 
+Payment methods displayed (such as "debt snowball" or "debt avalanche") are widely-known mathematical approaches, not our recommendations. The suitability of any payment strategy depends on your individual financial situation.
+
 ### 3.2 User Responsibility
 You are solely responsible for:
 - All financial decisions and actions you take

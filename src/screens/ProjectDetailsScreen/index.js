@@ -1,4 +1,4 @@
-// src/screens/ProjectDetailsScreen/index.js
+// src/screens/MilestoneDetailsScreen/index.js
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   View, 
@@ -25,10 +25,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scaleWidth, scaleHeight, isSmallDevice, isTablet, fontSizes, spacing } from '../../utils/responsive';
 
 // Import components
-import ProjectHeader from './components/ProjectHeader';
+import MilestoneHeader from './components/MilestoneHeader';
 import * as FeatureExplorerTracker from '../../services/FeatureExplorerTracker';
-import ProjectTabs from './components/ProjectTabs';
-import ProjectDetailsForm from './components/ProjectDetailsForm';
+import MilestoneTabs from './components/MilestoneTabs';
+import MilestoneDetailsForm from './components/MilestoneDetailsForm';
 import TaskListView from './components/TaskListView';
 import TaskDetailModal from './components/TaskDetailModal';
 import GoalSelectorModal from './components/GoalSelectorModal';
@@ -43,18 +43,18 @@ import MilestonePreview from './components/MilestonePreview';
 // Import subscription UI components - removed FeatureLimitBanner
 import { FREE_PLAN_LIMITS } from '../../services/SubscriptionService';
 
-const ProjectDetailsScreen = ({ route, navigation }) => {
+const MilestoneDetailsScreen = ({ route, navigation }) => {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   
   const { 
-    projects, 
+    milestones, 
     goals,
     tasks,
-    isProjectActive, 
-    updateProject, 
-    addProject, 
-    deleteProject, 
+    isMilestoneActive, 
+    updateMilestone, 
+    addMilestone, 
+    deleteMilestone, 
     addTask,
     updateTask,
     deleteTask,
@@ -64,7 +64,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
   
   const { showSuccess, showError } = useNotification();
   
-  const { mode, projectId, preselectedGoalId } = route.params || { mode: 'create' };
+  const { mode, milestoneId, preselectedGoalId } = route.params || { mode: 'create' };
   const isCreating = mode === 'create';
   
   // Check if user is a Pro member
@@ -84,11 +84,11 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
   // Track deletion state to prevent further component updates
   const isDeleting = useRef(false);
   
-  // Track if we've loaded the project to prevent reloading over local changes
-  const hasLoadedProject = useRef(false);
+  // Track if we've loaded the milestone to prevent reloading over local changes
+  const hasLoadedMilestone = useRef(false);
   
-  // Project details state
-  const [projectState, setProjectState] = useState({
+  // Milestone details state
+  const [milestoneState, setMilestoneState] = useState({
     title: '',
     description: '',
     color: '#4CAF50',
@@ -153,18 +153,18 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
     
     // Check if any values are different from initial
     const hasChanges = 
-      projectState.title !== initialValues.title ||
-      projectState.description !== initialValues.description ||
-      projectState.color !== initialValues.color ||
+      milestoneState.title !== initialValues.title ||
+      milestoneState.description !== initialValues.description ||
+      milestoneState.color !== initialValues.color ||
       selectedGoalId !== initialValues.selectedGoalId ||
-      projectState.hasDueDate !== initialValues.hasDueDate ||
-      (projectState.hasDueDate && projectState.dueDate.toISOString() !== initialValues.dueDate?.toISOString());
+      milestoneState.hasDueDate !== initialValues.hasDueDate ||
+      (milestoneState.hasDueDate && milestoneState.dueDate.toISOString() !== initialValues.dueDate?.toISOString());
     
     setUiState(prev => ({
       ...prev,
       hasUnsavedChanges: hasChanges
     }));
-  }, [projectState, selectedGoalId, initialValues]);
+  }, [milestoneState, selectedGoalId, initialValues]);
 
   // Handle Android back button
   useFocusEffect(
@@ -202,14 +202,14 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
     isMounted.current = true;
     
     return () => {
-      console.log(`ProjectDetailsScreen unmounting for project ID: ${projectId}`);
+      console.log(`MilestoneDetailsScreen unmounting for milestone ID: ${milestoneId}`);
       isMounted.current = false;
       
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [projectId]);
+  }, [milestoneId]);
 
   // Custom back button handler
   const handleBackPress = () => {
@@ -252,20 +252,20 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
     }
   };
 
-  // Load project if editing or handle preselected goal when creating
+  // Load milestone if editing or handle preselected goal when creating
   useEffect(() => {
     // Skip loading if we're in deletion process
     if (isDeleting.current) return;
     
-    // Skip if we've already loaded this project (prevents overriding local changes)
-    if (!isCreating && hasLoadedProject.current) return;
+    // Skip if we've already loaded this milestone (prevents overriding local changes)
+    if (!isCreating && hasLoadedMilestone.current) return;
 
     try {
-      if (!isCreating && projectId) {
-        // Safety check to ensure projects is an array
-        if (!Array.isArray(projects)) {
-          console.error("Projects is not an array:", projects);
-          setProjectState(prev => ({
+      if (!isCreating && milestoneId) {
+        // Safety check to ensure milestones is an array
+        if (!Array.isArray(milestones)) {
+          console.error("Milestones is not an array:", milestones);
+          setMilestoneState(prev => ({
             ...prev,
             title: "Error: Milestone data unavailable",
             description: "There was an error loading the milestone data. Please go back and try again."
@@ -274,10 +274,10 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
           return;
         }
         
-        // Use the safer isProjectActive check if available
-        if (typeof isProjectActive === 'function' && !isProjectActive(projectId)) {
-          console.error(`Project with ID ${projectId} is not active or has been deleted`);
-          setProjectState(prev => ({
+        // Use the safer isMilestoneActive check if available
+        if (typeof isMilestoneActive === 'function' && !isMilestoneActive(milestoneId)) {
+          console.error(`Milestone with ID ${milestoneId} is not active or has been deleted`);
+          setMilestoneState(prev => ({
             ...prev,
             title: "Milestone Not Found or Deleted",
             description: "This milestone may have been deleted or is no longer available."
@@ -290,39 +290,39 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
           return;
         }
         
-        const project = projects.find(p => p.id === projectId);
-        if (project) {
-          console.log(`Loading project: "${project.title}" (ID: ${projectId})`);
-          const titleValue = project.title || "";
-          const descriptionValue = project.description || '';
-          const colorValue = project.color || '#4CAF50';
-          const goalIdValue = project.goalId || null;
+        const milestone = milestones.find(p => p.id === milestoneId);
+        if (milestone) {
+          console.log(`Loading milestone: "${milestone.title}" (ID: ${milestoneId})`);
+          const titleValue = milestone.title || "";
+          const descriptionValue = milestone.description || '';
+          const colorValue = milestone.color || '#4CAF50';
+          const goalIdValue = milestone.goalId || null;
           
           // Handle due date
           let hasDueDateValue = false;
           let dueDateValue = new Date();
           
-          if (project.dueDate) {
+          if (milestone.dueDate) {
             try {
-              const dateObj = new Date(project.dueDate);
+              const dateObj = new Date(milestone.dueDate);
               if (!isNaN(dateObj.getTime())) {
                 hasDueDateValue = true;
                 dueDateValue = dateObj;
               } else {
-                console.warn("Invalid date format:", project.dueDate);
+                console.warn("Invalid date format:", milestone.dueDate);
               }
             } catch (dateError) {
               console.error("Error parsing date:", dateError);
             }
           }
           
-          // Get tasks from global tasks array instead of project.tasks
-          const projectTasks = Array.isArray(tasks) 
-            ? tasks.filter(task => task.projectId === projectId)
+          // Get tasks from global tasks array instead of milestone.tasks
+          const milestoneTasks = Array.isArray(tasks) 
+            ? tasks.filter(task => task.milestoneId === milestoneId)
             : [];
           
           // FIXED: Ensure all tasks have proper status property with better fallback logic
-          const updatedTasks = projectTasks.map(task => {
+          const updatedTasks = milestoneTasks.map(task => {
             let status = task.status;
             
             // If no status is set, determine it based on completion
@@ -344,7 +344,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
             };
           });
           
-          setProjectState({
+          setMilestoneState({
             title: titleValue,
             description: descriptionValue,
             color: colorValue,
@@ -369,13 +369,13 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
             hasUnsavedChanges: false
           }));
           
-          // Mark that we've loaded the project
-          hasLoadedProject.current = true;
+          // Mark that we've loaded the milestone
+          hasLoadedMilestone.current = true;
         } else {
           // Only show error if not in deletion process
           if (!isDeleting.current) {
-            console.error(`Project with ID ${projectId} not found in`, projects);
-            setProjectState(prev => ({
+            console.error(`Milestone with ID ${milestoneId} not found in`, milestones);
+            setMilestoneState(prev => ({
               ...prev,
               title: "Milestone Not Found",
               description: "This milestone may have been deleted or is no longer available."
@@ -400,7 +400,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
             (Array.isArray(goals) ? goals.find(g => g.id === preselectedGoalId) : null);
           
           if (selectedGoal && selectedGoal.color) {
-            setProjectState(prev => ({
+            setMilestoneState(prev => ({
               ...prev,
               color: selectedGoal.color
             }));
@@ -410,7 +410,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
         
         setSelectedGoalId(goalIdValue);
         
-        // Store initial values for new project
+        // Store initial values for new milestone
         setInitialValues({
           title: titleValue,
           description: descriptionValue,
@@ -426,15 +426,15 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
         }));
       }
     } catch (error) {
-      console.error("Error in project loading effect:", error);
-      setProjectState(prev => ({
+      console.error("Error in milestone loading effect:", error);
+      setMilestoneState(prev => ({
         ...prev,
         title: "Error Loading Milestone",
         description: "An unexpected error occurred while loading the milestone data."
       }));
       showError("Error loading milestone data");
     }
-  }, [isCreating, projectId, preselectedGoalId, mainGoals, goals, isProjectActive, showError, projects, tasks]); 
+  }, [isCreating, milestoneId, preselectedGoalId, mainGoals, goals, isMilestoneActive, showError, milestones, tasks]); 
   
   // Update color when goal is selected
   useEffect(() => {
@@ -443,7 +443,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
     if (selectedGoalId) {
       const selectedGoal = availableGoals.find(g => g.id === selectedGoalId);
       if (selectedGoal && selectedGoal.color) {
-        setProjectState(prev => ({
+        setMilestoneState(prev => ({
           ...prev,
           color: selectedGoal.color
         }));
@@ -456,13 +456,13 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
     // Pro users have unlimited tasks
     if (isPro) return true;
     
-    // Get current tasks for this project from global tasks array
-    const currentProjectTasks = Array.isArray(tasks) 
-      ? tasks.filter(task => task.projectId === projectId)
+    // Get current tasks for this milestone from global tasks array
+    const currentMilestoneTasks = Array.isArray(tasks) 
+      ? tasks.filter(task => task.milestoneId === milestoneId)
       : [];
     
     // Free users are limited
-    return currentProjectTasks.length < FREE_PLAN_LIMITS.MAX_TASKS_PER_PROJECT;
+    return currentMilestoneTasks.length < FREE_PLAN_LIMITS.MAX_TASKS_PER_MILESTONE;
   };
 
   // Show upgrade modal (similar to GoalsScreen)
@@ -487,7 +487,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
     }
     
     if (selectedDate) {
-      setProjectState(prev => ({
+      setMilestoneState(prev => ({
         ...prev,
         dueDate: selectedDate
       }));
@@ -518,7 +518,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
           updatedAt: new Date().toISOString()
         };
         
-        await updateTask(projectId, currentTask.id, updatedTaskData);
+        await updateTask(milestoneId, currentTask.id, updatedTaskData);
         
         setUiState(prev => ({
           ...prev,
@@ -541,7 +541,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
         
         // Show upgrade modal instead of banner
         showUpgradePrompt(
-          `You've reached the limit of ${FREE_PLAN_LIMITS.MAX_TASKS_PER_PROJECT} tasks per project. Upgrade to Pro for unlimited tasks.`
+          `You've reached the limit of ${FREE_PLAN_LIMITS.MAX_TASKS_PER_MILESTONE} tasks per milestone. Upgrade to Pro for unlimited tasks.`
         );
         return;
       }
@@ -555,7 +555,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
           createdAt: new Date().toISOString()
         };
         
-        await addTask(projectId, newTaskData);
+        await addTask(milestoneId, newTaskData);
         showSuccess('Task added successfully');
       } catch (error) {
         console.error('Error adding task:', error);
@@ -575,7 +575,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
     if (!canAddMoreTasks()) {
       // Show upgrade modal instead of banner
       showUpgradePrompt(
-        `You've reached the limit of ${FREE_PLAN_LIMITS.MAX_TASKS_PER_PROJECT} tasks per project. Upgrade to Pro for unlimited tasks.`
+        `You've reached the limit of ${FREE_PLAN_LIMITS.MAX_TASKS_PER_MILESTONE} tasks per milestone. Upgrade to Pro for unlimited tasks.`
       );
       return;
     }
@@ -589,17 +589,17 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
       }
     }
     
-    // Create pre-filled task with project and goal information
+    // Create pre-filled task with milestone and goal information
     const prefilledTask = {
-      projectId: projectId,
-      projectTitle: projectState.title,
+      milestoneId: milestoneId,
+      milestoneTitle: milestoneState.title,
       goalId: selectedGoalId,
       goalTitle: goalTitle,
       title: "",
       description: ""
     };
     
-    // If user can add more tasks, proceed to open the modal with pre-filled project info
+    // If user can add more tasks, proceed to open the modal with pre-filled milestone info
     setCurrentTask(prefilledTask);
     setUiState(prev => ({
       ...prev,
@@ -626,7 +626,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
     
     try {
       // Find the task in global tasks array
-      const task = tasks.find(t => t.id === taskId && t.projectId === projectId);
+      const task = tasks.find(t => t.id === taskId && t.milestoneId === milestoneId);
       if (!task) {
         console.error(`Task ${taskId} not found`);
         return;
@@ -644,7 +644,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
         updatedAt: new Date().toISOString()
       };
       
-      await updateTask(projectId, taskId, updatedTaskData);
+      await updateTask(milestoneId, taskId, updatedTaskData);
     } catch (error) {
       console.error('Error toggling task:', error);
       showError('Failed to update task');
@@ -659,7 +659,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
     
     try {
       // Find the task in global tasks array
-      const task = tasks.find(t => t.id === taskId && t.projectId === projectId);
+      const task = tasks.find(t => t.id === taskId && t.milestoneId === milestoneId);
       if (!task) {
         console.error(`Task ${taskId} not found`);
         return;
@@ -673,7 +673,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
         updatedAt: new Date().toISOString()
       };
       
-      await updateTask(projectId, taskId, updatedTaskData);
+      await updateTask(milestoneId, taskId, updatedTaskData);
       
       // Show success message
       const statusText = newStatus === 'todo' ? 'To Do' : 
@@ -683,7 +683,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
       console.error('Error changing task status:', error);
       showError('Failed to update task');
     }
-  }, [showSuccess, showError, tasks, projectId, updateTask]);
+  }, [showSuccess, showError, tasks, milestoneId, updateTask]);
   
   // Delete task
   const handleDeleteTask = (taskId) => {
@@ -699,7 +699,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
           style: 'destructive',
           onPress: async () => {
             try {
-              await deleteTask(projectId, taskId);
+              await deleteTask(milestoneId, taskId);
               setUiState(prev => ({
                 ...prev,
                 showTaskDetailModal: false
@@ -715,17 +715,17 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
     );
   };
   
-  // Calculate project progress
+  // Calculate milestone progress
   const calculateProgress = useCallback(() => {
-    // Get current tasks for this project from global tasks array
-    const currentProjectTasks = Array.isArray(tasks) 
-      ? tasks.filter(task => task.projectId === projectId)
+    // Get current tasks for this milestone from global tasks array
+    const currentMilestoneTasks = Array.isArray(tasks) 
+      ? tasks.filter(task => task.milestoneId === milestoneId)
       : [];
     
-    if (currentProjectTasks.length === 0) return 0;
-    const completedTasks = currentProjectTasks.filter(task => task.completed || task.status === 'done').length;
-    return Math.round((completedTasks / currentProjectTasks.length) * 100);
-  }, [tasks, projectId]);
+    if (currentMilestoneTasks.length === 0) return 0;
+    const completedTasks = currentMilestoneTasks.filter(task => task.completed || task.status === 'done').length;
+    return Math.round((completedTasks / currentMilestoneTasks.length) * 100);
+  }, [tasks, milestoneId]);
   
   // Animate save button
   const animateSaveButton = () => {
@@ -748,11 +748,11 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
     ]).start();
   };
   
-  // Save project
+  // Save milestone
   const handleSave = () => {
     if (isDeleting.current) return;
     
-    if (!projectState.title.trim()) {
+    if (!milestoneState.title.trim()) {
       showError('Please enter a milestone title');
       return;
     }
@@ -780,18 +780,18 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
       }
     }
     
-    // Create project object
+    // Create milestone object
     const progress = calculateProgress();
-    const project = {
-      id: isCreating ? Date.now().toString() : projectId,
-      title: projectState.title,
-      description: projectState.description,
-      color: projectState.color,
-      dueDate: projectState.hasDueDate ? projectState.dueDate.toISOString() : null,
+    const milestone = {
+      id: isCreating ? Date.now().toString() : milestoneId,
+      title: milestoneState.title,
+      description: milestoneState.description,
+      color: milestoneState.color,
+      dueDate: milestoneState.hasDueDate ? milestoneState.dueDate.toISOString() : null,
       progress,
       goalId: selectedGoalId,
       goalTitle: goalTitle,
-      createdAt: isCreating ? new Date().toISOString() : (projects.find(p => p.id === projectId)?.createdAt || new Date().toISOString()),
+      createdAt: isCreating ? new Date().toISOString() : (milestones.find(p => p.id === milestoneId)?.createdAt || new Date().toISOString()),
       updatedAt: new Date().toISOString()
     };
     
@@ -801,17 +801,17 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
       
       try {
         if (isCreating) {
-          addProject(project);
+          addMilestone(milestone);
           showSuccess('Milestone created successfully');
         } else {
-          updateProject(project);
+          updateMilestone(milestone);
           showSuccess('Milestone updated successfully');
         }
         
-        // Track strategic thinker achievement if project has a goal
-        if (project.goalId) {
+        // Track strategic thinker achievement if milestone has a goal
+        if (milestone.goalId) {
           try {
-            FeatureExplorerTracker.trackStrategicThinker(project, showSuccess);
+            FeatureExplorerTracker.trackStrategicThinker(milestone, showSuccess);
           } catch (error) {
             console.error('Error tracking strategic thinker achievement:', error);
             // Silently handle tracking errors without affecting main functionality
@@ -826,7 +826,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
         
         navigation.goBack();
       } catch (error) {
-        console.error("Error saving project:", error);
+        console.error("Error saving milestone:", error);
         showError("An error occurred while saving the milestone.");
         
         setUiState(prev => ({
@@ -838,7 +838,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
     }, 500);
   };
   
-  // Delete project function - show confirmation modal
+  // Delete milestone function - show confirmation modal
   const handleDelete = () => {
     setUiState(prev => ({
       ...prev,
@@ -846,7 +846,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
     }));
   };
 
-  // Actual delete project implementation
+  // Actual delete milestone implementation
   const handleConfirmDelete = async () => {
     try {
       isDeleting.current = true;
@@ -863,22 +863,22 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
         showTaskDetailModal: false
       }));
       
-      const projectIdToDelete = projectId;
+      const milestoneIdToDelete = milestoneId;
       
       // Use a timeout to ensure smooth navigation
       setTimeout(async () => {
         try {
-          const success = await deleteProject(projectIdToDelete);
+          const success = await deleteMilestone(milestoneIdToDelete);
           
           if (success) {
-            console.log(`Successfully deleted project ID: ${projectIdToDelete}`);
+            console.log(`Successfully deleted milestone ID: ${milestoneIdToDelete}`);
             showSuccess('Milestone deleted successfully');
           } else {
-            console.error(`Failed to delete project ID: ${projectIdToDelete}`);
+            console.error(`Failed to delete milestone ID: ${milestoneIdToDelete}`);
             showError('Error deleting milestone');
           }
         } catch (deleteError) {
-          console.error("Error during project deletion:", deleteError);
+          console.error("Error during milestone deletion:", deleteError);
           showError('Error deleting milestone');
         }
       }, 500);
@@ -923,14 +923,14 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={projectState.color} />
+          <ActivityIndicator size="large" color={milestoneState.color} />
           <Text 
             style={[styles.loadingText, { color: theme.text }]}
             maxFontSizeMultiplier={1.3}
             accessible={true}
-            accessibilityLabel="Deleting project"
+            accessibilityLabel="Deleting milestone"
           >
-            Deleting project...
+            Deleting milestone...
           </Text>
         </View>
       </SafeAreaView>
@@ -945,16 +945,16 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
       <View 
         style={styles.loadingOverlay}
         accessible={true}
-        accessibilityLabel={isCreating ? "Creating project" : "Updating project"}
+        accessibilityLabel={isCreating ? "Creating milestone" : "Updating milestone"}
         accessibilityRole="progressbar"
       >
         <View style={[styles.loadingContainer, { backgroundColor: theme.card }]}>
-          <ActivityIndicator size="large" color={projectState.color} />
+          <ActivityIndicator size="large" color={milestoneState.color} />
           <Text 
             style={[styles.loadingText, { color: theme.text }]}
             maxFontSizeMultiplier={1.3}
           >
-            {isCreating ? 'Creating Project...' : 'Updating Project...'}
+            {isCreating ? 'Creating Milestone...' : 'Updating Milestone...'}
           </Text>
         </View>
       </View>
@@ -1000,15 +1000,15 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
           <TouchableOpacity 
             style={[
               styles.saveButton, 
-              { backgroundColor: projectState.color },
+              { backgroundColor: milestoneState.color },
               uiState.isLoading && { opacity: 0.6 }
             ]}
             onPress={handleSave}
             disabled={uiState.isLoading}
             accessible={true}
             accessibilityRole="button"
-            accessibilityLabel="Save project"
-            accessibilityHint="Saves the current project"
+            accessibilityLabel="Save milestone"
+            accessibilityHint="Saves the current milestone"
             accessibilityState={{ disabled: uiState.isLoading }}
           >
             <Ionicons name="save-outline" size={scaleWidth(18)} color="#000000" />
@@ -1038,12 +1038,12 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
         scrollEventThrottle={16}
         keyboardShouldPersistTaps="handled"
         accessible={true}
-        accessibilityLabel="Project details content"
+        accessibilityLabel="Milestone details content"
       >
         {/* Milestone Preview */}
         <MilestonePreview
-          title={projectState.title}
-          selectedColor={projectState.color}
+          title={milestoneState.title}
+          selectedColor={milestoneState.color}
           progress={calculateProgress()}
           theme={theme}
         />
@@ -1053,27 +1053,27 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
           styles.tabsContainer,
           { marginHorizontal: spacing.m, marginBottom: spacing.xs }
         ]}>
-          <ProjectTabs 
+          <MilestoneTabs 
             activeTab={uiState.activeTab}
             setActiveTab={(tab) => setUiState(prev => ({ ...prev, activeTab: tab }))}
             theme={theme}
-            color={projectState.color}
+            color={milestoneState.color}
           />
         </View>
         
         {/* Tab Content */}
         <View style={styles.content}>
           {uiState.activeTab === 'details' && (
-            <ProjectDetailsForm 
-              title={projectState.title}
-              setTitle={(text) => setProjectState(prev => ({ ...prev, title: text }))}
-              description={projectState.description}
-              setDescription={(text) => setProjectState(prev => ({ ...prev, description: text }))}
-              color={projectState.color}
-              setColor={(color) => setProjectState(prev => ({ ...prev, color: color }))}
-              hasDueDate={projectState.hasDueDate}
-              setHasDueDate={(value) => setProjectState(prev => ({ ...prev, hasDueDate: value }))}
-              dueDate={projectState.dueDate}
+            <MilestoneDetailsForm 
+              title={milestoneState.title}
+              setTitle={(text) => setMilestoneState(prev => ({ ...prev, title: text }))}
+              description={milestoneState.description}
+              setDescription={(text) => setMilestoneState(prev => ({ ...prev, description: text }))}
+              color={milestoneState.color}
+              setColor={(color) => setMilestoneState(prev => ({ ...prev, color: color }))}
+              hasDueDate={milestoneState.hasDueDate}
+              setHasDueDate={(value) => setMilestoneState(prev => ({ ...prev, hasDueDate: value }))}
+              dueDate={milestoneState.dueDate}
               showDatePicker={uiState.showDatePicker}
               setShowDatePicker={(show) => setUiState(prev => ({ ...prev, showDatePicker: show }))}
               handleDateChange={handleDateChange}
@@ -1091,8 +1091,8 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
           
           {uiState.activeTab === 'list' && (
             <TaskListView 
-              tasks={Array.isArray(tasks) ? tasks.filter(task => task.projectId === projectId) : []}
-              color={projectState.color}
+              tasks={Array.isArray(tasks) ? tasks.filter(task => task.milestoneId === milestoneId) : []}
+              color={milestoneState.color}
               theme={theme}
               calculateProgress={calculateProgress}
               handleViewTask={handleViewTask}
@@ -1120,7 +1120,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
           setCurrentTask(null);
         }}
         onAdd={handleAddTask}
-        color={projectState.color}
+        color={milestoneState.color}
         task={currentTask}
         isEditing={uiState.isEditingTask}
       />
@@ -1135,7 +1135,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
         handleDeleteTask={handleDeleteTask}
         handleEditTask={handleEditTask}
         theme={theme}
-        color={projectState.color}
+        color={milestoneState.color}
       />
       
       {/* Goal Selector Modal */}
@@ -1145,7 +1145,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
         availableGoals={availableGoals}
         selectedGoalId={selectedGoalId}
         setSelectedGoalId={setSelectedGoalId}
-        setColor={(color) => setProjectState(prev => ({ ...prev, color: color }))}
+        setColor={(color) => setMilestoneState(prev => ({ ...prev, color: color }))}
         theme={theme}
       />
 
@@ -1156,7 +1156,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
         handleSave={handleSave}
         discardChangesAndGoBack={discardChangesAndGoBack}
         theme={theme}
-        color={projectState.color}
+        color={milestoneState.color}
       />
 
       {/* Delete Confirmation Modal */}
@@ -1191,7 +1191,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
               style={[styles.deleteModalMessage, { color: theme.textSecondary }]}
               maxFontSizeMultiplier={1.3}
             >
-              Are you sure you want to delete this project and all its tasks? This action cannot be undone.
+              Are you sure you want to delete this milestone and all its tasks? This action cannot be undone.
             </Text>
             
             <View style={styles.deleteModalButtons}>
@@ -1267,7 +1267,7 @@ const ProjectDetailsScreen = ({ route, navigation }) => {
               style={[styles.upgradeModalMessage, { color: theme.text }]}
               maxFontSizeMultiplier={1.3}
             >
-              {upgradeMessage || "Upgrade to Pro to unlock unlimited tasks per project."}
+              {upgradeMessage || "Upgrade to Pro to unlock unlimited tasks per milestone."}
             </Text>
             
             <TouchableOpacity
@@ -1528,4 +1528,4 @@ const styles = StyleSheet.create({
   }
 });
 
-export default ProjectDetailsScreen;
+export default MilestoneDetailsScreen;

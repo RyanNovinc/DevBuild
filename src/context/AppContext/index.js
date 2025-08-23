@@ -10,21 +10,21 @@ import { STORAGE_KEYS, DEFAULT_SETTINGS } from './constants';
 // Import utility functions
 import { loadAppData, saveData } from './utils/storageUtils';
 import { 
-  auditProjectGoalRelationships, 
-  cleanupOrphanedProjects,
-  linkProjectsToGoalsByTitle
+  auditMilestoneGoalRelationships, 
+  cleanupOrphanedMilestones,
+  linkMilestonesToGoalsByTitle
 } from './utils/relationshipUtils';
 import { 
   calculateGoalProgress, 
-  calculateProjectProgress,
-  getProjectsForGoal,
-  getIndependentProjects,
-  getTasksForProject
+  calculateMilestoneProgress,
+  getMilestonesForGoal,
+  getIndependentMilestones,
+  getTasksForMilestone
 } from './utils/progressUtils';
 
 // Import reducers and actions
 import { goalReducer, initialGoalState, goalActions } from './reducers/goalReducer';
-import { projectReducer, initialProjectState, projectActions } from './reducers/projectReducer';
+import { milestoneReducer, initialMilestoneState, milestoneActions } from './reducers/milestoneReducer';
 
 // Create context
 const AppContext = createContext();
@@ -32,7 +32,7 @@ const AppContext = createContext();
 // Combine all initial states
 const initialState = {
   ...initialGoalState,
-  ...initialProjectState,
+  ...initialMilestoneState,
   
   // Additional states
   timeBlocks: [],
@@ -58,86 +58,86 @@ function appReducer(state, action) {
   // First apply goal reducer
   const goalState = goalReducer(state, action);
   
-  // Then apply project reducer on the updated state
-  const projectState = projectReducer(goalState, action);
+  // Then apply milestone reducer on the updated state
+  const milestoneState = milestoneReducer(goalState, action);
   
   // Handle other actions
   switch (action.type) {
     case 'SET_TIME_BLOCKS':
       return {
-        ...projectState,
+        ...milestoneState,
         timeBlocks: action.payload,
       };
       
     case 'SET_DOMAINS':
       return {
-        ...projectState,
+        ...milestoneState,
         domains: action.payload,
       };
       
     case 'SET_SETTINGS':
       return {
-        ...projectState,
+        ...milestoneState,
         settings: action.payload,
       };
       
     case 'SET_TAGS':
       return {
-        ...projectState,
+        ...milestoneState,
         tags: action.payload,
       };
       
     case 'SET_NOTES':
       return {
-        ...projectState,
+        ...milestoneState,
         notes: action.payload,
       };
       
     case 'SET_FILTERS':
       return {
-        ...projectState,
+        ...milestoneState,
         filters: action.payload,
       };
       
     case 'SET_LOADING':
       return {
-        ...projectState,
+        ...milestoneState,
         isLoading: action.payload,
       };
       
     case 'SET_TASKS':
       return {
-        ...projectState,
+        ...milestoneState,
         tasks: action.payload,
       };
       
     case 'SET_TODOS':
       return {
-        ...projectState,
+        ...milestoneState,
         todos: action.payload,
       };
       
     case 'SET_TOMORROW_TODOS':
       return {
-        ...projectState,
+        ...milestoneState,
         tomorrowTodos: action.payload,
       };
       
     case 'SET_LATER_TODOS':
       return {
-        ...projectState,
+        ...milestoneState,
         laterTodos: action.payload,
       };
       
     case 'SET_ALL_DATA':
       return {
-        ...projectState,
+        ...milestoneState,
         ...action.payload,
         isLoading: false,
       };
       
     default:
-      return projectState;
+      return milestoneState;
   }
 }
 
@@ -172,19 +172,19 @@ export const AppProvider = ({ children }) => {
         dispatch({ type: 'SET_ALL_DATA', payload: data });
         
         // Verify data integrity
-        if (data.goals && data.projects) {
-          const auditResults = auditProjectGoalRelationships(data.projects, data.goals, data.projectGoalLinkMap);
+        if (data.goals && data.milestones) {
+          const auditResults = auditMilestoneGoalRelationships(data.milestones, data.goals, data.milestoneGoalLinkMap);
           
           if (auditResults.needsUpdate) {
-            // Update projects with fixed relationships
-            dispatch({ type: 'SET_PROJECTS', payload: auditResults.projects });
-            dispatch({ type: 'SET_PROJECT_GOAL_LINK_MAP', payload: auditResults.projectGoalLinkMap });
+            // Update milestones with fixed relationships
+            dispatch({ type: 'SET_MILESTONES', payload: auditResults.milestones });
+            dispatch({ type: 'SET_MILESTONE_GOAL_LINK_MAP', payload: auditResults.milestoneGoalLinkMap });
             
             // Save fixed data
-            await saveData(STORAGE_KEYS.PROJECTS, auditResults.projects);
-            await saveData(STORAGE_KEYS.PROJECT_GOAL_LINK_MAP, auditResults.projectGoalLinkMap);
+            await saveData(STORAGE_KEYS.MILESTONES, auditResults.milestones);
+            await saveData(STORAGE_KEYS.MILESTONE_GOAL_LINK_MAP, auditResults.milestoneGoalLinkMap);
             
-            console.log(`Fixed ${auditResults.stats.fixesApplied} project-goal relationships`);
+            console.log(`Fixed ${auditResults.stats.fixesApplied} milestone-goal relationships`);
           }
         }
         
@@ -206,12 +206,12 @@ export const AppProvider = ({ children }) => {
     updateGoalProgress: (goalId, progress) => goalActions.updateGoalProgress(dispatch, goalId, progress, stateRef.current)
   };
   
-  // Create a wrapper for project actions
-  const projectActionWrappers = {
-    addProject: (newProject) => projectActions.addProject(dispatch, newProject, notification, stateRef.current),
-    updateProject: (updatedProject) => projectActions.updateProject(dispatch, updatedProject, notification, stateRef.current),
-    deleteProject: (projectId) => projectActions.deleteProject(dispatch, projectId, notification, stateRef.current),
-    updateProjectProgress: (projectId, newProgress) => projectActions.updateProjectProgress(dispatch, projectId, newProgress, notification, stateRef.current)
+  // Create a wrapper for milestone actions
+  const milestoneActionWrappers = {
+    addMilestone: (newMilestone) => milestoneActions.addMilestone(dispatch, newMilestone, notification, stateRef.current),
+    updateMilestone: (updatedMilestone) => milestoneActions.updateMilestone(dispatch, updatedMilestone, notification, stateRef.current),
+    deleteMilestone: (milestoneId) => milestoneActions.deleteMilestone(dispatch, milestoneId, notification, stateRef.current),
+    updateMilestoneProgress: (milestoneId, newProgress) => milestoneActions.updateMilestoneProgress(dispatch, milestoneId, newProgress, notification, stateRef.current)
   };
   
   // Time block actions
@@ -270,13 +270,13 @@ export const AppProvider = ({ children }) => {
   };
   
   // Task actions
-  const addTask = async (projectId, newTask) => {
+  const addTask = async (milestoneId, newTask) => {
     try {
-      // Check if project exists
-      const projectExists = state.projects.some(p => p.id === projectId);
-      if (!projectExists) {
-        console.warn(`Project with ID ${projectId} not found, cannot add task`);
-        notification.showError('Project not found');
+      // Check if milestone exists
+      const milestoneExists = state.milestones.some(p => p.id === milestoneId);
+      if (!milestoneExists) {
+        console.warn(`Milestone with ID ${milestoneId} not found, cannot add task`);
+        notification.showError('Milestone not found');
         return null;
       }
       
@@ -287,7 +287,7 @@ export const AppProvider = ({ children }) => {
       const taskWithId = { 
         ...newTask,
         id: newTask.id || `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        projectId: projectId,
+        milestoneId: milestoneId,
         completed: newTask.completed || false,
         createdAt: new Date().toISOString()
       };
@@ -299,23 +299,23 @@ export const AppProvider = ({ children }) => {
       // Save to AsyncStorage
       await saveData(STORAGE_KEYS.TASKS, updatedTasks);
       
-      // Find the current project
-      const project = state.projects.find(p => p.id === projectId);
-      if (!project) return taskWithId;
+      // Find the current milestone
+      const milestone = state.milestones.find(p => p.id === milestoneId);
+      if (!milestone) return taskWithId;
       
-      // Calculate new task-based progress WITHOUT changing project status
-      const projectTasks = updatedTasks.filter(task => task.projectId === projectId);
-      const completedTasks = projectTasks.filter(task => task.completed || task.status === 'done').length;
-      const calculatedProgress = projectTasks.length > 0 
-        ? Math.round((completedTasks / projectTasks.length) * 100)
+      // Calculate new task-based progress WITHOUT changing milestone status
+      const milestoneTasks = updatedTasks.filter(task => task.milestoneId === milestoneId);
+      const completedTasks = milestoneTasks.filter(task => task.completed || task.status === 'done').length;
+      const calculatedProgress = milestoneTasks.length > 0 
+        ? Math.round((completedTasks / milestoneTasks.length) * 100)
         : 0;
       
       // Only update the progress number, NEVER the status
-      if (project.progress !== calculatedProgress) {
-        console.log(`[AppContext] Updating project "${project.title}" progress to ${calculatedProgress}% (status remains "${project.status || 'todo'}")`);
+      if (milestone.progress !== calculatedProgress) {
+        console.log(`[AppContext] Updating milestone "${milestone.title}" progress to ${calculatedProgress}% (status remains "${milestone.status || 'todo'}")`);
         
-        const updatedProject = {
-          ...project,
+        const updatedMilestone = {
+          ...milestone,
           progress: calculatedProgress,
           // DO NOT CHANGE these properties based on tasks:
           // status: stays the same
@@ -323,13 +323,13 @@ export const AppProvider = ({ children }) => {
           updatedAt: new Date().toISOString()
         };
         
-        // Special case: if project is marked as done, keep it at 100%
-        if (project.status === 'done' || project.completed) {
-          updatedProject.progress = 100;
+        // Special case: if milestone is marked as done, keep it at 100%
+        if (milestone.status === 'done' || milestone.completed) {
+          updatedMilestone.progress = 100;
         }
         
-        // Update the project
-        await projectActionWrappers.updateProject(updatedProject);
+        // Update the milestone
+        await milestoneActionWrappers.updateMilestone(updatedMilestone);
       }
       
       return taskWithId;
@@ -340,13 +340,13 @@ export const AppProvider = ({ children }) => {
     }
   };
   
-  const updateTask = async (projectId, taskId, updatedTask) => {
+  const updateTask = async (milestoneId, taskId, updatedTask) => {
     try {
-      // Check if project exists
-      const projectExists = state.projects.some(p => p.id === projectId);
-      if (!projectExists) {
-        console.warn(`Project with ID ${projectId} not found, cannot update task`);
-        notification.showError('Project not found');
+      // Check if milestone exists
+      const milestoneExists = state.milestones.some(p => p.id === milestoneId);
+      if (!milestoneExists) {
+        console.warn(`Milestone with ID ${milestoneId} not found, cannot update task`);
+        notification.showError('Milestone not found');
         return null;
       }
       
@@ -357,10 +357,10 @@ export const AppProvider = ({ children }) => {
       }
       
       // Find the task
-      const taskIndex = state.tasks.findIndex(task => task.id === taskId && task.projectId === projectId);
+      const taskIndex = state.tasks.findIndex(task => task.id === taskId && task.milestoneId === milestoneId);
       
       if (taskIndex === -1) {
-        console.warn(`Task with ID ${taskId} not found in project ${projectId}`);
+        console.warn(`Task with ID ${taskId} not found in milestone ${milestoneId}`);
         notification.showError('Task not found');
         return null;
       }
@@ -378,8 +378,8 @@ export const AppProvider = ({ children }) => {
       // Save to AsyncStorage
       await saveData(STORAGE_KEYS.TASKS, newTasksArray);
       
-      // Update project progress
-      await updateProjectProgressFromTasks(projectId, newTasksArray);
+      // Update milestone progress
+      await updateMilestoneProgressFromTasks(milestoneId, newTasksArray);
       
       return newTasksArray[taskIndex];
     } catch (error) {
@@ -389,13 +389,13 @@ export const AppProvider = ({ children }) => {
     }
   };
   
-  const deleteTask = async (projectId, taskId) => {
+  const deleteTask = async (milestoneId, taskId) => {
     try {
-      // Check if project exists
-      const projectExists = state.projects.some(p => p.id === projectId);
-      if (!projectExists) {
-        console.warn(`Project with ID ${projectId} not found, cannot delete task`);
-        notification.showError('Project not found');
+      // Check if milestone exists
+      const milestoneExists = state.milestones.some(p => p.id === milestoneId);
+      if (!milestoneExists) {
+        console.warn(`Milestone with ID ${milestoneId} not found, cannot delete task`);
+        notification.showError('Milestone not found');
         return false;
       }
       
@@ -406,15 +406,15 @@ export const AppProvider = ({ children }) => {
       }
       
       // Check if task exists
-      const taskExists = state.tasks.some(task => task.id === taskId && task.projectId === projectId);
+      const taskExists = state.tasks.some(task => task.id === taskId && task.milestoneId === milestoneId);
       if (!taskExists) {
-        console.warn(`Task with ID ${taskId} not found in project ${projectId}`);
+        console.warn(`Task with ID ${taskId} not found in milestone ${milestoneId}`);
         notification.showError('Task not found');
         return false;
       }
       
       // Remove the task
-      const updatedTasks = state.tasks.filter(task => !(task.id === taskId && task.projectId === projectId));
+      const updatedTasks = state.tasks.filter(task => !(task.id === taskId && task.milestoneId === milestoneId));
       
       // Update state
       dispatch({ type: 'SET_TASKS', payload: updatedTasks });
@@ -422,8 +422,8 @@ export const AppProvider = ({ children }) => {
       // Save to AsyncStorage
       await saveData(STORAGE_KEYS.TASKS, updatedTasks);
       
-      // Update project progress
-      await updateProjectProgressFromTasks(projectId, updatedTasks);
+      // Update milestone progress
+      await updateMilestoneProgressFromTasks(milestoneId, updatedTasks);
       
       notification.showSuccess('Task deleted successfully');
       return true;
@@ -434,52 +434,52 @@ export const AppProvider = ({ children }) => {
     }
   };
   
-  // Helper function to update project progress from tasks
-  const updateProjectProgressFromTasks = async (projectId, currentTasks = null) => {
+  // Helper function to update milestone progress from tasks
+  const updateMilestoneProgressFromTasks = async (milestoneId, currentTasks = null) => {
     try {
-      if (!projectId) return;
+      if (!milestoneId) return;
       
-      const project = state.projects.find(p => p.id === projectId);
-      if (!project) return;
+      const milestone = state.milestones.find(p => p.id === milestoneId);
+      if (!milestone) return;
       
-      // IMPORTANT: Don't change project status based on task completion
+      // IMPORTANT: Don't change milestone status based on task completion
       // Only recalculate progress percentage while preserving status
       
       // Calculate task completion percentage (but don't change status)
       const tasksToUse = currentTasks || state.tasks;
-      const projectTasks = tasksToUse.filter(task => task.projectId === projectId);
+      const milestoneTasks = tasksToUse.filter(task => task.milestoneId === milestoneId);
       
       // If there are no tasks, don't update anything
-      if (projectTasks.length === 0) return;
+      if (milestoneTasks.length === 0) return;
       
-      const completedTasks = projectTasks.filter(task => task.completed || task.status === 'done').length;
-      const calculatedProgress = Math.round((completedTasks / projectTasks.length) * 100);
+      const completedTasks = milestoneTasks.filter(task => task.completed || task.status === 'done').length;
+      const calculatedProgress = Math.round((completedTasks / milestoneTasks.length) * 100);
       
-      // Do not update the project if progress hasn't changed
-      if (project.progress === calculatedProgress) return;
+      // Do not update the milestone if progress hasn't changed
+      if (milestone.progress === calculatedProgress) return;
       
       // For progress display, use the calculated value, but preserve existing status
-      console.log(`[AppContext] Updating project "${project.title}" task-based progress: ${calculatedProgress}%`);
+      console.log(`[AppContext] Updating milestone "${milestone.title}" task-based progress: ${calculatedProgress}%`);
       
       // We only update the percentage, not the status
       // Preserve the existing status (todo, in_progress, done) regardless of task completion
-      const updatedProject = {
-        ...project,
+      const updatedMilestone = {
+        ...milestone,
         progress: calculatedProgress,
         updatedAt: new Date().toISOString()
       };
       
-      // If project is already marked as done, keep it that way regardless of progress
-      if (project.status === 'done' || project.completed) {
-        updatedProject.progress = 100;
-        updatedProject.completed = true;
-        updatedProject.status = 'done';
+      // If milestone is already marked as done, keep it that way regardless of progress
+      if (milestone.status === 'done' || milestone.completed) {
+        updatedMilestone.progress = 100;
+        updatedMilestone.completed = true;
+        updatedMilestone.status = 'done';
       }
       
-      // Update the project
-      await projectActionWrappers.updateProject(updatedProject);
+      // Update the milestone
+      await milestoneActionWrappers.updateMilestone(updatedMilestone);
     } catch (error) {
-      console.error('Error updating project progress from tasks:', error);
+      console.error('Error updating milestone progress from tasks:', error);
     }
   };
   
@@ -784,29 +784,29 @@ export const AppProvider = ({ children }) => {
           console.log(`Updated ${goalsToUpdate.length} goals with domain "${updatedDomain.name}"`);
         }
         
-        // Also update any projects with this domain
-        const projectsToUpdate = state.projects.filter(project => 
-          project.domain === updatedDomain.name
+        // Also update any milestones with this domain
+        const milestonesToUpdate = state.milestones.filter(milestone => 
+          milestone.domain === updatedDomain.name
         );
         
-        if (projectsToUpdate.length > 0) {
-          const updatedProjects = state.projects.map(project => {
-            if (project.domain === updatedDomain.name) {
+        if (milestonesToUpdate.length > 0) {
+          const updatedMilestones = state.milestones.map(milestone => {
+            if (milestone.domain === updatedDomain.name) {
               return {
-                ...project,
+                ...milestone,
                 domain: updatedDomain.name,
-                color: updatedDomain.color || project.color
+                color: updatedDomain.color || milestone.color
               };
             }
-            return project;
+            return milestone;
           });
           
-          // Update projects state
-          dispatch({ type: 'SET_PROJECTS', payload: updatedProjects });
+          // Update milestones state
+          dispatch({ type: 'SET_MILESTONES', payload: updatedMilestones });
           
           // Save to AsyncStorage
-          await saveData(STORAGE_KEYS.PROJECTS, updatedProjects);
-          console.log(`Updated ${projectsToUpdate.length} projects with domain "${updatedDomain.name}"`);
+          await saveData(STORAGE_KEYS.MILESTONES, updatedMilestones);
+          console.log(`Updated ${milestonesToUpdate.length} milestones with domain "${updatedDomain.name}"`);
         }
       }
       
@@ -878,18 +878,18 @@ export const AppProvider = ({ children }) => {
     try {
       console.log('Forcing data refresh...');
       
-      // First clean up any orphaned projects
-      const cleanupResults = cleanupOrphanedProjects(state.projects, state.goals, state.projectGoalLinkMap);
-      console.log(`Cleaned up ${cleanupResults.orphanCount} orphaned projects`);
+      // First clean up any orphaned milestones
+      const cleanupResults = cleanupOrphanedMilestones(state.milestones, state.goals, state.milestoneGoalLinkMap);
+      console.log(`Cleaned up ${cleanupResults.orphanCount} orphaned milestones`);
       
       if (cleanupResults.orphanCount > 0) {
-        // Update projects state
-        dispatch({ type: 'SET_PROJECTS', payload: cleanupResults.projects });
-        dispatch({ type: 'SET_PROJECT_GOAL_LINK_MAP', payload: cleanupResults.projectGoalLinkMap });
+        // Update milestones state
+        dispatch({ type: 'SET_MILESTONES', payload: cleanupResults.milestones });
+        dispatch({ type: 'SET_MILESTONE_GOAL_LINK_MAP', payload: cleanupResults.milestoneGoalLinkMap });
         
         // Save to AsyncStorage
-        await saveData(STORAGE_KEYS.PROJECTS, cleanupResults.projects);
-        await saveData(STORAGE_KEYS.PROJECT_GOAL_LINK_MAP, cleanupResults.projectGoalLinkMap);
+        await saveData(STORAGE_KEYS.MILESTONES, cleanupResults.milestones);
+        await saveData(STORAGE_KEYS.MILESTONE_GOAL_LINK_MAP, cleanupResults.milestoneGoalLinkMap);
       }
       
       // Reload all data from storage
@@ -975,7 +975,7 @@ export const AppProvider = ({ children }) => {
     // State values
     goals: state.goals,
     mainGoals: state.goals, // Alias for backward compatibility
-    projects: state.projects,
+    milestones: state.milestones,
     timeBlocks: state.timeBlocks,
     domains: state.domains,
     settings: state.settings,
@@ -983,7 +983,7 @@ export const AppProvider = ({ children }) => {
     notes: state.notes,
     filters: state.filters,
     isLoading: state.isLoading,
-    projectGoalLinkMap: state.projectGoalLinkMap,
+    milestoneGoalLinkMap: state.milestoneGoalLinkMap,
     tasks: state.tasks,
     todos: state.todos,
     tomorrowTodos: state.tomorrowTodos,
@@ -991,42 +991,42 @@ export const AppProvider = ({ children }) => {
     
     // State setters (for direct updates when needed)
     setGoals: (goals) => dispatch({ type: 'SET_GOALS', payload: goals }),
-    setProjects: (projects) => dispatch({ type: 'SET_PROJECTS', payload: projects }),
+    setMilestones: (milestones) => dispatch({ type: 'SET_MILESTONES', payload: milestones }),
     setTasks: (tasks) => dispatch({ type: 'SET_TASKS', payload: tasks }),
     setTodos: (todos) => dispatch({ type: 'SET_TODOS', payload: todos }),
     setTomorrowTodos: (todos) => dispatch({ type: 'SET_TOMORROW_TODOS', payload: todos }),
     setLaterTodos: (todos) => dispatch({ type: 'SET_LATER_TODOS', payload: todos }),
     
     // Helper functions
-    isProjectActive: (projectId) => state.projects.some(p => p.id === projectId) && !state.deletedProjectIds.has(projectId),
+    isMilestoneActive: (milestoneId) => state.milestones.some(p => p.id === milestoneId) && !state.deletedMilestoneIds.has(milestoneId),
     isGoalActive: (goalId) => state.goals.some(g => g.id === goalId),
-    getProject: (projectId) => state.projects.find(p => p.id === projectId),
-    hasParentGoal: (projectId) => {
-      const project = state.projects.find(p => p.id === projectId);
-      return project && project.goalId && state.goals.some(g => g.id === project.goalId);
+    getMilestone: (milestoneId) => state.milestones.find(p => p.id === milestoneId),
+    hasParentGoal: (milestoneId) => {
+      const milestone = state.milestones.find(p => p.id === milestoneId);
+      return milestone && milestone.goalId && state.goals.some(g => g.id === milestone.goalId);
     },
-    getParentGoal: (projectId) => {
-      const project = state.projects.find(p => p.id === projectId);
-      return project && project.goalId ? 
-        state.goals.find(g => g.id === project.goalId) : null;
+    getParentGoal: (milestoneId) => {
+      const milestone = state.milestones.find(p => p.id === milestoneId);
+      return milestone && milestone.goalId ? 
+        state.goals.find(g => g.id === milestone.goalId) : null;
     },
-    getProjectsForGoal: (goalId) => getProjectsForGoal(goalId, state.projects, state.deletedProjectIds),
-    getIndependentProjects: () => getIndependentProjects(state.projects, state.deletedProjectIds),
-    getTasksForProject: (projectId) => getTasksForProject(projectId, state.tasks),
-    calculateGoalProgress: (goalId) => calculateGoalProgress(goalId, state.projects),
-    calculateProjectProgress: (projectId) => calculateProjectProgress(projectId, state.tasks, state.projects),
+    getMilestonesForGoal: (goalId) => getMilestonesForGoal(goalId, state.milestones, state.deletedMilestoneIds),
+    getIndependentMilestones: () => getIndependentMilestones(state.milestones, state.deletedMilestoneIds),
+    getTasksForMilestone: (milestoneId) => getTasksForMilestone(milestoneId, state.tasks),
+    calculateGoalProgress: (goalId) => calculateGoalProgress(goalId, state.milestones),
+    calculateMilestoneProgress: (milestoneId) => calculateMilestoneProgress(milestoneId, state.tasks, state.milestones),
     
     // Goal actions
     addGoal: goalActionWrappers.addGoal,
     updateGoal: goalActionWrappers.updateGoal,
     deleteGoal: goalActionWrappers.deleteGoal,
     
-    // Project actions
-    addProject: projectActionWrappers.addProject,
-    updateProject: projectActionWrappers.updateProject,
-    deleteProject: projectActionWrappers.deleteProject,
-    updateProjectProgress: projectActionWrappers.updateProjectProgress,
-    updateProjectProgressFromTasks,
+    // Milestone actions
+    addMilestone: milestoneActionWrappers.addMilestone,
+    updateMilestone: milestoneActionWrappers.updateMilestone,
+    deleteMilestone: milestoneActionWrappers.deleteMilestone,
+    updateMilestoneProgress: milestoneActionWrappers.updateMilestoneProgress,
+    updateMilestoneProgressFromTasks,
     
     // Task actions
     addTask,
@@ -1052,47 +1052,47 @@ export const AppProvider = ({ children }) => {
     getLifeDirection,
     
     // Utility functions
-    linkProjectsToGoalsByTitle: async () => {
-      const results = linkProjectsToGoalsByTitle(state.projects, state.goals, state.projectGoalLinkMap);
+    linkMilestonesToGoalsByTitle: async () => {
+      const results = linkMilestonesToGoalsByTitle(state.milestones, state.goals, state.milestoneGoalLinkMap);
       
       if (results.fixCount > 0) {
-        dispatch({ type: 'SET_PROJECTS', payload: results.projects });
-        dispatch({ type: 'SET_PROJECT_GOAL_LINK_MAP', payload: results.projectGoalLinkMap });
+        dispatch({ type: 'SET_MILESTONES', payload: results.milestones });
+        dispatch({ type: 'SET_MILESTONE_GOAL_LINK_MAP', payload: results.milestoneGoalLinkMap });
         
-        await saveData(STORAGE_KEYS.PROJECTS, results.projects);
-        await saveData(STORAGE_KEYS.PROJECT_GOAL_LINK_MAP, results.projectGoalLinkMap);
+        await saveData(STORAGE_KEYS.MILESTONES, results.milestones);
+        await saveData(STORAGE_KEYS.MILESTONE_GOAL_LINK_MAP, results.milestoneGoalLinkMap);
         
-        notification.showSuccess(`Fixed ${results.fixCount} project-goal relationships`);
+        notification.showSuccess(`Fixed ${results.fixCount} milestone-goal relationships`);
       }
       
       return results.fixCount;
     },
-    auditProjectGoalRelationships: async () => {
-      const results = auditProjectGoalRelationships(state.projects, state.goals, state.projectGoalLinkMap);
+    auditMilestoneGoalRelationships: async () => {
+      const results = auditMilestoneGoalRelationships(state.milestones, state.goals, state.milestoneGoalLinkMap);
       
       if (results.needsUpdate) {
-        dispatch({ type: 'SET_PROJECTS', payload: results.projects });
-        dispatch({ type: 'SET_PROJECT_GOAL_LINK_MAP', payload: results.projectGoalLinkMap });
+        dispatch({ type: 'SET_MILESTONES', payload: results.milestones });
+        dispatch({ type: 'SET_MILESTONE_GOAL_LINK_MAP', payload: results.milestoneGoalLinkMap });
         
-        await saveData(STORAGE_KEYS.PROJECTS, results.projects);
-        await saveData(STORAGE_KEYS.PROJECT_GOAL_LINK_MAP, results.projectGoalLinkMap);
+        await saveData(STORAGE_KEYS.MILESTONES, results.milestones);
+        await saveData(STORAGE_KEYS.MILESTONE_GOAL_LINK_MAP, results.milestoneGoalLinkMap);
         
-        console.log(`Fixed ${results.stats.fixesApplied} project-goal relationships`);
+        console.log(`Fixed ${results.stats.fixesApplied} milestone-goal relationships`);
       }
       
       return results.stats;
     },
-    cleanupOrphanedProjects: async () => {
-      const results = cleanupOrphanedProjects(state.projects, state.goals, state.projectGoalLinkMap);
+    cleanupOrphanedMilestones: async () => {
+      const results = cleanupOrphanedMilestones(state.milestones, state.goals, state.milestoneGoalLinkMap);
       
       if (results.orphanCount > 0) {
-        dispatch({ type: 'SET_PROJECTS', payload: results.projects });
-        dispatch({ type: 'SET_PROJECT_GOAL_LINK_MAP', payload: results.projectGoalLinkMap });
+        dispatch({ type: 'SET_MILESTONES', payload: results.milestones });
+        dispatch({ type: 'SET_MILESTONE_GOAL_LINK_MAP', payload: results.milestoneGoalLinkMap });
         
-        await saveData(STORAGE_KEYS.PROJECTS, results.projects);
-        await saveData(STORAGE_KEYS.PROJECT_GOAL_LINK_MAP, results.projectGoalLinkMap);
+        await saveData(STORAGE_KEYS.MILESTONES, results.milestones);
+        await saveData(STORAGE_KEYS.MILESTONE_GOAL_LINK_MAP, results.milestoneGoalLinkMap);
         
-        console.log(`Cleaned up ${results.orphanCount} orphaned projects`);
+        console.log(`Cleaned up ${results.orphanCount} orphaned milestones`);
       }
       
       return results.orphanCount;

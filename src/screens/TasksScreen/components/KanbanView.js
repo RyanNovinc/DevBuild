@@ -33,13 +33,13 @@ const KanbanView = ({ taskScreenProps }) => {
     isDarkMode,
     handleAddProject,
     handleAddTask,
-    verifyProjectDataConsistency,
+    verifyMilestoneDataConsistency,
     isVerifying,
-    getFilteredProjects,
+    getFilteredMilestones,
     getFilteredTasks,
-    handleKanbanProjectPress,
+    handleKanbanMilestonePress,
     handleKanbanTaskPress,
-    handleUpdateProjectProgress,
+    handleUpdateMilestoneProgress,
     handleUpdateTaskStatus,
     kanbanFilter,
     selectedGoalId,
@@ -299,9 +299,9 @@ const KanbanView = ({ taskScreenProps }) => {
                 text: goal.title,
                 onPress: () => {
                   // Check if there are projects for this goal
-                  const projectsForGoal = getFilteredProjects().filter(p => p.goalId === goal.id);
+                  const milestonesForGoal = getFilteredMilestones().filter(m => m.goalId === goal.id);
                     
-                  if (projectsForGoal.length === 0) {
+                  if (milestonesForGoal.length === 0) {
                     Alert.alert(
                       "Task Organization Options",
                       "Add tasks directly to this goal, create a milestone, or add standalone tasks.",
@@ -378,9 +378,9 @@ const KanbanView = ({ taskScreenProps }) => {
           }
           
           // For specific goal view, check projects for the goal
-          const projectsForGoal = getFilteredProjects().filter(project => project.goalId === selectedGoalId);
+          const milestonesForGoal = getFilteredMilestones().filter(milestone => milestone.goalId === selectedGoalId);
           
-          if (projectsForGoal.length === 0) {
+          if (milestonesForGoal.length === 0) {
             Alert.alert(
               "Task Organization Options",
               "Add tasks directly to this goal, create a milestone, or add standalone tasks.",
@@ -490,10 +490,10 @@ const KanbanView = ({ taskScreenProps }) => {
                   return viewMode === 'projects';
                 })() ? (
                   <KanbanBoard
-                    projects={getFilteredProjects()}
+                    projects={getFilteredMilestones()}
                     theme={theme}
-                    onPressMilestone={handleKanbanProjectPress}
-                    onUpdateMilestoneProgress={handleUpdateProjectProgress}
+                    onPressMilestone={handleKanbanMilestonePress}
+                    onUpdateMilestoneProgress={handleUpdateMilestoneProgress}
                     filterBy={kanbanFilter}
                     isMilestoneLevel={true}
                     darkMode={isDarkMode}
@@ -511,7 +511,7 @@ const KanbanView = ({ taskScreenProps }) => {
                       taskScreenProps.goalsToShow.find(g => g.id === selectedGoalId)?.color || theme.primary 
                       : theme.primary}
                     // Pass all projects and goals for color inheritance
-                    allProjects={getFilteredProjects()}
+                    allMilestones={getFilteredMilestones()}
                     allGoals={taskScreenProps.goalsToShow || []}
                     // Pass WIP limit from settings
                     wipLimit={settings?.kanbanWipLimit || 3}
@@ -550,7 +550,7 @@ const KanbanView = ({ taskScreenProps }) => {
                       taskScreenProps.goalsToShow.find(g => g.id === selectedGoalId)?.color || theme.primary 
                       : theme.primary}
                         // Pass all projects and goals for color inheritance
-                        allMilestones={getFilteredProjects()}
+                        allMilestones={getFilteredMilestones()}
                         allGoals={taskScreenProps.goalsToShow || []}
                         showTaskLabels={showTaskLabels}
                         isFullScreen={true}
@@ -594,10 +594,10 @@ const KanbanView = ({ taskScreenProps }) => {
               return viewMode === 'projects';
             })() ? (
               <KanbanBoard
-                projects={getFilteredProjects()}
+                projects={getFilteredMilestones()}
                 theme={theme}
-                onPressMilestone={handleKanbanProjectPress}
-                onUpdateMilestoneProgress={handleUpdateProjectProgress}
+                onPressMilestone={handleKanbanMilestonePress}
+                onUpdateMilestoneProgress={handleUpdateMilestoneProgress}
                 filterBy={kanbanFilter}
                 isMilestoneLevel={true}
                 darkMode={isDarkMode}
@@ -615,7 +615,7 @@ const KanbanView = ({ taskScreenProps }) => {
                   taskScreenProps.goalsToShow.find(g => g.id === selectedGoalId)?.color || theme.primary 
                   : theme.primary}
                 // Pass all projects and goals for color inheritance
-                allProjects={getFilteredProjects()}
+                allMilestones={getFilteredMilestones()}
                 allGoals={taskScreenProps.goalsToShow || []}
                 // Pass WIP limit from settings
                 wipLimit={settings?.kanbanWipLimit || 3}
@@ -654,7 +654,7 @@ const KanbanView = ({ taskScreenProps }) => {
                   taskScreenProps.goalsToShow.find(g => g.id === selectedGoalId)?.color || theme.primary 
                   : theme.primary}
                     // Pass all projects and goals for color inheritance
-                    allMilestones={getFilteredProjects()}
+                    allMilestones={getFilteredMilestones()}
                     allGoals={taskScreenProps.goalsToShow || []}
                     showTaskLabels={showTaskLabels}
                     isFullScreen={false}
@@ -708,14 +708,14 @@ const KanbanView = ({ taskScreenProps }) => {
           </TouchableOpacity>
       
       {/* Data Fix Option - Only show in projects view and when there's a data inconsistency */}
-      {viewMode === 'projects' && totalProjectCount !== visibleItemCount && getFilteredProjects().length === 0 && (
+      {viewMode === 'projects' && totalProjectCount !== visibleItemCount && getFilteredMilestones().length === 0 && (
         <View style={{ position: 'absolute', bottom: 80, right: 20 }}>
           <TouchableOpacity 
             style={[
               styles.fixDataButton, 
               { backgroundColor: theme.warning || '#ff9800' }
             ]}
-            onPress={verifyProjectDataConsistency}
+            onPress={verifyMilestoneDataConsistency}
             disabled={isVerifying}
             activeOpacity={0.7}
             accessible={true}

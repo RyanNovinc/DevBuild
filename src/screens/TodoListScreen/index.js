@@ -629,10 +629,11 @@ const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen,
               shadowOpacity: 0,
               borderRadius: 25,
               marginHorizontal: spacing.m,
-              marginTop: spacing.xs,
-              marginBottom: spacing.s,
-              height: 44,
+              marginTop: isFullscreen ? 0 : spacing.xs,
+              marginBottom: isFullscreen ? 0 : spacing.s,
+              height: isFullscreen ? 0 : 44,
               overflow: 'hidden',
+              opacity: isFullscreen ? 0 : 1,
             },
             tabBarIndicatorStyle: {
               backgroundColor: theme.primary,
@@ -679,6 +680,7 @@ const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen,
               <DailyStandupRevamped
                 theme={theme}
                 showSuccess={showSuccess}
+                isFullscreen={isFullscreen}
               />
             )}
           </TopTab.Screen>

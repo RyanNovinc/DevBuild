@@ -12,7 +12,7 @@ const AppContextUpdater = () => {
   const appContext = useAppContext();
   const { 
     goals, 
-    projects, 
+    milestones, 
     tasks, 
     settings, 
     userCountry,
@@ -25,18 +25,18 @@ const AppContextUpdater = () => {
       console.log('[AppContextUpdater] Generating app context summary...');
       
       // Ensure we have valid data before proceeding
-      if (!goals && !projects && !tasks) {
+      if (!goals && !milestones && !tasks) {
         console.log('[AppContextUpdater] No app data available yet, skipping summary generation');
         return false;
       }
       
       // Log data sizes for debugging
-      console.log(`[AppContextUpdater] Data: ${goals?.length || 0} goals, ${projects?.length || 0} projects, ${tasks?.length || 0} tasks`);
+      console.log(`[AppContextUpdater] Data: ${goals?.length || 0} goals, ${milestones?.length || 0} milestones, ${tasks?.length || 0} tasks`);
       
       // Generate summary from current app context
       const appData = {
         goals: goals || [],
-        projects: projects || [],
+        milestones: milestones || [],
         tasks: tasks || [],
         settings: settings || {},
         userCountry: userCountry,
@@ -53,7 +53,7 @@ const AppContextUpdater = () => {
       console.error('[AppContextUpdater] Failed to update app context summary:', error);
       return false;
     }
-  }, [goals, projects, tasks, settings, userCountry]);
+  }, [goals, milestones, tasks, settings, userCountry]);
   
   // Run an immediate update when the component mounts (after data is loaded)
   useEffect(() => {
@@ -99,7 +99,7 @@ const AppContextUpdater = () => {
     return () => clearTimeout(timerId);
   }, [
     goals, 
-    projects, 
+    milestones, 
     tasks, 
     settings?.userProfile, 
     settings?.lifeDirection,

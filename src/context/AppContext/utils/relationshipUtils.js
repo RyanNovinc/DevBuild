@@ -1,107 +1,107 @@
 // src/context/AppContext/utils/relationshipUtils.js
-// Extracted utilities for managing relationships between goals and projects
+// Extracted utilities for managing relationships between goals and milestones
 
 import { saveData } from './storageUtils';
 import { STORAGE_KEYS } from '../constants';
 
 /**
- * Check if a project has a valid parent goal
- * @param {string} projectId - The ID of the project
- * @param {Array} projects - Array of all projects
+ * Check if a milestone has a valid parent goal
+ * @param {string} milestoneId - The ID of the milestone
+ * @param {Array} milestones - Array of all milestones
  * @param {Array} goals - Array of all goals
- * @returns {boolean} - True if project has a valid parent goal
+ * @returns {boolean} - True if milestone has a valid parent goal
  */
-export const hasParentGoal = (projectId, projects, goals) => {
-  if (!projectId || !Array.isArray(projects) || !Array.isArray(goals)) {
+export const hasParentGoal = (milestoneId, milestones, goals) => {
+  if (!milestoneId || !Array.isArray(milestones) || !Array.isArray(goals)) {
     return false;
   }
   
-  // Find the project
-  const project = projects.find(p => p.id === projectId);
-  if (!project || !project.goalId) {
+  // Find the milestone
+  const milestone = milestones.find(p => p.id === milestoneId);
+  if (!milestone || !milestone.goalId) {
     return false;
   }
   
   // Check if the goal exists
-  return goals.some(goal => goal.id === project.goalId);
+  return goals.some(goal => goal.id === milestone.goalId);
 };
 
 /**
- * Get the parent goal for a project
- * @param {string} projectId - The ID of the project
- * @param {Array} projects - Array of all projects
+ * Get the parent goal for a milestone
+ * @param {string} milestoneId - The ID of the milestone
+ * @param {Array} milestones - Array of all milestones
  * @param {Array} goals - Array of all goals
  * @returns {Object|null} - The parent goal or null if not found
  */
-export const getParentGoal = (projectId, projects, goals) => {
-  if (!projectId || !Array.isArray(projects) || !Array.isArray(goals)) {
+export const getParentGoal = (milestoneId, milestones, goals) => {
+  if (!milestoneId || !Array.isArray(milestones) || !Array.isArray(goals)) {
     return null;
   }
   
-  // Find the project
-  const project = projects.find(p => p.id === projectId);
-  if (!project || !project.goalId) {
+  // Find the milestone
+  const milestone = milestones.find(p => p.id === milestoneId);
+  if (!milestone || !milestone.goalId) {
     return null;
   }
   
   // Find the goal
-  return goals.find(goal => goal.id === project.goalId) || null;
+  return goals.find(goal => goal.id === milestone.goalId) || null;
 };
 
 /**
- * Audit and fix goal-project relationships
- * @param {Array} projects - Array of all projects
+ * Audit and fix goal-milestone relationships
+ * @param {Array} milestones - Array of all milestones
  * @param {Array} goals - Array of all goals
- * @param {Object} projectGoalLinkMap - Map of project IDs to goal IDs
- * @returns {Object} - Object with updated projects, goals, linkMap, and stats
+ * @param {Object} milestoneGoalLinkMap - Map of milestone IDs to goal IDs
+ * @returns {Object} - Object with updated milestones, goals, linkMap, and stats
  */
-export const auditProjectGoalRelationships = (projects, goals, projectGoalLinkMap = {}) => {
-  if (!projects || !goals) return { 
-    projects, 
+export const auditMilestoneGoalRelationships = (milestones, goals, milestoneGoalLinkMap = {}) => {
+  if (!milestones || !goals) return { 
+    milestones, 
     goals, 
-    projectGoalLinkMap,
+    milestoneGoalLinkMap,
     stats: { issuesFound: 0, fixesApplied: 0 }
   };
   
   let issuesFound = 0;
   let fixesApplied = 0;
-  const updatedProjects = [...projects];
-  const updatedLinkMap = { ...projectGoalLinkMap };
+  const updatedMilestones = [...milestones];
+  const updatedLinkMap = { ...milestoneGoalLinkMap };
   let needsUpdate = false;
   
-  // Check each project for valid goal references
-  projects.forEach((project, index) => {
-    if (project.goalId) {
-      const goalExists = goals.some(goal => goal.id === project.goalId);
+  // Check each milestone for valid goal references
+  milestones.forEach((milestone, index) => {
+    if (milestone.goalId) {
+      const goalExists = goals.some(goal => goal.id === milestone.goalId);
       if (!goalExists) {
-        console.warn(`Project "${project.title}" (ID: ${project.id}) references nonexistent goal ID: ${project.goalId}`);
+        console.warn(`Milestone "${milestone.title}" (ID: ${milestone.id}) references nonexistent goal ID: ${milestone.goalId}`);
         
         // Try to fix by goalTitle
-        if (project.goalTitle) {
+        if (milestone.goalTitle) {
           const matchingGoal = goals.find(goal => 
-            goal.title.toLowerCase() === project.goalTitle.toLowerCase()
+            goal.title.toLowerCase() === milestone.goalTitle.toLowerCase()
           );
           
           if (matchingGoal) {
-            console.log(`Fixing goal link for project "${project.title}" - linking to goal "${matchingGoal.title}"`);
-            updatedProjects[index].goalId = matchingGoal.id;
-            updatedLinkMap[project.id] = matchingGoal.id;
+            console.log(`Fixing goal link for milestone "${milestone.title}" - linking to goal "${matchingGoal.title}"`);
+            updatedMilestones[index].goalId = matchingGoal.id;
+            updatedLinkMap[milestone.id] = matchingGoal.id;
             fixesApplied++;
             needsUpdate = true;
           } else {
             // Clear the invalid goal ID
-            updatedProjects[index].goalId = null;
-            delete updatedLinkMap[project.id];
+            updatedMilestones[index].goalId = null;
+            delete updatedLinkMap[milestone.id];
             needsUpdate = true;
             issuesFound++;
           }
         }
       } else {
         // Goal exists, but check if goalTitle matches
-        const goal = goals.find(g => g.id === project.goalId);
-        if (goal && goal.title !== project.goalTitle) {
-          console.log(`Fixing mismatched goal title for project "${project.title}" - should be "${goal.title}"`);
-          updatedProjects[index].goalTitle = goal.title;
+        const goal = goals.find(g => g.id === milestone.goalId);
+        if (goal && goal.title !== milestone.goalTitle) {
+          console.log(`Fixing mismatched goal title for milestone "${milestone.title}" - should be "${goal.title}"`);
+          updatedMilestones[index].goalTitle = goal.title;
           needsUpdate = true;
           fixesApplied++;
         }
@@ -110,9 +110,9 @@ export const auditProjectGoalRelationships = (projects, goals, projectGoalLinkMa
   });
   
   return {
-    projects: updatedProjects,
+    milestones: updatedMilestones,
     goals,
-    projectGoalLinkMap: updatedLinkMap,
+    milestoneGoalLinkMap: updatedLinkMap,
     needsUpdate,
     stats: {
       issuesFound,
@@ -122,107 +122,107 @@ export const auditProjectGoalRelationships = (projects, goals, projectGoalLinkMa
 };
 
 /**
- * Link projects to goals by title
- * @param {Array} projects - Array of all projects
+ * Link milestones to goals by title
+ * @param {Array} milestones - Array of all milestones
  * @param {Array} goals - Array of all goals
- * @param {Object} projectGoalLinkMap - Map of project IDs to goal IDs
- * @returns {Object} - Object with updated projects, linkMap, and fixCount
+ * @param {Object} milestoneGoalLinkMap - Map of milestone IDs to goal IDs
+ * @returns {Object} - Object with updated milestones, linkMap, and fixCount
  */
-export const linkProjectsToGoalsByTitle = (projects, goals, projectGoalLinkMap = {}) => {
-  if (!Array.isArray(projects) || !Array.isArray(goals)) {
-    return { projects, projectGoalLinkMap, fixCount: 0 };
+export const linkMilestonesToGoalsByTitle = (milestones, goals, milestoneGoalLinkMap = {}) => {
+  if (!Array.isArray(milestones) || !Array.isArray(goals)) {
+    return { milestones, milestoneGoalLinkMap, fixCount: 0 };
   }
   
   let fixCount = 0;
   
-  // Look for projects without goalId but with goalTitle
-  const updatedProjects = projects.map(project => {
-    if (!project.goalId && project.goalTitle) {
+  // Look for milestones without goalId but with goalTitle
+  const updatedMilestones = milestones.map(milestone => {
+    if (!milestone.goalId && milestone.goalTitle) {
       // Try to find goal by title
       const matchingGoal = goals.find(goal => 
-        goal.title.toLowerCase() === project.goalTitle.toLowerCase()
+        goal.title.toLowerCase() === milestone.goalTitle.toLowerCase()
       );
       
       if (matchingGoal) {
         fixCount++;
         return {
-          ...project,
+          ...milestone,
           goalId: matchingGoal.id,
           goalTitle: matchingGoal.title, // Ensure exact case match
           // Inherit domain and color if not already set
-          domain: project.domain || matchingGoal.domain,
-          color: project.color || matchingGoal.color
+          domain: milestone.domain || matchingGoal.domain,
+          color: milestone.color || matchingGoal.color
         };
       }
     }
     
-    return project;
+    return milestone;
   });
   
   // Update link map
-  const updatedLinkMap = { ...projectGoalLinkMap };
-  updatedProjects.forEach(project => {
-    if (project.goalId) {
-      updatedLinkMap[project.id] = project.goalId;
+  const updatedLinkMap = { ...milestoneGoalLinkMap };
+  updatedMilestones.forEach(milestone => {
+    if (milestone.goalId) {
+      updatedLinkMap[milestone.id] = milestone.goalId;
     }
   });
   
   return {
-    projects: updatedProjects,
-    projectGoalLinkMap: updatedLinkMap,
+    milestones: updatedMilestones,
+    milestoneGoalLinkMap: updatedLinkMap,
     fixCount
   };
 };
 
 /**
- * Clean up orphaned projects (projects with invalid goal IDs)
- * @param {Array} projects - Array of all projects
+ * Clean up orphaned milestones (milestones with invalid goal IDs)
+ * @param {Array} milestones - Array of all milestones
  * @param {Array} goals - Array of all goals
- * @param {Object} projectGoalLinkMap - Map of project IDs to goal IDs
- * @returns {Object} - Object with updated projects, linkMap, and orphanCount
+ * @param {Object} milestoneGoalLinkMap - Map of milestone IDs to goal IDs
+ * @returns {Object} - Object with updated milestones, linkMap, and orphanCount
  */
-export const cleanupOrphanedProjects = (projects, goals, projectGoalLinkMap = {}) => {
-  if (!Array.isArray(projects) || !Array.isArray(goals)) {
-    return { projects, projectGoalLinkMap, orphanCount: 0 };
+export const cleanupOrphanedMilestones = (milestones, goals, milestoneGoalLinkMap = {}) => {
+  if (!Array.isArray(milestones) || !Array.isArray(goals)) {
+    return { milestones, milestoneGoalLinkMap, orphanCount: 0 };
   }
   
   // Find valid goal IDs
   const validGoalIds = goals.map(goal => goal.id);
   
-  // Find orphaned projects
-  const orphanedProjects = projects.filter(project => 
-    project.goalId && !validGoalIds.includes(project.goalId)
+  // Find orphaned milestones
+  const orphanedMilestones = milestones.filter(milestone => 
+    milestone.goalId && !validGoalIds.includes(milestone.goalId)
   );
   
-  if (orphanedProjects.length === 0) {
-    return { projects, projectGoalLinkMap, orphanCount: 0 };
+  if (orphanedMilestones.length === 0) {
+    return { milestones, milestoneGoalLinkMap, orphanCount: 0 };
   }
   
-  console.log(`Found ${orphanedProjects.length} orphaned projects to convert to standalone`);
+  console.log(`Found ${orphanedMilestones.length} orphaned milestones to convert to standalone`);
   
-  // Convert orphaned projects to standalone (remove goal references)
-  const updatedProjects = projects.map(project => {
-    if (project.goalId && !validGoalIds.includes(project.goalId)) {
+  // Convert orphaned milestones to standalone (remove goal references)
+  const updatedMilestones = milestones.map(milestone => {
+    if (milestone.goalId && !validGoalIds.includes(milestone.goalId)) {
       // Convert to standalone milestone
       return {
-        ...project,
+        ...milestone,
         goalId: null,
         goalTitle: null
       };
     }
-    return project;
+    return milestone;
   });
   
   // Update link map
-  const updatedLinkMap = { ...projectGoalLinkMap };
-  orphanedProjects.forEach(project => {
-    delete updatedLinkMap[project.id];
+  const updatedLinkMap = { ...milestoneGoalLinkMap };
+  orphanedMilestones.forEach(milestone => {
+    delete updatedLinkMap[milestone.id];
   });
   
   return {
-    projects: updatedProjects,
-    projectGoalLinkMap: updatedLinkMap,
-    orphanCount: orphanedProjects.length
+    milestones: updatedMilestones,
+    milestoneGoalLinkMap: updatedLinkMap,
+    orphanCount: orphanedMilestones.length
   };
 };
 
@@ -237,11 +237,11 @@ export const saveAuditResults = async (auditResults) => {
   }
   
   try {
-    // Save updated projects
-    await saveData(STORAGE_KEYS.PROJECTS, auditResults.projects);
+    // Save updated milestones
+    await saveData(STORAGE_KEYS.MILESTONES, auditResults.milestones);
     
     // Save updated link map
-    await saveData(STORAGE_KEYS.PROJECT_GOAL_LINK_MAP, auditResults.projectGoalLinkMap);
+    await saveData(STORAGE_KEYS.MILESTONE_GOAL_LINK_MAP, auditResults.milestoneGoalLinkMap);
     
     return true;
   } catch (error) {

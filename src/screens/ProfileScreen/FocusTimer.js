@@ -17,6 +17,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import PagerView from 'react-native-pager-view';
 import {
@@ -72,6 +73,29 @@ const FocusTimer = ({ theme, navigation }) => {
   
   // Track interaction states
   const [isTransitioning, setIsTransitioning] = useState(false);
+  
+  // Alarm system states
+  const [showAlarmModal, setShowAlarmModal] = useState(false);
+  const [alarmTimeoutId, setAlarmTimeoutId] = useState(null);
+  
+  // Force reset alarm state (emergency function)
+  const forceResetAlarm = () => {
+    console.log('🚨 FORCE RESETTING ALARM STATE');
+    setShowAlarmModal(false);
+    if (alarmTimeoutId) {
+      clearTimeout(alarmTimeoutId);
+      setAlarmTimeoutId(null);
+    }
+    Notifications.cancelAllScheduledNotificationsAsync();
+  };
+  
+  // Expose force reset to global for debugging
+  useEffect(() => {
+    global.forceResetAlarm = forceResetAlarm;
+    return () => {
+      delete global.forceResetAlarm;
+    };
+  }, [alarmTimeoutId]);
 
   // Get screen dimensions and safe area insets
   const { width, height } = useScreenDimensions();
@@ -108,7 +132,155 @@ const FocusTimer = ({ theme, navigation }) => {
   useEffect(() => {
     loadTimerHistory();
     loadEditHintState();
+    setupNotifications();
   }, []);
+
+  // Cleanup alarm on unmount
+  useEffect(() => {
+    return () => {
+      // Clean up alarm when component unmounts
+      if (alarmTimeoutId) {
+        clearTimeout(alarmTimeoutId);
+      }
+      setShowAlarmModal(false);
+      Notifications.cancelAllScheduledNotificationsAsync();
+    };
+  }, [alarmTimeoutId]);
+
+  // Setup notifications for alarm system
+  const setupNotifications = async () => {
+    try {
+      // Configure notification behavior
+      Notifications.setNotificationHandler({
+        handleNotification: async () => ({
+          shouldShowAlert: true,
+          shouldPlaySound: true,
+          shouldSetBadge: false,
+        }),
+      });
+
+      // Request permissions
+      const { status } = await Notifications.requestPermissionsAsync();
+      if (status !== 'granted') {
+        console.log('Notification permissions not granted');
+      }
+    } catch (error) {
+      console.error('Error setting up notifications:', error);
+    }
+  };
+
+  // Hybrid alarm system for countdown timer completion
+  const playAlarmSound = async () => {
+    try {
+      console.log('🔔 Focus timer completed! Starting hybrid alarm system...');
+      console.log('📱 App state:', AppState.currentState);
+      console.log('🎯 Fullscreen mode:', fullscreenMode);
+      
+      // Check if app is currently active
+      const currentAppState = AppState.currentState;
+      const isAppActive = currentAppState === 'active';
+      
+      if (isAppActive) {
+        console.log('✅ Triggering foreground alarm (modal + haptics)');
+        // App is in foreground - use in-app modal + haptics
+        triggerForegroundAlarm();
+      } else {
+        console.log('✅ Triggering background alarm (notification)');
+        // App is in background - use notification
+        triggerBackgroundAlarm();
+      }
+      
+      // Set auto-stop timer (60 seconds)
+      const timeoutId = setTimeout(() => {
+        console.log('⏰ Auto-stopping alarm after 60 seconds');
+        stopAlarm();
+      }, 60000);
+      
+      setAlarmTimeoutId(timeoutId);
+      
+    } catch (error) {
+      console.error('❌ Error with hybrid alarm system:', error);
+      // Fallback to simple haptics
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      }
+    }
+  };
+
+  // Foreground alarm with modal and haptics
+  const triggerForegroundAlarm = async () => {
+    try {
+      console.log('🎬 Setting showAlarmModal to true');
+      // Show alarm modal
+      setShowAlarmModal(true);
+      
+      // Enhanced haptic pattern
+      if (Platform.OS !== 'web') {
+        console.log('📳 Starting haptic pattern');
+        // Create alarm-like haptic pattern
+        const hapticPattern = async () => {
+          for (let i = 0; i < 6; i++) {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+            await new Promise(resolve => setTimeout(resolve, 300));
+          }
+          // Final success notification
+          setTimeout(() => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          }, 500);
+        };
+        hapticPattern();
+      }
+      
+      console.log('✅ Foreground alarm: Modal shown + haptic pattern triggered');
+    } catch (error) {
+      console.error('❌ Error with foreground alarm:', error);
+    }
+  };
+
+  // Background alarm with notification
+  const triggerBackgroundAlarm = async () => {
+    try {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: '⏰ Focus Timer Complete!',
+          body: 'Your focus session has finished. Tap to dismiss.',
+          sound: 'default',
+          priority: Notifications.AndroidNotificationPriority.HIGH,
+          vibrate: [0, 250, 250, 250],
+        },
+        trigger: null, // Show immediately
+      });
+      
+      console.log('🔔 Background alarm: Notification scheduled');
+    } catch (error) {
+      console.error('Error with background alarm:', error);
+    }
+  };
+
+  // Stop all alarm activities
+  const stopAlarm = () => {
+    try {
+      console.log('🛑 Stopping alarm...');
+      
+      // Clear auto-stop timer
+      if (alarmTimeoutId) {
+        console.log('⏰ Clearing alarm timeout');
+        clearTimeout(alarmTimeoutId);
+        setAlarmTimeoutId(null);
+      }
+      
+      // Hide modal
+      console.log('🎬 Setting showAlarmModal to false');
+      setShowAlarmModal(false);
+      
+      // Cancel any pending notifications
+      Notifications.cancelAllScheduledNotificationsAsync();
+      
+      console.log('✅ Alarm stopped successfully');
+    } catch (error) {
+      console.error('❌ Error stopping alarm:', error);
+    }
+  };
 
   // Separate effect for animations and UI updates
   useEffect(() => {
@@ -157,6 +329,9 @@ const FocusTimer = ({ theme, navigation }) => {
             if (Platform.OS !== 'web') {
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             }
+            
+            // Play alarm sound when timer completes
+            playAlarmSound();
             
             // Save the completed session
             saveTimerSession(targetTime, countdownDistractions);
@@ -326,6 +501,9 @@ const FocusTimer = ({ theme, navigation }) => {
               setCountdownTimeElapsed(state.targetTime);
               setIsCountdownRunning(false);
               setCountdownStartTime(null);
+              
+              // Play alarm sound if timer completed while in background
+              playAlarmSound();
             } else {
               setCountdownStartTime(state.countdownStartTime);
               setIsCountdownRunning(true);
@@ -2563,6 +2741,44 @@ const FocusTimer = ({ theme, navigation }) => {
     </Modal>
   );
 
+  // Render alarm modal - only when actually needed
+  const renderAlarmModal = () => {
+    if (!showAlarmModal) return null;
+    
+    return (
+      <Modal
+        visible={showAlarmModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={stopAlarm}
+        presentationStyle="overFullScreen"
+      >
+        <View style={styles.alarmModalOverlay}>
+          <View style={styles.alarmModalContent}>
+            <View style={styles.alarmHeader}>
+              <Text style={styles.alarmTitle}>⏰ Focus Complete!</Text>
+              <Text style={styles.alarmSubtitle}>Your focus session has finished</Text>
+            </View>
+            
+            <View style={styles.alarmButtonContainer}>
+              <TouchableOpacity
+                style={styles.alarmDismissButton}
+                onPress={stopAlarm}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.alarmDismissText}>Stop Alarm</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <Text style={styles.alarmAutoStopText}>
+              Auto-stops in 60 seconds
+            </Text>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
   return (
     <View 
       style={[
@@ -2579,6 +2795,7 @@ const FocusTimer = ({ theme, navigation }) => {
     >
       {renderTimerView()}
       {fullscreenMode && renderFullscreenTimer()}
+      {renderAlarmModal()}
     </View>
   );
 };
@@ -2774,6 +2991,68 @@ const styles = StyleSheet.create({
   // Edit hint styles
   editHintContainer: {},
   editHintText: {},
+  
+  // Alarm modal styles
+  alarmModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  alarmModalContent: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: 20,
+    padding: 30,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 20,
+    borderWidth: 1,
+    borderColor: '#333',
+    minWidth: 280,
+  },
+  alarmHeader: {
+    alignItems: 'center',
+    marginBottom: 25,
+  },
+  alarmTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  alarmSubtitle: {
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.7)',
+    textAlign: 'center',
+  },
+  alarmButtonContainer: {
+    marginBottom: 15,
+  },
+  alarmDismissButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 40,
+    paddingVertical: 15,
+    borderRadius: 25,
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  alarmDismissText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  alarmAutoStopText: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.5)',
+    textAlign: 'center',
+  },
 });
 
 export default FocusTimer;

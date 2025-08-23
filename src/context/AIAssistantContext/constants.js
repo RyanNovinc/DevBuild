@@ -123,12 +123,12 @@ export const initialState = {
   // Modal state
   modals: {
     goalModalVisible: false,
-    projectModalVisible: false,
+    milestoneModalVisible: false,
     timeBlockModalVisible: false,
     taskModalVisible: false,
     actionSheetVisible: false,
     currentGoalData: null,
-    currentProjectData: null,
+    currentMilestoneData: null,
     currentTimeBlockData: null,
     currentTaskData: null,
   },

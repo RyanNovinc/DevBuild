@@ -11,12 +11,12 @@ export const DOMAIN_DEFINITIONS = [
         name: "Master Work-Life Balance",
         description: "Achieve sustainable integration between career success and personal wellbeing",
         icon: "scale",
-        explanation: "A goal in LifeCompass represents something meaningful you want to achieve in this domain. Goals provide direction and focus, and are broken down into projects and tasks to make them achievable.",
-        projects: [
+        explanation: "A goal in LifeCompass represents something meaningful you want to achieve in this domain. Goals provide direction and focus, and are broken down into milestones and tasks to make them achievable.",
+        milestones: [
           {
             name: "Flexible Work Arrangement",
             description: "Negotiate and maintain work arrangements that support life integration",
-            explanation: "A project in LifeCompass breaks your goal into manageable parts. Each project tackles one major component needed to achieve your goal and contains specific tasks you can complete.",
+            explanation: "A milestone in LifeCompass breaks your goal into manageable parts. Each milestone tackles one major component needed to achieve your goal and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Document your productivity metrics and propose flexible work arrangement to manager",
@@ -37,7 +37,7 @@ export const DOMAIN_DEFINITIONS = [
           {
             name: "Stress Management System",
             description: "Develop tools to manage work stress and prevent burnout",
-            explanation: "A project in LifeCompass breaks your goal into manageable parts. Each project tackles one major component needed to achieve your goal and contains specific tasks you can complete.",
+            explanation: "A milestone in LifeCompass breaks your goal into manageable parts. Each milestone tackles one major component needed to achieve your goal and contains specific tasks you can complete.",
             tasks: [
               {
                 name: "Create daily routines that help transition between work and personal life",
@@ -61,14 +61,14 @@ export const DOMAIN_DEFINITIONS = [
         name: "Build Career-Advancing Skills",
         description: "Develop future-ready capabilities that guarantee career growth and advancement",
         icon: "trending-up",
-        explanation: "A goal in LifeCompass represents something meaningful you want to achieve in this domain. Goals provide direction and focus, and are broken down into projects and tasks to make them achievable.",
+        explanation: "A goal in LifeCompass represents something meaningful you want to achieve in this domain. Goals provide direction and focus, and are broken down into milestones and tasks to make them achievable.",
         needsClarification: true,
         clarificationOptions: [
           {
             id: "data-analytics",
             name: "Data Analytics & Business Intelligence",
             description: "Master data analysis, Excel, and business intelligence tools",
-            projects: [
+            milestones: [
               {
                 name: "Data Analytics Mastery",
                 description: "Master essential data analysis tools for American business environment",
@@ -117,7 +117,7 @@ export const DOMAIN_DEFINITIONS = [
             id: "ai-ml",
             name: "AI & Machine Learning Applications",
             description: "Learn practical AI tools and machine learning fundamentals",
-            projects: [
+            milestones: [
               {
                 name: "AI Tools for Business",
                 description: "Master practical AI applications for workplace productivity and innovation",
@@ -166,7 +166,7 @@ export const DOMAIN_DEFINITIONS = [
             id: "leadership",
             name: "Leadership & Communication Skills",
             description: "Develop soft skills for management and team leadership roles",
-            projects: [
+            milestones: [
               {
                 name: "Leadership Skill Development",
                 description: "Build essential leadership capabilities for American workplace advancement",
@@ -212,7 +212,7 @@ export const DOMAIN_DEFINITIONS = [
             ]
           }
         ],
-        projects: [
+        milestones: [
           {
             name: "Strategic Skill Development",
             description: "Identify and master high-impact skills for your career path",
@@ -268,7 +268,7 @@ export const DOMAIN_DEFINITIONS = [
             id: "environmental",
             name: "Environmental & Sustainability Roles",
             description: "Work in roles focused on environmental protection, sustainability, or climate action",
-            projects: [
+            milestones: [
               {
                 name: "Environmental Career Transition",
                 description: "Transition into roles focused on environmental protection and sustainability",
@@ -313,7 +313,7 @@ export const DOMAIN_DEFINITIONS = [
             id: "social-services",
             name: "Healthcare & Social Services",
             description: "Contribute to healthcare, social services, or community development",
-            projects: [
+            milestones: [
               {
                 name: "Healthcare Career Path",
                 description: "Transition into healthcare or social services roles for direct community impact",
@@ -358,7 +358,7 @@ export const DOMAIN_DEFINITIONS = [
             id: "education",
             name: "Education & Community Impact",
             description: "Work in education, training, or social impact organizations",
-            projects: [
+            milestones: [
               {
                 name: "Education Career Development",
                 description: "Transition into education or training roles for long-term community impact",
@@ -400,7 +400,7 @@ export const DOMAIN_DEFINITIONS = [
             ]
           }
         ],
-        projects: [
+        milestones: [
           {
             name: "Values-Based Career Research",
             description: "Identify career opportunities that align with your personal values",
@@ -454,7 +454,7 @@ export const DOMAIN_DEFINITIONS = [
         description: "Create financial security buffer for true peace of mind and stability",
         icon: "shield",
         explanation: "48% of Gen Z and 46% of millennials feel financially insecure with 60% living paycheck to paycheck. Emergency funds provide the foundation enabling all other life goals.",
-        projects: [
+        milestones: [
           {
             name: "Emergency Fund Foundation",
             description: "Calculate target amount and establish systematic saving plan",
@@ -504,7 +504,7 @@ export const DOMAIN_DEFINITIONS = [
         description: "Eliminate credit card and high-interest debt to unlock financial freedom",
         icon: "card",
         explanation: "Debt management education provides information for educational purposes. Individual financial situations vary significantly - consult qualified financial advisors for guidance.",
-        projects: [
+        milestones: [
           {
             name: "Strategic Debt Elimination",
             description: "Create systematic plan to pay off all high-interest debt",
@@ -554,7 +554,7 @@ export const DOMAIN_DEFINITIONS = [
         description: "Learn about investment concepts for educational purposes",
         icon: "trending-up",
         explanation: "Homeownership research provides information for educational purposes. Individual real estate outcomes vary significantly - consult qualified real estate and financial professionals for guidance.",
-        projects: [
+        milestones: [
           {
             name: "Investment Foundation Setup",
             description: "Open investment accounts and begin systematic investing",
@@ -612,7 +612,7 @@ export const DOMAIN_DEFINITIONS = [
         description: "Achieve consistent 7-8 hours of restorative sleep for optimal health and performance",
         icon: "moon",
         explanation: "Sleep quality ranks as top 3 wellness priority, with 54% prioritizing sleep improvement. The sleep crisis affects 70% of this age group who don't get recommended amounts.",
-        projects: [
+        milestones: [
           {
             name: "Sleep Hygiene System",
             description: "Create environment and routines that support quality sleep",
@@ -662,7 +662,7 @@ export const DOMAIN_DEFINITIONS = [
         description: "Create sustainable exercise habits for lifelong physical and mental health",
         icon: "barbell",
         explanation: "72% of millennials and 73% of Gen Z use fitness facilities with 88% prioritizing physical fitness. Yet 44% of Gen Z struggle with exercise motivation.",
-        projects: [
+        milestones: [
           {
             name: "Sustainable Exercise Plan",
             description: "Design workout routine that fits your schedule and preferences",
@@ -712,7 +712,7 @@ export const DOMAIN_DEFINITIONS = [
         description: "Establish therapy or counseling routine for emotional wellbeing and growth",
         icon: "happy",
         explanation: "39% of Gen Z and millennials plan to pursue therapy, with 93% wanting to improve mental health. Only 37% with struggles currently seek care due to cost barriers.",
-        projects: [
+        milestones: [
           {
             name: "Mental Health Care Access",
             description: "Find and establish relationship with mental health professional",
@@ -766,7 +766,7 @@ export const DOMAIN_DEFINITIONS = [
         description: "Create and maintain 3-5 close, supportive friendships for lasting connection",
         icon: "people",
         explanation: "Post-pandemic friendship crisis affects millions, with 22% saying it's been 5+ years since making a new friend. Yet 94% of young adults identify friends as primary social support.",
-        projects: [
+        milestones: [
           {
             name: "Friendship Network Building",
             description: "Actively meet new people and develop meaningful friendships",
@@ -812,7 +812,7 @@ export const DOMAIN_DEFINITIONS = [
         description: "Pursue conscious dating for meaningful romantic partnership",
         icon: "heart",
         explanation: "70% of millennials want marriage and 74% want children eventually. Dating fatigue drives shift toward 'conscious dating' seeking deeper connections over casual encounters.",
-        projects: [
+        milestones: [
           {
             name: "Intentional Dating Strategy",
             description: "Approach dating with clear intentions for long-term partnership",
@@ -858,7 +858,7 @@ export const DOMAIN_DEFINITIONS = [
         description: "Develop regular family connection habits and stronger bonds",
         icon: "home",
         explanation: "79% of millennials say family is most important in their lives—higher than any other priority. Post-pandemic emphasized family bonds, but geographic mobility makes maintenance challenging.",
-        projects: [
+        milestones: [
           {
             name: "Family Communication Enhancement",
             description: "Create regular touchpoints and improve communication with family",
@@ -912,7 +912,7 @@ export const DOMAIN_DEFINITIONS = [
         description: "Master data analysis skills for career enhancement and decision-making",
         icon: "bar-chart",
         explanation: "Data analytics skills show 52% job growth (2019-2024), accounting for 8% of global postings. Microsoft Excel was #1 most popular course in 2024.",
-        projects: [
+        milestones: [
           {
             name: "Data Analytics Certification",
             description: "Complete comprehensive data analytics training program",
@@ -964,7 +964,7 @@ export const DOMAIN_DEFINITIONS = [
             id: "digital-content",
             name: "Digital Content Creation (videos, blogs, social media)",
             description: "Create online content through YouTube, blogging, or social media",
-            projects: [
+            milestones: [
               {
                 name: "Content Creation Foundation",
                 description: "Establish digital content platform and build audience for monetization",
@@ -1009,7 +1009,7 @@ export const DOMAIN_DEFINITIONS = [
             id: "handmade-products",
             name: "Handmade Products & Crafts (Etsy, local markets)",
             description: "Make and sell physical products through online marketplaces",
-            projects: [
+            milestones: [
               {
                 name: "Handmade Product Business Launch",
                 description: "Create marketable handmade products and establish online sales presence",
@@ -1054,7 +1054,7 @@ export const DOMAIN_DEFINITIONS = [
             id: "creative-services",
             name: "Creative Services (design, writing, photography)",
             description: "Offer creative professional services to clients",
-            projects: [
+            milestones: [
               {
                 name: "Creative Services Business Setup",
                 description: "Establish professional creative services offering and client acquisition system",
@@ -1096,7 +1096,7 @@ export const DOMAIN_DEFINITIONS = [
             ]
           }
         ],
-        projects: [
+        milestones: [
           {
             name: "Side Hustle Launch Strategy",
             description: "Choose creative focus and establish business foundation",
@@ -1148,7 +1148,7 @@ export const DOMAIN_DEFINITIONS = [
             id: "practical-tools",
             name: "Practical AI Tools for Work (ChatGPT, automation)",
             description: "Master everyday AI tools that improve work productivity",
-            projects: [
+            milestones: [
               {
                 name: "AI Productivity Mastery",
                 description: "Master practical AI tools for immediate workplace productivity gains",
@@ -1193,7 +1193,7 @@ export const DOMAIN_DEFINITIONS = [
             id: "ml-fundamentals",
             name: "Machine Learning & Data Science Fundamentals",
             description: "Learn technical foundations of machine learning and data science",
-            projects: [
+            milestones: [
               {
                 name: "ML Technical Foundation",
                 description: "Build solid technical understanding of machine learning concepts and applications",
@@ -1238,7 +1238,7 @@ export const DOMAIN_DEFINITIONS = [
             id: "ai-strategy",
             name: "AI Strategy & Business Applications",
             description: "Understand AI's business impact and strategic implementation",
-            projects: [
+            milestones: [
               {
                 name: "AI Strategy Understanding",
                 description: "Develop strategic understanding of AI's business impact and implementation challenges",
@@ -1280,7 +1280,7 @@ export const DOMAIN_DEFINITIONS = [
             ]
           }
         ],
-        projects: [
+        milestones: [
           {
             name: "AI Skills Development",
             description: "Complete structured AI/ML learning program with practical projects",
@@ -1334,7 +1334,7 @@ export const DOMAIN_DEFINITIONS = [
         description: "Complete meaningful solo travel experience for personal growth and adventure",
         icon: "airplane",
         explanation: "70% of 25-34 year-olds travel annually, with 75% of Gen Z planning solo trips in 2024. Solo travel has become major trend for personal growth and independence.",
-        projects: [
+        milestones: [
           {
             name: "Solo Travel Planning",
             description: "Research and plan meaningful solo adventure experience",
@@ -1380,7 +1380,7 @@ export const DOMAIN_DEFINITIONS = [
         description: "Maintain 4+ weekly wellness activities for holistic health and relaxation",
         icon: "leaf",
         explanation: "Fitness and wellness activities may support physical and mental health. Individual health outcomes vary - consult health professionals for guidance.",
-        projects: [
+        milestones: [
           {
             name: "Wellness Routine Development",
             description: "Create diverse wellness activities that support mental and physical health",
@@ -1426,7 +1426,7 @@ export const DOMAIN_DEFINITIONS = [
         description: "Try 24 new local restaurants, events, and cultural activities within 12 months",
         icon: "restaurant",
         explanation: "Entertainment and dining may provide social and recreational experiences. Individual preferences and budgets vary - plan according to personal circumstances.",
-        projects: [
+        milestones: [
           {
             name: "Local Cultural Exploration",
             description: "Systematically discover and experience local cultural offerings",
@@ -1480,7 +1480,7 @@ export const DOMAIN_DEFINITIONS = [
         description: "Complete 50+ hours of meaningful community service within 12 months",
         icon: "heart",
         explanation: "28.3% of Americans volunteer formally (75.7+ million), with volunteering rebounding 5.1% post-pandemic. Ages 35-44 have highest volunteer rates (28.9%) and 96% report enriched purpose.",
-        projects: [
+        milestones: [
           {
             name: "Strategic Volunteering Setup",
             description: "Choose cause and commit to regular volunteer service",
@@ -1526,7 +1526,7 @@ export const DOMAIN_DEFINITIONS = [
         description: "Find career role that matches personal ethics and impact goals",
         icon: "compass",
         explanation: "92% of millennials and 89% of Gen Z consider purpose important for job satisfaction. Nearly half have left roles lacking purpose, while 40% reject assignments based on ethics.",
-        projects: [
+        milestones: [
           {
             name: "Values-Work Integration Strategy",
             description: "Assess current role and plan for better values alignment",
@@ -1572,7 +1572,7 @@ export const DOMAIN_DEFINITIONS = [
         description: "Reduce personal environmental impact by 30% through lifestyle changes",
         icon: "leaf",
         explanation: "Environmental sustainability tops priorities, with ~60% worried about climate monthly. Half of Gen Z/millennials actively pressure businesses on climate action.",
-        projects: [
+        milestones: [
           {
             name: "Sustainable Lifestyle Assessment",
             description: "Audit current environmental impact and identify reduction opportunities",
@@ -1626,7 +1626,7 @@ export const DOMAIN_DEFINITIONS = [
         description: "Navigate path to homeownership despite affordability challenges",
         icon: "key",
         explanation: "Millennials are largest homebuyer group (38%) with 23% planning purchase within 6 months. Despite affordability crisis, 82% view homeownership as good investment.",
-        projects: [
+        milestones: [
           {
             name: "Homeownership Preparation Strategy",
             description: "Build financial foundation and knowledge for home purchase",
@@ -1672,7 +1672,7 @@ export const DOMAIN_DEFINITIONS = [
         description: "Declutter and organise home environment for calm and productivity",
         icon: "grid",
         explanation: "64% of millennials/Gen Z actively reducing possessions in 2024. Decluttering is #1 New Year's resolution, with people 'more ruthless than ever' about items.",
-        projects: [
+        milestones: [
           {
             name: "Systematic Decluttering Process",
             description: "Remove unnecessary items and create organised living systems",
@@ -1718,7 +1718,7 @@ export const DOMAIN_DEFINITIONS = [
         description: "Transform living space into energy-efficient, sustainable environment",
         icon: "leaf",
         explanation: "Millennials prioritise sustainability in housing, seeking energy-efficient appliances and eco-friendly materials. 88% prefer urban living with sustainable amenities.",
-        projects: [
+        milestones: [
           {
             name: "Energy Efficiency Improvements",
             description: "Implement changes that reduce energy consumption and environmental impact",

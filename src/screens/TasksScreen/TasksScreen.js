@@ -52,7 +52,7 @@ import {
 } from '../../components/subscription/SubscriptionUI';
 
 // Import subscription service constants
-import { FREE_PLAN_LIMITS, checkProjectsPerGoalLimit } from '../../services/SubscriptionService';
+import { FREE_PLAN_LIMITS, checkMilestonesPerGoalLimit } from '../../services/SubscriptionService';
 
 // Removed width/height as they were only used for tabs
 
@@ -115,7 +115,7 @@ const TasksScreen = ({ route, navigation }) => {
       
       if (todoTask && updateTask) {
         console.log('🎯 Tour: Moving task', todoTask.title, 'from todo to in-progress');
-        console.log('🎯 Tour: Task details:', { id: todoTask.id, projectId: todoTask.projectId, currentStatus: todoTask.status });
+        console.log('🎯 Tour: Task details:', { id: todoTask.id, milestoneId: todoTask.milestoneId, currentStatus: todoTask.status });
         setTourTaskToMove(todoTask.id);
         
         const updatedTask = { 
@@ -125,8 +125,8 @@ const TasksScreen = ({ route, navigation }) => {
         };
         
         try {
-          // Use the correct updateTask signature: updateTask(projectId, taskId, updatedTask)
-          await updateTask(todoTask.projectId, todoTask.id, updatedTask);
+          // Use the correct updateTask signature: updateTask(milestoneId, taskId, updatedTask)
+          await updateTask(todoTask.milestoneId, todoTask.id, updatedTask);
           console.log('🎯 Tour: Successfully moved task to in-progress');
         } catch (error) {
           console.error('🎯 Tour: Error moving task:', error);
@@ -159,8 +159,8 @@ const TasksScreen = ({ route, navigation }) => {
           };
           
           try {
-            // Use the correct updateTask signature: updateTask(projectId, taskId, updatedTask)
-            await updateTask(taskToComplete.projectId, taskToComplete.id, updatedTask);
+            // Use the correct updateTask signature: updateTask(milestoneId, taskId, updatedTask)
+            await updateTask(taskToComplete.milestoneId, taskToComplete.id, updatedTask);
             console.log('🎯 Tour: Successfully completed task');
           } catch (error) {
             console.error('🎯 Tour: Error completing task:', error);
@@ -181,8 +181,8 @@ const TasksScreen = ({ route, navigation }) => {
           };
           
           try {
-            // Use the correct updateTask signature: updateTask(projectId, taskId, updatedTask)
-            await updateTask(inProgressTask.projectId, inProgressTask.id, updatedTask);
+            // Use the correct updateTask signature: updateTask(milestoneId, taskId, updatedTask)
+            await updateTask(inProgressTask.milestoneId, inProgressTask.id, updatedTask);
             console.log('🎯 Tour: Successfully completed fallback task');
           } catch (error) {
             console.error('🎯 Tour: Error completing fallback task:', error);
@@ -198,18 +198,18 @@ const TasksScreen = ({ route, navigation }) => {
   };
   
   const { 
-    projects, 
+    milestones, 
     tasks, 
     mainGoals, 
     goals, 
-    updateProject,
-    updateProjectProgress,
+    updateMilestone,
+    updateMilestoneProgress,
     updateGoal,
     updateTask,
-    cleanupOrphanedProjects,
+    cleanupOrphanedMilestones,
     forceDataReset,
     refreshData,
-    canAddMoreProjectsToGoal,
+    canAddMoreMilestonesToGoal,
     userSubscriptionStatus,
     settings,
     updateAppSetting
@@ -232,19 +232,19 @@ const TasksScreen = ({ route, navigation }) => {
   const [selectedMilestoneId, setSelectedMilestoneId] = useState(null); // New milestone filter state
   // Removed tab-related state since we're Kanban-only now
   
-  // New state for task/project view mode toggle
-  const [viewMode, setViewMode] = useState('tasks'); // 'projects' or 'tasks' - Default to tasks for Kanban filtering
+  // New state for task/milestone view mode toggle
+  const [viewMode, setViewMode] = useState('tasks'); // 'milestones' or 'tasks' - Default to tasks for Kanban filtering
   
   // State for subscription limit banner
   const [showLimitBanner, setShowLimitBanner] = useState(false);
   const [limitMessage, setLimitMessage] = useState('');
   const limitBannerAnimation = useRef(new Animated.Value(-100)).current;
   
-  // State for project limit modal
+  // State for milestone limit modal
   const [showLimitModal, setShowLimitModal] = useState(false);
-  const [projectLimitData, setProjectLimitData] = useState({
-    projectCount: 0,
-    maxAllowed: FREE_PLAN_LIMITS?.MAX_PROJECTS_PER_GOAL || 2
+  const [milestoneLimitData, setMilestoneLimitData] = useState({
+    milestoneCount: 0,
+    maxAllowed: FREE_PLAN_LIMITS?.MAX_MILESTONES_PER_GOAL || 2
   });
   
   // State for upgrade modal
@@ -266,7 +266,7 @@ const TasksScreen = ({ route, navigation }) => {
   const [specificGoalCollapsedSections, setSpecificGoalCollapsedSections] = useState({});
   const sectionsInitialized = useRef(false);
   
-  // Confetti state for project completion
+  // Confetti state for milestone completion
   const [showConfetti, setShowConfetti] = useState(false);
   const [confettiColors, setConfettiColors] = useState(['#4CAF50', '#8BC34A', '#CDDC39', '#2E7D32', '#1B5E20']);
   
@@ -281,11 +281,11 @@ const TasksScreen = ({ route, navigation }) => {
   
   // Drag and drop states
   const [isDragging, setIsDragging] = useState(false);
-  const [draggingProject, setDraggingProject] = useState(null);
+  const [draggingMilestone, setDraggingMilestone] = useState(null);
   const [draggingIndex, setDraggingIndex] = useState(null);
-  const [projectLayout, setProjectLayout] = useState({});
+  const [milestoneLayout, setMilestoneLayout] = useState({});
   const [dropZoneY, setDropZoneY] = useState(null);
-  const [activeProjectSection, setActiveProjectSection] = useState(null);
+  const [activeMilestoneSection, setActiveMilestoneSection] = useState(null);
   
   // Loading state for data verification
   const [isVerifying, setIsVerifying] = useState(false);
@@ -320,24 +320,24 @@ const TasksScreen = ({ route, navigation }) => {
     }
   }, [routeViewMode]);
   
-  // Function to verify project data consistency
-  const verifyProjectDataConsistency = async () => {
+  // Function to verify milestone data consistency
+  const verifyMilestoneDataConsistency = async () => {
     setIsVerifying(true);
     try {
       // Get data directly from storage
-      const projectsJson = await AsyncStorage.getItem('projects');
+      const milestonesJson = await AsyncStorage.getItem('milestones');
       const goalsJson = await AsyncStorage.getItem('goals');
       
-      if (!projectsJson || !goalsJson) {
-        console.warn('Cannot verify: projects or goals not found in storage');
+      if (!milestonesJson || !goalsJson) {
+        console.warn('Cannot verify: milestones or goals not found in storage');
         return;
       }
       
       // Parse the data
-      const storedProjects = JSON.parse(projectsJson);
+      const storedMilestones = JSON.parse(milestonesJson);
       const storedGoals = JSON.parse(goalsJson);
       
-      if (!Array.isArray(storedProjects) || !Array.isArray(storedGoals)) {
+      if (!Array.isArray(storedMilestones) || !Array.isArray(storedGoals)) {
         console.warn('Invalid data format in storage');
         return;
       }
@@ -345,43 +345,43 @@ const TasksScreen = ({ route, navigation }) => {
       // Get valid goal IDs
       const validGoalIds = storedGoals.map(goal => goal.id);
       
-      // Only count projects with valid goal IDs - NO INDEPENDENT PROJECTS!
-      const validProjects = storedProjects.filter(project => 
-        project.goalId && validGoalIds.includes(project.goalId)
+      // Only count milestones with valid goal IDs - NO INDEPENDENT MILESTONES!
+      const validMilestones = storedMilestones.filter(milestone => 
+        milestone.goalId && validGoalIds.includes(milestone.goalId)
       );
       
       // Log verification results
-      console.log('Project verification results:');
-      console.log(`- Storage contains ${storedProjects.length} total projects`);
-      console.log(`- ${validProjects.length} projects have valid goal IDs`);
-      console.log(`- ${storedProjects.length - validProjects.length} independent or orphaned projects detected`);
-      console.log(`- Memory contains ${Array.isArray(projects) ? projects.length : 0} projects`);
+      console.log('Milestone verification results:');
+      console.log(`- Storage contains ${storedMilestones.length} total milestones`);
+      console.log(`- ${validMilestones.length} milestones have valid goal IDs`);
+      console.log(`- ${storedMilestones.length - validMilestones.length} independent or orphaned milestones detected`);
+      console.log(`- Memory contains ${Array.isArray(milestones) ? milestones.length : 0} milestones`);
       
       // DISABLED AUTO-REPAIR: This was interfering with clean deletion process
       // Log what we found but don't automatically "fix" it
-      if (storedProjects.length !== validProjects.length ||
-          (Array.isArray(projects) && projects.length !== validProjects.length)) {
+      if (storedMilestones.length !== validMilestones.length ||
+          (Array.isArray(milestones) && milestones.length !== validMilestones.length)) {
         
         console.log('DETECTED DATA DISCREPANCY (not auto-fixing):');
-        console.log(`- Storage projects: ${storedProjects.length}`);
-        console.log(`- Valid projects: ${validProjects.length}`);
-        console.log(`- Memory projects: ${Array.isArray(projects) ? projects.length : 0}`);
+        console.log(`- Storage milestones: ${storedMilestones.length}`);
+        console.log(`- Valid milestones: ${validMilestones.length}`);
+        console.log(`- Memory milestones: ${Array.isArray(milestones) ? milestones.length : 0}`);
         console.log('Auto-repair disabled to prevent interference with deletion process');
         
         // Only show alert if discrepancy is large (more than normal deletion variance)
-        const discrepancy = Math.abs(storedProjects.length - validProjects.length);
+        const discrepancy = Math.abs(storedMilestones.length - validMilestones.length);
         if (discrepancy > 2) {
           Alert.alert(
             'Data Discrepancy Detected',
-            `Found ${discrepancy} orphaned projects. Use Profile > Debug Storage to clean up if needed.`,
+            `Found ${discrepancy} orphaned milestones. Use Profile > Debug Storage to clean up if needed.`,
             [{ text: 'OK' }]
           );
         }
       } else {
-        console.log('No project data inconsistencies detected');
+        console.log('No milestone data inconsistencies detected');
       }
     } catch (error) {
-      console.error('Error verifying project data:', error);
+      console.error('Error verifying milestone data:', error);
     } finally {
       setIsVerifying(false);
     }
@@ -400,30 +400,30 @@ const TasksScreen = ({ route, navigation }) => {
   useEffect(() => {
     const initialSetup = async () => {
       // DISABLED: Auto-cleanup was interfering with clean deletion process
-      // if (typeof cleanupOrphanedProjects === 'function') {
-      //   await cleanupOrphanedProjects();
+      // if (typeof cleanupOrphanedMilestones === 'function') {
+      //   await cleanupOrphanedMilestones();
       // }
       
       // Only verify data consistency (no auto-repair)
-      await verifyProjectDataConsistency();
+      await verifyMilestoneDataConsistency();
     };
     
     initialSetup();
   }, []);
   
-  // Check for System Builder achievement when projects or goals change
+  // Check for System Builder achievement when milestones or goals change
   useEffect(() => {
     // Make sure we have valid data first
-    if (Array.isArray(projects) && projects.length > 0 && 
+    if (Array.isArray(milestones) && milestones.length > 0 && 
         Array.isArray(goals) && goals.length > 0) {
       try {
         // Track system builder achievement
-        FeatureExplorerTracker.trackSystemBuilder(goals, projects, notification?.showSuccess);
+        FeatureExplorerTracker.trackSystemBuilder(goals, milestones, notification?.showSuccess);
       } catch (error) {
         console.error('Error tracking system builder achievement:', error);
       }
     }
-  }, [projects, goals, notification]);
+  }, [milestones, goals, notification]);
 
   // Initialize collapsed sections when goals data is available
   useEffect(() => {
@@ -522,7 +522,7 @@ const TasksScreen = ({ route, navigation }) => {
     return selectedGoalId === 'all' ? allViewCollapsedSections : specificGoalCollapsedSections;
   };
   
-  // Generate confetti colors based on project color
+  // Generate confetti colors based on milestone color
   const getConfettiColors = (baseColor) => {
     // Default color if none provided
     const color = baseColor || '#4CAF50';
@@ -631,44 +631,44 @@ const TasksScreen = ({ route, navigation }) => {
       ? goalsToUse.filter(goal => goal.completed).map(goal => goal.id)
       : [];
     
-    // Get all projects (including standalone ones)
-    const allProjects = Array.isArray(projects) ? projects : [];
+    // Get all milestones (including standalone ones)
+    const allMilestones = Array.isArray(milestones) ? milestones : [];
     
-    // Create a map of projectId -> goalId for quick lookups (includes standalone projects)
-    const projectGoalMap = {};
-    allProjects.forEach(project => {
-      projectGoalMap[project.id] = project.goalId || null; // null for standalone milestones
+    // Create a map of milestoneId -> goalId for quick lookups (includes standalone milestones)
+    const milestoneGoalMap = {};
+    allMilestones.forEach(milestone => {
+      milestoneGoalMap[milestone.id] = milestone.goalId || null; // null for standalone milestones
     });
     
     // Filter tasks for flexible hierarchy
     let filtered = tasks.filter(task => {
-      // CASE 1: Standalone tasks (no goalId, no projectId)
-      if (!task.goalId && !task.projectId) {
+      // CASE 1: Standalone tasks (no goalId, no milestoneId)
+      if (!task.goalId && !task.milestoneId) {
         if (selectedGoalId === 'all') return true;
         return selectedGoalId === 'standalone'; // Show only when standalone filter selected
       }
       
-      // CASE 2: Direct goal tasks (goalId but no projectId)
-      if (task.goalId && !task.projectId) {
+      // CASE 2: Direct goal tasks (goalId but no milestoneId)
+      if (task.goalId && !task.milestoneId) {
         const goalExists = validGoalIds.includes(task.goalId);
         const goalNotCompleted = !completedGoalIds.includes(task.goalId);
         const goalMatches = selectedGoalId === 'all' || selectedGoalId === task.goalId;
         return goalExists && goalNotCompleted && goalMatches;
       }
       
-      // CASE 3: Milestone tasks (projectId with or without goalId)
-      if (task.projectId) {
-        const project = allProjects.find(p => p.id === task.projectId);
-        if (!project) return false; // Project doesn't exist
+      // CASE 3: Milestone tasks (milestoneId with or without goalId)
+      if (task.milestoneId) {
+        const milestone = allMilestones.find(p => p.id === task.milestoneId);
+        if (!milestone) return false; // Milestone doesn't exist
         
         // Apply milestone filter if selected
-        if (selectedMilestoneId && task.projectId !== selectedMilestoneId) return false;
+        if (selectedMilestoneId && task.milestoneId !== selectedMilestoneId) return false;
         
-        // If project has a goal, check goal validity and filter
-        if (project.goalId) {
-          const goalExists = validGoalIds.includes(project.goalId);
-          const goalNotCompleted = !completedGoalIds.includes(project.goalId);
-          const goalMatches = selectedGoalId === 'all' || selectedGoalId === project.goalId;
+        // If milestone has a goal, check goal validity and filter
+        if (milestone.goalId) {
+          const goalExists = validGoalIds.includes(milestone.goalId);
+          const goalNotCompleted = !completedGoalIds.includes(milestone.goalId);
+          const goalMatches = selectedGoalId === 'all' || selectedGoalId === milestone.goalId;
           return goalExists && goalNotCompleted && goalMatches;
         } else {
           // Standalone milestone task
@@ -682,122 +682,122 @@ const TasksScreen = ({ route, navigation }) => {
     
     console.log('✅ getFilteredTasks RESULT:');
     console.log('- Filtered tasks count:', filtered.length);
-    console.log('- First few filtered tasks:', filtered.slice(0, 3).map(t => ({ id: t.id, title: t.title, goalId: t.goalId, projectId: t.projectId })));
+    console.log('- First few filtered tasks:', filtered.slice(0, 3).map(t => ({ id: t.id, title: t.title, goalId: t.goalId, milestoneId: t.milestoneId })));
     
     return filtered;
   };
   
-  // Filter projects based on selected goal and milestone
-  const getFilteredProjects = () => {
-    // Ensure projects is an array before filtering
-    if (!Array.isArray(projects)) {
-      console.warn('Projects is not an array:', projects);
+  // Filter milestones based on selected goal and milestone
+  const getFilteredMilestones = () => {
+    // Ensure milestones is an array before filtering
+    if (!Array.isArray(milestones)) {
+      console.warn('Milestones is not an array:', milestones);
       return [];
     }
 
-    console.log('🔍 getFilteredProjects DEBUG:');
-    console.log('- Total projects:', projects.length);
+    console.log('🔍 getFilteredMilestones DEBUG:');
+    console.log('- Total milestones:', milestones.length);
     console.log('- Selected Goal ID:', selectedGoalId);
     console.log('- Selected Milestone ID:', selectedMilestoneId);
-    console.log('- Sample project data:', projects.slice(0, 3));
+    console.log('- Sample milestone data:', milestones.slice(0, 3));
     
-    // First filter out orphaned projects (projects with goal IDs that don't exist)
+    // First filter out orphaned milestones (milestones with goal IDs that don't exist)
     const goalsToUse = Array.isArray(mainGoals) && mainGoals.length > 0 ? mainGoals : goals;
     const validGoalIds = Array.isArray(goalsToUse) ? goalsToUse.map(goal => goal.id) : [];
     
-    // Filter out projects with completed goals
+    // Filter out milestones with completed goals
     const completedGoalIds = Array.isArray(goalsToUse) 
       ? goalsToUse.filter(goal => goal.completed).map(goal => goal.id)
       : [];
     
-    // Filter projects for flexible hierarchy (include standalone milestones)
-    let filtered = [...projects].filter(project => {
+    // Filter milestones for flexible hierarchy (include standalone milestones)
+    let filtered = [...milestones].filter(milestone => {
       // Standalone milestones (no goalId)
-      if (!project.goalId) {
+      if (!milestone.goalId) {
         if (selectedGoalId === 'all') return true;
         return selectedGoalId === 'standalone';
       }
       
       // Goal-based milestones
-      const goalExists = validGoalIds.includes(project.goalId);
-      const goalNotCompleted = !completedGoalIds.includes(project.goalId);
-      const goalMatches = selectedGoalId === 'all' || selectedGoalId === project.goalId;
+      const goalExists = validGoalIds.includes(milestone.goalId);
+      const goalNotCompleted = !completedGoalIds.includes(milestone.goalId);
+      const goalMatches = selectedGoalId === 'all' || selectedGoalId === milestone.goalId;
       
       return goalExists && goalNotCompleted && goalMatches;
     });
     
     // Apply milestone filter if one is selected (show only the selected milestone)
     if (selectedMilestoneId) {
-      filtered = filtered.filter(project => project.id === selectedMilestoneId);
+      filtered = filtered.filter(milestone => milestone.id === selectedMilestoneId);
     }
     
-    console.log('✅ getFilteredProjects RESULT:');
-    console.log('- Filtered projects count:', filtered.length);
-    console.log('- First few filtered projects:', filtered.slice(0, 3).map(p => ({ id: p.id, title: p.title, goalId: p.goalId })));
+    console.log('✅ getFilteredMilestones RESULT:');
+    console.log('- Filtered milestones count:', filtered.length);
+    console.log('- First few filtered milestones:', filtered.slice(0, 3).map(p => ({ id: p.id, title: p.title, goalId: p.goalId })));
     
     return filtered;
   };
   
   // Get the appropriate items based on current view mode
   const getItemsForCurrentView = () => {
-    if (viewMode === 'projects') {
-      return getFilteredProjects();
+    if (viewMode === 'milestones') {
+      return getFilteredMilestones();
     } else {
       return getFilteredTasks();
     }
   };
   
-  // Count projects for the selected goal
-  const countProjectsForSelectedGoal = () => {
+  // Count milestones for the selected goal
+  const countMilestonesForSelectedGoal = () => {
     if (selectedGoalId === 'all') return 0;
     
-    return getFilteredProjects().filter(project => 
-      project.goalId === selectedGoalId
+    return getFilteredMilestones().filter(milestone => 
+      milestone.goalId === selectedGoalId
     ).length;
   };
   
-  // Check if the current goal has reached its project limit
-  const hasReachedProjectLimit = () => {
+  // Check if the current goal has reached its milestone limit
+  const hasReachedMilestoneLimit = () => {
     // Pro users have no limits
     if (isPro) return false;
     
     // "All" view has no specific goal limit
     if (selectedGoalId === 'all') return false;
     
-    // Count projects for the selected goal
-    const projectCount = countProjectsForSelectedGoal();
+    // Count milestones for the selected goal
+    const milestoneCount = countMilestonesForSelectedGoal();
     
     // Get the limit with a fallback
-    const projectLimit = FREE_PLAN_LIMITS?.MAX_PROJECTS_PER_GOAL || 2;
+    const milestoneLimit = FREE_PLAN_LIMITS?.MAX_MILESTONES_PER_GOAL || 2;
     
-    // Check against the project limit (2)
-    return projectCount >= projectLimit;
+    // Check against the milestone limit (2)
+    return milestoneCount >= milestoneLimit;
   };
   
-  // Check if a project has reached its task limit
-  const hasReachedTaskLimit = (projectId) => {
+  // Check if a milestone has reached its task limit
+  const hasReachedTaskLimit = (milestoneId) => {
     // Pro users have no limits
     if (isPro) return false;
     
-    // Get tasks for this project
-    const projectTasks = getTasksForProject(projectId);
+    // Get tasks for this milestone
+    const milestoneTasks = getTasksForMilestone(milestoneId);
     
     // Get the limit with a fallback
-    const taskLimit = FREE_PLAN_LIMITS?.MAX_TASKS_PER_PROJECT || 5;
+    const taskLimit = FREE_PLAN_LIMITS?.MAX_TASKS_PER_MILESTONE || 5;
     
     // Check against the task limit (5)
-    return projectTasks.length >= taskLimit;
+    return milestoneTasks.length >= taskLimit;
   };
   
-  // Get tasks for a specific project
-  const getTasksForProject = (projectId) => {
+  // Get tasks for a specific milestone
+  const getTasksForMilestone = (milestoneId) => {
     if (!Array.isArray(tasks)) return [];
-    return tasks.filter(task => task.projectId === projectId);
+    return tasks.filter(task => task.milestoneId === milestoneId);
   };
   
-  // Sort projects by order property
-  const sortProjectsByOrder = (projectsArray) => {
-    return [...projectsArray].sort((a, b) => {
+  // Sort milestones by order property
+  const sortMilestonesByOrder = (milestonesArray) => {
+    return [...milestonesArray].sort((a, b) => {
       // If both have order, sort by order
       if (a.order !== undefined && b.order !== undefined) {
         return a.order - b.order;
@@ -810,33 +810,33 @@ const TasksScreen = ({ route, navigation }) => {
     });
   };
 
-  // MODIFIED: Group tasks by both goal and project for section list
+  // MODIFIED: Group tasks by both goal and milestone for section list
   const getSectionedTasks = () => {
     const filteredTasks = getFilteredTasks();
     
-    // Group tasks by goalId and then by projectId
-    const tasksByGoalAndProject = {};
+    // Group tasks by goalId and then by milestoneId
+    const tasksByGoalAndMilestone = {};
     
     // Use mainGoals if available, otherwise use goals
     const goalsToUse = Array.isArray(mainGoals) && mainGoals.length > 0 ? mainGoals : goals;
     
-    // Create a projectId -> goalId map and collect project info
-    const projectGoalMap = {};
-    const projectsInfo = {};
+    // Create a milestoneId -> goalId map and collect milestone info
+    const milestoneGoalMap = {};
+    const milestonesInfo = {};
     
-    if (Array.isArray(projects)) {
-      projects.forEach(project => {
-        if (project.goalId) {
-          projectGoalMap[project.id] = project.goalId;
-          projectsInfo[project.id] = {
-            id: project.id,
-            title: project.title,
-            color: project.color,
-            status: project.status,
-            progress: project.progress || 0,
-            goalId: project.goalId,
-            icon: 'folder-outline', // Icon for project sections
-            isProject: true // Flag to identify project sections
+    if (Array.isArray(milestones)) {
+      milestones.forEach(milestone => {
+        if (milestone.goalId) {
+          milestoneGoalMap[milestone.id] = milestone.goalId;
+          milestonesInfo[milestone.id] = {
+            id: milestone.id,
+            title: milestone.title,
+            color: milestone.color,
+            status: milestone.status,
+            progress: milestone.progress || 0,
+            goalId: milestone.goalId,
+            icon: 'folder-outline', // Icon for milestone sections
+            isMilestone: true // Flag to identify milestone sections
           };
         }
       });
@@ -848,45 +848,45 @@ const TasksScreen = ({ route, navigation }) => {
         // Skip completed goals
         if (!goal || !goal.id || goal.completed) return;
         
-        tasksByGoalAndProject[goal.id] = {
+        tasksByGoalAndMilestone[goal.id] = {
           ...goal,
-          data: [],           // This will now contain project sections instead of tasks
+          data: [],           // This will now contain milestone sections instead of tasks
           isGoal: true,       // Flag to identify goal sections
-          subSections: {}     // Object to hold project sections keyed by project ID
+          subSections: {}     // Object to hold milestone sections keyed by milestone ID
         };
       });
     }
     
-    // Group tasks by their project and goal
+    // Group tasks by their milestone and goal
     filteredTasks.forEach(task => {
-      const projectId = task.projectId;
-      if (!projectId || !projectsInfo[projectId]) return; // Skip tasks without valid project
+      const milestoneId = task.milestoneId;
+      if (!milestoneId || !milestonesInfo[milestoneId]) return; // Skip tasks without valid milestone
       
-      const goalId = projectGoalMap[projectId];
-      if (!goalId || !tasksByGoalAndProject[goalId]) return; // Skip if goal is invalid
+      const goalId = milestoneGoalMap[milestoneId];
+      if (!goalId || !tasksByGoalAndMilestone[goalId]) return; // Skip if goal is invalid
       
-      // Initialize project section if it doesn't exist
-      if (!tasksByGoalAndProject[goalId].subSections[projectId]) {
-        tasksByGoalAndProject[goalId].subSections[projectId] = {
-          ...projectsInfo[projectId],
-          data: []  // Array to hold tasks for this project
+      // Initialize milestone section if it doesn't exist
+      if (!tasksByGoalAndMilestone[goalId].subSections[milestoneId]) {
+        tasksByGoalAndMilestone[goalId].subSections[milestoneId] = {
+          ...milestonesInfo[milestoneId],
+          data: []  // Array to hold tasks for this milestone
         };
       }
       
-      // Add task to the project section
-      tasksByGoalAndProject[goalId].subSections[projectId].data.push(task);
+      // Add task to the milestone section
+      tasksByGoalAndMilestone[goalId].subSections[milestoneId].data.push(task);
     });
     
     // Convert to array format for SectionList and filter out empty sections
-    const sectionsArray = Object.values(tasksByGoalAndProject).filter(goalSection => {
-      // Get all project sections for this goal
-      const projectSections = Object.values(goalSection.subSections);
+    const sectionsArray = Object.values(tasksByGoalAndMilestone).filter(goalSection => {
+      // Get all milestone sections for this goal
+      const milestoneSections = Object.values(goalSection.subSections);
       
-      // Skip goals with no projects or no tasks
-      if (projectSections.length === 0) return false;
+      // Skip goals with no milestones or no tasks
+      if (milestoneSections.length === 0) return false;
       
-      // Add project sections to goal's data array (for SectionList)
-      goalSection.data = projectSections;
+      // Add milestone sections to goal's data array (for SectionList)
+      goalSection.data = milestoneSections;
       
       return true;
     });
@@ -895,27 +895,27 @@ const TasksScreen = ({ route, navigation }) => {
   };
   
   // Prepare data for section list grouped by goals
-  const getSectionedProjects = () => {
-    const filteredProjects = getFilteredProjects();
+  const getSectionedMilestones = () => {
+    const filteredMilestones = getFilteredMilestones();
     
-    // Group projects by goalId
-    const projectsByGoal = {};
+    // Group milestones by goalId
+    const milestonesByGoal = {};
     
     // Use mainGoals if available, otherwise use goals
     const goalsToUse = Array.isArray(mainGoals) && mainGoals.length > 0 ? mainGoals : goals;
     
     // Ensure we have an array of goals to work with
     if (Array.isArray(goalsToUse)) {
-      // Add other goals with their projects
+      // Add other goals with their milestones
       goalsToUse.forEach(goal => {
         // Skip completed goals - additional check
         if (!goal || !goal.id || goal.completed) return; 
         
-        const goalProjects = filteredProjects.filter(project => project.goalId === goal.id);
-        if (goalProjects.length > 0) {
-          projectsByGoal[goal.id] = {
+        const goalMilestones = filteredMilestones.filter(milestone => milestone.goalId === goal.id);
+        if (goalMilestones.length > 0) {
+          milestonesByGoal[goal.id] = {
             ...goal,
-            data: sortProjectsByOrder(goalProjects), // Sort by order
+            data: sortMilestonesByOrder(goalMilestones), // Sort by order
             isGoal: true // Add flag to identify goal sections
           };
         }
@@ -923,74 +923,74 @@ const TasksScreen = ({ route, navigation }) => {
     }
     
     // Convert to array format for SectionList
-    return Object.values(projectsByGoal).filter(section => section.data.length > 0);
+    return Object.values(milestonesByGoal).filter(section => section.data.length > 0);
   };
 
   // Get the right sectioned data based on current view mode
   const getSectionedData = () => {
-    if (viewMode === 'projects') {
-      return getSectionedProjects();
+    if (viewMode === 'milestones') {
+      return getSectionedMilestones();
     } else {
       return getSectionedTasks();
     }
   };
   
-  // Function to update project progress - using the atomic update function if available
-  const handleUpdateProjectProgress = async (projectId, newProgress) => {
-    // Get the project to update
-    const projectToUpdate = projects.find(p => p.id === projectId);
-    if (!projectToUpdate) return;
+  // Function to update milestone progress - using the atomic update function if available
+  const handleUpdateMilestoneProgress = async (milestoneId, newProgress) => {
+    // Get the milestone to update
+    const milestoneToUpdate = milestones.find(p => p.id === milestoneId);
+    if (!milestoneToUpdate) return;
     
     try {
-      // Check if this is a project completion (0 or other -> 100)
-      const wasCompleted = projectToUpdate.status === 'done' || projectToUpdate.completed;
+      // Check if this is a milestone completion (0 or other -> 100)
+      const wasCompleted = milestoneToUpdate.status === 'done' || milestoneToUpdate.completed;
       const isNowCompleted = newProgress === 100;
       
-      // If project is being completed (not already completed), show confetti!
+      // If milestone is being completed (not already completed), show confetti!
       if (!wasCompleted && isNowCompleted) {
-        console.log("COMPLETING PROJECT! Triggering confetti for:", projectToUpdate.title);
+        console.log("COMPLETING MILESTONE! Triggering confetti for:", milestoneToUpdate.title);
         
-        // Set confetti colors based on project color
-        setConfettiColors(getConfettiColors(projectToUpdate.color));
+        // Set confetti colors based on milestone color
+        setConfettiColors(getConfettiColors(milestoneToUpdate.color));
         
         // Show confetti
         setShowConfetti(true);
       }
       
       // First, try to use the atomic update function if available
-      if (typeof updateProjectProgress === 'function') {
+      if (typeof updateMilestoneProgress === 'function') {
         // Use it with proper error handling - this will update status but preserve task-based progress
-        const success = await updateProjectProgress(projectId, newProgress);
+        const success = await updateMilestoneProgress(milestoneId, newProgress);
         
         if (success) {
           // Show success notification
           if (notification && notification.showSuccess) {
-            notification.showSuccess(`Project moved to ${newProgress === 0 ? 'To Do' : newProgress === 100 ? 'Done' : 'In Progress'}`);
+            notification.showSuccess(`Milestone moved to ${newProgress === 0 ? 'To Do' : newProgress === 100 ? 'Done' : 'In Progress'}`);
           }
           
           // Note: Removed refreshData call to prevent overriding completion status
-          // The updateProjectProgress function already updates state and storage
-          console.log('Project progress update completed successfully');
+          // The updateMilestoneProgress function already updates state and storage
+          console.log('Milestone progress update completed successfully');
         } else {
           // Show error notification
           if (notification && notification.showError) {
-            notification.showError("Failed to update project. Please try again.");
+            notification.showError("Failed to update milestone. Please try again.");
           }
         }
         return;
       }
       
       // Fall back to the old method if the new function isn't available
-      console.log(`Updating project ${projectId} progress to ${newProgress}%`);
+      console.log(`Updating milestone ${milestoneId} progress to ${newProgress}%`);
       
       // Determine status based on progress
       const newStatus = newProgress === 0 ? 'todo' : 
                        newProgress === 50 ? 'in_progress' : 
-                       newProgress === 100 ? 'done' : projectToUpdate.status;
+                       newProgress === 100 ? 'done' : milestoneToUpdate.status;
       
-      // Create updated project
-      const updatedProject = {
-        ...projectToUpdate,
+      // Create updated milestone
+      const updatedMilestone = {
+        ...milestoneToUpdate,
         status: newStatus, // Set explicit status property
         statusProgress: newProgress, // Store status indicator value
         // Don't directly set progress - let AppContext handle task-based calculation
@@ -998,25 +998,25 @@ const TasksScreen = ({ route, navigation }) => {
         updatedAt: new Date().toISOString()
       };
       
-      updateProject(updatedProject);
+      updateMilestone(updatedMilestone);
       
       // Show success notification
       if (notification && notification.showSuccess) {
-        notification.showSuccess(`Project moved to ${newProgress === 0 ? 'To Do' : newProgress === 100 ? 'Done' : 'In Progress'}`);
+        notification.showSuccess(`Milestone moved to ${newProgress === 0 ? 'To Do' : newProgress === 100 ? 'Done' : 'In Progress'}`);
       }
       
       // Force update goal progress
-      if (projectToUpdate.goalId) {
+      if (milestoneToUpdate.goalId) {
         // Calculate goal progress if we can
-        const projectsForGoal = projects.filter(p => p.goalId === projectToUpdate.goalId);
-        const completedProjects = projectsForGoal.filter(p => 
-          p.id === projectId ? newProgress === 100 : (p.progress === 100 || p.completed || p.status === 'done')
+        const milestonesForGoal = milestones.filter(p => p.goalId === milestoneToUpdate.goalId);
+        const completedMilestones = milestonesForGoal.filter(p => 
+          p.id === milestoneId ? newProgress === 100 : (p.progress === 100 || p.completed || p.status === 'done')
         ).length;
         
-        const newGoalProgress = Math.round((completedProjects / projectsForGoal.length) * 100);
+        const newGoalProgress = Math.round((completedMilestones / milestonesForGoal.length) * 100);
         
         // Find the goal
-        const goalToUpdate = goals.find(g => g.id === projectToUpdate.goalId);
+        const goalToUpdate = goals.find(g => g.id === milestoneToUpdate.goalId);
         if (goalToUpdate) {
           const updatedGoal = {
             ...goalToUpdate,
@@ -1031,7 +1031,7 @@ const TasksScreen = ({ route, navigation }) => {
         }
       }
     } catch (error) {
-      console.error("Error updating project progress:", error);
+      console.error("Error updating milestone progress:", error);
       
       // Show error notification
       if (notification && notification.showError) {
@@ -1042,7 +1042,7 @@ const TasksScreen = ({ route, navigation }) => {
 
   // Handle view mode change - now handled through GoalFilters or other UI
   const handleViewModeChange = () => {
-    const newViewMode = viewMode === 'projects' ? 'tasks' : 'projects';
+    const newViewMode = viewMode === 'milestones' ? 'tasks' : 'milestones';
     setViewMode(newViewMode);
     
     // Update params at the current navigator level
@@ -1055,16 +1055,16 @@ const TasksScreen = ({ route, navigation }) => {
     }
   };
   
-  // Handle project status change in list view
-  const handleChangeProjectStatus = (projectId, newStatus) => {
-    console.log(`🎯 [UI DEBUG] handleChangeProjectStatus called - Project: ${projectId}, Status: ${newStatus}`);
-    // Get the project to update
-    const projectToUpdate = projects.find(p => p.id === projectId);
-    if (!projectToUpdate) {
-      console.log(`🎯 [UI DEBUG] Project not found: ${projectId}`);
+  // Handle milestone status change in list view
+  const handleChangeMilestoneStatus = (milestoneId, newStatus) => {
+    console.log(`🎯 [UI DEBUG] handleChangeMilestoneStatus called - Milestone: ${milestoneId}, Status: ${newStatus}`);
+    // Get the milestone to update
+    const milestoneToUpdate = milestones.find(p => p.id === milestoneId);
+    if (!milestoneToUpdate) {
+      console.log(`🎯 [UI DEBUG] Milestone not found: ${milestoneId}`);
       return;
     }
-    console.log(`🎯 [UI DEBUG] Found project to update: ${projectToUpdate.title} (current status: ${projectToUpdate.status})`);
+    console.log(`🎯 [UI DEBUG] Found milestone to update: ${milestoneToUpdate.title} (current status: ${milestoneToUpdate.status})`);
     
     
     // Convert status to status indicator value
@@ -1073,51 +1073,51 @@ const TasksScreen = ({ route, navigation }) => {
     else if (newStatus === 'in_progress') statusIndicator = 50;
     else if (newStatus === 'done') statusIndicator = 100;
     
-    console.log(`[TasksScreen] Changing project ${projectId} status to ${newStatus}`);
+    console.log(`[TasksScreen] Changing milestone ${milestoneId} status to ${newStatus}`);
     
-    // Check if this is a project completion (not already completed -> done)
-    const wasCompleted = projectToUpdate.status === 'done' || projectToUpdate.completed;
+    // Check if this is a milestone completion (not already completed -> done)
+    const wasCompleted = milestoneToUpdate.status === 'done' || milestoneToUpdate.completed;
     const isNowCompleted = newStatus === 'done';
     
-    // If project is being completed (not already completed), show confetti!
+    // If milestone is being completed (not already completed), show confetti!
     if (!wasCompleted && isNowCompleted) {
-      console.log("COMPLETING PROJECT! Triggering confetti for:", projectToUpdate.title);
+      console.log("COMPLETING MILESTONE! Triggering confetti for:", milestoneToUpdate.title);
       
-      // Set confetti colors based on project color
-      setConfettiColors(getConfettiColors(projectToUpdate.color));
+      // Set confetti colors based on milestone color
+      setConfettiColors(getConfettiColors(milestoneToUpdate.color));
       
       // Show confetti
       setShowConfetti(true);
     }
     
-    // Call the updateProjectProgress function which will handle preserving the task-based progress
-    if (typeof updateProjectProgress === 'function') {
-      updateProjectProgress(projectId, statusIndicator);
+    // Call the updateMilestoneProgress function which will handle preserving the task-based progress
+    if (typeof updateMilestoneProgress === 'function') {
+      updateMilestoneProgress(milestoneId, statusIndicator);
     } else {
       // Fallback if the atomic update function isn't available
-      const updatedProject = {
-        ...projectToUpdate,
+      const updatedMilestone = {
+        ...milestoneToUpdate,
         status: newStatus,
         completed: newStatus === 'done',
         updatedAt: new Date().toISOString()
       };
       
-      updateProject(updatedProject);
+      updateMilestone(updatedMilestone);
     }
     
     // Show success notification and animate
     if (notification && notification.showSuccess) {
-      notification.showSuccess(`Project moved to ${newStatus === 'todo' ? 'To Do' : newStatus === 'in_progress' ? 'In Progress' : 'Done'}`);
+      notification.showSuccess(`Milestone moved to ${newStatus === 'todo' ? 'To Do' : newStatus === 'in_progress' ? 'In Progress' : 'Done'}`);
     }
   };
   
-  // Render project actions menu
-  const showProjectActionsMenu = (project) => {
+  // Render milestone actions menu
+  const showMilestoneActionsMenu = (milestone) => {
     // Determine current status based on status property first, then progress
     const currentStatus = 
-      project.status ? project.status :
-      project.progress === 0 ? 'todo' :
-      project.progress === 100 ? 'done' : 'in_progress';
+      milestone.status ? milestone.status :
+      milestone.progress === 0 ? 'todo' :
+      milestone.progress === 100 ? 'done' : 'in_progress';
     
     // Create action items based on current status
     const actions = [];
@@ -1126,33 +1126,33 @@ const TasksScreen = ({ route, navigation }) => {
     if (currentStatus !== 'todo') {
       actions.push({
         text: 'Move to To Do',
-        onPress: () => handleChangeProjectStatus(project.id, 'todo')
+        onPress: () => handleChangeMilestoneStatus(milestone.id, 'todo')
       });
     }
     
     if (currentStatus !== 'in_progress') {
       actions.push({
         text: 'Move to In Progress',
-        onPress: () => handleChangeProjectStatus(project.id, 'in_progress')
+        onPress: () => handleChangeMilestoneStatus(milestone.id, 'in_progress')
       });
     }
     
     if (currentStatus !== 'done') {
       actions.push({
         text: 'Move to Done',
-        onPress: () => handleChangeProjectStatus(project.id, 'done')
+        onPress: () => handleChangeMilestoneStatus(milestone.id, 'done')
       });
     }
     
     // Add edit option
     actions.push({
-      text: 'Edit Project',
-      onPress: () => navigation.navigate('ProjectDetails', { projectId: project.id, mode: 'edit' })
+      text: 'Edit Milestone',
+      onPress: () => navigation.navigate('MilestoneDetails', { milestoneId: milestone.id, mode: 'edit' })
     });
     
     // Show the action menu
     Alert.alert(
-      project.title,
+      milestone.title,
       'What would you like to do?',
       [
         ...actions,
@@ -1192,13 +1192,13 @@ const TasksScreen = ({ route, navigation }) => {
     }
     
     // Add view/edit option
-    const projectId = task.projectId;
-    const project = projects.find(p => p.id === projectId);
-    if (project) {
+    const milestoneId = task.milestoneId;
+    const milestone = milestones.find(p => p.id === milestoneId);
+    if (milestone) {
       actions.push({
-        text: 'View in Project',
-        onPress: () => navigation.navigate('ProjectDetails', { 
-          projectId: projectId, 
+        text: 'View in Milestone',
+        onPress: () => navigation.navigate('MilestoneDetails', { 
+          milestoneId: milestoneId, 
           mode: 'edit',
           initialTask: task.id
         })
@@ -1216,17 +1216,17 @@ const TasksScreen = ({ route, navigation }) => {
     );
   };
   
-  // Handle project press in Kanban view
-  const handleKanbanProjectPress = (project) => {
-    navigation.navigate('ProjectDetails', { projectId: project.id, mode: 'edit' });
+  // Handle milestone press in Kanban view
+  const handleKanbanMilestonePress = (milestone) => {
+    navigation.navigate('MilestoneDetails', { milestoneId: milestone.id, mode: 'edit' });
   };
 
   // NEW FUNCTION: Handle task press in Kanban view
   const handleKanbanTaskPress = (task) => {
-    const projectId = task.projectId;
-    if (projectId) {
-      navigation.navigate('ProjectDetails', { 
-        projectId: projectId, 
+    const milestoneId = task.milestoneId;
+    if (milestoneId) {
+      navigation.navigate('MilestoneDetails', { 
+        milestoneId: milestoneId, 
         mode: 'edit',
         initialTask: task.id
       });
@@ -1235,8 +1235,8 @@ const TasksScreen = ({ route, navigation }) => {
   
   // Removed animateToggleButton as we no longer have the floating button
   
-  // Handle add project button - direct implementation instead of reference
-  const handleAddProject = () => {
+  // Handle add milestone button - direct implementation instead of reference
+  const handleAddMilestone = () => {
     // For "all" view, ask user to select a goal first
     if (selectedGoalId === 'all') {
       // Show a prompt to select a goal
@@ -1247,22 +1247,22 @@ const TasksScreen = ({ route, navigation }) => {
             // First select the goal
             handleGoalSelect(goal.id);
             
-            // Then check if they can add more projects to this goal
+            // Then check if they can add more milestones to this goal
             setTimeout(async () => {
-              // Get the count of projects for this goal
-              const projectCount = projects.filter(project => project.goalId === goal.id).length;
+              // Get the count of milestones for this goal
+              const milestoneCount = milestones.filter(milestone => milestone.goalId === goal.id).length;
               
               // Check if limit reached - directly use the count for immediate feedback
-              const hasReachedLimit = !isPro && projectCount >= (FREE_PLAN_LIMITS?.MAX_PROJECTS_PER_GOAL || 2);
+              const hasReachedLimit = !isPro && milestoneCount >= (FREE_PLAN_LIMITS?.MAX_MILESTONES_PER_GOAL || 2);
               
               if (hasReachedLimit) {
                 // Use the new upgrade modal instead of the limit modal
                 showUpgradePrompt(
-                  `You've reached the limit of ${FREE_PLAN_LIMITS?.MAX_PROJECTS_PER_GOAL || 2} projects per goal. Upgrade to Pro to create unlimited projects for each goal.`
+                  `You've reached the limit of ${FREE_PLAN_LIMITS?.MAX_MILESTONES_PER_GOAL || 2} milestones per goal. Upgrade to Pro to create unlimited milestones for each goal.`
                 );
               } else {
-                // Navigate to project creation screen
-                navigation.navigate('ProjectDetails', { 
+                // Navigate to milestone creation screen
+                navigation.navigate('MilestoneDetails', { 
                   mode: 'create',
                   preselectedGoalId: goal.id
                 });
@@ -1273,7 +1273,7 @@ const TasksScreen = ({ route, navigation }) => {
         
         Alert.alert(
           "Select a Goal",
-          "Choose which goal to add this project to:",
+          "Choose which goal to add this milestone to:",
           [
             ...goalOptions,
             { text: "Cancel", style: "cancel" }
@@ -1283,7 +1283,7 @@ const TasksScreen = ({ route, navigation }) => {
         // No goals available
         Alert.alert(
           "No Goals Available",
-          "You need to create a goal before adding projects.",
+          "You need to create a goal before adding milestones.",
           [
             { text: "Cancel", style: "cancel" },
             { 
@@ -1296,20 +1296,20 @@ const TasksScreen = ({ route, navigation }) => {
       return;
     }
     
-    // For specific goal view, directly check project count for the goal
-    const projectCount = projects.filter(project => project.goalId === selectedGoalId).length;
-    const hasReachedLimit = !isPro && projectCount >= (FREE_PLAN_LIMITS?.MAX_PROJECTS_PER_GOAL || 2);
+    // For specific goal view, directly check milestone count for the goal
+    const milestoneCount = milestones.filter(milestone => milestone.goalId === selectedGoalId).length;
+    const hasReachedLimit = !isPro && milestoneCount >= (FREE_PLAN_LIMITS?.MAX_MILESTONES_PER_GOAL || 2);
     
     if (hasReachedLimit) {
       // Use the new upgrade modal instead of the limit modal
       showUpgradePrompt(
-        `You've reached the limit of ${FREE_PLAN_LIMITS?.MAX_PROJECTS_PER_GOAL || 2} projects per goal. Upgrade to Pro to create unlimited projects for each goal.`
+        `You've reached the limit of ${FREE_PLAN_LIMITS?.MAX_MILESTONES_PER_GOAL || 2} milestones per goal. Upgrade to Pro to create unlimited milestones for each goal.`
       );
       return;
     }
     
-    // If user can add more projects, proceed to project creation screen
-    navigation.navigate('ProjectDetails', { 
+    // If user can add more milestones, proceed to milestone creation screen
+    navigation.navigate('MilestoneDetails', { 
       mode: 'create',
       preselectedGoalId: selectedGoalId
     });
@@ -1335,7 +1335,7 @@ const TasksScreen = ({ route, navigation }) => {
       
       // Update the task
       if (typeof updateTask === 'function') {
-        await updateTask(taskToUpdate.projectId, taskToUpdate.id, updatedTask);
+        await updateTask(taskToUpdate.milestoneId, taskToUpdate.id, updatedTask);
         
         // Show success notification
         if (notification && notification.showSuccess) {
@@ -1343,7 +1343,7 @@ const TasksScreen = ({ route, navigation }) => {
         }
         
         // Note: Removed refreshData call to prevent overriding completion status
-        // The updateTask function already updates state and triggers project progress updates
+        // The updateTask function already updates state and triggers milestone progress updates
       } else {
         console.error("updateTask function not available");
         if (notification && notification.showError) {
@@ -1368,7 +1368,7 @@ const TasksScreen = ({ route, navigation }) => {
 
     // CASE 1: Specific milestone selected - add task directly to that milestone
     if (selectedMilestoneId) {
-      const selectedMilestone = projects.find(p => p.id === selectedMilestoneId);
+      const selectedMilestone = milestones.find(p => p.id === selectedMilestoneId);
       
       if (!selectedMilestone) {
         console.error("Selected milestone not found:", selectedMilestoneId);
@@ -1381,7 +1381,7 @@ const TasksScreen = ({ route, navigation }) => {
       
       if (!isPro && hasTaskLimit) {
         showUpgradePrompt(
-          `You've reached the limit of ${FREE_PLAN_LIMITS?.MAX_TASKS_PER_PROJECT || 5} tasks per milestone. Upgrade to Pro to create unlimited tasks.`
+          `You've reached the limit of ${FREE_PLAN_LIMITS?.MAX_TASKS_PER_MILESTONE || 5} tasks per milestone. Upgrade to Pro to create unlimited tasks.`
         );
         return;
       }
@@ -1429,14 +1429,14 @@ const TasksScreen = ({ route, navigation }) => {
     ? mainGoals.filter(goal => !goal.completed) 
     : Array.isArray(goals) ? goals.filter(goal => !goal.completed) : [];
     
-  // Get milestones for the selected goal (these are projects within the goal)
+  // Get milestones for the selected goal (these are milestones within the goal)
   const getMilestonesForSelectedGoal = () => {
     if (selectedGoalId === 'all' || selectedGoalId === 'standalone') return [];
     
-    return Array.isArray(projects) 
-      ? projects.filter(project => 
-          project.goalId === selectedGoalId && 
-          !project.completed
+    return Array.isArray(milestones) 
+      ? milestones.filter(milestone => 
+          milestone.goalId === selectedGoalId && 
+          !milestone.completed
         )
       : [];
   };
@@ -1448,7 +1448,7 @@ const TasksScreen = ({ route, navigation }) => {
   
   // Calculate item counts correctly by summing the actual visible items
   const visibleItemCount = sectionData.reduce((sum, section) => sum + section.data.length, 0);
-  const totalProjectCount = Array.isArray(projects) ? projects.length : 0;
+  const totalMilestoneCount = Array.isArray(milestones) ? milestones.length : 0;
   const totalTaskCount = Array.isArray(tasks) ? tasks.length : 0;
   
   // This ensures we're showing the actual count of visible items in the UI
@@ -1473,11 +1473,11 @@ const TasksScreen = ({ route, navigation }) => {
     theme,
     navigation,
     isDarkMode,
-    handleAddProject,
+    handleAddMilestone,
     handleAddTask, // NEW: Add task handler
     displayedItemCount,
-    verifyProjectDataConsistency,
-    viewMode, // NEW: Current view mode (projects/tasks)
+    verifyMilestoneDataConsistency,
+    viewMode, // NEW: Current view mode (milestones/tasks)
     setViewMode, // NEW: Function to change view mode
     displayMode: 'kanban', // Always kanban now
     setDisplayMode: () => {}, // No-op since we only have kanban
@@ -1487,30 +1487,30 @@ const TasksScreen = ({ route, navigation }) => {
     goalsToShow,
     sectionData,
     getCurrentCollapsedSections,
-    getTasksForProject,
+    getTasksForMilestone,
     toggleSection,
-    showProjectActionsMenu,
+    showMilestoneActionsMenu,
     showTaskActionsMenu, // NEW: Task actions menu handler
-    handleChangeProjectStatus,
+    handleChangeMilestoneStatus,
     handleUpdateTaskStatus, // NEW: Task status update handler
-    getFilteredProjects,
+    getFilteredMilestones,
     getFilteredTasks, // NEW: Get tasks method
-    handleKanbanProjectPress,
+    handleKanbanMilestonePress,
     handleKanbanTaskPress, // NEW: Task press handler for kanban
-    handleUpdateProjectProgress,
+    handleUpdateMilestoneProgress,
     kanbanFilter: selectedGoalId !== 'all' ? { goalId: selectedGoalId } : null,
-    totalProjectCount,
+    totalMilestoneCount,
     totalTaskCount, // NEW: Total task count
     visibleItemCount,
     isVerifying,
-    setDraggingProject,
-    setActiveProjectSection,
+    setDraggingMilestone,
+    setActiveMilestoneSection,
     setIsDragging,
-    draggingProject,
-    projectLayout,
-    setProjectLayout,
+    draggingMilestone,
+    milestoneLayout,
+    setMilestoneLayout,
     isDragging,
-    activeProjectSection,
+    activeMilestoneSection,
     contentFadeOpacity,
     contentTranslateY,
     // Props for enhanced kanban view
@@ -1519,8 +1519,8 @@ const TasksScreen = ({ route, navigation }) => {
     // Subscription related props
     isPro,
     handleUpgradePress,
-    projectLimitReached: selectedGoalId !== 'all' && !isPro && 
-      countProjectsForSelectedGoal() >= (FREE_PLAN_LIMITS?.MAX_PROJECTS_PER_GOAL || 2),
+    milestoneLimitReached: selectedGoalId !== 'all' && !isPro && 
+      countMilestonesForSelectedGoal() >= (FREE_PLAN_LIMITS?.MAX_MILESTONES_PER_GOAL || 2),
     // Pass both functions to child components
     showUpgradePrompt,
     showFeatureLimitBanner,
@@ -1562,7 +1562,7 @@ const TasksScreen = ({ route, navigation }) => {
         paddingTop: insets.top,
       }
     ]}>
-      {/* Confetti component at the top level for project completion */}
+      {/* Confetti component at the top level for milestone completion */}
       <Confetti 
         active={showConfetti} 
         colors={confettiColors} 
@@ -1636,7 +1636,7 @@ const TasksScreen = ({ route, navigation }) => {
               ]}
               maxFontSizeMultiplier={1.3}
             >
-              Verifying project data...
+              Verifying milestone data...
             </Text>
           </View>
         </View>
@@ -1676,7 +1676,7 @@ const TasksScreen = ({ route, navigation }) => {
               style={[additionalStyles.upgradeModalMessage, { color: theme.text }]}
               maxFontSizeMultiplier={1.3}
             >
-              {upgradeMessage || "Upgrade to Pro to create unlimited projects for each goal."}
+              {upgradeMessage || "Upgrade to Pro to create unlimited milestones for each goal."}
             </Text>
             
             <TouchableOpacity
@@ -1718,12 +1718,12 @@ const TasksScreen = ({ route, navigation }) => {
         </View>
       </Modal>
       
-      {/* Project Limit Modal - KEEPING AS FALLBACK */}
+      {/* Milestone Limit Modal - KEEPING AS FALLBACK */}
       <AILimitReachedModal
         visible={showLimitModal}
         theme={theme}
-        usageCount={projectLimitData.projectCount}
-        maxCount={projectLimitData.maxAllowed}
+        usageCount={milestoneLimitData.milestoneCount}
+        maxCount={milestoneLimitData.maxAllowed}
         onClose={() => setShowLimitModal(false)}
         onUpgrade={handleUpgradePress}
         onWatchAd={() => {
@@ -1735,7 +1735,7 @@ const TasksScreen = ({ route, navigation }) => {
             onAdComplete: () => {
               // This callback would be called when ad is finished
               // You could grant a temporary exemption to the limit here
-              navigation.navigate('ProjectDetails', { 
+              navigation.navigate('MilestoneDetails', { 
                 mode: 'create',
                 preselectedGoalId: selectedGoalId,
                 bypassLimits: true // Add a flag to bypass limits for this creation

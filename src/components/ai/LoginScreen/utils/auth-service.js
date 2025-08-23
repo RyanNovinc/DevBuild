@@ -13,7 +13,9 @@ import {
   confirmResetPassword,
   fetchUserAttributes, 
   getCurrentUser, 
-  updateUserAttributes 
+  updateUserAttributes,
+  updatePassword,
+  deleteUser
 } from 'aws-amplify/auth';
 
 // Simple configuration check - AWS should be configured in App.js
@@ -276,6 +278,52 @@ export const authService = {
     }
   },
   
+  /**
+   * Change user password
+   * @param {string} oldPassword - Current password
+   * @param {string} newPassword - New password
+   * @returns {Promise<boolean>} - Success status
+   */
+  changePassword: async (oldPassword, newPassword) => {
+    try {
+      console.log('AUTH SERVICE: Attempting password change');
+      
+      // Ensure AWS is configured before any auth operation
+      if (!checkAwsConfiguration()) {
+        throw new Error('AWS Amplify configuration failed');
+      }
+      
+      await updatePassword({ oldPassword, newPassword });
+      console.log('AUTH SERVICE: Password change successful');
+      return true;
+    } catch (error) {
+      console.error('AUTH SERVICE: Change password error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Delete user account
+   * @returns {Promise<boolean>} - Success status
+   */
+  deleteUser: async () => {
+    try {
+      console.log('AUTH SERVICE: Attempting user deletion');
+      
+      // Ensure AWS is configured before any auth operation
+      if (!checkAwsConfiguration()) {
+        throw new Error('AWS Amplify configuration failed');
+      }
+      
+      await deleteUser();
+      console.log('AUTH SERVICE: User deletion successful');
+      return true;
+    } catch (error) {
+      console.error('AUTH SERVICE: Delete user error:', error);
+      throw error;
+    }
+  },
+
   /**
    * Get user-friendly error messages for authentication errors
    * @param {Error} error - Error object

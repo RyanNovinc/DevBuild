@@ -48,7 +48,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 // Import components
 import ColorPicker from './ColorPicker';
 import CustomDateTimePicker from './CustomDateTimePicker';
-import ProjectSelector from './ProjectSelector';
+import MilestoneSelector from './MilestoneSelector';
 import TaskSelector from './TaskSelector';
 import TimeBlockForm from './TimeBlockForm';
 import UnsavedChangesModal from './UnsavedChangesModal';
@@ -56,7 +56,7 @@ import GoalRequiredModal from './GoalRequiredModal';
 
 const TimeBlockScreen = ({ route, navigation }) => {
   const { theme } = useTheme();
-  const { mainGoals, projects, addTimeBlock, updateTimeBlock, deleteTimeBlock, timeBlocks } = useAppContext();
+  const { mainGoals, milestones, addTimeBlock, updateTimeBlock, deleteTimeBlock, timeBlocks } = useAppContext();
   const notification = useNotification ? useNotification() : { 
     showSuccess: (msg) => console.log(msg),
     showError: (msg) => console.error(msg)
@@ -90,22 +90,22 @@ const TimeBlockScreen = ({ route, navigation }) => {
   
   // For the goal required modal
   const [showGoalRequiredModal, setShowGoalRequiredModal] = useState(false);
-  const [goalRequiredModalType, setGoalRequiredModalType] = useState('project'); // 'project' or 'task'
+  const [goalRequiredModalType, setGoalRequiredModalType] = useState('milestone'); // 'milestone' or 'task'
   
-  // Function to extract all tasks from projects
+  // Function to extract all tasks from milestones
   const getAllTasks = () => {
-    if (!Array.isArray(projects)) return [];
+    if (!Array.isArray(milestones)) return [];
     
-    // Collect all tasks from all projects
+    // Collect all tasks from all milestones
     const allTasks = [];
-    projects.forEach(project => {
-      if (project && Array.isArray(project.tasks)) {
-        // Add project ID to each task for reference
-        const projectTasks = project.tasks.map(task => ({
+    milestones.forEach(milestone => {
+      if (milestone && Array.isArray(milestone.tasks)) {
+        // Add milestone ID to each task for reference
+        const milestoneTasks = milestone.tasks.map(task => ({
           ...task,
-          projectId: project.id
+          milestoneId: milestone.id
         }));
-        allTasks.push(...projectTasks);
+        allTasks.push(...milestoneTasks);
       }
     });
     
@@ -119,7 +119,7 @@ const TimeBlockScreen = ({ route, navigation }) => {
   const [title, setTitle] = useState('');
   const [domain, setDomain] = useState('');
   const [domainColor, setDomainColor] = useState('#4CAF50');
-  const [selectedProject, setSelectedProject] = useState(null);
+  const [selectedMilestone, setSelectedMilestone] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null); // New state for task selection
   
   // State for general activity blocks
@@ -147,8 +147,8 @@ const TimeBlockScreen = ({ route, navigation }) => {
   const [notes, setNotes] = useState('');
   const [isCompleted, setIsCompleted] = useState(false);
   
-  // State for project selection modal
-  const [showProjectModal, setShowProjectModal] = useState(false);
+  // State for milestone selection modal
+  const [showMilestoneModal, setShowMilestoneModal] = useState(false);
   
   // State for task selection modal
   const [showTaskModal, setShowTaskModal] = useState(false);
@@ -204,7 +204,7 @@ const TimeBlockScreen = ({ route, navigation }) => {
     }, [])
   );
   
-  // Get all tasks from projects
+  // Get all tasks from milestones
   const allTasks = getAllTasks();
   
   // Get available goals, filtering out completed ones
@@ -212,22 +212,22 @@ const TimeBlockScreen = ({ route, navigation }) => {
     ? mainGoals.filter(goal => !goal.completed)
     : [];
     
-  // Get projects for the currently selected goal
-  const goalProjects = Array.isArray(projects) 
-    ? projects.filter(project => {
-        // If there's no selected domain, show all projects
+  // Get milestones for the currently selected goal
+  const goalMilestones = Array.isArray(milestones) 
+    ? milestones.filter(milestone => {
+        // If there's no selected domain, show all milestones
         if (!domain) return true;
-        // Otherwise, filter projects by the selected goal
+        // Otherwise, filter milestones by the selected goal
         const matchingGoal = Array.isArray(mainGoals) ? mainGoals.find(goal => goal.title === domain) : null;
-        return matchingGoal ? project.goalId === matchingGoal.id : false;
+        return matchingGoal ? milestone.goalId === matchingGoal.id : false;
       })
     : [];
     
-  // Get tasks for the currently selected project
-  const projectTasks = Array.isArray(allTasks)
+  // Get tasks for the currently selected milestone
+  const milestoneTasks = Array.isArray(allTasks)
     ? allTasks.filter(task => {
-        if (!selectedProject) return false;
-        return task.projectId === selectedProject.id && !task.completed;
+        if (!selectedMilestone) return false;
+        return task.milestoneId === selectedMilestone.id && !task.completed;
       })
     : [];
   
@@ -290,11 +290,11 @@ const TimeBlockScreen = ({ route, navigation }) => {
           setDomainColor(initialTimeBlock.domainColor || '#4CAF50');
         }
         
-        // Set project if available
-        if (initialTimeBlock.projectId && Array.isArray(projects)) {
-          const project = projects.find(p => p.id === initialTimeBlock.projectId);
-          if (project) {
-            setSelectedProject(project);
+        // Set milestone if available
+        if (initialTimeBlock.milestoneId && Array.isArray(milestones)) {
+          const milestone = milestones.find(p => p.id === initialTimeBlock.milestoneId);
+          if (milestone) {
+            setSelectedMilestone(milestone);
             
             // Set task if available
             if (initialTimeBlock.taskId) {
@@ -364,7 +364,7 @@ const TimeBlockScreen = ({ route, navigation }) => {
         enableNotification: initialTimeBlock.notification || false,
         notificationTime: initialTimeBlock.notificationTime || 'exact',
         customMinutes: initialTimeBlock.customMinutes || '15',
-        projectId: initialTimeBlock.projectId || null,
+        milestoneId: initialTimeBlock.milestoneId || null,
         taskId: initialTimeBlock.taskId || null
       });
       
@@ -420,7 +420,7 @@ const TimeBlockScreen = ({ route, navigation }) => {
         enableNotification: false,
         notificationTime: 'exact',
         customMinutes: '15',
-        projectId: null,
+        milestoneId: null,
         taskId: null
       });
       
@@ -437,7 +437,7 @@ const TimeBlockScreen = ({ route, navigation }) => {
         setDomainColor(activeGoals[0].color);
       }
     }
-  }, [isCreating, initialTimeBlock, date, mainGoals, projects]);
+  }, [isCreating, initialTimeBlock, date, mainGoals, milestones]);
   
   // Update check for unsaved changes whenever relevant state changes
   useEffect(() => {
@@ -465,7 +465,7 @@ const TimeBlockScreen = ({ route, navigation }) => {
       (enableNotification && notificationTime !== initialValues.notificationTime) ||
       (enableNotification && notificationTime === 'custom' && 
        customMinutes !== initialValues.customMinutes) ||
-      (selectedProject && selectedProject.id !== initialValues.projectId) ||
+      (selectedMilestone && selectedMilestone.id !== initialValues.milestoneId) ||
       (selectedTask && selectedTask.id !== initialValues.taskId);
     
     setHasUnsavedChanges(hasChanges);
@@ -473,7 +473,7 @@ const TimeBlockScreen = ({ route, navigation }) => {
     title, activeTab, domain, category, customColor, startTime, endTime,
     location, notes, isCompleted, isRepeating, repeatFrequency,
     repeatIndefinitely, repeatUntil, enableNotification, notificationTime,
-    customMinutes, selectedProject, selectedTask, initialValues
+    customMinutes, selectedMilestone, selectedTask, initialValues
   ]);
   
   // Handle Android back button
@@ -662,14 +662,14 @@ const TimeBlockScreen = ({ route, navigation }) => {
       mainGoals.find(goal => goal.title === domain) : null;
     const selectedColor = selectedGoal ? selectedGoal.color : domainColor;
     
-    // Get the project ID if a project is selected
-    const projectId = selectedProject ? selectedProject.id : null;
+    // Get the milestone ID if a milestone is selected
+    const milestoneId = selectedMilestone ? selectedMilestone.id : null;
     
     // Get the task ID if a task is selected
     const taskId = selectedTask ? selectedTask.id : null;
     
-    // NEW: Also store the project and task titles
-    const projectTitle = selectedProject ? selectedProject.title : null;
+    // NEW: Also store the milestone and task titles
+    const milestoneTitle = selectedMilestone ? selectedMilestone.title : null;
     const taskTitle = selectedTask ? selectedTask.title : null;
     
     // If we're updating, cancel the existing notification if there is one
@@ -695,8 +695,8 @@ const TimeBlockScreen = ({ route, navigation }) => {
       // For Goal Focus time blocks
       domain: activeTab === 'goal' ? domain : null,
       domainColor: activeTab === 'goal' ? selectedColor : null,
-      projectId: activeTab === 'goal' ? projectId : null,
-      projectTitle: activeTab === 'goal' ? projectTitle : null, // NEW: Store project title
+      milestoneId: activeTab === 'goal' ? milestoneId : null,
+      milestoneTitle: activeTab === 'goal' ? milestoneTitle : null, // NEW: Store milestone title
       taskId: activeTab === 'goal' ? taskId : null,
       taskTitle: activeTab === 'goal' ? taskTitle : null, // NEW: Store task title
       
@@ -940,15 +940,15 @@ const TimeBlockScreen = ({ route, navigation }) => {
     }
   };
   
-  // Handle project selection
-  const handleProjectSelect = (project) => {
-    // If selecting a different project, clear the task selection
-    if ((!selectedProject && project) || (selectedProject && project && selectedProject.id !== project.id)) {
+  // Handle milestone selection
+  const handleMilestoneSelect = (milestone) => {
+    // If selecting a different milestone, clear the task selection
+    if ((!selectedMilestone && milestone) || (selectedMilestone && milestone && selectedMilestone.id !== milestone.id)) {
       setSelectedTask(null);
     }
     
-    setSelectedProject(project);
-    setShowProjectModal(false);
+    setSelectedMilestone(milestone);
+    setShowMilestoneModal(false);
   };
   
   // Handle task selection
@@ -1017,32 +1017,32 @@ const TimeBlockScreen = ({ route, navigation }) => {
     }
   };
   
-  // Open project selection modal
-  const openProjectModal = () => {
+  // Open milestone selection modal
+  const openMilestoneModal = () => {
     // Check if there are any goals available
     if (availableGoals.length === 0) {
-      setGoalRequiredModalType('project');
+      setGoalRequiredModalType('milestone');
       setShowGoalRequiredModal(true);
       return;
     }
-    setShowProjectModal(true);
+    setShowMilestoneModal(true);
   };
   
   // Open task selection modal
   const openTaskModal = () => {
-    // Only show task modal if a project is selected
-    if (selectedProject) {
+    // Only show task modal if a milestone is selected
+    if (selectedMilestone) {
       setShowTaskModal(true);
     } else {
-      // Check if there are projects available for the current goal
-      if (goalProjects.length === 0) {
+      // Check if there are milestones available for the current goal
+      if (goalMilestones.length === 0) {
         setGoalRequiredModalType('task');
         setShowGoalRequiredModal(true);
       } else {
-        // There are projects, but user hasn't selected one
+        // There are milestones, but user hasn't selected one
         Alert.alert(
-          'Select a Project First',
-          'Please select a project before selecting a task.',
+          'Select a Milestone First',
+          'Please select a milestone before selecting a task.',
           [{ text: 'OK' }]
         );
       }
@@ -1067,8 +1067,8 @@ const TimeBlockScreen = ({ route, navigation }) => {
     navigation.navigate('GoalsTab');
   };
   
-  // Navigate to Projects tab to create a project
-  const navigateToProjects = () => {
+  // Navigate to Milestones tab to create a milestone
+  const navigateToMilestones = () => {
     navigation.navigate('ProjectsTab');
   };
   
@@ -1219,9 +1219,9 @@ const TimeBlockScreen = ({ route, navigation }) => {
             setDomain={setDomain}
             domainColor={domainColor}
             setDomainColor={setDomainColor}
-            selectedProject={selectedProject}
+            selectedMilestone={selectedMilestone}
             selectedTask={selectedTask}
-            openProjectModal={openProjectModal}
+            openMilestoneModal={openMilestoneModal}
             openTaskModal={openTaskModal}
             category={category}
             setCategory={setCategory}
@@ -1231,7 +1231,9 @@ const TimeBlockScreen = ({ route, navigation }) => {
             openStartTimePicker={openStartTimePicker}
             openEndTimePicker={openEndTimePicker}
             startTime={startTime}
+            setStartTime={setStartTime}
             endTime={endTime}
+            setEndTime={setEndTime}
             timeError={timeError}
             location={location}
             setLocation={setLocation}
@@ -1260,8 +1262,8 @@ const TimeBlockScreen = ({ route, navigation }) => {
             formatTime={formatTime}
             formatDate={formatDate}
             availableGoals={availableGoals}
-            goalProjects={goalProjects}
-            projectTasks={projectTasks}
+            goalMilestones={goalMilestones}
+            milestoneTasks={milestoneTasks}
             handleDelete={handleDelete}
             isCreating={isCreating}
             theme={theme}
@@ -1295,13 +1297,13 @@ const TimeBlockScreen = ({ route, navigation }) => {
         />
       )}
 
-      {showProjectModal && (
-        <ProjectSelector
-          visible={showProjectModal}
-          onClose={() => setShowProjectModal(false)}
-          onSelectProject={handleProjectSelect}
-          selectedProject={selectedProject}
-          projects={goalProjects}
+      {showMilestoneModal && (
+        <MilestoneSelector
+          visible={showMilestoneModal}
+          onClose={() => setShowMilestoneModal(false)}
+          onSelectMilestone={handleMilestoneSelect}
+          selectedMilestone={selectedMilestone}
+          milestones={goalMilestones}
           domainColor={domainColor}
           theme={theme}
           isDarkMode={isDarkMode}
@@ -1318,7 +1320,7 @@ const TimeBlockScreen = ({ route, navigation }) => {
           onClose={() => setShowTaskModal(false)}
           onSelectTask={handleTaskSelect}
           selectedTask={selectedTask}
-          tasks={projectTasks}
+          tasks={milestoneTasks}
           domainColor={domainColor}
           theme={theme}
           isDarkMode={isDarkMode}
@@ -1346,7 +1348,7 @@ const TimeBlockScreen = ({ route, navigation }) => {
           visible={showGoalRequiredModal}
           onClose={() => setShowGoalRequiredModal(false)}
           onNavigateToGoals={navigateToGoals}
-          onNavigateToProjects={navigateToProjects}
+          onNavigateToMilestones={navigateToMilestones}
           type={goalRequiredModalType}
           theme={theme}
           isDarkMode={isDarkMode}

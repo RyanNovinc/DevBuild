@@ -84,7 +84,7 @@ export const useProfileScreenData = (navigation, route) => {
     // Stats
     totalActiveGoals: 0,
     completedGoals: 0,
-    activeProjects: 0,
+    activeMilestones: 0,
     totalActiveTasks: 0,
     
     // Settings & preferences
@@ -114,7 +114,7 @@ export const useProfileScreenData = (navigation, route) => {
           if (appContext) {
             console.log('🔄 ProfileScreen: Force clearing AppContext arrays');
             if (appContext.setGoals) appContext.setGoals([]);
-            if (appContext.setProjects) appContext.setProjects([]);
+            if (appContext.setMilestones) appContext.setMilestones([]);
             if (appContext.setTasks) appContext.setTasks([]);
             if (appContext.setTodos) appContext.setTodos([]);
             if (appContext.setTomorrowTodos) appContext.setTomorrowTodos([]);
@@ -126,7 +126,7 @@ export const useProfileScreenData = (navigation, route) => {
             ...prev,
             totalActiveGoals: 0,
             completedGoals: 0,
-            activeProjects: 0,
+            activeMilestones: 0,
             totalActiveTasks: 0,
             localDomains: []
           }));
@@ -154,12 +154,12 @@ export const useProfileScreenData = (navigation, route) => {
   const isAppContextReady = useCallback(() => {
     if (!appContext) return false;
     
-    const { isLoading, goals, projects, tasks } = appContext;
+    const { isLoading, goals, milestones, tasks } = appContext;
     
     // AppContext must not be loading and must have initialized arrays (even if empty)
     return !isLoading && 
            Array.isArray(goals) && 
-           Array.isArray(projects) && 
+           Array.isArray(milestones) && 
            Array.isArray(tasks);
   }, [appContext]);
 
@@ -251,19 +251,19 @@ export const useProfileScreenData = (navigation, route) => {
       
       if (!appContext) throw new Error('AppContext not available');
       
-      const { goals, projects, tasks, settings } = appContext;
+      const { goals, milestones, tasks, settings } = appContext;
       
       // SAFETY CHECK: If all arrays are empty, return zero stats immediately
       const goalsToUse = Array.isArray(goals) ? goals : [];
-      const projectsToUse = Array.isArray(projects) ? projects : [];
+      const milestonesToUse = Array.isArray(milestones) ? milestones : [];
       const tasksToUse = Array.isArray(tasks) ? tasks : [];
       
-      if (goalsToUse.length === 0 && projectsToUse.length === 0 && tasksToUse.length === 0) {
+      if (goalsToUse.length === 0 && milestonesToUse.length === 0 && tasksToUse.length === 0) {
         statsLog('All arrays are empty - returning zero stats');
         return {
           totalActiveGoals: 0,
           completedGoals: 0,
-          activeProjects: 0,
+          activeMilestones: 0,
           totalActiveTasks: 0,
           settings: settings || {}
         };
@@ -275,7 +275,7 @@ export const useProfileScreenData = (navigation, route) => {
       
       if (signal?.aborted) throw new Error('Operation aborted');
       
-      // Calculate project statistics (use already defined projectsToUse)
+      // Calculate milestone statistics (use already defined milestonesToUse)
       
       // Create completed goals map for filtering
       const completedGoalsMap = {};
@@ -288,11 +288,11 @@ export const useProfileScreenData = (navigation, route) => {
         }
       });
       
-      // Count active projects (not completed, not linked to completed/deleted goals)
-      const activeProjectsCount = projectsToUse.filter(project => {
-        if (project.completed === true || project.status === 'done') return false;
-        if (project.goalId && completedGoalsMap[project.goalId]) return false;
-        if (project.goalId && !validGoalIds.has(project.goalId)) return false;
+      // Count active milestones (not completed, not linked to completed/deleted goals)
+      const activeMilestonesCount = milestonesToUse.filter(milestone => {
+        if (milestone.completed === true || milestone.status === 'done') return false;
+        if (milestone.goalId && completedGoalsMap[milestone.goalId]) return false;
+        if (milestone.goalId && !validGoalIds.has(milestone.goalId)) return false;
         return true;
       }).length;
       
@@ -301,32 +301,32 @@ export const useProfileScreenData = (navigation, route) => {
       // Calculate task statistics (use already defined tasksToUse)
       let activeTasksCount = 0;
       
-      // Create completed projects map
-      const completedProjectsMap = {};
-      projectsToUse.forEach(project => {
-        if (project.completed === true || 
-            project.status === 'done' || 
-            (project.goalId && completedGoalsMap[project.goalId]) ||
-            (project.goalId && !validGoalIds.has(project.goalId))) {
-          completedProjectsMap[project.id] = true;
+      // Create completed milestones map
+      const completedMilestonesMap = {};
+      milestonesToUse.forEach(milestone => {
+        if (milestone.completed === true || 
+            milestone.status === 'done' || 
+            (milestone.goalId && completedGoalsMap[milestone.goalId]) ||
+            (milestone.goalId && !validGoalIds.has(milestone.goalId))) {
+          completedMilestonesMap[milestone.id] = true;
         }
       });
       
       // Count active tasks
       activeTasksCount = tasksToUse.filter(task => {
         if (task.completed || task.status === 'done') return false;
-        if (task.projectId && completedProjectsMap[task.projectId]) return false;
+        if (task.milestoneId && completedMilestonesMap[task.milestoneId]) return false;
         if (task.goalId && completedGoalsMap[task.goalId]) return false;
         if (task.goalId && !validGoalIds.has(task.goalId)) return false;
         return true;
       }).length;
       
-      statsLog(`Final stats: Goals(${activeGoalsCount}/${completedGoalsCount}), Projects(${activeProjectsCount}), Tasks(${activeTasksCount})`);
+      statsLog(`Final stats: Goals(${activeGoalsCount}/${completedGoalsCount}), Milestones(${activeMilestonesCount}), Tasks(${activeTasksCount})`);
       
       return {
         totalActiveGoals: activeGoalsCount,
         completedGoals: completedGoalsCount,
-        activeProjects: activeProjectsCount,
+        activeMilestones: activeMilestonesCount,
         totalActiveTasks: activeTasksCount,
         settings: settings || {}
       };

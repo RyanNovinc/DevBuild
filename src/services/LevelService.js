@@ -84,8 +84,8 @@ function getStageThreshold(stage) {
 function getPointsForNextStage(currentPoints) {
   const currentStage = calculateStage(currentPoints);
   
-  // If at max stage, return 0
-  if (currentStage >= STAGE_THRESHOLDS.length) {
+  // If at max stage (12), return 0
+  if (currentStage >= STAGE_TITLES.length) {
     return 0;
   }
   

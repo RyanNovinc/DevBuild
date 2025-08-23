@@ -29,7 +29,7 @@ const AppContext = createContext();
 // Storage keys for app data
 const STORAGE_KEYS = {
   GOALS: 'goals',
-  PROJECTS: 'projects',
+  MILESTONES: 'milestones',
   TIME_BLOCKS: 'timeBlocks',
   DOMAINS: 'domains',
   SETTINGS: 'settings',
@@ -67,18 +67,18 @@ const DEFAULT_SETTINGS = {
 export const AppProvider = ({ children }) => {
   // State
   const [goals, setGoals] = useState([]);
-  const [projects, setProjectsInternal] = useState([]);
+  const [milestones, setMilestonesInternal] = useState([]);
   const [timeBlocks, setTimeBlocks] = useState([]);
   
-  // Clean setProjects function
-  const setProjects = setProjectsInternal;
+  // Clean setMilestones function
+  const setMilestones = setMilestonesInternal;
   const [domains, setDomains] = useState([]);
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [tags, setTags] = useState([]);
   const [notes, setNotes] = useState([]);
   const [filters, setFilters] = useState({});
   const [isLoading, setIsLoading] = useState(true);
-  const [projectGoalLinkMap, setProjectGoalLinkMap] = useState({});
+  const [milestoneGoalLinkMap, setMilestoneGoalLinkMap] = useState({});
   const [tasks, setTasks] = useState([]);
   
   // Add user purchase status state - 'free' or 'pro' or 'unlimited'
@@ -105,18 +105,18 @@ export const AppProvider = ({ children }) => {
   // Add refresh counter to trigger UI updates
   const [refreshCounter, setRefreshCounter] = useState(0);
   
-  // Keep track of deleted project IDs to prevent race conditions
-  const deletedProjectIds = useRef(new Set());
+  // Keep track of deleted milestone IDs to prevent race conditions
+  const deletedMilestoneIds = useRef(new Set());
   // Keep track of operations in progress
   const operationsInProgress = useRef({
     deletingGoals: new Set(),
-    deletingProjects: new Set(),
-    updatingProjects: new Set()
+    deletingMilestones: new Set(),
+    updatingMilestones: new Set()
   });
   
   // Add refs to always have latest state
   const goalsRef = useRef(goals);
-  const projectsRef = useRef(projects);
+  const milestonesRef = useRef(milestones);
   const tasksRef = useRef(tasks);
   const todosRef = useRef(todos);
   const tomorrowTodosRef = useRef(tomorrowTodos);
@@ -128,8 +128,8 @@ export const AppProvider = ({ children }) => {
   }, [goals]);
   
   useEffect(() => {
-    projectsRef.current = projects;
-  }, [projects]);
+    milestonesRef.current = milestones;
+  }, [milestones]);
   
   useEffect(() => {
     tasksRef.current = tasks;
@@ -171,10 +171,10 @@ export const AppProvider = ({ children }) => {
           setGoals(parsedGoals);
         }
         
-        // Load projects
-        const storedProjects = await AsyncStorage.getItem(STORAGE_KEYS.PROJECTS);
-        if (storedProjects) {
-          setProjects(JSON.parse(storedProjects));
+        // Load milestones
+        const storedMilestones = await AsyncStorage.getItem(STORAGE_KEYS.MILESTONES);
+        if (storedMilestones) {
+          setMilestones(JSON.parse(storedMilestones));
         }
         
         // Load tasks
@@ -219,10 +219,10 @@ export const AppProvider = ({ children }) => {
           setFilters(JSON.parse(storedFilters));
         }
         
-        // Load project-goal link map
-        const storedLinkMap = await AsyncStorage.getItem('projectGoalLinkMap');
+        // Load milestone-goal link map
+        const storedLinkMap = await AsyncStorage.getItem('milestoneGoalLinkMap');
         if (storedLinkMap) {
-          setProjectGoalLinkMap(JSON.parse(storedLinkMap));
+          setMilestoneGoalLinkMap(JSON.parse(storedLinkMap));
         }
         
         // Load todos
@@ -273,13 +273,13 @@ export const AppProvider = ({ children }) => {
           setUserCountry(storedUserCountry);
         }
         
-        // Check if goals and projects are linked correctly
-        if (storedGoals && storedProjects) {
-          auditProjectGoalRelationships(JSON.parse(storedGoals), JSON.parse(storedProjects));
+        // Check if goals and milestones are linked correctly
+        if (storedGoals && storedMilestones) {
+          auditMilestoneGoalRelationships(JSON.parse(storedGoals), JSON.parse(storedMilestones));
         }
         
-        // Fix any project-goal link inconsistencies
-        await fixProjectGoalLinks();
+        // Fix any milestone-goal link inconsistencies
+        await fixMilestoneGoalLinks();
         
         setIsLoading(false);
       } catch (error) {
@@ -291,49 +291,49 @@ export const AppProvider = ({ children }) => {
     loadData();
   }, []);
   
-  // Helper function to calculate goal progress from projects
+  // Helper function to calculate goal progress from milestones
   // Legacy function - use imported calculateGoalProgress for flexible hierarchy support
-  const calculateGoalProgressLegacy = useCallback((goalId, currentProjects = null) => {
-    const projectsToUse = currentProjects || projectsRef.current;
-    if (!Array.isArray(projectsToUse)) return 0;
+  const calculateGoalProgressLegacy = useCallback((goalId, currentMilestones = null) => {
+    const milestonesToUse = currentMilestones || milestonesRef.current;
+    if (!Array.isArray(milestonesToUse)) return 0;
     
-    const goalProjects = projectsToUse.filter(project => project.goalId === goalId);
-    if (goalProjects.length === 0) return 0;
+    const goalMilestones = milestonesToUse.filter(milestone => milestone.goalId === goalId);
+    if (goalMilestones.length === 0) return 0;
     
-    // IMPORTANT: Only count projects that are EXPLICITLY marked as completed
+    // IMPORTANT: Only count milestones that are EXPLICITLY marked as completed
     // Ignore task-based progress (even if it's 100%)
-    const completedProjects = goalProjects.filter(project => 
-      project.completed === true || project.status === 'done'
+    const completedMilestones = goalMilestones.filter(milestone => 
+      milestone.completed === true || milestone.status === 'done'
     ).length;
     
-    return Math.round((completedProjects / goalProjects.length) * 100);
+    return Math.round((completedMilestones / goalMilestones.length) * 100);
   }, []);
   
-  // Helper function to calculate project progress from tasks
-  const calculateProjectProgress = useCallback((projectId, currentTasks = null) => {
+  // Helper function to calculate milestone progress from tasks
+  const calculateMilestoneProgress = useCallback((milestoneId, currentTasks = null) => {
     const tasksToUse = currentTasks || tasksRef.current;
     if (!Array.isArray(tasksToUse)) return 0;
     
-    // Get the current project
-    const project = projectsRef.current.find(p => p.id === projectId);
+    // Get the current milestone
+    const milestone = milestonesRef.current.find(p => p.id === milestoneId);
     
-    // If project is already marked as completed, always return 100%
-    if (project && project.status === 'done' && project.completed) return 100;
+    // If milestone is already marked as completed, always return 100%
+    if (milestone && milestone.status === 'done' && milestone.completed) return 100;
     
     // Calculate based on tasks
-    const projectTasks = tasksToUse.filter(task => task.projectId === projectId);
-    if (projectTasks.length === 0) return 0;
+    const milestoneTasks = tasksToUse.filter(task => task.milestoneId === milestoneId);
+    if (milestoneTasks.length === 0) return 0;
     
-    const completedTasks = projectTasks.filter(task => task.completed || task.status === 'done').length;
-    return Math.round((completedTasks / projectTasks.length) * 100);
+    const completedTasks = milestoneTasks.filter(task => task.completed || task.status === 'done').length;
+    return Math.round((completedTasks / milestoneTasks.length) * 100);
   }, []);
   
-  // Helper function to check if a project exists and is not in the deleted list
-  const isProjectActive = (projectId) => {
-    if (!projectId) return false;
-    if (deletedProjectIds.current.has(projectId)) return false;
-    if (operationsInProgress.current.deletingProjects.has(projectId)) return false;
-    return Array.isArray(projects) && projects.some(project => project.id === projectId);
+  // Helper function to check if a milestone exists and is not in the deleted list
+  const isMilestoneActive = (milestoneId) => {
+    if (!milestoneId) return false;
+    if (deletedMilestoneIds.current.has(milestoneId)) return false;
+    if (operationsInProgress.current.deletingMilestones.has(milestoneId)) return false;
+    return Array.isArray(milestones) && milestones.some(milestone => milestone.id === milestoneId);
   };
   
   // Helper function to check if a goal exists
@@ -343,175 +343,175 @@ export const AppProvider = ({ children }) => {
     return Array.isArray(goals) && goals.some(goal => goal.id === goalId);
   };
   
-  // Get project object safely
-  const getProject = (projectId) => {
-    if (!isProjectActive(projectId)) {
+  // Get milestone object safely
+  const getMilestone = (milestoneId) => {
+    if (!isMilestoneActive(milestoneId)) {
       return null;
     }
-    return projects.find(project => project.id === projectId);
+    return milestones.find(milestone => milestone.id === milestoneId);
   };
   
-  // Helper function to check if a project has a parent goal
-  const hasParentGoal = (projectId) => {
-    const project = getProject(projectId);
-    if (!project) return false;
+  // Helper function to check if a milestone has a parent goal
+  const hasParentGoal = (milestoneId) => {
+    const milestone = getMilestone(milestoneId);
+    if (!milestone) return false;
     
-    // Check if project has a goalId and if the goal exists
-    return !!(project.goalId && isGoalActive(project.goalId));
+    // Check if milestone has a goalId and if the goal exists
+    return !!(milestone.goalId && isGoalActive(milestone.goalId));
   };
   
-  // Get parent goal for a project (safely)
-  const getParentGoal = (projectId) => {
-    const project = getProject(projectId);
-    if (!project || !project.goalId) return null;
+  // Get parent goal for a milestone (safely)
+  const getParentGoal = (milestoneId) => {
+    const milestone = getMilestone(milestoneId);
+    if (!milestone || !milestone.goalId) return null;
     
-    return goals.find(goal => goal.id === project.goalId) || null;
+    return goals.find(goal => goal.id === milestone.goalId) || null;
   };
   
-  // Get all projects for a goal - IMPROVED to check both goalId and projectGoalLinkMap
-  const getProjectsForGoal = (goalId) => {
+  // Get all milestones for a goal - IMPROVED to check both goalId and milestoneGoalLinkMap
+  const getMilestonesForGoal = (goalId) => {
     // Use current ref to get the latest state including recent completions
-    const currentProjects = projectsRef.current;
-    if (!goalId || !Array.isArray(currentProjects)) {
-      deletionLog(`getProjectsForGoal: Invalid input - goalId: ${goalId}, projects array: ${Array.isArray(currentProjects)}`);
+    const currentMilestones = milestonesRef.current;
+    if (!goalId || !Array.isArray(currentMilestones)) {
+      deletionLog(`getMilestonesForGoal: Invalid input - goalId: ${goalId}, milestones array: ${Array.isArray(currentMilestones)}`);
       return [];
     }
     
     // Force log to appear
-    log('Error', `🔍 getProjectsForGoal CALLED: Looking for projects linked to goal ${goalId}`);
-    log('Error', `🔍 getProjectsForGoal: Total projects in memory: ${currentProjects.length}`);
+    log('Error', `🔍 getMilestonesForGoal CALLED: Looking for milestones linked to goal ${goalId}`);
+    log('Error', `🔍 getMilestonesForGoal: Total milestones in memory: ${currentMilestones.length}`);
     
-    deletionLog(`getProjectsForGoal: Looking for projects linked to goal ${goalId}`);
-    deletionLog(`getProjectsForGoal: Total projects in memory: ${currentProjects.length}`);
-    deletionLog(`getProjectsForGoal: Deleted project IDs: [${Array.from(deletedProjectIds.current).join(', ')}]`);
-    deletionLog(`getProjectsForGoal: Projects in deletion progress: [${Array.from(operationsInProgress.current.deletingProjects).join(', ')}]`);
+    deletionLog(`getMilestonesForGoal: Looking for milestones linked to goal ${goalId}`);
+    deletionLog(`getMilestonesForGoal: Total milestones in memory: ${currentMilestones.length}`);
+    deletionLog(`getMilestonesForGoal: Deleted milestone IDs: [${Array.from(deletedMilestoneIds.current).join(', ')}]`);
+    deletionLog(`getMilestonesForGoal: Milestones in deletion progress: [${Array.from(operationsInProgress.current.deletingMilestones).join(', ')}]`);
     
-    // Get projects linked by goalId property
-    const projectsByProperty = currentProjects.filter(project => {
-      const hasGoalId = project.goalId === goalId;
-      const notDeleted = !deletedProjectIds.current.has(project.id);
-      const notInProgress = !operationsInProgress.current.deletingProjects.has(project.id);
+    // Get milestones linked by goalId property
+    const milestonesByProperty = currentMilestones.filter(milestone => {
+      const hasGoalId = milestone.goalId === goalId;
+      const notDeleted = !deletedMilestoneIds.current.has(milestone.id);
+      const notInProgress = !operationsInProgress.current.deletingMilestones.has(milestone.id);
       
-      // Log EVERY project to see what's going on
-      log('Error', `🔍 PROJECT CHECK: "${project.title}" (${project.id})`);
-      log('Error', `  - goalId: "${project.goalId}" (target: "${goalId}")`);
+      // Log EVERY milestone to see what's going on
+      log('Error', `🔍 MILESTONE CHECK: "${milestone.title}" (${milestone.id})`);
+      log('Error', `  - goalId: "${milestone.goalId}" (target: "${goalId}")`);
       log('Error', `  - hasGoalId: ${hasGoalId}, notDeleted: ${notDeleted}, notInProgress: ${notInProgress}`);
       
       if (hasGoalId) {
-        deletionLog(`getProjectsForGoal: Project "${project.title}" (${project.id}) - goalId match: ${hasGoalId}, not deleted: ${notDeleted}, not in progress: ${notInProgress}`);
-        log('Error', `✅ MATCH: "${project.title}" (${project.id}) goalId: ${project.goalId} === ${goalId}`);
+        deletionLog(`getMilestonesForGoal: Milestone "${milestone.title}" (${milestone.id}) - goalId match: ${hasGoalId}, not deleted: ${notDeleted}, not in progress: ${notInProgress}`);
+        log('Error', `✅ MATCH: "${milestone.title}" (${milestone.id}) goalId: ${milestone.goalId} === ${goalId}`);
       }
       
-      // Also log projects that have goalIds but don't match
-      if (project.goalId && project.goalId !== goalId) {
-        log('Error', `❌ NO MATCH: "${project.title}" (${project.id}) goalId: ${project.goalId} !== ${goalId}`);
+      // Also log milestones that have goalIds but don't match
+      if (milestone.goalId && milestone.goalId !== goalId) {
+        log('Error', `❌ NO MATCH: "${milestone.title}" (${milestone.id}) goalId: ${milestone.goalId} !== ${goalId}`);
       }
       
       return hasGoalId && notDeleted && notInProgress;
     });
     
-    deletionLog(`getProjectsForGoal: Found ${projectsByProperty.length} projects by goalId property`);
+    deletionLog(`getMilestonesForGoal: Found ${milestonesByProperty.length} milestones by goalId property`);
     
-    // Get project IDs from the link map
-    const projectIdsByMap = Object.entries(projectGoalLinkMap)
+    // Get milestone IDs from the link map
+    const milestoneIdsByMap = Object.entries(milestoneGoalLinkMap)
       .filter(([_, linkedGoalId]) => linkedGoalId === goalId)
-      .map(([projectId]) => projectId);
+      .map(([milestoneId]) => milestoneId);
     
-    log('Error', `🗺️ LINK MAP CHECK: Found ${projectIdsByMap.length} project IDs in link map: [${projectIdsByMap.join(', ')}]`);
-    log('Error', `🗺️ FULL LINK MAP:`, projectGoalLinkMap);
+    log('Error', `🗺️ LINK MAP CHECK: Found ${milestoneIdsByMap.length} milestone IDs in link map: [${milestoneIdsByMap.join(', ')}]`);
+    log('Error', `🗺️ FULL LINK MAP:`, milestoneGoalLinkMap);
     
-    deletionLog(`getProjectsForGoal: Found ${projectIdsByMap.length} project IDs in link map: [${projectIdsByMap.join(', ')}]`);
+    deletionLog(`getMilestonesForGoal: Found ${milestoneIdsByMap.length} milestone IDs in link map: [${milestoneIdsByMap.join(', ')}]`);
     
-    // Get projects by IDs from linkMap (that aren't already found by property)
-    const projectsByMap = currentProjects.filter(project => {
-      const inLinkMap = projectIdsByMap.includes(project.id);
-      const notAlreadyFound = !projectsByProperty.some(p => p.id === project.id);
-      const notDeleted = !deletedProjectIds.current.has(project.id);
-      const notInProgress = !operationsInProgress.current.deletingProjects.has(project.id);
+    // Get milestones by IDs from linkMap (that aren't already found by property)
+    const milestonesByMap = currentMilestones.filter(milestone => {
+      const inLinkMap = milestoneIdsByMap.includes(milestone.id);
+      const notAlreadyFound = !milestonesByProperty.some(p => p.id === milestone.id);
+      const notDeleted = !deletedMilestoneIds.current.has(milestone.id);
+      const notInProgress = !operationsInProgress.current.deletingMilestones.has(milestone.id);
       
       if (inLinkMap) {
-        deletionLog(`getProjectsForGoal: Project "${project.title}" (${project.id}) from link map - not already found: ${notAlreadyFound}, not deleted: ${notDeleted}, not in progress: ${notInProgress}`);
+        deletionLog(`getMilestonesForGoal: Milestone "${milestone.title}" (${milestone.id}) from link map - not already found: ${notAlreadyFound}, not deleted: ${notDeleted}, not in progress: ${notInProgress}`);
       }
       
       return inLinkMap && notAlreadyFound && notDeleted && notInProgress;
     });
     
-    deletionLog(`getProjectsForGoal: Found ${projectsByMap.length} additional projects from link map`);
+    deletionLog(`getMilestonesForGoal: Found ${milestonesByMap.length} additional milestones from link map`);
     
     // Combine both lists
-    const allProjects = [...projectsByProperty, ...projectsByMap];
+    const allMilestones = [...milestonesByProperty, ...milestonesByMap];
     
     // Force log the result
-    log('Error', `🎯 getProjectsForGoal RESULT: Returning ${allProjects.length} total projects for goal ${goalId}`);
-    allProjects.forEach(p => log('Error', `  - "${p.title}" (${p.id})`));
+    log('Error', `🎯 getMilestonesForGoal RESULT: Returning ${allMilestones.length} total milestones for goal ${goalId}`);
+    allMilestones.forEach(p => log('Error', `  - "${p.title}" (${p.id})`));
     
-    deletionLog(`getProjectsForGoal: Returning ${allProjects.length} total projects for goal ${goalId}`);
-    allProjects.forEach(p => deletionLog(`  - "${p.title}" (${p.id})`));
+    deletionLog(`getMilestonesForGoal: Returning ${allMilestones.length} total milestones for goal ${goalId}`);
+    allMilestones.forEach(p => deletionLog(`  - "${p.title}" (${p.id})`));
     
-    return allProjects;
+    return allMilestones;
   };
   
-  // Get all independent projects
-  const getIndependentProjects = () => {
-    if (!Array.isArray(projects)) {
+  // Get all independent milestones
+  const getIndependentMilestones = () => {
+    if (!Array.isArray(milestones)) {
       return [];
     }
-    return projects.filter(project => 
-      !project.goalId && 
-      !deletedProjectIds.current.has(project.id) &&
-      !operationsInProgress.current.deletingProjects.has(project.id)
+    return milestones.filter(milestone => 
+      !milestone.goalId && 
+      !deletedMilestoneIds.current.has(milestone.id) &&
+      !operationsInProgress.current.deletingMilestones.has(milestone.id)
     );
   };
   
-  // Get all tasks for a project
-  const getTasksForProject = (projectId) => {
-    if (!projectId || !Array.isArray(tasks)) {
+  // Get all tasks for a milestone
+  const getTasksForMilestone = (milestoneId) => {
+    if (!milestoneId || !Array.isArray(tasks)) {
       return [];
     }
-    return tasks.filter(task => task.projectId === projectId);
+    return tasks.filter(task => task.milestoneId === milestoneId);
   };
 
   // NEW FLEXIBLE HIERARCHY FUNCTIONS
   
   // Get standalone milestones (milestones with no goal parent and no tasks)
   const getStandaloneMilestones = () => {
-    if (!Array.isArray(projects)) {
+    if (!Array.isArray(milestones)) {
       return [];
     }
-    return projects.filter(project => {
-      const hasNoGoal = !project.goalId || project.goalId === null || project.goalId === undefined;
-      const hasNoTasks = !Array.isArray(tasks) || tasks.filter(task => task.projectId === project.id).length === 0;
-      const notDeleted = !deletedProjectIds.current.has(project.id);
-      const notInProgress = !operationsInProgress.current.deletingProjects.has(project.id);
+    return milestones.filter(milestone => {
+      const hasNoGoal = !milestone.goalId || milestone.goalId === null || milestone.goalId === undefined;
+      const hasNoTasks = !Array.isArray(tasks) || tasks.filter(task => task.milestoneId === milestone.id).length === 0;
+      const notDeleted = !deletedMilestoneIds.current.has(milestone.id);
+      const notInProgress = !operationsInProgress.current.deletingMilestones.has(milestone.id);
       
       return hasNoGoal && hasNoTasks && notDeleted && notInProgress;
     });
   };
 
-  // Get standalone tasks (tasks with no goal and no project)
+  // Get standalone tasks (tasks with no goal and no milestone)
   const getStandaloneTasks = () => {
     if (!Array.isArray(tasks)) {
       return [];
     }
     return tasks.filter(task => {
       const hasNoGoal = !task.goalId || task.goalId === null || task.goalId === undefined;
-      const hasNoProject = !task.projectId || task.projectId === null || task.projectId === undefined;
+      const hasNoMilestone = !task.milestoneId || task.milestoneId === null || task.milestoneId === undefined;
       
-      return hasNoGoal && hasNoProject;
+      return hasNoGoal && hasNoMilestone;
     });
   };
 
   // Get populated standalone milestones (milestones with no goal parent but have tasks)
   // These appear in the "Standalone Tasks" section
   const getPopulatedStandaloneMilestones = () => {
-    if (!Array.isArray(projects)) {
+    if (!Array.isArray(milestones)) {
       return [];
     }
-    return projects.filter(project => {
-      const hasNoGoal = !project.goalId || project.goalId === null || project.goalId === undefined;
-      const hasTasks = Array.isArray(tasks) && tasks.filter(task => task.projectId === project.id).length > 0;
-      const notDeleted = !deletedProjectIds.current.has(project.id);
-      const notInProgress = !operationsInProgress.current.deletingProjects.has(project.id);
+    return milestones.filter(milestone => {
+      const hasNoGoal = !milestone.goalId || milestone.goalId === null || milestone.goalId === undefined;
+      const hasTasks = Array.isArray(tasks) && tasks.filter(task => task.milestoneId === milestone.id).length > 0;
+      const notDeleted = !deletedMilestoneIds.current.has(milestone.id);
+      const notInProgress = !operationsInProgress.current.deletingMilestones.has(milestone.id);
       
       return hasNoGoal && hasTasks && notDeleted && notInProgress;
     });
@@ -524,9 +524,9 @@ export const AppProvider = ({ children }) => {
     }
     return tasks.filter(task => {
       const hasGoalId = task.goalId === goalId;
-      const hasNoProject = !task.projectId || task.projectId === null || task.projectId === undefined;
+      const hasNoMilestone = !task.milestoneId || task.milestoneId === null || task.milestoneId === undefined;
       
-      return hasGoalId && hasNoProject;
+      return hasGoalId && hasNoMilestone;
     });
   };
 
@@ -535,52 +535,52 @@ export const AppProvider = ({ children }) => {
     if (!milestoneId || !Array.isArray(tasks)) {
       return [];
     }
-    return tasks.filter(task => task.projectId === milestoneId);
+    return tasks.filter(task => task.milestoneId === milestoneId);
   };
   
-  // AUDIT: Check project-goal relationships for issues
-  const auditProjectGoalRelationships = (projectsList, goalsList) => {
-    if (!projectsList || !goalsList) return;
+  // AUDIT: Check milestone-goal relationships for issues
+  const auditMilestoneGoalRelationships = (milestonesList, goalsList) => {
+    if (!milestonesList || !goalsList) return;
     
     let issuesFound = 0;
     let fixesApplied = 0;
-    const updatedProjects = [...projectsList];
-    const updatedLinkMap = { ...projectGoalLinkMap };
+    const updatedMilestones = [...milestonesList];
+    const updatedLinkMap = { ...milestoneGoalLinkMap };
     let needsUpdate = false;
     
-    // Check each project for valid goal references
-    projectsList.forEach((project, index) => {
-      if (project.goalId) {
-        const goalExists = goalsList.some(goal => goal.id === project.goalId);
+    // Check each milestone for valid goal references
+    milestonesList.forEach((milestone, index) => {
+      if (milestone.goalId) {
+        const goalExists = goalsList.some(goal => goal.id === milestone.goalId);
         if (!goalExists) {
-          console.warn(`Project "${project.title}" (ID: ${project.id}) references nonexistent goal ID: ${project.goalId}`);
+          console.warn(`Milestone "${milestone.title}" (ID: ${milestone.id}) references nonexistent goal ID: ${milestone.goalId}`);
           
           // Try to fix by goalTitle
-          if (project.goalTitle) {
+          if (milestone.goalTitle) {
             const matchingGoal = goalsList.find(goal => 
-              goal.title.toLowerCase() === project.goalTitle.toLowerCase()
+              goal.title.toLowerCase() === milestone.goalTitle.toLowerCase()
             );
             
             if (matchingGoal) {
-              console.log(`Fixing goal link for project "${project.title}" - linking to goal "${matchingGoal.title}"`);
-              updatedProjects[index].goalId = matchingGoal.id;
-              updatedLinkMap[project.id] = matchingGoal.id;
+              console.log(`Fixing goal link for milestone "${milestone.title}" - linking to goal "${matchingGoal.title}"`);
+              updatedMilestones[index].goalId = matchingGoal.id;
+              updatedLinkMap[milestone.id] = matchingGoal.id;
               fixesApplied++;
               needsUpdate = true;
             } else {
               // Clear the invalid goal ID
-              updatedProjects[index].goalId = null;
-              delete updatedLinkMap[project.id];
+              updatedMilestones[index].goalId = null;
+              delete updatedLinkMap[milestone.id];
               needsUpdate = true;
               issuesFound++;
             }
           }
         } else {
           // Goal exists, but check if goalTitle matches
-          const goal = goalsList.find(g => g.id === project.goalId);
-          if (goal && goal.title !== project.goalTitle) {
-            console.log(`Fixing mismatched goal title for project "${project.title}" - should be "${goal.title}"`);
-            updatedProjects[index].goalTitle = goal.title;
+          const goal = goalsList.find(g => g.id === milestone.goalId);
+          if (goal && goal.title !== milestone.goalTitle) {
+            console.log(`Fixing mismatched goal title for milestone "${milestone.title}" - should be "${goal.title}"`);
+            updatedMilestones[index].goalTitle = goal.title;
             needsUpdate = true;
             fixesApplied++;
           }
@@ -588,30 +588,30 @@ export const AppProvider = ({ children }) => {
       }
     });
     
-    // Update projects and link map if issues were fixed
+    // Update milestones and link map if issues were fixed
     if (needsUpdate) {
-      console.log(`Applied ${fixesApplied} fixes to project-goal relationships`);
-      setProjects(updatedProjects);
-      setProjectGoalLinkMap(updatedLinkMap);
+      console.log(`Applied ${fixesApplied} fixes to milestone-goal relationships`);
+      setMilestones(updatedMilestones);
+      setMilestoneGoalLinkMap(updatedLinkMap);
       
-      // Save updated projects to AsyncStorage
-      AsyncStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(updatedProjects))
+      // Save updated milestones to AsyncStorage
+      AsyncStorage.setItem(STORAGE_KEYS.MILESTONES, JSON.stringify(updatedMilestones))
         .then(() => {
-          console.log('Fixed projects saved to AsyncStorage');
+          console.log('Fixed milestones saved to AsyncStorage');
         })
         .catch(error => {
-          console.error('Error saving fixed projects:', error);
+          console.error('Error saving fixed milestones:', error);
         });
         
       // Save updated link map
-      AsyncStorage.setItem('projectGoalLinkMap', JSON.stringify(updatedLinkMap))
+      AsyncStorage.setItem('milestoneGoalLinkMap', JSON.stringify(updatedLinkMap))
         .catch(error => {
           console.error('Error saving link map:', error);
         });
     }
     
     if (issuesFound > 0) {
-      console.warn(`Found ${issuesFound} project-goal relationship issues that could not be fixed automatically`);
+      console.warn(`Found ${issuesFound} milestone-goal relationship issues that could not be fixed automatically`);
     }
   };
   
@@ -626,14 +626,14 @@ export const AppProvider = ({ children }) => {
   };
   
   /**
-   * Thoroughly cleans AsyncStorage after goal deletion to ensure no orphaned projects/tasks remain
+   * Thoroughly cleans AsyncStorage after goal deletion to ensure no orphaned milestones/tasks remain
    * @param {string} goalId - The ID of the deleted goal
-   * @param {Array} linkedProjectIds - Array of project IDs that were linked to this goal
+   * @param {Array} linkedMilestoneIds - Array of milestone IDs that were linked to this goal
    * @returns {Promise<boolean>} - Success status
    */
-  const cleanupAsyncStorageAfterGoalDeletion = async (goalId, linkedProjectIds) => {
+  const cleanupAsyncStorageAfterGoalDeletion = async (goalId, linkedMilestoneIds) => {
     try {
-      console.log(`Performing thorough AsyncStorage cleanup for goal ${goalId} and ${linkedProjectIds.length} linked projects`);
+      console.log(`Performing thorough AsyncStorage cleanup for goal ${goalId} and ${linkedMilestoneIds.length} linked milestones`);
       
       // 1. Verify goals in AsyncStorage
       const storedGoalsJson = await AsyncStorage.getItem(STORAGE_KEYS.GOALS);
@@ -647,26 +647,26 @@ export const AppProvider = ({ children }) => {
         }
       }
       
-      // 2. Clean up projects in AsyncStorage
-      const storedProjectsJson = await AsyncStorage.getItem(STORAGE_KEYS.PROJECTS);
-      if (storedProjectsJson) {
-        const storedProjects = JSON.parse(storedProjectsJson);
+      // 2. Clean up milestones in AsyncStorage
+      const storedMilestonesJson = await AsyncStorage.getItem(STORAGE_KEYS.MILESTONES);
+      if (storedMilestonesJson) {
+        const storedMilestones = JSON.parse(storedMilestonesJson);
         
-        // Remove all linked projects AND any projects still referencing the deleted goal
-        const updatedProjects = storedProjects.filter(project => {
-          const isLinkedToDeletedGoal = linkedProjectIds.includes(project.id);
-          const stillReferencesDeletedGoal = project.goalId === goalId;
+        // Remove all linked milestones AND any milestones still referencing the deleted goal
+        const updatedMilestones = storedMilestones.filter(milestone => {
+          const isLinkedToDeletedGoal = linkedMilestoneIds.includes(milestone.id);
+          const stillReferencesDeletedGoal = milestone.goalId === goalId;
           
           if (isLinkedToDeletedGoal || stillReferencesDeletedGoal) {
-            console.log(`Removing project "${project.title}" (${project.id}) from AsyncStorage`);
+            console.log(`Removing milestone "${milestone.title}" (${milestone.id}) from AsyncStorage`);
             return false;
           }
           return true;
         });
         
-        if (updatedProjects.length !== storedProjects.length) {
-          console.log(`Removed ${storedProjects.length - updatedProjects.length} projects from AsyncStorage`);
-          await AsyncStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(updatedProjects));
+        if (updatedMilestones.length !== storedMilestones.length) {
+          console.log(`Removed ${storedMilestones.length - updatedMilestones.length} milestones from AsyncStorage`);
+          await AsyncStorage.setItem(STORAGE_KEYS.MILESTONES, JSON.stringify(updatedMilestones));
         }
       }
       
@@ -675,12 +675,12 @@ export const AppProvider = ({ children }) => {
       if (storedTasksJson) {
         const storedTasks = JSON.parse(storedTasksJson);
         
-        // Remove all tasks linked to the deleted projects OR directly to the deleted goal
+        // Remove all tasks linked to the deleted milestones OR directly to the deleted goal
         const updatedTasks = storedTasks.filter(task => {
-          const isFromDeletedProject = linkedProjectIds.includes(task.projectId);
+          const isFromDeletedMilestone = linkedMilestoneIds.includes(task.milestoneId);
           const isDirectlyLinkedToGoal = task.goalId === goalId;
           
-          if (isFromDeletedProject || isDirectlyLinkedToGoal) {
+          if (isFromDeletedMilestone || isDirectlyLinkedToGoal) {
             return false;
           }
           return true;
@@ -692,34 +692,34 @@ export const AppProvider = ({ children }) => {
         }
       }
       
-      // 4. Clean up project-goal link map
-      const linkMapJson = await AsyncStorage.getItem('projectGoalLinkMap');
+      // 4. Clean up milestone-goal link map
+      const linkMapJson = await AsyncStorage.getItem('milestoneGoalLinkMap');
       if (linkMapJson) {
         const linkMap = JSON.parse(linkMapJson);
         let madeChanges = false;
         
-        // Create a new map without the deleted projects
+        // Create a new map without the deleted milestones
         const updatedLinkMap = { ...linkMap };
         
-        // Remove by linked project IDs
-        linkedProjectIds.forEach(projectId => {
-          if (updatedLinkMap[projectId]) {
-            delete updatedLinkMap[projectId];
+        // Remove by linked milestone IDs
+        linkedMilestoneIds.forEach(milestoneId => {
+          if (updatedLinkMap[milestoneId]) {
+            delete updatedLinkMap[milestoneId];
             madeChanges = true;
           }
         });
         
         // Also remove any entries that still reference the deleted goal
-        Object.entries(updatedLinkMap).forEach(([projectId, linkedGoalId]) => {
+        Object.entries(updatedLinkMap).forEach(([milestoneId, linkedGoalId]) => {
           if (linkedGoalId === goalId) {
-            delete updatedLinkMap[projectId];
+            delete updatedLinkMap[milestoneId];
             madeChanges = true;
           }
         });
         
         if (madeChanges) {
-          console.log(`Updated project-goal link map in AsyncStorage`);
-          await AsyncStorage.setItem('projectGoalLinkMap', JSON.stringify(updatedLinkMap));
+          console.log(`Updated milestone-goal link map in AsyncStorage`);
+          await AsyncStorage.setItem('milestoneGoalLinkMap', JSON.stringify(updatedLinkMap));
         }
       }
       
@@ -984,28 +984,28 @@ export const AppProvider = ({ children }) => {
     return activeGoals < FREE_PLAN_LIMITS.MAX_GOALS;
   };
   
-  // Check if user can add more projects to a goal
-  const canAddMoreProjectsToGoal = (goalId) => {
-    // Pro users have unlimited projects
+  // Check if user can add more milestones to a goal
+  const canAddMoreMilestonesToGoal = (goalId) => {
+    // Pro users have unlimited milestones
     if (userSubscriptionStatus === 'pro' || userSubscriptionStatus === 'unlimited') {
       return true;
     }
     
-    // Free users are limited to X projects per goal
-    const projectsForGoal = getProjectsForGoal(goalId);
-    return projectsForGoal.length < FREE_PLAN_LIMITS.MAX_PROJECTS;
+    // Free users are limited to X milestones per goal
+    const milestonesForGoal = getMilestonesForGoal(goalId);
+    return milestonesForGoal.length < FREE_PLAN_LIMITS.MAX_MILESTONES;
   };
   
-  // Check if user can add more tasks to a project
-  const canAddMoreTasksToProject = (projectId) => {
+  // Check if user can add more tasks to a milestone
+  const canAddMoreTasksToMilestone = (milestoneId) => {
     // Pro users have unlimited tasks
     if (userSubscriptionStatus === 'pro' || userSubscriptionStatus === 'unlimited') {
       return true;
     }
     
-    // Free users are limited to X tasks per project
-    const projectTasks = getTasksForProject(projectId);
-    return projectTasks.length < FREE_PLAN_LIMITS.MAX_TASKS_PER_PROJECT;
+    // Free users are limited to X tasks per milestone
+    const milestoneTasks = getTasksForMilestone(milestoneId);
+    return milestoneTasks.length < FREE_PLAN_LIMITS.MAX_TASKS_PER_MILESTONE;
   };
   
   // Check if user can add more time blocks for this week
@@ -1179,7 +1179,7 @@ export const AppProvider = ({ children }) => {
       // Apply domain normalization
       const normalizedGoal = normalizeDomain(updatedGoal);
       
-      // Recalculate progress from projects, but preserve manual completion
+      // Recalculate progress from milestones, but preserve manual completion
       const calculatedProgress = calculateGoalProgress(normalizedGoal.id);
       // If goal is manually marked as completed, keep it at 100%, otherwise use calculated progress
       normalizedGoal.progress = normalizedGoal.completed ? 100 : calculatedProgress;
@@ -1197,8 +1197,8 @@ export const AppProvider = ({ children }) => {
       );
       await saveData(STORAGE_KEYS.GOALS, updatedGoals);
       
-      // Also update any projects associated with this goal
-      updateProjectsForGoal(normalizedGoal);
+      // Also update any milestones associated with this goal
+      updateMilestonesForGoal(normalizedGoal);
       
       // Increment the refresh counter to trigger UI updates
       setRefreshCounter(prev => prev + 1);
@@ -1211,38 +1211,38 @@ export const AppProvider = ({ children }) => {
     }
   };
   
-  // Update projects when goal changes
-  const updateProjectsForGoal = async (updatedGoal) => {
-    // Check if any projects are linked to this goal
-    const linkedProjects = getProjectsForGoal(updatedGoal.id);
+  // Update milestones when goal changes
+  const updateMilestonesForGoal = async (updatedGoal) => {
+    // Check if any milestones are linked to this goal
+    const linkedMilestones = getMilestonesForGoal(updatedGoal.id);
     
-    if (linkedProjects.length > 0) {
+    if (linkedMilestones.length > 0) {
       // Use current ref to get the latest state including recent completions
-      const currentProjects = projectsRef.current;
-      const updatedProjects = currentProjects.map(project => {
-        if (project.goalId === updatedGoal.id) {
+      const currentMilestones = milestonesRef.current;
+      const updatedMilestones = currentMilestones.map(milestone => {
+        if (milestone.goalId === updatedGoal.id) {
           // Update the goalTitle and inherit domain/color
-          // CRITICAL: Preserve all existing project properties, especially status, completed, and progress
+          // CRITICAL: Preserve all existing milestone properties, especially status, completed, and progress
           return {
-            ...project,
+            ...milestone,
             goalTitle: updatedGoal.title,
-            domain: updatedGoal.domain || project.domain,
-            color: updatedGoal.color || project.color,
+            domain: updatedGoal.domain || milestone.domain,
+            color: updatedGoal.color || milestone.color,
             // Explicitly preserve completion status
-            status: project.status,
-            completed: project.completed,
-            progress: project.progress
+            status: milestone.status,
+            completed: milestone.completed,
+            progress: milestone.progress
           };
         }
-        return project;
+        return milestone;
       });
       
-      // Update projects state
-      setProjects(updatedProjects);
+      // Update milestones state
+      setMilestones(updatedMilestones);
       
       // Save to AsyncStorage
-      await saveData(STORAGE_KEYS.PROJECTS, updatedProjects);
-      console.log(`Updated ${linkedProjects.length} projects associated with goal "${updatedGoal.title}"`);
+      await saveData(STORAGE_KEYS.MILESTONES, updatedMilestones);
+      console.log(`Updated ${linkedMilestones.length} milestones associated with goal "${updatedGoal.title}"`);
     }
   };
   
@@ -1271,11 +1271,11 @@ export const AppProvider = ({ children }) => {
       
       // STEP 1: Get current state from refs (not storage)
       const currentGoals = [...goalsRef.current];
-      const currentProjects = [...projectsRef.current]; 
+      const currentMilestones = [...milestonesRef.current]; 
       const currentTasks = [...tasksRef.current];
-      const currentLinkMap = { ...projectGoalLinkMap };
+      const currentLinkMap = { ...milestoneGoalLinkMap };
       
-      log('Error', `📊 BEFORE DELETION: Goals: ${currentGoals.length}, Projects: ${currentProjects.length}, Tasks: ${currentTasks.length}`);
+      log('Error', `📊 BEFORE DELETION: Goals: ${currentGoals.length}, Milestones: ${currentMilestones.length}, Tasks: ${currentTasks.length}`);
       
       // STEP 2: Remove the goal
       const updatedGoals = currentGoals.filter(goal => goal.id !== goalId);
@@ -1284,37 +1284,37 @@ export const AppProvider = ({ children }) => {
       const validGoalIds = new Set(updatedGoals.map(g => g.id));
       log('Error', `🎯 VALID GOALS AFTER DELETION: [${Array.from(validGoalIds).join(', ')}]`);
         
-      // STEP 4: Remove ONLY projects linked to the deleted goal (keep standalone projects)
-      const validProjects = currentProjects.filter(project => {
-        // Keep standalone projects (no goalId) and projects linked to remaining valid goals
-        const isStandalone = !project.goalId || project.goalId === null || project.goalId === undefined;
-        const hasValidGoal = project.goalId && validGoalIds.has(project.goalId);
+      // STEP 4: Remove ONLY milestones linked to the deleted goal (keep standalone milestones)
+      const validMilestones = currentMilestones.filter(milestone => {
+        // Keep standalone milestones (no goalId) and milestones linked to remaining valid goals
+        const isStandalone = !milestone.goalId || milestone.goalId === null || milestone.goalId === undefined;
+        const hasValidGoal = milestone.goalId && validGoalIds.has(milestone.goalId);
         const shouldKeep = isStandalone || hasValidGoal;
         
         if (!shouldKeep) {
-          log('Error', `🗑️ REMOVING PROJECT LINKED TO DELETED GOAL: "${project.title}" (goalId: ${project.goalId})`);
+          log('Error', `🗑️ REMOVING MILESTONE LINKED TO DELETED GOAL: "${milestone.title}" (goalId: ${milestone.goalId})`);
         } else if (isStandalone) {
-          log('Error', `✅ KEEPING STANDALONE PROJECT: "${project.title}"`);
+          log('Error', `✅ KEEPING STANDALONE MILESTONE: "${milestone.title}"`);
         } else {
-          log('Error', `✅ KEEPING PROJECT WITH VALID GOAL: "${project.title}" (goalId: ${project.goalId})`);
+          log('Error', `✅ KEEPING MILESTONE WITH VALID GOAL: "${milestone.title}" (goalId: ${milestone.goalId})`);
         }
         return shouldKeep;
       });
       
-      // STEP 5: Remove ALL orphaned tasks (tasks without valid projects) - COMPREHENSIVE APPROACH  
-      const validProjectIds = new Set(validProjects.map(p => p.id));
-      log('Error', `🎯 VALID PROJECTS AFTER CLEANUP: [${Array.from(validProjectIds).join(', ')}]`);
+      // STEP 5: Remove ALL orphaned tasks (tasks without valid milestones) - COMPREHENSIVE APPROACH  
+      const validMilestoneIds = new Set(validMilestones.map(p => p.id));
+      log('Error', `🎯 VALID MILESTONES AFTER CLEANUP: [${Array.from(validMilestoneIds).join(', ')}]`);
       
       const validTasks = currentTasks.filter(task => {
-        // Keep standalone tasks (no projectId/goalId) and tasks linked to remaining valid projects/goals  
-        const isStandaloneTask = (!task.projectId || task.projectId === null || task.projectId === undefined) && 
+        // Keep standalone tasks (no milestoneId/goalId) and tasks linked to remaining valid milestones/goals  
+        const isStandaloneTask = (!task.milestoneId || task.milestoneId === null || task.milestoneId === undefined) && 
                                 (!task.goalId || task.goalId === null || task.goalId === undefined);
-        const hasValidProject = task.projectId && validProjectIds.has(task.projectId);
+        const hasValidMilestone = task.milestoneId && validMilestoneIds.has(task.milestoneId);
         const hasValidGoal = task.goalId && validGoalIds.has(task.goalId);
-        const shouldKeep = isStandaloneTask || hasValidProject || hasValidGoal;
+        const shouldKeep = isStandaloneTask || hasValidMilestone || hasValidGoal;
         
         if (!shouldKeep) {
-          log('Error', `🗑️ REMOVING TASK LINKED TO DELETED GOAL: "${task.name || task.title}" (goalId: ${task.goalId}, projectId: ${task.projectId})`);
+          log('Error', `🗑️ REMOVING TASK LINKED TO DELETED GOAL: "${task.name || task.title}" (goalId: ${task.goalId}, milestoneId: ${task.milestoneId})`);
         } else if (isStandaloneTask) {
           log('Error', `✅ KEEPING STANDALONE TASK: "${task.name || task.title}"`);
         } else {
@@ -1325,40 +1325,40 @@ export const AppProvider = ({ children }) => {
       
       // STEP 6: Clean up link map - remove all invalid entries
       const cleanedLinkMap = {};
-      Object.entries(currentLinkMap).forEach(([projectId, linkedGoalId]) => {
-        const projectExists = validProjectIds.has(projectId);
+      Object.entries(currentLinkMap).forEach(([milestoneId, linkedGoalId]) => {
+        const milestoneExists = validMilestoneIds.has(milestoneId);
         const goalExists = validGoalIds.has(linkedGoalId);
         
-        if (projectExists && goalExists) {
-          cleanedLinkMap[projectId] = linkedGoalId;
+        if (milestoneExists && goalExists) {
+          cleanedLinkMap[milestoneId] = linkedGoalId;
         } else {
-          log('Error', `🗑️ REMOVING INVALID LINK: ${projectId} -> ${linkedGoalId}`);
+          log('Error', `🗑️ REMOVING INVALID LINK: ${milestoneId} -> ${linkedGoalId}`);
         }
       });
       
       // STEP 7: Calculate cleanup summary
-      const projectsRemoved = currentProjects.length - validProjects.length;
+      const milestonesRemoved = currentMilestones.length - validMilestones.length;
       const tasksRemoved = currentTasks.length - validTasks.length;
       const linkMapEntriesRemoved = Object.keys(currentLinkMap).length - Object.keys(cleanedLinkMap).length;
       
       log('Error', `📈 CLEANUP SUMMARY:`);
       log('Error', `  - Removed 1 goal: "${goalTitle}"`);
-      log('Error', `  - Removed ${projectsRemoved} orphaned projects`);
+      log('Error', `  - Removed ${milestonesRemoved} orphaned milestones`);
       log('Error', `  - Removed ${tasksRemoved} orphaned tasks`);
       log('Error', `  - Removed ${linkMapEntriesRemoved} invalid link map entries`);
       
       // STEP 8: Update all state and storage atomically
       setGoals(updatedGoals);
-      setProjects(validProjects);
+      setMilestones(validMilestones);
       setTasks(validTasks);
-      setProjectGoalLinkMap(cleanedLinkMap);
+      setMilestoneGoalLinkMap(cleanedLinkMap);
       
       // STEP 9: Save all cleaned data to storage in parallel
       await Promise.all([
         saveData(STORAGE_KEYS.GOALS, updatedGoals),
-        saveData(STORAGE_KEYS.PROJECTS, validProjects),  
+        saveData(STORAGE_KEYS.MILESTONES, validMilestones),  
         saveData(STORAGE_KEYS.TASKS, validTasks),
-        saveData('projectGoalLinkMap', cleanedLinkMap)
+        saveData('milestoneGoalLinkMap', cleanedLinkMap)
       ]);
       
       log('Error', `💾 ALL DATA SAVED TO STORAGE`);
@@ -1368,7 +1368,7 @@ export const AppProvider = ({ children }) => {
       
       // Final verification
       log('Error', `🏁 COMPREHENSIVE DELETION COMPLETED`);
-      log('Error', `📊 AFTER DELETION: Goals: ${updatedGoals.length}, Projects: ${validProjects.length}, Tasks: ${validTasks.length}`);
+      log('Error', `📊 AFTER DELETION: Goals: ${updatedGoals.length}, Milestones: ${validMilestones.length}, Tasks: ${validTasks.length}`);
       
       // Increment refresh counter to trigger UI updates
       setRefreshCounter(prev => prev + 1);
@@ -1388,58 +1388,58 @@ export const AppProvider = ({ children }) => {
     }
   };
   
-  // Add a project/milestone - UPDATED FOR FLEXIBLE HIERARCHY (goalId now optional)
-  const addProject = async (newProject) => {
+  // Add a milestone/milestone - UPDATED FOR FLEXIBLE HIERARCHY (goalId now optional)
+  const addMilestone = async (newMilestone) => {
     try {
       // Check subscription limits only if attached to a goal
-      if (newProject.goalId && !canAddMoreProjectsToGoal(newProject.goalId)) {
-        showError(`Free version limited to ${FREE_PLAN_LIMITS.MAX_PROJECTS} projects per goal. Complete a project or upgrade to Pro.`);
+      if (newMilestone.goalId && !canAddMoreMilestonesToGoal(newMilestone.goalId)) {
+        showError(`Free version limited to ${FREE_PLAN_LIMITS.MAX_MILESTONES} milestones per goal. Complete a milestone or upgrade to Pro.`);
         return null;
       }
       
       // Verify goal relationship ONLY if goalId is provided (now optional)
-      if (newProject.goalId) {
-        const goalExists = isGoalActive(newProject.goalId);
+      if (newMilestone.goalId) {
+        const goalExists = isGoalActive(newMilestone.goalId);
         
         if (!goalExists) {
-          console.warn(`Project references nonexistent goal ID: ${newProject.goalId}`);
+          console.warn(`Milestone references nonexistent goal ID: ${newMilestone.goalId}`);
           
           // Try to find by goalTitle
-          if (newProject.goalTitle) {
+          if (newMilestone.goalTitle) {
             const matchingGoal = goals.find(goal => 
-              goal.title.toLowerCase() === newProject.goalTitle.toLowerCase()
+              goal.title.toLowerCase() === newMilestone.goalTitle.toLowerCase()
             );
             
             if (matchingGoal) {
               console.log(`Found goal by title: "${matchingGoal.title}"`);
-              newProject.goalId = matchingGoal.id;
-              newProject.goalTitle = matchingGoal.title;
+              newMilestone.goalId = matchingGoal.id;
+              newMilestone.goalTitle = matchingGoal.title;
               
               // Inherit domain and color from goal
-              newProject.domain = matchingGoal.domain || newProject.domain;
-              newProject.color = matchingGoal.color || newProject.color;
+              newMilestone.domain = matchingGoal.domain || newMilestone.domain;
+              newMilestone.color = matchingGoal.color || newMilestone.color;
             } else {
               // No matching goal found, create as standalone milestone
-              console.warn(`No goal found matching title "${newProject.goalTitle}" - creating standalone milestone`);
-              delete newProject.goalId;
-              delete newProject.goalTitle;
+              console.warn(`No goal found matching title "${newMilestone.goalTitle}" - creating standalone milestone`);
+              delete newMilestone.goalId;
+              delete newMilestone.goalTitle;
             }
           } else {
             // No goalTitle to match with, create as standalone milestone
-            delete newProject.goalId;
+            delete newMilestone.goalId;
             console.log('Creating standalone milestone (no goal parent)');
           }
         } else {
           // Goal exists, ensure we have the correct title and inherit domain/color
-          const linkedGoal = goals.find(goal => goal.id === newProject.goalId);
-          newProject.goalTitle = linkedGoal.title;
+          const linkedGoal = goals.find(goal => goal.id === newMilestone.goalId);
+          newMilestone.goalTitle = linkedGoal.title;
           
           // Inherit domain and color if not already set
-          if (!newProject.domain && linkedGoal.domain) {
-            newProject.domain = linkedGoal.domain;
+          if (!newMilestone.domain && linkedGoal.domain) {
+            newMilestone.domain = linkedGoal.domain;
           }
-          if (!newProject.color && linkedGoal.color) {
-            newProject.color = linkedGoal.color;
+          if (!newMilestone.color && linkedGoal.color) {
+            newMilestone.color = linkedGoal.color;
           }
         }
       } else {
@@ -1448,175 +1448,175 @@ export const AppProvider = ({ children }) => {
       }
       
       // Calculate initial progress from tasks if any
-      if (newProject.tasks && Array.isArray(newProject.tasks)) {
-        const completedTasks = newProject.tasks.filter(task => task.completed || task.status === 'done').length;
-        newProject.progress = newProject.tasks.length > 0 
-          ? Math.round((completedTasks / newProject.tasks.length) * 100) 
+      if (newMilestone.tasks && Array.isArray(newMilestone.tasks)) {
+        const completedTasks = newMilestone.tasks.filter(task => task.completed || task.status === 'done').length;
+        newMilestone.progress = newMilestone.tasks.length > 0 
+          ? Math.round((completedTasks / newMilestone.tasks.length) * 100) 
           : 0;
       } else {
-        newProject.progress = 0;
+        newMilestone.progress = 0;
       }
       
       // Now apply domain normalization
-      const normalizedProject = normalizeDomain(newProject);
+      const normalizedMilestone = normalizeDomain(newMilestone);
       
-      // Update the projects state
-      setProjects(prevProjects => [...prevProjects, normalizedProject]);
+      // Update the milestones state
+      setMilestones(prevMilestones => [...prevMilestones, normalizedMilestone]);
       
       // Save to AsyncStorage
-      const updatedProjects = [...projects, normalizedProject];
-      await saveData(STORAGE_KEYS.PROJECTS, updatedProjects);
+      const updatedMilestones = [...milestones, normalizedMilestone];
+      await saveData(STORAGE_KEYS.MILESTONES, updatedMilestones);
       
-      // Also update the project-goal link map
-      if (normalizedProject.goalId) {
+      // Also update the milestone-goal link map
+      if (normalizedMilestone.goalId) {
         const updatedLinkMap = {
-          ...projectGoalLinkMap,
-          [normalizedProject.id]: normalizedProject.goalId
+          ...milestoneGoalLinkMap,
+          [normalizedMilestone.id]: normalizedMilestone.goalId
         };
-        setProjectGoalLinkMap(updatedLinkMap);
+        setMilestoneGoalLinkMap(updatedLinkMap);
         
         // Save link map to AsyncStorage
-        await saveData('projectGoalLinkMap', updatedLinkMap);
+        await saveData('milestoneGoalLinkMap', updatedLinkMap);
         
         // Update goal progress
-        await updateGoalProgressFromProjects(normalizedProject.goalId);
+        await updateGoalProgressFromMilestones(normalizedMilestone.goalId);
       }
       
-      return normalizedProject;
+      return normalizedMilestone;
     } catch (error) {
-      console.error('Error adding project:', error);
-      showError('Failed to add project');
+      console.error('Error adding milestone:', error);
+      showError('Failed to add milestone');
       throw error;
     }
   };
   
-  // Update a project - UPDATED TO PRESERVE PROGRESS AND STATUS SEPARATION
-  const updateProject = async (updatedProject) => {
+  // Update a milestone - UPDATED TO PRESERVE PROGRESS AND STATUS SEPARATION
+  const updateMilestone = async (updatedMilestone) => {
     try {
       // Check if in progress
-      if (operationsInProgress.current.updatingProjects.has(updatedProject.id)) {
-        console.log(`Project ${updatedProject.id} is already being updated, ignoring duplicate request`);
+      if (operationsInProgress.current.updatingMilestones.has(updatedMilestone.id)) {
+        console.log(`Milestone ${updatedMilestone.id} is already being updated, ignoring duplicate request`);
         return null;
       }
       
       // Mark as in progress
-      operationsInProgress.current.updatingProjects.add(updatedProject.id);
+      operationsInProgress.current.updatingMilestones.add(updatedMilestone.id);
       
-      // Check if project exists
-      if (!isProjectActive(updatedProject.id)) {
-        console.warn(`Project with ID ${updatedProject.id} not found, unable to update`);
-        showError('Project not found');
+      // Check if milestone exists
+      if (!isMilestoneActive(updatedMilestone.id)) {
+        console.warn(`Milestone with ID ${updatedMilestone.id} not found, unable to update`);
+        showError('Milestone not found');
         return null;
       }
       
       // Apply domain normalization
-      const normalizedProject = normalizeDomain(updatedProject);
+      const normalizedMilestone = normalizeDomain(updatedMilestone);
       
-      // Get original project
-      const originalProject = projects.find(p => p.id === normalizedProject.id);
+      // Get original milestone
+      const originalMilestone = milestones.find(p => p.id === normalizedMilestone.id);
       
       // Recalculate progress from tasks if flag is set
-      if (normalizedProject.recalculateProgress) {
-        const calculatedProgress = calculateProjectProgress(normalizedProject.id);
-        normalizedProject.progress = calculatedProgress;
-        delete normalizedProject.recalculateProgress; // Remove flag
+      if (normalizedMilestone.recalculateProgress) {
+        const calculatedProgress = calculateMilestoneProgress(normalizedMilestone.id);
+        normalizedMilestone.progress = calculatedProgress;
+        delete normalizedMilestone.recalculateProgress; // Remove flag
       }
       
       // IMPORTANT: Preserve status in certain conditions
       // If the client didn't explicitly try to change the status, 
       // we should keep it as it was
-      if (!normalizedProject.status && originalProject && originalProject.status) {
-        normalizedProject.status = originalProject.status;
+      if (!normalizedMilestone.status && originalMilestone && originalMilestone.status) {
+        normalizedMilestone.status = originalMilestone.status;
       }
       
       // Make sure "completed" flag is synchronized with "done" status
-      if (normalizedProject.status === 'done') {
-        normalizedProject.completed = true;
+      if (normalizedMilestone.status === 'done') {
+        normalizedMilestone.completed = true;
       }
       
       // Verify goal if specified
-      if (normalizedProject.goalId && !isGoalActive(normalizedProject.goalId)) {
-        console.warn(`Project references nonexistent goal ID: ${normalizedProject.goalId}`);
-        // Make this project independent if goal doesn't exist
-        normalizedProject.goalId = null;
-        normalizedProject.goalTitle = null;
-      } else if (normalizedProject.goalId) {
+      if (normalizedMilestone.goalId && !isGoalActive(normalizedMilestone.goalId)) {
+        console.warn(`Milestone references nonexistent goal ID: ${normalizedMilestone.goalId}`);
+        // Make this milestone independent if goal doesn't exist
+        normalizedMilestone.goalId = null;
+        normalizedMilestone.goalTitle = null;
+      } else if (normalizedMilestone.goalId) {
         // Update goal title to match goal
-        const goal = goals.find(g => g.id === normalizedProject.goalId);
+        const goal = goals.find(g => g.id === normalizedMilestone.goalId);
         if (goal) {
-          normalizedProject.goalTitle = goal.title;
+          normalizedMilestone.goalTitle = goal.title;
         }
       }
       
-      // Get the old project to check if goalId changed
-      const oldProject = projects.find(p => p.id === normalizedProject.id);
-      const goalIdChanged = oldProject && oldProject.goalId !== normalizedProject.goalId;
+      // Get the old milestone to check if goalId changed
+      const oldMilestone = milestones.find(p => p.id === normalizedMilestone.id);
+      const goalIdChanged = oldMilestone && oldMilestone.goalId !== normalizedMilestone.goalId;
       
-      // Update the projects state
-      setProjects(prevProjects => 
-        prevProjects.map(project => 
-          project.id === normalizedProject.id ? normalizedProject : project
+      // Update the milestones state
+      setMilestones(prevMilestones => 
+        prevMilestones.map(milestone => 
+          milestone.id === normalizedMilestone.id ? normalizedMilestone : milestone
         )
       );
       
       // Save to AsyncStorage
-      const updatedProjects = projects.map(project => 
-        project.id === normalizedProject.id ? normalizedProject : project
+      const updatedMilestones = milestones.map(milestone => 
+        milestone.id === normalizedMilestone.id ? normalizedMilestone : milestone
       );
-      await saveData(STORAGE_KEYS.PROJECTS, updatedProjects);
+      await saveData(STORAGE_KEYS.MILESTONES, updatedMilestones);
       
-      // Update the project-goal link map if goalId changed
-      if (normalizedProject.goalId) {
+      // Update the milestone-goal link map if goalId changed
+      if (normalizedMilestone.goalId) {
         const updatedLinkMap = {
-          ...projectGoalLinkMap,
-          [normalizedProject.id]: normalizedProject.goalId
+          ...milestoneGoalLinkMap,
+          [normalizedMilestone.id]: normalizedMilestone.goalId
         };
-        setProjectGoalLinkMap(updatedLinkMap);
+        setMilestoneGoalLinkMap(updatedLinkMap);
         
         // Save link map to AsyncStorage
-        await saveData('projectGoalLinkMap', updatedLinkMap);
-      } else if (projectGoalLinkMap[normalizedProject.id]) {
+        await saveData('milestoneGoalLinkMap', updatedLinkMap);
+      } else if (milestoneGoalLinkMap[normalizedMilestone.id]) {
         // Remove from map if goalId is gone
-        const updatedLinkMap = { ...projectGoalLinkMap };
-        delete updatedLinkMap[normalizedProject.id];
-        setProjectGoalLinkMap(updatedLinkMap);
+        const updatedLinkMap = { ...milestoneGoalLinkMap };
+        delete updatedLinkMap[normalizedMilestone.id];
+        setMilestoneGoalLinkMap(updatedLinkMap);
         
         // Save link map to AsyncStorage
-        await saveData('projectGoalLinkMap', updatedLinkMap);
+        await saveData('milestoneGoalLinkMap', updatedLinkMap);
       }
       
       // Update goal progress if goal is linked or if goal changed
-      if (normalizedProject.goalId) {
-        await updateGoalProgressFromProjects(normalizedProject.goalId);
+      if (normalizedMilestone.goalId) {
+        await updateGoalProgressFromMilestones(normalizedMilestone.goalId);
       }
       
       // If goal changed, also update the old goal's progress
-      if (goalIdChanged && oldProject?.goalId) {
-        await updateGoalProgressFromProjects(oldProject.goalId);
+      if (goalIdChanged && oldMilestone?.goalId) {
+        await updateGoalProgressFromMilestones(oldMilestone.goalId);
       }
       
-      return normalizedProject;
+      return normalizedMilestone;
     } catch (error) {
-      console.error('Error updating project:', error);
-      showError('Failed to update project');
+      console.error('Error updating milestone:', error);
+      showError('Failed to update milestone');
       return null;
     } finally {
       // Clear operation tracking
       setTimeout(() => {
-        operationsInProgress.current.updatingProjects.delete(updatedProject.id);
+        operationsInProgress.current.updatingMilestones.delete(updatedMilestone.id);
       }, 500);
     }
   };
   
-  // NEW: Function to update goal progress from its projects
-  const updateGoalProgressFromProjects = async (goalId) => {
+  // NEW: Function to update goal progress from its milestones
+  const updateGoalProgressFromMilestones = async (goalId) => {
     try {
       if (!goalId) return;
       
       const goal = goalsRef.current.find(g => g.id === goalId);
       if (!goal) return;
       
-      const calculatedProgress = calculateGoalProgress(goalId, projectsRef.current, tasksRef.current);
+      const calculatedProgress = calculateGoalProgress(goalId, milestonesRef.current, tasksRef.current);
       
       // Don't override manually completed goals
       if (goal.completed) {
@@ -1660,94 +1660,94 @@ export const AppProvider = ({ children }) => {
     }
   };
   
-  // Delete a project - SIMPLIFIED VERSION WITH GOAL PROGRESS UPDATE
-  const deleteProject = async (projectId) => {
+  // Delete a milestone - SIMPLIFIED VERSION WITH GOAL PROGRESS UPDATE
+  const deleteMilestone = async (milestoneId) => {
     try {
-      console.log(`Deleting project with ID: ${projectId}`);
+      console.log(`Deleting milestone with ID: ${milestoneId}`);
       
-      // Simple guard against already deleted projects
-      if (!Array.isArray(projects) || projects.length === 0) {
-        console.warn('No projects array available');
+      // Simple guard against already deleted milestones
+      if (!Array.isArray(milestones) || milestones.length === 0) {
+        console.warn('No milestones array available');
         return false;
       }
       
-      // Check if project exists in the full projects array
-      const project = projects.find(p => p.id === projectId);
-      if (!project) {
-        console.warn(`Project with ID ${projectId} not found, it may have already been deleted`);
+      // Check if milestone exists in the full milestones array
+      const milestone = milestones.find(p => p.id === milestoneId);
+      if (!milestone) {
+        console.warn(`Milestone with ID ${milestoneId} not found, it may have already been deleted`);
         return false;
       }
       
-      const goalId = project.goalId; // Store goal ID for later progress update
+      const goalId = milestone.goalId; // Store goal ID for later progress update
       
       // 1. First remove from AsyncStorage to ensure persistence
-      const updatedProjects = projects.filter(project => project.id !== projectId);
-      await AsyncStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(updatedProjects));
+      const updatedMilestones = milestones.filter(milestone => milestone.id !== milestoneId);
+      await AsyncStorage.setItem(STORAGE_KEYS.MILESTONES, JSON.stringify(updatedMilestones));
       
       // 2. Then update state (AFTER storage is updated)
-      setProjects(updatedProjects);
+      setMilestones(updatedMilestones);
       
       // 3. Clean up associated tasks if they exist
       if (Array.isArray(tasks) && tasks.length > 0) {
-        const updatedTasks = tasks.filter(task => task.projectId !== projectId);
+        const updatedTasks = tasks.filter(task => task.milestoneId !== milestoneId);
         await AsyncStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(updatedTasks));
         setTasks(updatedTasks);
       }
       
-      // 4. Update project-goal link map if needed
-      if (projectGoalLinkMap[projectId]) {
-        const updatedLinkMap = { ...projectGoalLinkMap };
-        delete updatedLinkMap[projectId];
+      // 4. Update milestone-goal link map if needed
+      if (milestoneGoalLinkMap[milestoneId]) {
+        const updatedLinkMap = { ...milestoneGoalLinkMap };
+        delete updatedLinkMap[milestoneId];
         
-        await AsyncStorage.setItem('projectGoalLinkMap', JSON.stringify(updatedLinkMap));
-        setProjectGoalLinkMap(updatedLinkMap);
+        await AsyncStorage.setItem('milestoneGoalLinkMap', JSON.stringify(updatedLinkMap));
+        setMilestoneGoalLinkMap(updatedLinkMap);
       }
       
-      // 5. Update goal progress if project was linked to a goal
+      // 5. Update goal progress if milestone was linked to a goal
       if (goalId) {
         setTimeout(() => {
-          updateGoalProgressFromProjects(goalId);
+          updateGoalProgressFromMilestones(goalId);
         }, 500);
       }
       
       return true;
     } catch (error) {
-      console.error('Error deleting project:', error);
+      console.error('Error deleting milestone:', error);
       return false;
     }
   };
   
-  // Add a task to a project OR create standalone task - COMPLETELY REWRITTEN TO NEVER CHANGE PROJECT STATUS AND ADD SUBSCRIPTION CHECK
-  const addTask = async (projectIdOrTaskData, newTask) => {
+  // Add a task to a milestone OR create standalone task - COMPLETELY REWRITTEN TO NEVER CHANGE MILESTONE STATUS AND ADD SUBSCRIPTION CHECK
+  const addTask = async (milestoneIdOrTaskData, newTask) => {
     try {
-      // Handle both old format (projectId, newTask) and new format (taskData only)
-      let projectId, taskData;
+      // Handle both old format (milestoneId, newTask) and new format (taskData only)
+      let milestoneId, taskData;
       
-      if (typeof projectIdOrTaskData === 'string' || projectIdOrTaskData === null) {
-        // Old format: addTask(projectId, newTask)
-        projectId = projectIdOrTaskData;
+      if (typeof milestoneIdOrTaskData === 'string' || milestoneIdOrTaskData === null) {
+        // Old format: addTask(milestoneId, newTask)
+        milestoneId = milestoneIdOrTaskData;
         taskData = newTask;
       } else {
         // New format: addTask(taskData)
-        taskData = projectIdOrTaskData;
-        projectId = taskData.projectId;
+        taskData = milestoneIdOrTaskData;
+        milestoneId = taskData.milestoneId;
       }
       
-      // For standalone tasks, projectId will be null/undefined
-      const isStandaloneTask = !projectId || projectId === null || projectId === undefined;
+      // For standalone tasks, milestoneId will be null/undefined
+      const isStandaloneTask = !milestoneId || milestoneId === null || milestoneId === undefined;
       
-      console.log('🔍 addTask called with:', { projectId, isStandaloneTask, taskData: taskData?.title });
+      console.log('🔍 addTask called with:', { milestoneId, isStandaloneTask, taskData: taskData?.title });
       
-      // Check if project exists (only for non-standalone tasks)
-      if (!isStandaloneTask && !isProjectActive(projectId)) {
-        console.warn(`Project with ID ${projectId} not found, cannot add task`);
-        showError('Project not found');
+      // Check if milestone exists (only for non-standalone tasks)
+      if (!isStandaloneTask && !isMilestoneActive(milestoneId)) {
+        console.warn(`Milestone with ID ${milestoneId} not found, cannot add task`);
+        showError('Milestone not found');
         return null;
       }
       
-      // Check subscription limits (only for project-based tasks)
-      if (!isStandaloneTask && !canAddMoreTasksToProject(projectId)) {
-        showError(`Free version limited to ${FREE_PLAN_LIMITS.MAX_TASKS_PER_PROJECT} tasks per project. Complete a task or upgrade to Pro.`);
+      // Check subscription limits (only for milestone-based tasks)
+      if (!isStandaloneTask && !canAddMoreTasksToMilestone(milestoneId)) {
+        showError(`Free version limited to ${FREE_PLAN_LIMITS.MAX_TASKS_PER_MILESTONE} tasks per milestone. Complete a task or upgrade to Pro.`);
         return null;
       }
       
@@ -1758,8 +1758,8 @@ export const AppProvider = ({ children }) => {
       const taskWithId = { 
         ...taskData,
         id: taskData.id || `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        projectId: isStandaloneTask ? null : projectId, // Explicitly set to null for standalone tasks
-        milestoneId: taskData.milestoneId || (isStandaloneTask ? null : projectId), // Use milestoneId or fallback to projectId
+        milestoneId: isStandaloneTask ? null : milestoneId, // Explicitly set to null for standalone tasks
+        milestoneId: taskData.milestoneId || (isStandaloneTask ? null : milestoneId), // Use milestoneId or fallback to milestoneId
         goalId: taskData.goalId || null, // Ensure goalId is set
         completed: taskData.completed || false,
         createdAt: taskData.createdAt || new Date().toISOString()
@@ -1774,28 +1774,28 @@ export const AppProvider = ({ children }) => {
       
       console.log('🔍 Task added successfully:', { id: taskWithId.id, title: taskWithId.title, isStandalone: isStandaloneTask });
       
-      // Skip project progress calculation for standalone tasks
+      // Skip milestone progress calculation for standalone tasks
       if (isStandaloneTask) {
         return taskWithId;
       }
       
-      // Find the current project
-      const project = projectsRef.current.find(p => p.id === projectId);
-      if (!project) return taskWithId;
+      // Find the current milestone
+      const milestone = milestonesRef.current.find(p => p.id === milestoneId);
+      if (!milestone) return taskWithId;
       
-      // Calculate new task-based progress WITHOUT changing project status
-      const projectTasks = updatedTasks.filter(task => task.projectId === projectId);
-      const completedTasks = projectTasks.filter(task => task.completed || task.status === 'done').length;
-      const calculatedProgress = projectTasks.length > 0 
-        ? Math.round((completedTasks / projectTasks.length) * 100)
+      // Calculate new task-based progress WITHOUT changing milestone status
+      const milestoneTasks = updatedTasks.filter(task => task.milestoneId === milestoneId);
+      const completedTasks = milestoneTasks.filter(task => task.completed || task.status === 'done').length;
+      const calculatedProgress = milestoneTasks.length > 0 
+        ? Math.round((completedTasks / milestoneTasks.length) * 100)
         : 0;
       
       // Only update the progress number, NEVER the status
-      if (project.progress !== calculatedProgress) {
-        console.log(`[AppContext] Updating project "${project.title}" progress to ${calculatedProgress}% (status remains "${project.status || 'todo'}")`);
+      if (milestone.progress !== calculatedProgress) {
+        console.log(`[AppContext] Updating milestone "${milestone.title}" progress to ${calculatedProgress}% (status remains "${milestone.status || 'todo'}")`);
         
-        const updatedProject = {
-          ...project,
+        const updatedMilestone = {
+          ...milestone,
           progress: calculatedProgress,
           // DO NOT CHANGE these properties based on tasks:
           // status: stays the same
@@ -1803,26 +1803,26 @@ export const AppProvider = ({ children }) => {
           updatedAt: new Date().toISOString()
         };
         
-        // Special case: if project is marked as done, keep it at 100%
-        if (project.status === 'done' || project.completed) {
-          updatedProject.progress = 100;
+        // Special case: if milestone is marked as done, keep it at 100%
+        if (milestone.status === 'done' || milestone.completed) {
+          updatedMilestone.progress = 100;
         }
         
-        // Update projects state
-        setProjects(prevProjects => 
-          prevProjects.map(p => p.id === projectId ? updatedProject : p)
+        // Update milestones state
+        setMilestones(prevMilestones => 
+          prevMilestones.map(p => p.id === milestoneId ? updatedMilestone : p)
         );
         
         // Save to AsyncStorage
-        const updatedProjects = projectsRef.current.map(p => 
-          p.id === projectId ? updatedProject : p
+        const updatedMilestones = milestonesRef.current.map(p => 
+          p.id === milestoneId ? updatedMilestone : p
         );
-        await saveData(STORAGE_KEYS.PROJECTS, updatedProjects);
+        await saveData(STORAGE_KEYS.MILESTONES, updatedMilestones);
         
-        // Update goal progress if project is linked to a goal
-        if (project.goalId) {
+        // Update goal progress if milestone is linked to a goal
+        if (milestone.goalId) {
           setTimeout(() => {
-            updateGoalProgressFromProjects(project.goalId);
+            updateGoalProgressFromMilestones(milestone.goalId);
           }, 500);
         }
       }
@@ -1835,13 +1835,13 @@ export const AppProvider = ({ children }) => {
     }
   };
   
-  // Update a task - COMPLETELY REWRITTEN TO NEVER CHANGE PROJECT STATUS
-  const updateTask = async (projectId, taskId, updatedTask) => {
+  // Update a task - COMPLETELY REWRITTEN TO NEVER CHANGE MILESTONE STATUS
+  const updateTask = async (milestoneId, taskId, updatedTask) => {
     try {
-      // Check if project exists
-      if (!isProjectActive(projectId)) {
-        console.warn(`Project with ID ${projectId} not found, cannot update task`);
-        showError('Project not found');
+      // Check if milestone exists
+      if (!isMilestoneActive(milestoneId)) {
+        console.warn(`Milestone with ID ${milestoneId} not found, cannot update task`);
+        showError('Milestone not found');
         return null;
       }
       
@@ -1852,10 +1852,10 @@ export const AppProvider = ({ children }) => {
       }
       
       // Find the task
-      const taskIndex = tasks.findIndex(task => task.id === taskId && task.projectId === projectId);
+      const taskIndex = tasks.findIndex(task => task.id === taskId && task.milestoneId === milestoneId);
       
       if (taskIndex === -1) {
-        console.warn(`Task with ID ${taskId} not found in project ${projectId}`);
+        console.warn(`Task with ID ${taskId} not found in milestone ${milestoneId}`);
         showError('Task not found');
         return null;
       }
@@ -1873,23 +1873,23 @@ export const AppProvider = ({ children }) => {
       // Save to AsyncStorage
       await saveData(STORAGE_KEYS.TASKS, newTasksArray);
       
-      // Find the current project
-      const project = projectsRef.current.find(p => p.id === projectId);
-      if (!project) return null;
+      // Find the current milestone
+      const milestone = milestonesRef.current.find(p => p.id === milestoneId);
+      if (!milestone) return null;
       
-      // Calculate new task-based progress WITHOUT changing project status
-      const projectTasks = newTasksArray.filter(task => task.projectId === projectId);
-      const completedTasks = projectTasks.filter(task => task.completed || task.status === 'done').length;
-      const calculatedProgress = projectTasks.length > 0 
-        ? Math.round((completedTasks / projectTasks.length) * 100)
+      // Calculate new task-based progress WITHOUT changing milestone status
+      const milestoneTasks = newTasksArray.filter(task => task.milestoneId === milestoneId);
+      const completedTasks = milestoneTasks.filter(task => task.completed || task.status === 'done').length;
+      const calculatedProgress = milestoneTasks.length > 0 
+        ? Math.round((completedTasks / milestoneTasks.length) * 100)
         : 0;
       
       // Only update the progress number, NEVER the status
-      if (project.progress !== calculatedProgress) {
-        console.log(`[AppContext] Updating project "${project.title}" progress to ${calculatedProgress}% (status remains "${project.status || 'todo'}")`);
+      if (milestone.progress !== calculatedProgress) {
+        console.log(`[AppContext] Updating milestone "${milestone.title}" progress to ${calculatedProgress}% (status remains "${milestone.status || 'todo'}")`);
         
-        const updatedProject = {
-          ...project,
+        const updatedMilestone = {
+          ...milestone,
           progress: calculatedProgress,
           // DO NOT CHANGE these properties based on tasks:
           // status: stays the same
@@ -1897,26 +1897,26 @@ export const AppProvider = ({ children }) => {
           updatedAt: new Date().toISOString()
         };
         
-        // Special case: if project is marked as done, keep it at 100%
-        if (project.status === 'done' || project.completed) {
-          updatedProject.progress = 100;
+        // Special case: if milestone is marked as done, keep it at 100%
+        if (milestone.status === 'done' || milestone.completed) {
+          updatedMilestone.progress = 100;
         }
         
-        // Update projects state
-        setProjects(prevProjects => 
-          prevProjects.map(p => p.id === projectId ? updatedProject : p)
+        // Update milestones state
+        setMilestones(prevMilestones => 
+          prevMilestones.map(p => p.id === milestoneId ? updatedMilestone : p)
         );
         
         // Save to AsyncStorage
-        const updatedProjects = projectsRef.current.map(p => 
-          p.id === projectId ? updatedProject : p
+        const updatedMilestones = milestonesRef.current.map(p => 
+          p.id === milestoneId ? updatedMilestone : p
         );
-        await saveData(STORAGE_KEYS.PROJECTS, updatedProjects);
+        await saveData(STORAGE_KEYS.MILESTONES, updatedMilestones);
         
-        // Update goal progress if project is linked to a goal
-        if (project.goalId) {
+        // Update goal progress if milestone is linked to a goal
+        if (milestone.goalId) {
           setTimeout(() => {
-            updateGoalProgressFromProjects(project.goalId);
+            updateGoalProgressFromMilestones(milestone.goalId);
           }, 500);
         }
       }
@@ -1930,14 +1930,14 @@ export const AppProvider = ({ children }) => {
   };
   
   // Delete a task - UPDATED FOR FLEXIBLE HIERARCHY (handles standalone tasks)
-  const deleteTask = async (projectId, taskId) => {
+  const deleteTask = async (milestoneId, taskId) => {
     try {
-      const isStandaloneTask = projectId === null || projectId === undefined;
+      const isStandaloneTask = milestoneId === null || milestoneId === undefined;
       
-      // Check if project exists (only for non-standalone tasks)
-      if (!isStandaloneTask && !isProjectActive(projectId)) {
-        console.warn(`Project with ID ${projectId} not found, cannot delete task`);
-        showError('Project not found');
+      // Check if milestone exists (only for non-standalone tasks)
+      if (!isStandaloneTask && !isMilestoneActive(milestoneId)) {
+        console.warn(`Milestone with ID ${milestoneId} not found, cannot delete task`);
+        showError('Milestone not found');
         return false;
       }
       
@@ -1947,21 +1947,21 @@ export const AppProvider = ({ children }) => {
         throw new Error('Tasks array not available');
       }
       
-      // Check if task exists (handle both standalone and project tasks)
+      // Check if task exists (handle both standalone and milestone tasks)
       const taskExists = isStandaloneTask 
-        ? tasks.some(task => task.id === taskId && (task.projectId === null || task.projectId === undefined))
-        : tasks.some(task => task.id === taskId && task.projectId === projectId);
+        ? tasks.some(task => task.id === taskId && (task.milestoneId === null || task.milestoneId === undefined))
+        : tasks.some(task => task.id === taskId && task.milestoneId === milestoneId);
       
       if (!taskExists) {
-        console.warn(`Task with ID ${taskId} not found${isStandaloneTask ? ' in standalone tasks' : ` in project ${projectId}`}`);
+        console.warn(`Task with ID ${taskId} not found${isStandaloneTask ? ' in standalone tasks' : ` in milestone ${milestoneId}`}`);
         showError('Task not found');
         return false;
       }
       
-      // Remove the task (handle both standalone and project tasks)
+      // Remove the task (handle both standalone and milestone tasks)
       const updatedTasks = isStandaloneTask
-        ? tasks.filter(task => !(task.id === taskId && (task.projectId === null || task.projectId === undefined)))
-        : tasks.filter(task => !(task.id === taskId && task.projectId === projectId));
+        ? tasks.filter(task => !(task.id === taskId && (task.milestoneId === null || task.milestoneId === undefined)))
+        : tasks.filter(task => !(task.id === taskId && task.milestoneId === milestoneId));
       
       // Update state
       setTasks(updatedTasks);
@@ -1969,28 +1969,28 @@ export const AppProvider = ({ children }) => {
       // Save to AsyncStorage
       await saveData(STORAGE_KEYS.TASKS, updatedTasks);
       
-      // Find the current project
-      const project = projectsRef.current.find(p => p.id === projectId);
-      if (!project) return true;
+      // Find the current milestone
+      const milestone = milestonesRef.current.find(p => p.id === milestoneId);
+      if (!milestone) return true;
       
-      // Calculate new task-based progress WITHOUT changing project status
-      const projectTasks = updatedTasks.filter(task => task.projectId === projectId);
+      // Calculate new task-based progress WITHOUT changing milestone status
+      const milestoneTasks = updatedTasks.filter(task => task.milestoneId === milestoneId);
       
       // If no tasks left, keep the current progress
-      if (projectTasks.length === 0) {
+      if (milestoneTasks.length === 0) {
         showSuccess('Task deleted successfully');
         return true;
       }
       
-      const completedTasks = projectTasks.filter(task => task.completed || task.status === 'done').length;
-      const calculatedProgress = Math.round((completedTasks / projectTasks.length) * 100);
+      const completedTasks = milestoneTasks.filter(task => task.completed || task.status === 'done').length;
+      const calculatedProgress = Math.round((completedTasks / milestoneTasks.length) * 100);
       
       // Only update the progress number, NEVER the status
-      if (project.progress !== calculatedProgress) {
-        console.log(`[AppContext] Updating project "${project.title}" progress to ${calculatedProgress}% (status remains "${project.status || 'todo'}")`);
+      if (milestone.progress !== calculatedProgress) {
+        console.log(`[AppContext] Updating milestone "${milestone.title}" progress to ${calculatedProgress}% (status remains "${milestone.status || 'todo'}")`);
         
-        const updatedProject = {
-          ...project,
+        const updatedMilestone = {
+          ...milestone,
           progress: calculatedProgress,
           // DO NOT CHANGE these properties based on tasks:
           // status: stays the same
@@ -1998,26 +1998,26 @@ export const AppProvider = ({ children }) => {
           updatedAt: new Date().toISOString()
         };
         
-        // Special case: if project is marked as done, keep it at 100%
-        if (project.status === 'done' || project.completed) {
-          updatedProject.progress = 100;
+        // Special case: if milestone is marked as done, keep it at 100%
+        if (milestone.status === 'done' || milestone.completed) {
+          updatedMilestone.progress = 100;
         }
         
-        // Update projects state
-        setProjects(prevProjects => 
-          prevProjects.map(p => p.id === projectId ? updatedProject : p)
+        // Update milestones state
+        setMilestones(prevMilestones => 
+          prevMilestones.map(p => p.id === milestoneId ? updatedMilestone : p)
         );
         
         // Save to AsyncStorage
-        const updatedProjects = projectsRef.current.map(p => 
-          p.id === projectId ? updatedProject : p
+        const updatedMilestones = milestonesRef.current.map(p => 
+          p.id === milestoneId ? updatedMilestone : p
         );
-        await saveData(STORAGE_KEYS.PROJECTS, updatedProjects);
+        await saveData(STORAGE_KEYS.MILESTONES, updatedMilestones);
         
-        // Update goal progress if project is linked to a goal
-        if (project.goalId) {
+        // Update goal progress if milestone is linked to a goal
+        if (milestone.goalId) {
           setTimeout(() => {
-            updateGoalProgressFromProjects(project.goalId);
+            updateGoalProgressFromMilestones(milestone.goalId);
           }, 500);
         }
       }
@@ -2031,90 +2031,90 @@ export const AppProvider = ({ children }) => {
     }
   };
   
-  // Function to update project progress from its tasks
-  const updateProjectProgressFromTasks = async (projectId, currentTasks = null) => {
+  // Function to update milestone progress from its tasks
+  const updateMilestoneProgressFromTasks = async (milestoneId, currentTasks = null) => {
     try {
-      console.log(`🔴 [DEBUG] updateProjectProgressFromTasks called - Project: ${projectId}`);
-      if (!projectId) return;
+      console.log(`🔴 [DEBUG] updateMilestoneProgressFromTasks called - Milestone: ${milestoneId}`);
+      if (!milestoneId) return;
       
-      const project = projectsRef.current.find(p => p.id === projectId);
-      if (!project) return;
+      const milestone = milestonesRef.current.find(p => p.id === milestoneId);
+      if (!milestone) return;
       
-      console.log(`🔴 [DEBUG] Project found:`, {
-        id: projectId,
-        title: project.title,
-        status: project.status,
-        progress: project.progress,
-        completed: project.completed,
-        updatedAt: project.updatedAt
+      console.log(`🔴 [DEBUG] Milestone found:`, {
+        id: milestoneId,
+        title: milestone.title,
+        status: milestone.status,
+        progress: milestone.progress,
+        completed: milestone.completed,
+        updatedAt: milestone.updatedAt
       });
       
-      // IMPORTANT: Don't update projects that were manually completed recently
-      if ((project.status === 'done' || project.completed) && project.updatedAt) {
-        const lastUpdate = new Date(project.updatedAt).getTime();
+      // IMPORTANT: Don't update milestones that were manually completed recently
+      if ((milestone.status === 'done' || milestone.completed) && milestone.updatedAt) {
+        const lastUpdate = new Date(milestone.updatedAt).getTime();
         const now = Date.now();
         const timeDiff = now - lastUpdate;
         console.log(`🔴 [DEBUG] Manual completion check - Time since update: ${timeDiff}ms`);
-        // If project was manually completed in the last 2 seconds, don't override it
+        // If milestone was manually completed in the last 2 seconds, don't override it
         if (timeDiff < 2000) {
-          console.log(`🔴 [DEBUG] Project "${project.title}" was manually completed recently, skipping auto-update`);
+          console.log(`🔴 [DEBUG] Milestone "${milestone.title}" was manually completed recently, skipping auto-update`);
           return;
         }
       }
       
-      // IMPORTANT: Don't change project status based on task completion
+      // IMPORTANT: Don't change milestone status based on task completion
       // Only recalculate progress percentage while preserving status
       
       // Calculate task completion percentage (but don't change status)
       const tasksToUse = currentTasks || tasksRef.current;
-      const projectTasks = tasksToUse.filter(task => task.projectId === projectId);
+      const milestoneTasks = tasksToUse.filter(task => task.milestoneId === milestoneId);
       
       // If there are no tasks, don't update anything
-      if (projectTasks.length === 0) return;
+      if (milestoneTasks.length === 0) return;
       
-      const completedTasks = projectTasks.filter(task => task.completed || task.status === 'done').length;
-      const calculatedProgress = Math.round((completedTasks / projectTasks.length) * 100);
+      const completedTasks = milestoneTasks.filter(task => task.completed || task.status === 'done').length;
+      const calculatedProgress = Math.round((completedTasks / milestoneTasks.length) * 100);
       
-      // Do not update the project if progress hasn't changed
-      if (project.progress === calculatedProgress) return;
+      // Do not update the milestone if progress hasn't changed
+      if (milestone.progress === calculatedProgress) return;
       
       // For progress display, use the calculated value, but preserve existing status
-      console.log(`[AppContext] Updating project "${project.title}" task-based progress: ${calculatedProgress}%`);
+      console.log(`[AppContext] Updating milestone "${milestone.title}" task-based progress: ${calculatedProgress}%`);
       
       // We only update the percentage, not the status
       // Preserve the existing status (todo, in_progress, done) regardless of task completion
-      const updatedProject = {
-        ...project,
+      const updatedMilestone = {
+        ...milestone,
         progress: calculatedProgress,
         updatedAt: new Date().toISOString()
       };
       
-      // If project is already marked as done, keep it that way regardless of progress
-      if (project.status === 'done' || project.completed) {
-        updatedProject.progress = 100;
-        updatedProject.completed = true;
-        updatedProject.status = 'done';
+      // If milestone is already marked as done, keep it that way regardless of progress
+      if (milestone.status === 'done' || milestone.completed) {
+        updatedMilestone.progress = 100;
+        updatedMilestone.completed = true;
+        updatedMilestone.status = 'done';
       }
       
-      // Update projects state
-      setProjects(prevProjects => 
-        prevProjects.map(p => p.id === projectId ? updatedProject : p)
+      // Update milestones state
+      setMilestones(prevMilestones => 
+        prevMilestones.map(p => p.id === milestoneId ? updatedMilestone : p)
       );
       
       // Save to AsyncStorage
-      const updatedProjects = projectsRef.current.map(p => 
-        p.id === projectId ? updatedProject : p
+      const updatedMilestones = milestonesRef.current.map(p => 
+        p.id === milestoneId ? updatedMilestone : p
       );
-      await saveData(STORAGE_KEYS.PROJECTS, updatedProjects);
+      await saveData(STORAGE_KEYS.MILESTONES, updatedMilestones);
       
-      // Update goal progress if project is linked to a goal
-      if (project.goalId) {
+      // Update goal progress if milestone is linked to a goal
+      if (milestone.goalId) {
         setTimeout(() => {
-          updateGoalProgressFromProjects(project.goalId);
+          updateGoalProgressFromMilestones(milestone.goalId);
         }, 500);
       }
     } catch (error) {
-      console.error('Error updating project progress from tasks:', error);
+      console.error('Error updating milestone progress from tasks:', error);
     }
   };
   
@@ -2238,29 +2238,29 @@ export const AppProvider = ({ children }) => {
           console.log(`Updated ${goalsToUpdate.length} goals with domain "${updatedDomain.name}"`);
         }
         
-        // Also update any projects with this domain
-        const projectsToUpdate = projects.filter(project => 
-          project.domain === updatedDomain.name
+        // Also update any milestones with this domain
+        const milestonesToUpdate = milestones.filter(milestone => 
+          milestone.domain === updatedDomain.name
         );
         
-        if (projectsToUpdate.length > 0) {
-          const updatedProjects = projects.map(project => {
-            if (project.domain === updatedDomain.name) {
+        if (milestonesToUpdate.length > 0) {
+          const updatedMilestones = milestones.map(milestone => {
+            if (milestone.domain === updatedDomain.name) {
               return {
-                ...project,
+                ...milestone,
                 domain: updatedDomain.name,
-                color: updatedDomain.color || project.color
+                color: updatedDomain.color || milestone.color
               };
             }
-            return project;
+            return milestone;
           });
           
-          // Update projects state
-          setProjects(updatedProjects);
+          // Update milestones state
+          setMilestones(updatedMilestones);
           
           // Save to AsyncStorage
-          await saveData(STORAGE_KEYS.PROJECTS, updatedProjects);
-          console.log(`Updated ${projectsToUpdate.length} projects with domain "${updatedDomain.name}"`);
+          await saveData(STORAGE_KEYS.MILESTONES, updatedMilestones);
+          console.log(`Updated ${milestonesToUpdate.length} milestones with domain "${updatedDomain.name}"`);
         }
       }
       
@@ -2330,177 +2330,177 @@ export const AppProvider = ({ children }) => {
   };
   
   
-  // Link projects to goals by title (cleanup function)
-  const linkProjectsToGoalsByTitle = async () => {
+  // Link milestones to goals by title (cleanup function)
+  const linkMilestonesToGoalsByTitle = async () => {
     try {
       let fixCount = 0;
       
-      // Look for projects without goalId but with goalTitle
-      const updatedProjects = projects.map(project => {
-        if (!project.goalId && project.goalTitle) {
+      // Look for milestones without goalId but with goalTitle
+      const updatedMilestones = milestones.map(milestone => {
+        if (!milestone.goalId && milestone.goalTitle) {
           // Try to find goal by title
           const matchingGoal = goals.find(goal => 
-            goal.title.toLowerCase() === project.goalTitle.toLowerCase()
+            goal.title.toLowerCase() === milestone.goalTitle.toLowerCase()
           );
           
           if (matchingGoal) {
             fixCount++;
             return {
-              ...project,
+              ...milestone,
               goalId: matchingGoal.id,
               goalTitle: matchingGoal.title, // Ensure exact case match
               // Inherit domain and color if not already set
-              domain: project.domain || matchingGoal.domain,
-              color: project.color || matchingGoal.color
+              domain: milestone.domain || matchingGoal.domain,
+              color: milestone.color || matchingGoal.color
             };
           }
         }
         
-        return project;
+        return milestone;
       });
       
       if (fixCount > 0) {
         // Update state
-        setProjects(updatedProjects);
+        setMilestones(updatedMilestones);
         
         // Save to AsyncStorage
-        await saveData(STORAGE_KEYS.PROJECTS, updatedProjects);
+        await saveData(STORAGE_KEYS.MILESTONES, updatedMilestones);
         
         // Update link map
-        const updatedLinkMap = { ...projectGoalLinkMap };
-        updatedProjects.forEach(project => {
-          if (project.goalId) {
-            updatedLinkMap[project.id] = project.goalId;
+        const updatedLinkMap = { ...milestoneGoalLinkMap };
+        updatedMilestones.forEach(milestone => {
+          if (milestone.goalId) {
+            updatedLinkMap[milestone.id] = milestone.goalId;
           }
         });
         
-        setProjectGoalLinkMap(updatedLinkMap);
-        await saveData('projectGoalLinkMap', updatedLinkMap);
+        setMilestoneGoalLinkMap(updatedLinkMap);
+        await saveData('milestoneGoalLinkMap', updatedLinkMap);
         
-        showSuccess(`Fixed ${fixCount} project-goal relationships`);
+        showSuccess(`Fixed ${fixCount} milestone-goal relationships`);
         return fixCount;
       }
       
       return 0;
     } catch (error) {
-      console.error('Error linking projects to goals:', error);
-      showError('Failed to link projects to goals');
+      console.error('Error linking milestones to goals:', error);
+      showError('Failed to link milestones to goals');
       throw error;
     }
   };
   
-  // Clean up orphaned projects
-  const cleanupOrphanedProjects = async () => {
+  // Clean up orphaned milestones
+  const cleanupOrphanedMilestones = async () => {
     try {
-      // Find projects with goalId that doesn't exist in goals
+      // Find milestones with goalId that doesn't exist in goals
       const validGoalIds = goals.map(goal => goal.id);
-      const orphanedProjects = projects.filter(project => 
-        project.goalId && !validGoalIds.includes(project.goalId)
+      const orphanedMilestones = milestones.filter(milestone => 
+        milestone.goalId && !validGoalIds.includes(milestone.goalId)
       );
       
-      if (orphanedProjects.length > 0) {
-        console.log(`Found ${orphanedProjects.length} orphaned projects to clean up`);
+      if (orphanedMilestones.length > 0) {
+        console.log(`Found ${orphanedMilestones.length} orphaned milestones to clean up`);
         
-        // Get all orphaned project IDs
-        const orphanedIds = orphanedProjects.map(project => project.id);
+        // Get all orphaned milestone IDs
+        const orphanedIds = orphanedMilestones.map(milestone => milestone.id);
         
         // Mark as being deleted
         orphanedIds.forEach(id => {
-          deletedProjectIds.current.add(id);
-          operationsInProgress.current.deletingProjects.add(id);
+          deletedMilestoneIds.current.add(id);
+          operationsInProgress.current.deletingMilestones.add(id);
         });
         
-        // Option 1: Delete orphaned projects
-        // setProjects(prevProjects => 
-        //   prevProjects.filter(project => !orphanedIds.includes(project.id))
+        // Option 1: Delete orphaned milestones
+        // setMilestones(prevMilestones => 
+        //   prevMilestones.filter(milestone => !orphanedIds.includes(milestone.id))
         // );
         
-        // Option 2: Make orphaned projects independent
-        setProjects(prevProjects => 
-          prevProjects.map(project => {
-            if (project.goalId && !validGoalIds.includes(project.goalId)) {
-              // Convert to independent project
+        // Option 2: Make orphaned milestones independent
+        setMilestones(prevMilestones => 
+          prevMilestones.map(milestone => {
+            if (milestone.goalId && !validGoalIds.includes(milestone.goalId)) {
+              // Convert to independent milestone
               return {
-                ...project,
+                ...milestone,
                 goalId: null,
                 goalTitle: null
               };
             }
-            return project;
+            return milestone;
           })
         );
         
         // Save to AsyncStorage - Option 2 implementation
-        const updatedProjects = projects.map(project => {
-          if (project.goalId && !validGoalIds.includes(project.goalId)) {
+        const updatedMilestones = milestones.map(milestone => {
+          if (milestone.goalId && !validGoalIds.includes(milestone.goalId)) {
             return {
-              ...project,
+              ...milestone,
               goalId: null,
               goalTitle: null
             };
           }
-          return project;
+          return milestone;
         });
         
-        await saveData(STORAGE_KEYS.PROJECTS, updatedProjects);
+        await saveData(STORAGE_KEYS.MILESTONES, updatedMilestones);
         
         // Update link map
-        const updatedLinkMap = { ...projectGoalLinkMap };
-        orphanedIds.forEach(projectId => {
-          delete updatedLinkMap[projectId];
+        const updatedLinkMap = { ...milestoneGoalLinkMap };
+        orphanedIds.forEach(milestoneId => {
+          delete updatedLinkMap[milestoneId];
         });
-        setProjectGoalLinkMap(updatedLinkMap);
-        await saveData('projectGoalLinkMap', updatedLinkMap);
+        setMilestoneGoalLinkMap(updatedLinkMap);
+        await saveData('milestoneGoalLinkMap', updatedLinkMap);
         
         // Clear deletion tracking after a delay
         setTimeout(() => {
           orphanedIds.forEach(id => {
-            deletedProjectIds.current.delete(id);
-            operationsInProgress.current.deletingProjects.delete(id);
+            deletedMilestoneIds.current.delete(id);
+            operationsInProgress.current.deletingMilestones.delete(id);
           });
         }, 1000);
         
-        console.log(`Cleaned up ${orphanedProjects.length} orphaned projects`);
-        return orphanedProjects.length;
+        console.log(`Cleaned up ${orphanedMilestones.length} orphaned milestones`);
+        return orphanedMilestones.length;
       }
       
       return 0;
     } catch (error) {
-      console.error('Error cleaning up orphaned projects:', error);
+      console.error('Error cleaning up orphaned milestones:', error);
       return 0;
     }
   };
   
-  // Project-Goal Link Debugging Function
-  const debugProjectGoalLinks = async () => {
-    console.log("==== DEBUG: Project-Goal Links ====");
+  // Milestone-Goal Link Debugging Function
+  const debugMilestoneGoalLinks = async () => {
+    console.log("==== DEBUG: Milestone-Goal Links ====");
     
     try {
       // Get data from storage for verification
       const goalsString = await AsyncStorage.getItem(STORAGE_KEYS.GOALS);
-      const projectsString = await AsyncStorage.getItem(STORAGE_KEYS.PROJECTS);
-      const linkMapString = await AsyncStorage.getItem('projectGoalLinkMap');
+      const milestonesString = await AsyncStorage.getItem(STORAGE_KEYS.MILESTONES);
+      const linkMapString = await AsyncStorage.getItem('milestoneGoalLinkMap');
       
       const storedGoals = goalsString ? JSON.parse(goalsString) : [];
-      const storedProjects = projectsString ? JSON.parse(projectsString) : [];
+      const storedMilestones = milestonesString ? JSON.parse(milestonesString) : [];
       const storedLinkMap = linkMapString ? JSON.parse(linkMapString) : {};
       
-      console.log(`Found ${storedGoals.length} goals, ${storedProjects.length} projects, ${Object.keys(storedLinkMap).length} link map entries`);
+      console.log(`Found ${storedGoals.length} goals, ${storedMilestones.length} milestones, ${Object.keys(storedLinkMap).length} link map entries`);
       
       // Check each goal
       storedGoals.forEach(goal => {
         const goalId = goal.id;
         
-        // Find projects linked by property
-        const linkedByProperty = storedProjects.filter(p => p.goalId === goalId);
+        // Find milestones linked by property
+        const linkedByProperty = storedMilestones.filter(p => p.goalId === goalId);
         
-        // Find projects linked by map
+        // Find milestones linked by map
         const linkedByMap = Object.entries(storedLinkMap)
           .filter(([_, gId]) => gId === goalId)
-          .map(([pId]) => storedProjects.find(p => p.id === pId))
+          .map(([pId]) => storedMilestones.find(p => p.id === pId))
           .filter(Boolean);
         
-        // Find projects that are only linked one way
+        // Find milestones that are only linked one way
         const onlyInProperty = linkedByProperty.filter(p => 
           !linkedByMap.some(mp => mp.id === p.id)
         );
@@ -2510,128 +2510,128 @@ export const AppProvider = ({ children }) => {
         );
         
         console.log(`Goal "${goal.title}" (${goalId}):`);
-        console.log(`- Projects by property: ${linkedByProperty.length}`);
-        console.log(`- Projects by map: ${linkedByMap.length}`);
+        console.log(`- Milestones by property: ${linkedByProperty.length}`);
+        console.log(`- Milestones by map: ${linkedByMap.length}`);
         
         if (onlyInProperty.length > 0) {
-          console.log(`- WARNING: ${onlyInProperty.length} projects only linked by property:`);
+          console.log(`- WARNING: ${onlyInProperty.length} milestones only linked by property:`);
           onlyInProperty.forEach(p => console.log(`  - ${p.title} (${p.id})`));
         }
         
         if (onlyInMap.length > 0) {
-          console.log(`- WARNING: ${onlyInMap.length} projects only linked by map:`);
+          console.log(`- WARNING: ${onlyInMap.length} milestones only linked by map:`);
           onlyInMap.forEach(p => console.log(`  - ${p.title} (${p.id})`));
         }
       });
       
-      // Check for orphaned projects in the link map
-      const orphanedLinks = Object.entries(storedLinkMap).filter(([projectId, goalId]) => {
-        const projectExists = storedProjects.some(p => p.id === projectId);
+      // Check for orphaned milestones in the link map
+      const orphanedLinks = Object.entries(storedLinkMap).filter(([milestoneId, goalId]) => {
+        const milestoneExists = storedMilestones.some(p => p.id === milestoneId);
         const goalExists = storedGoals.some(g => g.id === goalId);
-        return !projectExists || !goalExists;
+        return !milestoneExists || !goalExists;
       });
       
       if (orphanedLinks.length > 0) {
         console.log(`WARNING: Found ${orphanedLinks.length} orphaned entries in the link map`);
-        orphanedLinks.forEach(([projectId, goalId]) => {
-          console.log(`- Project ${projectId} -> Goal ${goalId}`);
+        orphanedLinks.forEach(([milestoneId, goalId]) => {
+          console.log(`- Milestone ${milestoneId} -> Goal ${goalId}`);
         });
       }
       
       console.log("==== END DEBUG ====");
       return true;
     } catch (error) {
-      console.error("Error in debugProjectGoalLinks:", error);
+      console.error("Error in debugMilestoneGoalLinks:", error);
       return false;
     }
   };
   
-  // Fix Project-Goal Links Function
-  const fixProjectGoalLinks = async () => {
-    console.log("Starting project-goal link repair...");
+  // Fix Milestone-Goal Links Function
+  const fixMilestoneGoalLinks = async () => {
+    console.log("Starting milestone-goal link repair...");
     
     try {
       // Get data from storage
       const goalsString = await AsyncStorage.getItem(STORAGE_KEYS.GOALS);
-      const projectsString = await AsyncStorage.getItem(STORAGE_KEYS.PROJECTS);
-      const linkMapString = await AsyncStorage.getItem('projectGoalLinkMap');
+      const milestonesString = await AsyncStorage.getItem(STORAGE_KEYS.MILESTONES);
+      const linkMapString = await AsyncStorage.getItem('milestoneGoalLinkMap');
       
       const storedGoals = goalsString ? JSON.parse(goalsString) : [];
-      const storedProjects = projectsString ? JSON.parse(projectsString) : [];
+      const storedMilestones = milestonesString ? JSON.parse(milestonesString) : [];
       let storedLinkMap = linkMapString ? JSON.parse(linkMapString) : {};
       
-      console.log(`Found ${storedGoals.length} goals, ${storedProjects.length} projects, ${Object.keys(storedLinkMap).length} link map entries`);
+      console.log(`Found ${storedGoals.length} goals, ${storedMilestones.length} milestones, ${Object.keys(storedLinkMap).length} link map entries`);
       
       // Create set of valid goal IDs
       const validGoalIds = new Set(storedGoals.map(g => g.id));
       
       // Track changes
-      let projectsFixed = 0;
+      let milestonesFixed = 0;
       let linkMapFixed = 0;
-      let orphanedProjectsFixed = 0;
+      let orphanedMilestonesFixed = 0;
       
-      // 1. Fix projects - ensure goalId references valid goals
-      const fixedProjects = storedProjects.map(project => {
-        if (project.goalId && !validGoalIds.has(project.goalId)) {
-          // This project references a non-existent goal
-          console.log(`Fixing project "${project.title}" - invalid goalId: ${project.goalId}`);
-          projectsFixed++;
-          return { ...project, goalId: null, goalTitle: null };
+      // 1. Fix milestones - ensure goalId references valid goals
+      const fixedMilestones = storedMilestones.map(milestone => {
+        if (milestone.goalId && !validGoalIds.has(milestone.goalId)) {
+          // This milestone references a non-existent goal
+          console.log(`Fixing milestone "${milestone.title}" - invalid goalId: ${milestone.goalId}`);
+          milestonesFixed++;
+          return { ...milestone, goalId: null, goalTitle: null };
         }
-        return project;
+        return milestone;
       });
       
-      // 2. Fix link map - ensure all entries reference valid goals and projects
+      // 2. Fix link map - ensure all entries reference valid goals and milestones
       const newLinkMap = {};
       
       // First add all valid entries from current link map
-      Object.entries(storedLinkMap).forEach(([projectId, goalId]) => {
-        const projectExists = storedProjects.some(p => p.id === projectId);
+      Object.entries(storedLinkMap).forEach(([milestoneId, goalId]) => {
+        const milestoneExists = storedMilestones.some(p => p.id === milestoneId);
         const goalExists = validGoalIds.has(goalId);
         
-        if (projectExists && goalExists) {
-          newLinkMap[projectId] = goalId;
+        if (milestoneExists && goalExists) {
+          newLinkMap[milestoneId] = goalId;
         } else {
-          console.log(`Removing invalid link map entry: Project ${projectId} -> Goal ${goalId}`);
+          console.log(`Removing invalid link map entry: Milestone ${milestoneId} -> Goal ${goalId}`);
           linkMapFixed++;
         }
       });
       
-      // 3. Ensure all projects with goalId are in the link map
-      fixedProjects.forEach(project => {
-        if (project.goalId && validGoalIds.has(project.goalId) && !newLinkMap[project.id]) {
-          console.log(`Adding missing link map entry for project "${project.title}"`);
-          newLinkMap[project.id] = project.goalId;
+      // 3. Ensure all milestones with goalId are in the link map
+      fixedMilestones.forEach(milestone => {
+        if (milestone.goalId && validGoalIds.has(milestone.goalId) && !newLinkMap[milestone.id]) {
+          console.log(`Adding missing link map entry for milestone "${milestone.title}"`);
+          newLinkMap[milestone.id] = milestone.goalId;
           linkMapFixed++;
         }
       });
       
       // 4. Update storage if needed
-      if (projectsFixed > 0) {
-        console.log(`Saving ${projectsFixed} fixed projects to storage`);
-        await AsyncStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(fixedProjects));
-        setProjects(fixedProjects);
+      if (milestonesFixed > 0) {
+        console.log(`Saving ${milestonesFixed} fixed milestones to storage`);
+        await AsyncStorage.setItem(STORAGE_KEYS.MILESTONES, JSON.stringify(fixedMilestones));
+        setMilestones(fixedMilestones);
       }
       
       if (linkMapFixed > 0) {
         console.log(`Saving ${linkMapFixed} fixed link map entries to storage`);
-        await AsyncStorage.setItem('projectGoalLinkMap', JSON.stringify(newLinkMap));
-        setProjectGoalLinkMap(newLinkMap);
+        await AsyncStorage.setItem('milestoneGoalLinkMap', JSON.stringify(newLinkMap));
+        setMilestoneGoalLinkMap(newLinkMap);
       }
       
       // Log results
-      console.log(`Repair complete: ${projectsFixed} projects fixed, ${linkMapFixed} link map entries fixed`);
+      console.log(`Repair complete: ${milestonesFixed} milestones fixed, ${linkMapFixed} link map entries fixed`);
       
-      if (projectsFixed > 0 || linkMapFixed > 0) {
+      if (milestonesFixed > 0 || linkMapFixed > 0) {
         // Force a refresh
         await refreshData();
-        showSuccess(`Fixed ${projectsFixed + linkMapFixed} project-goal links`);
+        showSuccess(`Fixed ${milestonesFixed + linkMapFixed} milestone-goal links`);
       }
       
-      return { projectsFixed, linkMapFixed };
+      return { milestonesFixed, linkMapFixed };
     } catch (error) {
-      console.error("Error fixing project-goal links:", error);
-      showError("Failed to fix project-goal links");
+      console.error("Error fixing milestone-goal links:", error);
+      showError("Failed to fix milestone-goal links");
       return { error };
     }
   };
@@ -2641,13 +2641,13 @@ export const AppProvider = ({ children }) => {
     try {
       console.log('Forcing data refresh...');
       
-      // First clean up any orphaned projects
-      const cleanupCount = await cleanupOrphanedProjects();
-      console.log(`Cleaned up ${cleanupCount} orphaned projects`);
+      // First clean up any orphaned milestones
+      const cleanupCount = await cleanupOrphanedMilestones();
+      console.log(`Cleaned up ${cleanupCount} orphaned milestones`);
       
       // Reload all data from storage
       const storedGoals = await AsyncStorage.getItem(STORAGE_KEYS.GOALS);
-      const storedProjects = await AsyncStorage.getItem(STORAGE_KEYS.PROJECTS);
+      const storedMilestones = await AsyncStorage.getItem(STORAGE_KEYS.MILESTONES);
       const storedTasks = await AsyncStorage.getItem(STORAGE_KEYS.TASKS);
       const storedTodos = await AsyncStorage.getItem(STORAGE_KEYS.TODOS);
       const storedTomorrowTodos = await AsyncStorage.getItem(STORAGE_KEYS.TOMORROW_TODOS);
@@ -2655,7 +2655,7 @@ export const AppProvider = ({ children }) => {
       
       console.log('🔍 refreshData() - Raw AsyncStorage values:');
       console.log('  - storedGoals:', storedGoals);
-      console.log('  - storedProjects:', storedProjects);
+      console.log('  - storedMilestones:', storedMilestones);
       console.log('  - storedTasks:', storedTasks);
       
       if (storedGoals) {
@@ -2667,13 +2667,13 @@ export const AppProvider = ({ children }) => {
         setGoals([]);
       }
       
-      if (storedProjects) {
-        const parsedProjects = JSON.parse(storedProjects);
-        console.log('📝 Setting projects to:', parsedProjects.length, 'items');
-        setProjects(parsedProjects);
+      if (storedMilestones) {
+        const parsedMilestones = JSON.parse(storedMilestones);
+        console.log('📝 Setting milestones to:', parsedMilestones.length, 'items');
+        setMilestones(parsedMilestones);
       } else {
-        console.log('📝 No stored projects, setting to empty array');
-        setProjects([]);
+        console.log('📝 No stored milestones, setting to empty array');
+        setMilestones([]);
       }
       
       if (storedTasks) {
@@ -2730,27 +2730,27 @@ export const AppProvider = ({ children }) => {
     return refreshedDomains;
   }, [goals]);
   
-  // Update project progress with atomic update to ensure goal progress is updated
-  const updateProjectProgress = async (projectId, newProgress) => {
+  // Update milestone progress with atomic update to ensure goal progress is updated
+  const updateMilestoneProgress = async (milestoneId, newProgress) => {
     try {
-      console.log(`🔵 [DEBUG] updateProjectProgress called - Project: ${projectId}, Progress: ${newProgress}`);
+      console.log(`🔵 [DEBUG] updateMilestoneProgress called - Milestone: ${milestoneId}, Progress: ${newProgress}`);
       
       // Use current refs to avoid stale closure
-      const currentProjects = projectsRef.current;
+      const currentMilestones = milestonesRef.current;
       const currentGoals = goalsRef.current;
       const currentTasks = tasksRef.current;
       
-      // Find the project
-      const project = currentProjects.find(p => p.id === projectId);
-      if (!project) {
-        console.error(`Project with ID ${projectId} not found`);
+      // Find the milestone
+      const milestone = currentMilestones.find(p => p.id === milestoneId);
+      if (!milestone) {
+        console.error(`Milestone with ID ${milestoneId} not found`);
         return false;
       }
       
       // Get previous status
-      const prevStatus = project.status || 
-                         (project.progress === 100 ? 'done' : 
-                          project.progress > 0 ? 'in_progress' : 'todo');
+      const prevStatus = milestone.status || 
+                         (milestone.progress === 100 ? 'done' : 
+                          milestone.progress > 0 ? 'in_progress' : 'todo');
       
       // Determine the new status based on the newProgress parameter
       let newStatus;
@@ -2758,27 +2758,27 @@ export const AppProvider = ({ children }) => {
       else if (newProgress === 50) newStatus = 'in_progress';
       else if (newProgress === 100) newStatus = 'done';
       
-      // Get tasks for this project
-      const projectTasks = Array.isArray(currentTasks) 
-        ? currentTasks.filter(task => task.projectId === projectId)
+      // Get tasks for this milestone
+      const milestoneTasks = Array.isArray(currentTasks) 
+        ? currentTasks.filter(task => task.milestoneId === milestoneId)
         : [];
       
       // Calculate task-based progress
       let taskBasedProgress;
-      if (projectTasks.length > 0) {
-        const completedTasks = projectTasks.filter(task => task.completed || task.status === 'done').length;
-        taskBasedProgress = Math.round((completedTasks / projectTasks.length) * 100);
+      if (milestoneTasks.length > 0) {
+        const completedTasks = milestoneTasks.filter(task => task.completed || task.status === 'done').length;
+        taskBasedProgress = Math.round((completedTasks / milestoneTasks.length) * 100);
       } else {
         // If no tasks, keep the existing progress value
-        taskBasedProgress = project.progress || 0;
+        taskBasedProgress = milestone.progress || 0;
       }
       
-      console.log(`[AppContext] Task-based progress for project "${project.title}": ${taskBasedProgress}%`);
-      console.log(`[AppContext] Setting project status to "${newStatus}" without changing progress`);
+      console.log(`[AppContext] Task-based progress for milestone "${milestone.title}": ${taskBasedProgress}%`);
+      console.log(`[AppContext] Setting milestone status to "${newStatus}" without changing progress`);
       
-      // Create updated project
-      const updatedProject = {
-        ...project,
+      // Create updated milestone
+      const updatedMilestone = {
+        ...milestone,
         status: newStatus, // Set explicit status property
         statusProgress: newProgress, // Store status indicator value
         // Use status-based progress when manually set to done, otherwise use task-based
@@ -2787,41 +2787,41 @@ export const AppProvider = ({ children }) => {
         updatedAt: new Date().toISOString()
       };
       
-      console.log(`🟢 [DEBUG] Project update created:`, {
-        id: projectId,
-        title: project.title,
-        oldStatus: project.status,
+      console.log(`🟢 [DEBUG] Milestone update created:`, {
+        id: milestoneId,
+        title: milestone.title,
+        oldStatus: milestone.status,
         newStatus: newStatus,
-        oldProgress: project.progress,
-        newProgress: updatedProject.progress,
-        completed: updatedProject.completed
+        oldProgress: milestone.progress,
+        newProgress: updatedMilestone.progress,
+        completed: updatedMilestone.completed
       });
       
-      // First update the project in state and storage
-      const updatedProjects = currentProjects.map(p => 
-        p.id === projectId ? updatedProject : p
+      // First update the milestone in state and storage
+      const updatedMilestones = currentMilestones.map(p => 
+        p.id === milestoneId ? updatedMilestone : p
       );
       
       // Update state
-      setProjects(updatedProjects);
-      console.log(`🟡 [DEBUG] Project state updated in memory`);
+      setMilestones(updatedMilestones);
+      console.log(`🟡 [DEBUG] Milestone state updated in memory`);
       
       // Update storage
-      await saveData(STORAGE_KEYS.PROJECTS, updatedProjects);
-      console.log(`🟡 [DEBUG] Project state saved to storage`);
+      await saveData(STORAGE_KEYS.MILESTONES, updatedMilestones);
+      console.log(`🟡 [DEBUG] Milestone state saved to storage`);
       
-      // Next, check if this project is linked to a goal
-      if (project.goalId) {
+      // Next, check if this milestone is linked to a goal
+      if (milestone.goalId) {
         // Calculate goal progress if we can
-        const projectsForGoal = updatedProjects.filter(p => p.goalId === project.goalId);
-        const completedProjects = projectsForGoal.filter(p => 
-          p.id === projectId ? newStatus === 'done' : (p.progress === 100 || p.completed || p.status === 'done')
+        const milestonesForGoal = updatedMilestones.filter(p => p.goalId === milestone.goalId);
+        const completedMilestones = milestonesForGoal.filter(p => 
+          p.id === milestoneId ? newStatus === 'done' : (p.progress === 100 || p.completed || p.status === 'done')
         ).length;
         
-        const newGoalProgress = Math.round((completedProjects / projectsForGoal.length) * 100);
+        const newGoalProgress = Math.round((completedMilestones / milestonesForGoal.length) * 100);
         
         // Find the goal
-        const goalToUpdate = currentGoals.find(g => g.id === project.goalId);
+        const goalToUpdate = currentGoals.find(g => g.id === milestone.goalId);
         if (goalToUpdate) {
           const updatedGoal = {
             ...goalToUpdate,
@@ -2838,7 +2838,7 @@ export const AppProvider = ({ children }) => {
       
       // Show success notification
       if (showSuccess) {
-        showSuccess(`Project moved to ${newStatus === 'todo' ? 'To Do' : newStatus === 'in_progress' ? 'In Progress' : 'Done'}`);
+        showSuccess(`Milestone moved to ${newStatus === 'todo' ? 'To Do' : newStatus === 'in_progress' ? 'In Progress' : 'Done'}`);
       }
       
       // Note: Removed automatic refreshData call to prevent interference with manual completion
@@ -2846,7 +2846,7 @@ export const AppProvider = ({ children }) => {
       
       return true;
     } catch (error) {
-      console.error("Error in updateProjectProgress:", error);
+      console.error("Error in updateMilestoneProgress:", error);
       
       // Show error notification
       if (showError) {
@@ -3116,7 +3116,8 @@ export const AppProvider = ({ children }) => {
     // State
     goals,
     mainGoals, // Alias for backward compatibility
-    projects,
+    milestones,
+    projects: milestones, // Alias for backward compatibility
     timeBlocks,
     domains,
     settings,
@@ -3124,7 +3125,7 @@ export const AppProvider = ({ children }) => {
     notes,
     filters,
     isLoading,
-    projectGoalLinkMap,
+    milestoneGoalLinkMap,
     tasks,
     refreshCounter, // Include refresh counter in context value
     // Todo states
@@ -3145,23 +3146,24 @@ export const AppProvider = ({ children }) => {
     
     // State setters
     setGoals,
-    setProjects,
+    setMilestones,
+    setProjects: setMilestones, // Alias for backward compatibility
     setTasks,
     setTodos,
     setTomorrowTodos,
     setLaterTodos,
     
     // Helper functions for components
-    getProject,
-    isProjectActive,
+    getMilestone,
+    isMilestoneActive,
     isGoalActive,
     hasParentGoal,
     getParentGoal,
-    getProjectsForGoal,
-    getIndependentProjects,
-    getTasksForProject,
+    getMilestonesForGoal,
+    getIndependentMilestones,
+    getTasksForMilestone,
     calculateGoalProgress: calculateGoalProgressLegacy,
-    calculateProjectProgress,
+    calculateMilestoneProgress,
     
     // NEW FLEXIBLE HIERARCHY FUNCTIONS
     getStandaloneMilestones,
@@ -3175,13 +3177,17 @@ export const AppProvider = ({ children }) => {
     updateGoal,
     deleteGoal,
     
-    // Project functions
-    addProject,
-    updateProject,
-    deleteProject,
-    updateProjectProgress,
-    updateProjectProgressFromTasks,
-    updateGoalProgressFromProjects,
+    // Milestone functions
+    addMilestone,
+    updateMilestone,
+    deleteMilestone,
+    // Aliases for backward compatibility
+    addProject: addMilestone,
+    updateProject: updateMilestone,
+    deleteProject: deleteMilestone,
+    updateMilestoneProgress,
+    updateMilestoneProgressFromTasks,
+    updateGoalProgressFromMilestones,
     
     // Task functions
     addTask,
@@ -3225,18 +3231,18 @@ export const AppProvider = ({ children }) => {
     
     // Subscription limit checks
     canAddMoreGoals,
-    canAddMoreProjectsToGoal,
-    canAddMoreTasksToProject,
+    canAddMoreMilestonesToGoal,
+    canAddMoreTasksToMilestone,
     canAddMoreTimeBlocks,
     
     // Utility functions
-    linkProjectsToGoalsByTitle,
-    auditProjectGoalRelationships,
-    cleanupOrphanedProjects,
+    linkMilestonesToGoalsByTitle,
+    auditMilestoneGoalRelationships,
+    cleanupOrphanedMilestones,
     cleanupOrphanedData,
     refreshData,
-    fixProjectGoalLinks,
-    debugProjectGoalLinks
+    fixMilestoneGoalLinks,
+    debugMilestoneGoalLinks
   };
   
   return (
@@ -3252,7 +3258,7 @@ export const useAppContext = () => {
   // Add safety defaults to prevent "property doesn't exist" errors
   return context || {
     goals: [],
-    projects: [],
+    milestones: [],
     tasks: [],
     timeBlocks: [],
     domains: [],
@@ -3269,9 +3275,9 @@ export const useAppContext = () => {
     addGoal: () => null,
     updateGoal: () => null,
     deleteGoal: () => null,
-    addProject: () => null,
-    updateProject: () => null,
-    deleteProject: () => null,
+    addMilestone: () => null,
+    updateMilestone: () => null,
+    deleteMilestone: () => null,
     addTask: () => null,
     updateTask: () => null,
     deleteTask: () => null

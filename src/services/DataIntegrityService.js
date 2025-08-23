@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /**
  * DataIntegrityService - Handles data integrity operations, ensuring relationships
- * between goals, projects, and tasks are maintained correctly.
+ * between goals, milestones, and tasks are maintained correctly.
  * 
  * Provides thorough logging to track operations and diagnose issues.
  */
@@ -11,13 +11,13 @@ class DataIntegrityService {
   // Storage keys - aligned with AppContext and OnboardingService
   static STORAGE_KEYS = {
     GOALS: 'goals',
-    PROJECTS: 'projects',
+    MILESTONES: 'milestones',
     TASKS: 'tasks',
-    PROJECT_GOAL_LINK_MAP: 'projectGoalLinkMap'
+    MILESTONE_GOAL_LINK_MAP: 'milestoneGoalLinkMap'
   };
   
   /**
-   * Thoroughly deletes a goal and all its associated projects and tasks
+   * Thoroughly deletes a goal and all its associated milestones and tasks
    * Works with both onboarding-created and manually-created goals
    * 
    * @param {string} goalId - The ID of the goal to delete
@@ -35,16 +35,16 @@ class DataIntegrityService {
     try {
       // STEP 1: Load all data from storage
       log('Loading all data from AsyncStorage...');
-      const [goalsJson, projectsJson, tasksJson, linkMapJson] = await Promise.all([
+      const [goalsJson, milestonesJson, tasksJson, linkMapJson] = await Promise.all([
         AsyncStorage.getItem(this.STORAGE_KEYS.GOALS),
-        AsyncStorage.getItem(this.STORAGE_KEYS.PROJECTS),
+        AsyncStorage.getItem(this.STORAGE_KEYS.MILESTONES),
         AsyncStorage.getItem(this.STORAGE_KEYS.TASKS),
-        AsyncStorage.getItem(this.STORAGE_KEYS.PROJECT_GOAL_LINK_MAP)
+        AsyncStorage.getItem(this.STORAGE_KEYS.MILESTONE_GOAL_LINK_MAP)
       ]);
       
       // Parse the data with fallbacks
       const goals = goalsJson ? JSON.parse(goalsJson) : [];
-      const projects = projectsJson ? JSON.parse(projectsJson) : [];
+      const milestones = milestonesJson ? JSON.parse(milestonesJson) : [];
       const tasks = tasksJson ? JSON.parse(tasksJson) : [];
       const linkMap = linkMapJson ? JSON.parse(linkMapJson) : {};
       
@@ -61,75 +61,75 @@ class DataIntegrityService {
       
       log(`Found goal to delete: "${goalToDelete.title}" (${goalId})`);
       
-      // STEP 3: Find all projects linked to this goal - through ALL possible methods
+      // STEP 3: Find all milestones linked to this goal - through ALL possible methods
       
       // Method 1: Direct goalId property
-      const projectsLinkedByProperty = projects.filter(p => p.goalId === goalId);
-      log(`Found ${projectsLinkedByProperty.length} projects linked by goalId property`);
+      const milestonesLinkedByProperty = milestones.filter(m => m.goalId === goalId);
+      log(`Found ${milestonesLinkedByProperty.length} milestones linked by goalId property`);
       
       // Method 2: Link map
-      const projectIdsFromLinkMap = Object.entries(linkMap)
+      const milestoneIdsFromLinkMap = Object.entries(linkMap)
         .filter(([_, linkedGoalId]) => linkedGoalId === goalId)
-        .map(([projectId]) => projectId);
-      log(`Found ${projectIdsFromLinkMap.length} projects linked via projectGoalLinkMap`);
+        .map(([milestoneId]) => milestoneId);
+      log(`Found ${milestoneIdsFromLinkMap.length} milestones linked via milestoneGoalLinkMap`);
       
       // Method 3: Check for goalTitle match (as fallback)
       const goalTitle = goalToDelete.title || '';
-      const projectsLinkedByTitle = projects.filter(p => 
-        p.goalTitle === goalTitle && !p.goalId && 
-        !projectsLinkedByProperty.some(lp => lp.id === p.id) &&
-        !projectIdsFromLinkMap.includes(p.id)
+      const milestonesLinkedByTitle = milestones.filter(m => 
+        m.goalTitle === goalTitle && !m.goalId && 
+        !milestonesLinkedByProperty.some(lm => lm.id === m.id) &&
+        !milestoneIdsFromLinkMap.includes(m.id)
       );
-      log(`Found ${projectsLinkedByTitle.length} projects linked only by matching goalTitle`);
+      log(`Found ${milestonesLinkedByTitle.length} milestones linked only by matching goalTitle`);
       
-      // Combine all methods to get ALL linked projects
-      const allLinkedProjects = [
-        ...projectsLinkedByProperty,
-        ...projects.filter(p => projectIdsFromLinkMap.includes(p.id) && 
-                              !projectsLinkedByProperty.some(lp => lp.id === p.id)),
-        ...projectsLinkedByTitle
+      // Combine all methods to get ALL linked milestones
+      const allLinkedMilestones = [
+        ...milestonesLinkedByProperty,
+        ...milestones.filter(m => milestoneIdsFromLinkMap.includes(m.id) && 
+                              !milestonesLinkedByProperty.some(lm => lm.id === m.id)),
+        ...milestonesLinkedByTitle
       ];
       
-      // Get all linked project IDs
-      const linkedProjectIds = allLinkedProjects.map(p => p.id);
+      // Get all linked milestone IDs
+      const linkedMilestoneIds = allLinkedMilestones.map(m => m.id);
       
-      log(`Total projects to delete: ${allLinkedProjects.length}`);
-      log(`Project IDs to delete: ${linkedProjectIds.join(', ')}`);
+      log(`Total milestones to delete: ${allLinkedMilestones.length}`);
+      log(`Milestone IDs to delete: ${linkedMilestoneIds.join(', ')}`);
       
-      // STEP 4: Find all tasks for these projects
-      // Method 1: Direct projectId in tasks array
-      const tasksLinkedByProjectId = tasks.filter(t => linkedProjectIds.includes(t.projectId));
-      log(`Found ${tasksLinkedByProjectId.length} tasks linked by projectId`);
+      // STEP 4: Find all tasks for these milestones
+      // Method 1: Direct milestoneId in tasks array
+      const tasksLinkedByMilestoneId = tasks.filter(t => linkedMilestoneIds.includes(t.milestoneId));
+      log(`Found ${tasksLinkedByMilestoneId.length} tasks linked by milestoneId`);
       
       // Note: No longer handling embedded tasks since we've moved to single storage
       
       // Total tasks to be affected
-      const totalTasksToDelete = tasksLinkedByProjectId.length;
+      const totalTasksToDelete = tasksLinkedByMilestoneId.length;
       log(`Total tasks to delete: ${totalTasksToDelete}`);
       
       // STEP 5: Create updated arrays (filtering out the items to delete)
       const updatedGoals = goals.filter(g => g.id !== goalId);
-      const updatedProjects = projects.filter(p => !linkedProjectIds.includes(p.id));
-      const updatedTasks = tasks.filter(t => !linkedProjectIds.includes(t.projectId));
+      const updatedMilestones = milestones.filter(m => !linkedMilestoneIds.includes(m.id));
+      const updatedTasks = tasks.filter(t => !linkedMilestoneIds.includes(t.milestoneId));
       
       // Update link map
       const updatedLinkMap = { ...linkMap };
-      linkedProjectIds.forEach(projectId => {
-        delete updatedLinkMap[projectId];
+      linkedMilestoneIds.forEach(milestoneId => {
+        delete updatedLinkMap[milestoneId];
       });
       
       // STEP 6: Create detailed report of what will be deleted
       log('=== DELETION SUMMARY ===');
       log(`- Goals: 1 (${goalToDelete.title})`);
-      log(`- Projects: ${allLinkedProjects.length}`);
+      log(`- Milestones: ${allLinkedMilestones.length}`);
       log(`- Tasks: ${totalTasksToDelete}`);
-      log(`- Link map entries: ${linkedProjectIds.length}`);
+      log(`- Link map entries: ${linkedMilestoneIds.length}`);
       
-      if (allLinkedProjects.length > 0) {
-        log('Projects to be deleted:');
-        allLinkedProjects.forEach((p, i) => {
-          const projectTaskCount = tasks.filter(t => t.projectId === p.id).length;
-          log(`  ${i+1}. "${p.title}" (ID: ${p.id}) - ${projectTaskCount} tasks`);
+      if (allLinkedMilestones.length > 0) {
+        log('Milestones to be deleted:');
+        allLinkedMilestones.forEach((m, i) => {
+          const milestoneTaskCount = tasks.filter(t => t.milestoneId === m.id).length;
+          log(`  ${i+1}. "${m.title}" (ID: ${m.id}) - ${milestoneTaskCount} tasks`);
         });
       }
       
@@ -141,8 +141,8 @@ class DataIntegrityService {
           dryRun: true,
           deleted: {
             goal: goalToDelete,
-            projects: allLinkedProjects,
-            projectIds: linkedProjectIds,
+            milestones: allLinkedMilestones,
+            milestoneIds: linkedMilestoneIds,
             taskCount: totalTasksToDelete
           }
         };
@@ -155,7 +155,7 @@ class DataIntegrityService {
       if (verbose) {
         const backupData = {
           goals,
-          projects,
+          milestones,
           tasks,
           linkMap
         };
@@ -166,14 +166,14 @@ class DataIntegrityService {
       // Write all updated data back to storage
       await Promise.all([
         AsyncStorage.setItem(this.STORAGE_KEYS.GOALS, JSON.stringify(updatedGoals)),
-        AsyncStorage.setItem(this.STORAGE_KEYS.PROJECTS, JSON.stringify(updatedProjects)),
+        AsyncStorage.setItem(this.STORAGE_KEYS.MILESTONES, JSON.stringify(updatedMilestones)),
         AsyncStorage.setItem(this.STORAGE_KEYS.TASKS, JSON.stringify(updatedTasks)),
-        AsyncStorage.setItem(this.STORAGE_KEYS.PROJECT_GOAL_LINK_MAP, JSON.stringify(updatedLinkMap))
+        AsyncStorage.setItem(this.STORAGE_KEYS.MILESTONE_GOAL_LINK_MAP, JSON.stringify(updatedLinkMap))
       ]);
       
       // STEP 9: Verify deletion was successful
       log('Verifying deletion...');
-      const verificationResult = await this.verifyDeletion(goalId, linkedProjectIds);
+      const verificationResult = await this.verifyDeletion(goalId, linkedMilestoneIds);
       
       if (verificationResult.success) {
         log('Deletion verified successfully');
@@ -182,7 +182,7 @@ class DataIntegrityService {
         // Try to repair if verification failed
         if (verificationResult.canRepair) {
           log('Attempting repair...');
-          await this.repairDeletion(goalId, linkedProjectIds);
+          await this.repairDeletion(goalId, linkedMilestoneIds);
         }
       }
       
@@ -191,7 +191,7 @@ class DataIntegrityService {
         success: true,
         deleted: {
           goal: goalToDelete,
-          projectCount: allLinkedProjects.length,
+          milestoneCount: allLinkedMilestones.length,
           taskCount: totalTasksToDelete,
           verification: verificationResult
         }
@@ -210,48 +210,48 @@ class DataIntegrityService {
   }
   
   /**
-   * Verifies that a goal and its projects were successfully deleted
+   * Verifies that a goal and its milestones were successfully deleted
    */
-  static async verifyDeletion(goalId, projectIds) {
+  static async verifyDeletion(goalId, milestoneIds) {
     try {
       // Load data from storage
-      const [goalsJson, projectsJson, tasksJson, linkMapJson] = await Promise.all([
+      const [goalsJson, milestonesJson, tasksJson, linkMapJson] = await Promise.all([
         AsyncStorage.getItem(this.STORAGE_KEYS.GOALS),
-        AsyncStorage.getItem(this.STORAGE_KEYS.PROJECTS),
+        AsyncStorage.getItem(this.STORAGE_KEYS.MILESTONES),
         AsyncStorage.getItem(this.STORAGE_KEYS.TASKS),
-        AsyncStorage.getItem(this.STORAGE_KEYS.PROJECT_GOAL_LINK_MAP)
+        AsyncStorage.getItem(this.STORAGE_KEYS.MILESTONE_GOAL_LINK_MAP)
       ]);
       
       // Parse data
       const goals = goalsJson ? JSON.parse(goalsJson) : [];
-      const projects = projectsJson ? JSON.parse(projectsJson) : [];
+      const milestones = milestonesJson ? JSON.parse(milestonesJson) : [];
       const tasks = tasksJson ? JSON.parse(tasksJson) : [];
       const linkMap = linkMapJson ? JSON.parse(linkMapJson) : {};
       
       // Check if goal is deleted
       const goalExists = goals.some(g => g.id === goalId);
       
-      // Check if projects are deleted
-      const remainingProjects = projects.filter(p => projectIds.includes(p.id));
+      // Check if milestones are deleted
+      const remainingMilestones = milestones.filter(m => milestoneIds.includes(m.id));
       
-      // Check if tasks for these projects are deleted
-      const remainingTasks = tasks.filter(t => projectIds.includes(t.projectId));
+      // Check if tasks for these milestones are deleted
+      const remainingTasks = tasks.filter(t => milestoneIds.includes(t.milestoneId));
       
       // Check if link map entries are deleted
       const remainingLinkMapEntries = Object.entries(linkMap)
-        .filter(([projectId, _]) => projectIds.includes(projectId))
+        .filter(([milestoneId, _]) => milestoneIds.includes(milestoneId))
         .length;
       
       // Determine success
       const success = !goalExists && 
-                     remainingProjects.length === 0 && 
+                     remainingMilestones.length === 0 && 
                      remainingTasks.length === 0 &&
                      remainingLinkMapEntries === 0;
       
       // Collect issues
       const issues = [];
       if (goalExists) issues.push(`Goal ${goalId} still exists`);
-      if (remainingProjects.length > 0) issues.push(`${remainingProjects.length} projects still exist`);
+      if (remainingMilestones.length > 0) issues.push(`${remainingMilestones.length} milestones still exist`);
       if (remainingTasks.length > 0) issues.push(`${remainingTasks.length} tasks still exist`);
       if (remainingLinkMapEntries > 0) issues.push(`${remainingLinkMapEntries} link map entries still exist`);
       
@@ -260,7 +260,7 @@ class DataIntegrityService {
         message: success ? 'Deletion verified successfully' : issues.join(', '),
         details: {
           goalExists,
-          remainingProjects: remainingProjects.length,
+          remainingMilestones: remainingMilestones.length,
           remainingTasks: remainingTasks.length,
           remainingLinkMapEntries
         },
@@ -279,52 +279,52 @@ class DataIntegrityService {
   /**
    * Attempts to repair failed deletions
    */
-  static async repairDeletion(goalId, projectIds) {
+  static async repairDeletion(goalId, milestoneIds) {
     try {
       console.log(`[DataIntegrityService] Repairing deletion for goal ${goalId}`);
       
       // Load data from storage
-      const [goalsJson, projectsJson, tasksJson, linkMapJson] = await Promise.all([
+      const [goalsJson, milestonesJson, tasksJson, linkMapJson] = await Promise.all([
         AsyncStorage.getItem(this.STORAGE_KEYS.GOALS),
-        AsyncStorage.getItem(this.STORAGE_KEYS.PROJECTS),
+        AsyncStorage.getItem(this.STORAGE_KEYS.MILESTONES),
         AsyncStorage.getItem(this.STORAGE_KEYS.TASKS),
-        AsyncStorage.getItem(this.STORAGE_KEYS.PROJECT_GOAL_LINK_MAP)
+        AsyncStorage.getItem(this.STORAGE_KEYS.MILESTONE_GOAL_LINK_MAP)
       ]);
       
       // Parse data
       const goals = goalsJson ? JSON.parse(goalsJson) : [];
-      const projects = projectsJson ? JSON.parse(projectsJson) : [];
+      const milestones = milestonesJson ? JSON.parse(milestonesJson) : [];
       const tasks = tasksJson ? JSON.parse(tasksJson) : [];
       const linkMap = linkMapJson ? JSON.parse(linkMapJson) : {};
       
       // Force delete everything related to this goal
       const updatedGoals = goals.filter(g => g.id !== goalId);
-      const updatedProjects = projects.filter(p => !projectIds.includes(p.id) && p.goalId !== goalId);
-      const updatedTasks = tasks.filter(t => !projectIds.includes(t.projectId));
+      const updatedMilestones = milestones.filter(m => !milestoneIds.includes(m.id) && m.goalId !== goalId);
+      const updatedTasks = tasks.filter(t => !milestoneIds.includes(t.milestoneId));
       
       // Update link map
       const updatedLinkMap = { ...linkMap };
-      projectIds.forEach(projectId => {
-        delete updatedLinkMap[projectId];
+      milestoneIds.forEach(milestoneId => {
+        delete updatedLinkMap[milestoneId];
       });
       
       // Also remove any other entries pointing to this goal
-      Object.keys(updatedLinkMap).forEach(projectId => {
-        if (updatedLinkMap[projectId] === goalId) {
-          delete updatedLinkMap[projectId];
+      Object.keys(updatedLinkMap).forEach(milestoneId => {
+        if (updatedLinkMap[milestoneId] === goalId) {
+          delete updatedLinkMap[milestoneId];
         }
       });
       
       // Write all updated data back to storage
       await Promise.all([
         AsyncStorage.setItem(this.STORAGE_KEYS.GOALS, JSON.stringify(updatedGoals)),
-        AsyncStorage.setItem(this.STORAGE_KEYS.PROJECTS, JSON.stringify(updatedProjects)),
+        AsyncStorage.setItem(this.STORAGE_KEYS.MILESTONES, JSON.stringify(updatedMilestones)),
         AsyncStorage.setItem(this.STORAGE_KEYS.TASKS, JSON.stringify(updatedTasks)),
-        AsyncStorage.setItem(this.STORAGE_KEYS.PROJECT_GOAL_LINK_MAP, JSON.stringify(updatedLinkMap))
+        AsyncStorage.setItem(this.STORAGE_KEYS.MILESTONE_GOAL_LINK_MAP, JSON.stringify(updatedLinkMap))
       ]);
       
       // Verify repair
-      const verificationResult = await this.verifyDeletion(goalId, projectIds);
+      const verificationResult = await this.verifyDeletion(goalId, milestoneIds);
       
       if (verificationResult.success) {
         console.log('[DataIntegrityService] Repair successful');
@@ -352,20 +352,20 @@ class DataIntegrityService {
       console.log('[DataIntegrityService] Starting data integrity audit...');
       
       // Load all data
-      const [goalsJson, projectsJson, tasksJson, linkMapJson] = await Promise.all([
+      const [goalsJson, milestonesJson, tasksJson, linkMapJson] = await Promise.all([
         AsyncStorage.getItem(this.STORAGE_KEYS.GOALS),
-        AsyncStorage.getItem(this.STORAGE_KEYS.PROJECTS),
+        AsyncStorage.getItem(this.STORAGE_KEYS.MILESTONES),
         AsyncStorage.getItem(this.STORAGE_KEYS.TASKS),
-        AsyncStorage.getItem(this.STORAGE_KEYS.PROJECT_GOAL_LINK_MAP)
+        AsyncStorage.getItem(this.STORAGE_KEYS.MILESTONE_GOAL_LINK_MAP)
       ]);
       
       // Parse data
       const goals = goalsJson ? JSON.parse(goalsJson) : [];
-      const projects = projectsJson ? JSON.parse(projectsJson) : [];
+      const milestones = milestonesJson ? JSON.parse(milestonesJson) : [];
       const tasks = tasksJson ? JSON.parse(tasksJson) : [];
       const linkMap = linkMapJson ? JSON.parse(linkMapJson) : {};
       
-      console.log(`[DataIntegrityService] Loaded ${goals.length} goals, ${projects.length} projects, ${tasks.length} tasks`);
+      console.log(`[DataIntegrityService] Loaded ${goals.length} goals, ${milestones.length} milestones, ${tasks.length} tasks`);
       
       // Track issues and fixes
       const issues = [];
@@ -373,33 +373,33 @@ class DataIntegrityService {
       
       // Check 1: Convert orphaned milestones to standalone (flexible hierarchy support)
       const validGoalIds = new Set(goals.map(g => g.id));
-      const orphanedProjects = projects.filter(p => 
-        p.goalId && !validGoalIds.has(p.goalId)
+      const orphanedMilestones = milestones.filter(m => 
+        m.goalId && !validGoalIds.has(m.goalId)
       );
       
-      if (orphanedProjects.length > 0) {
-        issues.push(`Found ${orphanedProjects.length} orphaned milestones to convert to standalone`);
+      if (orphanedMilestones.length > 0) {
+        issues.push(`Found ${orphanedMilestones.length} orphaned milestones to convert to standalone`);
         
         // Fix: Convert to standalone milestones
-        orphanedProjects.forEach(p => {
-          fixes.push(`Converting milestone "${p.title}" (${p.id}) to standalone`);
+        orphanedMilestones.forEach(m => {
+          fixes.push(`Converting milestone "${m.title}" (${m.id}) to standalone`);
         });
         
         // Apply fix
-        const updatedProjects = projects.map(p => {
-          if (p.goalId && !validGoalIds.has(p.goalId)) {
-            return { ...p, goalId: null, goalTitle: null };
+        const updatedMilestones = milestones.map(m => {
+          if (m.goalId && !validGoalIds.has(m.goalId)) {
+            return { ...m, goalId: null, goalTitle: null };
           }
-          return p;
+          return m;
         });
         
-        await AsyncStorage.setItem(this.STORAGE_KEYS.PROJECTS, JSON.stringify(updatedProjects));
+        await AsyncStorage.setItem(this.STORAGE_KEYS.MILESTONES, JSON.stringify(updatedMilestones));
       }
       
       // Check 2: Convert orphaned tasks to standalone (flexible hierarchy support)
-      const validProjectIds = new Set(projects.map(p => p.id));
+      const validMilestoneIds = new Set(milestones.map(m => m.id));
       const orphanedTasks = tasks.filter(t => 
-        t.projectId && !validProjectIds.has(t.projectId)
+        t.milestoneId && !validMilestoneIds.has(t.milestoneId)
       );
       
       if (orphanedTasks.length > 0) {
@@ -410,13 +410,13 @@ class DataIntegrityService {
           fixes.push(`Converting task "${t.title || t.name}" (${t.id}) to standalone`);
         });
         
-        // Apply fix - convert to standalone by removing project/goal references
+        // Apply fix - convert to standalone by removing milestone/goal references
         const updatedTasks = tasks.map(t => {
-          if (t.projectId && !validProjectIds.has(t.projectId)) {
+          if (t.milestoneId && !validMilestoneIds.has(t.milestoneId)) {
             return { 
               ...t, 
-              projectId: null, 
-              projectTitle: null,
+              milestoneId: null, 
+              milestoneTitle: null,
               goalId: null, // Also remove goal reference to make truly standalone
               goalTitle: null
             };
@@ -427,45 +427,45 @@ class DataIntegrityService {
         await AsyncStorage.setItem(this.STORAGE_KEYS.TASKS, JSON.stringify(updatedTasks));
       }
       
-      // Check 3: Find inconsistencies in the project-goal link map
+      // Check 3: Find inconsistencies in the milestone-goal link map
       const linkMapIssues = [];
       
-      // Check for projects in link map that don't exist
-      Object.keys(linkMap).forEach(projectId => {
-        if (!validProjectIds.has(projectId)) {
-          linkMapIssues.push(`Link map contains non-existent project ID: ${projectId}`);
+      // Check for milestones in link map that don't exist
+      Object.keys(linkMap).forEach(milestoneId => {
+        if (!validMilestoneIds.has(milestoneId)) {
+          linkMapIssues.push(`Link map contains non-existent milestone ID: ${milestoneId}`);
         }
       });
       
-      // Check for projects linked to goals that don't exist
-      Object.entries(linkMap).forEach(([projectId, goalId]) => {
+      // Check for milestones linked to goals that don't exist
+      Object.entries(linkMap).forEach(([milestoneId, goalId]) => {
         if (!validGoalIds.has(goalId)) {
-          linkMapIssues.push(`Project ${projectId} is linked to non-existent goal ${goalId} in link map`);
+          linkMapIssues.push(`Milestone ${milestoneId} is linked to non-existent goal ${goalId} in link map`);
         }
       });
       
-      // Check for projects with goalId but missing from link map
-      projects.forEach(project => {
-        if (project.goalId && validGoalIds.has(project.goalId) && !linkMap[project.id]) {
-          linkMapIssues.push(`Project "${project.title}" (${project.id}) has goalId but is missing from link map`);
+      // Check for milestones with goalId but missing from link map
+      milestones.forEach(milestone => {
+        if (milestone.goalId && validGoalIds.has(milestone.goalId) && !linkMap[milestone.id]) {
+          linkMapIssues.push(`Milestone "${milestone.title}" (${milestone.id}) has goalId but is missing from link map`);
         }
       });
       
       if (linkMapIssues.length > 0) {
-        issues.push(`Found ${linkMapIssues.length} issues in project-goal link map`);
+        issues.push(`Found ${linkMapIssues.length} issues in milestone-goal link map`);
         
         // Fix: Rebuild link map completely
         const newLinkMap = {};
-        projects.forEach(project => {
-          if (project.goalId && validGoalIds.has(project.goalId)) {
-            newLinkMap[project.id] = project.goalId;
+        milestones.forEach(milestone => {
+          if (milestone.goalId && validGoalIds.has(milestone.goalId)) {
+            newLinkMap[milestone.id] = milestone.goalId;
           }
         });
         
-        fixes.push(`Rebuilt project-goal link map with ${Object.keys(newLinkMap).length} entries`);
+        fixes.push(`Rebuilt milestone-goal link map with ${Object.keys(newLinkMap).length} entries`);
         
         // Apply fix
-        await AsyncStorage.setItem(this.STORAGE_KEYS.PROJECT_GOAL_LINK_MAP, JSON.stringify(newLinkMap));
+        await AsyncStorage.setItem(this.STORAGE_KEYS.MILESTONE_GOAL_LINK_MAP, JSON.stringify(newLinkMap));
       }
       
       // Return audit results
@@ -487,21 +487,21 @@ class DataIntegrityService {
   }
   
   /**
-   * Analyzes the structure of a project to determine if it was created during onboarding
+   * Analyzes the structure of a milestone to determine if it was created during onboarding
    */
-  static isOnboardingCreatedProject(project) {
+  static isOnboardingCreatedMilestone(milestone) {
     // Check for onboarding-specific ID patterns
-    if (project.id && project.id.includes('project_')) {
+    if (milestone.id && milestone.id.includes('milestone_')) {
       return true;
     }
     
     // Check for specific metadata fields set during onboarding
-    if (project.createdDuringOnboarding || project.onboardingProject) {
+    if (milestone.createdDuringOnboarding || milestone.onboardingMilestone) {
       return true;
     }
     
     // Check if created with domain metadata (typical of onboarding)
-    if (project.domain && project.domainName && project.color && project.icon) {
+    if (milestone.domain && milestone.domainName && milestone.color && milestone.icon) {
       return true;
     }
     
@@ -516,46 +516,46 @@ class DataIntegrityService {
       console.log('[DataIntegrityService] Starting onboarding data diagnosis...');
       
       // Load all data
-      const [goalsJson, projectsJson, tasksJson, linkMapJson] = await Promise.all([
+      const [goalsJson, milestonesJson, tasksJson, linkMapJson] = await Promise.all([
         AsyncStorage.getItem(this.STORAGE_KEYS.GOALS),
-        AsyncStorage.getItem(this.STORAGE_KEYS.PROJECTS),
+        AsyncStorage.getItem(this.STORAGE_KEYS.MILESTONES),
         AsyncStorage.getItem(this.STORAGE_KEYS.TASKS),
-        AsyncStorage.getItem(this.STORAGE_KEYS.PROJECT_GOAL_LINK_MAP)
+        AsyncStorage.getItem(this.STORAGE_KEYS.MILESTONE_GOAL_LINK_MAP)
       ]);
       
       // Parse data
       const goals = goalsJson ? JSON.parse(goalsJson) : [];
-      const projects = projectsJson ? JSON.parse(projectsJson) : [];
+      const milestones = milestonesJson ? JSON.parse(milestonesJson) : [];
       const tasks = tasksJson ? JSON.parse(tasksJson) : [];
       const linkMap = linkMapJson ? JSON.parse(linkMapJson) : {};
       
-      // Find projects that were likely created during onboarding
-      const onboardingProjects = projects.filter(p => this.isOnboardingCreatedProject(p));
+      // Find milestones that were likely created during onboarding
+      const onboardingMilestones = milestones.filter(m => this.isOnboardingCreatedMilestone(m));
       
-      // Group onboarding projects by goal
-      const onboardingProjectsByGoal = {};
-      onboardingProjects.forEach(project => {
-        if (project.goalId) {
-          if (!onboardingProjectsByGoal[project.goalId]) {
-            onboardingProjectsByGoal[project.goalId] = [];
+      // Group onboarding milestones by goal
+      const onboardingMilestonesByGoal = {};
+      onboardingMilestones.forEach(milestone => {
+        if (milestone.goalId) {
+          if (!onboardingMilestonesByGoal[milestone.goalId]) {
+            onboardingMilestonesByGoal[milestone.goalId] = [];
           }
-          onboardingProjectsByGoal[project.goalId].push(project);
+          onboardingMilestonesByGoal[milestone.goalId].push(milestone);
         }
       });
       
       // Note: No longer checking for duplicate tasks since we've moved to single storage
-      const projectsWithDuplicateTasks = [];
+      const milestonesWithDuplicateTasks = [];
       
-      // Check for goals created during onboarding (based on having onboarding projects)
+      // Check for goals created during onboarding (based on having onboarding milestones)
       const likelyOnboardingGoals = [];
       
-      Object.keys(onboardingProjectsByGoal).forEach(goalId => {
+      Object.keys(onboardingMilestonesByGoal).forEach(goalId => {
         const goal = goals.find(g => g.id === goalId);
         if (goal) {
           likelyOnboardingGoals.push({
             goal: goal.title,
             id: goal.id,
-            onboardingProjectCount: onboardingProjectsByGoal[goalId].length
+            onboardingMilestoneCount: onboardingMilestonesByGoal[goalId].length
           });
         }
       });
@@ -563,14 +563,14 @@ class DataIntegrityService {
       // Prepare diagnostic report
       const report = {
         totalGoals: goals.length,
-        totalProjects: projects.length,
+        totalMilestones: milestones.length,
         totalTasks: tasks.length,
-        onboardingProjects: onboardingProjects.length,
+        onboardingMilestones: onboardingMilestones.length,
         onboardingGoals: likelyOnboardingGoals.length,
-        projectsWithDuplicateTasks: projectsWithDuplicateTasks.length,
+        milestonesWithDuplicateTasks: milestonesWithDuplicateTasks.length,
         details: {
           likelyOnboardingGoals,
-          projectsWithDuplicateTasks
+          milestonesWithDuplicateTasks
         }
       };
       
