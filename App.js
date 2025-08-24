@@ -164,6 +164,9 @@ import CustomTabBar from './src/components/CustomTabBar';
 // Import Swipeable Tab Navigator for physical swiping between tabs
 import SwipeableTabNavigator from './src/components/SwipeableTabNavigator';
 
+// Import tour hook for navigation blocking
+import { useAppTour } from './src/hooks/useAppTour';
+
 // Import ProfileProvider
 import { ProfileProvider } from './src/context/ProfileContext';
 
@@ -927,11 +930,58 @@ const createTabBarIcon = (iconName, label, focused, color) => {
   );
 };
 
+// React component for flashing tab bar icon for tour
+const FlashingTabBarIcon = ({ iconName, label, focused, color }) => {
+  const activeIconName = iconName;
+  // Handle special case for document-text icon
+  const inactiveIconName = iconName === 'document-text' ? 'document-outline' : `${iconName}-outline`;
+  
+  // Create animation value
+  const flashAnim = useRef(new Animated.Value(1)).current;
+  
+  useEffect(() => {
+    // Start flashing animation
+    const flashAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(flashAnim, {
+          toValue: 0.3,
+          duration: 500,
+          useNativeDriver: true
+        }),
+        Animated.timing(flashAnim, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true
+        })
+      ])
+    );
+    
+    flashAnimation.start();
+    
+    return () => flashAnimation.stop();
+  }, [flashAnim]);
+  
+  return (
+    <Animated.View style={{ opacity: flashAnim }}>
+      <Ionicons 
+        name={focused ? activeIconName : inactiveIconName} 
+        size={scaleFontSize(22)} 
+        color={color}
+        accessible={true}
+        accessibilityLabel={`${label} tab ${focused ? 'selected' : ''} (flashing)`}
+      />
+    </Animated.View>
+  );
+};
+
 // Main tab navigator with stacks and enhanced animations
 function MainTabNavigator({ route }) {
   const s = getStyles();
   const { theme } = useTheme();
   const auth = useAuth();
+  
+  // Import and use tour hook to track tour state
+  const { isTourActive } = useAppTour();
   
   // Track if coming from onboarding to determine initial tab
   const [fromOnboarding, setFromOnboarding] = useState(false);
@@ -1053,8 +1103,9 @@ function MainTabNavigator({ route }) {
     <View style={s.container}>
       <Animated.View style={[s.contentContainer, { opacity: contentOpacity }]}>
         <SwipeableTabNavigator
-          swipeThreshold={60}
-          velocityThreshold={400}
+          swipeThreshold={50}
+          velocityThreshold={300}
+          disabled={isTourActive === true}
         >
           <Tab.Navigator
           ref={tabNavigationRef}
@@ -1129,7 +1180,17 @@ function MainTabNavigator({ route }) {
               tabBarIcon: ({ focused, color }) => 
                 createTabBarIcon('grid', 'Dashboard', focused, color),
               tabBarAccessibilityLabel: "Dashboard tab"
-            }} 
+            }}
+            listeners={({ navigation }) => ({
+              tabPress: (e) => {
+                // Prevent navigation if tour is active (with safety check)
+                if (isTourActive === true) {
+                  e.preventDefault();
+                  console.log('🚫 Tab navigation blocked during tour');
+                  return;
+                }
+              },
+            })}
           />
           <Tab.Screen 
             name="GoalsTab" 
@@ -1144,6 +1205,13 @@ function MainTabNavigator({ route }) {
             listeners={({ navigation, route }) => ({
               tabPress: (e) => {
                 try {
+                  // Prevent navigation if tour is active
+                  if (isTourActive) {
+                    e.preventDefault();
+                    console.log('🚫 Tab navigation blocked during tour');
+                    return;
+                  }
+                  
                   // If we're already on the Goals tab, toggle the view
                   if (navigation.isFocused()) {
                     e.preventDefault();
@@ -1197,6 +1265,16 @@ function MainTabNavigator({ route }) {
                 createTabBarIcon('reader', 'Kanban', focused, color),
               tabBarAccessibilityLabel: "Kanban tab"
             }}
+            listeners={({ navigation }) => ({
+              tabPress: (e) => {
+                // Prevent navigation if tour is active (with safety check)
+                if (isTourActive === true) {
+                  e.preventDefault();
+                  console.log('🚫 Tab navigation blocked during tour');
+                  return;
+                }
+              },
+            })}
           />
           <Tab.Screen 
             name="TimeTab" 
@@ -1206,23 +1284,94 @@ function MainTabNavigator({ route }) {
               tabBarIcon: ({ focused, color }) => 
                 createTabBarIcon('calendar', 'Time', focused, color),
               tabBarAccessibilityLabel: "Time tab"
-            }} 
+            }}
+            listeners={({ navigation }) => ({
+              tabPress: (e) => {
+                // Prevent navigation if tour is active (with safety check)
+                if (isTourActive === true) {
+                  e.preventDefault();
+                  console.log('🚫 Tab navigation blocked during tour');
+                  return;
+                }
+              },
+            })}
           />
           <Tab.Screen 
             name="TodoTab" 
             component={TodoStack} 
             options={({ route }) => {
-              const currentView = route.params?.currentView || 'todo';
+              let currentView = route.params?.currentView || 'todo';
+              
+              // Normal tab behavior - no tour interference
+              
               const label = currentView === 'notes' ? 'Notes' : 'To-Do';
               const iconName = currentView === 'todo' ? 'checkbox' : 'document-text';
               
+              console.log('📍 App.js TabBar Options - currentView:', currentView, 'iconName:', iconName, 'tourFlashing:', global.tourShouldFlashToDoTab);
+              
               return {
                 tabBarLabel: label,
-                tabBarIcon: ({ focused, color }) => 
-                  createTabBarIcon(iconName, label, focused, color),
+                tabBarIcon: ({ focused, color }) => {
+                  // Check global tour flag for flashing
+                  if (global.tourShouldFlashToDoTab) {
+                    return <FlashingTabBarIcon iconName={iconName} label={label} focused={focused} color={color} />;
+                  } else {
+                    // Handle special case for document-text icon which doesn't have a standard -outline version
+                    let finalIconName;
+                    if (iconName === 'document-text') {
+                      finalIconName = focused ? 'document-text' : 'document-outline';
+                    } else {
+                      finalIconName = focused ? iconName : `${iconName}-outline`;
+                    }
+                    
+                    return (
+                      <Ionicons 
+                        name={finalIconName} 
+                        size={scaleFontSize(22)} 
+                        color={color}
+                        accessible={true}
+                        accessibilityLabel={`${label} tab ${focused ? 'selected' : ''}`}
+                      />
+                    );
+                  }
+                },
                 tabBarAccessibilityLabel: `${label} tab`
               };
             }}
+            listeners={({ navigation, route }) => ({
+              tabPress: (e) => {
+                try {
+                  // Check if tour is expecting To-Do tab tap (special case - allow this during tour)
+                  if (global.onToDoTabTapped && typeof global.onToDoTabTapped === 'function') {
+                    console.log('🎯 TodoTab tapped during tour, calling tour callback');
+                    global.onToDoTabTapped();
+                    return; // Allow this navigation for tour
+                  }
+
+                  // Check if tour is expecting notes toggle tap (special case - allow this during tour)
+                  if (global.onNotesToggleTapped && typeof global.onNotesToggleTapped === 'function') {
+                    console.log('🎯 TodoTab tapped during NOTES tour step, toggling to notes view');
+                    // Change the route params to trigger notes view, which will call the callback
+                    const currentParams = route?.params || {};
+                    const newView = currentParams.currentView === 'todo' ? 'notes' : 'todo';
+                    navigation.setParams({ currentView: newView });
+                    return; // Allow this navigation for tour
+                  }
+                  
+                  // Prevent other navigation if tour is active (but not when tour expects this tap)
+                  if (isTourActive) {
+                    e.preventDefault();
+                    console.log('🚫 Tab navigation blocked during tour');
+                    return;
+                  }
+                  
+                  // Allow normal navigation to proceed
+                  console.log('🎯 TodoTab tapped, navigating normally');
+                } catch (error) {
+                  console.warn('Error in TodoTab press handler:', error);
+                }
+              },
+            })}
           />
           </Tab.Navigator>
         </SwipeableTabNavigator>

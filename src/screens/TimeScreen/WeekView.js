@@ -113,6 +113,12 @@ const WeekView = ({
   
   // Render day blocks
   const renderDayBlocks = React.useCallback((date, index) => {
+    // Safety check for undefined date
+    if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+      console.warn('WeekView: renderDayBlocks received invalid date:', date);
+      return null;
+    }
+    
     const blocksForDay = getTimeBlocksForDate(date);
     const isSelected = internalSelectedDay === index;
     const isTodayDate = isToday(date);

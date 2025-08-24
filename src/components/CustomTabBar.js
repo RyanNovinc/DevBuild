@@ -22,10 +22,21 @@ const CustomTabBar = ({ state, descriptors, navigation, theme }) => {
   const { width } = useScreenDimensions();
   const insets = useSafeAreaInsets();
   
+  // Check if tour is active and requesting tab highlighting
+  const isTourHighlightingTabs = global.tourShouldFlashToDoTab || false;
+  
+  // Debug logging
+  if (isTourHighlightingTabs) {
+    console.log('🎯 CustomTabBar: Tour is highlighting tabs, starting animation');
+  }
+  
   // Animation values
-  const fadeAnim = useRef(state.routes.map(() => new Animated.Value(0))).current;
-  const scaleAnim = useRef(state.routes.map(() => new Animated.Value(1))).current;
+  const fadeAnim = useRef(state.routes.map((_, i) => new Animated.Value(i === state.index ? 1 : 0.7))).current;
+  const scaleAnim = useRef(state.routes.map((_, i) => new Animated.Value(i === state.index ? 1.15 : 1))).current;
   const tabIndicatorPosition = useRef(new Animated.Value(0)).current;
+  
+  // Tour animation values
+  const todoTabPulse = useRef(new Animated.Value(1)).current;
   
   // Tab indicator width and spacing
   const tabWidth = width / state.routes.length;
@@ -64,6 +75,16 @@ const CustomTabBar = ({ state, descriptors, navigation, theme }) => {
       }).start();
     });
   }, [state.index]);
+  
+  // Handle tour tab highlighting - no animation, just keep icon visible
+  useEffect(() => {
+    if (isTourHighlightingTabs) {
+      console.log('🎯 CustomTabBar: Tour highlighting tabs - no animation');
+      todoTabPulse.setValue(1); // Keep at normal size
+    } else {
+      todoTabPulse.setValue(1);
+    }
+  }, [isTourHighlightingTabs]);
 
   return (
     <View 
@@ -106,17 +127,33 @@ const CustomTabBar = ({ state, descriptors, navigation, theme }) => {
         const label = options.tabBarLabel || options.title || route.name;
         const isFocused = state.index === index;
 
-        // Determine icon to show
-        let iconName;
+        // Get the icon component to render
+        let iconComponent = null;
         if (options.tabBarIcon) {
-          iconName = options.tabBarIcon({ 
+          // Debug logging for TodoTab during tour
+          if (route.name === 'TodoTab' && isTourHighlightingTabs) {
+            const currentView = route.params?.currentView || 'todo';
+            console.log('🎯 CustomTabBar: TOUR DEBUGGING - route.params:', route.params);
+            console.log('🎯 CustomTabBar: TOUR DEBUGGING - currentView:', currentView);
+            console.log('🎯 CustomTabBar: TOUR DEBUGGING - should show CHECKBOX icon for todo, DOCUMENT icon for notes');
+          }
+          // Determine the appropriate color based on tour state and focus
+          const iconColor = isTourHighlightingTabs && route.name !== 'TodoTab'
+            ? theme.textSecondary // Keep darkened tabs with secondary color
+            : isTourHighlightingTabs && route.name === 'TodoTab'
+            ? theme.primary // Highlight TodoTab with primary color during tour
+            : isFocused ? theme.primary : theme.textSecondary; // Normal behavior
+            
+          iconComponent = options.tabBarIcon({ 
             focused: isFocused, 
-            color: isFocused ? theme.primary : theme.textSecondary, 
+            color: iconColor, 
             size: scaleWidth(24) // Keep original size but make it responsive
-          }).props.name;
+          });
         }
 
         const onPress = () => {
+          // Normal tab behavior during tour
+          
           const event = navigation.emit({
             type: 'tabPress',
             target: route.key,
@@ -172,17 +209,21 @@ const CustomTabBar = ({ state, descriptors, navigation, theme }) => {
               style={[
                 styles.iconContainer,
                 {
-                  opacity: fadeAnim[index],
-                  transform: [{ scale: scaleAnim[index] }],
+                  opacity: isTourHighlightingTabs && route.name === 'TodoTab'
+                    ? 1 // Force TodoTab to full opacity during tour
+                    : isTourHighlightingTabs && route.name !== 'TodoTab' 
+                    ? 0.3 // Darken all tabs except TodoTab during tour
+                    : fadeAnim[index],
+                  transform: [
+                    { scale: (isTourHighlightingTabs && route.name === 'TodoTab') 
+                      ? 1 // Keep TodoTab at normal size during tour - no pulse animation
+                      : scaleAnim[index] }
+                  ],
                   padding: scaleWidth(8) // Match original padding
                 }
               ]}
             >
-              <Ionicons 
-                name={iconName} 
-                size={scaleWidth(24)} 
-                color={isFocused ? theme.primary : theme.textSecondary} 
-              />
+              {iconComponent}
               
               {/* Only show label for focused tab - keep original behavior */}
               {isFocused && (
@@ -190,8 +231,12 @@ const CustomTabBar = ({ state, descriptors, navigation, theme }) => {
                   style={[
                     styles.tabLabel,
                     { 
-                      color: theme.primary,
-                      opacity: fadeAnim[index],
+                      color: isTourHighlightingTabs && route.name !== 'TodoTab'
+                        ? theme.textSecondary // Darken label for non-TodoTab during tour
+                        : theme.primary,
+                      opacity: isTourHighlightingTabs && route.name !== 'TodoTab' 
+                        ? 0.3 // Darken label opacity for non-TodoTab during tour
+                        : fadeAnim[index],
                       fontSize: scaleWidth(10), // Match original font size
                       marginTop: scaleHeight(2) // Match original spacing
                     }

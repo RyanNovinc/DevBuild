@@ -26,7 +26,7 @@ const AssetsTab = ({ theme, data, handlers, onShowAllocation }) => {
   const { financialData, formatCurrency, isPremium } = data;
   const [showAddAssetModal, setShowAddAssetModal] = useState(false);
   const [editingAsset, setEditingAsset] = useState(null);
-  const [showMonthlyModal, setShowMonthlyModal] = useState(false);
+  // Removed showMonthlyModal - no longer needed
   
   // Form state
   const [assetName, setAssetName] = useState('');
@@ -94,11 +94,7 @@ const AssetsTab = ({ theme, data, handlers, onShowAllocation }) => {
 
   const metrics = calculateAssetMetrics();
 
-  const monthlyTrackingSummary = {
-    totalIncome: data.totalIncome || 0,
-    totalExpenses: data.totalExpenses || 0,
-    totalNetGain: (data.totalIncome || 0) - (data.totalExpenses || 0)
-  };
+  // Removed monthlyTrackingSummary - no longer needed for manual surplus system
 
   const clearForm = () => {
     setAssetName('');
@@ -293,30 +289,6 @@ const AssetsTab = ({ theme, data, handlers, onShowAllocation }) => {
           )}
         </View>
 
-        {monthlyTrackingSummary.totalNetGain > 0 && (
-          <View style={styles.monthlyTrackingSection}>
-            <TouchableOpacity 
-              style={[styles.monthlyTrackingCard, { backgroundColor: theme.card }]}
-              onPress={() => setShowMonthlyModal(true)}
-            >
-              <Ionicons 
-                name="calendar" 
-                size={24} 
-                color={monthlyTrackingSummary.totalNetGain >= 0 ? '#10b981' : '#ef4444'} 
-              />
-              <Text style={[styles.monthlyTrackingLabel, { color: theme.textSecondary }]}>
-                Income - Expenses Tracking
-              </Text>
-              <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
-            </TouchableOpacity>
-            <Text style={[
-              styles.monthlyTrackingValue, 
-              { color: monthlyTrackingSummary.totalNetGain >= 0 ? '#10b981' : '#ef4444' }
-            ]}>
-              {formatCurrency(monthlyTrackingSummary.totalNetGain)} this month
-            </Text>
-          </View>
-        )}
       </ScrollView>
 
       {/* Add Asset Modal */}
@@ -434,61 +406,7 @@ const AssetsTab = ({ theme, data, handlers, onShowAllocation }) => {
         </KeyboardAvoidingView>
       </Modal>
 
-      {/* Monthly Tracking Modal */}
-      <Modal
-        visible={showMonthlyModal}
-        transparent
-        animationType="slide"
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.monthlyModalContent, { backgroundColor: theme.card }]}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: theme.text }]}>
-                Monthly Surplus
-              </Text>
-              <TouchableOpacity onPress={() => setShowMonthlyModal(false)}>
-                <Ionicons name="close" size={24} color={theme.textSecondary} />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.summarySection}>
-              <Text style={[styles.summaryLabel, { color: theme.textSecondary }]}>
-                Available to Allocate
-              </Text>
-              <Text style={[styles.summaryValue, { color: '#10b981' }]}>
-                {formatCurrency(monthlyTrackingSummary.totalNetGain)}
-              </Text>
-              <Text style={[styles.summaryDescription, { color: theme.textSecondary }]}>
-                From this month's income minus expenses
-              </Text>
-            </View>
-
-            <View style={styles.modalActions}>
-              {monthlyTrackingSummary.totalNetGain > 0 && (
-                <TouchableOpacity
-                  style={styles.allocateButton}
-                  onPress={() => {
-                    setShowMonthlyModal(false);
-                    if (onShowAllocation) {
-                      onShowAllocation(monthlyTrackingSummary);
-                    }
-                  }}
-                >
-                  <LinearGradient
-                    colors={['#10b981', '#059669']}
-                    style={styles.allocateButtonGradient}
-                  >
-                    <Ionicons name="arrow-forward-circle" size={20} color="#ffffff" />
-                    <Text style={styles.allocateButtonText}>
-                      Allocate Surplus
-                    </Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-              )}
-            </View>
-          </View>
-        </View>
-      </Modal>
+      {/* Removed Monthly Tracking Modal - users must manually add surplus via Tracking tab */}
 
     </Animated.View>
   );
@@ -1023,6 +941,27 @@ const styles = StyleSheet.create({
   fullScreenScrollContent: {
     paddingHorizontal: 20,
     paddingBottom: Platform.OS === 'ios' ? 40 : 20,
+  },
+  
+  // Allocation button styles
+  allocationButton: {
+    marginHorizontal: 16,
+    marginVertical: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  allocationButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+  },
+  allocationButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
   },
 });
 

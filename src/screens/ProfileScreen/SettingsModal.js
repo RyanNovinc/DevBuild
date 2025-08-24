@@ -16,11 +16,13 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { useAuth } from '../../context/AuthContext';
+import { useAppContext } from '../../context/AppContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import responsive from '../../utils/responsive';
 import ReferralCodeInputModal from '../../components/ReferralCodeInputModal';
 import TermsOfServiceModal from '../../components/ai/LoginScreen/components/TermsOfServiceModal';
 import PrivacyPolicyModal from '../../components/ai/LoginScreen/components/PrivacyPolicyModal';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import DataExportService from '../../services/DataExportService';
 import DataExportModal from '../../components/DataExportModal';
 import DataDeleteModal from '../../components/DataDeleteModal';
@@ -46,9 +48,11 @@ const SettingsModal = ({
   onScreenStateUpdate, // Add this prop to update parent state
   onTriggerGiftSurprise, // Add this prop for testing the gift surprise
   onTriggerAIPlusUpgrade, // Add this prop for AI Plus upgrade notification
-  onTestSecondOnboarding // Add this prop for testing the second onboarding
+  onTestSecondOnboarding, // Add this prop for testing the second onboarding
+  onTestNewTour // Add this prop for testing the new streamlined tour
 }) => {
   const { logout } = useAuth() || {};
+  const appContext = useAppContext();
   const insets = useSafeAreaInsets();
   
   // Animation values
@@ -218,12 +222,116 @@ const SettingsModal = ({
     setShowDeleteModal(true);
   };
 
+  // Debug function to analyze AsyncStorage
+  const debugAsyncStorage = async () => {
+    try {
+      const allKeys = await AsyncStorage.getAllKeys();
+      console.log(`🔍 Total AsyncStorage keys: ${allKeys.length}`);
+      
+      let taskRelatedData = {};
+      
+      for (const key of allKeys) {
+        try {
+          const data = await AsyncStorage.getItem(key);
+          if (data) {
+            // Check if key or data contains task-related content
+            const keyLower = key.toLowerCase();
+            if (keyLower.includes('task') || keyLower.includes('goal') || keyLower.includes('milestone') || keyLower.includes('project')) {
+              taskRelatedData[key] = data;
+              console.log(`📝 Found task-related key: ${key}`);
+            } else {
+              // Check if data contains task references
+              try {
+                const parsed = JSON.parse(data);
+                const dataStr = JSON.stringify(parsed).toLowerCase();
+                if (dataStr.includes('task') || dataStr.includes('goal') || dataStr.includes('milestone')) {
+                  taskRelatedData[key] = data;
+                  console.log(`📝 Found task data in key: ${key}`);
+                }
+              } catch (e) {
+                // Not JSON, check raw string
+                if (data.toLowerCase().includes('task') || data.toLowerCase().includes('goal') || data.toLowerCase().includes('milestone')) {
+                  taskRelatedData[key] = data;
+                  console.log(`📝 Found task string in key: ${key}`);
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.log(`❌ Error checking key ${key}:`, error.message);
+        }
+      }
+      
+      // Show analysis in alert
+      const analysis = Object.keys(taskRelatedData).map(key => {
+        const data = taskRelatedData[key];
+        let summary = '';
+        try {
+          const parsed = JSON.parse(data);
+          if (Array.isArray(parsed)) {
+            summary = `Array with ${parsed.length} items`;
+          } else if (typeof parsed === 'object') {
+            summary = `Object with ${Object.keys(parsed).length} properties`;
+          } else {
+            summary = typeof parsed;
+          }
+        } catch (e) {
+          summary = `String (${data.length} chars)`;
+        }
+        return `${key}: ${summary}`;
+      }).join('\n');
+      
+      Alert.alert(
+        'AsyncStorage Debug Analysis',
+        `Found ${Object.keys(taskRelatedData).length} keys with task/goal/milestone data:\n\n${analysis}`,
+        [{ text: 'OK' }]
+      );
+      
+    } catch (error) {
+      Alert.alert('Debug Error', error.message, [{ text: 'OK' }]);
+    }
+  };
+
   // Handle delete confirmation
   const handleDeleteConfirm = async () => {
     setShowDeleteModal(false);
     try {
       setIsDeleting(true);
+      
+      console.log('🚨 DELETE START');
+      
+      // Check counts before deletion
+      const tasksBefore = await AsyncStorage.getItem('tasks');
+      console.log(`BEFORE: Storage has ${tasksBefore ? JSON.parse(tasksBefore).length : 0} tasks`);
+      console.log(`BEFORE: AppContext has ${appContext?.tasks?.length || 0} tasks`);
+      
+      // Run deletion
       const result = await DataExportService.deleteAllUserData();
+      console.log(`DELETE RESULT: success=${result.success}, deletedItems=${result.deletedItems}`);
+      
+      // Check counts after deletion  
+      const tasksAfter = await AsyncStorage.getItem('tasks');
+      console.log(`AFTER: Storage has ${tasksAfter ? JSON.parse(tasksAfter).length : 0} tasks`);
+      console.log(`AFTER: AppContext has ${appContext?.tasks?.length || 0} tasks`);
+      
+      // Force clear AppContext
+      if (appContext) {
+        console.log('CLEARING AppContext...');
+        if (appContext.setTasks) appContext.setTasks([]);
+        if (appContext.setMilestones) appContext.setMilestones([]);
+        if (appContext.setGoals) appContext.setGoals([]);
+        
+        console.log(`AFTER CLEAR: AppContext has ${appContext?.tasks?.length || 0} tasks`);
+        
+        // Force reload
+        if (appContext.loadAppData) {
+          console.log('RELOADING AppContext...');
+          await appContext.loadAppData();
+          console.log(`AFTER RELOAD: AppContext has ${appContext?.tasks?.length || 0} tasks`);
+        }
+      }
+      
+      console.log('🚨 DELETE END');
       
       if (result.success) {
         Alert.alert(
@@ -1191,6 +1299,40 @@ const SettingsModal = ({
               )}
             </TouchableOpacity>
             
+            {/* Debug AsyncStorage Button - Development Only */}
+            {__DEV__ && (
+              <TouchableOpacity 
+                style={[styles.settingButton, { 
+                  backgroundColor: 'rgba(255, 165, 0, 0.05)',
+                  borderColor: 'rgba(255, 165, 0, 0.3)',
+                  borderWidth: 1,
+                  marginBottom: 16
+                }]}
+                onPress={debugAsyncStorage}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Debug AsyncStorage"
+                accessibilityHint="Show all task/goal/milestone data in storage"
+              >
+                <View style={styles.settingButtonContent}>
+                  <View style={[styles.settingIconContainer, { 
+                    backgroundColor: 'rgba(255, 165, 0, 0.1)'
+                  }]}>
+                    <Ionicons name="bug-outline" size={18} color="#FFA500" />
+                  </View>
+                  <View style={styles.settingTextContainer}>
+                    <Text style={[styles.settingTitle, { color: '#FFA500' }]}>
+                      Debug Storage
+                    </Text>
+                    <Text style={[styles.settingSubtitle, { color: theme.textSecondary }]}>
+                      Analyze AsyncStorage for task data
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={18} color="#FFA500" />
+                </View>
+              </TouchableOpacity>
+            )}
+
             {/* Delete All Data Button - GDPR/CCPA Right to Erasure */}
             <TouchableOpacity 
               style={[styles.settingButton, { 
@@ -1482,6 +1624,54 @@ const SettingsModal = ({
                         numberOfLines={1}
                       >
                         Guided tour of main features
+                      </Text>
+                    </View>
+                  </View>
+                  <Ionicons 
+                    name="chevron-forward" 
+                    size={18} 
+                    color={theme.textSecondary} 
+                  />
+                </TouchableOpacity>
+
+                {/* Tour 2 Button - New streamlined tour */}
+                <TouchableOpacity
+                  style={[styles.settingButton, {
+                    backgroundColor: theme.card,
+                    borderColor: theme.border,
+                    marginTop: 8
+                  }]}
+                  onPress={() => {
+                    if (onTestNewTour) {
+                      onTestNewTour();
+                      onClose(); // Close the settings modal to see the tour
+                    }
+                  }}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel="Test New Tour"
+                  accessibilityHint="Test the new streamlined goal-focused tour"
+                >
+                  <View style={styles.settingButtonContent}>
+                    <View style={[styles.settingIconContainer, {
+                      backgroundColor: '#22c55e20'
+                    }]}>
+                      <Ionicons name="rocket-outline" size={20} color="#22c55e" />
+                    </View>
+                    <View style={styles.settingTextContainer}>
+                      <Text 
+                        style={[styles.settingButtonText, { color: theme.text }]}
+                        maxFontSizeMultiplier={1.3}
+                        numberOfLines={1}
+                      >
+                        Tour 2 (New)
+                      </Text>
+                      <Text 
+                        style={[styles.settingButtonSubtext, { color: theme.textSecondary }]}
+                        maxFontSizeMultiplier={1.5}
+                        numberOfLines={1}
+                      >
+                        Goal-focused workflow tour
                       </Text>
                     </View>
                   </View>

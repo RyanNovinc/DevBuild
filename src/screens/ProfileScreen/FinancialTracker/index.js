@@ -318,7 +318,7 @@ const FinancialTracker = ({
           goals: loadedData.goals || [], // Empty array if no goals exist
           currency: currency,
           title: loadedData.title || widgetName || "Financial Tracker",
-          monthlyHistory: loadedData.monthlyHistory || [] // Ensure monthly history exists
+          monthlyHistory: loadedData.monthlyHistory || [], // Ensure monthly history exists
         }));
       } else {
         // Initialize with example data for better UX
@@ -1024,6 +1024,7 @@ const FinancialTracker = ({
     }
   };
 
+
   // Handle full-screen graph
   const openFullScreenGraph = (graphType, graphData, isAccumulative, toggleAccumulative) => {
     setFullScreenGraphData({
@@ -1077,6 +1078,7 @@ const FinancialTracker = ({
     updateNetWorth: handleUpdateNetWorth,
     openFullScreenGraph
   };
+  
   
   // Main return
   return (

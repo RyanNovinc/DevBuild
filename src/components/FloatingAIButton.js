@@ -92,9 +92,26 @@ const FloatingAIButton = ({ theme, hideDuringTour = false }) => {
         setKanbanFullScreenHidden(!window.aiButtonVisible);
       }
       
-      // Check if app tour is active
-      setIsTourActive(global.isAppTourActive || false);
+      // Check if app tour is active - with smooth fade in when tour ends
+      const wasTourActive = isTourActive;
+      const isTourCurrentlyActive = global.isAppTourActive || false;
+      setIsTourActive(isTourCurrentlyActive);
+      
+      // If tour just ended (was active, now inactive), fade in the button
+      if (wasTourActive && !isTourCurrentlyActive) {
+        console.log('🎯 Tour just ended - fading in AI button');
+        // Start with button invisible then fade in
+        buttonOpacity.setValue(0);
+        Animated.timing(buttonOpacity, {
+          toValue: 1,
+          duration: 1000, // 1 second fade in
+          useNativeDriver: true,
+        }).start();
+      }
     };
+    
+    // Set up global trigger function for tour completion
+    global.triggerAIButtonCheck = checkButtonVisibility;
     
     // Initial check
     checkButtonVisibility();
@@ -109,8 +126,9 @@ const FloatingAIButton = ({ theme, hideDuringTour = false }) => {
     return () => {
       clearInterval(checkInterval.current);
       unsubscribe();
+      delete global.triggerAIButtonCheck;
     };
-  }, [navigation]);
+  }, [navigation, isTourActive]);
   
   // Pulse animation (slower than onboarding sparkle icon)
   useEffect(() => {

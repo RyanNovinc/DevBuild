@@ -68,6 +68,10 @@ import FreeTierLimitModal from './FreeTierLimitModal';
 // Import CalendarSettingsModal component
 import CalendarSettingsModal from '../../components/CalendarSettingsModal';
 
+// Import tour components
+import useAppTour from '../../hooks/useAppTour';
+import AppTourOverlay from '../../components/AppTourOverlay';
+
 const Tab = createMaterialTopTabNavigator();
 
 /**
@@ -81,6 +85,18 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
   const safeSpacing = useSafeSpacing();
   const { width, height } = useScreenDimensions();
   const isLandscape = useIsLandscape();
+  
+  // App Tour Hook
+  const { 
+    isTourActive,
+    currentStep,
+    nextStep,
+    skipTour
+  } = useAppTour(navigation);
+  
+  // Tour animation ref for time screen lighting effect
+  const tourTimeOpacity = useRef(new Animated.Value(0)).current;
+  
   
   // Internal fullscreen state management
   const [internalIsFullscreen, setInternalIsFullscreen] = useState(false);
@@ -125,14 +141,56 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
     };
   }, [isFullscreen]);
   
+  // Handle tour time screen lighting animation - start dark then light up
+  useEffect(() => {
+    if (isTourActive) {
+      // Light up time screen for all TIME steps
+      if (currentStep === 'SCHEDULE_DEDICATED_TIME' || currentStep === 'TIME_BLOCK_CREATED' || currentStep === 'SYSTEM_CONFIDENCE') {
+        console.log('🎯 Tour: Starting time screen lighting animation for', currentStep);
+        
+        // For TIME_BLOCK_CREATED step, light up immediately so user can see their time block
+        if (currentStep === 'TIME_BLOCK_CREATED') {
+          console.log('🎯 Tour: Lighting up immediately for TIME_BLOCK_CREATED');
+          tourTimeOpacity.setValue(1);
+        } else {
+          // Light up the time screen as the AI message appears for other steps
+          // Coordinate with AppTourOverlay AI message timing:
+          // 100ms overlay fade + 300ms delay + 300ms step delay = 700ms until AI message starts typing
+          const lightUpDelay = 700; // Start lighting as AI message begins typing
+          
+          setTimeout(() => {
+            if (isTourActive && (currentStep === 'SCHEDULE_DEDICATED_TIME' || currentStep === 'SYSTEM_CONFIDENCE')) {
+              console.log('🎯 Tour: Now lighting up the time screen for', currentStep);
+              Animated.timing(tourTimeOpacity, {
+                toValue: 1,
+                duration: 1000, // Match the AI message typing duration
+                useNativeDriver: true
+              }).start(() => {
+                console.log('🎯 Tour: Time screen lighting animation complete');
+              });
+            }
+          }, lightUpDelay);
+        }
+      } else {
+        // Keep dark during tour until we reach TIME steps
+        tourTimeOpacity.setValue(0);
+      }
+    } else {
+      // Not in tour - show normal brightness
+      tourTimeOpacity.setValue(1);
+    }
+  }, [isTourActive, currentStep]);
+  
   // Detect Dynamic Island
   const hasDynamicIsland = insets.top >= 59;
   
   // Get app context with safety for timeBlocks
   const appContext = useAppContext();
   const timeBlocks = appContext.timeBlocks || [];
+  const addTimeBlock = appContext.addTimeBlock;
   const userSubscriptionStatus = appContext.userSubscriptionStatus || 'free';
   const isPremium = userSubscriptionStatus === 'pro' || userSubscriptionStatus === 'unlimited';
+  const { mainGoals, milestones } = appContext;
   const { showSuccess } = useNotification();
   
   // Calendar integration
@@ -159,9 +217,17 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [selectedTab, setSelectedTab] = useState('Day'); // Track active tab
   const [tabNavigatorKey, setTabNavigatorKey] = useState(0); // Key to force remount
+  const [showTourTimePickerPopup, setShowTourTimePickerPopup] = useState(false); // Tour time picker popup
+  const [selectedDuration, setSelectedDuration] = useState(null); // Selected duration for time block
+  const [timePickerStep, setTimePickerStep] = useState('duration'); // 'duration' or 'time'
+  const [showTourContinueButton, setShowTourContinueButton] = useState(false); // Show continue button after time block created
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [limitModalType, setLimitModalType] = useState('');
   const isSelectingWithinWeekRef = useRef(false);
+  
+  // Navigation ref for tour tab switching
+  const tabNavigatorRef = useRef(null);
+  
   
   // Calendar events state
   const [currentDateCalendarEvents, setCurrentDateCalendarEvents] = useState([]);
@@ -543,6 +609,211 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
     
     setCurrentDate(newDate);
   };
+
+  // Handle tour special actions
+  const handleTourSpecialAction = (action) => {
+    if (action === 'switchToWeekTab') {
+      console.log('🕐 Tour: Switching to Week tab');
+      if (tabNavigatorRef.current) {
+        tabNavigatorRef.current.navigate('Week');
+        setSelectedTab('Week');
+      }
+    } else if (action === 'switchToMonthTab') {
+      console.log('🗓️ Tour: Switching to Month tab');
+      if (tabNavigatorRef.current) {
+        tabNavigatorRef.current.navigate('Month');
+        setSelectedTab('Month');
+      }
+    } else if (action === 'showTimePickerPopup') {
+      console.log('🎯 Tour: Showing time picker popup');
+      setShowTourTimePickerPopup(true);
+    }
+  };
+
+  // Handle duration selection - advances to time selection
+  const handleDurationSelect = (durationMinutes) => {
+    console.log('🎯 Tour: Duration selected:', durationMinutes, 'minutes');
+    setSelectedDuration(durationMinutes);
+    setTimePickerStep('time');
+  };
+
+  // Generate time slots for today
+  const generateTimeSlots = () => {
+    const slots = [];
+    const now = new Date();
+    const currentTime = now.getHours() * 60 + now.getMinutes();
+    
+    // Safety check for selectedDuration
+    if (!selectedDuration || typeof selectedDuration !== 'number') {
+      console.warn('🎯 Tour: generateTimeSlots called without valid selectedDuration:', selectedDuration);
+      return [];
+    }
+    
+    // Start from current time rounded up to next 15-minute interval
+    let startMinutes = Math.ceil(currentTime / 15) * 15;
+    
+    // Generate slots for the rest of today (until 10 PM)
+    const endOfDay = 22 * 60; // 10 PM in minutes
+    
+    while (startMinutes < endOfDay) {
+      const hours = Math.floor(startMinutes / 60);
+      const minutes = startMinutes % 60;
+      const endMinutes = startMinutes + selectedDuration;
+      const endHours = Math.floor(endMinutes / 60);
+      const endMins = endMinutes % 60;
+      
+      const startTime = new Date();
+      startTime.setHours(hours, minutes, 0, 0);
+      
+      const endTime = new Date();
+      endTime.setHours(endHours, endMins, 0, 0);
+      
+      slots.push({
+        time: startTime,
+        display: startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        endTime: endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      });
+      
+      startMinutes += 30; // 30-minute intervals
+    }
+    
+    return slots.slice(0, 8); // Show max 8 slots to keep it manageable
+  };
+
+  // Helper function to find the task that was moved to "In Progress" during tour
+  const findInProgressTourTask = () => {
+    for (const goal of mainGoals || []) {
+      for (const project of goal.projects || []) {
+        for (const milestone of project.milestones || []) {
+          const inProgressTask = milestone.tasks?.find(task => 
+            task.status === 'in-progress' && task.columnStatus === 'in-progress'
+          );
+          if (inProgressTask) {
+            return {
+              task: inProgressTask,
+              milestone,
+              project,
+              goal
+            };
+          }
+        }
+      }
+    }
+    return null;
+  };
+
+  // Handle creating a time block during tour
+  const handleCreateTourTimeBlock = async (durationMinutes, startTime = null) => {
+    console.log('🎯 Tour: Creating time block for', durationMinutes, 'minutes', { startTime });
+    
+    try {
+      // Use the selected start time, or calculate default
+      let blockStartTime;
+      if (startTime) {
+        blockStartTime = new Date(startTime);
+        console.log('🎯 Tour: Using selected start time:', blockStartTime);
+      } else {
+        // Fallback: Get current time rounded to next 15-minute interval
+        const now = new Date();
+        const roundedMinutes = Math.ceil(now.getMinutes() / 15) * 15;
+        blockStartTime = new Date(now);
+        blockStartTime.setMinutes(roundedMinutes, 0, 0);
+        
+        // If rounded time is in the past (same hour), add 15 minutes
+        if (blockStartTime <= now) {
+          blockStartTime.setMinutes(blockStartTime.getMinutes() + 15);
+        }
+        console.log('🎯 Tour: Using calculated start time:', blockStartTime);
+      }
+      
+      // Validate the dates
+      if (!blockStartTime || isNaN(blockStartTime.getTime())) {
+        throw new Error('Invalid start time');
+      }
+      
+      const endTime = new Date(blockStartTime);
+      endTime.setMinutes(endTime.getMinutes() + durationMinutes);
+      
+      if (!endTime || isNaN(endTime.getTime())) {
+        throw new Error('Invalid end time');
+      }
+      
+      console.log('🎯 Tour: Time block times calculated:', { blockStartTime, endTime });
+      
+      // Find the current in-progress task from the tour
+      const taskInfo = findInProgressTourTask();
+      console.log('🎯 Tour: Found task info:', taskInfo);
+      
+      // Create the actual time block data with proper structure
+      const timeBlockData = {
+        id: Date.now().toString(),
+        title: taskInfo ? `Work on ${taskInfo.task.title}` : 'Work on Goal Task',
+        isGeneralActivity: false, // This is a goal-focused time block
+        
+        // For Goal Focus time blocks - link to actual goal/project/task
+        domain: taskInfo ? taskInfo.goal.domain : 'Personal Growth',
+        domainColor: taskInfo ? taskInfo.goal.color || '#22c55e' : '#22c55e',
+        milestoneId: taskInfo ? taskInfo.milestone.id : null,
+        milestoneTitle: taskInfo ? taskInfo.milestone.title : null,
+        taskId: taskInfo ? taskInfo.task.id : null,
+        taskTitle: taskInfo ? taskInfo.task.title : null,
+        
+        // For General Activity time blocks (not used here)
+        category: null,
+        customColor: null,
+        
+        // Common fields
+        startTime: blockStartTime.toISOString(),
+        endTime: endTime.toISOString(),
+        location: '',
+        notes: 'Created during app tour - work on your goal task!',
+        isCompleted: false,
+        
+        // Add repeating information
+        isRepeating: false,
+        repeatFrequency: null,
+        repeatIndefinitely: null,
+        repeatUntil: null,
+        
+        // Notification info (no notification for tour)
+        hasNotification: false,
+        notificationTime: null,
+        customMinutes: null,
+        notificationId: null,
+        
+        // Tour marker
+        isFromTour: true
+      };
+      
+      console.log('🎯 Tour: Time block data prepared:', timeBlockData);
+      
+      // Actually create the time block using addTimeBlock
+      await addTimeBlock(timeBlockData);
+      console.log('🎯 Tour: Time block created successfully', timeBlockData);
+      
+      // Show success feedback
+      const timeString = blockStartTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      console.log(`🎯 Tour: Time block scheduled for ${timeString} (${durationMinutes} minutes)`);
+      
+      // Close the popup and reset state
+      setShowTourTimePickerPopup(false);
+      setSelectedDuration(null);
+      setTimePickerStep('duration');
+      
+      // Advance tour to TIME_BLOCK_CREATED step to hide AppTourOverlay and show continue button
+      nextStep(); // This advances from SCHEDULE_DEDICATED_TIME to TIME_BLOCK_CREATED
+      
+      // Show the continue button so user can see their time block and then continue
+      setShowTourContinueButton(true);
+      
+    } catch (error) {
+      console.error('🎯 Tour: Error creating time block:', error);
+      // Still advance tour and show continue button even if time block creation fails
+      setShowTourTimePickerPopup(false);
+      nextStep(); // Advance to TIME_BLOCK_CREATED step
+      setShowTourContinueButton(true);
+    }
+  };
   
   // Function to get time blocks for a specific date
   const getTimeBlocksForDate = (date) => {
@@ -564,8 +835,14 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
       // Safety check: ensure block and block.startTime exist
       if (!block || !block.startTime) return false;
       
-      const blockDate = new Date(block.startTime).toDateString();
-      return blockDate === dateString;
+      try {
+        const blockDate = new Date(block.startTime);
+        if (isNaN(blockDate.getTime())) return false;
+        return blockDate.toDateString() === dateString;
+      } catch (error) {
+        console.warn('Error parsing block startTime:', block.startTime, error);
+        return false;
+      }
     });
     
     // Add calendar events if enabled and available
@@ -814,7 +1091,7 @@ const handleSharePDF = (tabName) => {
   
   generateAndSharePDF({
     setIsGeneratingPDF,
-    selectedView: tabName.toLowerCase(),
+    selectedView: (tabName || '').toLowerCase(),
     currentDate,
     formatDate,
     getTimeBlocksForDate,
@@ -903,7 +1180,7 @@ else if (isPremium && tabName === 'Month') {
                     accessible={true}
                     accessibilityRole="button"
                     accessibilityLabel="Previous day"
-                    accessibilityHint={`Navigate to the previous ${selectedTab.toLowerCase()}`}
+                    accessibilityHint={`Navigate to the previous ${selectedTab ? (selectedTab || '').toLowerCase() || 'view' : 'view'}`}
                   >
                     <Ionicons 
                       name="chevron-back" 
@@ -963,7 +1240,7 @@ else if (isPremium && tabName === 'Month') {
                     accessible={true}
                     accessibilityRole="button"
                     accessibilityLabel="Next day"
-                    accessibilityHint={`Navigate to the next ${selectedTab.toLowerCase()}`}
+                    accessibilityHint={`Navigate to the next ${selectedTab ? (selectedTab || '').toLowerCase() || 'view' : 'view'}`}
                   >
                     <Ionicons 
                       name="chevron-forward" 
@@ -1021,7 +1298,7 @@ else if (isPremium && tabName === 'Month') {
                       accessible={true}
                       accessibilityRole="button"
                       accessibilityLabel="Generate PDF"
-                      accessibilityHint={`Create a PDF of the current ${selectedTab.toLowerCase()} view`}
+                      accessibilityHint={`Create a PDF of the current ${selectedTab ? (selectedTab || '').toLowerCase() || 'view' : 'view'} view`}
                     >
                       <Ionicons 
                         name="document-text-outline" 
@@ -1493,12 +1770,14 @@ else if (isPremium && tabName === 'Month') {
       </View>
 
       {/* Tab Navigator - Below date */}
-      <NavigationContainer independent={true} key={tabNavigatorKey}>
-        <Tab.Navigator
+      <Animated.View style={[{ flex: 1 }, isTourActive ? { opacity: tourTimeOpacity } : {}]}>
+        <NavigationContainer independent={true} key={tabNavigatorKey} ref={tabNavigatorRef}>
+          <Tab.Navigator
           initialRouteName="Day"
           screenOptions={{
             tabBarActiveTintColor: isDarkMode ? '#FFFFFF' : '#000000',
             tabBarInactiveTintColor: theme.textSecondary,
+            swipeEnabled: isTourActive !== true, // Disable swiping during tour
             tabBarStyle: { 
               backgroundColor: theme.cardElevated,
               elevation: 0,
@@ -1566,8 +1845,9 @@ else if (isPremium && tabName === 'Month') {
               tabBarAccessibilityLabel: "Month view",
             }}
           />
-        </Tab.Navigator>
-      </NavigationContainer>
+          </Tab.Navigator>
+        </NavigationContainer>
+      </Animated.View>
 
 
       {/* Floating Zoom Controls - Bottom center */}
@@ -1769,6 +2049,261 @@ else if (isPremium && tabName === 'Month') {
         onClose={() => setShowCalendarSettings(false)}
       />
 
+      {/* App Tour Overlay */}
+      <AppTourOverlay
+        isVisible={isTourActive && (currentStep === 'SCHEDULE_DEDICATED_TIME' || currentStep === 'SYSTEM_CONFIDENCE')}
+        currentStep={currentStep}
+        onComplete={nextStep}
+        onSkip={skipTour}
+        onSpecialAction={handleTourSpecialAction}
+      />
+
+      {/* Tour Continue Button - Shows after time block is created */}
+      {showTourContinueButton && (
+        <View style={{
+          position: 'absolute',
+          bottom: 100,
+          left: 0,
+          right: 0,
+          alignItems: 'center',
+          zIndex: 1000,
+        }}>
+          <TouchableOpacity
+            style={{
+              backgroundColor: '#22c55e',
+              paddingHorizontal: 32,
+              paddingVertical: 16,
+              borderRadius: 25,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.2,
+              shadowRadius: 8,
+              elevation: 8,
+            }}
+            onPress={() => {
+              console.log('🎯 Tour: Continue button pressed, advancing to system confidence');
+              setShowTourContinueButton(false);
+              nextStep();
+            }}
+          >
+            <Text style={{
+              color: 'white',
+              fontSize: 18,
+              fontWeight: '600',
+            }}>
+              Continue
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Tour Time Picker Popup */}
+      <Modal
+        visible={showTourTimePickerPopup}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowTourTimePickerPopup(false)}
+      >
+        <View style={{
+          flex: 1,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: 20
+        }}>
+          <View style={{
+            backgroundColor: theme.card || theme.background,
+            borderRadius: 20,
+            padding: 24,
+            width: '90%',
+            maxWidth: 400,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 10 },
+            shadowOpacity: 0.3,
+            shadowRadius: 20,
+            elevation: 20
+          }}>
+            {/* Header */}
+            <View style={{ marginBottom: 24, alignItems: 'center' }}>
+              <Ionicons name="time" size={32} color="#22c55e" />
+              <Text style={{
+                fontSize: 20,
+                fontWeight: '600',
+                color: theme.text,
+                marginTop: 8,
+                textAlign: 'center'
+              }}>
+                {timePickerStep === 'duration' ? 'How long do you want to work?' : 'What time today?'}
+              </Text>
+              <Text style={{
+                fontSize: 14,
+                color: theme.textSecondary,
+                marginTop: 4,
+                textAlign: 'center'
+              }}>
+                {timePickerStep === 'duration' ? 
+                  'Choose your focus session length' : 
+                  `Block ${selectedDuration} minutes for your task`
+                }
+              </Text>
+            </View>
+
+            {/* Step 1: Duration Selection */}
+            {timePickerStep === 'duration' && (
+              <View style={{ marginBottom: 24 }}>
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: '#22c55e',
+                    padding: 16,
+                    borderRadius: 12,
+                    marginBottom: 12,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                  }}
+                  onPress={() => handleDurationSelect(15)}
+                >
+                  <View>
+                    <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
+                      15 minutes
+                    </Text>
+                    <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12 }}>
+                      A shorter session but any focused time is still good
+                    </Text>
+                  </View>
+                  <Ionicons name="arrow-forward" size={20} color="white" />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: '#3b82f6',
+                    padding: 16,
+                    borderRadius: 12,
+                    marginBottom: 12,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                  }}
+                  onPress={() => handleDurationSelect(30)}
+                >
+                  <View>
+                    <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
+                      30 minutes
+                    </Text>
+                    <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12 }}>
+                      Perfect for making solid progress
+                    </Text>
+                  </View>
+                  <Ionicons name="arrow-forward" size={20} color="white" />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: '#8b5cf6',
+                    padding: 16,
+                    borderRadius: 12,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                  }}
+                  onPress={() => handleDurationSelect(60)}
+                >
+                  <View>
+                    <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
+                      1 hour
+                    </Text>
+                    <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12 }}>
+                      You'll make a good amount of progress
+                    </Text>
+                  </View>
+                  <Ionicons name="arrow-forward" size={20} color="white" />
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Step 2: Time Selection */}
+            {timePickerStep === 'time' && (
+              <View style={{ marginBottom: 24 }}>
+                <Text style={{
+                  fontSize: 16,
+                  color: theme.text,
+                  marginBottom: 16,
+                  textAlign: 'center'
+                }}>
+                  Pick a start time for today:
+                </Text>
+                
+                <ScrollView style={{ maxHeight: 300 }} showsVerticalScrollIndicator={false}>
+                  {generateTimeSlots().map((timeSlot, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={{
+                        backgroundColor: theme.card,
+                        borderColor: theme.border,
+                        borderWidth: 1,
+                        padding: 16,
+                        borderRadius: 12,
+                        marginBottom: 8,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between'
+                      }}
+                      onPress={() => handleCreateTourTimeBlock(selectedDuration, timeSlot.time)}
+                    >
+                      <View>
+                        <Text style={{ color: theme.text, fontSize: 16, fontWeight: '600' }}>
+                          {timeSlot.display}
+                        </Text>
+                        <Text style={{ color: theme.textSecondary, fontSize: 12 }}>
+                          {timeSlot.endTime} • {selectedDuration} minutes
+                        </Text>
+                      </View>
+                      <Ionicons name="arrow-forward" size={16} color={theme.textSecondary} />
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+                
+                {/* Back Button */}
+                <TouchableOpacity
+                  style={{
+                    marginTop: 16,
+                    padding: 12,
+                    alignItems: 'center'
+                  }}
+                  onPress={() => setTimePickerStep('duration')}
+                >
+                  <Text style={{
+                    color: theme.primary,
+                    fontSize: 14
+                  }}>
+                    ← Back to duration
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Close Button */}
+            <TouchableOpacity
+              style={{
+                padding: 12,
+                alignItems: 'center'
+              }}
+              onPress={() => {
+                setShowTourTimePickerPopup(false);
+                setSelectedDuration(null);
+                setTimePickerStep('duration');
+              }}
+            >
+              <Text style={{
+                color: theme.textSecondary,
+                fontSize: 14
+              }}>
+                Maybe later
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
     </SafeAreaView>
   );

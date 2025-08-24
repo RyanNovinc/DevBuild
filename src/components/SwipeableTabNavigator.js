@@ -8,7 +8,8 @@ import * as Haptics from 'expo-haptics';
 const SwipeableTabNavigator = ({ 
   children, 
   swipeThreshold = 60, // Increased threshold for more intentional swipes
-  velocityThreshold = 400 // Increased velocity threshold
+  velocityThreshold = 400, // Increased velocity threshold
+  disabled = false // Disable swiping when needed (e.g., during tour)
 }) => {
   // Use navigation hook instead of prop
   const navigation = useNavigation();
@@ -21,6 +22,11 @@ const SwipeableTabNavigator = ({
   const lastSwipeTime = useRef(0);
 
   const handleGestureStateChange = useCallback((event) => {
+    // Don't handle gestures if disabled
+    if (disabled) {
+      return;
+    }
+    
     const { nativeEvent } = event;
     
     // Only handle when gesture ends
@@ -81,7 +87,7 @@ const SwipeableTabNavigator = ({
         }
       }
     }
-  }, [navigation, navigationState, swipeThreshold, velocityThreshold]);
+  }, [navigation, navigationState, swipeThreshold, velocityThreshold, disabled]);
 
   return (
     <PanGestureHandler

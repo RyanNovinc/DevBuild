@@ -117,7 +117,7 @@ const AllocationScreen = ({
   };
 
   const calculateRemainingAmount = () => {
-    const totalAvailable = monthlyTrackingSummary.totalNetGain;
+    const totalAvailable = Math.max((data.totalIncome || 0) - (data.totalExpenses || 0), 0);
     const allocated = Object.entries(allocations).reduce((sum, [key, val]) => {
       const value = parseFloat(val || 0);
       if (value === 0) return sum;
@@ -132,7 +132,7 @@ const AllocationScreen = ({
   };
 
   const getTotalAllocatedPercentage = () => {
-    const totalAvailable = monthlyTrackingSummary.totalNetGain;
+    const totalAvailable = Math.max((data.totalIncome || 0) - (data.totalExpenses || 0), 0);
     if (totalAvailable === 0) return 0;
     
     return Object.entries(allocations).reduce((total, [key, value]) => {
@@ -159,6 +159,8 @@ const AllocationScreen = ({
 
   // Check if individual asset allocation is disabled due to parent category allocation
   const isAssetAllocationDisabled = (asset) => {
+    // For debts and regular assets, they are disabled only if their PARENT category has an allocation
+    // NOT if other individual items in the same category have allocations
     return !!allocations[asset.category];
   };
 
@@ -200,7 +202,7 @@ const AllocationScreen = ({
 
   const handleAllocationChange = (key, value) => {
     const cleanValue = value.replace(/[%$,]/g, '');
-    const totalAvailable = monthlyTrackingSummary.totalNetGain;
+    const totalAvailable = Math.max((data.totalIncome || 0) - (data.totalExpenses || 0), 0);
     
     // Validate based on allocation mode
     if (cleanValue) {
@@ -214,9 +216,9 @@ const AllocationScreen = ({
         
         // Check debt-specific limits for individual debts
         const debt = (financialData.debts || []).find(d => d.id === key);
-        if (debt) {
+        if (debt && Math.abs(debt.amount) > 0) {
           const dollarEquivalent = (numericValue / 100) * totalAvailable;
-          if (dollarEquivalent > debt.amount) {
+          if (dollarEquivalent > Math.abs(debt.amount)) {
             // Don't allow percentage that would exceed debt amount
             return;
           }
@@ -229,9 +231,11 @@ const AllocationScreen = ({
         
         // Check debt-specific limits for individual debts
         const debt = (financialData.debts || []).find(d => d.id === key);
-        if (debt && numericValue > debt.amount) {
-          // Don't allow dollar amount greater than debt balance
-          return;
+        if (debt && Math.abs(debt.amount) > 0) {
+          if (numericValue > Math.abs(debt.amount)) {
+            // Don't allow dollar amount greater than debt balance
+            return;
+          }
         }
       }
     }
@@ -258,9 +262,22 @@ const AllocationScreen = ({
         });
         delete newAllocations[key];
       } else {
+        // Check if it's an asset
         const asset = (financialData.assets || []).find(a => a.id === key);
+        // Check if it's a debt
+        const debt = (financialData.debts || []).find(d => d.id === key);
+        
         if (asset) {
           delete newAllocations[asset.category];
+          
+          if (cleanValue) {
+            newAllocations[key] = cleanValue;
+          } else {
+            delete newAllocations[key];
+          }
+        } else if (debt) {
+          // Handle debt allocation
+          delete newAllocations[debt.category || 'payOffDebt']; // Remove parent allocation
           
           if (cleanValue) {
             newAllocations[key] = cleanValue;
@@ -284,10 +301,10 @@ const AllocationScreen = ({
         // Check individual debt limits in percentage mode
         for (const [allocKey, allocValue] of Object.entries(newAllocations)) {
           const debt = (financialData.debts || []).find(d => d.id === allocKey);
-          if (debt) {
+          if (debt && Math.abs(debt.amount) > 0) {
             const cleanAllocValue = parseFloat(allocValue.toString().replace(/[%$,]/g, '')) || 0;
             const dollarEquivalent = (cleanAllocValue / 100) * totalAvailable;
-            if (dollarEquivalent > debt.amount) {
+            if (dollarEquivalent > Math.abs(debt.amount)) {
               return prev; // Return previous state without changes
             }
           }
@@ -306,9 +323,9 @@ const AllocationScreen = ({
         // Check individual debt limits in dollar mode
         for (const [allocKey, allocValue] of Object.entries(newAllocations)) {
           const debt = (financialData.debts || []).find(d => d.id === allocKey);
-          if (debt) {
+          if (debt && Math.abs(debt.amount) > 0) {
             const cleanAllocValue = parseFloat(allocValue.toString().replace(/[%$,]/g, '')) || 0;
-            if (cleanAllocValue > debt.amount) {
+            if (cleanAllocValue > Math.abs(debt.amount)) {
               return prev; // Return previous state without changes
             }
           }
@@ -376,8 +393,8 @@ const AllocationScreen = ({
     }
   };
 
-  const handleAllocationSubmit = () => {
-    const totalAvailable = monthlyTrackingSummary.totalNetGain;
+  const handleAllocationSubmit = async () => {
+    const totalAvailable = Math.max((data.totalIncome || 0) - (data.totalExpenses || 0), 0);
     
     Object.entries(allocations).forEach(([key, value]) => {
       if (value && parseFloat(value) > 0) {
@@ -437,8 +454,13 @@ const AllocationScreen = ({
       }
     });
 
+    // Save and close
     if (handlers?.saveCurrentMonth) {
-      handlers.saveCurrentMonth();
+      try {
+        await handlers.saveCurrentMonth();
+      } catch (error) {
+        console.error('Error saving:', error);
+      }
     }
 
     // Close the allocation screen
@@ -446,8 +468,13 @@ const AllocationScreen = ({
   };
 
   return (
-    <SafeAreaView style={[allocationStyles.screenContainer, { backgroundColor: theme.background }]}>
-      <StatusBar barStyle="light-content" backgroundColor={theme.background} />
+    <KeyboardAvoidingView 
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+    >
+      <SafeAreaView style={[allocationStyles.screenContainer, { backgroundColor: theme.background }]}>
+        <StatusBar barStyle="light-content" backgroundColor={theme.background} />
       
       {/* Enhanced Header */}
       <View style={[allocationStyles.header, { backgroundColor: theme.background }]}>
@@ -491,7 +518,7 @@ const AllocationScreen = ({
               if (allocationMode !== 'percentage') {
                 // Convert all current dollar amounts to percentages
                 const convertedAllocations = {};
-                const totalAvailable = monthlyTrackingSummary.totalNetGain;
+                const totalAvailable = Math.max((data.totalIncome || 0) - (data.totalExpenses || 0), 0);
                 
                 Object.entries(allocations).forEach(([key, value]) => {
                   if (value) {
@@ -525,7 +552,7 @@ const AllocationScreen = ({
               if (allocationMode !== 'amount') {
                 // Convert all current percentages to dollar amounts
                 const convertedAllocations = {};
-                const totalAvailable = monthlyTrackingSummary.totalNetGain;
+                const totalAvailable = Math.max((data.totalIncome || 0) - (data.totalExpenses || 0), 0);
                 
                 Object.entries(allocations).forEach(([key, value]) => {
                   if (value) {
@@ -557,7 +584,7 @@ const AllocationScreen = ({
               Available
             </Text>
             <Text style={[allocationStyles.summaryValue, { color: '#10b981' }]}>
-              {formatCurrency(monthlyTrackingSummary.totalNetGain)}
+              {formatCurrency(Math.max((data.totalIncome || 0) - (data.totalExpenses || 0), 0))}
             </Text>
           </View>
           <View style={allocationStyles.summaryItem}>
@@ -576,7 +603,21 @@ const AllocationScreen = ({
           </View>
         </View>
 
-        {/* Categories */}
+        {/* No Surplus Message */}
+        {((data.totalIncome || 0) - (data.totalExpenses || 0) <= 0) && (
+          <View style={allocationStyles.noSurplusMessage}>
+            <Ionicons name="information-circle-outline" size={24} color={theme.textSecondary} />
+            <Text style={[allocationStyles.noSurplusTitle, { color: theme.text }]}>
+              No Surplus Available
+            </Text>
+            <Text style={[allocationStyles.noSurplusDescription, { color: theme.textSecondary }]}>
+              Add surplus from your Tracking tab's Net Cash Flow to start allocating funds to your financial goals.
+            </Text>
+          </View>
+        )}
+
+        {/* Categories - Only show if surplus is available */}
+        {((data.totalIncome || 0) - (data.totalExpenses || 0) > 0) && (
         <View style={allocationStyles.categories}>
           {Object.entries(assetCategories).map(([key, category]) => {
             const categoryAssets = getAssetsByCategory(key);
@@ -663,15 +704,9 @@ const AllocationScreen = ({
                             }]}
                             placeholder="0"
                             placeholderTextColor={theme.textSecondary}
-                            value={isAssetAllocationDisabled(asset) 
-                              ? formatInputValue(getAssetAllocationValue(asset).toString())
-                              : formatInputValue(allocations[asset.id] || '')
-                            }
-                            onChangeText={isAssetAllocationDisabled(asset) 
-                              ? undefined 
-                              : (value) => handleAllocationChange(asset.id, value)
-                            }
-                            editable={!isAssetAllocationDisabled(asset)}
+                            value={formatInputValue(allocations[asset.id] || '')}
+                            onChangeText={(value) => handleAllocationChange(asset.id, value)}
+                            editable={true}
                             keyboardType="numeric"
                           />
                           <Text style={[allocationStyles.inputUnit, { color: theme.textSecondary }]}>
@@ -731,8 +766,10 @@ const AllocationScreen = ({
             );
           })}
         </View>
+        )}
 
-        {/* Action Buttons */}
+        {/* Action Buttons - Only show if surplus is available */}
+        {((data.totalIncome || 0) - (data.totalExpenses || 0) > 0) && (
         <View style={allocationStyles.actions}>
           {/* Save Preferences Button - Only show in percentage mode */}
           {allocationMode === 'percentage' && (
@@ -761,8 +798,10 @@ const AllocationScreen = ({
             </Text>
           </TouchableOpacity>
         </View>
+        )}
       </ScrollView>
     </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -786,7 +825,6 @@ const DetailModal = ({ visible, theme, data, handlers, onClose, widgetName, show
   
   // Allocation state
   const [showAllocationView, setShowAllocationView] = useState(false);
-  const [allocationData, setAllocationData] = useState(null);
   const [allocationMode, setAllocationMode] = useState('percentage');
   const [allocations, setAllocations] = useState({});
   const [expandedCategories, setExpandedCategories] = useState({});
@@ -854,14 +892,12 @@ const DetailModal = ({ visible, theme, data, handlers, onClose, widgetName, show
   };
 
   // Handle allocation view
-  const handleShowAllocation = (monthlyData) => {
-    setAllocationData(monthlyData);
+  const handleShowAllocation = () => {
     setShowAllocationView(true);
   };
 
   const handleCloseAllocation = () => {
     setShowAllocationView(false);
-    setAllocationData(null);
     setAllocations({});
     setExpandedCategories({});
     setAllocationMode('percentage');
@@ -985,8 +1021,7 @@ const DetailModal = ({ visible, theme, data, handlers, onClose, widgetName, show
     } finally {
       setIsSaving(false);
       
-      // Reset navigation state to prevent layout corruption on next open
-      setNavigationKey(0);
+      // Reset modal state
       setPendingTrackingSection(null);
       setShowCurrencyModal(false);
       setShowCurrencyInfoModal(false);
@@ -995,12 +1030,11 @@ const DetailModal = ({ visible, theme, data, handlers, onClose, widgetName, show
       
       // Reset allocation state
       setShowAllocationView(false);
-      setAllocationData(null);
       setAllocations({});
       setExpandedCategories({});
       setAllocationMode('percentage');
       
-      // Call parent close handler
+      // Call parent close handler after saving is complete
       onClose();
     }
   };
@@ -1529,11 +1563,11 @@ const DetailModal = ({ visible, theme, data, handlers, onClose, widgetName, show
         )}
         
         {/* Allocation View Overlay - renders over everything when active */}
-        {showAllocationView && allocationData && (
+        {showAllocationView && (
           <View style={styles.allocationOverlay}>
             <AllocationScreen 
               theme={theme}
-              data={{ ...data, monthlyTrackingSummary: allocationData }}
+              data={data}
               handlers={handlers}
               onClose={handleCloseAllocation}
               allocationMode={allocationMode}
@@ -1998,6 +2032,24 @@ const allocationStyles = StyleSheet.create({
   summaryValue: {
     fontSize: 18,
     fontWeight: '700',
+  },
+  noSurplusMessage: {
+    alignItems: 'center',
+    padding: 32,
+    marginBottom: 24,
+  },
+  noSurplusTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: 16,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  noSurplusDescription: {
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
+    maxWidth: 280,
   },
   categories: {
     marginBottom: 24,

@@ -17,7 +17,7 @@ export const generateSimplifiedHTML = (
   try {
     // Get the date in a readable format
     const formattedDate = formatDate(currentDate, 'long');
-    const viewType = selectedView.charAt(0).toUpperCase() + selectedView.slice(1);
+    const viewType = (selectedView || 'day').charAt(0).toUpperCase() + (selectedView || 'day').slice(1);
     
     // Get blocks for the current date - with error checking
     const blocksForDay = getTimeBlocksForDate(currentDate) || [];
@@ -297,7 +297,7 @@ export const shareAsText = async (options) => {
   try {
     // Create a simple text summary with better formatting
     const formattedDate = formatDate(currentDate, 'long');
-    const viewType = selectedView.charAt(0).toUpperCase() + selectedView.slice(1);
+    const viewType = (selectedView || 'day').charAt(0).toUpperCase() + (selectedView || 'day').slice(1);
     const blocksForDay = getTimeBlocksForDate(currentDate) || [];
     
     let textContent = `📅 TimeBlocks ${viewType} - ${formattedDate}\n\n`;

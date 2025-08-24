@@ -450,13 +450,154 @@ class DataExportService {
         console.log('❌ Error deleting additional user keys:', error.message);
       }
 
-      // 8. Clean up any export files
+      // 8. Delete AppContext-specific storage keys that might be causing reloading
+      try {
+        const appContextKeys = [
+          'goals',
+          'milestones', 
+          'tasks',
+          'todos',
+          'tomorrowTodos',
+          'laterTodos',
+          'timeBlocks',
+          'domains',
+          'settings',
+          'tags',
+          'notes',
+          'filters',
+          'milestoneGoalLinkMap',
+          'userCountry',
+          'lifeDirection'
+        ];
+        
+        for (const key of appContextKeys) {
+          const value = await AsyncStorage.getItem(key);
+          if (value) {
+            await AsyncStorage.removeItem(key);
+            deletedItems++;
+            console.log(`✅ Deleted AppContext key: ${key}`);
+          }
+        }
+      } catch (error) {
+        console.log('❌ Error deleting AppContext keys:', error.message);
+      }
+
+      // 9. Set force clear flag for ProfileScreen
+      try {
+        await AsyncStorage.setItem('forceProfileClear', 'true');
+        console.log('✅ Set force profile clear flag');
+      } catch (error) {
+        console.log('❌ Error setting force clear flag:', error.message);
+      }
+
+      // 10. Comprehensive cleanup of ALL AsyncStorage keys using getAllKeys
+      try {
+        console.log('🔍 Starting comprehensive AsyncStorage cleanup...');
+        const allKeys = await AsyncStorage.getAllKeys();
+        console.log(`📊 Total AsyncStorage keys found: ${allKeys.length}`);
+        
+        // Define patterns for keys that should be preserved (system/app settings)
+        const preservePatterns = [
+          'subscriptionStatus',
+          'hasEnteredReferralCode', 
+          'referralCode',
+          'referralsRemaining',
+          'showAIButton',
+          'expo-',
+          'RCTAsyncLocalStorage',
+          '@react-native-async-storage'
+        ];
+        
+        // Keys to definitely delete - including the backup files that are causing issues
+        const deletePatterns = [
+          'backup_startup_',     // This is the main culprit - all backup files
+          'achievement',
+          'widget_',
+          'conversation_',
+          'dailyStandup_',
+          'standup',
+          'notes',
+          'todo',
+          'task', 
+          'goal',
+          'milestone',
+          'project',             // Old milestone storage key
+          'projects_backup',     // Backup of projects
+          'financial',
+          'streak',
+          'calendar',
+          'user',
+          'profile',
+          'theme',
+          'domain',
+          'timeBlock',
+          'settings',
+          'onboarding',
+          'knowledge',
+          'document',
+          'doc_content_',        // Document content
+          'levelMilestone_',     // Achievement milestone flags
+          'selectedGoal',        // Selected goal references
+          'appSetting_selectedGoal', // App setting goal references
+          'goalsTabIndex',       // Goals tab index
+          'milestoneGoalLinkMap', // Milestone-goal links
+          'projectGoalLinkMap',  // Project-goal links  
+          'processedDocumentsContent', // Processed document content
+          'assistantDocumentContext',  // AI document context
+          'documentContextCache',      // Document context cache
+          'userKnowledgeFiles',        // User knowledge files
+          'localConversations',        // Local conversation storage
+          'unlockedAchievements',      // Achievement data
+          'dailyStandupFocusMode'      // Daily standup data
+        ];
+        
+        let comprehensiveDeleteCount = 0;
+        
+        for (const key of allKeys) {
+          const keyLower = key.toLowerCase();
+          
+          // Skip if it should be preserved
+          const shouldPreserve = preservePatterns.some(pattern => 
+            keyLower.includes(pattern.toLowerCase())
+          );
+          
+          if (shouldPreserve) {
+            console.log(`⚪ Preserving system key: ${key}`);
+            continue;
+          }
+          
+          // Delete if it matches our delete patterns or if it's user data
+          const shouldDelete = deletePatterns.some(pattern => 
+            keyLower.includes(pattern.toLowerCase()) || key.startsWith(pattern)
+          ) || key === 'forceProfileClear'; // Also clean up our own flag after use
+          
+          if (shouldDelete) {
+            try {
+              await AsyncStorage.removeItem(key);
+              comprehensiveDeleteCount++;
+              console.log(`✅ Comprehensively deleted: ${key}`);
+            } catch (error) {
+              console.log(`❌ Error deleting key ${key}:`, error.message);
+            }
+          } else {
+            console.log(`⚪ Skipping unknown key: ${key}`);
+          }
+        }
+        
+        console.log(`🧹 Comprehensive cleanup complete: ${comprehensiveDeleteCount} additional keys deleted`);
+        deletedItems += comprehensiveDeleteCount;
+      } catch (error) {
+        console.log('❌ Error in comprehensive cleanup:', error.message);
+      }
+
+      // 11. Clean up any export files
       await this.cleanupAllExportFiles();
 
       console.log(`🗑️ Data deletion completed:
         - Total items deleted: ${deletedItems}
         - Export files cleaned up
-        - User data completely removed`);
+        - User data completely removed
+        - Force clear flag set for ProfileScreen`);
 
       return {
         success: true,

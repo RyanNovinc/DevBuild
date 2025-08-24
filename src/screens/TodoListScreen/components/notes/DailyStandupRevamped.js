@@ -61,7 +61,7 @@ const DailyStandupRevamped = ({ theme, showSuccess, isFullscreen }) => {
 
   // UI state
   const [isLoading, setIsLoading] = useState(true);
-  const [activeSection, setActiveSection] = useState('morning'); // 'morning' or 'evening'
+  const [activeSection, setActiveSection] = useState(null); // 'morning' or 'evening' or null (both collapsed)
   const [focusedInput, setFocusedInput] = useState(null);
   const [currentPrompts, setCurrentPrompts] = useState(DEFAULT_PROMPTS);
   const [focusMode, setFocusMode] = useState(null); // Track current focus theme

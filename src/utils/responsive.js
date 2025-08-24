@@ -143,6 +143,11 @@ export const ensureAccessibleTouchTarget = (width, height) => {
 export const getContrastRatio = (color1, color2) => {
   // Convert hex to RGB
   const getRGB = (hex) => {
+    // Safety check for undefined or invalid hex values
+    if (!hex || typeof hex !== 'string') {
+      return { r: 0, g: 0, b: 0 };
+    }
+    
     const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
     const fullHex = hex.replace(shorthandRegex, (m, r, g, b) => r + r + g + g + b + b);
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(fullHex);

@@ -264,7 +264,7 @@ export const checkWeeklyTimeBlockLimit = (timeBlocks) => {
  * Modified to support watermarking
  */
 export const createTextSummary = (selectedView, currentDate, formatDate, getTimeBlocksForDate, formatTime, getMonthName, weekDates, isToday, monthDates, selectedMonthDay, addWatermark = false) => {
-  const viewType = selectedView.charAt(0).toUpperCase() + selectedView.slice(1);
+  const viewType = (selectedView || 'day').charAt(0).toUpperCase() + (selectedView || 'day').slice(1);
   let summary = `TimeBlocks ${viewType} Calendar - ${formatDate(currentDate, 'long')}\n\n`;
   
   if (selectedView === 'day') {
@@ -276,16 +276,23 @@ export const createTextSummary = (selectedView, currentDate, formatDate, getTime
       blocksForDay
         .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
         .forEach(block => {
-          summary += `\n• ${formatTime(block.startTime)} - ${formatTime(block.endTime)}: ${block.title}`;
-          if (block.projectTitle && !block.isGeneralActivity) {
-            summary += `\n  Project: ${block.projectTitle}`;
+          const safeTitle = block.title || 'Untitled';
+          const safeProjectTitle = block.projectTitle || '';
+          const safeTaskTitle = block.taskTitle || '';
+          const safeCategory = block.category || 'General';
+          const safeDomain = block.domain || 'Personal';
+          const safeLocation = block.location || '';
+          
+          summary += `\n• ${formatTime(block.startTime)} - ${formatTime(block.endTime)}: ${safeTitle}`;
+          if (safeProjectTitle && !block.isGeneralActivity) {
+            summary += `\n  Project: ${safeProjectTitle}`;
           }
-          if (block.taskTitle && !block.isGeneralActivity) {
-            summary += `\n  Task: ${block.taskTitle}`;
+          if (safeTaskTitle && !block.isGeneralActivity) {
+            summary += `\n  Task: ${safeTaskTitle}`;
           }
-          summary += `\n  ${block.isGeneralActivity ? block.category : block.domain}`;
-          if (block.location) {
-            summary += `\n  Location: ${block.location}`;
+          summary += `\n  ${block.isGeneralActivity ? safeCategory : safeDomain}`;
+          if (safeLocation) {
+            summary += `\n  Location: ${safeLocation}`;
           }
         });
     }
@@ -300,7 +307,8 @@ export const createTextSummary = (selectedView, currentDate, formatDate, getTime
         blocksForDay
           .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
           .forEach(block => {
-            summary += `  • ${formatTime(block.startTime)}: ${block.title}\n`;
+            const safeTitle = block.title || 'Untitled';
+            summary += `  • ${formatTime(block.startTime)}: ${safeTitle}\n`;
           });
       }
     }
@@ -319,12 +327,16 @@ export const createTextSummary = (selectedView, currentDate, formatDate, getTime
       blocksForSelectedDay
         .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
         .forEach(block => {
-          summary += `\n• ${formatTime(block.startTime)} - ${formatTime(block.endTime)}: ${block.title}`;
-          if (block.projectTitle && !block.isGeneralActivity) {
-            summary += `\n  Project: ${block.projectTitle}`;
+          const safeTitle = block.title || 'Untitled';
+          const safeProjectTitle = block.projectTitle || '';
+          const safeTaskTitle = block.taskTitle || '';
+          
+          summary += `\n• ${formatTime(block.startTime)} - ${formatTime(block.endTime)}: ${safeTitle}`;
+          if (safeProjectTitle && !block.isGeneralActivity) {
+            summary += `\n  Project: ${safeProjectTitle}`;
           }
-          if (block.taskTitle && !block.isGeneralActivity) {
-            summary += `\n  Task: ${block.taskTitle}`;
+          if (safeTaskTitle && !block.isGeneralActivity) {
+            summary += `\n  Task: ${safeTaskTitle}`;
           }
         });
     }
@@ -375,8 +387,8 @@ export const generateDayViewHTML = async (currentDate, getTimeBlocksForDate, for
       const hasTask = block.taskTitle && !block.isGeneralActivity;
       const isRecurring = block.isRepeating || block.isRepeatingInstance;
       const recurringText = isRecurring ? 
-        `(${block.repeatFrequency === 'daily' ? 'Daily' : 
-           block.repeatFrequency === 'weekly' ? 'Weekly' : 'Monthly'})` : '';
+        `(${(block.repeatFrequency || '') === 'daily' ? 'Daily' : 
+           (block.repeatFrequency || '') === 'weekly' ? 'Weekly' : 'Monthly'})` : '';
       
       html += `
         <div class="time-block" style="border-left-color: ${blockColor};">
@@ -386,17 +398,17 @@ export const generateDayViewHTML = async (currentDate, getTimeBlocksForDate, for
               ${isRecurring ? `<span class="recurring-indicator">${recurringText}</span>` : ''}
             </span>
           </div>
-          <h3 class="time-block-title">${block.title}</h3>
+          <h3 class="time-block-title">${block.title || 'Untitled'}</h3>
           
           ${hasProject ? `
             <div class="project-task-info">
-              <strong>Project:</strong> ${block.projectTitle}
+              <strong>Project:</strong> ${block.projectTitle || ''}
             </div>
           ` : ''}
           
           ${hasTask ? `
             <div class="project-task-info">
-              <strong>Task:</strong> ${block.taskTitle}
+              <strong>Task:</strong> ${block.taskTitle || ''}
             </div>
           ` : ''}
           
@@ -493,7 +505,7 @@ export const generateWeekViewHTML = async (weekDates, getTimeBlocksForDate, form
         html += `
           <div class="mini-block">
             <span class="event-dot" style="background-color: ${blockColor};"></span>
-            ${formatTime(block.startTime)}: ${block.title}
+            ${formatTime(block.startTime)}: ${block.title || 'Untitled'}
           </div>
         `;
       }
@@ -548,17 +560,17 @@ export const generateWeekViewHTML = async (weekDates, getTimeBlocksForDate, form
                 ${isRecurring ? `<span class="recurring-indicator">(${block.repeatFrequency === 'daily' ? 'Daily' : block.repeatFrequency === 'weekly' ? 'Weekly' : 'Monthly'})</span>` : ''}
               </span>
             </div>
-            <h3 class="time-block-title">${block.title}</h3>
+            <h3 class="time-block-title">${block.title || 'Untitled'}</h3>
             
             ${hasProject ? `
               <div class="project-task-info">
-                <strong>Project:</strong> ${block.projectTitle}
+                <strong>Project:</strong> ${block.projectTitle || ''}
               </div>
             ` : ''}
             
             ${hasTask ? `
               <div class="project-task-info">
-                <strong>Task:</strong> ${block.taskTitle}
+                <strong>Task:</strong> ${block.taskTitle || ''}
               </div>
             ` : ''}
             
@@ -691,11 +703,14 @@ export const generateMonthViewHTML = async (currentDate, monthDates, selectedMon
         
         for (const block of displayBlocks) {
           const blockColor = block.isGeneralActivity ? block.customColor : block.domainColor;
+          const safeTitle = block.title || 'Untitled';
+          const formattedTime = formatTime(block.startTime) || '';
+          const shortTime = formattedTime ? formattedTime.slice(0, -3) : '';
           
           html += `
             <div class="mini-block">
               <span class="event-dot" style="background-color: ${blockColor};"></span>
-              ${formatTime(block.startTime).slice(0, -3)}: ${block.title.length > 12 ? block.title.substring(0, 12) + '...' : block.title}
+              ${shortTime}: ${safeTitle.length > 12 ? safeTitle.substring(0, 12) + '...' : safeTitle}
             </div>
           `;
         }
@@ -750,17 +765,17 @@ export const generateMonthViewHTML = async (currentDate, monthDates, selectedMon
               ${isRecurring ? `<span class="recurring-indicator">(${block.repeatFrequency === 'daily' ? 'Daily' : block.repeatFrequency === 'weekly' ? 'Weekly' : 'Monthly'})</span>` : ''}
             </span>
           </div>
-          <h3 class="time-block-title">${block.title}</h3>
+          <h3 class="time-block-title">${block.title || 'Untitled'}</h3>
           
           ${hasProject ? `
             <div class="project-task-info">
-              <strong>Project:</strong> ${block.projectTitle}
+              <strong>Project:</strong> ${block.projectTitle || ''}
             </div>
           ` : ''}
           
           ${hasTask ? `
             <div class="project-task-info">
-              <strong>Task:</strong> ${block.taskTitle}
+              <strong>Task:</strong> ${block.taskTitle || ''}
             </div>
           ` : ''}
           

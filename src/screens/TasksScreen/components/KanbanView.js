@@ -513,8 +513,8 @@ const KanbanView = ({ taskScreenProps }) => {
                     // Pass all projects and goals for color inheritance
                     allMilestones={getFilteredMilestones()}
                     allGoals={taskScreenProps.goalsToShow || []}
-                    // Pass WIP limit from settings
-                    wipLimit={settings?.kanbanWipLimit || 3}
+                    // Pass WIP limit from settings - force to 1 during tour
+                    wipLimit={isTourMode ? 1 : (settings?.kanbanWipLimit || 3)}
                     onWipLimitChange={handleWipLimitChange}
                     onShowWipEducation={handleShowWipEducation}
                     // Tour props
@@ -554,8 +554,8 @@ const KanbanView = ({ taskScreenProps }) => {
                         allGoals={taskScreenProps.goalsToShow || []}
                         showTaskLabels={showTaskLabels}
                         isFullScreen={true}
-                        // Pass WIP limit from settings
-                        wipLimit={settings?.kanbanWipLimit || 3}
+                        // Pass WIP limit from settings - force to 1 during tour  
+                        wipLimit={isTourMode ? 1 : (settings?.kanbanWipLimit || 3)}
                         onWipLimitChange={handleWipLimitChange}
                         onShowWipEducation={handleShowWipEducation}
                         // Pass navigation for redirecting to LifePlan
@@ -617,8 +617,8 @@ const KanbanView = ({ taskScreenProps }) => {
                 // Pass all projects and goals for color inheritance
                 allMilestones={getFilteredMilestones()}
                 allGoals={taskScreenProps.goalsToShow || []}
-                // Pass WIP limit from settings
-                wipLimit={settings?.kanbanWipLimit || 3}
+                // Pass WIP limit from settings - force to 1 during tour
+                wipLimit={isTourMode ? 1 : (settings?.kanbanWipLimit || 3)}
                 onWipLimitChange={handleWipLimitChange}
                 onShowWipEducation={handleShowWipEducation}
                 // Tour props
@@ -658,8 +658,8 @@ const KanbanView = ({ taskScreenProps }) => {
                     allGoals={taskScreenProps.goalsToShow || []}
                     showTaskLabels={showTaskLabels}
                     isFullScreen={false}
-                    // Pass WIP limit from settings
-                    wipLimit={settings?.kanbanWipLimit || 3}
+                    // Pass WIP limit from settings - force to 1 during tour
+                    wipLimit={isTourMode ? 1 : (settings?.kanbanWipLimit || 3)}
                     onWipLimitChange={handleWipLimitChange}
                     onShowWipEducation={handleShowWipEducation}
                     // Pass navigation for redirecting to LifePlan

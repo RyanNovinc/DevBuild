@@ -1,5 +1,5 @@
 // src/screens/LifePlanOverviewScreen.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { 
   View, 
@@ -1160,6 +1160,10 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
     skipTour,
     updateGlobalTourState
   } = useAppTour(navigation);
+
+  // Tour animation ref for goal lighting effect - start with 0 and track initial state
+  const [tourGoalStarted, setTourGoalStarted] = useState(false);
+  const tourGoalOpacity = useRef(new Animated.Value(0)).current;
   
   // Debug logging for tour state
   if (__DEV__) {
@@ -1191,6 +1195,45 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
       updateGlobalTourState({ shouldCollapseAll: false });
     }
   }, [shouldCollapseAll, isTourActive, currentStep]);
+  
+  // Handle tour goal lighting animation - start dark then light up
+  useEffect(() => {
+    if (isTourActive && currentStep === 'OVERVIEW_PLAN') {
+      console.log('🎯 Tour: Starting goal lighting animation - immediately setting to dark');
+      
+      // Track that we've started the tour goal process
+      setTourGoalStarted(true);
+      
+      // Immediately start with goal dark (opacity 0) - no delay
+      tourGoalOpacity.setValue(0);
+      
+      // Force an immediate re-render to ensure dark state
+      setTimeout(() => {
+        if (isTourActive && currentStep === 'OVERVIEW_PLAN') {
+          // Light up the goal as the AI message appears (coordinate with overlay timing)
+          // AppTourOverlay timing: 100ms overlay + 300ms delay + 200ms step delay + 400ms AI animation = 1000ms
+          const lightUpDelay = 1200; // Start lighting slightly after AI message begins appearing
+          
+          setTimeout(() => {
+            if (isTourActive && currentStep === 'OVERVIEW_PLAN') {
+              console.log('🎯 Tour: Now lighting up the goal');
+              Animated.timing(tourGoalOpacity, {
+                toValue: 1,
+                duration: 800,
+                useNativeDriver: true
+              }).start(() => {
+                console.log('🎯 Tour: Goal lighting animation complete');
+              });
+            }
+          }, lightUpDelay);
+        }
+      }, 0); // Immediate but after current render cycle
+    } else {
+      // Reset when not in tour or different step
+      setTourGoalStarted(false);
+      tourGoalOpacity.setValue(0);
+    }
+  }, [isTourActive, currentStep]);
   
   // Get parameters from route
   const filter = route?.params?.filter || null;
@@ -1339,6 +1382,7 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
   // Modern delete confirmation dialog states
   const [showFirstDeleteConfirm, setShowFirstDeleteConfirm] = useState(false);
   const [showFinalDeleteConfirm, setShowFinalDeleteConfirm] = useState(false);
+  const [actualDeleteCounts, setActualDeleteCounts] = useState({ goals: 0, milestones: 0, tasks: 0 });
 
   // Use internal edit mode if onEditModeToggle is not provided
   const editMode = onEditModeToggle ? isEditMode : internalEditMode;
@@ -1641,7 +1685,36 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
     }
   };
 
-  const handleDeleteAll = () => {
+  const handleDeleteAll = async () => {
+    try {
+      // Get actual counts from AsyncStorage to show accurate numbers
+      const [goalsStorage, milestonesStorage, tasksStorage] = await Promise.all([
+        AsyncStorage.getItem('goals'),
+        AsyncStorage.getItem('milestones'), 
+        AsyncStorage.getItem('tasks')
+      ]);
+      
+      const actualGoals = goalsStorage ? JSON.parse(goalsStorage) : [];
+      const actualMilestones = milestonesStorage ? JSON.parse(milestonesStorage) : [];
+      const actualTasks = tasksStorage ? JSON.parse(tasksStorage) : [];
+      
+      setActualDeleteCounts({
+        goals: actualGoals.length,
+        milestones: actualMilestones.length, 
+        tasks: actualTasks.length
+      });
+      
+      console.log(`🔍 ACCURATE DELETE COUNTS: ${actualGoals.length} goals, ${actualMilestones.length} milestones, ${actualTasks.length} tasks`);
+    } catch (error) {
+      console.error('Error getting accurate counts:', error);
+      // Fallback to AppContext counts
+      setActualDeleteCounts({
+        goals: goals.length,
+        milestones: milestones.length,
+        tasks: tasks.length
+      });
+    }
+    
     setShowFirstDeleteConfirm(true);
   };
 
@@ -1680,15 +1753,29 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
                         }
                       }
                       
-                      // Delete any remaining standalone tasks
-                      const remainingTaskIds = [...tasks.filter(t => !t.projectId && !t.goalId).map(t => t.id)];
-                      console.log(`Deleting ${remainingTaskIds.length} remaining standalone tasks...`);
+                      // Delete ANY remaining tasks - checking ALL possible properties
+                      // This includes tasks with milestoneId, projectId, goalId, or completely standalone tasks
+                      const allRemainingTasks = [...tasks];
+                      console.log(`🗑️ COMPREHENSIVE TASK DELETION: Found ${allRemainingTasks.length} total tasks to delete...`);
                       
-                      for (const taskId of remainingTaskIds) {
-                        if (deleteTask) {
-                          await deleteTask(null, taskId); // null projectId for standalone tasks
+                      // Delete each task individually using the proper deleteTask function
+                      for (const task of allRemainingTasks) {
+                        try {
+                          if (deleteTask) {
+                            // Use the milestoneId if available, otherwise null for standalone
+                            const milestoneIdForDeletion = task.milestoneId || task.projectId || null;
+                            await deleteTask(milestoneIdForDeletion, task.id);
+                            console.log(`✅ Deleted task: ${task.title || task.name} (ID: ${task.id})`);
+                          }
+                        } catch (error) {
+                          console.error(`❌ Error deleting task ${task.id}:`, error);
+                          // Continue with other tasks even if one fails
                         }
                       }
+                      
+                      // Force clear the tasks array directly from AsyncStorage as backup
+                      await AsyncStorage.setItem('tasks', '[]');
+                      console.log('🧹 Force cleared tasks from AsyncStorage as backup');
                       
                       // Clear todos manually since they don't have individual delete functions in context
                       setTodos([]);
@@ -1967,8 +2054,8 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
                 </View>
               ))
             ) : (
-              // Default: Show full hierarchy
-              processedGoals.map((goal) => {
+              // Default: Show full hierarchy (hide during tour to avoid double rendering)
+              !(isTourActive && currentStep === 'OVERVIEW_PLAN') && processedGoals.map((goal) => {
                 const standaloneMilestones = milestones.filter(milestone => !milestone.goalId);
                 const standaloneTasks = tasks.filter(task => !task.projectId && !task.milestoneId && !task.goalId);
                 
@@ -2012,8 +2099,8 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
               })
             )}
             
-            {/* Delete All Button in ScrollView - Hidden in fullscreen and filter views */}
-            {processedGoals.length > 0 && !isFullscreen && !filter && (
+            {/* Delete All Button in ScrollView - Hidden in fullscreen, filter views, and during tour */}
+            {processedGoals.length > 0 && !isFullscreen && !filter && !(isTourActive && currentStep === 'OVERVIEW_PLAN') && (
               <View style={styles.deleteAllContainer}>
                 <TouchableOpacity 
                   style={[styles.deleteAllButton, { 
@@ -2031,8 +2118,8 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
         )}
       </View>
 
-      {/* Floating Add Button - Hidden in fullscreen and filter views */}
-      {!isFullscreen && !filter && (
+      {/* Floating Add Button - Hidden in fullscreen, filter views, and during tour */}
+      {!isFullscreen && !filter && !(isTourActive && currentStep === 'OVERVIEW_PLAN') && (
         <FloatingAddButton onPress={handleAddButtonPress} />
       )}
       
@@ -2048,7 +2135,7 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
         visible={showFirstDeleteConfirm}
         onClose={() => setShowFirstDeleteConfirm(false)}
         title="Delete All Data"
-        message={`This will permanently delete:\n\n• ${goals.length} ${goals.length === 1 ? 'goal' : 'goals'}\n• ${milestones.length} ${milestones.length === 1 ? 'milestone' : 'milestones'}\n• ${tasks.length} ${tasks.length === 1 ? 'task' : 'tasks'}\n\nThis action cannot be undone.`}
+        message={`This will permanently delete:\n\n• ${actualDeleteCounts.goals} ${actualDeleteCounts.goals === 1 ? 'goal' : 'goals'}\n• ${actualDeleteCounts.milestones} ${actualDeleteCounts.milestones === 1 ? 'milestone' : 'milestones'}\n• ${actualDeleteCounts.tasks} ${actualDeleteCounts.tasks === 1 ? 'task' : 'tasks'}\n\nThis action cannot be undone.`}
         confirmText="Delete All"
         cancelText="Cancel"
         onConfirm={handleFirstDeleteConfirm}
@@ -2081,7 +2168,7 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
       
       {/* Elevated Goal - rendered AFTER overlay during tour so it appears on top */}
       {isTourActive && currentStep === 'OVERVIEW_PLAN' && processedGoals.length > 0 && (
-        <View style={styles.tourGoalContainer}>
+        <Animated.View style={[styles.tourGoalContainer, { opacity: tourGoalOpacity }]}>
           <GoalCard
             goal={processedGoals[0]}
             milestones={processedGoals[0].id === 'standalone-milestones' ? standaloneMilestones : 
@@ -2094,8 +2181,10 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
                      const goalMilestones = milestones.filter(m => m.goalId === processedGoals[0].id);
                      const goalMilestoneIds = goalMilestones.map(m => m.id);
                      // Return tasks that belong to this goal directly or via its milestones
+                     // Use milestoneId (new format) OR projectId (legacy format) for compatibility
                      return tasks.filter(task => 
                        task.goalId === processedGoals[0].id || 
+                       (task.milestoneId && goalMilestoneIds.includes(task.milestoneId)) ||
                        (task.projectId && goalMilestoneIds.includes(task.projectId))
                      );
                    })()}
@@ -2117,7 +2206,7 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
             expandedMilestones={expandedMilestones} // Pass external milestone expansion state
             onMilestoneExpandToggle={handleMilestoneExpandToggle} // Handle milestone expansion
           />
-        </View>
+        </Animated.View>
       )}
     </View>
   );

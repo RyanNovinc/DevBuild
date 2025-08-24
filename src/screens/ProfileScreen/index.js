@@ -91,27 +91,10 @@ const ProfileScreen = ({ navigation, route }) => {
   // Handle tour step transitions
   useEffect(() => {
     if (isTourActive) {
-      if (currentStep === 'PROFILE_GOALS') {
-        // Reset stats opacity for goals step
+      if (currentStep === 'GOAL_ACHIEVEMENT_VALIDATION') {
+        // Show stats for the new tour's first step
         tourStatsOpacity.setValue(1);
         tourDomainWheelOpacity.setValue(0);
-      } else if (currentStep === 'PROFILE_DOMAIN_WHEEL') {
-        // Fade out stats and fade in domain wheel
-        Animated.sequence([
-          // First fade out stats
-          Animated.timing(tourStatsOpacity, {
-            toValue: 0,
-            duration: 300,
-            useNativeDriver: true
-          }),
-          // Then fade in domain wheel after a short delay
-          Animated.delay(200),
-          Animated.timing(tourDomainWheelOpacity, {
-            toValue: 1,
-            duration: 600,
-            useNativeDriver: true
-          })
-        ]).start();
       }
     } else {
       // Reset when tour is not active
@@ -495,6 +478,12 @@ const ProfileScreen = ({ navigation, route }) => {
     console.log('Starting app tour...');
     startTour();
   };
+
+  // Handle test new tour
+  const handleTestNewTour = () => {
+    console.log('Starting new streamlined tour...');
+    startTour('GOAL_ACHIEVEMENT_VALIDATION');
+  };
   
   // Main render
   const isDarkMode = theme.dark;
@@ -574,6 +563,7 @@ const ProfileScreen = ({ navigation, route }) => {
         onTriggerGiftSurprise={triggerGiftSurpriseForTesting}
         onTriggerAIPlusUpgrade={triggerAIPlusUpgrade}
         onTestSecondOnboarding={handleTestSecondOnboarding}
+        onTestNewTour={handleTestNewTour}
       />
       
       <AIExplanationModal
@@ -622,15 +612,16 @@ const ProfileScreen = ({ navigation, route }) => {
       
       {/* App Tour Overlay */}
       <AppTourOverlay
-        isVisible={isTourActive}
+        isVisible={isTourActive && currentStep === 'GOAL_ACHIEVEMENT_VALIDATION'}
         currentStep={currentStep}
         onComplete={nextStep}
         onSkip={skipTour}
         spotlightTarget={spotlightTarget}
+        navigation={navigation}
       />
       
       {/* Stats Row - rendered AFTER overlay during tour so it appears on top */}
-      {isTourActive && currentStep === 'PROFILE_GOALS' && (
+      {isTourActive && currentStep === 'GOAL_ACHIEVEMENT_VALIDATION' && (
         <Animated.View style={[styles.tourStatsContainer, { opacity: tourStatsOpacity }]}>
           <StatsRow
             theme={theme}

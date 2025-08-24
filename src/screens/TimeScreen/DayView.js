@@ -104,6 +104,12 @@ const DayView = ({
   
   // Render time block
   const renderTimeBlock = (block) => {
+    // Safety check: ensure block is valid
+    if (!block || typeof block !== 'object') {
+      console.warn('DayView: renderTimeBlock received invalid block:', block);
+      return null;
+    }
+    
     const { height, top } = calculateTimeBlockStyle(block);
     
     // Check if this is a calendar event
@@ -113,10 +119,10 @@ const DayView = ({
     const isRepeatingInstance = block.isRepeatingInstance === true;
     const isRepeatingBlock = block.isRepeating === true;
     
-    // Get darker shade of domain color for border
+    // Get darker shade of domain color for border - ensure always valid
     const blockColor = isCalendarEvent 
       ? block.color || '#2196F3' 
-      : (block.isGeneralActivity ? block.customColor : block.domainColor);
+      : (block.isGeneralActivity ? (block.customColor || '#6366f1') : (block.domainColor || '#6366f1'));
     const borderColor = getDarkerShade(blockColor);
     
     // Calculate text color for optimal contrast against the background
@@ -135,13 +141,21 @@ const DayView = ({
     // Check if we should use inline layout (when zoomed out below 70%)
     const useInlineLayout = scale < 0.7;
     
-    // Create accessibility label with all relevant information
-    const accessibilityLabel = `${block.title} from ${formatTime(block.startTime)} to ${formatTime(block.endTime)}` + 
-      `${isCalendarEvent ? `, Calendar Event from ${block.source}` : 
-        (block.isGeneralActivity ? `, Category: ${block.category}` : `, Domain: ${block.domain}`)}` +
-      `${!isCalendarEvent && hasProject ? `, Project: ${block.projectTitle}` : ''}` +
-      `${!isCalendarEvent && hasTask ? `, Task: ${block.taskTitle}` : ''}` +
-      `${block.location ? `, Location: ${block.location}` : ''}` +
+    // Create accessibility label with all relevant information - with safe string handling
+    const safeTitle = block.title || 'Untitled';
+    const safeSource = block.source || 'Unknown';
+    const safeCategory = block.category || 'General';
+    const safeDomain = block.domain || 'Personal';
+    const safeProjectTitle = block.projectTitle || '';
+    const safeTaskTitle = block.taskTitle || '';
+    const safeLocation = block.location || '';
+    
+    const accessibilityLabel = `${safeTitle}${(block.startTime && block.endTime) ? ` from ${formatTime(block.startTime)} to ${formatTime(block.endTime)}` : ' (time not set)'}` + 
+      `${isCalendarEvent ? `, Calendar Event from ${safeSource}` : 
+        (block.isGeneralActivity ? `, Category: ${safeCategory}` : `, Domain: ${safeDomain}`)}` +
+      `${!isCalendarEvent && hasProject ? `, Project: ${safeProjectTitle}` : ''}` +
+      `${!isCalendarEvent && hasTask ? `, Task: ${safeTaskTitle}` : ''}` +
+      `${safeLocation ? `, Location: ${safeLocation}` : ''}` +
       `${!isCalendarEvent && (isRepeatingBlock || isRepeatingInstance) ? ', Repeating' : ''}`;
     return (
       <TouchableOpacity
@@ -198,7 +212,7 @@ const DayView = ({
               maxFontSizeMultiplier={1.3}
               numberOfLines={1}
             >
-              {formatTime(block.startTime)}-{formatTime(block.endTime)}
+              {(block.startTime && block.endTime) ? `${formatTime(block.startTime)}-${formatTime(block.endTime)}` : 'Time not set'}
             </Text>
             
             <Text 
@@ -218,7 +232,7 @@ const DayView = ({
               maxFontSizeMultiplier={1.3}
               ellipsizeMode="tail"
             >
-              {block.title}
+              {safeTitle}
             </Text>
 
             {/* Show calendar/repeat indicators on the very right */}
@@ -244,7 +258,7 @@ const DayView = ({
                   ]}
                   maxFontSizeMultiplier={1.3}
                 >
-                  {block.source === 'device_calendar' ? 'Cal' : 'Sync'}
+                  {safeSource === 'device_calendar' ? 'Cal' : 'Sync'}
                 </Text>
               </View>
             )}
@@ -272,8 +286,8 @@ const DayView = ({
                     ]}
                     maxFontSizeMultiplier={1.3}
                   >
-                    {block.repeatFrequency === 'daily' ? 'Daily' : 
-                    block.repeatFrequency === 'weekly' ? 'Weekly' : 'Monthly'}
+                    {(block.repeatFrequency && String(block.repeatFrequency)) === 'daily' ? 'Daily' : 
+                    (block.repeatFrequency && String(block.repeatFrequency)) === 'weekly' ? 'Weekly' : 'Monthly'}
                   </Text>
                 )}
               </View>
@@ -290,7 +304,7 @@ const DayView = ({
                 ]}
                 maxFontSizeMultiplier={1.3}
               >
-                {formatTime(block.startTime)} - {formatTime(block.endTime)}
+                {(block.startTime && block.endTime) ? `${formatTime(block.startTime)} - ${formatTime(block.endTime)}` : 'Time not set'}
               </Text>
               
               {/* Show calendar indicator for calendar events */}
@@ -308,7 +322,7 @@ const DayView = ({
                     ]}
                     maxFontSizeMultiplier={1.3}
                   >
-                    {block.source === 'device_calendar' ? 'Cal' : 'Sync'}
+                    {safeSource === 'device_calendar' ? 'Cal' : 'Sync'}
                   </Text>
                 </View>
               )}
@@ -329,8 +343,8 @@ const DayView = ({
                       ]}
                       maxFontSizeMultiplier={1.3}
                     >
-                      {block.repeatFrequency === 'daily' ? 'Daily' : 
-                      block.repeatFrequency === 'weekly' ? 'Weekly' : 'Monthly'}
+                      {(block.repeatFrequency && String(block.repeatFrequency)) === 'daily' ? 'Daily' : 
+                      (block.repeatFrequency && String(block.repeatFrequency)) === 'weekly' ? 'Weekly' : 'Monthly'}
                     </Text>
                   )}
                 </View>
@@ -345,7 +359,7 @@ const DayView = ({
               numberOfLines={height < scaleHeight(60) ? 1 : 2}
               maxFontSizeMultiplier={1.3}
             >
-              {block.title}
+              {safeTitle}
             </Text>
           </>
         )}
@@ -368,7 +382,7 @@ const DayView = ({
                   numberOfLines={1}
                   maxFontSizeMultiplier={1.3}
                 >
-                  {block.projectTitle}
+                  {safeProjectTitle}
                 </Text>
               </View>
             )}
@@ -388,7 +402,7 @@ const DayView = ({
                   numberOfLines={1}
                   maxFontSizeMultiplier={1.3}
                 >
-                  {block.taskTitle}
+                  {safeTaskTitle}
                 </Text>
               </View>
             )}
@@ -411,13 +425,13 @@ const DayView = ({
                 maxFontSizeMultiplier={1.3}
               >
                 {isCalendarEvent 
-                  ? (block.source === 'device_calendar' ? 'Calendar' : block.source)
-                  : (block.isGeneralActivity ? block.category : block.domain)
+                  ? (safeSource === 'device_calendar' ? 'Calendar' : safeSource)
+                  : (block.isGeneralActivity ? safeCategory : safeDomain)
                 }
               </Text>
             </View>
             
-            {block.location && height >= scaleHeight(100) && (
+            {safeLocation && height >= scaleHeight(100) && (
               <View style={styles.locationContainer}>
                 <Ionicons 
                   name="location-outline" 
@@ -432,7 +446,7 @@ const DayView = ({
                   numberOfLines={1}
                   maxFontSizeMultiplier={1.3}
                 >
-                  {block.location}
+                  {safeLocation}
                 </Text>
               </View>
             )}
@@ -442,12 +456,14 @@ const DayView = ({
     );
   };
 
-  return (
-    <View style={styles.dayViewContainer}>
-      <View style={styles.dayViewContent}>
-        {/* Time indicators */}
-        <View style={styles.timeIndicatorsColumn}>
-          {timeSlots.map((hour) => (
+  // Emergency try-catch wrapper to isolate the error
+  try {
+    return (
+      <View style={styles.dayViewContainer}>
+        <View style={styles.dayViewContent}>
+          {/* Time indicators */}
+          <View style={styles.timeIndicatorsColumn}>
+            {timeSlots.map((hour) => (
             <View 
               key={`hour-${hour}`} 
               style={[
@@ -532,12 +548,44 @@ const DayView = ({
           
           {/* Time blocks positioned absolutely over the grid */}
           {blocksForDay
-            .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
+            .filter(block => block && block.startTime) // Filter out invalid blocks
+            .sort((a, b) => {
+              try {
+                const dateA = new Date(a.startTime);
+                const dateB = new Date(b.startTime);
+                if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) return 0;
+                return dateA - dateB;
+              } catch (error) {
+                console.warn('Error sorting time blocks:', error);
+                return 0;
+              }
+            })
             .map(renderTimeBlock)}
         </TouchableOpacity>
       </View>
     </View>
-  );
+    );
+  } catch (error) {
+    console.error('🚨 DayView Error:', error);
+    console.error('🚨 DayView Error Stack:', error.stack);
+    console.error('🚨 Props causing issue:', { 
+      timeBlocks: Array.isArray(timeBlocks) ? timeBlocks.length : 'not array', 
+      currentDate,
+      timeSlots: Array.isArray(timeSlots) ? timeSlots.length : 'not array',
+      blocksForDay: Array.isArray(blocksForDay) ? blocksForDay.length : 'not array'
+    });
+    
+    // Return a safe fallback
+    return (
+      <View style={styles.dayViewContainer}>
+        <View style={styles.dayViewContent}>
+          <Text style={{ color: theme.text, padding: 20, textAlign: 'center' }}>
+            DayView Error: {error.message}
+          </Text>
+        </View>
+      </View>
+    );
+  }
 };
 
 export default DayView;

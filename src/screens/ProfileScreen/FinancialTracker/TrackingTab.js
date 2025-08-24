@@ -600,9 +600,15 @@ const UnifiedCashFlowView = ({
         <View style={styles.netFlowCard}>
           <View style={styles.netFlowHeader}>
             <View style={styles.netFlowIcon}>
-              <Ionicons name="trending-up" size={18} color={(totalIncome - totalExpenses) >= 0 ? '#00D4AA' : '#FF6B6B'} />
+              <Ionicons 
+                name="trending-up" 
+                size={18} 
+                color={(totalIncome - totalExpenses) >= 0 ? '#00D4AA' : '#FF6B6B'}
+              />
             </View>
-            <Text style={styles.netFlowLabel}>Net Cash Flow</Text>
+            <Text style={styles.netFlowLabel}>
+              Net Cash Flow
+            </Text>
           </View>
           <Text style={[
             styles.netFlowAmount,
@@ -681,12 +687,14 @@ const UnifiedCashFlowView = ({
 };
 
 const TrackingTab = React.forwardRef(({ theme, data, handlers, pendingExpandSection }, ref) => {
+
   const [viewMode, setViewMode] = useState('current'); // 'current' or 'history'
   const [selectedDate, setSelectedDate] = useState(new Date()); // Current viewing month
   const slideAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [saveState, setSaveState] = useState(null); // 'confirming', 'saving', 'success', null
   const [showChart, setShowChart] = useState(false); // Toggle for chart view
+  
 
   // Month navigation functions
   const canGoToPreviousMonth = () => {
@@ -765,6 +773,7 @@ const TrackingTab = React.forwardRef(({ theme, data, handlers, pendingExpandSect
       setCurrentMonthData(monthData);
     }
   };
+
   
   // Historical editing functions - moved to main component scope
   const updateHistoricalMonth = (monthString, updateFn) => {
@@ -1176,6 +1185,7 @@ const TrackingTab = React.forwardRef(({ theme, data, handlers, pendingExpandSect
           )}
         </Animated.View>
       </Animated.View>
+
     </View>
   );
 });
@@ -1359,7 +1369,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#0A0A0A',
     borderRadius: 16,
     padding: 20,
-    marginBottom: 24,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: '#1A1A1A',
     alignItems: 'center',

@@ -520,6 +520,31 @@ export const useProfileScreenData = (navigation, route) => {
     }
   }, [contextProfile, loadingState]);
 
+  // React to AppContext data changes and recalculate stats
+  useEffect(() => {
+    if (loadingState === LOADING_STATES.READY && appContext && isAppContextReady()) {
+      console.log('ProfileScreenData: AppContext data changed, recalculating stats');
+      const recalculateStats = async () => {
+        try {
+          const statsResult = await calculateStats();
+          const domains = calculateDomains();
+          
+          setProfileData(prevData => ({
+            ...prevData,
+            ...statsResult,
+            localDomains: domains
+          }));
+          
+          console.log('ProfileScreenData: Stats updated after AppContext change');
+        } catch (error) {
+          console.error('Error recalculating stats after AppContext change:', error);
+        }
+      };
+      
+      recalculateStats();
+    }
+  }, [appContext?.goals, appContext?.milestones, appContext?.tasks, loadingState, isAppContextReady, calculateStats, calculateDomains]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {

@@ -72,6 +72,9 @@ const TasksScreen = ({ route, navigation }) => {
     skipTour
   } = useAppTour(navigation);
   
+  // Tour animation ref for kanban lighting effect
+  const tourKanbanOpacity = useRef(new Animated.Value(0)).current;
+  
   // Debug logging for tour state
   if (__DEV__) {
     console.log('🎯 TasksScreen Tour State:', { 
@@ -99,6 +102,36 @@ const TasksScreen = ({ route, navigation }) => {
     if (isTourActive && currentStep === 'KANBAN_INTRO') {
       console.log('🎯 Tour: Resetting kanban scroll position to 0 (Todo section)');
       setTourKanbanScrollPosition(0);
+    }
+  }, [isTourActive, currentStep]);
+  
+  // Handle tour kanban lighting animation - start dark then light up
+  useEffect(() => {
+    if (isTourActive && currentStep === 'KANBAN_INTRO') {
+      console.log('🎯 Tour: Starting kanban lighting animation');
+      
+      // Start with kanban dark (opacity 0)
+      tourKanbanOpacity.setValue(0);
+      
+      // Light up the kanban as the AI message appears (coordinate with overlay timing)
+      // AppTourOverlay timing: 100ms overlay + 300ms delay + 300ms step delay + 400ms AI animation = 1100ms
+      const lightUpDelay = 1300; // Start lighting slightly after AI message begins appearing
+      
+      setTimeout(() => {
+        if (isTourActive && (currentStep === 'KANBAN_SYSTEM_INTRO' || currentStep === 'PICK_CURRENT_FOCUS' || currentStep === 'TASK_MOVED_CELEBRATION')) {
+          console.log('🎯 Tour: Now lighting up the kanban');
+          Animated.timing(tourKanbanOpacity, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true
+          }).start(() => {
+            console.log('🎯 Tour: Kanban lighting animation complete');
+          });
+        }
+      }, lightUpDelay);
+    } else {
+      // Always start dark when not in tour or different step
+      tourKanbanOpacity.setValue(0);
     }
   }, [isTourActive, currentStep]);
   const [tourTaskToMove, setTourTaskToMove] = useState(null); // Track which task to move during tour
@@ -1109,6 +1142,16 @@ const TasksScreen = ({ route, navigation }) => {
     if (notification && notification.showSuccess) {
       notification.showSuccess(`Milestone moved to ${newStatus === 'todo' ? 'To Do' : newStatus === 'in_progress' ? 'In Progress' : 'Done'}`);
     }
+    
+    // Tour detection: Check if user moved milestone to In Progress during tour
+    if (isTourActive && (currentStep === 'PICK_CURRENT_FOCUS' || currentStep === 'TASK_MOVED_CELEBRATION') && newStatus === 'in_progress') {
+      console.log('🎯 Tour: User moved milestone to In Progress! Triggering celebration step');
+      setTimeout(() => {
+        if (global.tourTaskMoved) {
+          global.tourTaskMoved();
+        }
+      }, 1000); // Small delay to let success notification show
+    }
   };
   
   // Render milestone actions menu
@@ -1342,6 +1385,20 @@ const TasksScreen = ({ route, navigation }) => {
           notification.showSuccess(`Task moved to ${newStatus === 'todo' ? 'To Do' : newStatus === 'in_progress' ? 'In Progress' : 'Done'}`);
         }
         
+        // Tour detection: Check if user moved task to In Progress during tour
+        if (isTourActive && (currentStep === 'PICK_CURRENT_FOCUS' || currentStep === 'TASK_MOVED_CELEBRATION') && newStatus === 'in_progress') {
+          console.log('🎯 Tour: User moved task to In Progress! Triggering celebration step');
+          console.log('🎯 Tour: Current state:', { isTourActive, currentStep, globalCallback: !!global.tourTaskMoved });
+          setTimeout(() => {
+            if (global.tourTaskMoved) {
+              console.log('🎯 Tour: Calling global.tourTaskMoved()');
+              global.tourTaskMoved();
+            } else {
+              console.log('🎯 Tour: ERROR - global.tourTaskMoved not available!');
+            }
+          }, 1000); // Small delay to let success notification show
+        }
+        
         // Note: Removed refreshData call to prevent overriding completion status
         // The updateTask function already updates state and triggers milestone progress updates
       } else {
@@ -1527,6 +1584,9 @@ const TasksScreen = ({ route, navigation }) => {
     // Pass settings for WIP limit access
     settings,
     updateAppSetting,
+    // Tour-related props
+    isTourMode: isTourActive && (currentStep === 'KANBAN_SYSTEM_INTRO' || currentStep === 'PICK_CURRENT_FOCUS' || currentStep === 'TASK_MOVED_CELEBRATION'),
+    tourScrollPosition: 0,
   };
 
 
@@ -1592,7 +1652,10 @@ const TasksScreen = ({ route, navigation }) => {
           backgroundColor: '#000000',
           paddingBottom: 0  // Remove extra padding since no floating button
         }}>
-          <KanbanView taskScreenProps={taskScreenProps} />
+          {/* Hide normal kanban during tour to avoid double rendering */}
+          {!(isTourActive && currentStep === 'KANBAN_INTRO') && (
+            <KanbanView taskScreenProps={taskScreenProps} />
+          )}
         </View>
       </Animated.View>
       
@@ -1747,7 +1810,7 @@ const TasksScreen = ({ route, navigation }) => {
       
       {/* Elevated Tour Kanban - rendered AFTER overlay during tour so it appears on top */}
       {isTourActive && currentStep === 'KANBAN_INTRO' && (
-        <View style={additionalStyles.tourKanbanContainer}>
+        <Animated.View style={[additionalStyles.tourKanbanContainer, { opacity: tourKanbanOpacity }]}>
           <KanbanView 
             taskScreenProps={{
               ...taskScreenProps,
@@ -1755,12 +1818,71 @@ const TasksScreen = ({ route, navigation }) => {
               tourScrollPosition: tourKanbanScrollPosition // Pass scroll position control
             }} 
           />
-        </View>
+        </Animated.View>
       )}
       
+      {/* Tour Continue Button - shows when user has moved exactly 1 task to In Progress */}
+      {(() => {
+        const inProgressTasks = tasks.filter(task => task.status === 'in_progress');
+        const inProgressMilestones = milestones.filter(milestone => milestone.status === 'in_progress');
+        const totalInProgress = inProgressTasks.length + inProgressMilestones.length;
+        
+        console.log('🎯 Continue Button Debug:', {
+          isTourActive,
+          currentStep,
+          tourWaitingForTaskMove: global.tourWaitingForTaskMove,
+          totalInProgress,
+          shouldShow: isTourActive && currentStep === 'TASK_MOVED_CELEBRATION' && totalInProgress >= 1
+        });
+        
+        return isTourActive && currentStep === 'TASK_MOVED_CELEBRATION' && totalInProgress >= 1;
+      })() && (
+        <View style={{
+          position: 'absolute',
+          bottom: 100,
+          left: 20,
+          right: 20,
+          zIndex: 10001,
+          alignItems: 'center'
+        }}>
+          <TouchableOpacity
+            style={{
+              backgroundColor: '#22c55e',
+              paddingHorizontal: 32,
+              paddingVertical: 16,
+              borderRadius: 25,
+              flexDirection: 'row',
+              alignItems: 'center',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.3,
+              shadowRadius: 8,
+              elevation: 8
+            }}
+            onPress={() => {
+              console.log('🎯 Tour: Continue button pressed, advancing to time screen');
+              nextStep();
+            }}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Continue Tour"
+            accessibilityHint="Continue to schedule time for this task"
+          >
+            <Ionicons name="arrow-forward" size={20} color="white" style={{marginRight: 8}} />
+            <Text style={{
+              color: 'white',
+              fontSize: 16,
+              fontWeight: '600'
+            }}>
+              Continue - Let's Schedule Time!
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* App Tour Overlay */}
       <AppTourOverlay
-        isVisible={isTourActive && currentStep === 'KANBAN_INTRO'}
+        isVisible={isTourActive && (currentStep === 'KANBAN_SYSTEM_INTRO' || currentStep === 'PICK_CURRENT_FOCUS' || currentStep === 'TASK_MOVED_CELEBRATION')}
         currentStep={currentStep}
         onComplete={nextStep}
         onSkip={skipTour}

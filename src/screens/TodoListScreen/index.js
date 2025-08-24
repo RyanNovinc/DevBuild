@@ -49,6 +49,10 @@ import NotesToggle from './components/notes/NotesToggle';
 import DailyStandup from './components/notes/DailyStandup';
 import DailyStandupRevamped from './components/notes/DailyStandupRevamped';
 
+// Import tour components
+import useAppTour from '../../hooks/useAppTour';
+import AppTourOverlay from '../../components/AppTourOverlay';
+
 // Import achievement tracking
 import FeatureExplorerTracker from '../../services/FeatureExplorerTracker';
 
@@ -69,6 +73,17 @@ const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen,
     setLaterTodos,
     subscription
   } = useAppContext();
+
+  // App Tour Hook
+  const { 
+    isTourActive,
+    currentStep,
+    nextStep,
+    skipTour
+  } = useAppTour(navigation);
+  
+  // Tour animation ref for todo screen lighting effect
+  const tourTodoOpacity = useRef(new Animated.Value(0)).current;
 
   // Internal fullscreen state management
   const [internalIsFullscreen, setInternalIsFullscreen] = useState(false);
@@ -200,11 +215,26 @@ const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen,
 
   // Listen for route parameter changes from bottom tab navigation
   React.useEffect(() => {
-    if (route?.params?.currentView && route.params.currentView !== currentView) {
-      console.log('TodoScreen: Route params changed, switching view to:', route.params.currentView);
-      setCurrentView(route.params.currentView);
+    // COMPLETELY DISABLE route param listening during NOTES_DAILY_STANDUP to prevent loops
+    if (isTourActive && currentStep === 'NOTES_DAILY_STANDUP') {
+      console.log('📍 TodoScreen: Route param listening DISABLED during NOTES_DAILY_STANDUP to prevent loops');
+      return;
     }
-  }, [route?.params?.currentView, currentView]);
+    
+    if (route?.params?.currentView && route.params.currentView !== currentView) {
+      console.log('📍 TodoScreen: Route params changed, switching view to:', route.params.currentView, 'from:', currentView);
+      const newView = route.params.currentView;
+      
+      // Allow route param changes for other steps
+      if (!isTourActive || 
+          (isTourActive && !['NOTES_FREE_FORM', 'FREE_NOTES_EXPLANATION', 'TODO_TODAY', 'TODO_TOMORROW', 'TODO_LATER'].includes(currentStep))) {
+        console.log('📍 TodoScreen: Allowing route param change to:', newView);
+        setCurrentView(newView);
+      } else {
+        console.log('📍 TodoScreen: Ignoring route param change during active tour step:', currentStep);
+      }
+    }
+  }, [route?.params?.currentView, currentView, isTourActive, currentStep]);
   
   // Force navigator remount to sync tab content with indicator
   useFocusEffect(
@@ -215,6 +245,205 @@ const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen,
   );
   
   // No forced reset - let content match whatever tab is selected
+  
+  // Handle tour todo screen lighting animation - start dark then light up
+  useEffect(() => {
+    const todoSteps = ['TODO_TODAY', 'TODO_TOMORROW', 'TODO_LATER', 'NOTES_DAILY_STANDUP', 'NOTES_FREE_FORM', 'FREE_NOTES_EXPLANATION'];
+    
+    // FORCE RESET: For NOTES_DAILY_STANDUP, ensure we start with todo view
+    if (isTourActive && currentStep === 'NOTES_DAILY_STANDUP' && currentView !== 'todo') {
+      console.log('🎯 Tour: FORCE RESET - NOTES_DAILY_STANDUP must start with todo view, currently:', currentView);
+      setCurrentView('todo');
+      
+      // Also force update navigation params
+      const tabNavigator = navigation.getParent();
+      if (tabNavigator) {
+        tabNavigator.setParams({ currentView: 'todo' });
+        console.log('🎯 Tour: FORCE RESET - Set navigation params to todo');
+      }
+    }
+    
+    if (isTourActive && todoSteps.includes(currentStep)) {
+      console.log('🎯 Tour: Starting todo/notes screen lighting animation for step:', currentStep);
+      console.log('🎯 Tour: currentView:', currentView, 'notesMode:', notesMode);
+      
+      // Extra debug and forced restart for NOTES_FREE_FORM
+      if (currentStep === 'NOTES_FREE_FORM') {
+        console.log('🚨 Tour: NOTES_FREE_FORM lighting - should start dark then brighten');
+        console.log('🚨 Tour: Current tourTodoOpacity value before reset:', tourTodoOpacity._value);
+        
+        // Force restart the lighting animation for message 14
+        tourTodoOpacity.setValue(0); // Ensure we start dark
+        console.log('🚨 Tour: Forced tourTodoOpacity to 0 for NOTES_FREE_FORM');
+      }
+      
+      // Start with screen dark (opacity 0) - except for FREE_NOTES_EXPLANATION
+      if (currentStep !== 'FREE_NOTES_EXPLANATION') {
+        tourTodoOpacity.setValue(0);
+      } else {
+        console.log('🎯 Tour: FREE_NOTES_EXPLANATION - keeping screen bright, no dark animation');
+        tourTodoOpacity.setValue(1);
+      }
+      
+      // Light up the screen as the AI message appears (coordinate with overlay timing)
+      // AppTourOverlay timing: 100ms overlay + 300ms delay + 300ms step delay + 400ms AI animation = 1100ms
+      const lightUpDelay = 1300; // Start lighting slightly after AI message begins appearing
+      
+      setTimeout(() => {
+        if (isTourActive && todoSteps.includes(currentStep) && currentStep !== 'FREE_NOTES_EXPLANATION') {
+          console.log('🎯 Tour: Now lighting up the screen for step:', currentStep);
+          if (currentStep === 'NOTES_FREE_FORM') {
+            console.log('🚨 Tour: NOTES_FREE_FORM lighting animation starting, opacity 0 -> 1');
+          }
+          Animated.timing(tourTodoOpacity, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true
+          }).start(() => {
+            console.log('🎯 Tour: Screen lighting animation complete for step:', currentStep);
+            if (currentStep === 'NOTES_FREE_FORM') {
+              console.log('🚨 Tour: NOTES_FREE_FORM lighting complete, screen should be bright now');
+            }
+          });
+        } else if (currentStep === 'FREE_NOTES_EXPLANATION') {
+          console.log('🎯 Tour: FREE_NOTES_EXPLANATION - skipping lighting animation, already bright');
+        } else {
+          console.log('🚨 Tour: Lighting animation SKIPPED - conditions not met');
+          console.log('🚨 Tour: isTourActive:', isTourActive, 'currentStep:', currentStep, 'todoSteps includes:', todoSteps.includes(currentStep));
+        }
+      }, lightUpDelay);
+    } else if (isTourActive) {
+      // Only make dark during tour if we're not on a relevant step
+      tourTodoOpacity.setValue(0);
+    } else {
+      // When not in tour, ensure screen is always visible
+      tourTodoOpacity.setValue(1);
+    }
+  }, [isTourActive, currentStep]);
+
+  // Tour step detection with proper view switching
+  useEffect(() => {
+    if (isTourActive) {
+      console.log('🎯 TodoScreen: Tour step changed to', currentStep);
+      
+      // Handle NOTES steps
+      if (currentStep === 'NOTES_DAILY_STANDUP') {
+        console.log('🎯 TodoScreen: NOTES_DAILY_STANDUP detected, staying in todo view until user taps');
+        // DON'T automatically switch - let user tap to switch
+        setCurrentView('todo'); // Force back to todo view
+        setNotesMode('standup'); // But prepare standup mode for when they do switch
+      } else if (currentStep === 'NOTES_FREE_FORM') {
+        console.log('🎯 TodoScreen: NOTES_FREE_FORM detected, switching to notes/freeform');
+        setCurrentView('notes');
+        setNotesMode('freeform');
+      } else if (currentStep === 'FREE_NOTES_EXPLANATION') {
+        console.log('🎯 TodoScreen: FREE_NOTES_EXPLANATION detected, switching to freeform at full brightness');
+        setCurrentView('notes');
+        setNotesMode('freeform');
+        // Set full brightness immediately - no dark animation
+        tourTodoOpacity.setValue(1);
+      }
+      // Handle TODO steps
+      else if (currentStep === 'TODO_TODAY') {
+        console.log('🎯 TodoScreen: TODO_TODAY detected, switching to todo/today');
+        setCurrentView('todo');
+        setActiveTab('today');
+      } else if (currentStep === 'TODO_TOMORROW') {
+        console.log('🎯 TodoScreen: TODO_TOMORROW detected, switching to todo/tomorrow');
+        setCurrentView('todo');
+        setActiveTab('tomorrow');
+      } else if (currentStep === 'TODO_LATER') {
+        console.log('🎯 TodoScreen: TODO_LATER detected, switching to todo/later');
+        setCurrentView('todo');
+        setActiveTab('later');
+      }
+    }
+  }, [isTourActive, currentStep]);
+
+  // Global function for immediate notes switch during tour
+  React.useEffect(() => {
+    // New function that bypasses route params completely
+    global.forceNotesViewForTour = () => {
+      console.log('🎯 TodoScreen: DIRECTLY forcing notes view during tour (bypassing route params)');
+      
+      // Direct state changes - no route params involved
+      setCurrentView('notes');
+      setNotesMode('standup');
+      
+      // Start lighting animation immediately for notes view
+      console.log('🎯 TodoScreen: Starting lighting animation for notes view switch');
+      tourTodoOpacity.setValue(0); // Start dark
+      
+      setTimeout(() => {
+        console.log('🎯 TodoScreen: Lighting up notes view');
+        Animated.timing(tourTodoOpacity, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true
+        }).start(() => {
+          console.log('🎯 TodoScreen: Notes view lighting complete');
+        });
+      }, 200); // Small delay to let view switch render
+      
+      // Notify tour that switch completed
+      if (global.tourViewSwitched) {
+        global.tourViewSwitched();
+      }
+      
+      // Auto-advance after view switch
+      setTimeout(() => {
+        console.log('🎯 TodoScreen: Direct switch complete, auto-advancing to NOTES_FREE_FORM');
+        if (global.updateGlobalTourState) {
+          global.updateGlobalTourState({ currentStep: 'NOTES_FREE_FORM' });
+        }
+      }, 500);
+    };
+    
+    global.switchToNotesForTour = () => {
+      console.log('🎯 TodoScreen: Immediately switching to notes/standup mode');
+      console.log('🎯 TodoScreen: Before - currentView:', currentView, 'notesMode:', notesMode);
+      
+      // AGGRESSIVELY force standup mode MULTIPLE times
+      console.log('🚨 TodoScreen: FORCING notesMode to standup (should load Daily Standup tab)');
+      setNotesMode('standup');
+      
+      // Force it again after a tiny delay
+      setTimeout(() => {
+        console.log('🚨 TodoScreen: FORCING notesMode to standup AGAIN');
+        setNotesMode('standup');
+      }, 10);
+      
+      // Force navigation container refresh by changing key
+      setNavigatorKey(`notes-standup-${Date.now()}`);
+      console.log('🚨 TodoScreen: Set navigator key to force refresh');
+      
+      // Use a small timeout to ensure notesMode state is updated before switching view
+      setTimeout(() => {
+        setCurrentView('notes');
+        console.log('🎯 TodoScreen: Switched to notes view with standup mode');
+        
+        // Don't update navigation params - let tour control the icon completely
+        
+        // Force restart the tour lighting animation for notes view
+        if (isTourActive && currentStep === 'NOTES_DAILY_STANDUP') {
+          console.log('🎯 TodoScreen: Force restarting tour lighting animation for notes view');
+          tourTodoOpacity.setValue(0); // Start dark
+          setTimeout(() => {
+            Animated.timing(tourTodoOpacity, {
+              toValue: 1,
+              duration: 800,
+              useNativeDriver: true
+            }).start();
+          }, 300); // Short delay then light up
+        }
+      }, 50);
+    };
+    
+    return () => {
+      delete global.switchToNotesForTour;
+      delete global.forceNotesViewForTour;
+    };
+  }, [navigation]);
 
   // Simple add todo function
   const addTodo = (tab, groupId, text) => {
@@ -324,6 +553,26 @@ const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen,
   // Simple edit todo function
   const startEditTodo = (todo, tab) => {
     showSuccess(`Edit mode for: ${todo.title}`);
+  };
+
+  // Handle tour special actions for tab switching
+  const handleTourSpecialAction = (action) => {
+    if (action === 'switchToTomorrowTab') {
+      console.log('📅 Tour: Switching to Tomorrow tab');
+      if (tabNavigatorRef.current) {
+        tabNavigatorRef.current.navigate('tomorrow');
+        setActiveTab('tomorrow');
+      }
+    } else if (action === 'switchToLaterTab') {
+      console.log('📋 Tour: Switching to Later tab');
+      if (tabNavigatorRef.current) {
+        tabNavigatorRef.current.navigate('later');
+        setActiveTab('later');
+      }
+    } else if (action === 'switchToFreeNotesTab') {
+      console.log('📝 Tour: Switching to Free Notes tab');
+      setNotesMode('freeform');
+    }
   };
 
   // Move incomplete today's todos to tomorrow (triggers todo-organizer achievement)
@@ -439,7 +688,14 @@ const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen,
 
   // Toggle between todos and notes
   const toggleView = () => {
+    // Don't allow manual toggling during specific tour steps
+    if (isTourActive && ['NOTES_DAILY_STANDUP', 'NOTES_FREE_FORM', 'FREE_NOTES_EXPLANATION', 'TODO_TODAY', 'TODO_TOMORROW', 'TODO_LATER'].includes(currentStep)) {
+      console.log('🔄 Toggle blocked during tour step:', currentStep);
+      return;
+    }
+    
     const newView = currentView === 'todo' ? 'notes' : 'todo';
+    console.log('🔄 Toggling view from', currentView, 'to', newView);
     setCurrentView(newView);
     
     // Update route params for tab icon - access the parent tab navigator
@@ -496,8 +752,8 @@ const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen,
           tabBarItemStyle: {
             zIndex: 2, // Ensure tab content is above indicator
           },
-          // Enable swipe but disable problematic animations
-          swipeEnabled: true,
+          // Enable swipe but disable problematic animations (except during tour)
+          swipeEnabled: isTourActive !== true,
           animationEnabled: false,
           tabBarPressColor: 'transparent', // Remove press ripple that might interfere
           tabBarPressOpacity: 1, // Prevent opacity changes on press
@@ -613,11 +869,37 @@ const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen,
   );
 
   // Render Notes view with swipeable tabs between Daily Standup and Free Notes
-  const renderNotesView = () => (
-    <>
-      <NavigationContainer independent={true} key={`notes-${notesMode}`}>
-        <TopTab.Navigator
-          initialRouteName={notesMode}
+  const renderNotesView = () => {
+    console.log('🎯 TodoScreen: renderNotesView called with notesMode:', notesMode);
+    console.log('🎯 TodoScreen: NavigationContainer key will be:', `${navigatorKey}-notes-${notesMode}`);
+    
+    // NUCLEAR: During tour notes steps, force state to standup if it's wrong
+    if (isTourActive && (currentStep === 'NOTES_DAILY_STANDUP' || currentStep === 'NOTES_FREE_FORM') && notesMode !== 'standup') {
+      console.log('🚨 TodoScreen: EMERGENCY FIX - notesMode is', notesMode, 'but should be standup, fixing now!');
+      setNotesMode('standup');
+    }
+    
+    // FORCE: During tour, ALWAYS start with standup
+    let initialRoute = notesMode;
+    if (isTourActive && (currentStep === 'NOTES_DAILY_STANDUP' || currentStep === 'NOTES_FREE_FORM')) {
+      initialRoute = 'standup';
+      console.log('🚨 TodoScreen: FORCING initialRouteName to standup during tour, ignoring notesMode:', notesMode);
+    }
+    
+    console.log('🎯 TodoScreen: Final initialRouteName will be:', initialRoute);
+    return (
+      <>
+        <NavigationContainer independent={true} key={`${navigatorKey}-notes-${notesMode}`}>
+          <TopTab.Navigator
+            initialRouteName={initialRoute}
+            onStateChange={(state) => {
+              console.log('🚨 NOTES NAVIGATOR STATE CHANGE:', state);
+              console.log('🚨 Current route index:', state?.index);
+              console.log('🚨 Route names:', state?.routeNames);
+              if (state?.routes) {
+                console.log('🚨 Active route:', state.routes[state.index]?.name);
+              }
+            }}
           screenOptions={({ route }) => ({
             tabBarActiveTintColor: '#FFFFFF', // White text on active tab for better contrast
             tabBarInactiveTintColor: theme.textSecondary,
@@ -663,14 +945,7 @@ const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen,
             flex: 1,
             backgroundColor: theme.background 
           }}
-          onStateChange={(state) => {
-            if (state?.index !== undefined) {
-              const routes = ['standup', 'freeform'];
-              const newNotesMode = routes[state.index] || 'standup';
-              console.log('Notes tab changed to:', newNotesMode, 'state.index:', state.index);
-              setNotesMode(newNotesMode);
-            }
-          }}
+          // onStateChange removed - was conflicting with initial route setting
         >
           <TopTab.Screen 
             name="standup" 
@@ -742,8 +1017,9 @@ const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen,
           showSuccess={showSuccess}
         />
       )}
-    </>
-  );
+      </>
+    );
+  };
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -751,10 +1027,17 @@ const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen,
         style={[styles.container, { backgroundColor: theme.background }]}
         edges={['top']}
       >
+
         {/* Content */}
-        <View style={[styles.content, { flex: 1 }]}>
+        <Animated.View style={[
+          styles.content, 
+          { flex: 1 }, 
+          isTourActive && ['TODO_TODAY', 'TODO_TOMORROW', 'TODO_LATER', 'NOTES_DAILY_STANDUP', 'NOTES_FREE_FORM', 'FREE_NOTES_EXPLANATION'].includes(currentStep) 
+            ? { opacity: tourTodoOpacity } 
+            : {}
+        ]}>
           {currentView === 'todo' ? renderTodoTabs() : renderNotesView()}
-        </View>
+        </Animated.View>
 
         {/* Floating Fullscreen Button - Bottom Left (exact KanbanView positioning) */}
         <TouchableOpacity
@@ -788,6 +1071,16 @@ const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen,
             color="#FFFFFF" 
           />
         </TouchableOpacity>
+        
+        {/* App Tour Overlay */}
+        <AppTourOverlay 
+          isVisible={isTourActive && currentStep === 'SUPPORTING_TOOLS_OVERVIEW'}
+          currentStep={currentStep}
+          onComplete={nextStep}
+          onSkip={skipTour}
+          onSpecialAction={handleTourSpecialAction}
+          navigation={navigation}
+        />
       </SafeAreaView>
     </GestureHandlerRootView>
   );

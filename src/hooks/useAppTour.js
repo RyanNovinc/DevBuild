@@ -44,24 +44,28 @@ export const useAppTour = (navigation = null) => {
     };
   }, []);
   
-  // Tour step sequence
+  // Tour step sequence - New streamlined interactive tour
   const TOUR_SEQUENCE = [
-    'PROFILE_GOALS',
-    'PROFILE_DOMAIN_WHEEL', 
-    'OVERVIEW_PLAN',
-    'KANBAN_INTRO',
-    'TIME_BLOCKS',
-    'AI_ASSISTANT'
+    'GOAL_ACHIEVEMENT_VALIDATION',
+    'KANBAN_SYSTEM_INTRO', 
+    'PICK_CURRENT_FOCUS',
+    'TASK_MOVED_CELEBRATION',
+    'SCHEDULE_DEDICATED_TIME',
+    'TIME_BLOCK_CREATED',
+    'SYSTEM_CONFIDENCE',
+    'SUPPORTING_TOOLS_OVERVIEW'
   ];
   
   // Screen navigation map for tour steps
   const STEP_SCREENS = {
-    'PROFILE_GOALS': 'Profile',
-    'PROFILE_DOMAIN_WHEEL': 'Profile',
-    'OVERVIEW_PLAN': 'GoalsTab',
-    'KANBAN_INTRO': 'Projects',
-    'TIME_BLOCKS': 'Time',
-    'AI_ASSISTANT': null // Stays on current screen
+    'GOAL_ACHIEVEMENT_VALIDATION': 'Profile',
+    'KANBAN_SYSTEM_INTRO': 'Projects',
+    'PICK_CURRENT_FOCUS': 'Projects',
+    'TASK_MOVED_CELEBRATION': 'Projects',
+    'SCHEDULE_DEDICATED_TIME': 'Time',
+    'TIME_BLOCK_CREATED': 'Time',
+    'SYSTEM_CONFIDENCE': 'Time',
+    'SUPPORTING_TOOLS_OVERVIEW': 'TodoTab'
   };
   
   // Check if tour should start
@@ -87,14 +91,109 @@ export const useAppTour = (navigation = null) => {
     }
   };
   
-  const startTour = () => {
+  const startTour = (startStep = 'GOAL_ACHIEVEMENT_VALIDATION') => {
     updateGlobalTourState({
       isTourActive: true,
-      currentStep: 'PROFILE_GOALS'
+      currentStep: startStep
     });
     // Set global flag to hide floating AI button
     global.isAppTourActive = true;
   };
+  
+  // Function to start tour from notes screen for testing
+  const startTourFromNotes = (navigation) => {
+    console.log('🎯 Starting tour from notes section');
+    
+    // Navigate to TodoTab first, then switch to notes view
+    if (navigation) {
+      try {
+        navigation.navigate('TodoTab', { currentView: 'todo' });
+        console.log('🧭 Navigated to TodoTab with todo view for notes tour');
+        
+        // Start the tour after navigation completes
+        setTimeout(() => {
+          startTour('NOTES_DAILY_STANDUP');
+          console.log('🎯 Tour started from NOTES_DAILY_STANDUP step');
+        }, 500);
+      } catch (error) {
+        console.warn('Navigation failed:', error);
+        // Fallback: start tour anyway
+        startTour('NOTES_DAILY_STANDUP');
+      }
+    } else {
+      // Start the tour from notes step
+      startTour('NOTES_DAILY_STANDUP');
+      console.log('🎯 Tour started from NOTES_DAILY_STANDUP step');
+    }
+  };
+  
+  // Make functions available globally for easy testing
+  useEffect(() => {
+    global.startTourFromNotes = startTourFromNotes;
+    global.updateGlobalTourState = updateGlobalTourState;
+    
+    // DEV: Easy way to jump to any tour step
+    global.jumpToTourStep = (stepName, nav = null) => {
+      console.log('🎯 DEV: Jumping to tour step:', stepName);
+      
+      const navigationToUse = nav || navigation;
+      if (!navigationToUse) {
+        console.warn('🎯 DEV: No navigation available for jumpToTourStep');
+        return;
+      }
+      
+      // Get the screen for this step
+      const targetScreen = STEP_SCREENS[stepName];
+      if (!targetScreen) {
+        console.warn('🎯 DEV: No screen defined for step:', stepName);
+        return;
+      }
+      
+      console.log('🎯 DEV: Navigating to screen:', targetScreen, 'for step:', stepName);
+      
+      try {
+        // Handle navigation for new tour steps
+        if (stepName === 'SUPPORTING_TOOLS_OVERVIEW') {
+          navigationToUse.navigate(targetScreen, { currentView: 'todo' });
+        } else {
+          navigationToUse.navigate(targetScreen);
+        }
+        
+        // Update tour state after navigation
+        setTimeout(() => {
+          updateGlobalTourState({ 
+            isTourActive: true,
+            currentStep: stepName 
+          });
+          global.isAppTourActive = true;
+          console.log('🎯 DEV: Tour state updated to:', stepName);
+        }, 500);
+        
+      } catch (error) {
+        console.error('🎯 DEV: Navigation failed:', error);
+        // Fallback: just update state
+        updateGlobalTourState({ 
+          isTourActive: true,
+          currentStep: stepName 
+        });
+        global.isAppTourActive = true;
+      }
+    };
+    
+    // DEV: Console shortcut commands
+    if (__DEV__) {
+      console.log('🤖 DEV COMMANDS AVAILABLE:');
+      console.log('- global.jumpToTourStep("PICK_CURRENT_FOCUS") // Start at step 3');
+      console.log('- global.jumpToTourStep("SUPPORTING_TOOLS_OVERVIEW") // Start at step 6');
+      console.log('- startTour("GOAL_ACHIEVEMENT_VALIDATION") // Start new tour');
+    }
+    
+    return () => {
+      delete global.startTourFromNotes;
+      delete global.updateGlobalTourState;
+      delete global.jumpToTourStep;
+    };
+  }, []);
   
   const nextStep = () => {
     const currentIndex = TOUR_SEQUENCE.indexOf(currentStep);
@@ -117,22 +216,20 @@ export const useAppTour = (navigation = null) => {
         // Navigate first, then update step after navigation
         try {
           console.log('🧭 Navigating to:', nextScreen);
-          navigation.navigate(nextScreen);
+          
+          // Handle navigation for new tour steps
+          if (nextStepName === 'SUPPORTING_TOOLS_OVERVIEW') {
+            navigation.navigate(nextScreen, { currentView: 'todo' });
+            console.log('🧭 Navigated to TodoTab for supporting tools overview');
+          } else {
+            navigation.navigate(nextScreen);
+            console.log('🧭 Navigated to:', nextScreen);
+          }
           
           // Use InteractionManager to wait for navigation animation to complete
           InteractionManager.runAfterInteractions(() => {
-            // For OVERVIEW_PLAN step, add extra delay to ensure screen is fully ready
-            if (nextStepName === 'OVERVIEW_PLAN') {
-              console.log('📍 Setting step to OVERVIEW_PLAN with extra delay for screen readiness');
-              // Signal to collapse all goals and milestones before showing tour
-              updateGlobalTourState({ 
-                currentStep: nextStepName,
-                shouldCollapseAll: true 
-              });
-            } else {
-              console.log('📍 Setting step to:', nextStepName);
-              updateGlobalTourState({ currentStep: nextStepName });
-            }
+            console.log('📍 Setting step to:', nextStepName);
+            updateGlobalTourState({ currentStep: nextStepName });
           });
         } catch (error) {
           console.warn('Navigation failed in tour:', error);
@@ -141,6 +238,7 @@ export const useAppTour = (navigation = null) => {
         }
       } else {
         console.log('📍 Setting step to:', nextStepName, '(no navigation needed)');
+        
         updateGlobalTourState({ currentStep: nextStepName });
       }
     } else {
@@ -213,6 +311,7 @@ export const useAppTour = (navigation = null) => {
     
     // Actions
     startTour,
+    startTourFromNotes,
     nextStep,
     skipTour,
     completeTour,
