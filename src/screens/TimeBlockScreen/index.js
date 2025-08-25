@@ -56,7 +56,7 @@ import GoalRequiredModal from './GoalRequiredModal';
 
 const TimeBlockScreen = ({ route, navigation }) => {
   const { theme } = useTheme();
-  const { mainGoals, milestones, addTimeBlock, updateTimeBlock, deleteTimeBlock, timeBlocks } = useAppContext();
+  const { mainGoals, milestones, tasks, addTimeBlock, updateTimeBlock, deleteTimeBlock, timeBlocks } = useAppContext();
   const notification = useNotification ? useNotification() : { 
     showSuccess: (msg) => console.log(msg),
     showError: (msg) => console.error(msg)
@@ -75,7 +75,19 @@ const TimeBlockScreen = ({ route, navigation }) => {
   // Check if using dark mode
   const isDarkMode = theme.background === '#000000';
   
-  const { mode, timeBlock: initialTimeBlock, date, prefilledStartTime, prefilledEndTime } = route.params || { mode: 'create' };
+  const { 
+    mode, 
+    timeBlock: initialTimeBlock, 
+    date, 
+    prefilledStartTime, 
+    prefilledEndTime,
+    prefilledTask,
+    prefilledMilestone,
+    prefilledGoal,
+    prefilledTaskId,
+    prefilledMilestoneId,
+    prefilledGoalId
+  } = route.params || { mode: 'create' };
   const isCreating = mode === 'create';
 
   // Animation values
@@ -92,24 +104,10 @@ const TimeBlockScreen = ({ route, navigation }) => {
   const [showGoalRequiredModal, setShowGoalRequiredModal] = useState(false);
   const [goalRequiredModalType, setGoalRequiredModalType] = useState('milestone'); // 'milestone' or 'task'
   
-  // Function to extract all tasks from milestones
+  // Function to get all tasks - tasks are now stored separately, not nested under milestones
   const getAllTasks = () => {
-    if (!Array.isArray(milestones)) return [];
-    
-    // Collect all tasks from all milestones
-    const allTasks = [];
-    milestones.forEach(milestone => {
-      if (milestone && Array.isArray(milestone.tasks)) {
-        // Add milestone ID to each task for reference
-        const milestoneTasks = milestone.tasks.map(task => ({
-          ...task,
-          milestoneId: milestone.id
-        }));
-        allTasks.push(...milestoneTasks);
-      }
-    });
-    
-    return allTasks;
+    if (!Array.isArray(tasks)) return [];
+    return tasks;
   };
   
   // Tab state
@@ -255,7 +253,19 @@ const TimeBlockScreen = ({ route, navigation }) => {
   useEffect(() => {
     // If we're editing an existing time block, set the initial values
     if (!isCreating && initialTimeBlock) {
-      console.log("Editing time block:", initialTimeBlock);
+      console.log('[TimeBlockScreen] Loading existing time block:', {
+        title: initialTimeBlock.title,
+        domain: initialTimeBlock.domain,
+        domainColor: initialTimeBlock.domainColor,
+        milestoneId: initialTimeBlock.milestoneId,
+        milestoneTitle: initialTimeBlock.milestoneTitle,
+        taskId: initialTimeBlock.taskId,
+        taskTitle: initialTimeBlock.taskTitle,
+        isGeneralActivity: initialTimeBlock.isGeneralActivity
+      });
+      console.log('[TimeBlockScreen] Available goals:', mainGoals?.map(g => ({ id: g.id, title: g.title, domain: g.domain })));
+      console.log('[TimeBlockScreen] Available milestones:', milestones?.map(m => ({ id: m.id, title: m.title, goalId: m.goalId })));
+      console.log('[TimeBlockScreen] Available tasks:', tasks?.map(t => ({ id: t.id, title: t.title, milestoneId: t.milestoneId })));
       
       setTitle(initialTimeBlock.title);
       setStartTime(new Date(initialTimeBlock.startTime));
@@ -275,36 +285,61 @@ const TimeBlockScreen = ({ route, navigation }) => {
         setCategory(initialTimeBlock.category || 'Personal');
         setCustomColor(initialTimeBlock.customColor || '#4285F4');
       } else {
-        // Find the matching goal for the time block domain
-        const matchingGoal = Array.isArray(mainGoals) ? 
-          mainGoals.find(goal => goal.title === initialTimeBlock.domain) : null;
+        // Goal-focused time block - find goal, milestone, and task
         
-        if (matchingGoal) {
-          console.log("Found matching goal:", matchingGoal.title);
-          setDomain(matchingGoal.title);
-          setDomainColor(matchingGoal.color || initialTimeBlock.domainColor || '#4CAF50');
+        // First, try to find milestone by ID if available
+        let milestone = null;
+        let goal = null;
+        let task = null;
+        
+        if (initialTimeBlock.milestoneId && Array.isArray(milestones)) {
+          console.log('🎯 TimeBlock Edit: Looking for milestone with ID:', initialTimeBlock.milestoneId);
+          console.log('🎯 TimeBlock Edit: Available milestones:', milestones.map(m => ({ id: m.id, title: m.title })));
+          
+          milestone = milestones.find(m => m.id === initialTimeBlock.milestoneId);
+          console.log('[TimeBlockScreen] Found milestone by ID:', milestone ? milestone.title : 'NOT FOUND');
+          
+          if (milestone) {
+            setSelectedMilestone(milestone);
+            console.log('🎯 TimeBlock Edit: Set selectedMilestone to:', milestone.title);
+            
+            // Find goal from milestone's goalId
+            if (milestone.goalId && Array.isArray(mainGoals)) {
+              goal = mainGoals.find(g => g.id === milestone.goalId);
+              console.log('[TimeBlockScreen] Found goal via milestone:', goal ? goal.title : 'NOT FOUND');
+            }
+          }
+        }
+        
+        // If no goal found via milestone, try to find by domain (title)
+        if (!goal && Array.isArray(mainGoals)) {
+          goal = mainGoals.find(g => g.title === initialTimeBlock.domain);
+          console.log('[TimeBlockScreen] Found goal by domain title:', goal ? goal.title : 'NOT FOUND');
+        }
+        
+        // Set goal information
+        if (goal) {
+          setDomain(goal.title);
+          setDomainColor(goal.color || initialTimeBlock.domainColor || '#4CAF50');
         } else {
           // If no matching goal found, still set the domain to preserve it
-          console.log("No matching goal found, using time block domain");
+          console.log('[TimeBlockScreen] No goal found, using stored domain:', initialTimeBlock.domain);
           setDomain(initialTimeBlock.domain);
           setDomainColor(initialTimeBlock.domainColor || '#4CAF50');
         }
         
-        // Set milestone if available
-        if (initialTimeBlock.milestoneId && Array.isArray(milestones)) {
-          const milestone = milestones.find(p => p.id === initialTimeBlock.milestoneId);
-          if (milestone) {
-            setSelectedMilestone(milestone);
-            
-            // Set task if available
-            if (initialTimeBlock.taskId) {
-              // Find task in all tasks array
-              const tasks = getAllTasks();
-              const task = tasks.find(t => t.id === initialTimeBlock.taskId);
-              if (task) {
-                setSelectedTask(task);
-              }
-            }
+        // Set task if available
+        if (initialTimeBlock.taskId) {
+          console.log('🎯 TimeBlock Edit: Looking for task with ID:', initialTimeBlock.taskId);
+          const allTasks = getAllTasks();
+          console.log('🎯 TimeBlock Edit: Available tasks:', allTasks.map(t => ({ id: t.id, title: t.title })));
+          
+          task = allTasks.find(t => t.id === initialTimeBlock.taskId);
+          console.log('[TimeBlockScreen] Found task by ID:', task ? task.title : 'NOT FOUND');
+          
+          if (task) {
+            setSelectedTask(task);
+            console.log('🎯 TimeBlock Edit: Set selectedTask to:', task.title);
           }
         }
       }
@@ -400,12 +435,70 @@ const TimeBlockScreen = ({ route, navigation }) => {
       setStartTime(startTimeToUse);
       setEndTime(endTimeToUse);
 
-      // Store initial values for a new time block
+      // Handle pre-filled data from kanban task selection (regular flow)
+      if (prefilledTask && prefilledMilestone && prefilledGoal) {
+        // Set the title to the task title
+        setTitle(prefilledTask.title);
+        
+        // Set to goal tab since we have goal/milestone/task data
+        setActiveTab('goal');
+        
+        // Set the goal (domain)
+        setDomain(prefilledGoal.title);
+        setDomainColor(prefilledGoal.color || '#4CAF50');
+        
+        // Set the milestone
+        setSelectedMilestone(prefilledMilestone);
+        
+        // Set the task
+        setSelectedTask(prefilledTask);
+      }
+      
+      // Handle tour mode - check if we have tour-selected data (milestone and goal at minimum)
+      else if (global.tourSelectedMilestone && global.tourSelectedGoal) {
+        console.log('🎯 Tour: Pre-filling TimeBlock with tour-selected data:', {
+          task: global.tourSelectedTask ? global.tourSelectedTask.title : 'None (milestone focus)',
+          milestone: global.tourSelectedMilestone.title,
+          goal: global.tourSelectedGoal.title
+        });
+        
+        // Set the title to "Focus Session" for tour
+        setTitle("Focus Session");
+        
+        // Set to goal tab since we have goal/milestone data
+        setActiveTab('goal');
+        
+        // Set the goal (domain)
+        setDomain(global.tourSelectedGoal.title);
+        setDomainColor(global.tourSelectedGoal.color || '#4CAF50');
+        
+        // Set the milestone
+        setSelectedMilestone(global.tourSelectedMilestone);
+        
+        // Set the task if available (could be null for milestone-focused timeblocks)
+        if (global.tourSelectedTask) {
+          setSelectedTask(global.tourSelectedTask);
+        }
+        
+        console.log('🎯 Tour: TimeBlock state set:', {
+          title: "Focus Session",
+          activeTab: 'goal',
+          domain: global.tourSelectedGoal.title,
+          selectedMilestone: global.tourSelectedMilestone ? global.tourSelectedMilestone.title : null,
+          selectedTask: global.tourSelectedTask ? global.tourSelectedTask.title : 'None (milestone focus)'
+        });
+      }
+
+      // Store initial values for a new time block (accounting for pre-filled or tour data)
+      const tourTask = global.tourSelectedTask;
+      const tourMilestone = global.tourSelectedMilestone;
+      const tourGoal = global.tourSelectedGoal;
+      
       setInitialValues({
-        title: '',
-        tab: 'goal', // Default tab
-        domain: '',
-        domainColor: '#4CAF50',
+        title: tourTask ? 'Focus Session' : (prefilledTask?.title || ''),
+        tab: (prefilledTask || tourTask) ? 'goal' : 'goal', // Default tab
+        domain: prefilledGoal?.title || tourGoal?.title || '',
+        domainColor: prefilledGoal?.color || tourGoal?.color || '#4CAF50',
         category: 'Personal',
         customColor: '#4285F4',
         startTime: startTimeToUse.toISOString(),
@@ -420,8 +513,8 @@ const TimeBlockScreen = ({ route, navigation }) => {
         enableNotification: false,
         notificationTime: 'exact',
         customMinutes: '15',
-        milestoneId: null,
-        taskId: null
+        milestoneId: prefilledMilestone?.id || tourMilestone?.id || null,
+        taskId: prefilledTask?.id || tourTask?.id || null
       });
       
       // Reset unsaved changes flag
@@ -437,7 +530,7 @@ const TimeBlockScreen = ({ route, navigation }) => {
         setDomainColor(activeGoals[0].color);
       }
     }
-  }, [isCreating, initialTimeBlock, date, mainGoals, milestones]);
+  }, [isCreating, initialTimeBlock, date, mainGoals, milestones, tasks]);
   
   // Update check for unsaved changes whenever relevant state changes
   useEffect(() => {
@@ -672,6 +765,17 @@ const TimeBlockScreen = ({ route, navigation }) => {
     const milestoneTitle = selectedMilestone ? selectedMilestone.title : null;
     const taskTitle = selectedTask ? selectedTask.title : null;
     
+    console.log('🎯 TimeBlock Save Debug:', {
+      title,
+      domain,
+      milestoneId,
+      milestoneTitle,
+      taskId,
+      taskTitle,
+      selectedMilestone: selectedMilestone ? selectedMilestone.title : null,
+      selectedTask: selectedTask ? selectedTask.title : null
+    });
+    
     // If we're updating, cancel the existing notification if there is one
     if (!isCreating && notificationId) {
       try {
@@ -723,6 +827,7 @@ const TimeBlockScreen = ({ route, navigation }) => {
       customMinutes: enableNotification && notificationTime === 'custom' ? validatedMinutes : null,
       notificationId: null
     };
+    
     
     // Handle notification scheduling
     let newNotificationId = null;
@@ -785,6 +890,26 @@ const TimeBlockScreen = ({ route, navigation }) => {
       
       // Reset hasUnsavedChanges flag
       setHasUnsavedChanges(false);
+      
+      // Tour detection: Check if we just created a time block during the tour
+      if (global.tourSelectedMilestone && global.tourSelectedGoal) {
+        console.log('🎯 Tour: Time block created successfully with pre-filled data!', {
+          task: global.tourSelectedTask ? global.tourSelectedTask.title : 'None (milestone focus)',
+          milestone: global.tourSelectedMilestone.title,
+          goal: global.tourSelectedGoal.title
+        });
+        
+        // Clear the global tour data since we've successfully used it
+        global.tourSelectedTask = null;
+        global.tourSelectedMilestone = null;
+        global.tourSelectedGoal = null;
+        
+        // Notify the tour system that time scheduling was completed
+        if (global.tourTimeScheduled) {
+          console.log('🎯 Tour: Calling global.tourTimeScheduled()');
+          global.tourTimeScheduled();
+        }
+      }
       
       // Navigate back
       navigation.goBack();
@@ -1263,7 +1388,7 @@ const TimeBlockScreen = ({ route, navigation }) => {
             formatDate={formatDate}
             availableGoals={availableGoals}
             goalMilestones={goalMilestones}
-            milestoneTasks={milestoneTasks}
+            milestoneItems={milestoneTasks}
             handleDelete={handleDelete}
             isCreating={isCreating}
             theme={theme}

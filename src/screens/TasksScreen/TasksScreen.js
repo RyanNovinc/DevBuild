@@ -1146,6 +1146,24 @@ const TasksScreen = ({ route, navigation }) => {
     // Tour detection: Check if user moved milestone to In Progress during tour
     if (isTourActive && (currentStep === 'PICK_CURRENT_FOCUS' || currentStep === 'TASK_MOVED_CELEBRATION') && newStatus === 'in_progress') {
       console.log('🎯 Tour: User moved milestone to In Progress! Triggering celebration step');
+      
+      // Store the selected milestone data for timeblock creation
+      const goal = mainGoals.find(g => g.id === milestoneToUpdate.goalId);
+      
+      if (goal) {
+        console.log('🎯 Tour: Storing milestone data globally for timeblock creation:', {
+          milestone: milestoneToUpdate.title,
+          goal: goal.title
+        });
+        
+        // For milestone-focused timeblocks, we don't have a specific task
+        global.tourSelectedTask = null;
+        global.tourSelectedMilestone = milestoneToUpdate;
+        global.tourSelectedGoal = goal;
+      } else {
+        console.error('🎯 Tour: ERROR - Could not find goal for milestone:', milestoneToUpdate);
+      }
+      
       setTimeout(() => {
         if (global.tourTaskMoved) {
           global.tourTaskMoved();
@@ -1389,6 +1407,25 @@ const TasksScreen = ({ route, navigation }) => {
         if (isTourActive && (currentStep === 'PICK_CURRENT_FOCUS' || currentStep === 'TASK_MOVED_CELEBRATION') && newStatus === 'in_progress') {
           console.log('🎯 Tour: User moved task to In Progress! Triggering celebration step');
           console.log('🎯 Tour: Current state:', { isTourActive, currentStep, globalCallback: !!global.tourTaskMoved });
+          
+          // Store the selected task data for timeblock creation
+          const milestone = milestones.find(m => m.id === taskToUpdate.milestoneId);
+          const goal = milestone ? mainGoals.find(g => g.id === milestone.goalId) : null;
+          
+          if (milestone && goal) {
+            console.log('🎯 Tour: Storing task data globally for timeblock creation:', {
+              task: taskToUpdate.title,
+              milestone: milestone.title,
+              goal: goal.title
+            });
+            
+            global.tourSelectedTask = taskToUpdate;
+            global.tourSelectedMilestone = milestone;
+            global.tourSelectedGoal = goal;
+          } else {
+            console.error('🎯 Tour: ERROR - Could not find milestone or goal for task:', taskToUpdate);
+          }
+          
           setTimeout(() => {
             if (global.tourTaskMoved) {
               console.log('🎯 Tour: Calling global.tourTaskMoved()');
@@ -1638,15 +1675,18 @@ const TasksScreen = ({ route, navigation }) => {
         opacity: Animated.multiply(contentFadeOpacity, contentOpacity),
         transform: [{ translateY: contentTranslate }]
       }}>
-        <GoalFilters 
-          selectedGoalId={selectedGoalId}
-          onGoalSelect={handleGoalSelect}
-          goalsToShow={goalsToShow}
-          theme={theme}
-          selectedMilestoneId={selectedMilestoneId}
-          onMilestoneSelect={handleMilestoneSelect}
-          milestonesForGoal={milestonesForGoal}
-        />
+        {/* Hide goal filters during tour */}
+        {!isTourActive && (
+          <GoalFilters 
+            selectedGoalId={selectedGoalId}
+            onGoalSelect={handleGoalSelect}
+            goalsToShow={goalsToShow}
+            theme={theme}
+            selectedMilestoneId={selectedMilestoneId}
+            onMilestoneSelect={handleMilestoneSelect}
+            milestonesForGoal={milestonesForGoal}
+          />
+        )}
         <View style={{ 
           flex: 1, 
           backgroundColor: '#000000',
