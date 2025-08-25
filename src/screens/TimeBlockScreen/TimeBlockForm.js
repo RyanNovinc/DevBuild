@@ -36,6 +36,9 @@ const GoalSelector = ({
   theme,
   isDarkMode
 }) => {
+  // Ensure goals is never undefined
+  const safeGoals = goals || [];
+  
   return (
     <Modal
       visible={visible}
@@ -104,8 +107,8 @@ const GoalSelector = ({
               </Text>
             </TouchableOpacity>
             
-            {goals.length > 0 ? (
-              goals.map(goal => (
+            {safeGoals.length > 0 ? (
+              safeGoals.map(goal => (
                 <TouchableOpacity 
                   key={goal.id}
                   style={[
@@ -238,6 +241,11 @@ const TimeBlockForm = ({
   validateCustomMinutes,
 }) => {
   
+  // Ensure arrays are never undefined to prevent errors
+  const safeGoalMilestones = goalMilestones || [];
+  const safeMilestoneItems = milestoneItems || [];
+  const safeAvailableGoals = availableGoals || [];
+  
   // State for showing goal selector modal
   const [showGoalModal, setShowGoalModal] = useState(false);
   
@@ -267,8 +275,8 @@ const TimeBlockForm = ({
   ]);
   
   // Find selected goal
-  const selectedGoal = Array.isArray(availableGoals) ? 
-    availableGoals.find(goal => goal.title === domain) : null;
+  const selectedGoal = Array.isArray(safeAvailableGoals) ? 
+    safeAvailableGoals.find(goal => goal.title === domain) : null;
   
   // Calculate time block duration whenever start or end time changes
   useEffect(() => {
@@ -439,11 +447,11 @@ const TimeBlockForm = ({
                 { 
                   backgroundColor: theme.card, 
                   borderColor: selectedMilestone ? domainColor : theme.border,
-                  opacity: goalMilestones.length > 0 ? 1 : 0.6
+                  opacity: safeGoalMilestones.length > 0 ? 1 : 0.6
                 }
               ]}
-              onPress={goalMilestones.length > 0 ? openMilestoneModal : null}
-              activeOpacity={goalMilestones.length > 0 ? 0.8 : 1}
+              onPress={safeGoalMilestones.length > 0 ? openMilestoneModal : null}
+              activeOpacity={safeGoalMilestones.length > 0 ? 0.8 : 1}
             >
               {selectedMilestone ? (
                 <View style={styles.selectedContent}>
@@ -455,16 +463,16 @@ const TimeBlockForm = ({
               ) : (
                 <View style={styles.placeholderContent}>
                   <Ionicons 
-                    name={goalMilestones.length > 0 ? "add-circle-outline" : "close-circle-outline"} 
+                    name={safeGoalMilestones.length > 0 ? "add-circle-outline" : "close-circle-outline"} 
                     size={16} 
                     color={theme.textSecondary} 
                   />
                   <Text style={[styles.placeholderText, { color: theme.textSecondary }]}>
-                    {goalMilestones.length > 0 ? 'Select a milestone' : 'No milestones available'}
+                    {safeGoalMilestones.length > 0 ? 'Select a milestone' : 'No milestones available'}
                   </Text>
                 </View>
               )}
-              {goalMilestones.length > 0 && (
+              {safeGoalMilestones.length > 0 && (
                 <Ionicons name="chevron-forward-outline" size={16} color={theme.textSecondary} />
               )}
             </TouchableOpacity>
@@ -485,11 +493,11 @@ const TimeBlockForm = ({
                 { 
                   backgroundColor: theme.card, 
                   borderColor: selectedTask ? domainColor : theme.border,
-                  opacity: milestoneItems.length > 0 ? 1 : 0.6
+                  opacity: safeMilestoneItems.length > 0 ? 1 : 0.6
                 }
               ]}
-              onPress={milestoneItems.length > 0 ? openTaskModal : null}
-              activeOpacity={milestoneItems.length > 0 ? 0.8 : 1}
+              onPress={safeMilestoneItems.length > 0 ? openTaskModal : null}
+              activeOpacity={safeMilestoneItems.length > 0 ? 0.8 : 1}
             >
               {selectedTask ? (
                 <View style={styles.selectedContent}>
@@ -505,16 +513,16 @@ const TimeBlockForm = ({
               ) : (
                 <View style={styles.placeholderContent}>
                   <Ionicons 
-                    name={milestoneItems.length > 0 ? "add-circle-outline" : "close-circle-outline"} 
+                    name={safeMilestoneItems.length > 0 ? "add-circle-outline" : "close-circle-outline"} 
                     size={16} 
                     color={theme.textSecondary} 
                   />
                   <Text style={[styles.placeholderText, { color: theme.textSecondary }]}>
-                    {milestoneItems.length > 0 ? 'Select a task' : 'No tasks available'}
+                    {safeMilestoneItems.length > 0 ? 'Select a task' : 'No tasks available'}
                   </Text>
                 </View>
               )}
-              {milestoneItems.length > 0 && (
+              {safeMilestoneItems.length > 0 && (
                 <Ionicons name="chevron-forward-outline" size={16} color={theme.textSecondary} />
               )}
             </TouchableOpacity>
@@ -1081,7 +1089,7 @@ const TimeBlockForm = ({
           onClose={() => setShowGoalModal(false)}
           onSelectGoal={handleGoalSelect}
           selectedGoal={selectedGoal}
-          goals={availableGoals}
+          goals={safeAvailableGoals}
           customColor={customColor}
           theme={theme}
           isDarkMode={isDarkMode}

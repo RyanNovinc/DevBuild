@@ -190,7 +190,7 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
   const addTimeBlock = appContext.addTimeBlock;
   const userSubscriptionStatus = appContext.userSubscriptionStatus || 'free';
   const isPremium = userSubscriptionStatus === 'pro' || userSubscriptionStatus === 'unlimited';
-  const { mainGoals, milestones } = appContext;
+  const { mainGoals, milestones, tasks } = appContext;
   const { showSuccess } = useNotification();
   
   // Calendar integration
@@ -682,29 +682,70 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
 
   // Helper function to find the task that was moved to "In Progress" during tour
   const findInProgressTourTask = () => {
-    for (const goal of mainGoals || []) {
-      for (const project of goal.projects || []) {
-        for (const milestone of project.milestones || []) {
-          const inProgressTask = milestone.tasks?.find(task => 
-            task.status === 'in-progress' && task.columnStatus === 'in-progress'
-          );
-          if (inProgressTask) {
-            return {
-              task: inProgressTask,
-              milestone,
-              project,
-              goal
-            };
-          }
-        }
+    console.log('🎯 Tour: findInProgressTourTask called');
+    console.log('🎯 Tour: Global tour data:', {
+      tourSelectedTask: global.tourSelectedTask ? global.tourSelectedTask.title : null,
+      tourSelectedMilestone: global.tourSelectedMilestone ? global.tourSelectedMilestone.title : null,
+      tourSelectedGoal: global.tourSelectedGoal ? global.tourSelectedGoal.title : null
+    });
+    
+    // First, check if we have tour-selected task data stored globally
+    if (global.tourSelectedTask && global.tourSelectedMilestone && global.tourSelectedGoal) {
+      console.log('🎯 Tour: Using stored tour task data');
+      return {
+        task: global.tourSelectedTask,
+        milestone: global.tourSelectedMilestone,
+        goal: global.tourSelectedGoal
+      };
+    }
+    
+    console.log('🎯 Tour: No global tour data, looking for in-progress tasks');
+    console.log('🎯 Tour: Available tasks:', tasks?.map(t => ({ id: t.id, title: t.title, status: t.status })));
+    
+    // Fallback: look for in-progress tasks in the updated data structure
+    // Tasks are now stored separately, not nested under milestones
+    const inProgressTask = tasks?.find(task => 
+      task.status === 'in-progress'
+    );
+    
+    console.log('🎯 Tour: Found in-progress task:', inProgressTask ? inProgressTask.title : null);
+    
+    if (inProgressTask) {
+      const milestone = milestones?.find(m => m.id === inProgressTask.milestoneId);
+      const goal = milestone ? mainGoals?.find(g => g.id === milestone.goalId) : null;
+      
+      console.log('🎯 Tour: Found milestone:', milestone ? milestone.title : null);
+      console.log('🎯 Tour: Found goal:', goal ? goal.title : null);
+      
+      if (milestone && goal) {
+        return {
+          task: inProgressTask,
+          milestone,
+          goal
+        };
       }
     }
+    
+    console.log('🎯 Tour: No valid task data found, returning null');
     return null;
   };
 
   // Handle creating a time block during tour
   const handleCreateTourTimeBlock = async (durationMinutes, startTime = null) => {
-    console.log('🎯 Tour: Creating time block for', durationMinutes, 'minutes', { startTime });
+    console.log('🎯 Tour: handleCreateTourTimeBlock called with:', durationMinutes, 'minutes', { startTime });
+    console.log('🎯 Tour: Current context data available:', {
+      mainGoals: mainGoals ? mainGoals.length : 0,
+      milestones: milestones ? milestones.length : 0,
+      tasks: tasks ? tasks.length : 0
+    });
+    console.log('🎯 Tour: Global tour data check:', {
+      hasGlobalTask: !!global.tourSelectedTask,
+      hasGlobalMilestone: !!global.tourSelectedMilestone,
+      hasGlobalGoal: !!global.tourSelectedGoal,
+      taskTitle: global.tourSelectedTask?.title,
+      milestoneTitle: global.tourSelectedMilestone?.title,
+      goalTitle: global.tourSelectedGoal?.title
+    });
     
     try {
       // Use the selected start time, or calculate default
@@ -744,14 +785,25 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
       const taskInfo = findInProgressTourTask();
       console.log('🎯 Tour: Found task info:', taskInfo);
       
+      // If taskInfo is null, something went wrong - let's debug this
+      if (!taskInfo) {
+        console.error('🎯 Tour: ERROR - No task info found! This should not happen during tour.');
+        console.error('🎯 Tour: Available data for debugging:', {
+          tasksCount: tasks ? tasks.length : 0,
+          inProgressTasks: tasks ? tasks.filter(t => t.status === 'in-progress') : [],
+          milestonesCount: milestones ? milestones.length : 0,
+          goalsCount: mainGoals ? mainGoals.length : 0
+        });
+      }
+      
       // Create the actual time block data with proper structure
       const timeBlockData = {
         id: Date.now().toString(),
-        title: taskInfo ? `Work on ${taskInfo.task.title}` : 'Work on Goal Task',
+        title: 'Focus Session', // Use consistent title as per tour design
         isGeneralActivity: false, // This is a goal-focused time block
         
         // For Goal Focus time blocks - link to actual goal/project/task
-        domain: taskInfo ? taskInfo.goal.domain : 'Personal Growth',
+        domain: taskInfo ? taskInfo.goal.title : 'Personal Growth', // Use goal title as domain
         domainColor: taskInfo ? taskInfo.goal.color || '#22c55e' : '#22c55e',
         milestoneId: taskInfo ? taskInfo.milestone.id : null,
         milestoneTitle: taskInfo ? taskInfo.milestone.title : null,
@@ -790,6 +842,11 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
       // Actually create the time block using addTimeBlock
       await addTimeBlock(timeBlockData);
       console.log('🎯 Tour: Time block created successfully', timeBlockData);
+      
+      // Clear tour selection data after successful timeblock creation
+      global.tourSelectedTask = null;
+      global.tourSelectedMilestone = null;
+      global.tourSelectedGoal = null;
       
       // Show success feedback
       const timeString = blockStartTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
