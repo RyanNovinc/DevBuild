@@ -247,8 +247,8 @@ const KanbanBoard = ({
           </SafeText>
           
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            {/* Eye toggle - only show in first column and for tasks only */}
-            {status === 'todo' && !isMilestoneLevel && (
+            {/* Eye toggle - only show in first column and for tasks only - HIDE DURING TOUR */}
+            {status === 'todo' && !isMilestoneLevel && !isTourMode && (
               <TouchableOpacity
                 onPress={() => {
                   // This will be handled by parent component
@@ -271,11 +271,12 @@ const KanbanBoard = ({
               </TouchableOpacity>
             )}
             
-            {/* WIP Limit indicator and controls for In Progress column */}
+            {/* WIP Limit indicator and controls for In Progress column - HIDE CONTROLS DURING TOUR */}
             {status === 'in_progress' && (
               <View style={styles.wipLimitContainer}>
                 {/* Decrease button */}
-                <TouchableOpacity
+                {!isTourMode && (
+                  <TouchableOpacity
                   style={[styles.wipControlButton, { opacity: wipLimit <= 1 ? 0.3 : 1 }]}
                   onPress={() => {
                     if (wipLimit > 1) {
@@ -305,6 +306,7 @@ const KanbanBoard = ({
                 >
                   <Ionicons name="remove" size={16} color="rgba(255,255,255,0.9)" />
                 </TouchableOpacity>
+                )}
 
                 {/* Clickable WIP indicator */}
                 <TouchableOpacity
@@ -333,7 +335,8 @@ const KanbanBoard = ({
                 </TouchableOpacity>
 
                 {/* Increase button */}
-                <TouchableOpacity
+                {!isTourMode && (
+                  <TouchableOpacity
                   style={[styles.wipControlButton, { opacity: wipLimit >= 10 ? 0.3 : 1 }]}
                   onPress={() => {
                     if (wipLimit < 10 && onWipLimitChange) {
@@ -348,6 +351,7 @@ const KanbanBoard = ({
                 >
                   <Ionicons name="add" size={16} color="rgba(255,255,255,0.9)" />
                 </TouchableOpacity>
+                )}
               </View>
             )}
             
@@ -377,11 +381,15 @@ const KanbanBoard = ({
                 onPress={() => {
                   if (isMilestoneLevel && onPressMilestone) {
                     onPressMilestone(item);
-                  } else if (!isMilestoneLevel && onPressTask) {
-                    onPressTask(item);
                   }
+                  // For tasks, we now only use long press to show schedule option
                 }}
                 onLongPress={() => {
+                  // Disable long-press during tour
+                  if (isTourMode) {
+                    return;
+                  }
+                  
                   if (isMilestoneLevel) {
                     Alert.alert(
                       'Move Milestone',
@@ -399,20 +407,27 @@ const KanbanBoard = ({
                       ]
                     );
                   } else {
-                    // Task long press - show move options
+                    // Task long press - show move and schedule options
+                    const moveOptions = ['todo', 'in_progress', 'done']
+                      .filter(s => s !== status)
+                      .map(newStatus => ({
+                        text: `Move to ${newStatus === 'todo' ? 'To Do' : 
+                               newStatus === 'in_progress' ? 'In Progress' : 'Done'}`,
+                        onPress: () => handleMoveTask(item, newStatus)
+                      }));
+
+                    const scheduleOption = onPressTask ? [{
+                      text: '📅 Schedule Time Block',
+                      onPress: () => onPressTask(item)
+                    }] : [];
+
                     Alert.alert(
-                      'Move Task',
-                      `Move "${item.title}" to a different status?`,
+                      item.title,
+                      'What would you like to do with this task?',
                       [
                         { text: 'Cancel', style: 'cancel' },
-                        ...(['todo', 'in_progress', 'done']
-                          .filter(s => s !== status)
-                          .map(newStatus => ({
-                            text: newStatus === 'todo' ? 'To Do' : 
-                                 newStatus === 'in_progress' ? 'In Progress' : 'Done',
-                            onPress: () => handleMoveTask(item, newStatus)
-                          }))
-                        )
+                        ...scheduleOption,
+                        ...moveOptions
                       ]
                     );
                   }

@@ -160,7 +160,8 @@ const AppTourOverlay = ({
         aiIconPulse.stopAnimation();
         tapPromptOpacity.stopAnimation();
         
-        overlayOpacity.setValue(shouldHaveDarkOverlay ? 0 : 0);
+        // Only reset overlay if we're on ProfileScreen
+        overlayOpacity.setValue(currentStep === 'GOAL_ACHIEVEMENT_VALIDATION' ? 0 : 1);
         
         messageOpacity.setValue(0);
         aiIconScale.setValue(0);
@@ -178,8 +179,8 @@ const AppTourOverlay = ({
         tapPromptOpacity.stopAnimation();
         
         // Reset all animation values to initial state
-        // Start with clear overlay for all steps
-        overlayOpacity.setValue(0);
+        // Only use dark overlay for ProfileScreen
+        overlayOpacity.setValue(currentStep === 'GOAL_ACHIEVEMENT_VALIDATION' ? 0 : 1);
         messageOpacity.setValue(0);
         aiIconScale.setValue(0);
         aiIconPulse.setValue(1);
@@ -205,10 +206,12 @@ const AppTourOverlay = ({
       
       // Entrance animation - gentle for early steps, dramatic for others
       // Check if overlay is already dark (for step transitions within Profile)
+      // Only show dark overlay for ProfileScreen (GOAL_ACHIEVEMENT_VALIDATION)
+      const shouldShowDarkOverlay = currentStep === 'GOAL_ACHIEVEMENT_VALIDATION';
       const overlayAlreadyDark = overlayOpacity._value > 0.5;
       
-      const overlayAnimation = overlayAlreadyDark ? 
-        Animated.delay(0) : // Skip overlay animation if already dark
+      const overlayAnimation = (!shouldShowDarkOverlay || overlayAlreadyDark) ? 
+        Animated.delay(0) : // Skip overlay animation if not ProfileScreen or already dark
         Animated.timing(overlayOpacity, {
           toValue: 1,
           duration: isEarlyStep ? 600 : 100, // Much slower fade-in for early steps
@@ -216,7 +219,7 @@ const AppTourOverlay = ({
         });
       
       Animated.sequence([
-        // 1. Darken everything (skip if already dark)
+        // 1. Darken everything (only for ProfileScreen)
         overlayAnimation,
         // 2. Wait a moment for dramatic effect (shorter for early steps)
         Animated.delay(isEarlyStep ? 200 : 300),
@@ -468,6 +471,9 @@ const AppTourOverlay = ({
     console.log('🎯 AppTourOverlay: TIME step detected, currentStep =', currentStep);
   }
   
+  // Determine if we should show dark overlay (only for ProfileScreen step)
+  const showDarkOverlay = currentStep === 'GOAL_ACHIEVEMENT_VALIDATION';
+  
   return (
     <View style={StyleSheet.absoluteFillObject} pointerEvents="box-only">
       {/* Full-screen touchable for tap-to-advance and blocking interactions */}
@@ -477,14 +483,16 @@ const AppTourOverlay = ({
         onPress={handleScreenTap}
       />
       
-      {/* Simple full-screen dark overlay */}
-      <Animated.View 
-        style={[
-          styles.fullScreenOverlay,
-          { opacity: overlayOpacity }
-        ]}
-        pointerEvents="none"
-      />
+      {/* Simple full-screen dark overlay - ONLY for ProfileScreen */}
+      {showDarkOverlay && (
+        <Animated.View 
+          style={[
+            styles.fullScreenOverlay,
+            { opacity: overlayOpacity }
+          ]}
+          pointerEvents="none"
+        />
+      )}
       
       
       {/* AI Message Box - Fades in with other elements */}

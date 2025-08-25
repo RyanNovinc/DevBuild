@@ -673,39 +673,41 @@ const KanbanView = ({ taskScreenProps }) => {
             )}
           </View>
 
-          {/* Full Screen Toggle Button - Bottom Left */}
-          <TouchableOpacity
-            style={{
-              position: 'absolute', 
-              bottom: insets.bottom - 20, 
-              left: 20, 
-              zIndex: 100,
-              backgroundColor: isDarkMode ? '#333333' : '#FFFFFF',
-              borderRadius: 20,
-              padding: 8,
-              minWidth: 44,
-              minHeight: 44,
-              alignItems: 'center',
-              justifyContent: 'center',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.3,
-              shadowRadius: 4,
-              elevation: 5,
-            }}
-            onPress={() => setKanbanFullScreen(true)}
-            activeOpacity={0.7}
-            accessible={true}
-            accessibilityRole="button"
-            accessibilityLabel="Enter full screen"
-            accessibilityHint="Expands kanban board to full screen"
-          >
-            <Ionicons 
-              name="expand" 
-              size={scaleWidth(20)} 
-              color={isDarkMode ? '#FFFFFF' : '#333333'} 
-            />
-          </TouchableOpacity>
+          {/* Full Screen Toggle Button - Bottom Left - HIDE DURING TOUR */}
+          {!isTourMode && (
+            <TouchableOpacity
+              style={{
+                position: 'absolute', 
+                bottom: insets.bottom - 20, 
+                left: 20, 
+                zIndex: 100,
+                backgroundColor: isDarkMode ? '#333333' : '#FFFFFF',
+                borderRadius: 20,
+                padding: 8,
+                minWidth: 44,
+                minHeight: 44,
+                alignItems: 'center',
+                justifyContent: 'center',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.3,
+                shadowRadius: 4,
+                elevation: 5,
+              }}
+              onPress={() => setKanbanFullScreen(true)}
+              activeOpacity={0.7}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Enter full screen"
+              accessibilityHint="Expands kanban board to full screen"
+            >
+              <Ionicons 
+                name="expand" 
+                size={scaleWidth(20)} 
+                color={isDarkMode ? '#FFFFFF' : '#333333'} 
+              />
+            </TouchableOpacity>
+          )}
       
       {/* Data Fix Option - Only show in projects view and when there's a data inconsistency */}
       {viewMode === 'projects' && totalProjectCount !== visibleItemCount && getFilteredMilestones().length === 0 && (
