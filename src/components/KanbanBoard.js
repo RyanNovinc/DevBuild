@@ -114,10 +114,11 @@ const KanbanBoard = ({
   
   // Function to get the color for a task based on its milestone's goal's color
   const getTaskColor = (task) => {
-    if (!task.projectId) return color;
+    // Check both projectId and milestoneId for milestone association (match Overview screen logic)
+    if (!task.projectId && !task.milestoneId) return color;
     
-    // Find the milestone this task belongs to
-    const milestone = allMilestones.find(p => p.id === task.projectId);
+    // Find the milestone this task belongs to - check both properties
+    const milestone = allMilestones.find(p => p.id === task.projectId || p.id === task.milestoneId);
     if (!milestone || !milestone.goalId) return color;
     
     // Find the goal this milestone belongs to
@@ -463,7 +464,8 @@ const KanbanBoard = ({
                       <View style={styles.taskMeta}>
                         {/* Goal info */}
                         {(() => {
-                          const milestone = allMilestones.find(p => p.id === item.projectId);
+                          // Check both projectId and milestoneId for milestone association (match Overview screen logic)
+                          const milestone = allMilestones.find(p => p.id === item.projectId || p.id === item.milestoneId);
                           const goal = milestone ? allGoals.find(g => g.id === milestone.goalId) : null;
                           
                           return (

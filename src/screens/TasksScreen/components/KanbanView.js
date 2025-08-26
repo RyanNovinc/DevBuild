@@ -67,7 +67,7 @@ const KanbanView = ({ taskScreenProps }) => {
   const [fadeAnim] = useState(new Animated.Value(1));
   
   // State for showing/hiding task meta labels
-  const [showTaskLabels, setShowTaskLabels] = useState(false);
+  const [showTaskLabels, setShowTaskLabels] = useState(true);
   
   // State for WIP education modal
   const [showWipEducation, setShowWipEducation] = useState(false);
