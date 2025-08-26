@@ -236,13 +236,11 @@ const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen,
     }
   }, [route?.params?.currentView, currentView, isTourActive, currentStep]);
   
-  // Force navigator remount to sync tab content with indicator
-  useFocusEffect(
-    React.useCallback(() => {
-      // Force remount of the navigation container to sync state
-      setNavigatorKey(`navigator-${Date.now()}`);
-    }, [])
-  );
+  // Only remount navigator when currentView changes, not on every focus
+  React.useEffect(() => {
+    // Only update navigator key when switching between todo/notes views
+    setNavigatorKey(`navigator-${currentView}-${Date.now()}`);
+  }, [currentView]);
   
   // No forced reset - let content match whatever tab is selected
   
@@ -1074,7 +1072,7 @@ const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen,
         
         {/* App Tour Overlay */}
         <AppTourOverlay 
-          isVisible={isTourActive && currentStep === 'SUPPORTING_TOOLS_OVERVIEW'}
+          isVisible={isTourActive && (currentStep === 'SUPPORTING_TOOLS_OVERVIEW' || currentStep === 'AI_FAREWELL')}
           currentStep={currentStep}
           onComplete={nextStep}
           onSkip={skipTour}

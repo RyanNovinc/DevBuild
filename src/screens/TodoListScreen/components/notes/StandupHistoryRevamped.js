@@ -13,8 +13,7 @@ import {
   TextInput,
   ActivityIndicator,
   SafeAreaView,
-  Platform,
-  StatusBar
+  Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -50,8 +49,15 @@ const StandupHistoryRevamped = ({ visible, setVisible, theme, showSuccess }) => 
 
   useEffect(() => {
     if (visible) {
+      // Ensure animations start from visible state immediately
+      fadeAnim.setValue(1);
+      slideAnim.setValue(0);
       loadHistoryData();
       startAnimations();
+    } else {
+      // Reset animations when modal closes to prevent layout conflicts
+      fadeAnim.setValue(0);
+      slideAnim.setValue(50);
     }
   }, [visible]);
 
@@ -60,16 +66,16 @@ const StandupHistoryRevamped = ({ visible, setVisible, theme, showSuccess }) => 
   }, [searchQuery, historyData]);
 
   const startAnimations = () => {
+    // Gentle enhancement animations - items are already visible
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 400,
+        duration: 200,
         useNativeDriver: true
       }),
-      Animated.spring(slideAnim, {
+      Animated.timing(slideAnim, {
         toValue: 0,
-        tension: 40,
-        friction: 8,
+        duration: 200,
         useNativeDriver: true
       })
     ]).start();
@@ -316,20 +322,28 @@ const StandupHistoryRevamped = ({ visible, setVisible, theme, showSuccess }) => 
     </Modal>
   );
 
+  const handleClose = () => {
+    // Reset state when closing
+    setSearchQuery('');
+    setSelectedEntry(null);
+    setShowEntryModal(false);
+    setVisible(false);
+  };
+
   return (
     <Modal
       visible={visible}
       animationType="slide"
-      presentationStyle="fullScreen"
-      onRequestClose={() => setVisible(false)}
+      presentationStyle="pageSheet"
+      onRequestClose={handleClose}
     >
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-        <StatusBar barStyle={theme.background === '#000000' ? 'light-content' : 'dark-content'} />
+        {/* StatusBar removed to prevent layout conflicts when modal closes */}
         
         {/* Header with proper spacing */}
         <View style={[styles.header, { borderBottomColor: theme.border + '30' }]}>
           <TouchableOpacity 
-            onPress={() => setVisible(false)}
+            onPress={handleClose}
             style={styles.headerButton}
           >
             <View style={[styles.backButton, { backgroundColor: theme.cardElevated }]}>

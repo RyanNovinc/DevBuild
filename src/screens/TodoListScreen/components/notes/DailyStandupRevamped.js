@@ -9,13 +9,13 @@ import {
   StyleSheet,
   Animated,
   Dimensions,
-  KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
   Vibration,
   Modal,
   Linking,
-  SafeAreaView
+  SafeAreaView,
+  Keyboard
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -72,6 +72,7 @@ const DailyStandupRevamped = ({ theme, showSuccess, isFullscreen }) => {
   const [showResearchModal, setShowResearchModal] = useState(false);
   const [currentResearch, setCurrentResearch] = useState(null);
   const [researchMessageIndex, setResearchMessageIndex] = useState(null); // null = use default daily message
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -94,6 +95,29 @@ const DailyStandupRevamped = ({ theme, showSuccess, isFullscreen }) => {
   useEffect(() => {
     initializeData();
     startEntryAnimations();
+  }, []);
+
+  // Custom keyboard handling - more stable than KeyboardAvoidingView
+  useEffect(() => {
+    const keyboardWillShow = (event) => {
+      const { height } = event.endCoordinates;
+      setKeyboardHeight(height);
+    };
+
+    const keyboardWillHide = () => {
+      setKeyboardHeight(0);
+    };
+
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const showSubscription = Keyboard.addListener(showEvent, keyboardWillShow);
+    const hideSubscription = Keyboard.addListener(hideEvent, keyboardWillHide);
+
+    return () => {
+      showSubscription?.remove();
+      hideSubscription?.remove();
+    };
   }, []);
 
   // Animate streak glow - DISABLED
@@ -905,10 +929,7 @@ const DailyStandupRevamped = ({ theme, showSuccess, isFullscreen }) => {
   }
 
   return (
-    <KeyboardAvoidingView 
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
+    <View style={{ flex: 1, paddingBottom: keyboardHeight }}>
       <ScrollView 
         style={[styles.container, { backgroundColor: theme.background }]}
         showsVerticalScrollIndicator={false}
@@ -1186,7 +1207,7 @@ const DailyStandupRevamped = ({ theme, showSuccess, isFullscreen }) => {
           </SafeAreaView>
         </View>
       </Modal>
-    </KeyboardAvoidingView>
+    </View>
   );
 };
 
