@@ -1,5 +1,5 @@
 // src/screens/TimeScreen/DayView.js
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import EmptyTimeIllustration from '../../components/illustrations/EmptyTimeIllustration';
@@ -39,6 +39,16 @@ const DayView = ({
   // Local state for expanded time block to prevent parent re-renders
   const [expandedTimeBlockId, setExpandedTimeBlockId] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Update current time every minute for real-time indicator
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Local handler for time block long press
   const handleLocalTimeBlockLongPress = useCallback((timeBlock) => {
@@ -181,132 +191,71 @@ const DayView = ({
       : (block.isGeneralActivity ? (block.customColor || '#6366f1') : (block.domainColor || '#6366f1'));
     const borderColor = getDarkerShade(blockColor);
     
-    // Calculate text color for optimal contrast against the background
-    const backgroundWithOpacity = `${blockColor}30`; // 30% opacity
-    const textColor = theme.text; // Default to theme text color
+    // Use more subtle background with professional opacity
+    const backgroundColor = blockColor + (isDarkMode ? 'CC' : 'E6'); // More visible: CC=20%, E6=10% opacity
+    const solidBackgroundColor = blockColor;
     
-    // Determine text color for domain badge based on its background
-    const domainBadgeTextColor = meetsContrastRequirements('#FFFFFF', blockColor) 
-      ? '#FFFFFF' 
-      : '#000000';
+    // High contrast text colors for readability against colored backgrounds
+    const primaryTextColor = isDarkMode ? '#FFFFFF' : '#1A1A1A'; // Very dark text for light backgrounds
+    const secondaryTextColor = isDarkMode ? '#E0E0E0' : '#404040'; // Medium contrast secondary text
+    const timeTextColor = isDarkMode ? '#E0E0E0' : '#505050'; // Readable time text
     
-    // Check if project and task information is available
-    const hasProject = block.projectTitle && !block.isGeneralActivity;
-    const hasTask = block.taskTitle && !block.isGeneralActivity;
+    // Use the block color for accents
+    const accentColor = blockColor;
     
-    // Check if we should use inline layout based on actual rendered height
-    // Switch to inline when either:
-    // 1. Zoomed out significantly (scale < 0.7), OR  
-    // 2. The time block's rendered height is too small to display stacked content properly
-    // Scale the threshold based on current scale for consistency
-    const baseMinHeight = 50;
-    const scaledMinHeight = baseMinHeight * Math.max(scale, 0.4); // Don't go below 40% of base
-    const useInlineLayout = scale < 0.7 || height < scaledMinHeight;
-    
-    // ==========================================
-    // CONTENT FITTING ENGINE - Research-Based Approach  
-    // ==========================================
-    
-    // Content priority queue (most important first)
-    const CONTENT_PRIORITY = [
-      { type: 'title', essential: true, minHeight: 16, baseSize: 14 },
-      { type: 'time', essential: false, minHeight: 14, baseSize: 12 },
-      { type: 'milestone', essential: false, minHeight: 20, baseSize: 10 },
-      { type: 'details', essential: false, minHeight: 32, baseSize: 11 },
-      { type: 'location', essential: false, minHeight: 18, baseSize: 9 }
-    ];
-    
-    // Calculate available content area (exclude padding)
-    const verticalPadding = scaleWidth(6) * 2; // Top + bottom padding
-    const availableHeight = height - verticalPadding;
-    
-    // Dynamic font calculation based on zoom and available space
-    const calculateContentFontSize = (baseSize, zoomScale, availableSpace) => {
-      // Base responsive scaling
-      const responsive = scaleFontSize(baseSize, 0.3);
-      // Apply zoom influence (gentler than before)
-      const zoomAdjusted = responsive * Math.pow(zoomScale, 0.35);
-      // Constrain based on available space (prevent overflow)
-      const spaceConstrained = Math.min(zoomAdjusted, availableSpace * 0.6);
-      // Ensure minimum readability
-      return Math.max(8, Math.round(spaceConstrained));
-    };
-    
-    // Content Fitting Algorithm - Determines what can fit
-    const fitContent = (containerHeight, zoomScale) => {
-      let remainingHeight = containerHeight;
-      let fittedContent = [];
-      
-      // Always try to show at least clean block
-      if (remainingHeight < 27.5) {
-        return { mode: 'clean', content: [] };
-      }
-      
-      // Try to fit content in priority order
-      for (const item of CONTENT_PRIORITY) {
-        const fontSize = calculateContentFontSize(item.baseSize, zoomScale, remainingHeight);
-        const itemHeight = Math.max(fontSize * 1.2, item.minHeight); // Line height + minimum touch
-        
-        // For essential content, try to fit even if tight
-        if (item.essential) {
-          fittedContent.push({
-            ...item,
-            fontSize,
-            allocatedHeight: itemHeight
-          });
-          remainingHeight -= itemHeight;
-        } 
-        // For non-essential content, only add if we have enough space
-        else if (remainingHeight >= itemHeight) {
-          fittedContent.push({
-            ...item,
-            fontSize,
-            allocatedHeight: itemHeight
-          });
-          remainingHeight -= itemHeight;
-        }
-        // If non-essential item doesn't fit, continue to try other items
-      }
-      
-      // If we have no content fitted, show clean block
-      if (fittedContent.length === 0) {
-        return { mode: 'clean', content: [] };
-      }
-      
-      // Determine display mode based on what fit
-      let mode = 'minimal';
-      if (fittedContent.find(c => c.type === 'details')) mode = 'full';
-      else if (fittedContent.find(c => c.type === 'milestone')) mode = 'standard';
-      else if (fittedContent.find(c => c.type === 'time')) mode = 'compact';
-      
-      return { mode, content: fittedContent };
-    };
-    
-    // Get fitted content for this time block
-    const fittingResult = fitContent(availableHeight, scale);
-    const showContent = fittingResult.mode !== 'clean';
-    
-    // Create font size lookup for easy access
-    const dynamicFontSizes = {};
-    fittingResult.content.forEach(item => {
-      dynamicFontSizes[item.type] = item.fontSize;
-    });
-    
-    // Helper functions to check what content is included
-    const hasTitle = fittingResult.content.some(c => c.type === 'title');
-    const hasTime = fittingResult.content.some(c => c.type === 'time');
-    const hasMilestone = fittingResult.content.some(c => c.type === 'milestone');
-    const hasDetails = fittingResult.content.some(c => c.type === 'details');
-    const hasLocationContent = fittingResult.content.some(c => c.type === 'location');
-    
-    // Create accessibility label with all relevant information - with safe string handling
+    // Create safe string variables with proper defaults
     const safeTitle = block.title || 'Untitled';
     const safeSource = block.source || 'Unknown';
     const safeCategory = block.category || 'General';
     const safeDomain = block.domain || 'Personal';
-    const safeProjectTitle = block.projectTitle || '';
+    // In this system, milestones ARE the projects
+    const safeProjectTitle = block.milestoneTitle || '';
     const safeTaskTitle = block.taskTitle || '';
     const safeLocation = block.location || '';
+
+    // Check if project and task information is available
+    const hasProject = block.milestoneTitle && !block.isGeneralActivity;
+    const hasTask = block.taskTitle && !block.isGeneralActivity;
+    
+    // Calculate space requirements for badges to prevent overflow
+    const goalBadgeHeight = scaleHeight(6) * 2 + scaleFontSize(12) * 1.3 + scaleHeight(4); // padding + text + margin
+    const milestoneBadgeHeight = scaleHeight(5) * 2 + scaleFontSize(11) * 1.3 + scaleHeight(4); // padding + text + margin  
+    const taskBadgeHeight = scaleHeight(5) * 2 + scaleFontSize(11) * 1.3 + scaleHeight(4); // padding + text + margin
+    
+    // Check what can fit based on remaining space after title and time
+    const titleHeight = scaleFontSize(15) * 1.3 + scaleHeight(2); // title line height + margin
+    const timeHeight = scaleFontSize(12) * 1.2; // time line height
+    const leftSideUsedHeight = titleHeight + timeHeight + scaleHeight(10); // extra padding
+    const availableRightSideHeight = height - leftSideUsedHeight;
+    
+    // Determine what badges can fit without overflowing
+    let canShowGoal = (safeDomain || safeCategory || safeSource) && availableRightSideHeight >= goalBadgeHeight;
+    let canShowMilestone = hasProject && availableRightSideHeight >= (goalBadgeHeight + milestoneBadgeHeight) && canShowGoal;
+    let canShowTask = hasTask && availableRightSideHeight >= (goalBadgeHeight + milestoneBadgeHeight + taskBadgeHeight) && canShowGoal && canShowMilestone;
+    
+    // If goal can't fit, nothing else can fit
+    if (!canShowGoal) {
+      canShowMilestone = false;
+      canShowTask = false;
+    }
+    
+    // If milestone can't fit, task can't fit either
+    if (!canShowMilestone) {
+      canShowTask = false;
+    }
+    
+    // Additional height-based restrictions (original logic)
+    canShowMilestone = canShowMilestone && height > 35;
+    canShowTask = canShowTask && height > 50;
+    
+    
+    // Simple content display logic
+    const showContent = height > 20; // Show content if timeblock is taller than 20px
+    
+    // Check if we should use inline layout for very small or wide blocks
+    const useInlineLayout = height < 50 || (height / scaleWidth(280)) > 3;
+    
+    // Create accessibility label with all relevant information
     
     const accessibilityLabel = `${safeTitle}${(block.startTime && block.endTime) ? ` from ${formatTime(block.startTime)} to ${formatTime(block.endTime)}` : ' (time not set)'}` + 
       `${isCalendarEvent ? `, Calendar Event from ${safeSource}` : 
@@ -323,24 +272,26 @@ const DayView = ({
           {
             height,
             top,
-            backgroundColor: backgroundWithOpacity,
-            borderLeftColor: blockColor,
-            borderColor: borderColor,
-            // Ensure text is not clipped
+            // Professional colored background
+            backgroundColor: backgroundColor,
+            // Professional look without borders
+            borderRadius: 6, // Less rounded for more professional look
+            // Professional shadow - subtle but defined
+            shadowColor: isDarkMode ? '#000000' : '#000000',
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: isDarkMode ? 0.3 : 0.1,
+            shadowRadius: 2,
+            elevation: 2,
+            // Professional padding
+            paddingVertical: scaleHeight(10),
+            paddingHorizontal: scaleWidth(14),
+            // Layout
             overflow: 'visible',
-            justifyContent: 'flex-start', // Override space-between to prevent text clipping
-            paddingVertical: scaleWidth(6), // Slightly reduce padding to give more text space
+            justifyContent: 'flex-start',
           },
-          // Add dashed border for repeating instances
-          (isRepeatingInstance || isRepeatingBlock) && styles.repeatingTimeBlock,
           // Add distinct styling for calendar events
           isCalendarEvent && {
-            borderStyle: 'dotted',
-            borderWidth: 2,
-            borderRightWidth: 2,
-            borderTopWidth: 2,
-            borderBottomWidth: 2,
-            opacity: 0.9
+            opacity: 0.95
           }
         ]}
         onPress={() => onTimeBlockPress(block)}
@@ -444,260 +395,330 @@ const DayView = ({
           </View>
         )}
         
-        {/* Content Fitting Engine - Smart Content Display */}
-        {showContent && (() => {
-          const layout = useInlineLayout ? 'inline' : 'stacked';
-          
-          return layout === 'inline' ? (
-            // INLINE LAYOUT - Compact horizontal arrangement
+        {/* Simple Content Display */}
+        {showContent && (
+          useInlineLayout ? (
+            // INLINE LAYOUT for small/wide blocks
             <View style={{
               flexDirection: 'row',
               alignItems: 'center',
-              paddingHorizontal: scaleWidth(4),
               flex: 1,
-              height: '100%',
+              paddingHorizontal: scaleWidth(2),
             }}>
-              {/* Time (Priority 2 - Essential) */}
-              {hasTime && (
-                <Text 
-                  style={[
-                    styles.timeBlockTime, 
-                    { 
-                      color: textColor,
-                      fontSize: dynamicFontSizes.time || 12,
-                      lineHeight: (dynamicFontSizes.time || 12) * 1.2,
-                      marginRight: scaleWidth(6),
-                      fontWeight: '500',
-                    }
-                  ]}
-                  maxFontSizeMultiplier={1.3}
-                  numberOfLines={1}
-                >
-                  {(block.startTime && block.endTime) ? 
-                    `${formatTime(block.startTime)}-${formatTime(block.endTime)}` : 
-                    'Time not set'}
-                </Text>
-              )}
+              {/* Title */}
+              <Text 
+                style={[
+                  styles.timeBlockTitle, 
+                  { 
+                    color: primaryTextColor,
+                    fontSize: scaleFontSize(14),
+                    fontWeight: '600',
+                    flex: 1,
+                    marginRight: scaleWidth(6),
+                  }
+                ]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                maxFontSizeMultiplier={1.3}
+              >
+                {safeTitle}
+              </Text>
               
-              {/* Title (Priority 1 - Essential) */}
-              {hasTitle && (
-                <Text 
-                  style={[
-                    styles.timeBlockTitle, 
-                    { 
-                      color: textColor,
-                      fontSize: dynamicFontSizes.title || 14,
-                      lineHeight: (dynamicFontSizes.title || 14) * 1.2,
-                      fontWeight: '600',
-                      flex: 1,
-                      marginRight: scaleWidth(4),
-                    }
-                  ]}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                  maxFontSizeMultiplier={1.3}
-                >
-                  {safeTitle}
-                </Text>
-              )}
-
-              {/* Milestone Badge (Priority 3 - Visual Context) */}
-              {hasMilestone && (
-                <View 
-                  style={{
-                    backgroundColor: blockColor,
-                    paddingHorizontal: scaleWidth(3),
-                    paddingVertical: scaleWidth(1),
-                    borderRadius: scaleWidth(8),
-                    opacity: 0.9,
-                    alignSelf: 'center',
-                  }}
-                >
-                  <Text 
-                    style={[
-                      styles.inlineBadgeText, 
-                      { 
-                        color: '#FFFFFF',
-                        fontSize: dynamicFontSizes.milestone || 10,
-                        lineHeight: (dynamicFontSizes.milestone || 10) * 1.1,
-                        fontWeight: '600',
-                      }
-                    ]} 
-                    numberOfLines={1}
-                  >
-                    {isCalendarEvent ? safeSource : (block.isGeneralActivity ? safeCategory : safeDomain)}
+              {/* Recurring symbol (instead of time in inline layout) */}
+              {(block.isRepeating || block.isRepeatingInstance) && (
+                <View style={{
+                  backgroundColor: isDarkMode ? '#444444' : '#F0F0F0',
+                  borderWidth: 1,
+                  borderColor: isDarkMode ? '#666666' : '#CCCCCC',
+                  paddingHorizontal: scaleWidth(6),
+                  paddingVertical: scaleHeight(2),
+                  borderRadius: 6,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'row',
+                }}>
+                  <Ionicons 
+                    name="refresh-outline" 
+                    size={scaleFontSize(10)} 
+                    color={isDarkMode ? '#CCCCCC' : '#555555'}
+                    style={{ marginRight: scaleWidth(2) }}
+                  />
+                  <Text style={{
+                    color: isDarkMode ? '#CCCCCC' : '#555555',
+                    fontSize: scaleFontSize(8),
+                    fontWeight: '600',
+                    textAlign: 'center',
+                  }}>
+                    {block.repeatFrequency === 'daily' ? 'D' : 
+                     block.repeatFrequency === 'weekly' ? 'W' : 
+                     block.repeatFrequency === 'monthly' ? 'M' : 'R'}
                   </Text>
                 </View>
               )}
             </View>
           ) : (
-            // STACKED LAYOUT - Vertical arrangement for larger blocks
+            // TRADITIONAL TWO-COLUMN LAYOUT: Left side = Title/Time, Right side = Badges OR Icon
             <View style={{
-              paddingHorizontal: scaleWidth(8),
-              paddingTop: scaleWidth(4),
               flex: 1,
-              justifyContent: 'flex-start',
-            }}>
-              {/* Title (Priority 1 - Essential) */}
-              {hasTitle && (
-                <Text 
-                  style={[
-                    styles.timeBlockTitle, 
-                    { 
-                      color: textColor,
-                      fontSize: dynamicFontSizes.title || 14,
-                      lineHeight: (dynamicFontSizes.title || 14) * 1.2,
-                      fontWeight: '600',
-                      marginBottom: scaleWidth(2),
-                    }
-                  ]}
-                  numberOfLines={2}
-                  ellipsizeMode="tail"
-                  maxFontSizeMultiplier={1.3}
-                >
-                  {safeTitle}
-                </Text>
-              )}
-
-              {/* Time (Priority 2 - Essential) */}
-              {hasTime && (
-                <Text 
-                  style={[
-                    styles.timeBlockTime, 
-                    { 
-                      color: textColor,
-                      fontSize: dynamicFontSizes.time || 12,
-                      lineHeight: (dynamicFontSizes.time || 12) * 1.2,
-                      fontWeight: '500',
-                      marginBottom: scaleWidth(2),
-                    }
-                  ]}
-                  maxFontSizeMultiplier={1.3}
-                  numberOfLines={1}
-                >
-                  {(block.startTime && block.endTime) ? 
-                    `${formatTime(block.startTime)} - ${formatTime(block.endTime)}` : 
-                    'Time not set'}
-                </Text>
-              )}
-
-              {/* Milestone Badge (Priority 3 - Visual Context) */}
-              {hasMilestone && (
-                <View 
-                  style={{
-                    backgroundColor: blockColor,
-                    paddingHorizontal: scaleWidth(4),
-                    paddingVertical: scaleWidth(2),
-                    borderRadius: scaleWidth(8),
-                    opacity: 0.9,
-                    alignSelf: 'flex-start',
-                    marginBottom: scaleWidth(2),
-                  }}
-                >
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                paddingHorizontal: scaleWidth(2),
+              }}>
+                {/* LEFT SIDE - Title and Time Stacked */}
+                <View style={{
+                  flex: 1,
+                  justifyContent: 'flex-start',
+                  marginRight: scaleWidth(8),
+                }}>
+                  {/* Title */}
                   <Text 
                     style={[
-                      styles.badgeText, 
+                      styles.timeBlockTitle, 
                       { 
-                        color: '#FFFFFF',
-                        fontSize: dynamicFontSizes.milestone || 10,
-                        lineHeight: (dynamicFontSizes.milestone || 10) * 1.1,
+                        color: primaryTextColor,
+                        fontSize: scaleFontSize(15),
                         fontWeight: '600',
+                        marginBottom: scaleHeight(2),
                       }
-                    ]} 
-                    numberOfLines={1}
+                    ]}
+                    numberOfLines={useInlineLayout ? 1 : 2}
+                    ellipsizeMode="tail"
+                    maxFontSizeMultiplier={1.3}
                   >
-                    {isCalendarEvent ? safeSource : (block.isGeneralActivity ? safeCategory : safeDomain)}
+                    {safeTitle}
                   </Text>
-                </View>
-              )}
 
-              {/* Details (Priority 4 - Project/Task Info) */}
-              {hasDetails && (hasProject || hasTask) && (
-                <View style={styles.timeBlockProjectTask}>
-                  {hasProject && (
-                    <View style={styles.projectContainer}>
+                  {/* Time below title */}
+                  {block.startTime && block.endTime && (
+                    <Text 
+                      style={[
+                        styles.timeBlockTime, 
+                        { 
+                          color: timeTextColor,
+                          fontSize: scaleFontSize(12),
+                          fontWeight: '500',
+                        }
+                      ]}
+                      maxFontSizeMultiplier={1.2}
+                      numberOfLines={1}
+                    >
+                      {formatTime(block.startTime)} - {formatTime(block.endTime)}
+                    </Text>
+                  )}
+                </View>
+
+                {/* RIGHT SIDE - Hierarchy Badges: Goal → Milestone → Task */}
+                <View style={{
+                  alignItems: 'flex-end',
+                  justifyContent: 'flex-start',
+                  minWidth: scaleWidth(80),
+                }}>
+                  {/* Custom Icon OR Traditional Badge System with Recurring */}
+                  {!(block.isGeneralActivity && block.customIcon) && (block.isRepeating || block.isRepeatingInstance) && (
+                    /* Recurring symbol for traditional badge layout only */
+                    <View style={{
+                      backgroundColor: isDarkMode ? '#444444' : '#F0F0F0',
+                      borderWidth: 1,
+                      borderColor: isDarkMode ? '#666666' : '#CCCCCC',
+                      paddingHorizontal: scaleWidth(8),
+                      paddingVertical: scaleHeight(3),
+                      borderRadius: 8,
+                      marginBottom: scaleHeight(3),
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexDirection: 'row',
+                    }}>
                       <Ionicons 
-                        name="folder-outline" 
-                        size={(dynamicFontSizes.details || 11) * 1.1} 
-                        color={textColor} 
+                        name="refresh-outline" 
+                        size={scaleFontSize(12)} 
+                        color={isDarkMode ? '#CCCCCC' : '#555555'}
+                        style={{ marginRight: scaleWidth(4) }}
                       />
-                      <Text 
-                        style={[
-                          styles.projectTaskText, 
-                          { 
-                            color: textColor,
-                            fontSize: dynamicFontSizes.details || 11,
-                            lineHeight: (dynamicFontSizes.details || 11) * 1.2,
-                          }
-                        ]} 
-                        numberOfLines={1}
-                        maxFontSizeMultiplier={1.3}
-                      >
-                        {safeProjectTitle}
+                      <Text style={{
+                        color: isDarkMode ? '#CCCCCC' : '#555555',
+                        fontSize: scaleFontSize(10),
+                        fontWeight: '600',
+                        textAlign: 'center',
+                      }}>
+                        {block.repeatFrequency === 'daily' ? 'D' : 
+                         block.repeatFrequency === 'weekly' ? 'W' : 
+                         block.repeatFrequency === 'monthly' ? 'M' : 'R'}
                       </Text>
                     </View>
                   )}
                   
-                  {hasTask && (
-                    <View style={styles.taskContainer}>
+                  {/* Custom Icon OR Traditional Badge System */}
+                  {block.isGeneralActivity && block.customIcon ? (
+                    /* Vertically centered custom icon with optional recurring symbol */
+                    <View style={{
+                      flex: 1,
+                      justifyContent: 'center', // Vertical centering
+                      alignItems: 'center',     // Horizontal centering
+                      minHeight: height - 20,   // Full available height
+                      flexDirection: 'row',     // Horizontal layout for icon + recurring
+                      gap: 8                    // Space between icon and recurring symbol
+                    }}>
                       <Ionicons 
-                        name="checkbox-outline" 
-                        size={(dynamicFontSizes.details || 11) * 1.1} 
-                        color={textColor} 
+                        name={block.customIcon} 
+                        size={(() => {
+                          // Scale with timeblock height but constrained by sidebar width
+                          const maxSize = Math.min(height * 0.6, 60); // 60% of height, max 60px
+                          return Math.min(Math.max(maxSize, 16), 60);
+                        })()}
+                        color="#FFFFFF"
+                        style={{ 
+                          paddingTop: 2, // Fix Ionicons vertical alignment issue
+                        }}
                       />
-                      <Text 
-                        style={[
-                          styles.projectTaskText, 
-                          { 
-                            color: textColor,
-                            fontSize: dynamicFontSizes.details || 11,
-                            lineHeight: (dynamicFontSizes.details || 11) * 1.2,
-                          }
-                        ]} 
-                        numberOfLines={1}
-                        maxFontSizeMultiplier={1.3}
-                      >
-                        {safeTaskTitle}
-                      </Text>
+                      
+                      {/* Recurring symbol next to icon */}
+                      {(block.isRepeating || block.isRepeatingInstance) && height > 40 && (
+                        <View style={{
+                          backgroundColor: isDarkMode ? '#444444' : '#F0F0F0',
+                          borderWidth: 1,
+                          borderColor: isDarkMode ? '#666666' : '#CCCCCC',
+                          paddingHorizontal: scaleWidth(6),
+                          paddingVertical: scaleHeight(3),
+                          borderRadius: 6,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                        }}>
+                          <Ionicons 
+                            name="refresh-outline" 
+                            size={scaleFontSize(12)} 
+                            color={isDarkMode ? '#CCCCCC' : '#555555'}
+                            style={{ marginRight: scaleWidth(2) }}
+                          />
+                          <Text style={{
+                            color: isDarkMode ? '#CCCCCC' : '#555555',
+                            fontSize: scaleFontSize(10),
+                            fontWeight: '600',
+                            textAlign: 'center',
+                          }}>
+                            {block.repeatFrequency === 'daily' ? 'D' : 
+                             block.repeatFrequency === 'weekly' ? 'W' : 
+                             block.repeatFrequency === 'monthly' ? 'M' : 'R'}
+                          </Text>
+                        </View>
+                      )}
                     </View>
+                  ) : (
+                    /* Traditional Badge System */
+                    <>
+                      {/* 1. GOAL Badge (highest level) */}
+                    {canShowGoal && (
+                      <View style={{ 
+                        backgroundColor: isDarkMode ? '#333333' : '#F8F8F8',
+                        borderWidth: 1.5,
+                        borderColor: isDarkMode ? '#555555' : '#E0E0E0',
+                        paddingHorizontal: scaleWidth(12),
+                        paddingVertical: scaleHeight(6),
+                        borderRadius: 12,
+                        marginBottom: scaleHeight(4),
+                        maxWidth: scaleWidth(140),
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                        <Ionicons 
+                          name="flag-outline" 
+                          size={scaleFontSize(14)} 
+                          color={isDarkMode ? '#FFFFFF' : '#333333'}
+                          style={{ marginRight: scaleWidth(6) }}
+                        />
+                        <Text 
+                          style={{
+                            color: isDarkMode ? '#FFFFFF' : '#333333',
+                            fontSize: scaleFontSize(12),
+                            fontWeight: '700', // Bold for goal
+                            textAlign: 'center',
+                          }}
+                          numberOfLines={1}
+                          ellipsizeMode="tail"
+                        >
+                          {isCalendarEvent ? safeSource : (block.isGeneralActivity ? safeCategory : safeDomain)}
+                        </Text>
+                      </View>
+                    )}
+
+                    {/* 2. MILESTONE Badge (project level) */}
+                    {canShowMilestone && (
+                      <View style={{ 
+                        backgroundColor: isDarkMode ? '#2A2A2A' : '#FFFFFF',
+                        borderWidth: 1.5,
+                        borderColor: isDarkMode ? '#444444' : '#CCCCCC',
+                        paddingHorizontal: scaleWidth(10),
+                        paddingVertical: scaleHeight(5),
+                        borderRadius: 10,
+                        marginBottom: scaleHeight(4),
+                        maxWidth: scaleWidth(140),
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                        <Ionicons 
+                          name="diamond-outline" 
+                          size={scaleFontSize(12)} 
+                          color={isDarkMode ? '#CCCCCC' : '#666666'}
+                          style={{ marginRight: scaleWidth(5) }}
+                        />
+                        <Text 
+                          style={{
+                            color: isDarkMode ? '#CCCCCC' : '#666666',
+                            fontSize: scaleFontSize(11),
+                            fontWeight: '600',
+                            textAlign: 'center',
+                          }}
+                          numberOfLines={1}
+                          ellipsizeMode="tail"
+                        >
+                          {safeProjectTitle}
+                        </Text>
+                      </View>
+                    )}
+
+                    {/* 3. TASK Badge (lowest level) */}
+                    {canShowTask && (
+                      <View style={{ 
+                        backgroundColor: isDarkMode ? '#1F1F1F' : '#FAFAFA',
+                        borderWidth: 1,
+                        borderColor: isDarkMode ? '#333333' : '#DDDDDD',
+                        paddingHorizontal: scaleWidth(10),
+                        paddingVertical: scaleHeight(5),
+                        borderRadius: 10,
+                        marginBottom: scaleHeight(4),
+                        maxWidth: scaleWidth(140),
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                        <Ionicons 
+                          name="checkmark-done-outline" 
+                          size={scaleFontSize(12)} 
+                          color={isDarkMode ? '#AAAAAA' : '#777777'}
+                          style={{ marginRight: scaleWidth(5) }}
+                        />
+                        <Text 
+                          style={{
+                            color: isDarkMode ? '#AAAAAA' : '#777777',
+                            fontSize: scaleFontSize(11),
+                            fontWeight: '500',
+                            textAlign: 'center',
+                          }}
+                          numberOfLines={1}
+                          ellipsizeMode="tail"
+                        >
+                          {safeTaskTitle}
+                        </Text>
+                      </View>
+                    )}
+                  </>
                   )}
                 </View>
-              )}
-
-              {/* Location (Priority 5 - Nice to Have) */}
-              {hasLocationContent && safeLocation && (
-                <View style={{
-                  position: 'absolute',
-                  bottom: scaleWidth(6),
-                  left: scaleWidth(8),
-                  right: scaleWidth(8),
-                }}>
-                  <View style={styles.locationContainer}>
-                    <Ionicons 
-                      name="location-outline" 
-                      size={(dynamicFontSizes.location || 9) * 1.1} 
-                      color={textColor} 
-                    />
-                    <Text 
-                      style={[
-                        styles.locationText, 
-                        { 
-                          color: textColor,
-                          fontSize: dynamicFontSizes.location || 9,
-                          lineHeight: (dynamicFontSizes.location || 9) * 1.2,
-                        }
-                      ]} 
-                      numberOfLines={1}
-                      maxFontSizeMultiplier={1.3}
-                    >
-                      {safeLocation}
-                    </Text>
-                  </View>
-                </View>
-              )}
-            </View>
-          );
-        })()}
+              </View>
+            )
+        )}
       </TouchableOpacity>
     );
   };
@@ -797,6 +818,34 @@ const DayView = ({
                 />
               </View>
             ))}
+            
+            {/* Current time indicator line */}
+            {(() => {
+              const currentHour = currentTime.getHours();
+              const currentMinutes = currentTime.getMinutes();
+              const totalMinutes = currentHour * 60 + currentMinutes;
+              const dayMinutes = 24 * 60; // Total minutes in a day
+              const position = (totalMinutes / dayMinutes) * (hourHeight * timeSlots.length);
+              
+              return (
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: position,
+                    left: 0,
+                    right: 0,
+                    height: 2,
+                    backgroundColor: '#FFFFFF',
+                    zIndex: 999,
+                    shadowColor: '#000000',
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.3,
+                    shadowRadius: 2,
+                    elevation: 3,
+                  }}
+                />
+              );
+            })()}
             
             {/* Time blocks positioned absolutely over the grid */}
             {blocksForDay

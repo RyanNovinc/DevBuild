@@ -56,6 +56,18 @@ export const generateSimplifiedHTML = (
             border-radius: 4px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
           }
+          .block.calendar { 
+            border-left-color: #2196F3; 
+            background-color: #f5f9ff;
+          }
+          .block.general { 
+            border-left-color: #6366f1; 
+            background-color: #f8f8ff;
+          }
+          .block.domain { 
+            border-left-color: #4CAF50; 
+            background-color: #f9f9f9;
+          }
           .time { 
             font-weight: bold; 
             color: #444;
@@ -78,6 +90,13 @@ export const generateSimplifiedHTML = (
             color: #555;
             font-size: 13px;
             margin-top: 5px;
+          }
+          .description {
+            color: #666;
+            font-size: 13px;
+            margin-top: 8px;
+            line-height: 1.3;
+            font-style: italic;
           }
           .footer { 
             margin-top: 40px; 
@@ -119,18 +138,33 @@ export const generateSimplifiedHTML = (
                 
                 // Safe access to properties with defaults
                 const title = block.title || 'Untitled';
-                const category = block.isGeneralActivity ? 
-                  (block.category || 'General') : 
-                  (block.domain || 'Work');
+                
+                // Handle different block types
+                let category;
+                let blockType = 'timeblock'; // Default type for styling
+                
+                if (block.isCalendarEvent) {
+                  category = `📅 ${block.source || 'Calendar Event'}`;
+                  blockType = 'calendar';
+                } else if (block.isGeneralActivity) {
+                  category = block.category || 'General';
+                  blockType = 'general';
+                } else {
+                  category = block.domain || 'Work';
+                  blockType = 'domain';
+                }
+                
                 const location = block.location || '';
+                const description = block.description || '';
                 
                 // Create block HTML with error boundary
                 return `
-                  <div class="block">
+                  <div class="block ${blockType}">
                     <p class="time">${startTime} - ${endTime}</p>
                     <p class="title">${title}</p>
                     <div class="category">${category}</div>
                     ${location ? `<p class="location">📍 ${location}</p>` : ''}
+                    ${description && block.isCalendarEvent ? `<p class="description">${description}</p>` : ''}
                   </div>
                 `;
               }).join('') : 
@@ -325,12 +359,22 @@ export const shareAsText = async (options) => {
           if (index > 0) textContent += '\n----------\n';
           
           textContent += `⏰ ${startTime} - ${endTime}: ${block.title || 'Untitled'}\n`;
-          textContent += `🏷️ ${block.isGeneralActivity ? 
-            (block.category || 'General') : 
-            (block.domain || 'Work')}\n`;
+          
+          // Handle different block types
+          if (block.isCalendarEvent) {
+            textContent += `📅 Calendar Event (${block.source || 'Calendar'})\n`;
+          } else {
+            textContent += `🏷️ ${block.isGeneralActivity ? 
+              (block.category || 'General') : 
+              (block.domain || 'Work')}\n`;
+          }
             
           if (block.location) {
             textContent += `📍 Location: ${block.location}\n`;
+          }
+          
+          if (block.description && block.isCalendarEvent) {
+            textContent += `📝 Notes: ${block.description}\n`;
           }
         });
     }

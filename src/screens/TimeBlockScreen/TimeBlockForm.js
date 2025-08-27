@@ -17,6 +17,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
+import IconPicker from '../../components/IconPicker';
 
 // Enable LayoutAnimation for Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -183,6 +184,8 @@ const GoalSelector = ({
 };
 
 const TimeBlockForm = ({
+  activeTab,
+  setActiveTab,
   domain,
   setDomain,
   domainColor,
@@ -194,6 +197,10 @@ const TimeBlockForm = ({
   customColor,
   setCustomColor,
   openColorModal,
+  customIcon,
+  setCustomIcon,
+  showIconPicker,
+  setShowIconPicker,
   openDatePicker,
   openStartTimePicker,
   openEndTimePicker,
@@ -311,9 +318,13 @@ const TimeBlockForm = ({
   // Function to handle goal selection
   const handleGoalSelect = (goal) => {
     if (goal === null) {
+      // Switch to general activity tab when "No Specific Goal" is selected
+      setActiveTab('general');
       setDomain('');
       setDomainColor(customColor);
     } else {
+      // Switch to goal tab when a specific goal is selected
+      setActiveTab('goal');
       setDomain(goal.title);
       setDomainColor(goal.color);
     }
@@ -567,9 +578,9 @@ const TimeBlockForm = ({
                 </View>
               ) : (
                 <View style={styles.placeholderContent}>
-                  <Ionicons name="add-circle-outline" size={16} color={theme.textSecondary} />
+                  <Ionicons name="close-circle-outline" size={16} color={theme.textSecondary} />
                   <Text style={[styles.placeholderText, { color: theme.textSecondary }]}>
-                    Select a goal
+                    No Specific Goal
                   </Text>
                 </View>
               )}
@@ -601,6 +612,46 @@ const TimeBlockForm = ({
                 <Text style={[styles.selectedText, { color: theme.text }]}>
                   {customColor.toUpperCase()}
                 </Text>
+              </View>
+              <Ionicons name="chevron-forward-outline" size={16} color={theme.textSecondary} />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Icon Selection - Only show when no specific goal is selected */}
+        {!domain && (
+          <View style={styles.inputGroup}>
+            <View style={styles.inputHeader}>
+              <Ionicons name="apps-outline" size={18} color={theme.primary} />
+              <Text style={[styles.inputLabel, { color: theme.text }]}>Icon</Text>
+            </View>
+            <TouchableOpacity 
+              style={[
+                styles.modernSelector, 
+                { 
+                  backgroundColor: theme.card,
+                  borderColor: theme.border
+                }
+              ]}
+              onPress={() => setShowIconPicker(true)}
+              activeOpacity={0.8}
+            >
+              <View style={styles.selectedContent}>
+                {customIcon ? (
+                  <>
+                    <Ionicons name={customIcon} size={16} color={customColor} />
+                    <Text style={[styles.selectedText, { color: theme.text, marginLeft: 8 }]}>
+                      Custom Icon
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <Ionicons name="add-circle-outline" size={16} color={theme.textSecondary} />
+                    <Text style={[styles.placeholderText, { color: theme.textSecondary, marginLeft: 8 }]}>
+                      Choose an icon
+                    </Text>
+                  </>
+                )}
               </View>
               <Ionicons name="chevron-forward-outline" size={16} color={theme.textSecondary} />
             </TouchableOpacity>
@@ -1084,6 +1135,15 @@ const TimeBlockForm = ({
           isDarkMode={isDarkMode}
         />
       )}
+
+      {/* Icon Picker Modal */}
+      <IconPicker
+        visible={showIconPicker}
+        onClose={() => setShowIconPicker(false)}
+        selectedIcon={customIcon}
+        onSelectIcon={setCustomIcon}
+        customColor={customColor}
+      />
     </View>
   );
 };

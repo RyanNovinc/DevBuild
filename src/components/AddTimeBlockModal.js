@@ -23,6 +23,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useAppContext } from '../context/AppContext';
 import { FREE_PLAN_LIMITS } from '../services/SubscriptionService';
 import TextInputPopup from './TextInputPopup';
+import IconPicker from './IconPicker';
 
 // Import responsive utilities
 import responsive, { 
@@ -88,6 +89,11 @@ const AddTimeBlockModal = ({
   const [selectedProjectTitle, setSelectedProjectTitle] = useState('');
   const [selectedTaskId, setSelectedTaskId] = useState(null);
   const [selectedTaskTitle, setSelectedTaskTitle] = useState('');
+  
+  // Icon selection state
+  const [customIcon, setCustomIcon] = useState(null);
+  const [customColor, setCustomColor] = useState('#6366f1');
+  const [showIconPicker, setShowIconPicker] = useState(false);
   
   // Animation value for advanced options panel
   const advancedOptionsHeight = useState(new Animated.Value(0))[0];
@@ -330,6 +336,14 @@ const AddTimeBlockModal = ({
         setSelectedTaskId(timeBlockData.taskId);
         setSelectedTaskTitle(timeBlockData.taskTitle || '');
       }
+      
+      // Set custom icon and color if available
+      if (timeBlockData.customIcon) {
+        setCustomIcon(timeBlockData.customIcon);
+      }
+      if (timeBlockData.customColor) {
+        setCustomColor(timeBlockData.customColor);
+      }
     } else if (!visible) {
       // Reset form when closing
       resetForm();
@@ -347,6 +361,11 @@ const AddTimeBlockModal = ({
     
     // Reset advanced options
     setShowAdvancedOptions(false);
+    
+    // Reset icon selection
+    setCustomIcon(null);
+    setCustomColor('#6366f1');
+    setShowIconPicker(false);
     
     // Don't reset goal/project/task IDs to preserve them between sessions
   };
@@ -438,7 +457,12 @@ const AddTimeBlockModal = ({
       ...(selectedProjectId && { projectId: selectedProjectId }),
       ...(selectedProjectTitle && { projectTitle: selectedProjectTitle }),
       ...(selectedTaskId && { taskId: selectedTaskId }),
-      ...(selectedTaskTitle && { taskTitle: selectedTaskTitle })
+      ...(selectedTaskTitle && { taskTitle: selectedTaskTitle }),
+      // Add custom icon and color for general activities
+      ...(customIcon && { customIcon: customIcon }),
+      ...(customColor && { customColor: customColor }),
+      // Mark as general activity if no goal is selected
+      ...(!selectedGoalId && { isGeneralActivity: true })
     };
     
     // Call parent handler (passing back the updated time block data)
@@ -624,6 +648,9 @@ const AddTimeBlockModal = ({
     setSelectedProjectTitle('');
     setSelectedTaskId(null);
     setSelectedTaskTitle('');
+    
+    // Reset custom icon when goal is selected
+    setCustomIcon(null);
   };
   
   // Handle project selection
@@ -1072,6 +1099,57 @@ const AddTimeBlockModal = ({
               accessibilityRole="group"
               accessibilityLabel="Advanced options"
             >
+              {/* Custom Icon Selection - Only shown when no goal is selected */}
+              {!selectedGoalId && (
+                <View style={styles.selectionSection}>
+                  <Text 
+                    style={[
+                      styles.sectionLabel, 
+                      { color: theme.textSecondary }
+                    ]}
+                    maxFontSizeMultiplier={1.5}
+                    accessibilityRole="header"
+                  >
+                    Choose Icon (Optional)
+                  </Text>
+                  
+                  <TouchableOpacity
+                    style={[
+                      styles.iconSelectionButton,
+                      { 
+                        backgroundColor: theme.inputBackground,
+                        borderColor: theme.border,
+                        minHeight: scaleHeight(48)
+                      }
+                    ]}
+                    onPress={() => setShowIconPicker(true)}
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel="Select custom icon"
+                    accessibilityHint="Choose an icon to represent this activity"
+                  >
+                    <View style={styles.iconSelectionContent}>
+                      {customIcon ? (
+                        <>
+                          <Ionicons name={customIcon} size={scaleWidth(20)} color={customColor} />
+                          <Text style={[styles.iconSelectionText, { color: theme.text, marginLeft: spacing.xs }]}>
+                            Custom Icon
+                          </Text>
+                        </>
+                      ) : (
+                        <>
+                          <Ionicons name="add-circle-outline" size={scaleWidth(20)} color={theme.textSecondary} />
+                          <Text style={[styles.iconSelectionPlaceholder, { color: theme.textSecondary, marginLeft: spacing.xs }]}>
+                            Choose an icon
+                          </Text>
+                        </>
+                      )}
+                    </View>
+                    <Ionicons name="chevron-forward-outline" size={scaleWidth(16)} color={theme.textSecondary} />
+                  </TouchableOpacity>
+                </View>
+              )}
+              
               {/* Goal Selection */}
               <View style={styles.selectionSection}>
                 <Text 
@@ -1112,6 +1190,8 @@ const AddTimeBlockModal = ({
                         setSelectedProjectTitle('');
                         setSelectedTaskId(null);
                         setSelectedTaskTitle('');
+                        // Allow custom icon when no goal is selected
+                        // Don't reset customIcon here to preserve user selection
                       }}
                       accessible={true}
                       accessibilityRole="button"
@@ -1715,6 +1795,15 @@ const AddTimeBlockModal = ({
             multiline={true}
             maxLength={500}
           />
+          
+          {/* Icon Picker Modal */}
+          <IconPicker
+            visible={showIconPicker}
+            onClose={() => setShowIconPicker(false)}
+            selectedIcon={customIcon}
+            onSelectIcon={setCustomIcon}
+            customColor={customColor}
+          />
             </View>
           </KeyboardAvoidingView>
         </Animated.View>
@@ -1932,6 +2021,31 @@ const styles = StyleSheet.create({
   },
   noItemsText: {
     fontSize: fontSizes.xs
+  },
+  // Icon selection styles
+  iconSelectionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderRadius: scaleWidth(8),
+    paddingHorizontal: spacing.m,
+    paddingVertical: spacing.m,
+    marginBottom: spacing.m,
+  },
+  iconSelectionContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  iconSelectionText: {
+    fontSize: fontSizes.m,
+    fontWeight: '500',
+  },
+  iconSelectionPlaceholder: {
+    fontSize: fontSizes.m,
+    fontWeight: '400',
+    opacity: 0.8,
   },
   // Button
   addButton: {

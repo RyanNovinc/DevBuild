@@ -160,6 +160,18 @@ const TimeBlock = ({
               </View>
             )}
             
+            {/* Show custom icon for general activities that don't have project/task - TEMPORARILY DISABLED */}
+            {false && timeBlock.isGeneralActivity && timeBlock.customIcon && !hasProject && !hasTask && (
+              <View style={styles.compactCustomIconContainer}>
+                <Ionicons 
+                  name={timeBlock.customIcon} 
+                  size={scaleWidth(14)} 
+                  color={domainColor} 
+                  style={{ opacity: 0.8 }}
+                />
+              </View>
+            )}
+            
             {timeBlock.location && (
               <View style={styles.compactLocation}>
                 <Ionicons name="location-outline" size={scaleWidth(11)} color={theme.textSecondary} style={styles.compactLocationIcon} />
@@ -346,6 +358,18 @@ const TimeBlock = ({
               </Text>
             </View>
           )}
+        </View>
+      )}
+      
+      {/* Custom Icon Section for General Activities - TEMPORARILY DISABLED */}
+      {false && timeBlock.isGeneralActivity && timeBlock.customIcon && !hasProject && !hasTask && (
+        <View style={styles.customIconSection}>
+          <Ionicons 
+            name={timeBlock.customIcon} 
+            size={scaleWidth(18)} 
+            color={domainColor} 
+            style={{ opacity: 0.8, alignSelf: 'center' }}
+          />
         </View>
       )}
       
@@ -597,6 +621,20 @@ const styles = StyleSheet.create({
   compactLocationText: {
     fontSize: fontSizes.xs,
     flex: 1,
+  },
+  
+  // Custom icon styles
+  compactCustomIconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: spacing.xxxs,
+    marginBottom: spacing.xxxs,
+  },
+  customIconSection: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: spacing.xs,
+    marginBottom: spacing.xs,
   },
   
   // Delete overlay styles (similar to DayView)

@@ -394,7 +394,7 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
   const dateBeforeTimeBlock = useRef(null);
   const isReturningFromTimeBlock = useRef(false);
   // Store the most recent date from navigation to handle timing issues
-  const latestNavigatedDate = useRef(currentDate);
+  const latestNavigatedDate = useRef(currentDate || new Date());
   
   // Use external props if provided, otherwise use internal state
   const isFullscreen = externalIsFullscreen !== undefined ? externalIsFullscreen : internalIsFullscreen;
@@ -517,6 +517,9 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
   const [tabNavigatorKey, setTabNavigatorKey] = useState(0); // Key to force remount
   const [showTourTimePickerPopup, setShowTourTimePickerPopup] = useState(false); // Tour time picker popup
   const [selectedDuration, setSelectedDuration] = useState(null); // Selected duration for time block
+  
+  // Calendar view modes: 'app' (LifeCompass only), 'phone' (device calendar only), 'both' (combined view)
+  const [calendarViewMode, setCalendarViewMode] = useState('both');
   const [timePickerStep, setTimePickerStep] = useState('duration'); // 'duration' or 'time'
   const [showTourContinueButton, setShowTourContinueButton] = useState(false); // Show continue button after time block created
   const [showLimitModal, setShowLimitModal] = useState(false);
@@ -835,6 +838,40 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
     
     loadCalendarEventsForDate();
   }, [currentDate, calendarSettings.showCalendarEvents, getCalendarEventsForDate]);
+  
+  // Load and save calendar view mode preference
+  useEffect(() => {
+    const loadCalendarViewMode = async () => {
+      try {
+        const savedMode = await AsyncStorage.getItem('calendarViewMode');
+        if (savedMode && ['app', 'phone', 'both'].includes(savedMode)) {
+          setCalendarViewMode(savedMode);
+        }
+      } catch (error) {
+        console.error('Error loading calendar view mode:', error);
+        // Default to 'both' if error
+        setCalendarViewMode('both');
+      }
+    };
+    
+    loadCalendarViewMode();
+  }, []);
+  
+  // Save calendar view mode when it changes
+  useEffect(() => {
+    const saveCalendarViewMode = async () => {
+      try {
+        await AsyncStorage.setItem('calendarViewMode', calendarViewMode);
+      } catch (error) {
+        console.error('Error saving calendar view mode:', error);
+      }
+    };
+    
+    // Only save if not the initial render
+    if (calendarViewMode) {
+      saveCalendarViewMode();
+    }
+  }, [calendarViewMode]);
   
   // Format current date based on selected view and tab
   const getFormattedDate = (selectedView) => {
@@ -1409,31 +1446,110 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
       }
     });
     
-    // Add calendar events if enabled and available
-    if (calendarSettings.showCalendarEvents) {
+    // Filter based on calendar view mode
+    let finalTimeBlocks = [];
+    const dateKey = date.toDateString();
+    
+    // Include LifeCompass timeblocks if mode is 'app' or 'both'
+    if (calendarViewMode === 'app' || calendarViewMode === 'both') {
+      finalTimeBlocks = [...timeBlocksForDate];
+      console.log(`📅 ${dateKey}: Including ${timeBlocksForDate.length} LifeCompass timeblocks (mode: ${calendarViewMode})`);
+    }
+    
+    // Add calendar events if enabled, available, and mode is 'phone' or 'both'
+    if (calendarSettings.showCalendarEvents && (calendarViewMode === 'phone' || calendarViewMode === 'both')) {
       const calendarEventsForDate = date.toDateString() === currentDate.toDateString() 
         ? currentDateCalendarEvents 
         : [];
       
-      // Convert calendar events to time block format for display
-      const calendarEventBlocks = calendarEventsForDate.map(event => ({
-        id: `calendar_${event.id}`,
-        title: event.title,
-        startTime: event.startDate,
-        endTime: event.endDate,
-        location: event.location || '',
-        description: event.notes || '',
-        color: '#2196F3', // Blue color for calendar events
-        isCalendarEvent: true,
-        isReadOnly: event.isReadOnly !== false, // Default to read-only unless explicitly false
-        source: event.source || 'device_calendar',
-        originalEvent: event
-      }));
+      console.log(`📱 ${dateKey}: Found ${calendarEventsForDate.length} calendar events (mode: ${calendarViewMode})`);
       
-      return [...timeBlocksForDate, ...calendarEventBlocks];
+      // Convert calendar events to time block format for display
+      const calendarEventBlocks = calendarEventsForDate.map(event => {
+        // Enhanced validation for event data
+        if (!event || typeof event !== 'object') {
+          console.warn('⚠️ Calendar event is not a valid object:', event);
+          return null;
+        }
+        
+        if (!event.title || typeof event.title !== 'string' || event.title.trim() === '') {
+          console.warn('⚠️ Calendar event missing valid title:', event);
+          return null;
+        }
+        
+        if (!event.startDate) {
+          console.warn('⚠️ Calendar event missing startDate:', event);
+          return null;
+        }
+        
+        // Validate and normalize dates
+        let startDate, endDate;
+        try {
+          startDate = new Date(event.startDate);
+          if (isNaN(startDate.getTime())) {
+            console.warn('⚠️ Calendar event has invalid startDate:', event.startDate);
+            return null;
+          }
+          
+          // Handle endDate (some events might not have endDate)
+          if (event.endDate) {
+            endDate = new Date(event.endDate);
+            if (isNaN(endDate.getTime())) {
+              console.warn('⚠️ Calendar event has invalid endDate, using startDate + 1 hour:', event.endDate);
+              endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // Default to 1 hour
+            }
+          } else {
+            // Default to 1 hour duration if no end date
+            endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+          }
+          
+          // Ensure end date is not before start date
+          if (endDate < startDate) {
+            console.warn('⚠️ Calendar event endDate before startDate, swapping:', { start: startDate, end: endDate });
+            [startDate, endDate] = [endDate, startDate];
+          }
+        } catch (error) {
+          console.error('⚠️ Error parsing calendar event dates:', error, event);
+          return null;
+        }
+        
+        const calendarColor = '#2196F3'; // Blue color for calendar events
+        // Generate unique ID with fallback
+        const eventId = event.id || `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        return {
+          id: `calendar_${eventId}`,
+          title: event.title.trim(),
+          startTime: startDate,
+          endTime: endDate,
+          location: (event.location && typeof event.location === 'string') ? event.location.trim() : '',
+          description: (event.notes && typeof event.notes === 'string') ? event.notes.trim() : '',
+          color: calendarColor,
+          domainColor: calendarColor, // For MonthView and WeekView consistency
+          customColor: calendarColor, // Alternative color property
+          domain: 'Calendar', // Set domain for display
+          category: 'Calendar Event', // Set category for display
+          isCalendarEvent: true,
+          isGeneralActivity: false, // Ensure it's treated as a domain activity
+          isReadOnly: event.isReadOnly !== false, // Default to read-only unless explicitly false
+          source: event.source || 'device_calendar',
+          originalEvent: event
+        };
+      }).filter(Boolean); // Remove null entries
+      
+      finalTimeBlocks = [...finalTimeBlocks, ...calendarEventBlocks];
+      console.log(`📅 ${dateKey}: Total blocks after calendar events: ${finalTimeBlocks.length}`);
+    } else if (calendarViewMode === 'phone') {
+      // If in phone-only mode but no calendar events available, log this
+      console.log(`📱 ${dateKey}: Phone calendar mode but no events available (settings: ${JSON.stringify(calendarSettings)})`);
     }
     
-    return timeBlocksForDate;
+    // Log final result for debugging
+    if (finalTimeBlocks.length === 0 && calendarViewMode !== 'app') {
+      console.log(`⚠️ ${dateKey}: No timeblocks to display in mode '${calendarViewMode}'`);
+    }
+    
+    return finalTimeBlocks;
   };
   
   // Check weekly time block limit for free users
@@ -1547,14 +1663,14 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
     const dateToStore = latestNavigatedDate.current;
     console.log('🎯 TimeScreen: About to store date. currentDate state:', currentDate);
     console.log('🎯 TimeScreen: About to store date. latestNavigatedDate ref:', dateToStore);
-    console.log('🎯 TimeScreen: Date to store string:', dateToStore.toDateString());
+    console.log('🎯 TimeScreen: Date to store string:', dateToStore ? dateToStore.toDateString() : 'undefined');
     console.log('🎯 TimeScreen: Today for comparison:', new Date().toDateString());
     
     dateBeforeTimeBlock.current = dateToStore;
     isReturningFromTimeBlock.current = true;
     
     console.log('🎯 TimeScreen: Stored date in ref:', dateBeforeTimeBlock.current);
-    console.log('🎯 TimeScreen: Stored date as string:', dateBeforeTimeBlock.current.toDateString());
+    console.log('🎯 TimeScreen: Stored date as string:', dateBeforeTimeBlock.current ? dateBeforeTimeBlock.current.toDateString() : 'undefined');
     
     // If this is a calendar event, show info alert
     if (timeBlock.isCalendarEvent) {
@@ -1873,6 +1989,19 @@ else if (isPremium && tabName === 'Month') {
 }
 };
 
+// Handle calendar view mode cycling
+const handleCalendarViewToggle = () => {
+  const modes = ['app', 'phone', 'both'];
+  const currentIndex = modes.indexOf(calendarViewMode);
+  const nextIndex = (currentIndex + 1) % modes.length;
+  const newMode = modes[nextIndex];
+  
+  // Log for dev build testing
+  console.log(`🗓️ Calendar View: ${calendarViewMode} → ${newMode}`);
+  
+  setCalendarViewMode(newMode);
+};
+
   // Track tab change
   const handleTabChange = (tabName) => {
     setSelectedTab(tabName);
@@ -1902,7 +2031,7 @@ else if (isPremium && tabName === 'Month') {
         scaleWidth={scaleWidth}
       />
     ))
-  , [theme, insets, styles, scale, currentDate, timeBlocks, handleTimeBlockPress, handleTimeBlockLongPress, calculateTimeBlockStyle, handleAddTimeBlock, calendarSettings, currentDateCalendarEvents, selectedTab, isFullscreen, scaleHeight, scaleWidth]);
+  , [theme, insets, styles, scale, currentDate, timeBlocks, handleTimeBlockPress, handleTimeBlockLongPress, calculateTimeBlockStyle, handleAddTimeBlock, calendarSettings, currentDateCalendarEvents, selectedTab, isFullscreen, calendarViewMode, scaleHeight, scaleWidth]);
 
   const MemoizedWeekTab = useMemo(() =>
     React.memo(() => (
@@ -1932,7 +2061,7 @@ else if (isPremium && tabName === 'Month') {
         isTourActive={isTourActive}
       />
     ))
-  , [theme, styles, scaleWidth, scaleHeight, isFullscreen, weekDates, selectedWeekDay, handleWeekDaySelect, selectedTab, formatDate, getDayName, currentDate, timeBlocks, getTimeBlocksForDate, handleTimeBlockPress, handleTimeBlockLongPress, handleAddTimeBlock, calculateTimeBlockStyle, calendarSettings, currentDateCalendarEvents]);
+  , [theme, styles, scaleWidth, scaleHeight, isFullscreen, weekDates, selectedWeekDay, handleWeekDaySelect, selectedTab, formatDate, getDayName, currentDate, timeBlocks, getTimeBlocksForDate, handleTimeBlockPress, handleTimeBlockLongPress, handleAddTimeBlock, calculateTimeBlockStyle, calendarSettings, currentDateCalendarEvents, calendarViewMode]);
 
   const MemoizedMonthTab = useMemo(() =>
     React.memo(() => (
@@ -1962,7 +2091,7 @@ else if (isPremium && tabName === 'Month') {
         isTourActive={isTourActive}
       />
     ))
-  , [theme, styles, insets, scaleHeight, scaleWidth, isFullscreen, monthDates, selectedMonthDay, handleMonthDaySelect, selectedTab, getMonthName, currentDate, timeBlocks, getTimeBlocksForDate, handleTimeBlockPress, handleTimeBlockLongPress, handleAddTimeBlock, calculateTimeBlockStyle, calendarSettings, currentDateCalendarEvents]);
+  , [theme, styles, insets, scaleHeight, scaleWidth, isFullscreen, monthDates, selectedMonthDay, handleMonthDaySelect, selectedTab, getMonthName, currentDate, timeBlocks, getTimeBlocksForDate, handleTimeBlockPress, handleTimeBlockLongPress, handleAddTimeBlock, calculateTimeBlockStyle, calendarSettings, currentDateCalendarEvents, calendarViewMode]);
 
   // DayTab Component
   const DayTab = ({ route }) => {
@@ -1990,6 +2119,7 @@ else if (isPremium && tabName === 'Month') {
                   marginBottom: isFullscreen ? scaleHeight(5) : scaleHeight(10), // Reduced margin in fullscreen
                 }
               ]}>
+                {/* Navigation buttons row - back to original layout */}
                 <View style={styles.navigationButtonsRow}>
                   <TouchableOpacity 
                     style={[
@@ -2073,7 +2203,7 @@ else if (isPremium && tabName === 'Month') {
                     />
                   </TouchableOpacity>
 
-                  {/* Calendar Settings Button (hidden in fullscreen and during tour) */}
+                  {/* Calendar Settings Button */}
                   {!isFullscreen && !isTourActive && (
                     <TouchableOpacity 
                       style={[
@@ -2107,7 +2237,7 @@ else if (isPremium && tabName === 'Month') {
                     </TouchableOpacity>
                   )}
 
-                  {/* Share Button - To the right of navigation buttons (hidden in fullscreen and during tour) */}
+                  {/* PDF Button */}
                   {!isFullscreen && !isTourActive && (
                     <TouchableOpacity 
                       style={[
@@ -2132,6 +2262,45 @@ else if (isPremium && tabName === 'Month') {
                     </TouchableOpacity>
                   )}
                 </View>
+
+                {/* Calendar View Switcher - centered below Today button */}
+                {!isFullscreen && !isTourActive && (
+                  <View style={{ alignItems: 'center', marginTop: scaleHeight(8) }}>
+                    <TouchableOpacity
+                      onPress={handleCalendarViewToggle}
+                      style={[
+                        {
+                          backgroundColor: theme.cardElevated,
+                          borderRadius: scaleWidth(15),
+                          paddingHorizontal: scaleWidth(12),
+                          paddingVertical: scaleHeight(6),
+                          borderWidth: 1,
+                          borderColor: theme.border,
+                        }
+                      ]}
+                      accessible={true}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Calendar view mode: ${
+                        calendarViewMode === 'app' ? 'LifeCompass only' :
+                        calendarViewMode === 'phone' ? 'Phone calendar only' : 
+                        'Combined view'
+                      }`}
+                      accessibilityHint="Tap to switch between calendar view modes"
+                    >
+                      <Text style={[
+                        {
+                          color: theme.text,
+                          fontSize: scaleFontSize(11),
+                          fontWeight: '500',
+                        }
+                      ]}>
+                        {calendarViewMode === 'app' ? 'LifeCompass' :
+                         calendarViewMode === 'phone' ? 'Phone Calendar' : 
+                         'Combined View'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
               
               <DayView 
@@ -2200,6 +2369,7 @@ else if (isPremium && tabName === 'Month') {
               marginBottom: isFullscreen ? scaleHeight(5) : scaleHeight(10), // Reduced margin in fullscreen
             }
           ]}>
+            {/* Navigation buttons row - back to original layout */}
             <View style={styles.navigationButtonsRow}>
               <TouchableOpacity 
                 style={[
@@ -2283,7 +2453,7 @@ else if (isPremium && tabName === 'Month') {
                 />
               </TouchableOpacity>
 
-              {/* Calendar Settings Button (hidden in fullscreen and during tour) */}
+              {/* Calendar Settings Button */}
               {!isFullscreen && !isTourActive && (
                 <TouchableOpacity 
                   style={[
@@ -2317,7 +2487,7 @@ else if (isPremium && tabName === 'Month') {
                 </TouchableOpacity>
               )}
 
-              {/* Share Button - To the left of navigation buttons (hidden in fullscreen and during tour) */}
+              {/* PDF Button */}
               {!isFullscreen && !isTourActive && (
                 <TouchableOpacity 
                   style={[
@@ -2342,6 +2512,45 @@ else if (isPremium && tabName === 'Month') {
                 </TouchableOpacity>
               )}
             </View>
+
+            {/* Calendar View Switcher - centered below Today button */}
+            {!isFullscreen && !isTourActive && (
+              <View style={{ alignItems: 'center', marginTop: scaleHeight(8) }}>
+                <TouchableOpacity
+                  onPress={handleCalendarViewToggle}
+                  style={[
+                    {
+                      backgroundColor: theme.cardElevated,
+                      borderRadius: scaleWidth(15),
+                      paddingHorizontal: scaleWidth(12),
+                      paddingVertical: scaleHeight(6),
+                      borderWidth: 1,
+                      borderColor: theme.border,
+                    }
+                  ]}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Calendar view mode: ${
+                    calendarViewMode === 'app' ? 'LifeCompass only' :
+                    calendarViewMode === 'phone' ? 'Phone calendar only' : 
+                    'Combined view'
+                  }`}
+                  accessibilityHint="Tap to switch between calendar view modes"
+                >
+                  <Text style={[
+                    {
+                      color: theme.text,
+                      fontSize: scaleFontSize(11),
+                      fontWeight: '500',
+                    }
+                  ]}>
+                    {calendarViewMode === 'app' ? 'LifeCompass' :
+                     calendarViewMode === 'phone' ? 'Phone Calendar' : 
+                     'Combined View'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
           
           <WeekView 
@@ -2385,6 +2594,7 @@ else if (isPremium && tabName === 'Month') {
               marginBottom: isFullscreen ? scaleHeight(5) : scaleHeight(10), // Reduced margin in fullscreen
             }
           ]}>
+            {/* Navigation buttons row - back to original layout */}
             <View style={styles.navigationButtonsRow}>
               <TouchableOpacity 
                 style={[
@@ -2468,7 +2678,7 @@ else if (isPremium && tabName === 'Month') {
                 />
               </TouchableOpacity>
 
-              {/* Calendar Settings Button (hidden in fullscreen and during tour) */}
+              {/* Calendar Settings Button */}
               {!isFullscreen && !isTourActive && (
                 <TouchableOpacity 
                   style={[
@@ -2502,7 +2712,7 @@ else if (isPremium && tabName === 'Month') {
                 </TouchableOpacity>
               )}
 
-              {/* Share Button - To the right of navigation buttons (hidden in fullscreen and during tour) */}
+              {/* PDF Button */}
               {!isFullscreen && !isTourActive && (
                 <TouchableOpacity 
                   style={[
@@ -2527,6 +2737,45 @@ else if (isPremium && tabName === 'Month') {
                 </TouchableOpacity>
               )}
             </View>
+
+            {/* Calendar View Switcher - centered below Today button */}
+            {!isFullscreen && !isTourActive && (
+              <View style={{ alignItems: 'center', marginTop: scaleHeight(8) }}>
+                <TouchableOpacity
+                  onPress={handleCalendarViewToggle}
+                  style={[
+                    {
+                      backgroundColor: theme.cardElevated,
+                      borderRadius: scaleWidth(15),
+                      paddingHorizontal: scaleWidth(12),
+                      paddingVertical: scaleHeight(6),
+                      borderWidth: 1,
+                      borderColor: theme.border,
+                    }
+                  ]}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Calendar view mode: ${
+                    calendarViewMode === 'app' ? 'LifeCompass only' :
+                    calendarViewMode === 'phone' ? 'Phone calendar only' : 
+                    'Combined view'
+                  }`}
+                  accessibilityHint="Tap to switch between calendar view modes"
+                >
+                  <Text style={[
+                    {
+                      color: theme.text,
+                      fontSize: scaleFontSize(11),
+                      fontWeight: '500',
+                    }
+                  ]}>
+                    {calendarViewMode === 'app' ? 'LifeCompass' :
+                     calendarViewMode === 'phone' ? 'Phone Calendar' : 
+                     'Combined View'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
           
           <MonthView 
@@ -3403,7 +3652,6 @@ const styles = StyleSheet.create({
   },
   timeIndicator: {
     justifyContent: 'flex-start',
-    paddingTop: scaleHeight(8),
     alignItems: 'flex-end',
   },
   timeText: {
@@ -3471,6 +3719,13 @@ const styles = StyleSheet.create({
   projectTaskText: {
     fontSize: scaleFontSize(11),
     marginLeft: scaleWidth(4),
+  },
+  // Custom icon container for general activity blocks
+  timeBlockCustomIcon: {
+    marginTop: scaleHeight(2),
+    marginBottom: scaleHeight(2),
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   timeBlockFooter: {
     marginTop: 'auto',
@@ -3709,7 +3964,8 @@ const styles = StyleSheet.create({
   // Repeating block styles
   repeatingTimeBlock: {
     borderStyle: 'dashed',
-    borderWidth: 1,
+    borderWidth: 2,
+    // borderColor will be set dynamically in DayView.js
   },
   repeatingIndicator: {
     flexDirection: 'row',

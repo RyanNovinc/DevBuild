@@ -153,6 +153,8 @@ const TimeBlockScreen = ({ route, navigation }) => {
   // State for general activity blocks
   const [category, setCategory] = useState(initialTimeBlock?.category || 'Personal');
   const [customColor, setCustomColor] = useState(initialTimeBlock?.customColor || '#4285F4');
+  const [customIcon, setCustomIcon] = useState(initialTimeBlock?.customIcon || null);
+  const [showIconPicker, setShowIconPicker] = useState(false);
   
   // Predefined colors to choose from
   const colorOptions = [
@@ -317,6 +319,7 @@ const TimeBlockScreen = ({ route, navigation }) => {
         // Set category and color for general activity
         setCategory(initialTimeBlock.category || 'Personal');
         setCustomColor(initialTimeBlock.customColor || '#4285F4');
+        setCustomIcon(initialTimeBlock.customIcon || null);
       } else {
         // Goal-focused time block - find goal, milestone, and task
         
@@ -423,6 +426,7 @@ const TimeBlockScreen = ({ route, navigation }) => {
         domainColor: initialTimeBlock.domainColor || '#4CAF50',
         category: initialTimeBlock.category || 'Personal',
         customColor: initialTimeBlock.customColor || '#4285F4',
+        customIcon: initialTimeBlock.customIcon || null,
         startTime: new Date(initialTimeBlock.startTime).toISOString(),
         endTime: new Date(initialTimeBlock.endTime).toISOString(),
         location: initialTimeBlock.location || '',
@@ -535,6 +539,7 @@ const TimeBlockScreen = ({ route, navigation }) => {
         domainColor: prefilledGoal?.color || tourGoal?.color || '#4CAF50',
         category: 'Personal',
         customColor: '#4285F4',
+        customIcon: null,
         startTime: startTimeToUse.toISOString(),
         endTime: endTimeToUse.toISOString(),
         location: '',
@@ -555,15 +560,7 @@ const TimeBlockScreen = ({ route, navigation }) => {
       setHasUnsavedChanges(false);
     }
     
-    // If we have main goals, set the default domain to the first non-completed goal
-    if (Array.isArray(mainGoals) && mainGoals.length > 0 && isCreating && activeTab === 'goal') {
-      // Filter for non-completed goals
-      const activeGoals = mainGoals.filter(goal => !goal.completed);
-      if (activeGoals.length > 0) {
-        setDomain(activeGoals[0].title);
-        setDomainColor(activeGoals[0].color);
-      }
-    }
+    // Don't auto-select any goal - let user choose "No Specific Goal" by default
   }, [isCreating, initialTimeBlock, date, mainGoals, milestones, tasks]);
   
   // Update check for unsaved changes whenever relevant state changes
@@ -578,6 +575,7 @@ const TimeBlockScreen = ({ route, navigation }) => {
       (activeTab === 'goal' && domain !== initialValues.domain) ||
       (activeTab === 'general' && category !== initialValues.category) ||
       (activeTab === 'general' && customColor !== initialValues.customColor) ||
+      (activeTab === 'general' && customIcon !== initialValues.customIcon) ||
       startTime.toISOString() !== initialValues.startTime ||
       endTime.toISOString() !== initialValues.endTime ||
       location !== initialValues.location ||
@@ -597,7 +595,7 @@ const TimeBlockScreen = ({ route, navigation }) => {
     
     setHasUnsavedChanges(hasChanges);
   }, [
-    title, activeTab, domain, category, customColor, startTime, endTime,
+    title, activeTab, domain, category, customColor, customIcon, startTime, endTime,
     location, notes, isCompleted, isRepeating, repeatFrequency,
     repeatIndefinitely, repeatUntil, enableNotification, notificationTime,
     customMinutes, selectedMilestone, selectedTask, initialValues
@@ -743,14 +741,12 @@ const TimeBlockScreen = ({ route, navigation }) => {
     }
     
     if (activeTab === 'goal' && !domain.trim()) {
-      notification.showSuccess('Please select a goal', { type: 'warning' });
+      notification.showError('Please select a goal');
       return;
     }
     
-    if (activeTab === 'general' && !category.trim()) {
-      notification.showSuccess('Please select a category', { type: 'warning' });
-      return;
-    }
+    // For general activities, use default category if none selected
+    const finalCategory = activeTab === 'general' ? (category.trim() || 'Personal') : category;
     
     // Check for time block overlaps
     const overlaps = checkForOverlaps();
@@ -839,8 +835,9 @@ const TimeBlockScreen = ({ route, navigation }) => {
       taskTitle: activeTab === 'goal' ? taskTitle : null, // NEW: Store task title
       
       // For General Activity time blocks
-      category: activeTab === 'general' ? category : null,
+      category: activeTab === 'general' ? finalCategory : null,
       customColor: activeTab === 'general' ? customColor : null,
+      customIcon: activeTab === 'general' ? customIcon : null,
       
       // Common fields
       startTime: startTime.toISOString(),
@@ -1464,7 +1461,12 @@ const TimeBlockScreen = ({ route, navigation }) => {
             category={category}
             setCategory={setCategory}
             customColor={customColor}
+            setCustomColor={setCustomColor}
             openColorModal={openColorModal}
+            customIcon={customIcon}
+            setCustomIcon={setCustomIcon}
+            showIconPicker={showIconPicker}
+            setShowIconPicker={setShowIconPicker}
             openDatePicker={openDatePicker}
             openStartTimePicker={openStartTimePicker}
             openEndTimePicker={openEndTimePicker}
