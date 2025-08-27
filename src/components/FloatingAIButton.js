@@ -48,15 +48,41 @@ const FloatingAIButton = ({ theme, hideDuringTour = false }) => {
   const buttonSize = Math.max(scaleWidth(56), accessibility.minTouchTarget);
   
   // Screens where the button should be hidden
-  const hideButtonScreens = ['AIAssistant', 'Conversations'];
+  const hideButtonScreens = ['AIAssistant', 'Conversations', 'TimeBlock'];
   
-  // Current route name
+  // Current route name - check for nested routes
   const getCurrentRouteName = () => {
     const focusedRouteName = getFocusedRouteNameFromRoute(route);
     return focusedRouteName || route.name;
   };
   
   const currentRouteName = getCurrentRouteName();
+  
+  // Check if we're currently in a nested TimeBlock screen
+  const isInTimeBlockScreen = () => {
+    // Direct route check
+    if (currentRouteName === 'TimeBlock' || route.name === 'TimeBlock') {
+      return true;
+    }
+    
+    // Check nested routes - if we're in TimeTab and there's navigation state
+    if (route.state && route.state.routes) {
+      const nestedRoute = route.state.routes[route.state.index];
+      if (nestedRoute && nestedRoute.name === 'TimeBlock') {
+        return true;
+      }
+      
+      // Check deeper nesting
+      if (nestedRoute && nestedRoute.state && nestedRoute.state.routes) {
+        const deepNestedRoute = nestedRoute.state.routes[nestedRoute.state.index];
+        if (deepNestedRoute && deepNestedRoute.name === 'TimeBlock') {
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  };
   
   // Set up global method for controlling visibility from kanban view
   useEffect(() => {
@@ -130,30 +156,7 @@ const FloatingAIButton = ({ theme, hideDuringTour = false }) => {
     };
   }, [navigation, isTourActive]);
   
-  // Pulse animation (slower than onboarding sparkle icon)
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.2,
-          duration: 1500,
-          useNativeDriver: true
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 1500,
-          useNativeDriver: true
-        })
-      ])
-    ).start();
-  }, []);
-  
-  // Press handler - navigate to AI Assistant
-  const handlePress = () => {
-    navigation.navigate('AIAssistant');
-  };
-  
-  // Check if button should be hidden
+  // Check if button should be hidden (moved before animation effect)
   const shouldHideButton = 
     hideButtonScreens.includes(currentRouteName) || 
     hideButtonScreens.includes(route.name) || 
@@ -161,6 +164,59 @@ const FloatingAIButton = ({ theme, hideDuringTour = false }) => {
     kanbanFullScreenHidden ||
     hideDuringTour ||
     isTourActive;
+  
+  // Animation reference to store current running animation
+  const currentAnimation = useRef(null);
+  
+  // Pulse animation (slower than onboarding sparkle icon)
+  useEffect(() => {
+    const startPulseAnimation = () => {
+      // Stop any existing animation first
+      if (currentAnimation.current) {
+        currentAnimation.current.stop();
+      }
+      
+      // Reset pulse to initial state
+      pulseAnim.setValue(1);
+      
+      // Create and start new animation loop
+      currentAnimation.current = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.2,
+            duration: 1500,
+            useNativeDriver: true
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 1500,
+            useNativeDriver: true
+          })
+        ])
+      );
+      
+      currentAnimation.current.start();
+      console.log('🎯 FloatingAI: Started pulse animation');
+    };
+    
+    // Only start animation if tour is not active and button should be visible
+    if (!isTourActive && !shouldHideButton) {
+      startPulseAnimation();
+    }
+    
+    // Cleanup function to stop animation when component unmounts or effect re-runs
+    return () => {
+      if (currentAnimation.current) {
+        currentAnimation.current.stop();
+        currentAnimation.current = null;
+      }
+    };
+  }, [isTourActive, shouldHideButton]); // Dependencies to restart animation when needed
+  
+  // Press handler - navigate to AI Assistant
+  const handlePress = () => {
+    navigation.navigate('AIAssistant');
+  };
   
   // Don't render anything if button should be hidden
   if (shouldHideButton) {

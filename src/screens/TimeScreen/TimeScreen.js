@@ -1,5 +1,5 @@
 // src/screens/TimeScreen/TimeScreen.js
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import FeatureExplorerTracker from '../../services/FeatureExplorerTracker';
 import { useFocusEffect } from '@react-navigation/native';
 import { 
@@ -28,11 +28,300 @@ import {
   getDayName, 
   getMonthName 
 } from '../../utils/helpers';
-import { PinchGestureHandler, State } from 'react-native-gesture-handler';
 import { LinearGradient } from 'expo-linear-gradient';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+// Extracted tab components to prevent recreation on re-renders
+const DayTab = React.memo(({ 
+  theme, 
+  scrollViewRef, 
+  insets, 
+  styles, 
+  scale, 
+  currentDate, 
+  timeBlocks, 
+  handleTimeBlockPress, 
+  handleTimeBlockLongPress, 
+  calculateTimeBlockStyle, 
+  handleAddTimeBlock, 
+  calendarSettings, 
+  currentDateCalendarEvents, 
+  selectedTab, 
+  isFullscreen, 
+  isTourActive, 
+  scaleHeight, 
+  scaleWidth 
+}) => {
+  // Local state for expanded time block to prevent parent re-renders
+  const [expandedTimeBlockId, setExpandedTimeBlockId] = useState(null);
+
+  // Local handler for time block long press
+  const handleLocalTimeBlockLongPress = useCallback((timeBlock) => {
+    // Disable during tour
+    if (isTourActive) {
+      console.log('🎯 TimeScreen DayTab: Local timeblock long press disabled during tour');
+      return;
+    }
+    
+    // Capture current scroll position before state change
+    const currentScrollY = scrollViewRef.current?.startScrollY || startScrollY.current || 0;
+    console.log('🔄 Preserving scroll position during delete expansion:', currentScrollY);
+    
+    // Call original handler first
+    handleTimeBlockLongPress(timeBlock);
+    
+    // Toggle local expansion state
+    setExpandedTimeBlockId(expandedTimeBlockId === timeBlock.id ? null : timeBlock.id);
+    
+    // Restore scroll position after re-render completes
+    // Using same pattern as zoom functionality
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (scrollViewRef.current && currentScrollY >= 0) {
+          console.log('🔄 Restoring scroll position to:', currentScrollY);
+          scrollViewRef.current.scrollTo({ y: currentScrollY, animated: false });
+        }
+      });
+    });
+  }, [handleTimeBlockLongPress, expandedTimeBlockId, isTourActive, scrollViewRef, startScrollY]);
+
+  return (
+    <View style={{ flex: 1, backgroundColor: theme.background }}>
+      <View style={{ flex: 1 }}>
+        <ScrollView 
+            ref={scrollViewRef} 
+            style={styles.content}
+            showsVerticalScrollIndicator={true}
+            contentContainerStyle={[
+              styles.scrollViewContent,
+              { paddingBottom: insets.bottom + scaleHeight(80) }
+            ]}
+            scrollEventThrottle={16}
+            onScroll={(event) => {
+              // Track scroll position for zoom functionality
+              if (scrollViewRef.current) {
+                scrollViewRef.current.startScrollY = event.nativeEvent.contentOffset.y;
+              }
+            }}
+        >
+          <DayView
+            currentDate={currentDate}
+            timeBlocks={timeBlocks}
+            onTimeBlockPress={handleTimeBlockPress}
+            onTimeBlockLongPress={handleLocalTimeBlockLongPress}
+            onAddTimeBlock={handleAddTimeBlock}
+            expandedTimeBlockId={expandedTimeBlockId}
+            calculateTimeBlockStyle={calculateTimeBlockStyle}
+            calendarSettings={calendarSettings}
+            currentDateCalendarEvents={currentDateCalendarEvents}
+            selectedTab={selectedTab}
+            isFullscreen={isFullscreen}
+            isTourActive={isTourActive}
+            scale={scale}
+          />
+        </ScrollView>
+      </View>
+    </View>
+  );
+});
+
+const WeekTab = React.memo(({
+  theme,
+  styles,
+  scaleWidth,
+  scaleHeight,
+  isFullscreen,
+  weekDates,
+  selectedWeekDay,
+  handleWeekDaySelect,
+  handlePrev,
+  handleNext,
+  formatDate,
+  getDayName,
+  currentDate,
+  timeBlocks,
+  getTimeBlocksForDate,
+  handleTimeBlockPress,
+  handleTimeBlockLongPress,
+  handleAddTimeBlock,
+  calculateTimeBlockStyle,
+  calendarSettings,
+  currentDateCalendarEvents,
+  selectedTab,
+  isTourActive
+}) => {
+  return (
+    <View style={{ flex: 1, backgroundColor: theme.background }}>
+        {/* Navigation Controls are now moved here */}
+        <View style={[
+          styles.navigationContainer,
+          { 
+            paddingHorizontal: scaleWidth(10),
+            paddingVertical: isFullscreen ? scaleHeight(5) : scaleHeight(10), // Reduced padding in fullscreen
+            marginBottom: isFullscreen ? scaleHeight(5) : scaleHeight(10), // Reduced margin in fullscreen
+          }
+        ]}>
+          {/* Previous Button */}
+          <TouchableOpacity 
+            onPress={() => handlePrev()}
+            style={[styles.navButton, { marginRight: scaleWidth(15) }]}
+            activeOpacity={0.7}
+            accessibilityLabel="Previous week"
+            accessibilityHint="Navigate to the previous week"
+          >
+            <Ionicons name="chevron-back" size={scaleWidth(20)} color={theme.text} />
+          </TouchableOpacity>
+
+          {/* Week Days */}
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.weekDatesContainer}
+            style={{ flex: 1 }}
+          >
+            {weekDates.map((date, index) => {
+              const isSelected = selectedWeekDay === index;
+              const dateTimeBlocks = getTimeBlocksForDate(date);
+              const hasTimeBlocks = dateTimeBlocks.length > 0;
+              
+              return (
+                <TouchableOpacity
+                  key={index}
+                  onPress={() => handleWeekDaySelect(index)}
+                  style={[
+                    styles.weekDateItem,
+                    isSelected && styles.selectedWeekDateItem,
+                    { 
+                      minWidth: scaleWidth(60),
+                      height: scaleHeight(70),
+                      marginHorizontal: scaleWidth(4),
+                    }
+                  ]}
+                  activeOpacity={0.7}
+                  accessibilityLabel={`${getDayName(date.getDay())} ${formatDate(date, 'MMM DD')}`}
+                  accessibilityHint={hasTimeBlocks ? "Has scheduled time blocks" : "No scheduled time blocks"}
+                >
+                  <Text style={[
+                    styles.weekDayName,
+                    isSelected && styles.selectedWeekDayName,
+                    { fontSize: scaleWidth(12) }
+                  ]}>
+                    {getDayName(date.getDay()).substring(0, 3)}
+                  </Text>
+                  <Text style={[
+                    styles.weekDateNumber,
+                    isSelected && styles.selectedWeekDateNumber,
+                    { fontSize: scaleWidth(16) }
+                  ]}>
+                    {date.getDate()}
+                  </Text>
+                  {hasTimeBlocks && (
+                    <View style={[
+                      styles.timeBlockIndicator,
+                      { 
+                        width: scaleWidth(4),
+                        height: scaleWidth(4),
+                        marginTop: scaleHeight(2)
+                      }
+                    ]} />
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+
+          {/* Next Button */}
+          <TouchableOpacity 
+            onPress={() => handleNext()}
+            style={[styles.navButton, { marginLeft: scaleWidth(15) }]}
+            activeOpacity={0.7}
+            accessibilityLabel="Next week"
+            accessibilityHint="Navigate to the next week"
+          >
+            <Ionicons name="chevron-forward" size={scaleWidth(20)} color={theme.text} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Week View */}
+        <WeekView
+          currentDate={currentDate}
+          weekDates={weekDates}
+          selectedWeekDay={selectedWeekDay}
+          timeBlocks={timeBlocks}
+          onTimeBlockPress={handleTimeBlockPress}
+          onTimeBlockLongPress={handleTimeBlockLongPress}
+          onAddTimeBlock={handleAddTimeBlock}
+          calculateTimeBlockStyle={calculateTimeBlockStyle}
+          calendarSettings={calendarSettings}
+          currentDateCalendarEvents={currentDateCalendarEvents}
+          selectedTab={selectedTab}
+          isFullscreen={isFullscreen}
+          isTourActive={isTourActive}
+        />
+    </View>
+  );
+});
+
+const MonthTab = React.memo(({
+  theme,
+  styles,
+  insets,
+  scaleHeight,
+  scaleWidth,
+  isFullscreen,
+  monthDates,
+  selectedMonthDay,
+  handleMonthDaySelect,
+  handlePrev,
+  handleNext,
+  getMonthName,
+  currentDate,
+  timeBlocks,
+  getTimeBlocksForDate,
+  handleTimeBlockPress,
+  handleTimeBlockLongPress,
+  handleAddTimeBlock,
+  calculateTimeBlockStyle,
+  calendarSettings,
+  currentDateCalendarEvents,
+  selectedTab,
+  isTourActive
+}) => {
+  return (
+    <View style={{ flex: 1, backgroundColor: theme.background }}>
+      <ScrollView 
+        style={styles.content}
+        showsVerticalScrollIndicator={true}
+        contentContainerStyle={[
+          styles.scrollViewContent,
+          { paddingBottom: insets.bottom + scaleHeight(80) }
+        ]}
+      >
+        <MonthView
+          currentDate={currentDate}
+          monthDates={monthDates}
+          selectedMonthDay={selectedMonthDay}
+          onMonthDayPress={handleMonthDaySelect}
+          timeBlocks={timeBlocks}
+          onTimeBlockPress={handleTimeBlockPress}
+          onTimeBlockLongPress={handleTimeBlockLongPress}
+          onAddTimeBlock={handleAddTimeBlock}
+          calculateTimeBlockStyle={calculateTimeBlockStyle}
+          calendarSettings={calendarSettings}
+          currentDateCalendarEvents={currentDateCalendarEvents}
+          selectedTab={selectedTab}
+          isFullscreen={isFullscreen}
+          isTourActive={isTourActive}
+          handlePrev={handlePrev}
+          handleNext={handleNext}
+          getMonthName={getMonthName}
+        />
+      </ScrollView>
+    </View>
+  );
+});
 import { 
   scaleWidth, 
   scaleHeight, 
@@ -54,7 +343,6 @@ import MonthView from './MonthView';
 
 // Import helper functions
 import { 
-  generateRepeatingInstances, 
   formatTime, 
   getDarkerShade
 } from './TimeScreenHelpers';
@@ -71,6 +359,7 @@ import CalendarSettingsModal from '../../components/CalendarSettingsModal';
 // Import tour components
 import useAppTour from '../../hooks/useAppTour';
 import AppTourOverlay from '../../components/AppTourOverlay';
+
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -100,6 +389,12 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
   
   // Internal fullscreen state management
   const [internalIsFullscreen, setInternalIsFullscreen] = useState(false);
+  
+  // Store the date we should return to after TimeBlock navigation
+  const dateBeforeTimeBlock = useRef(null);
+  const isReturningFromTimeBlock = useRef(false);
+  // Store the most recent date from navigation to handle timing issues
+  const latestNavigatedDate = useRef(currentDate);
   
   // Use external props if provided, otherwise use internal state
   const isFullscreen = externalIsFullscreen !== undefined ? externalIsFullscreen : internalIsFullscreen;
@@ -144,16 +439,18 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
   // Handle tour time screen lighting animation - start dark then light up
   useEffect(() => {
     if (isTourActive) {
-      // Light up time screen for all TIME steps
+      // Light up time screen for all TIME steps by making overlay transparent
       if (currentStep === 'SCHEDULE_DEDICATED_TIME' || currentStep === 'TIME_BLOCK_CREATED' || currentStep === 'SYSTEM_CONFIDENCE') {
         console.log('🎯 Tour: Starting time screen lighting animation for', currentStep);
         
         // For TIME_BLOCK_CREATED step, light up immediately so user can see their time block
         if (currentStep === 'TIME_BLOCK_CREATED') {
           console.log('🎯 Tour: Lighting up immediately for TIME_BLOCK_CREATED');
-          tourTimeOpacity.setValue(1);
+          tourTimeOpacity.setValue(0); // 0 = transparent overlay = lit up screen
         } else {
-          // Light up the time screen as the AI message appears for other steps
+          // Start with dark overlay, then animate to transparent as AI message appears
+          tourTimeOpacity.setValue(1); // 1 = opaque overlay = darkened screen
+          
           // Coordinate with AppTourOverlay AI message timing:
           // 100ms overlay fade + 300ms delay + 300ms step delay = 700ms until AI message starts typing
           const lightUpDelay = 700; // Start lighting as AI message begins typing
@@ -162,7 +459,7 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
             if (isTourActive && (currentStep === 'SCHEDULE_DEDICATED_TIME' || currentStep === 'SYSTEM_CONFIDENCE')) {
               console.log('🎯 Tour: Now lighting up the time screen for', currentStep);
               Animated.timing(tourTimeOpacity, {
-                toValue: 1,
+                toValue: 0, // Animate to transparent = lit up
                 duration: 1000, // Match the AI message typing duration
                 useNativeDriver: true
               }).start(() => {
@@ -173,11 +470,11 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
         }
       } else {
         // Keep dark during tour until we reach TIME steps
-        tourTimeOpacity.setValue(0);
+        tourTimeOpacity.setValue(1); // 1 = opaque overlay = darkened screen
       }
     } else {
-      // Not in tour - show normal brightness
-      tourTimeOpacity.setValue(1);
+      // Not in tour - no overlay needed
+      tourTimeOpacity.setValue(0); // 0 = transparent overlay = normal brightness
     }
   }, [isTourActive, currentStep]);
   
@@ -188,6 +485,7 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
   const appContext = useAppContext();
   const timeBlocks = appContext.timeBlocks || [];
   const addTimeBlock = appContext.addTimeBlock;
+  const deleteTimeBlock = appContext.deleteTimeBlock;
   const userSubscriptionStatus = appContext.userSubscriptionStatus || 'free';
   const isPremium = userSubscriptionStatus === 'pro' || userSubscriptionStatus === 'unlimited';
   const { mainGoals, milestones, tasks } = appContext;
@@ -233,15 +531,116 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
   const [currentDateCalendarEvents, setCurrentDateCalendarEvents] = useState([]);
   const [showCalendarSettings, setShowCalendarSettings] = useState(false);
   
-  // Reset to day view whenever screen comes into focus
+  // Track previous tour step to prevent unnecessary resets during tour progression
+  const previousTourStepRef = useRef(null);
+  
+  // Define which tour steps belong to which screens
+  const getTourStepScreen = (step) => {
+    const STEP_SCREENS = {
+      'GOAL_ACHIEVEMENT_VALIDATION': 'Profile',
+      'KANBAN_SYSTEM_INTRO': 'Projects',
+      'PICK_CURRENT_FOCUS': 'Projects',
+      'TASK_MOVED_CELEBRATION': 'Projects',
+      'SCHEDULE_DEDICATED_TIME': 'Time',
+      'TIME_BLOCK_CREATED': 'Time',
+      'SYSTEM_CONFIDENCE': 'Time',
+      'SUPPORTING_TOOLS_OVERVIEW': 'TodoTab',
+      'AI_FAREWELL': 'TodoTab'
+    };
+    return STEP_SCREENS[step] || null;
+  };
+  
+  // Track if this is the initial mount vs subsequent navigation
+  const isInitialMountRef = useRef(true);
+  const lastNavigationSourceRef = useRef(null);
+  
+  // Handle initial mount - simple one-time setup
+  useEffect(() => {
+    console.log('🎯 TimeScreen: Initial mount - setting up Day view');
+    setSelectedTab('Day');
+    setCurrentDate(new Date());
+    setTabNavigatorKey(prev => prev + 1);
+    isInitialMountRef.current = false;
+  }, []); // Empty dependency array - only run on mount
+  
+  // Separate effect for tracking tour steps without triggering resets
+  useEffect(() => {
+    console.log('🎯 TimeScreen: Tour step changed to:', currentStep);
+    
+    // Tour data preparation - check for in-progress tasks during SCHEDULE_DEDICATED_TIME
+    if (isTourActive && currentStep === 'SCHEDULE_DEDICATED_TIME') {
+      console.log('🎯 TimeScreen: Checking for tour data during SCHEDULE_DEDICATED_TIME');
+        console.log('🎯 TimeScreen: Current global tour data:', {
+          hasTask: !!global.tourSelectedTask,
+          hasMilestone: !!global.tourSelectedMilestone,
+          hasGoal: !!global.tourSelectedGoal
+        });
+        
+        // If we don't have global tour data, try to find it from context
+        if (!global.tourSelectedTask) {
+          console.log('🎯 TimeScreen: No global tour data, searching for in-progress task');
+          console.log('🎯 TimeScreen: Available context data:', {
+            tasksCount: tasks?.length || 0,
+            milestonesCount: milestones?.length || 0,
+            goalsCount: mainGoals?.length || 0
+          });
+          
+          // Try to find in-progress task in available data
+          const inProgressTask = tasks?.find(task => task.status === 'in-progress');
+          
+          if (inProgressTask) {
+            console.log('🎯 TimeScreen: Found in-progress task:', inProgressTask.title);
+            
+            const milestone = milestones?.find(m => m.id === inProgressTask.milestoneId);
+            const goal = milestone ? mainGoals?.find(g => g.id === milestone.goalId) : null;
+            
+            if (milestone && goal) {
+              console.log('🎯 TimeScreen: Storing found tour data globally:', {
+                task: inProgressTask.title,
+                milestone: milestone.title,
+                goal: goal.title
+              });
+              
+              global.tourSelectedTask = inProgressTask;
+              global.tourSelectedMilestone = milestone;
+              global.tourSelectedGoal = goal;
+            } else {
+              console.error('🎯 TimeScreen: Could not find milestone or goal for task');
+            }
+          } else {
+            console.log('🎯 TimeScreen: No in-progress task found in context');
+          }
+        } else {
+          console.log('🎯 TimeScreen: Global tour data already exists');
+        }
+    }
+    
+    // Update previous step reference after processing
+    previousTourStepRef.current = currentStep;
+  }, [isTourActive, currentStep, tasks, milestones, mainGoals]);
+  
+  // Handle return from TimeBlock screen - preserve the date context
   useFocusEffect(
-    React.useCallback(() => {
-      setSelectedTab('Day');
-      // Reset to today's date
-      setCurrentDate(new Date());
-      // Force tab navigator to remount with Day as initial tab
-      setTabNavigatorKey(prev => prev + 1);
-    }, [])
+    useCallback(() => {
+      console.log('🎯 TimeScreen: Screen focused');
+      
+      // Check if we're returning from TimeBlock navigation
+      if (isReturningFromTimeBlock.current && dateBeforeTimeBlock.current) {
+        console.log('🎯 TimeScreen: Restoring date from before TimeBlock navigation:', dateBeforeTimeBlock.current);
+        const restoredDate = new Date(dateBeforeTimeBlock.current);
+        setCurrentDate(restoredDate);
+        console.log('🎯 TimeScreen: Date restored to:', restoredDate.toDateString());
+        
+        // Clear the flags
+        isReturningFromTimeBlock.current = false;
+        dateBeforeTimeBlock.current = null;
+      } else if (!isTourActive && !isReturningFromTimeBlock.current) {
+        console.log('🎯 TimeScreen: Normal navigation - resetting to today');
+        setSelectedTab('Day');
+        setCurrentDate(new Date());
+        setTabNavigatorKey(prev => prev + 1);
+      }
+    }, [isTourActive])
   );
   
   // Cleanup fullscreen state when component unmounts
@@ -302,7 +701,7 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
   const handleZoomIn = () => {
     animateButtonPress();
     
-    const newScale = Math.min(scale + 0.1, 3);
+    const newScale = Math.min(scale + 0.1, 2);
     
     // Calculate new scroll position to maintain current center view
     if (scrollViewRef.current) {
@@ -334,7 +733,7 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
   const handleZoomOut = () => {
     animateButtonPress();
     
-    const newScale = Math.max(scale - 0.1, 0.3);
+    const newScale = Math.max(scale - 0.1, 0.4);
     
     // Calculate new scroll position to maintain current center view
     if (scrollViewRef.current) {
@@ -390,47 +789,6 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
     startScrollY.current = event.nativeEvent.contentOffset.y;
   };
   
-  // Handle pinch gesture for zoom
-  const onPinchGestureEvent = (event) => {
-    // Get pinch scale and focal points
-    const { scale: pinchScale, focalX, focalY } = event.nativeEvent;
-    
-    // Store the focal point location
-    focalPoint.current = { x: focalX, y: focalY };
-    
-    // Calculate new scale with limits
-    const newScale = Math.max(0.3, Math.min(lastScale.current * pinchScale, 3));
-    
-    // Only update if scale has changed significantly
-    if (Math.abs(scale - newScale) > 0.01) {
-      // Get current visible content area
-      const viewportHeight = height;
-      const scrollOffset = startScrollY.current;
-      
-      // Calculate focal point relative to the content
-      const focalPointRelative = focalY - (viewportHeight / 2) + scrollOffset;
-      
-      // Calculate the new scroll position
-      const scaleFactor = newScale / scale;
-      const newFocalPointRelative = focalPointRelative * scaleFactor;
-      const newScrollPosition = newFocalPointRelative - (focalY - (viewportHeight / 2));
-      
-      // Apply the new scroll position
-      if (scrollViewRef.current) {
-        scrollViewRef.current.scrollTo({ y: newScrollPosition, animated: false });
-      }
-      
-      // Update scale state
-      setScale(newScale);
-    }
-  };
-
-  // When pinch begins, save the current scale
-  const onPinchHandlerStateChange = (event) => {
-    if (event.nativeEvent.oldState === State.ACTIVE) {
-      lastScale.current = scale;
-    }
-  };
 
   // Reset to Day tab when component mounts
   useEffect(() => {
@@ -539,11 +897,17 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
     }
     
     setCurrentDate(newDate);
+    // Store the latest navigated date immediately to handle React state timing
+    latestNavigatedDate.current = newDate;
+    console.log('🎯 TimeScreen: handlePrevious completed, stored latest date:', newDate.toDateString());
   };
   
   // Navigate to next day/week/month
   const handleNext = (tabName) => {
     animateButtonPress();
+    
+    console.log('🎯 TimeScreen: handleNext called for tab:', tabName);
+    console.log('🎯 TimeScreen: Current date before navigation:', currentDate.toDateString());
     
     const newDate = new Date(currentDate);
     
@@ -566,7 +930,11 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
       return;
     }
     
+    console.log('🎯 TimeScreen: Setting new date to:', newDate.toDateString());
     setCurrentDate(newDate);
+    // Store the latest navigated date immediately to handle React state timing
+    latestNavigatedDate.current = newDate;
+    console.log('🎯 TimeScreen: handleNext completed, stored latest date:', newDate.toDateString());
   };
   
   // Go to today
@@ -652,14 +1020,18 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
     // Start from current time rounded up to next 15-minute interval
     let startMinutes = Math.ceil(currentTime / 15) * 15;
     
-    // Generate slots for the rest of today (until 10 PM)
-    const endOfDay = 22 * 60; // 10 PM in minutes
+    // Generate slots for the rest of today (until midnight)
+    const endOfDay = 24 * 60; // Midnight (24:00) in minutes
     
-    while (startMinutes < endOfDay) {
-      const hours = Math.floor(startMinutes / 60);
+    // If it's 11 PM or later, also show early morning options for tomorrow
+    const isLateNight = now.getHours() >= 23;
+    const actualEndOfDay = isLateNight ? endOfDay + (8 * 60) : endOfDay; // Add 8 morning hours for late night users
+    
+    while (startMinutes < actualEndOfDay) {
+      const hours = Math.floor(startMinutes / 60) % 24; // Handle overflow past midnight
       const minutes = startMinutes % 60;
       const endMinutes = startMinutes + selectedDuration;
-      const endHours = Math.floor(endMinutes / 60);
+      const endHours = Math.floor(endMinutes / 60) % 24;
       const endMins = endMinutes % 60;
       
       const startTime = new Date();
@@ -668,16 +1040,23 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
       const endTime = new Date();
       endTime.setHours(endHours, endMins, 0, 0);
       
+      // For times past midnight, show next day indicator
+      const isNextDay = Math.floor(startMinutes / 60) >= 24;
+      const displayTime = startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const displayEndTime = endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      
       slots.push({
         time: startTime,
-        display: startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        endTime: endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        display: isNextDay ? `${displayTime} (tomorrow)` : displayTime,
+        endTime: isNextDay ? `${displayEndTime} (tomorrow)` : displayEndTime
       });
       
       startMinutes += 30; // 30-minute intervals
     }
     
-    return slots.slice(0, 8); // Show max 8 slots to keep it manageable
+    // Remove the 8-slot limit for better tour experience - show all available slots
+    // If there are too many slots (>12), limit to 12 for UI purposes
+    return slots.slice(0, 12);
   };
 
   // Helper function to find the task that was moved to "In Progress" during tour
@@ -689,9 +1068,14 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
       tourSelectedGoal: global.tourSelectedGoal ? global.tourSelectedGoal.title : null
     });
     
-    // First, check if we have tour-selected task data stored globally
+    // Check if we have tour-selected task data (all three required for tour)
     if (global.tourSelectedTask && global.tourSelectedMilestone && global.tourSelectedGoal) {
-      console.log('🎯 Tour: Using stored tour task data');
+      console.log('🎯 Tour: Using stored tour task data:', {
+        task: global.tourSelectedTask.title,
+        milestone: global.tourSelectedMilestone.title,
+        goal: global.tourSelectedGoal.title
+      });
+      
       return {
         task: global.tourSelectedTask,
         milestone: global.tourSelectedMilestone,
@@ -699,12 +1083,26 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
       };
     }
     
-    console.log('🎯 Tour: No global tour data, looking for in-progress tasks');
+    console.log('🎯 Tour: No global tour data available, looking for in-progress tasks in context');
     console.log('🎯 Tour: Available tasks:', tasks?.map(t => ({ id: t.id, title: t.title, status: t.status })));
     
-    // Fallback: look for in-progress tasks in the updated data structure
-    // Tasks are now stored separately, not nested under milestones
-    const inProgressTask = tasks?.find(task => 
+    // Since TimeScreen tasks array is often empty due to context issues,
+    // let's try to get the in-progress task from AppContext more directly
+    // Try both the destructured tasks and direct appContext.tasks
+    const destructuredTasks = tasks || [];
+    const directTasks = appContext.tasks || [];
+    
+    console.log('🎯 Tour: Task arrays comparison:', {
+      destructuredLength: destructuredTasks.length,
+      directLength: directTasks.length,
+      using: directTasks.length > 0 ? 'direct' : 'destructured'
+    });
+    
+    // Use the array that has data
+    const allTasks = directTasks.length > 0 ? directTasks : destructuredTasks;
+    console.log('🎯 Tour: Using tasks array with length:', allTasks.length);
+    
+    const inProgressTask = allTasks.find(task => 
       task.status === 'in-progress'
     );
     
@@ -718,6 +1116,12 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
       console.log('🎯 Tour: Found goal:', goal ? goal.title : null);
       
       if (milestone && goal) {
+        // Store this globally for future use
+        console.log('🎯 Tour: Storing found task data globally for consistency');
+        global.tourSelectedTask = inProgressTask;
+        global.tourSelectedMilestone = milestone;
+        global.tourSelectedGoal = goal;
+        
         return {
           task: inProgressTask,
           milestone,
@@ -726,7 +1130,7 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
       }
     }
     
-    console.log('🎯 Tour: No valid task data found, returning null');
+    console.log('🎯 Tour: No valid tour data found, returning null');
     return null;
   };
 
@@ -738,6 +1142,19 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
       milestones: milestones ? milestones.length : 0,
       tasks: tasks ? tasks.length : 0
     });
+    
+    // Log the full appContext to see what's available
+    console.log('🎯 Tour: Full appContext keys:', Object.keys(appContext || {}));
+    console.log('🎯 Tour: AppContext tasks array:', {
+      isArray: Array.isArray(appContext.tasks),
+      length: appContext.tasks?.length || 0,
+      firstFew: appContext.tasks?.slice(0, 3)?.map(t => ({ 
+        id: t.id, 
+        title: t.title, 
+        status: t.status 
+      }))
+    });
+    
     console.log('🎯 Tour: Global tour data check:', {
       hasGlobalTask: !!global.tourSelectedTask,
       hasGlobalMilestone: !!global.tourSelectedMilestone,
@@ -782,18 +1199,112 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
       console.log('🎯 Tour: Time block times calculated:', { blockStartTime, endTime });
       
       // Find the current in-progress task from the tour
-      const taskInfo = findInProgressTourTask();
+      let taskInfo = findInProgressTourTask();
       console.log('🎯 Tour: Found task info:', taskInfo);
       
-      // If taskInfo is null, something went wrong - let's debug this
+      // If taskInfo is null, try one last aggressive approach using direct context access
       if (!taskInfo) {
-        console.error('🎯 Tour: ERROR - No task info found! This should not happen during tour.');
+        console.error('🎯 Tour: ERROR - No task info found! Trying final fallback...');
         console.error('🎯 Tour: Available data for debugging:', {
           tasksCount: tasks ? tasks.length : 0,
           inProgressTasks: tasks ? tasks.filter(t => t.status === 'in-progress') : [],
           milestonesCount: milestones ? milestones.length : 0,
           goalsCount: mainGoals ? mainGoals.length : 0
         });
+        
+        // Final fallback: try to find in-progress task using fresh context data
+        const contextTasks = appContext?.tasks || [];
+        const contextMilestones = appContext?.milestones || [];  
+        const contextGoals = appContext?.mainGoals || [];
+        
+        console.log('🎯 Tour: Final fallback - direct context access:', {
+          contextTasksLength: contextTasks.length,
+          contextMilestonesLength: contextMilestones.length,
+          contextGoalsLength: contextGoals.length
+        });
+        
+        // Log all tasks with their status to see what we actually have
+        console.log('🎯 Tour: All context tasks with status:', contextTasks.map(t => ({
+          id: t.id,
+          title: t.title?.substring(0, 30) + '...',
+          status: t.status
+        })));
+        
+        // Try both status formats - there might be inconsistency between underscore and hyphen
+        const inProgressTaskHyphen = contextTasks.find(t => t.status === 'in-progress');
+        const inProgressTaskUnderscore = contextTasks.find(t => t.status === 'in_progress');
+        const inProgressTask = inProgressTaskHyphen || inProgressTaskUnderscore;
+        
+        console.log('🎯 Tour: Searching for in-progress task:', {
+          foundWithHyphen: !!inProgressTaskHyphen,
+          foundWithUnderscore: !!inProgressTaskUnderscore,
+          foundAny: !!inProgressTask,
+          allStatusValues: [...new Set(contextTasks.map(t => t.status))]
+        });
+        
+        if (inProgressTask) {
+          console.log('🎯 Tour: Final fallback found task:', inProgressTask.title);
+          const milestone = contextMilestones.find(m => m.id === inProgressTask.milestoneId);
+          const goal = milestone ? contextGoals.find(g => g.id === milestone.goalId) : null;
+          
+          if (milestone && goal) {
+            console.log('🎯 Tour: Final fallback success - creating taskInfo');
+            taskInfo = {
+              task: inProgressTask,
+              milestone,
+              goal
+            };
+            
+            // Store globally for future use
+            global.tourSelectedTask = inProgressTask;
+            global.tourSelectedMilestone = milestone;
+            global.tourSelectedGoal = goal;
+          } else {
+            console.error('🎯 Tour: Final fallback - could not find milestone/goal');
+          }
+        } else {
+          console.error('🎯 Tour: Final fallback - no in-progress task found');
+          
+          // Last resort: Since we're in a tour and know there should be a task,
+          // try to find ANY task that could be the tour task by looking for one
+          // that might have been recently updated or has certain characteristics
+          console.log('🎯 Tour: Last resort - looking for any suitable task');
+          
+          if (contextTasks.length > 0) {
+            // Look for a task that might be the tour task
+            // Priority: recently updated tasks
+            const sortedTasks = [...contextTasks].sort((a, b) => 
+              new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt)
+            );
+            
+            console.log('🎯 Tour: Most recently updated tasks:', sortedTasks.slice(0, 2).map(t => ({
+              title: t.title?.substring(0, 40),
+              status: t.status,
+              updatedAt: t.updatedAt
+            })));
+            
+            // Use the most recently updated task as the tour task
+            const possibleTourTask = sortedTasks[0];
+            const milestone = contextMilestones.find(m => m.id === possibleTourTask.milestoneId);
+            const goal = milestone ? contextGoals.find(g => g.id === milestone.goalId) : null;
+            
+            if (milestone && goal) {
+              console.log('🎯 Tour: Last resort success - using most recent task as tour task');
+              taskInfo = {
+                task: possibleTourTask,
+                milestone,
+                goal
+              };
+              
+              // Store globally for future use
+              global.tourSelectedTask = possibleTourTask;
+              global.tourSelectedMilestone = milestone;
+              global.tourSelectedGoal = goal;
+            } else {
+              console.error('🎯 Tour: Last resort failed - no milestone/goal found');
+            }
+          }
+        }
       }
       
       // Create the actual time block data with proper structure
@@ -882,13 +1393,9 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
     
     const dateString = date.toDateString();
     
-    // Generate repeating instances
-    const repeatingInstances = generateRepeatingInstances(timeBlocks, isPremium);
-    
-    // Combine original blocks with repeating instances
-    const allBlocks = [...timeBlocks, ...repeatingInstances];
-    
-    const timeBlocksForDate = allBlocks.filter(block => {
+    // Since recurring instances are now persisted in storage, we don't need to generate them
+    // Just use timeBlocks directly
+    const timeBlocksForDate = timeBlocks.filter(block => {
       // Safety check: ensure block and block.startTime exist
       if (!block || !block.startTime) return false;
       
@@ -965,6 +1472,13 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
   const handleAddTimeBlock = () => {
     animateButtonPress();
     
+    // Store current date before navigation so we can return to it
+    // Use latestNavigatedDate.current to get the most recent date (bypasses React state timing)
+    const dateToStore = latestNavigatedDate.current;
+    dateBeforeTimeBlock.current = dateToStore;
+    isReturningFromTimeBlock.current = true;
+    console.log('🎯 TimeScreen: Storing current date before navigation (add):', dateToStore);
+    
     // Check for free tier planning horizon
     if (!isPremium && isBeyondFreePlanningHorizon(currentDate)) {
       setLimitModalType('horizon');
@@ -988,6 +1502,12 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
   const handleAddTimeBlockWithTime = (startTime, endTime) => {
     animateButtonPress();
     
+    // Store current date before navigation so we can return to it
+    // Use latestNavigatedDate.current to get the most recent date (bypasses React state timing)
+    const dateToStore = latestNavigatedDate.current;
+    dateBeforeTimeBlock.current = dateToStore;
+    console.log('🎯 TimeScreen: Storing current date before navigation (add with time):', dateToStore);
+    
     // Check for free tier planning horizon
     if (!isPremium && isBeyondFreePlanningHorizon(currentDate)) {
       setLimitModalType('horizon');
@@ -1009,12 +1529,33 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
       date: currentDate, 
       isPremium,
       prefilledStartTime: startTime,
-      prefilledEndTime: endTime
+      prefilledEndTime: endTime,
+      returnDate: currentDate
     });
   };
   
   // Function to view time block details
-  const handleTimeBlockPress = (timeBlock) => {
+  const handleTimeBlockPress = useCallback((timeBlock) => {
+    // Disable timeblock clicks during tour
+    if (isTourActive) {
+      console.log('🎯 TimeScreen: Timeblock clicks disabled during tour');
+      return;
+    }
+    
+    // Store current date before navigation so we can return to it
+    // Use latestNavigatedDate.current to get the most recent date (bypasses React state timing)
+    const dateToStore = latestNavigatedDate.current;
+    console.log('🎯 TimeScreen: About to store date. currentDate state:', currentDate);
+    console.log('🎯 TimeScreen: About to store date. latestNavigatedDate ref:', dateToStore);
+    console.log('🎯 TimeScreen: Date to store string:', dateToStore.toDateString());
+    console.log('🎯 TimeScreen: Today for comparison:', new Date().toDateString());
+    
+    dateBeforeTimeBlock.current = dateToStore;
+    isReturningFromTimeBlock.current = true;
+    
+    console.log('🎯 TimeScreen: Stored date in ref:', dateBeforeTimeBlock.current);
+    console.log('🎯 TimeScreen: Stored date as string:', dateBeforeTimeBlock.current.toDateString());
+    
     // If this is a calendar event, show info alert
     if (timeBlock.isCalendarEvent) {
       const startTime = new Date(timeBlock.startTime).toLocaleTimeString([], { 
@@ -1094,7 +1635,150 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
       // Regular time block, just edit it
       navigation.navigate('TimeBlock', { mode: 'edit', timeBlock, isPremium });
     }
-  };
+  }, [isTourActive, timeBlocks, isPremium, navigation]);
+  
+  // Function to handle long press on time blocks (inline expansion)
+  const handleTimeBlockLongPress = useCallback((timeBlock, event) => {
+    // Disable during tour
+    if (isTourActive) {
+      console.log('🎯 TimeScreen: Timeblock long press disabled during tour');
+      return;
+    }
+    
+    // Don't show options for calendar events
+    if (timeBlock.isCalendarEvent) {
+      Alert.alert(
+        'Calendar Event',
+        'This is a calendar event. Please use your calendar app to edit or delete it.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+    
+    // For Week and Month views, the expansion is handled locally by each view
+    // This handler is primarily for any parent-level state management if needed
+    console.log('🎯 TimeScreen: Timeblock long press - handled by local view expansion');
+    
+  }, [isTourActive]);
+  
+  // Handle edit time block directly (simplified)  
+  const editTimeBlock = useCallback((timeBlock) => {
+    if (timeBlock.isRepeatingInstance) {
+      Alert.alert(
+        'Edit Repeating Time Block',
+        'This is a repeating time block. How would you like to edit it?',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel'
+          },
+          {
+            text: 'This Instance Only',
+            onPress: () => {
+              const standaloneBlock = {
+                ...timeBlock,
+                id: `standalone_${timeBlock.id}`,
+                isRepeating: false,
+                isRepeatingInstance: false,
+                originalTimeBlockId: null
+              };
+              navigation.navigate('TimeBlock', { mode: 'edit', timeBlock: standaloneBlock, isPremium });
+            }
+          },
+          {
+            text: 'Entire Series',
+            onPress: () => {
+              const originalBlock = timeBlocks.find(block => 
+                !block.isRepeatingInstance && block.id === timeBlock.originalTimeBlockId
+              );
+              
+              if (originalBlock) {
+                navigation.navigate('TimeBlock', { mode: 'edit', timeBlock: originalBlock, isPremium });
+              } else {
+                Alert.alert(
+                  'Error',
+                  'Could not find the original time block for this repeating instance.',
+                  [{ text: 'OK' }]
+                );
+              }
+            }
+          }
+        ]
+      );
+    } else {
+      navigation.navigate('TimeBlock', { mode: 'edit', timeBlock, isPremium });
+    }
+  }, [timeBlocks, isPremium, navigation]);
+  
+  // Handle delete time block directly (simplified)
+  const deleteTimeBlockHandler = useCallback((timeBlockId, deleteType = null) => {
+    console.log(`TimeScreen deleteTimeBlockHandler called: ID=${timeBlockId}, type=${deleteType}`);
+    
+    // Pass the deleteType directly to AppContext deleteTimeBlock function
+    // The AppContext function now handles all the logic for single vs series deletion
+    deleteTimeBlock(timeBlockId, deleteType);
+  }, [deleteTimeBlock]);
+  
+  // Legacy delete function for compatibility - can be removed later
+  const handleLegacyDelete = useCallback((timeBlock) => {
+    const isRepeating = timeBlock.isRepeating || timeBlock.isRepeatingInstance;
+    
+    if (isRepeating) {
+      Alert.alert(
+        'Delete Recurring Time Block',
+        `"${timeBlock.title}" is part of a recurring series. What would you like to delete?`,
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel'
+          },
+          {
+            text: 'Delete This Instance',
+            style: 'destructive',
+            onPress: () => {
+              deleteTimeBlock(timeBlock.id);
+            }
+          },
+          {
+            text: 'Delete Entire Series',
+            style: 'destructive',
+            onPress: async () => {
+              const originalId = timeBlock.isRepeatingInstance 
+                ? timeBlock.originalTimeBlockId 
+                : timeBlock.id;
+              
+              if (originalId) {
+                await deleteTimeBlock(originalId);
+                const relatedBlocks = timeBlocks.filter(block => 
+                  block.originalTimeBlockId === originalId || 
+                  (block.isRepeatingInstance && block.id.startsWith(originalId))
+                );
+                
+                for (const block of relatedBlocks) {
+                  await deleteTimeBlock(block.id);
+                }
+              }
+            }
+          }
+        ]
+      );
+    } else {
+      Alert.alert(
+        'Delete Time Block',
+        `Are you sure you want to delete "${timeBlock.title}"?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: () => {
+              deleteTimeBlock(timeBlock.id);
+            }
+          }
+        ]
+      );
+    }
+  }, [deleteTimeBlock]);
   
   // Helper to calculate time block position and dimensions
   const calculateTimeBlockStyle = (timeBlock) => {
@@ -1130,7 +1814,8 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
     // Convert to position and height (scaled)
     const hourHeight = getHourHeight();
     const top = (startTotalMinutes / 60) * hourHeight;
-    const height = Math.max((durationInMinutes / 60) * hourHeight, scaleHeight(30)); // Minimum height of 30
+    const scaledMinHeight = scaleHeight(30) * scale; // Scale minimum height with zoom level
+    const height = Math.max((durationInMinutes / 60) * hourHeight, scaledMinHeight);
     
     return { height, top };
   };
@@ -1193,16 +1878,98 @@ else if (isPremium && tabName === 'Month') {
     setSelectedTab(tabName);
   };
 
+  // Memoized components to prevent recreation on re-renders
+  const MemoizedDayTab = useMemo(() => 
+    React.memo(() => (
+      <DayTab
+        theme={theme}
+        scrollViewRef={scrollViewRef}
+        insets={insets}
+        styles={styles}
+        scale={scale}
+        currentDate={currentDate}
+        timeBlocks={timeBlocks}
+        onTimeBlockPress={handleTimeBlockPress}
+        onTimeBlockLongPress={handleTimeBlockLongPress}
+        calculateTimeBlockStyle={calculateTimeBlockStyle}
+        handleAddTimeBlock={handleAddTimeBlock}
+        calendarSettings={calendarSettings}
+        currentDateCalendarEvents={currentDateCalendarEvents}
+        selectedTab={selectedTab}
+        isFullscreen={isFullscreen}
+        isTourActive={isTourActive}
+        scaleHeight={scaleHeight}
+        scaleWidth={scaleWidth}
+      />
+    ))
+  , [theme, insets, styles, scale, currentDate, timeBlocks, handleTimeBlockPress, handleTimeBlockLongPress, calculateTimeBlockStyle, handleAddTimeBlock, calendarSettings, currentDateCalendarEvents, selectedTab, isFullscreen, scaleHeight, scaleWidth]);
+
+  const MemoizedWeekTab = useMemo(() =>
+    React.memo(() => (
+      <WeekTab
+        theme={theme}
+        styles={styles}
+        scaleWidth={scaleWidth}
+        scaleHeight={scaleHeight}
+        isFullscreen={isFullscreen}
+        weekDates={weekDates}
+        selectedWeekDay={selectedWeekDay}
+        handleWeekDaySelect={handleWeekDaySelect}
+        handlePrev={() => handlePrevious(selectedTab)}
+        handleNext={() => handleNext(selectedTab)}
+        formatDate={formatDate}
+        getDayName={getDayName}
+        currentDate={currentDate}
+        timeBlocks={timeBlocks}
+        getTimeBlocksForDate={getTimeBlocksForDate}
+        onTimeBlockPress={handleTimeBlockPress}
+        onTimeBlockLongPress={handleTimeBlockLongPress}
+        handleAddTimeBlock={handleAddTimeBlock}
+        calculateTimeBlockStyle={calculateTimeBlockStyle}
+        calendarSettings={calendarSettings}
+        currentDateCalendarEvents={currentDateCalendarEvents}
+        selectedTab={selectedTab}
+        isTourActive={isTourActive}
+      />
+    ))
+  , [theme, styles, scaleWidth, scaleHeight, isFullscreen, weekDates, selectedWeekDay, handleWeekDaySelect, selectedTab, formatDate, getDayName, currentDate, timeBlocks, getTimeBlocksForDate, handleTimeBlockPress, handleTimeBlockLongPress, handleAddTimeBlock, calculateTimeBlockStyle, calendarSettings, currentDateCalendarEvents]);
+
+  const MemoizedMonthTab = useMemo(() =>
+    React.memo(() => (
+      <MonthTab
+        theme={theme}
+        styles={styles}
+        insets={insets}
+        scaleHeight={scaleHeight}
+        scaleWidth={scaleWidth}
+        isFullscreen={isFullscreen}
+        monthDates={monthDates}
+        selectedMonthDay={selectedMonthDay}
+        handleMonthDaySelect={handleMonthDaySelect}
+        handlePrev={() => handlePrevious(selectedTab)}
+        handleNext={() => handleNext(selectedTab)}
+        getMonthName={getMonthName}
+        currentDate={currentDate}
+        timeBlocks={timeBlocks}
+        getTimeBlocksForDate={getTimeBlocksForDate}
+        onTimeBlockPress={handleTimeBlockPress}
+        onTimeBlockLongPress={handleTimeBlockLongPress}
+        handleAddTimeBlock={handleAddTimeBlock}
+        calculateTimeBlockStyle={calculateTimeBlockStyle}
+        calendarSettings={calendarSettings}
+        currentDateCalendarEvents={currentDateCalendarEvents}
+        selectedTab={selectedTab}
+        isTourActive={isTourActive}
+      />
+    ))
+  , [theme, styles, insets, scaleHeight, scaleWidth, isFullscreen, monthDates, selectedMonthDay, handleMonthDaySelect, selectedTab, getMonthName, currentDate, timeBlocks, getTimeBlocksForDate, handleTimeBlockPress, handleTimeBlockLongPress, handleAddTimeBlock, calculateTimeBlockStyle, calendarSettings, currentDateCalendarEvents]);
+
   // DayTab Component
   const DayTab = ({ route }) => {
     return (
       <View style={{ flex: 1, backgroundColor: theme.background }}>
-        <PinchGestureHandler
-          onGestureEvent={onPinchGestureEvent}
-          onHandlerStateChange={onPinchHandlerStateChange}
-        >
-          <Animated.View style={{ flex: 1 }}>
-            <ScrollView 
+        <View style={{ flex: 1 }}>
+          <ScrollView 
               ref={scrollViewRef} 
               style={styles.content}
               showsVerticalScrollIndicator={true}
@@ -1306,8 +2073,8 @@ else if (isPremium && tabName === 'Month') {
                     />
                   </TouchableOpacity>
 
-                  {/* Calendar Settings Button (hidden in fullscreen) */}
-                  {!isFullscreen && (
+                  {/* Calendar Settings Button (hidden in fullscreen and during tour) */}
+                  {!isFullscreen && !isTourActive && (
                     <TouchableOpacity 
                       style={[
                         styles.calendarButton, 
@@ -1340,8 +2107,8 @@ else if (isPremium && tabName === 'Month') {
                     </TouchableOpacity>
                   )}
 
-                  {/* Share Button - To the right of navigation buttons (hidden in fullscreen) */}
-                  {!isFullscreen && (
+                  {/* Share Button - To the right of navigation buttons (hidden in fullscreen and during tour) */}
+                  {!isFullscreen && !isTourActive && (
                     <TouchableOpacity 
                       style={[
                         styles.shareButton, 
@@ -1371,7 +2138,27 @@ else if (isPremium && tabName === 'Month') {
                 timeBlocks={timeBlocks}
                 getTimeBlocksForDate={getTimeBlocksForDate}
                 currentDate={currentDate}
-                handleTimeBlockPress={handleTimeBlockPress}
+                onTimeBlockPress={handleTimeBlockPress}
+                onTimeBlockLongPress={useCallback((timeBlock, event) => {
+                  // Capture current scroll position before DayView's state change
+                  const currentScrollY = scrollViewRef.current?.startScrollY || startScrollY.current || 0;
+                  console.log('🔄 Preserving scroll position during DayView delete expansion:', currentScrollY);
+                  
+                  // Call the original handler
+                  handleTimeBlockLongPress(timeBlock, event);
+                  
+                  // Restore scroll position after DayView's re-render completes
+                  requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                      if (scrollViewRef.current && currentScrollY >= 0) {
+                        console.log('🔄 Restoring DayView scroll position to:', currentScrollY);
+                        scrollViewRef.current.scrollTo({ y: currentScrollY, animated: false });
+                      }
+                    });
+                  });
+                }, [handleTimeBlockLongPress, scrollViewRef, startScrollY])}
+                editTimeBlock={editTimeBlock}
+                deleteTimeBlock={deleteTimeBlockHandler}
                 handleAddTimeBlock={handleAddTimeBlock}
                 handleAddTimeBlockWithTime={handleAddTimeBlockWithTime}
                 getHourHeight={getHourHeight}
@@ -1384,10 +2171,10 @@ else if (isPremium && tabName === 'Month') {
                 isDarkMode={isDarkMode}
                 isPremium={isPremium}
                 scale={scale}
+                isTourActive={isTourActive}
               />
             </ScrollView>
-          </Animated.View>
-        </PinchGestureHandler>
+        </View>
       </View>
     );
   };
@@ -1396,7 +2183,15 @@ else if (isPremium && tabName === 'Month') {
   const WeekTab = () => {
     return (
       <View style={{ flex: 1, backgroundColor: theme.background }}>
-          {/* Navigation Controls are now moved here */}
+        <ScrollView 
+          style={styles.content}
+          showsVerticalScrollIndicator={true}
+          contentContainerStyle={[
+            styles.scrollViewContent,
+            { paddingBottom: insets.bottom + scaleHeight(80) }
+          ]}
+        >
+          {/* Navigation Controls */}
           <View style={[
             styles.navigationContainer,
             { 
@@ -1488,8 +2283,8 @@ else if (isPremium && tabName === 'Month') {
                 />
               </TouchableOpacity>
 
-              {/* Calendar Settings Button (hidden in fullscreen) */}
-              {!isFullscreen && (
+              {/* Calendar Settings Button (hidden in fullscreen and during tour) */}
+              {!isFullscreen && !isTourActive && (
                 <TouchableOpacity 
                   style={[
                     styles.calendarButton, 
@@ -1522,8 +2317,8 @@ else if (isPremium && tabName === 'Month') {
                 </TouchableOpacity>
               )}
 
-              {/* Share Button - To the left of navigation buttons (hidden in fullscreen) */}
-              {!isFullscreen && (
+              {/* Share Button - To the left of navigation buttons (hidden in fullscreen and during tour) */}
+              {!isFullscreen && !isTourActive && (
                 <TouchableOpacity 
                   style={[
                     styles.shareButton, 
@@ -1556,12 +2351,15 @@ else if (isPremium && tabName === 'Month') {
             getDayName={getDayName}
             getTimeBlocksForDate={getTimeBlocksForDate}
             handleWeekDaySelect={handleWeekDaySelect}
-            handleTimeBlockPress={handleTimeBlockPress}
+            onTimeBlockPress={handleTimeBlockPress}
+            onTimeBlockLongPress={handleTimeBlockLongPress}
+            deleteTimeBlock={deleteTimeBlockHandler}
             styles={styles}
             theme={theme}
             isPremium={isPremium}
             maxFreeBlocks={3} // Limit blocks shown in free version
           />
+        </ScrollView>
       </View>
     );
   };
@@ -1670,8 +2468,8 @@ else if (isPremium && tabName === 'Month') {
                 />
               </TouchableOpacity>
 
-              {/* Calendar Settings Button (hidden in fullscreen) */}
-              {!isFullscreen && (
+              {/* Calendar Settings Button (hidden in fullscreen and during tour) */}
+              {!isFullscreen && !isTourActive && (
                 <TouchableOpacity 
                   style={[
                     styles.calendarButton, 
@@ -1704,8 +2502,8 @@ else if (isPremium && tabName === 'Month') {
                 </TouchableOpacity>
               )}
 
-              {/* Share Button - To the right of navigation buttons (hidden in fullscreen) */}
-              {!isFullscreen && (
+              {/* Share Button - To the right of navigation buttons (hidden in fullscreen and during tour) */}
+              {!isFullscreen && !isTourActive && (
                 <TouchableOpacity 
                   style={[
                     styles.shareButton, 
@@ -1738,8 +2536,10 @@ else if (isPremium && tabName === 'Month') {
             formatDate={formatDate}
             getTimeBlocksForDate={getTimeBlocksForDate}
             handleMonthDaySelect={handleMonthDaySelect}
-            handleTimeBlockPress={handleTimeBlockPress}
+            onTimeBlockPress={handleTimeBlockPress}
+            onTimeBlockLongPress={handleTimeBlockLongPress}
             handleAddTimeBlock={handleAddTimeBlock}
+            deleteTimeBlock={deleteTimeBlockHandler}
             styles={styles}
             theme={theme}
             isDarkMode={isDarkMode}
@@ -1779,24 +2579,33 @@ else if (isPremium && tabName === 'Month') {
           marginBottom: isFullscreen ? 2 : 5, // Smaller margin in fullscreen
         }
       ]}>
-        {/* Fullscreen Button - Left side of flex row */}
-        <TouchableOpacity 
-          style={{
-            padding: 8,
-            zIndex: 2
-          }}
-          onPress={onFullScreenToggle}
-          accessible={true}
-          accessibilityRole="button"
-          accessibilityLabel={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-          accessibilityHint={isFullscreen ? "Exit fullscreen mode" : "Enter fullscreen mode"}
-        >
-          <Ionicons 
-            name={isFullscreen ? "contract" : "expand"} 
-            size={24} 
-            color={theme.text} 
-          />
-        </TouchableOpacity>
+        {/* Fullscreen Button - Left side of flex row (hidden during tour) */}
+        {!isTourActive && (
+          <TouchableOpacity 
+            style={{
+              padding: 8,
+              zIndex: 2
+            }}
+            onPress={onFullScreenToggle}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+            accessibilityHint={isFullscreen ? "Exit fullscreen mode" : "Enter fullscreen mode"}
+          >
+            <Ionicons 
+              name={isFullscreen ? "contract" : "expand"} 
+              size={24} 
+              color={theme.text} 
+            />
+          </TouchableOpacity>
+        )}
+        
+        {/* Invisible spacer when fullscreen button is hidden during tour */}
+        {isTourActive && (
+          <View style={{ padding: 8, opacity: 0 }}>
+            <Ionicons name="expand" size={24} color="transparent" />
+          </View>
+        )}
 
         {/* Date Text - Absolutely centered, smaller in fullscreen */}
         <Text 
@@ -1827,7 +2636,7 @@ else if (isPremium && tabName === 'Month') {
       </View>
 
       {/* Tab Navigator - Below date */}
-      <Animated.View style={[{ flex: 1 }, isTourActive ? { opacity: tourTimeOpacity } : {}]}>
+      <View style={{ flex: 1 }}>
         <NavigationContainer independent={true} key={tabNavigatorKey} ref={tabNavigatorRef}>
           <Tab.Navigator
           initialRouteName="Day"
@@ -1835,6 +2644,7 @@ else if (isPremium && tabName === 'Month') {
             tabBarActiveTintColor: isDarkMode ? '#FFFFFF' : '#000000',
             tabBarInactiveTintColor: theme.textSecondary,
             swipeEnabled: isTourActive !== true, // Disable swiping during tour
+            animationEnabled: true,
             tabBarStyle: { 
               backgroundColor: theme.cardElevated,
               elevation: 0,
@@ -1865,8 +2675,6 @@ else if (isPremium && tabName === 'Month') {
               height: scaleHeight(38),
               zIndex: 2,
             },
-            swipeEnabled: true,
-            animationEnabled: true,
             tabBarAccessibilityLabel: `${selectedTab} view tab`,
             tabBarAllowFontScaling: true,
             tabBarPressOpacity: 0.8,
@@ -1883,28 +2691,28 @@ else if (isPremium && tabName === 'Month') {
         >
           <Tab.Screen 
             name="Day" 
-            component={DayTab}
+            component={MemoizedDayTab}
             options={{
               tabBarAccessibilityLabel: "Day view",
             }}
           />
           <Tab.Screen 
             name="Week" 
-            component={WeekTab}
+            component={MemoizedWeekTab}
             options={{
               tabBarAccessibilityLabel: "Week view",
             }}
           />
           <Tab.Screen 
             name="Month" 
-            component={MonthTab}
+            component={MemoizedMonthTab}
             options={{
               tabBarAccessibilityLabel: "Month view",
             }}
           />
           </Tab.Navigator>
         </NavigationContainer>
-      </Animated.View>
+      </View>
 
 
       {/* Floating Zoom Controls - Bottom center */}
@@ -2007,8 +2815,8 @@ else if (isPremium && tabName === 'Month') {
         </View>
       )}
 
-      {/* Floating Add Button - Left side like GoalsScreen (hidden in fullscreen) */}
-      {!isFullscreen && (
+      {/* Floating Add Button - Left side like GoalsScreen (hidden in fullscreen and during tour) */}
+      {!isFullscreen && !isTourActive && (
         <Animated.View 
         style={[
           styles.floatingAddButton, 
@@ -2115,6 +2923,23 @@ else if (isPremium && tabName === 'Month') {
         onSpecialAction={handleTourSpecialAction}
       />
 
+      {/* Tour Lighting Overlay - Alternative to NavigationContainer opacity */}
+      {isTourActive && (currentStep === 'SCHEDULE_DEDICATED_TIME' || currentStep === 'TIME_BLOCK_CREATED' || currentStep === 'SYSTEM_CONFIDENCE') && (
+        <Animated.View 
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.3)',
+            opacity: tourTimeOpacity,
+            zIndex: 998, // Below AppTourOverlay but above content
+            pointerEvents: 'none', // Allow touches to pass through
+          }}
+        />
+      )}
+
       {/* Tour Continue Button - Shows after time block is created */}
       {showTourContinueButton && (
         <View style={{
@@ -2214,21 +3039,30 @@ else if (isPremium && tabName === 'Month') {
                     padding: 16,
                     borderRadius: 12,
                     marginBottom: 12,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between'
+                    height: 72,
+                    position: 'relative'
                   }}
-                  onPress={() => handleDurationSelect(15)}
+                  onPress={() => handleDurationSelect(30)}
                 >
-                  <View>
-                    <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
-                      15 minutes
+                  <View style={{ paddingRight: 40 }}>
+                    <Text style={{ color: 'white', fontSize: 16, fontWeight: '600', marginBottom: 4 }}>
+                      30 minutes
                     </Text>
-                    <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12 }}>
-                      A shorter session but any focused time is still good
+                    <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12, lineHeight: 16 }}>
+                      Perfect for making solid progress on your task
                     </Text>
                   </View>
-                  <Ionicons name="arrow-forward" size={20} color="white" />
+                  <View style={{ 
+                    position: 'absolute', 
+                    right: 16, 
+                    top: 0, 
+                    bottom: 0, 
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    width: 24
+                  }}>
+                    <Ionicons name="arrow-forward" size={20} color="white" />
+                  </View>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -2237,21 +3071,30 @@ else if (isPremium && tabName === 'Month') {
                     padding: 16,
                     borderRadius: 12,
                     marginBottom: 12,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between'
+                    height: 72,
+                    position: 'relative'
                   }}
-                  onPress={() => handleDurationSelect(30)}
+                  onPress={() => handleDurationSelect(60)}
                 >
-                  <View>
-                    <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
-                      30 minutes
+                  <View style={{ paddingRight: 40 }}>
+                    <Text style={{ color: 'white', fontSize: 16, fontWeight: '600', marginBottom: 4 }}>
+                      60 minutes
                     </Text>
-                    <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12 }}>
-                      Perfect for making solid progress
+                    <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12, lineHeight: 16 }}>
+                      The ideal length for deep work sessions
                     </Text>
                   </View>
-                  <Ionicons name="arrow-forward" size={20} color="white" />
+                  <View style={{ 
+                    position: 'absolute', 
+                    right: 16, 
+                    top: 0, 
+                    bottom: 0, 
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    width: 24
+                  }}>
+                    <Ionicons name="arrow-forward" size={20} color="white" />
+                  </View>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -2259,21 +3102,30 @@ else if (isPremium && tabName === 'Month') {
                     backgroundColor: '#8b5cf6',
                     padding: 16,
                     borderRadius: 12,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between'
+                    height: 72,
+                    position: 'relative'
                   }}
-                  onPress={() => handleDurationSelect(60)}
+                  onPress={() => handleDurationSelect(90)}
                 >
-                  <View>
-                    <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
-                      1 hour
+                  <View style={{ paddingRight: 40 }}>
+                    <Text style={{ color: 'white', fontSize: 16, fontWeight: '600', marginBottom: 4 }}>
+                      90 minutes
                     </Text>
-                    <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12 }}>
-                      You'll make a good amount of progress
+                    <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12, lineHeight: 16 }}>
+                      Ultradian rhythm cycle - neuroscience-backed for intense focus
                     </Text>
                   </View>
-                  <Ionicons name="arrow-forward" size={20} color="white" />
+                  <View style={{ 
+                    position: 'absolute', 
+                    right: 16, 
+                    top: 0, 
+                    bottom: 0, 
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    width: 24
+                  }}>
+                    <Ionicons name="arrow-forward" size={20} color="white" />
+                  </View>
                 </TouchableOpacity>
               </View>
             )}
@@ -2361,6 +3213,8 @@ else if (isPremium && tabName === 'Month') {
           </View>
         </View>
       </Modal>
+
+
 
     </SafeAreaView>
   );
@@ -2880,6 +3734,43 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: scaleFontSize(12),
     fontWeight: '600',
+  },
+  
+  // Inline action styles
+  deleteOverlay: {
+    // Styles defined inline in component for flexibility
+  },
+  deleteButton: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: '100%',
+    gap: scaleHeight(4),
+  },
+  deleteButtonText: {
+    fontSize: scaleFontSize(16),
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  confirmText: {
+    fontSize: scaleFontSize(14),
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  confirmButton: {
+    flex: 1,
+    paddingVertical: scaleHeight(8),
+    paddingHorizontal: scaleWidth(12),
+    borderRadius: scaleWidth(6),
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: scaleHeight(32),
+  },
+  confirmButtonText: {
+    fontSize: scaleFontSize(12),
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });
 

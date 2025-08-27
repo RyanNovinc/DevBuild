@@ -11,7 +11,9 @@ import {
   BackHandler,
   Platform,
   Alert,
-  Animated
+  Animated,
+  Modal,
+  KeyboardAvoidingView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
@@ -55,8 +57,21 @@ import UnsavedChangesModal from './UnsavedChangesModal';
 import GoalRequiredModal from './GoalRequiredModal';
 
 const TimeBlockScreen = ({ route, navigation }) => {
+  // Hide FloatingAI button when entering this screen
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && window.setAIButtonVisible) {
+      window.setAIButtonVisible(false);
+    }
+    
+    // Show it again when leaving this screen
+    return () => {
+      if (typeof window !== 'undefined' && window.setAIButtonVisible) {
+        window.setAIButtonVisible(true);
+      }
+    };
+  }, []);
   const { theme } = useTheme();
-  const { mainGoals, milestones, tasks, addTimeBlock, updateTimeBlock, deleteTimeBlock, timeBlocks } = useAppContext();
+  const { mainGoals, milestones, tasks, addTimeBlock, updateTimeBlock, updateTimeBlockSeries, createNewTimeBlockSeries, checkTimeBlockConflicts, deleteTimeBlock, timeBlocks } = useAppContext();
   const notification = useNotification ? useNotification() : { 
     showSuccess: (msg) => console.log(msg),
     showError: (msg) => console.error(msg)
@@ -103,6 +118,21 @@ const TimeBlockScreen = ({ route, navigation }) => {
   // For the goal required modal
   const [showGoalRequiredModal, setShowGoalRequiredModal] = useState(false);
   const [goalRequiredModalType, setGoalRequiredModalType] = useState('milestone'); // 'milestone' or 'task'
+  
+  // For title editing modal
+  const [showTitleEditModal, setShowTitleEditModal] = useState(false);
+  const [tempTitle, setTempTitle] = useState('');
+  
+  // For delete confirmation (similar to DayView pattern)
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  
+  // For series vs instance editing
+  const [isEditingSeries, setIsEditingSeries] = useState(false);
+  const [showSeriesInfoModal, setShowSeriesInfoModal] = useState(false);
+  
+  // For conflict warning modal
+  const [showConflictModal, setShowConflictModal] = useState(false);
+  const [conflictDetails, setConflictDetails] = useState('');
   
   // Function to get all tasks - tasks are now stored separately, not nested under milestones
   const getAllTasks = () => {
@@ -178,6 +208,9 @@ const TimeBlockScreen = ({ route, navigation }) => {
   
   // Error state
   const [timeError, setTimeError] = useState('');
+  
+  // Date picker mode state
+  const [datePickerMode, setDatePickerMode] = useState('spinner'); // 'spinner' or 'calendar'
   
   // Track if keyboard is visible
   const [keyboardVisible, setKeyboardVisible] = useState(false);
@@ -354,6 +387,9 @@ const TimeBlockScreen = ({ route, navigation }) => {
           setRepeatUntil(new Date(initialTimeBlock.repeatUntil));
           setRepeatIndefinitely(false);
         }
+        
+        // Default to editing series for recurring timeblocks
+        setIsEditingSeries(true);
       }
       
       // Set notification values if available
@@ -454,10 +490,10 @@ const TimeBlockScreen = ({ route, navigation }) => {
         setSelectedTask(prefilledTask);
       }
       
-      // Handle tour mode - check if we have tour-selected data (milestone and goal at minimum)
-      else if (global.tourSelectedMilestone && global.tourSelectedGoal) {
-        console.log('🎯 Tour: Pre-filling TimeBlock with tour-selected data:', {
-          task: global.tourSelectedTask ? global.tourSelectedTask.title : 'None (milestone focus)',
+      // Handle tour mode - check if we have tour-selected task data
+      else if (global.tourSelectedTask && global.tourSelectedMilestone && global.tourSelectedGoal) {
+        console.log('🎯 Tour: Pre-filling TimeBlock with tour-selected task:', {
+          task: global.tourSelectedTask.title,
           milestone: global.tourSelectedMilestone.title,
           goal: global.tourSelectedGoal.title
         });
@@ -465,7 +501,7 @@ const TimeBlockScreen = ({ route, navigation }) => {
         // Set the title to "Focus Session" for tour
         setTitle("Focus Session");
         
-        // Set to goal tab since we have goal/milestone data
+        // Set to goal tab since we have goal/milestone/task data
         setActiveTab('goal');
         
         // Set the goal (domain)
@@ -475,17 +511,15 @@ const TimeBlockScreen = ({ route, navigation }) => {
         // Set the milestone
         setSelectedMilestone(global.tourSelectedMilestone);
         
-        // Set the task if available (could be null for milestone-focused timeblocks)
-        if (global.tourSelectedTask) {
-          setSelectedTask(global.tourSelectedTask);
-        }
+        // Set the task
+        setSelectedTask(global.tourSelectedTask);
         
         console.log('🎯 Tour: TimeBlock state set:', {
           title: "Focus Session",
           activeTab: 'goal',
           domain: global.tourSelectedGoal.title,
-          selectedMilestone: global.tourSelectedMilestone ? global.tourSelectedMilestone.title : null,
-          selectedTask: global.tourSelectedTask ? global.tourSelectedTask.title : 'None (milestone focus)'
+          selectedMilestone: global.tourSelectedMilestone.title,
+          selectedTask: global.tourSelectedTask.title
         });
       }
 
@@ -828,6 +862,8 @@ const TimeBlockScreen = ({ route, navigation }) => {
       notificationId: null
     };
     
+    // Define the save logic as a function we can call conditionally
+    const performSave = async () => {
     
     // Handle notification scheduling
     let newNotificationId = null;
@@ -884,17 +920,42 @@ const TimeBlockScreen = ({ route, navigation }) => {
         await addTimeBlock(timeBlock);
         notification.showSuccess('Time block created');
       } else {
-        await updateTimeBlock(timeBlock);
-        notification.showSuccess('Time block updated');
+        // Determine save strategy based on editing mode
+        const wasRecurring = initialTimeBlock?.isRepeating || initialTimeBlock?.isRepeatingInstance;
+        const isNowRecurring = isRepeating;
+        const wasNonRecurringNowRecurring = !wasRecurring && isNowRecurring;
+        
+        if (isEditingSeries && wasRecurring) {
+          // Editing series - update all instances in the series
+          const seriesId = initialTimeBlock?.seriesId || initialTimeBlock?.originalTimeBlockId || initialTimeBlock?.id;
+          await updateTimeBlockSeries(seriesId, timeBlock);
+          notification.showSuccess('Series updated - all events changed');
+        } else if (!isEditingSeries && wasNonRecurringNowRecurring) {
+          // Instance editing: non-recurring becoming recurring - convert current instance to new series
+          const newSeriesTimeBlock = {
+            ...timeBlock,
+            id: initialTimeBlock.id, // Keep the original instance ID as the series ID
+            seriesId: null, // This becomes the original series block
+            originalTimeBlockId: null,
+            isRepeating: true,
+            isRepeatingInstance: false // This is now the original series block
+          };
+          await updateTimeBlock(newSeriesTimeBlock);
+          notification.showSuccess('New recurring series created');
+        } else {
+          // Standard instance editing - update only this timeblock
+          await updateTimeBlock(timeBlock);
+          notification.showSuccess(isEditingSeries ? 'Time block updated' : 'Instance updated');
+        }
       }
       
       // Reset hasUnsavedChanges flag
       setHasUnsavedChanges(false);
       
       // Tour detection: Check if we just created a time block during the tour
-      if (global.tourSelectedMilestone && global.tourSelectedGoal) {
-        console.log('🎯 Tour: Time block created successfully with pre-filled data!', {
-          task: global.tourSelectedTask ? global.tourSelectedTask.title : 'None (milestone focus)',
+      if (global.tourSelectedTask && global.tourSelectedMilestone && global.tourSelectedGoal) {
+        console.log('🎯 Tour: Time block created successfully with pre-filled task data!', {
+          task: global.tourSelectedTask.title,
           milestone: global.tourSelectedMilestone.title,
           goal: global.tourSelectedGoal.title
         });
@@ -917,12 +978,42 @@ const TimeBlockScreen = ({ route, navigation }) => {
       console.error('Error saving time block:', error);
       notification.showError('Failed to save time block');
     }
+    }; // End of performSave function
+    
+    // Check for time conflicts first (except when editing series)
+    if (isCreating || (!isEditingSeries && !initialTimeBlock?.isRepeating)) {
+      const excludeIds = isCreating ? [] : [initialTimeBlock?.id];
+      const conflicts = checkTimeBlockConflicts(timeBlock, excludeIds);
+      
+      if (conflicts.length > 0) {
+        const conflictTitles = conflicts.map(c => c.title).join(', ');
+        setTimeError(`Time conflict with: ${conflictTitles}`);
+        setConflictDetails(conflictTitles);
+        setShowConflictModal(true);
+        return; // Exit early to show modal
+      }
+    }
+    
+    // No conflicts, proceed with save
+    await performSave();
   };
   
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!initialTimeBlock) {
       return;
     }
+    
+    // Show confirmation UI instead of Alert
+    setShowDeleteConfirmation(true);
+  };
+  
+  // Handle confirmed deletion (similar to DayView pattern)
+  const handleConfirmDelete = async (deleteType = null) => {
+    if (!initialTimeBlock) {
+      return;
+    }
+    
+    setShowDeleteConfirmation(false);
     
     try {
       // If the time block has a notification, cancel it before deleting
@@ -936,41 +1027,64 @@ const TimeBlockScreen = ({ route, navigation }) => {
         }
       }
       
-      // If this is a repeating block, confirm if user wants to delete all instances
-      if (initialTimeBlock.isRepeating && !initialTimeBlock.isRepeatingInstance) {
-        Alert.alert(
-          'Delete Repeating Time Block',
-          'Would you like to delete this time block and all of its future repeating instances?',
-          [
-            {
-              text: 'Cancel',
-              style: 'cancel'
-            },
-            {
-              text: 'Delete All',
-              style: 'destructive',
-              onPress: () => {
-                deleteTimeBlock(initialTimeBlock.id);
-                notification.showSuccess('Time block and all its instances deleted');
-                // Reset hasUnsavedChanges flag
-                setHasUnsavedChanges(false);
-                navigation.goBack();
-              }
-            }
-          ]
-        );
+      if (deleteType) {
+        // For recurring blocks with specific delete type
+        if (deleteType === 'single') {
+          deleteTimeBlock(initialTimeBlock.id, 'single');
+          notification.showSuccess('Time block instance deleted');
+        } else if (deleteType === 'series') {
+          deleteTimeBlock(initialTimeBlock.seriesId || initialTimeBlock.id, 'series');
+          notification.showSuccess('Time block series deleted');
+        }
       } else {
-        // Single instance or regular block, just delete it
+        // For regular blocks
         deleteTimeBlock(initialTimeBlock.id);
         notification.showSuccess('Time block deleted');
-        // Reset hasUnsavedChanges flag
-        setHasUnsavedChanges(false);
-        navigation.goBack();
       }
+      
+      // Reset hasUnsavedChanges flag
+      setHasUnsavedChanges(false);
+      navigation.goBack();
     } catch (error) {
       console.error('Error during time block deletion:', error);
       notification.showError('Failed to delete time block');
     }
+  };
+  
+  // Handle cancel delete
+  const handleCancelDelete = () => {
+    setShowDeleteConfirmation(false);
+  };
+  
+  // Handle title editing functions (similar to financial tracker)
+  const handleTitlePress = () => {
+    setTempTitle(title);
+    setShowTitleEditModal(true);
+  };
+
+  const handleTitleSave = () => {
+    // Dismiss keyboard immediately to prevent interference
+    Keyboard.dismiss();
+    
+    if (!tempTitle.trim()) {
+      Alert.alert('Error', 'Please enter a title');
+      return;
+    }
+    
+    const newTitle = tempTitle.trim();
+    setTitle(newTitle);
+    setShowTitleEditModal(false);
+    setTempTitle('');
+  };
+
+  const handleTitleCancel = () => {
+    setShowTitleEditModal(false);
+    setTempTitle('');
+  };
+
+  // Handle date picker mode toggle
+  const handleDatePickerModeChange = (mode) => {
+    setDatePickerMode(mode);
   };
   
   // Format custom minutes for display
@@ -1093,9 +1207,9 @@ const TimeBlockScreen = ({ route, navigation }) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
   
-  // Format date for display (e.g., "Mon, May 8")
+  // Format date for display (e.g., "Mon, May 8, 2024")
   const formatDate = (date) => {
-    const options = { weekday: 'short', month: 'short', day: 'numeric' };
+    const options = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' };
     return date.toLocaleDateString(undefined, options);
   };
   
@@ -1262,10 +1376,12 @@ const TimeBlockScreen = ({ route, navigation }) => {
         >
           <Ionicons name="arrow-back" size={24} color={theme.text} />
         </TouchableOpacity>
-        <Text 
-          style={[
-            styles.screenTitle, 
-            { 
+        <View style={styles.titleContainer}>
+          <TouchableOpacity 
+            style={styles.titlePressable}
+            onPress={handleTitlePress}
+          >
+            <Text style={[styles.screenTitle, { 
               color: theme.text,
               fontSize: getResponsiveSize({
                 small: fontSizes.m,
@@ -1273,13 +1389,12 @@ const TimeBlockScreen = ({ route, navigation }) => {
                 large: fontSizes.l,
                 tablet: fontSizes.xl
               })
-            }
-          ]}
-          accessibilityRole="header"
-          maxFontSizeMultiplier={1.3}
-        >
-          {isCreating ? 'Create Time Block' : 'Edit Time Block'}
-        </Text>
+            }]}>
+              {title || (isCreating ? "New Time Block" : "Time Block")}
+            </Text>
+            <Ionicons name="pencil" size={14} color={theme.textSecondary} style={styles.titleEditIcon} />
+          </TouchableOpacity>
+        </View>
         <Animated.View style={{ transform: [{ scale: saveButtonScale }] }}>
           <TouchableOpacity 
             style={[
@@ -1336,8 +1451,6 @@ const TimeBlockScreen = ({ route, navigation }) => {
         >
           {/* Main form component with accessibility props */}
           <TimeBlockForm
-            title={title}
-            setTitle={setTitle}
             activeTab={activeTab}
             setActiveTab={setActiveTab}
             domain={domain}
@@ -1391,6 +1504,7 @@ const TimeBlockScreen = ({ route, navigation }) => {
             milestoneItems={milestoneTasks}
             handleDelete={handleDelete}
             isCreating={isCreating}
+            isEditingSeries={isEditingSeries}
             theme={theme}
             isDarkMode={isDarkMode}
             scrollToInput={scrollToInput}
@@ -1489,6 +1603,8 @@ const TimeBlockScreen = ({ route, navigation }) => {
         value={startTime}
         title="Select Date"
         theme={theme}
+        datePickerMode={datePickerMode}
+        onDatePickerModeChange={handleDatePickerModeChange}
         // Add responsive props
         spacing={spacing}
         fontSizes={fontSizes}
@@ -1529,10 +1645,342 @@ const TimeBlockScreen = ({ route, navigation }) => {
         title="Repeat Until Date"
         theme={theme}
         minimumDate={new Date(startTime.getTime() + 24 * 60 * 60 * 1000)}
+        datePickerMode={datePickerMode}
+        onDatePickerModeChange={handleDatePickerModeChange}
         // Add responsive props
         spacing={spacing}
         fontSizes={fontSizes}
       />
+
+      {/* Title Edit Modal */}
+      <Modal
+        visible={showTitleEditModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={handleTitleCancel}
+      >
+        <KeyboardAvoidingView 
+          style={styles.titleEditModalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        >
+          <TouchableOpacity 
+            style={styles.titleEditModalOverlay}
+            activeOpacity={1}
+            onPress={handleTitleCancel}
+          >
+            <TouchableOpacity 
+              style={[styles.titleEditModalContainer, { backgroundColor: theme.background }]}
+              activeOpacity={1}
+              onPress={() => {}} // Prevent modal from closing when tapping inside
+            >
+              {/* Header */}
+              <View style={styles.titleEditModalHeader}>
+                <View style={[styles.cleanModalIconContainer, { backgroundColor: theme.surface }]}>
+                  <Ionicons name="create-outline" size={24} color={theme.primary} />
+                </View>
+                <Text style={[styles.cleanModalTitle, { color: theme.text }]}>Edit Time Block Name</Text>
+                <Text style={[styles.cleanModalSubtitle, { color: theme.textSecondary }]}>
+                  Choose a memorable name for your time block
+                </Text>
+              </View>
+
+              {/* Text Input */}
+              <View style={styles.titleEditInputContainer}>
+                <TextInput
+                  style={[styles.titleEditInput, { 
+                    color: theme.text, 
+                    backgroundColor: theme.card, 
+                    borderColor: theme.border 
+                  }]}
+                  value={tempTitle}
+                  onChangeText={setTempTitle}
+                  placeholder="Enter time block name..."
+                  placeholderTextColor={theme.textSecondary}
+                  autoFocus={true}
+                  maxLength={50}
+                />
+              </View>
+
+              {/* Buttons */}
+              <View style={styles.titleEditModalButtons}>
+                <TouchableOpacity
+                  style={[styles.titleEditCancelButton, { backgroundColor: theme.card }]}
+                  onPress={handleTitleCancel}
+                >
+                  <Text style={[styles.titleEditCancelText, { color: theme.text }]}>Cancel</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[styles.titleEditSaveButton, { backgroundColor: theme.primary }]}
+                  onPress={handleTitleSave}
+                >
+                  <Text style={styles.titleEditSaveText}>Save</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Full-screen Delete Confirmation Overlay */}
+      {showDeleteConfirmation && (
+        <View style={styles.fullScreenOverlay}>
+          <View style={[styles.confirmationContent, { backgroundColor: theme.card }]}>
+            <View style={styles.confirmationHeader}>
+              <Ionicons 
+                name="warning" 
+                size={48} 
+                color={theme.error} 
+                style={styles.warningIcon}
+              />
+              <Text style={[styles.confirmationTitle, { color: theme.text }]}>
+                Delete Time Block
+              </Text>
+            </View>
+
+            <Text style={[styles.confirmationMessage, { color: theme.textSecondary }]}>
+              {(initialTimeBlock?.isRepeating || initialTimeBlock?.isRepeatingInstance) 
+                ? 'Would you like to delete this instance or the entire series?'
+                : 'This action cannot be undone. Are you sure you want to delete this time block?'
+              }
+            </Text>
+
+            <View style={styles.confirmationButtons}>
+              {(initialTimeBlock?.isRepeating || initialTimeBlock?.isRepeatingInstance) ? (
+                // Recurring block options
+                <>
+                  <TouchableOpacity
+                    style={[styles.confirmationButton, styles.instanceButton, { backgroundColor: theme.error }]}
+                    onPress={() => handleConfirmDelete('single')}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.confirmationButtonText, { color: '#FFFFFF' }]}>
+                      Delete Instance
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={[styles.confirmationButton, styles.seriesButton, { backgroundColor: theme.error }]}
+                    onPress={() => handleConfirmDelete('series')}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.confirmationButtonText, { color: '#FFFFFF' }]}>
+                      Delete Series
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={[styles.confirmationButton, styles.cancelButton, { 
+                      backgroundColor: 'transparent',
+                      borderWidth: 1,
+                      borderColor: theme.textSecondary
+                    }]}
+                    onPress={handleCancelDelete}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.confirmationButtonText, { color: theme.text }]}>
+                      Cancel
+                    </Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                // Regular block confirmation
+                <>
+                  <TouchableOpacity
+                    style={[styles.confirmationButton, styles.deleteButton, { backgroundColor: theme.error }]}
+                    onPress={() => handleConfirmDelete()}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.confirmationButtonText, { color: '#FFFFFF' }]}>
+                      Delete Time Block
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={[styles.confirmationButton, styles.cancelButton, { 
+                      backgroundColor: 'transparent',
+                      borderWidth: 1,
+                      borderColor: theme.textSecondary
+                    }]}
+                    onPress={handleCancelDelete}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.confirmationButtonText, { color: theme.text }]}>
+                      Cancel
+                    </Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* Floating Edit Mode Toggle Button - only show when editing a recurring timeblock */}
+      {!isCreating && (initialTimeBlock?.isRepeating || initialTimeBlock?.isRepeatingInstance) && (
+        <View style={styles.floatingButtonContainer}>
+          <View style={[styles.floatingEditSeriesButton, { backgroundColor: theme.primary }]}>
+            {/* Main toggle area */}
+            <TouchableOpacity
+              style={styles.floatingButtonMainArea}
+              onPress={React.useCallback(() => {
+                // Toggle between series and instance editing
+                const newIsEditingSeries = !isEditingSeries;
+                setIsEditingSeries(newIsEditingSeries);
+                
+                // When switching to instance editing, default repeat to OFF
+                // When switching to series editing, restore original repeat state
+                if (newIsEditingSeries) {
+                  // Switching to series - restore original repeat settings
+                  if (initialTimeBlock?.isRepeating) {
+                    setIsRepeating(true);
+                    setRepeatFrequency(initialTimeBlock.repeatFrequency || 'weekly');
+                    setRepeatIndefinitely(initialTimeBlock.repeatIndefinitely || true);
+                    if (initialTimeBlock.repeatUntil) {
+                      setRepeatUntil(new Date(initialTimeBlock.repeatUntil));
+                      setRepeatIndefinitely(false);
+                    }
+                  }
+                } else {
+                  // Switching to instance - default to non-repeating
+                  setIsRepeating(false);
+                }
+              }, [isEditingSeries, initialTimeBlock])}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel={isEditingSeries ? "Switch to editing single instance" : "Switch to editing entire series"}
+            >
+              {/* Frequency badge on the left */}
+              {isEditingSeries && (initialTimeBlock?.isRepeating || initialTimeBlock?.isRepeatingInstance) && (
+                <View style={[styles.floatingFrequencyBadge, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+                  <Text style={styles.floatingFrequencyText}>
+                    {initialTimeBlock?.repeatFrequency === 'daily' ? 'D' : 
+                     initialTimeBlock?.repeatFrequency === 'weekly' ? 'W' : 
+                     initialTimeBlock?.repeatFrequency === 'monthly' ? 'M' : 'R'}
+                  </Text>
+                </View>
+              )}
+              
+              <Ionicons 
+                name={isEditingSeries ? "repeat" : "document-text"} 
+                size={20} 
+                color="#FFFFFF" 
+                style={{ marginLeft: isEditingSeries ? 8 : 0 }}
+              />
+              <Text style={[styles.floatingEditSeriesText, { color: '#FFFFFF' }]}>
+                {isEditingSeries ? 'Editing Series' : 'Editing Instance'}
+              </Text>
+            </TouchableOpacity>
+            
+            {/* Info area on the right */}
+            <TouchableOpacity
+              style={styles.floatingButtonInfoArea}
+              onPress={() => setShowSeriesInfoModal(true)}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel="Learn about series vs instance editing"
+            >
+              <View style={styles.floatingButtonDivider} />
+              <Ionicons name="help-circle-outline" size={18} color="rgba(255,255,255,0.8)" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {/* Series Info Modal - Clean Minimalistic Design */}
+      <Modal
+        visible={showSeriesInfoModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowSeriesInfoModal(false)}
+      >
+        <TouchableOpacity 
+          style={styles.infoModalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowSeriesInfoModal(false)}
+        >
+          <View style={[styles.infoModalContainer, { backgroundColor: theme.card }]}>
+            <View style={styles.infoModalContent}>
+              <Text style={[styles.infoModalTitle, { color: theme.text }]}>
+                Editing Options
+              </Text>
+              
+              <View style={styles.infoOptionRow}>
+                <View style={[styles.infoOptionIcon, { backgroundColor: theme.primary }]}>
+                  <Ionicons name="repeat" size={16} color="#FFFFFF" />
+                </View>
+                <View style={styles.infoOptionContent}>
+                  <Text style={[styles.infoOptionTitle, { color: theme.text }]}>Series</Text>
+                  <Text style={[styles.infoOptionDesc, { color: theme.textSecondary }]}>Edit all recurring events</Text>
+                </View>
+              </View>
+              
+              <View style={styles.infoOptionRow}>
+                <View style={[styles.infoOptionIcon, { backgroundColor: theme.textSecondary }]}>
+                  <Ionicons name="document-text" size={16} color="#FFFFFF" />
+                </View>
+                <View style={styles.infoOptionContent}>
+                  <Text style={[styles.infoOptionTitle, { color: theme.text }]}>Instance</Text>
+                  <Text style={[styles.infoOptionDesc, { color: theme.textSecondary }]}>Edit only this event</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Conflict Warning Modal - Clean Professional Design */}
+      <Modal
+        visible={showConflictModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowConflictModal(false)}
+      >
+        <TouchableOpacity 
+          style={styles.infoModalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowConflictModal(false)}
+        >
+          <View style={[styles.conflictModalContainer, { backgroundColor: theme.card }]}>
+            <View style={styles.infoModalContent}>
+              <View style={[styles.conflictModalIcon, { backgroundColor: '#FF3B3015' }]}>
+                <Ionicons name="warning" size={28} color="#FF3B30" />
+              </View>
+              
+              <Text style={[styles.infoModalTitle, { color: theme.text }]}>
+                Time Conflict
+              </Text>
+              
+              <Text style={[styles.conflictModalDescription, { color: theme.textSecondary }]}>
+                This time overlaps with: {conflictDetails}
+              </Text>
+              
+              <View style={styles.conflictModalButtons}>
+                <TouchableOpacity
+                  style={[styles.conflictModalButton, styles.conflictCancelButton, { borderColor: theme.border }]}
+                  onPress={() => setShowConflictModal(false)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.conflictModalButtonText, { color: theme.text }]}>Cancel</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[styles.conflictModalButton, styles.conflictSaveButton, { backgroundColor: theme.primary }]}
+                  onPress={async () => {
+                    setShowConflictModal(false);
+                    setTimeError(''); // Clear error
+                    await performSave();
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.conflictModalButtonText, { color: '#FFFFFF' }]}>Save Anyway</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -1552,8 +2000,21 @@ const styles = StyleSheet.create({
   },
   screenTitle: {
     fontWeight: '600',
-    flex: 1,
     textAlign: 'center',
+  },
+  titleContainer: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  titlePressable: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  titleEditIcon: {
+    marginLeft: 6,
+    opacity: 0.6,
   },
   saveButton: {
     justifyContent: 'center',
@@ -1562,7 +2023,328 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontWeight: '600',
   },
-  // REMOVED: Floating Add Button styles
+  // Title Edit Modal Styles
+  titleEditModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  titleEditModalContainer: {
+    width: '85%',
+    maxWidth: 400,
+    borderRadius: 16,
+    paddingBottom: 24,
+  },
+  titleEditModalHeader: {
+    alignItems: 'center',
+    paddingTop: 32,
+    paddingBottom: 24,
+    paddingHorizontal: 24,
+  },
+  cleanModalIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  cleanModalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  cleanModalSubtitle: {
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  titleEditInputContainer: {
+    paddingHorizontal: 24,
+    marginBottom: 24,
+  },
+  titleEditInput: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+  },
+  titleEditModalButtons: {
+    flexDirection: 'row',
+    paddingHorizontal: 24,
+    gap: 12,
+  },
+  titleEditCancelButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  titleEditSaveButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  titleEditCancelText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  titleEditSaveText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  
+  // Full-screen confirmation overlay styles
+  fullScreenOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  confirmationContent: {
+    width: '85%',
+    maxWidth: 400,
+    padding: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 10,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  confirmationHeader: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  warningIcon: {
+    marginBottom: 12,
+  },
+  confirmationTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  confirmationMessage: {
+    fontSize: 16,
+    lineHeight: 24,
+    textAlign: 'center',
+    marginBottom: 32,
+  },
+  confirmationButtons: {
+    width: '100%',
+    gap: 12,
+  },
+  confirmationButton: {
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 56,
+  },
+  confirmationButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+  },
+  deleteButton: {
+    // Styles applied inline
+  },
+  instanceButton: {
+    // Styles applied inline
+  },
+  seriesButton: {
+    // Styles applied inline
+  },
+  cancelButton: {
+    // Styles applied inline
+  },
+  // Floating Button Container
+  floatingButtonContainer: {
+    position: 'absolute',
+    bottom: 30,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 50,
+  },
+  // Floating Edit Series Button Styles
+  floatingEditSeriesButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 25,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    zIndex: 1000,
+    backgroundColor: '#007AFF', // Fallback color
+    overflow: 'hidden',
+  },
+  floatingButtonMainArea: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    flex: 1,
+  },
+  floatingButtonInfoArea: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  floatingButtonDivider: {
+    width: 1,
+    height: 20,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    marginRight: 12,
+  },
+  floatingEditSeriesText: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  floatingFrequencyBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    marginRight: 8,
+    minWidth: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  floatingFrequencyText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
+  // Clean Info Modal Styles
+  infoModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  infoModalContainer: {
+    borderRadius: 16,
+    padding: 24,
+    maxWidth: 280,
+    width: '100%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 12,
+  },
+  infoModalContent: {
+    alignItems: 'center',
+  },
+  infoModalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  infoOptionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    width: '100%',
+  },
+  infoOptionIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  infoOptionContent: {
+    flex: 1,
+  },
+  infoOptionTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 1,
+  },
+  infoOptionDesc: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  // Conflict Modal Styles
+  conflictModalContainer: {
+    borderRadius: 16,
+    padding: 28,
+    maxWidth: 320,
+    width: '100%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 12,
+  },
+  conflictModalIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  conflictModalDescription: {
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  conflictModalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  conflictModalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44,
+    marginHorizontal: 6,
+  },
+  conflictCancelButton: {
+    borderWidth: 1,
+    backgroundColor: 'transparent',
+  },
+  conflictSaveButton: {
+    // Uses theme.primary background from inline style
+  },
+  conflictModalButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });
 
 export default TimeBlockScreen;

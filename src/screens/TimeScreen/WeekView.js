@@ -15,7 +15,9 @@ const WeekView = ({
   getDayName,
   getTimeBlocksForDate,
   handleWeekDaySelect,
-  handleTimeBlockPress,
+  onTimeBlockPress,
+  onTimeBlockLongPress,
+  deleteTimeBlock,
   styles,
   theme
 }) => {
@@ -24,6 +26,10 @@ const WeekView = ({
   
   // Internal selection state to avoid parent re-renders
   const [internalSelectedDay, setInternalSelectedDay] = React.useState(selectedWeekDay);
+  
+  // Expansion state for delete functionality (similar to DayView)
+  const [expandedTimeBlockId, setExpandedTimeBlockId] = React.useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = React.useState(null);
   
   // Update internal state when prop changes (but don't cause re-render if the same)
   React.useEffect(() => {
@@ -35,6 +41,48 @@ const WeekView = ({
     setInternalSelectedDay(index);
     // DO NOT call parent handler to avoid any state changes that could cause scroll reset
   };
+  
+  // Local handler for time block long press (similar to DayView)
+  const handleLocalTimeBlockLongPress = React.useCallback((timeBlock) => {
+    // Call original handler first (for parent state management)
+    if (onTimeBlockLongPress) {
+      onTimeBlockLongPress(timeBlock);
+    }
+    // Then toggle expanded state locally
+    setExpandedTimeBlockId(expandedTimeBlockId === timeBlock.id ? null : timeBlock.id);
+    setConfirmDeleteId(null); // Reset confirmation state
+  }, [onTimeBlockLongPress, expandedTimeBlockId]);
+  
+  // Function to handle delete button press
+  const handleDeleteTimeBlock = React.useCallback((timeBlock) => {
+    setConfirmDeleteId(timeBlock.id);
+  }, []);
+  
+  // Function to handle confirmed deletion
+  const handleConfirmDelete = React.useCallback((timeBlock, deleteType = null) => {
+    setExpandedTimeBlockId(null);
+    setConfirmDeleteId(null);
+    
+    // Call parent's delete handler
+    if (deleteTimeBlock) {
+      if (deleteType) {
+        deleteTimeBlock(deleteType === 'single' ? timeBlock.id : timeBlock.seriesId || timeBlock.id, deleteType);
+      } else {
+        deleteTimeBlock(timeBlock.id);
+      }
+    }
+  }, [deleteTimeBlock]);
+  
+  // Function to cancel deletion
+  const handleCancelDelete = React.useCallback(() => {
+    setConfirmDeleteId(null);
+  }, []);
+  
+  // Function to collapse expanded time block (similar to DayView)
+  const handleCollapseTimeBlock = React.useCallback(() => {
+    setExpandedTimeBlockId(null);
+    setConfirmDeleteId(null);
+  }, []);
   
   // Safety check - weekDates should be an array with 7 days
   if (!Array.isArray(weekDates) || weekDates.length !== 7) return null;
@@ -176,8 +224,15 @@ const WeekView = ({
                 <TimeBlock 
                   key={block.id} 
                   timeBlock={block} 
-                  onPress={() => handleTimeBlockPress(block)}
+                  onPress={() => onTimeBlockPress(block)}
+                  onLongPress={() => handleLocalTimeBlockLongPress(block)}
                   compact={true}
+                  // Expansion props for delete functionality
+                  isExpanded={expandedTimeBlockId === block.id}
+                  isConfirmDelete={confirmDeleteId === block.id}
+                  onDelete={() => handleDeleteTimeBlock(block)}
+                  onConfirmDelete={(deleteType) => handleConfirmDelete(block, deleteType)}
+                  onCancelDelete={handleCollapseTimeBlock}
                 />
               ))
           ) : (
@@ -199,7 +254,7 @@ const WeekView = ({
         </View>
       </TouchableOpacity>
     );
-  }, [internalSelectedDay, isToday, getDayName, getTimeBlocksForDate, handleInternalDaySelect, handleTimeBlockPress, theme, styles]);
+  }, [internalSelectedDay, isToday, getDayName, getTimeBlocksForDate, handleInternalDaySelect, onTimeBlockPress, theme, styles, expandedTimeBlockId, confirmDeleteId, handleLocalTimeBlockLongPress, handleDeleteTimeBlock, handleConfirmDelete, handleCancelDelete]);
   
   return (
     <View style={[
@@ -207,11 +262,6 @@ const WeekView = ({
       // Only add bottom padding for the home indicator if needed
       insets.bottom > 0 && { paddingBottom: insets.bottom }
     ]}>
-      {/* Week days header - Monday first */}
-      <View style={styles.weekDaysHeader}>
-        {weekDates.map(renderDayHeader)}
-      </View>
-      
       {/* Week view content showing blocks for each day */}
       <ScrollView 
         style={[
@@ -228,7 +278,23 @@ const WeekView = ({
         accessibilityRole="list"
         accessibilityLabel="Weekly schedule"
       >
-        {weekDates.map(renderDayBlocks)}
+        <TouchableOpacity 
+          style={{ flex: 1 }}
+          activeOpacity={1}
+          onPress={() => {
+            // Collapse expanded time block and confirmation when tapping away
+            if (expandedTimeBlockId || confirmDeleteId) {
+              handleCollapseTimeBlock();
+            }
+          }}
+        >
+{/* Week days header - Monday first - moved inside ScrollView */}
+          <View style={styles.weekDaysHeader}>
+            {weekDates.map(renderDayHeader)}
+          </View>
+          
+          {weekDates.map(renderDayBlocks)}
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );

@@ -9,7 +9,8 @@ import {
   Text,
   Platform,
   StatusBar,
-  Easing
+  Easing,
+  Modal
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
@@ -46,6 +47,7 @@ const AppTourOverlay = ({
   const [showTyping, setShowTyping] = useState(false);
   const [showTapToContinue, setShowTapToContinue] = useState(false);
   const [forceRender, setForceRender] = useState(0); // For forcing re-renders
+  const [showSkipModal, setShowSkipModal] = useState(false); // For skip confirmation modal
   const [goalExpanded, setGoalExpanded] = useState(false); // Track if goal was expanded during OVERVIEW_PLAN
   const [milestoneExpanded, setMilestoneExpanded] = useState(false); // Track if milestone was expanded during OVERVIEW_PLAN
   const [kanbanTaskMoved, setKanbanTaskMoved] = useState(false); // Track if task was moved to in progress
@@ -67,47 +69,83 @@ const AppTourOverlay = ({
       position: 'bottom'
     },
     KANBAN_SYSTEM_INTRO: {
-      message: "Now we turn your plan into action. This Kanban board is used by the biggest companies to stay focused on a limited number of tasks at once.",
+      message: "This Kanban system limits work in progress - focus on fewer tasks, do them better, make quicker progress.",
       spotlight: { x: 0, y: 100, width: SCREEN_WIDTH, height: SCREEN_HEIGHT - 200 },
       nextButton: "Choose one task",
       position: 'top'
     },
     PICK_CURRENT_FOCUS: {
-      message: "Choose ONE task from your goal to focus on. Drag it to 'In Progress' - this keeps you effective by limiting how many things you do at once.",
+      message: "Let's move one task to 'in-progress' that you want to work on.",
       spotlight: { x: 0, y: 100, width: SCREEN_WIDTH, height: SCREEN_HEIGHT - 200 },
       nextButton: "Tap anywhere to close and pick a task",
       position: 'top',
       requiresAction: true // This step requires user action before proceeding
     },
     TASK_MOVED_CELEBRATION: {
-      message: "Great! Now we have a focus. Let's set some time aside today and keep this momentum going to make some progress today.",
+      message: "Nice! Now we have a focus. Let's schedule some time to work on it.",
       spotlight: { x: 0, y: 100, width: SCREEN_WIDTH, height: SCREEN_HEIGHT - 200 },
       nextButton: "Schedule time",
       position: 'top'
     },
     SCHEDULE_DEDICATED_TIME: {
-      message: "Perfect! Now schedule time to actually work on this task. Tap to choose when and for how long you want to work on it today.",
+      message: "Perfect! Let's keep going. Pick a time today to work on this - action beats perfection every time.",
       spotlight: { x: 0, y: 150, width: SCREEN_WIDTH, height: SCREEN_HEIGHT - 250 },
       nextButton: "Schedule time",
       position: 'top',
       requiresAction: true // This step shows a time picker popup
     },
     SYSTEM_CONFIDENCE: {
-      message: "That's it! You have a goal, you've picked what to work on, and you've scheduled time for it. Keep doing this cycle and you'll reach your goal.",
+      message: "Excellent! You now have an elite planning system - goal, focus, time blocked.",
       spotlight: { x: 0, y: 150, width: SCREEN_WIDTH, height: SCREEN_HEIGHT - 250 },
       nextButton: "What about daily stuff?",
       position: 'center'
     },
     SUPPORTING_TOOLS_OVERVIEW: {
-      message: "For daily tasks like errands and chores, use this Todo screen. Today, Tomorrow, Later tabs keep you organized. Your AI assistant can help with all of this too.",
+      message: "Capture all your other daily tasks here. Sort them by timing - what needs to be done Today, Tomorrow, or Later.",
       spotlight: { x: 0, y: 150, width: SCREEN_WIDTH, height: SCREEN_HEIGHT - 250 },
-      nextButton: "Let's get started!",
+      nextButton: "Got it!",
       position: 'top'
+    },
+    AI_FAREWELL: {
+      message: "If you need any more help, I'll be here!",
+      spotlight: { x: 0, y: 150, width: SCREEN_WIDTH, height: SCREEN_HEIGHT - 250 },
+      nextButton: "Thanks!",
+      position: 'top',
+      isFinale: true // Special flag to trigger AI handoff sequence
     }
   };
   
   // Get current step config
   let stepConfig = TOUR_STEPS[currentStep] || TOUR_STEPS.GOAL_ACHIEVEMENT_VALIDATION;
+  
+  // Progress calculation by screen
+  const getScreenNumber = (step) => {
+    switch(step) {
+      case 'GOAL_ACHIEVEMENT_VALIDATION':
+        return 1; // Profile screen
+      case 'KANBAN_SYSTEM_INTRO':
+      case 'PICK_CURRENT_FOCUS':
+      case 'TASK_MOVED_CELEBRATION':
+        return 2; // Projects screen
+      case 'SCHEDULE_DEDICATED_TIME':
+      case 'SYSTEM_CONFIDENCE':
+        return 3; // Time screen
+      case 'SUPPORTING_TOOLS_OVERVIEW':
+      case 'AI_FAREWELL':
+        return 4; // Todo screen
+      default:
+        return 1;
+    }
+  };
+  
+  const currentScreenNumber = getScreenNumber(currentStep);
+  const totalScreens = 4;
+  
+  // Debug step config retrieval
+  if (currentStep === 'AI_FAREWELL') {
+    console.log('🎭 AI_FAREWELL stepConfig retrieved:', stepConfig);
+    console.log('🎭 Available TOUR_STEPS keys:', Object.keys(TOUR_STEPS));
+  }
   
   // NOTE: Removed message switching logic - now advances directly to next step
   // if (currentStep === 'NOTES_DAILY_STANDUP' && notesViewSwitched) { ... }
@@ -118,13 +156,16 @@ const AppTourOverlay = ({
       case 'GOAL_ACHIEVEMENT_VALIDATION':
         return 800; // Wait for profile screen to fully load
       case 'KANBAN_SYSTEM_INTRO':
-      case 'PICK_CURRENT_FOCUS':
         return 400; // Wait for kanban board to render
+      case 'PICK_CURRENT_FOCUS':
+        return 200; // Faster transition for task selection
       case 'SCHEDULE_DEDICATED_TIME':
       case 'SYSTEM_CONFIDENCE':
         return 300; // Wait for time screen elements
       case 'SUPPORTING_TOOLS_OVERVIEW':
         return 300; // Wait for todo screen
+      case 'AI_FAREWELL':
+        return 200; // Quick transition for farewell
       default:
         return 300;
     }
@@ -136,6 +177,12 @@ const AppTourOverlay = ({
       
       // Debug current tour step
       console.log('🎬 AppTourOverlay: Current step:', currentStep, 'isVisible:', isVisible);
+      
+      // Special debug for AI_FAREWELL
+      if (currentStep === 'AI_FAREWELL') {
+        console.log('🎭 AI_FAREWELL step detected in AppTourOverlay!');
+        console.log('🎭 Step config:', stepConfig);
+      }
       
       // Special handling for TASK_MOVED_CELEBRATION - only show if task was actually moved
       if (currentStep === 'TASK_MOVED_CELEBRATION' && global.tourWaitingForTaskMove) {
@@ -206,7 +253,7 @@ const AppTourOverlay = ({
       
       // Entrance animation - gentle for early steps, dramatic for others
       // Check if overlay is already dark (for step transitions within Profile)
-      // Only show dark overlay for ProfileScreen (GOAL_ACHIEVEMENT_VALIDATION)
+      // Show dark overlay only for ProfileScreen step
       const shouldShowDarkOverlay = currentStep === 'GOAL_ACHIEVEMENT_VALIDATION';
       const overlayAlreadyDark = overlayOpacity._value > 0.5;
       
@@ -327,7 +374,47 @@ const AppTourOverlay = ({
   }, [messageComplete, showTyping, currentStep]);
   
   const handleNext = () => {
-    // Fade out current step
+    // Special handling for finale step
+    if (stepConfig.isFinale) {
+      console.log('🎭 Finale step detected - completing tour');
+      // Fade out overlay completely and end tour
+      Animated.parallel([
+        Animated.timing(overlayOpacity, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true
+        }),
+        Animated.timing(messageOpacity, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true
+        }),
+        Animated.timing(aiIconScale, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true
+        })
+      ]).start(() => {
+        onComplete();
+        
+        // Navigate back to profile screen and trigger achievement modal
+        // Add a small delay to let the tour completion process finish
+        setTimeout(() => {
+          if (navigation) {
+            console.log('🧭 Tour completed - navigating to Profile screen');
+            navigation.navigate('Profile');
+            
+            // Set a global flag to show achievement modal on Profile screen
+            setTimeout(() => {
+              global.showTourCompletionAchievement = true;
+            }, 2300); // 800ms + 1500ms = 2.3 seconds total
+          }
+        }, 500);
+      });
+      return;
+    }
+
+    // Regular step transition
     Animated.timing(messageOpacity, {
       toValue: 0,
       duration: 200,
@@ -337,6 +424,10 @@ const AppTourOverlay = ({
     });
   };
   
+  const handleSkipTour = () => {
+    setShowSkipModal(true);
+  };
+
   const handleSkip = async () => {
     // Save that user has skipped tour
     await AsyncStorage.setItem('appTourSkipped', 'true');
@@ -431,7 +522,8 @@ const AppTourOverlay = ({
     if (stepConfig.position === 'top') {
       // Position messages at bottom for kanban and todo steps to avoid covering content
       if (currentStep === 'KANBAN_SYSTEM_INTRO' || currentStep === 'PICK_CURRENT_FOCUS' || 
-          currentStep === 'SCHEDULE_DEDICATED_TIME' || currentStep === 'SUPPORTING_TOOLS_OVERVIEW') {
+          currentStep === 'SCHEDULE_DEDICATED_TIME' || currentStep === 'SUPPORTING_TOOLS_OVERVIEW' ||
+          currentStep === 'AI_FAREWELL') {
         return { bottom: 20 };
       }
       return { top: 80 };
@@ -563,47 +655,84 @@ const AppTourOverlay = ({
         </Animated.View>
       )}
       
-      {/* Dev Buttons - Only in development */}
-      {__DEV__ && (
-        <>
-          <TouchableOpacity
-            style={styles.devExitButton}
-            onPress={() => {
-              console.log('Dev: Exiting tour');
-              onSkip();
-            }}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.devExitText}>DEV: Exit Tour</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[styles.devExitButton, { top: 90, backgroundColor: 'rgba(0, 255, 0, 0.8)' }]}
-            onPress={() => {
-              console.log('Dev: Starting tour from step 3 (PICK_CURRENT_FOCUS)');
-              if (global.jumpToTourStep) {
-                global.jumpToTourStep('PICK_CURRENT_FOCUS', navigation);
-              }
-            }}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.devExitText}>DEV: Start @3</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[styles.devExitButton, { top: 130, backgroundColor: 'rgba(255, 165, 0, 0.8)' }]}
-            onPress={() => {
-              console.log('Dev: Starting tour from step 6 (SUPPORTING_TOOLS_OVERVIEW)');
-              if (global.jumpToTourStep) {
-                global.jumpToTourStep('SUPPORTING_TOOLS_OVERVIEW', navigation);
-              }
-            }}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.devExitText}>DEV: Start @6</Text>
-          </TouchableOpacity>
-        </>
-      )}
+      {/* Skip Tour Button */}
+      <TouchableOpacity
+        style={styles.skipTourButton}
+        onPress={handleSkipTour}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.skipTourText}>Skip Tour</Text>
+      </TouchableOpacity>
+      
+      {/* Progress Indicator */}
+      <View style={styles.progressContainer}>
+        <Text style={styles.progressText}>
+          Step {currentScreenNumber} of {totalScreens}
+        </Text>
+      </View>
+      
+      
+      {/* Skip Tour Confirmation Modal */}
+      <Modal
+        visible={showSkipModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowSkipModal(false)}
+      >
+        <View style={styles.skipModalOverlay}>
+          <View style={styles.skipModalContainer}>
+            {/* Header */}
+            <View style={styles.skipModalHeader}>
+              <Text style={styles.skipModalTitle}>Skip Interactive Tour?</Text>
+            </View>
+            
+            {/* Content */}
+            <View style={styles.skipModalContent}>
+              <Text style={styles.skipModalDescription}>
+                The tour takes just 1 minute and shows you how to use the goal system you created.
+              </Text>
+              
+              <View style={styles.skipModalBenefits}>
+                <View style={styles.skipModalBenefit}>
+                  <Ionicons name="trophy-outline" size={16} color="#F59E0B" style={styles.skipModalIcon} />
+                  <Text style={styles.skipModalBenefitText}>Earn 'Quick Learner' achievement</Text>
+                </View>
+                <View style={styles.skipModalBenefit}>
+                  <Ionicons name="time-outline" size={16} color="#6B7280" style={styles.skipModalIcon} />
+                  <Text style={styles.skipModalBenefitText}>Only 60 seconds</Text>
+                </View>
+                <View style={styles.skipModalBenefit}>
+                  <Ionicons name="checkmark-circle-outline" size={16} color="#10B981" style={styles.skipModalIcon} />
+                  <Text style={styles.skipModalBenefitText}>Learn your personalized system</Text>
+                </View>
+              </View>
+            </View>
+            
+            {/* Buttons */}
+            <View style={styles.skipModalButtons}>
+              <TouchableOpacity 
+                style={styles.skipModalContinueButton}
+                onPress={() => setShowSkipModal(false)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.skipModalContinueText}>Take the Tour</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.skipModalSkipButton}
+                onPress={() => {
+                  setShowSkipModal(false);
+                  handleSkip();
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.skipModalSkipText}>Skip</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+      
     </View>
   );
 };
@@ -707,20 +836,140 @@ const styles = StyleSheet.create({
   tapPromptIcon: {
     marginLeft: 8,
   },
-  devExitButton: {
+  skipTourButton: {
     position: 'absolute',
-    top: 50,
-    right: 20,
-    backgroundColor: 'rgba(255, 0, 0, 0.8)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    zIndex: 1007, // Above everything
+    top: 60,
+    left: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+    zIndex: 1010, // Above everything
   },
-  devExitText: {
-    color: '#fff',
+  skipTourText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  progressContainer: {
+    position: 'absolute',
+    bottom: 40,
+    right: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+    zIndex: 1010,
+  },
+  progressText: {
+    color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '600',
+  },
+  
+  // Skip Modal Styles
+  skipModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  skipModalContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    width: '100%',
+    maxWidth: 340,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  skipModalHeader: {
+    paddingTop: 24,
+    paddingHorizontal: 24,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  skipModalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#111827',
+    textAlign: 'center',
+    letterSpacing: -0.5,
+  },
+  skipModalContent: {
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+  },
+  skipModalDescription: {
+    fontSize: 16,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 20,
+  },
+  skipModalBenefits: {
+    gap: 12,
+  },
+  skipModalBenefit: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 2,
+  },
+  skipModalIcon: {
+    marginRight: 12,
+    width: 20,
+    textAlign: 'center',
+  },
+  skipModalBenefitText: {
+    fontSize: 15,
+    color: '#374151',
+    fontWeight: '500',
+    flex: 1,
+  },
+  skipModalButtons: {
+    flexDirection: 'row',
+    paddingHorizontal: 24,
+    paddingBottom: 24,
+    gap: 12,
+  },
+  skipModalContinueButton: {
+    flex: 1,
+    backgroundColor: '#3B82F6',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  skipModalContinueText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: -0.3,
+  },
+  skipModalSkipButton: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#D1D5DB',
+  },
+  skipModalSkipText: {
+    color: '#6B7280',
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: -0.3,
   },
 });
 

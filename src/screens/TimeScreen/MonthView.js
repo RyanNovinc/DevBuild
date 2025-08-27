@@ -16,8 +16,10 @@ const MonthView = ({
   formatDate,
   getTimeBlocksForDate,
   handleMonthDaySelect,
-  handleTimeBlockPress,
+  onTimeBlockPress,
+  onTimeBlockLongPress,
   handleAddTimeBlock,
+  deleteTimeBlock,
   styles,
   theme,
   isDarkMode
@@ -40,6 +42,10 @@ const MonthView = ({
   
   // Safety check for empty monthDates
   if (!Array.isArray(monthDates) || monthDates.length === 0) return null;
+  
+  // Expansion state for delete functionality (similar to DayView and WeekView)
+  const [expandedTimeBlockId, setExpandedTimeBlockId] = React.useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = React.useState(null);
   
   // Create week arrays for the calendar grid - memoized for performance
   const weeks = useMemo(() => {
@@ -84,6 +90,48 @@ const MonthView = ({
     return getTimeBlocksForDate(monthDates[selectedMonthDay])
       .sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
   }, [monthDates, selectedMonthDay, getTimeBlocksForDate]);
+  
+  // Local handler for time block long press (similar to DayView and WeekView)
+  const handleLocalTimeBlockLongPress = React.useCallback((timeBlock) => {
+    // Call original handler first (for parent state management)
+    if (onTimeBlockLongPress) {
+      onTimeBlockLongPress(timeBlock);
+    }
+    // Then toggle expanded state locally
+    setExpandedTimeBlockId(expandedTimeBlockId === timeBlock.id ? null : timeBlock.id);
+    setConfirmDeleteId(null); // Reset confirmation state
+  }, [onTimeBlockLongPress, expandedTimeBlockId]);
+  
+  // Function to handle delete button press
+  const handleDeleteTimeBlock = React.useCallback((timeBlock) => {
+    setConfirmDeleteId(timeBlock.id);
+  }, []);
+  
+  // Function to handle confirmed deletion
+  const handleConfirmDelete = React.useCallback((timeBlock, deleteType = null) => {
+    setExpandedTimeBlockId(null);
+    setConfirmDeleteId(null);
+    
+    // Call parent's delete handler
+    if (deleteTimeBlock) {
+      if (deleteType) {
+        deleteTimeBlock(deleteType === 'single' ? timeBlock.id : timeBlock.seriesId || timeBlock.id, deleteType);
+      } else {
+        deleteTimeBlock(timeBlock.id);
+      }
+    }
+  }, [deleteTimeBlock]);
+  
+  // Function to cancel deletion
+  const handleCancelDelete = React.useCallback(() => {
+    setConfirmDeleteId(null);
+  }, []);
+  
+  // Function to collapse expanded time block (similar to DayView)
+  const handleCollapseTimeBlock = React.useCallback(() => {
+    setExpandedTimeBlockId(null);
+    setConfirmDeleteId(null);
+  }, []);
   
   // Render a day cell in the calendar
   const renderDay = (date, dayIndex, weekIndex) => {
@@ -453,18 +501,36 @@ const MonthView = ({
           accessibilityRole="list"
           accessibilityLabel={`Events for ${formatDate(monthDates[selectedMonthDay], 'long')}`}
         >
-          {selectedDayBlocks.length > 0 ? (
-            selectedDayBlocks.map((block) => (
-              <TimeBlock 
-                key={block.id} 
-                timeBlock={block} 
-                onPress={() => handleTimeBlockPress(block)}
-                compact={true} // Use compact view for month view
-              />
-            ))
-          ) : (
-            renderEmptyDay()
-          )}
+          <TouchableOpacity 
+            style={{ flex: 1 }}
+            activeOpacity={1}
+            onPress={() => {
+              // Collapse expanded time block and confirmation when tapping away
+              if (expandedTimeBlockId || confirmDeleteId) {
+                handleCollapseTimeBlock();
+              }
+            }}
+          >
+            {selectedDayBlocks.length > 0 ? (
+              selectedDayBlocks.map((block) => (
+                <TimeBlock 
+                  key={block.id} 
+                  timeBlock={block} 
+                  onPress={() => onTimeBlockPress(block)}
+                  onLongPress={() => handleLocalTimeBlockLongPress(block)}
+                  compact={true} // Use compact view for month view
+                  // Expansion props for delete functionality
+                  isExpanded={expandedTimeBlockId === block.id}
+                  isConfirmDelete={confirmDeleteId === block.id}
+                  onDelete={() => handleDeleteTimeBlock(block)}
+                  onConfirmDelete={(deleteType) => handleConfirmDelete(block, deleteType)}
+                  onCancelDelete={handleCollapseTimeBlock}
+                />
+              ))
+            ) : (
+              renderEmptyDay()
+            )}
+          </TouchableOpacity>
         </ScrollView>
       </View>
     </View>

@@ -15,7 +15,18 @@ import {
   meetsContrastRequirements
 } from '../utils/responsive';
 
-const TimeBlock = ({ timeBlock, onPress, compact = false }) => {
+const TimeBlock = ({ 
+  timeBlock, 
+  onPress, 
+  onLongPress, 
+  compact = false,
+  // Expansion props for delete functionality
+  isExpanded = false,
+  isConfirmDelete = false,
+  onDelete,
+  onConfirmDelete,
+  onCancelDelete
+}) => {
   const { theme } = useTheme();
   
   // Check if block is recurring
@@ -60,6 +71,7 @@ const TimeBlock = ({ timeBlock, onPress, compact = false }) => {
           isRecurring && styles.recurringBlock
         ]}
         onPress={onPress}
+        onLongPress={onLongPress}
         activeOpacity={0.7}
         accessible={true}
         accessibilityRole="button"
@@ -92,7 +104,16 @@ const TimeBlock = ({ timeBlock, onPress, compact = false }) => {
               {timeBlock.title}
             </Text>
             {isRecurring && (
-              <Ionicons name="repeat" size={scaleWidth(14)} color={theme.textSecondary} style={styles.compactRecurringIcon} />
+              <View style={[
+                styles.compactFrequencyBadge, 
+                { backgroundColor: theme.primary }
+              ]}>
+                <Text style={[styles.compactFrequencyText, { color: '#FFFFFF' }]}>
+                  {timeBlock.repeatFrequency === 'daily' ? 'D' : 
+                   timeBlock.repeatFrequency === 'weekly' ? 'W' : 
+                   timeBlock.repeatFrequency === 'monthly' ? 'M' : 'R'}
+                </Text>
+              </View>
             )}
           </View>
           
@@ -153,6 +174,84 @@ const TimeBlock = ({ timeBlock, onPress, compact = false }) => {
             )}
           </View>
         </View>
+        
+        {/* Delete overlay when expanded - compact view only (Week/Month) */}
+        {isExpanded && !timeBlock.isCalendarEvent && (
+          <TouchableOpacity 
+            style={styles.deleteOverlay}
+            onPress={onDelete}
+            activeOpacity={0.8}
+          >
+            {isConfirmDelete ? (
+              // Show confirmation state
+              <View style={styles.deleteButton}>
+                {(timeBlock.isRepeating || timeBlock.isRepeatingInstance) ? (
+                  // Recurring block options
+                  <>
+                    <Text style={[styles.confirmText, { color: '#FFFFFF', textAlign: 'center', marginBottom: scaleHeight(4), fontSize: scaleFontSize(11) }]}>
+                      Delete which?
+                    </Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
+                      <TouchableOpacity
+                        style={[styles.confirmButton, { backgroundColor: 'rgba(255,255,255,0.2)', marginRight: scaleWidth(8) }]}
+                        onPress={() => onConfirmDelete && onConfirmDelete('single')}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={[styles.confirmButtonText, { color: '#FFFFFF', fontSize: scaleFontSize(10) }]}>Instance</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.confirmButton, { backgroundColor: 'rgba(255,255,255,0.2)' }]}
+                        onPress={() => onConfirmDelete && onConfirmDelete('series')}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={[styles.confirmButtonText, { color: '#FFFFFF', fontSize: scaleFontSize(10) }]}>Series</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                ) : (
+                  // Regular block confirmation
+                  <>
+                    <Text style={[styles.confirmText, { color: '#FFFFFF', textAlign: 'center', marginBottom: scaleHeight(8), fontSize: scaleFontSize(12) }]}>
+                      Are you sure?
+                    </Text>
+                    <TouchableOpacity
+                      style={[styles.confirmButton, { backgroundColor: 'rgba(255,255,255,0.2)' }]}
+                      onPress={() => onConfirmDelete && onConfirmDelete()}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={[styles.confirmButtonText, { color: '#FFFFFF', fontSize: scaleFontSize(11) }]}>Delete</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
+              </View>
+            ) : (
+              // Show initial delete state
+              <View style={styles.deleteButton}>
+                <Ionicons name="trash" size={scaleWidth(20)} color="#FFFFFF" />
+                <Text style={[styles.deleteButtonText, { color: '#FFFFFF', marginTop: scaleWidth(4), fontSize: scaleFontSize(11) }]}>
+                  Delete
+                </Text>
+              </View>
+            )}
+            
+            {/* Cancel button positioned on top right */}
+            <TouchableOpacity
+              style={{
+                position: 'absolute',
+                top: scaleWidth(4),
+                right: scaleWidth(4),
+                backgroundColor: 'rgba(0,0,0,0.6)',
+                borderRadius: scaleWidth(12),
+                padding: scaleWidth(6),
+                zIndex: 20
+              }}
+              onPress={onCancelDelete}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="close" size={scaleWidth(16)} color="#FFFFFF" />
+            </TouchableOpacity>
+          </TouchableOpacity>
+        )}
       </TouchableOpacity>
     );
   }
@@ -175,6 +274,7 @@ const TimeBlock = ({ timeBlock, onPress, compact = false }) => {
         isRecurring && styles.recurringBlock
       ]}
       onPress={onPress}
+      onLongPress={onLongPress}
       activeOpacity={0.7}
       accessible={true}
       accessibilityRole="button"
@@ -189,15 +289,14 @@ const TimeBlock = ({ timeBlock, onPress, compact = false }) => {
           {formatTime(timeBlock.startTime)} - {formatTime(timeBlock.endTime)}
         </Text>
         {isRecurring && (
-          <View style={styles.recurringContainer}>
-            <Ionicons name="repeat" size={scaleWidth(16)} color={theme.text} />
-            <Text 
-              style={[styles.recurringText, { color: theme.text }]}
-              maxFontSizeMultiplier={1.5}
-            >
-              {timeBlock.repeatFrequency === 'daily' ? 'Daily' : 
-               timeBlock.repeatFrequency === 'weekly' ? 'Weekly' : 
-               timeBlock.repeatFrequency === 'monthly' ? 'Monthly' : 'Recurring'}
+          <View style={[
+            styles.frequencyBadge, 
+            { backgroundColor: theme.primary }
+          ]}>
+            <Text style={[styles.frequencyText, { color: '#FFFFFF' }]}>
+              {timeBlock.repeatFrequency === 'daily' ? 'D' : 
+               timeBlock.repeatFrequency === 'weekly' ? 'W' : 
+               timeBlock.repeatFrequency === 'monthly' ? 'M' : 'R'}
             </Text>
           </View>
         )}
@@ -327,6 +426,21 @@ const styles = StyleSheet.create({
     marginLeft: spacing.xxs,
     fontWeight: '500',
   },
+  frequencyBadge: {
+    backgroundColor: '#007AFF',
+    borderRadius: scaleWidth(10),
+    paddingHorizontal: scaleWidth(6),
+    paddingVertical: scaleWidth(3),
+    minWidth: scaleWidth(20),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  frequencyText: {
+    fontSize: scaleFontSize(10),
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
   title: {
     fontSize: fontSizes.m,
     fontWeight: 'bold',
@@ -425,6 +539,22 @@ const styles = StyleSheet.create({
   compactRecurringIcon: {
     marginLeft: spacing.xs,
   },
+  compactFrequencyBadge: {
+    backgroundColor: '#007AFF',
+    borderRadius: scaleWidth(8),
+    paddingHorizontal: scaleWidth(4),
+    paddingVertical: scaleWidth(2),
+    marginLeft: spacing.xs,
+    minWidth: scaleWidth(16),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  compactFrequencyText: {
+    fontSize: scaleFontSize(8),
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
   compactFooter: {
     flexDirection: 'column',
     justifyContent: 'space-between',
@@ -467,6 +597,49 @@ const styles = StyleSheet.create({
   compactLocationText: {
     fontSize: fontSizes.xs,
     flex: 1,
+  },
+  
+  // Delete overlay styles (similar to DayView)
+  deleteOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#FF3B30',
+    borderRadius: scaleWidth(8),
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  deleteButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.xs,
+  },
+  deleteButtonText: {
+    fontSize: fontSizes.xs,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  confirmText: {
+    fontSize: fontSizes.s,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: spacing.xs,
+  },
+  confirmButton: {
+    paddingVertical: spacing.xxs,
+    paddingHorizontal: spacing.xs,
+    borderRadius: scaleWidth(6),
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: scaleWidth(50),
+  },
+  confirmButtonText: {
+    fontSize: fontSizes.xs,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });
 

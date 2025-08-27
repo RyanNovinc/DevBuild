@@ -183,8 +183,6 @@ const GoalSelector = ({
 };
 
 const TimeBlockForm = ({
-  title,
-  setTitle,
   domain,
   setDomain,
   domainColor,
@@ -235,6 +233,7 @@ const TimeBlockForm = ({
   milestoneItems,
   handleDelete,
   isCreating,
+  isEditingSeries = true, // Default to series editing for backward compatibility
   theme,
   isDarkMode,
   scrollToInput,
@@ -329,31 +328,206 @@ const TimeBlockForm = ({
       maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
     >
       <View style={styles.formContainer}>
-        {/* Title */}
+        
+        {/* Date & Time */}
         <View style={styles.sectionGroup}>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>
-            Activity Details
+            Schedule
           </Text>
           
           <View style={styles.inputGroup}>
             <View style={styles.inputHeader}>
-              <Ionicons name="create-outline" size={18} color={theme.primary} />
-              <Text style={[styles.inputLabel, { color: theme.text }]}>Title</Text>
+              <Ionicons name="calendar-outline" size={18} color={theme.primary} />
+              <Text style={[styles.inputLabel, { color: theme.text }]}>Date</Text>
             </View>
-            <TextInput
-              style={[styles.modernInput, { 
-                color: theme.text, 
-                backgroundColor: theme.card, 
-                borderColor: theme.border
-              }]}
-              value={title}
-              onChangeText={setTitle}
-              placeholder="What are you planning to do?"
-              placeholderTextColor={theme.textSecondary}
-            />
+            <TouchableOpacity 
+              style={[
+                styles.modernDateSelector, 
+                { 
+                  backgroundColor: theme.card, 
+                  borderColor: theme.border
+                }
+              ]}
+              onPress={openDatePicker}
+              activeOpacity={0.8}
+            >
+              <View style={styles.dateContent}>
+                <View style={[styles.miniCalendar, { borderColor: domain ? domainColor : customColor }]}>
+                  <View style={[styles.miniCalendarHeader, { backgroundColor: domain ? domainColor : customColor }]}>
+                    <Text style={styles.miniCalendarMonth}>
+                      {startTime.toLocaleString('default', { month: 'short' })}
+                    </Text>
+                  </View>
+                  <Text style={[styles.miniCalendarDay, { color: theme.text }]}>
+                    {startTime.getDate()}
+                  </Text>
+                </View>
+                <View style={styles.dateDetails}>
+                  <Text style={[styles.dateMainText, { color: theme.text }]}>
+                    {formatDate(startTime)}
+                  </Text>
+                  <Text style={[styles.dateSubText, { color: theme.textSecondary }]}>
+                    {startTime.toLocaleDateString(undefined, { weekday: 'long' })}
+                  </Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward-outline" size={16} color={theme.textSecondary} />
+            </TouchableOpacity>
           </View>
+          
+          <View style={styles.inputGroup}>
+            <View style={styles.inputHeader}>
+              <Ionicons name="time-outline" size={18} color={theme.primary} />
+              <Text style={[styles.inputLabel, { color: theme.text }]}>Time</Text>
+            </View>
+            <View style={[styles.timeCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+              <View style={styles.timeSelectors}>
+                <View style={styles.timeSelector}>
+                  <Text style={[styles.timeLabel, { color: theme.textSecondary }]}>Start</Text>
+                  <TouchableOpacity 
+                    style={styles.timeDisplay} 
+                    onPress={openStartTimePicker}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.timeText, { color: theme.text }]}>
+                      {formatTime(startTime)}
+                    </Text>
+                  </TouchableOpacity>
+                  <View style={styles.timeAdjustButtons}>
+                    <TouchableOpacity 
+                      style={[styles.timeAdjustButton, { 
+                        backgroundColor: `${domain ? domainColor : customColor}10`,
+                        borderColor: `${domain ? domainColor : customColor}30`
+                      }]}
+                      onPress={() => {
+                        requestAnimationFrame(() => {
+                          const newTime = new Date(startTime.getTime() - timeIncrementRef.current * 60 * 1000);
+                          setStartTime(newTime);
+                          // Auto-adjust end time if it would be before new start time
+                          if (endTime <= newTime) {
+                            setEndTime(new Date(newTime.getTime() + 60 * 60 * 1000)); // Add 1 hour
+                          }
+                        });
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="remove" size={12} color={domain ? domainColor : customColor} />
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.timeAdjustButton, { 
+                        backgroundColor: `${domain ? domainColor : customColor}10`,
+                        borderColor: `${domain ? domainColor : customColor}30`
+                      }]}
+                      onPress={() => {
+                        requestAnimationFrame(() => {
+                          const newTime = new Date(startTime.getTime() + timeIncrementRef.current * 60 * 1000);
+                          setStartTime(newTime);
+                        });
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="add" size={12} color={domain ? domainColor : customColor} />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+                
+                <View style={styles.timeSeparator}>
+                  <Ionicons name="arrow-forward" size={16} color={theme.textSecondary} />
+                </View>
+                
+                <View style={styles.timeSelector}>
+                  <Text style={[styles.timeLabel, { color: theme.textSecondary }]}>End</Text>
+                  <TouchableOpacity 
+                    style={styles.timeDisplay} 
+                    onPress={openEndTimePicker}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.timeText, { color: theme.text }]}>
+                      {formatTime(endTime)}
+                    </Text>
+                  </TouchableOpacity>
+                  <View style={styles.timeAdjustButtons}>
+                    <TouchableOpacity 
+                      style={[styles.timeAdjustButton, { 
+                        backgroundColor: `${domain ? domainColor : customColor}10`,
+                        borderColor: `${domain ? domainColor : customColor}30`
+                      }]}
+                      onPress={() => {
+                        requestAnimationFrame(() => {
+                          const newTime = new Date(endTime.getTime() - timeIncrementRef.current * 60 * 1000);
+                          // Only allow if new end time is still after start time
+                          if (newTime > startTime) {
+                            setEndTime(newTime);
+                          }
+                        });
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="remove" size={12} color={domain ? domainColor : customColor} />
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.timeAdjustButton, { 
+                        backgroundColor: `${domain ? domainColor : customColor}10`,
+                        borderColor: `${domain ? domainColor : customColor}30`
+                      }]}
+                      onPress={() => {
+                        requestAnimationFrame(() => {
+                          const newTime = new Date(endTime.getTime() + timeIncrementRef.current * 60 * 1000);
+                          setEndTime(newTime);
+                        });
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="add" size={12} color={domain ? domainColor : customColor} />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+              
+              <View style={[styles.durationSection, { borderTopColor: theme.border }]}>
+                <View style={styles.durationDisplay}>
+                  <View style={styles.durationInfo}>
+                    <Ionicons name="hourglass-outline" size={14} color={theme.textSecondary} />
+                    <Text style={[styles.durationLabel, { color: theme.textSecondary }]}>Duration</Text>
+                    <Text style={[styles.durationValue, { color: theme.text }]}>
+                      {duration}
+                    </Text>
+                  </View>
+                  
+                  <View style={styles.incrementControl}>
+                    <Text style={[styles.incrementLabel, { color: theme.textSecondary }]}>Increments</Text>
+                    <TouchableOpacity 
+                      style={[styles.incrementToggle, { 
+                        backgroundColor: `${domain ? domainColor : customColor}10`,
+                        borderColor: `${domain ? domainColor : customColor}30`
+                      }]}
+                      onPress={() => {
+                        toggleTimeIncrement();
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.incrementToggleText, { 
+                        color: domain ? domainColor : customColor 
+                      }]}>
+                        {timeIncrementDisplay}m
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+                
+              </View>
+            </View>
+          </View>
+          
+          {/* Time Error Message */}
+          {timeError ? (
+            <View style={[styles.errorContainer, { backgroundColor: `${theme.error}10` }]}>
+              <Ionicons name="alert-circle" size={18} color={theme.error} style={styles.errorIcon} />
+              <Text style={[styles.errorText, { color: theme.error }]}>{timeError}</Text>
+            </View>
+          ) : null}
         </View>
-        
+
         {/* Goal & Milestone Section */}
         <View style={styles.sectionGroup}>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>
@@ -528,200 +702,6 @@ const TimeBlockForm = ({
             </TouchableOpacity>
           </View>
         )}
-        
-        {/* Date & Time */}
-        <View style={styles.sectionGroup}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>
-            Schedule
-          </Text>
-          
-          <View style={styles.inputGroup}>
-            <View style={styles.inputHeader}>
-              <Ionicons name="calendar-outline" size={18} color={theme.primary} />
-              <Text style={[styles.inputLabel, { color: theme.text }]}>Date</Text>
-            </View>
-            <TouchableOpacity 
-              style={[
-                styles.modernDateSelector, 
-                { 
-                  backgroundColor: theme.card, 
-                  borderColor: theme.border
-                }
-              ]}
-              onPress={openDatePicker}
-              activeOpacity={0.8}
-            >
-              <View style={styles.dateContent}>
-                <View style={[styles.miniCalendar, { borderColor: domain ? domainColor : customColor }]}>
-                  <View style={[styles.miniCalendarHeader, { backgroundColor: domain ? domainColor : customColor }]}>
-                    <Text style={styles.miniCalendarMonth}>
-                      {startTime.toLocaleString('default', { month: 'short' })}
-                    </Text>
-                  </View>
-                  <Text style={[styles.miniCalendarDay, { color: theme.text }]}>
-                    {startTime.getDate()}
-                  </Text>
-                </View>
-                <View style={styles.dateDetails}>
-                  <Text style={[styles.dateMainText, { color: theme.text }]}>
-                    {formatDate(startTime)}
-                  </Text>
-                  <Text style={[styles.dateSubText, { color: theme.textSecondary }]}>
-                    {startTime.toLocaleDateString(undefined, { weekday: 'long' })}
-                  </Text>
-                </View>
-              </View>
-              <Ionicons name="chevron-forward-outline" size={16} color={theme.textSecondary} />
-            </TouchableOpacity>
-          </View>
-          
-          <View style={styles.inputGroup}>
-            <View style={styles.inputHeader}>
-              <Ionicons name="time-outline" size={18} color={theme.primary} />
-              <Text style={[styles.inputLabel, { color: theme.text }]}>Time</Text>
-            </View>
-            <View style={[styles.timeCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
-              <View style={styles.timeSelectors}>
-                <View style={styles.timeSelector}>
-                  <Text style={[styles.timeLabel, { color: theme.textSecondary }]}>Start</Text>
-                  <TouchableOpacity 
-                    style={styles.timeDisplay} 
-                    onPress={openStartTimePicker}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={[styles.timeText, { color: theme.text }]}>
-                      {formatTime(startTime)}
-                    </Text>
-                  </TouchableOpacity>
-                  <View style={styles.timeAdjustButtons}>
-                    <TouchableOpacity 
-                      style={[styles.timeAdjustButton, { 
-                        backgroundColor: `${domain ? domainColor : customColor}10`,
-                        borderColor: `${domain ? domainColor : customColor}30`
-                      }]}
-                      onPress={() => {
-                        requestAnimationFrame(() => {
-                          const newTime = new Date(startTime.getTime() - timeIncrementRef.current * 60 * 1000);
-                          setStartTime(newTime);
-                          // Auto-adjust end time if it would be before new start time
-                          if (endTime <= newTime) {
-                            setEndTime(new Date(newTime.getTime() + 60 * 60 * 1000)); // Add 1 hour
-                          }
-                        });
-                      }}
-                      activeOpacity={0.7}
-                    >
-                      <Ionicons name="remove" size={12} color={domain ? domainColor : customColor} />
-                    </TouchableOpacity>
-                    <TouchableOpacity 
-                      style={[styles.timeAdjustButton, { 
-                        backgroundColor: `${domain ? domainColor : customColor}10`,
-                        borderColor: `${domain ? domainColor : customColor}30`
-                      }]}
-                      onPress={() => {
-                        requestAnimationFrame(() => {
-                          const newTime = new Date(startTime.getTime() + timeIncrementRef.current * 60 * 1000);
-                          setStartTime(newTime);
-                        });
-                      }}
-                      activeOpacity={0.7}
-                    >
-                      <Ionicons name="add" size={12} color={domain ? domainColor : customColor} />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-                
-                <View style={styles.timeSeparator}>
-                  <Ionicons name="arrow-forward" size={16} color={theme.textSecondary} />
-                </View>
-                
-                <View style={styles.timeSelector}>
-                  <Text style={[styles.timeLabel, { color: theme.textSecondary }]}>End</Text>
-                  <TouchableOpacity 
-                    style={styles.timeDisplay} 
-                    onPress={openEndTimePicker}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={[styles.timeText, { color: theme.text }]}>
-                      {formatTime(endTime)}
-                    </Text>
-                  </TouchableOpacity>
-                  <View style={styles.timeAdjustButtons}>
-                    <TouchableOpacity 
-                      style={[styles.timeAdjustButton, { 
-                        backgroundColor: `${domain ? domainColor : customColor}10`,
-                        borderColor: `${domain ? domainColor : customColor}30`
-                      }]}
-                      onPress={() => {
-                        requestAnimationFrame(() => {
-                          const newTime = new Date(endTime.getTime() - timeIncrementRef.current * 60 * 1000);
-                          // Only allow if new end time is still after start time
-                          if (newTime > startTime) {
-                            setEndTime(newTime);
-                          }
-                        });
-                      }}
-                      activeOpacity={0.7}
-                    >
-                      <Ionicons name="remove" size={12} color={domain ? domainColor : customColor} />
-                    </TouchableOpacity>
-                    <TouchableOpacity 
-                      style={[styles.timeAdjustButton, { 
-                        backgroundColor: `${domain ? domainColor : customColor}10`,
-                        borderColor: `${domain ? domainColor : customColor}30`
-                      }]}
-                      onPress={() => {
-                        requestAnimationFrame(() => {
-                          const newTime = new Date(endTime.getTime() + timeIncrementRef.current * 60 * 1000);
-                          setEndTime(newTime);
-                        });
-                      }}
-                      activeOpacity={0.7}
-                    >
-                      <Ionicons name="add" size={12} color={domain ? domainColor : customColor} />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-              
-              <View style={[styles.durationSection, { borderTopColor: theme.border }]}>
-                <View style={styles.durationDisplay}>
-                  <Ionicons name="hourglass-outline" size={14} color={theme.textSecondary} />
-                  <Text style={[styles.durationLabel, { color: theme.textSecondary }]}>Duration</Text>
-                  <Text style={[styles.durationValue, { color: theme.text }]}>
-                    {duration}
-                  </Text>
-                  <TouchableOpacity 
-                    style={[styles.incrementToggle, { 
-                      backgroundColor: `${domain ? domainColor : customColor}10`,
-                      borderColor: `${domain ? domainColor : customColor}30`,
-                      marginLeft: 8
-                    }]}
-                    onPress={() => {
-                      toggleTimeIncrement();
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={[styles.incrementToggleText, { 
-                      color: domain ? domainColor : customColor 
-                    }]}>
-                      {timeIncrementDisplay}m
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-                
-              </View>
-            </View>
-          </View>
-          
-          {/* Time Error Message */}
-          {timeError ? (
-            <View style={[styles.errorContainer, { backgroundColor: `${theme.error}10` }]}>
-              <Ionicons name="alert-circle" size={18} color={theme.error} style={styles.errorIcon} />
-              <Text style={[styles.errorText, { color: theme.error }]}>{timeError}</Text>
-            </View>
-          ) : null}
-        </View>
       </View>
     </ScrollView>
   );
@@ -745,7 +725,16 @@ const TimeBlockForm = ({
             <View style={styles.toggleHeader}>
               <View style={styles.toggleInfo}>
                 <Ionicons name="repeat" size={18} color={theme.primary} />
-                <Text style={[styles.toggleTitle, { color: theme.text }]}>Repeat Event</Text>
+                <View>
+                  <Text style={[styles.toggleTitle, { color: theme.text }]}>
+                    {isEditingSeries ? 'Repeat Event' : 'Make Recurring'}
+                  </Text>
+                  {!isEditingSeries && (
+                    <Text style={[styles.toggleSubtitle, { color: theme.textSecondary }]}>
+                      Create new recurring series from this event
+                    </Text>
+                  )}
+                </View>
               </View>
               <TouchableOpacity 
                 style={[
@@ -1336,7 +1325,24 @@ const styles = StyleSheet.create({
   durationDisplay: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 12,
+  },
+  durationInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  incrementControl: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  incrementLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   durationLabel: {
     fontSize: 13,

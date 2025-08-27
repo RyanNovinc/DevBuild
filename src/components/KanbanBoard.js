@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import MinimalistConfirmDialog from './MinimalistConfirmDialog';
+import TaskActionModal from './TaskActionModal';
 
 const { width } = Dimensions.get('window');
 
@@ -57,6 +58,7 @@ const KanbanBoard = ({
   const [draggingItem, setDraggingItem] = useState(null);
   const [wipDialog, setWipDialog] = useState({ visible: false, type: '', item: null, targetStatus: '' });
   const [wipLimitDialog, setWipLimitDialog] = useState({ visible: false, currentCount: 0, attemptedLimit: 0 });
+  const [taskActionModal, setTaskActionModal] = useState({ visible: false, task: null });
   
   // Refs for scroll views to maintain scroll positions
   const horizontalScrollRef = useRef(null);
@@ -408,29 +410,8 @@ const KanbanBoard = ({
                       ]
                     );
                   } else {
-                    // Task long press - show move and schedule options
-                    const moveOptions = ['todo', 'in_progress', 'done']
-                      .filter(s => s !== status)
-                      .map(newStatus => ({
-                        text: `Move to ${newStatus === 'todo' ? 'To Do' : 
-                               newStatus === 'in_progress' ? 'In Progress' : 'Done'}`,
-                        onPress: () => handleMoveTask(item, newStatus)
-                      }));
-
-                    const scheduleOption = onPressTask ? [{
-                      text: '📅 Schedule Time Block',
-                      onPress: () => onPressTask(item)
-                    }] : [];
-
-                    Alert.alert(
-                      item.title,
-                      'What would you like to do with this task?',
-                      [
-                        { text: 'Cancel', style: 'cancel' },
-                        ...scheduleOption,
-                        ...moveOptions
-                      ]
-                    );
+                    // Task long press - show clean modal with only schedule option
+                    setTaskActionModal({ visible: true, task: item });
                   }
                 }}
                 delayLongPress={500}
@@ -760,6 +741,16 @@ const KanbanBoard = ({
         onConfirm={() => {}}
         onClose={() => setWipLimitDialog({ visible: false, currentCount: 0, attemptedLimit: 0 })}
         icon="alert-circle-outline"
+      />
+
+      {/* Task Action Modal */}
+      <TaskActionModal
+        visible={taskActionModal.visible}
+        task={taskActionModal.task}
+        onClose={() => setTaskActionModal({ visible: false, task: null })}
+        onScheduleTimeBlock={onPressTask}
+        theme={theme}
+        isDarkMode={darkMode}
       />
     </View>
   );

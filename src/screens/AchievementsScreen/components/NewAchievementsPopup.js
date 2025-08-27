@@ -32,6 +32,10 @@ const NewAchievementsPopup = ({
   // Track current achievement for celebration animation
   const [currentIndex, setCurrentIndex] = useState(0);
   
+  // Celebration animations
+  const [fallingTrophies, setFallingTrophies] = useState([]);
+  const [fireworks, setFireworks] = useState([]);
+  
   // Animate popup entrance
   useEffect(() => {
     if (visible) {
@@ -49,7 +53,7 @@ const NewAchievementsPopup = ({
         }),
         Animated.timing(opacityAnim, {
           toValue: 1,
-          duration: 300,
+          duration: 150, // Faster animation
           useNativeDriver: true
         }),
         Animated.spring(slideAnim, {
@@ -58,13 +62,18 @@ const NewAchievementsPopup = ({
           tension: 40,
           useNativeDriver: true
         })
-      ]).start();
+      ]).start(() => {
+        // Start celebration effects after popup is visible
+        createCelebrationEffects();
+      });
     } else {
       // Reset animation values
       scaleAnim.setValue(0.8);
       opacityAnim.setValue(0);
       slideAnim.setValue(50);
       setCurrentIndex(0);
+      setFallingTrophies([]);
+      setFireworks([]);
     }
   }, [visible]);
   
@@ -74,6 +83,81 @@ const NewAchievementsPopup = ({
     
     const category = categories.find(c => c.id === achievement.category);
     return category?.color || '#3b82f6';
+  };
+  
+  // Create celebration effects
+  const createCelebrationEffects = () => {
+    // Create falling trophies
+    const newTrophies = [];
+    for (let i = 0; i < 6; i++) {
+      newTrophies.push({
+        id: Date.now() + i,
+        x: Math.random() * width,
+        animValue: new Animated.Value(-50),
+        rotation: new Animated.Value(0),
+        delay: Math.random() * 500
+      });
+    }
+    
+    // Create fireworks
+    const newFireworks = [];
+    for (let i = 0; i < 4; i++) {
+      newFireworks.push({
+        id: Date.now() + 100 + i,
+        x: Math.random() * width * 0.8 + width * 0.1,
+        y: Math.random() * 200 + 100,
+        scaleAnim: new Animated.Value(0),
+        opacityAnim: new Animated.Value(1),
+        delay: Math.random() * 300
+      });
+    }
+    
+    setFallingTrophies(newTrophies);
+    setFireworks(newFireworks);
+    
+    // Animate falling trophies
+    newTrophies.forEach(trophy => {
+      setTimeout(() => {
+        Animated.parallel([
+          Animated.timing(trophy.animValue, {
+            toValue: 800,
+            duration: 2000,
+            useNativeDriver: true
+          }),
+          Animated.loop(
+            Animated.timing(trophy.rotation, {
+              toValue: 1,
+              duration: 1000,
+              useNativeDriver: true
+            })
+          )
+        ]).start();
+      }, trophy.delay);
+    });
+    
+    // Animate fireworks
+    newFireworks.forEach(firework => {
+      setTimeout(() => {
+        Animated.parallel([
+          Animated.timing(firework.scaleAnim, {
+            toValue: 1.5,
+            duration: 300,
+            useNativeDriver: true
+          }),
+          Animated.timing(firework.opacityAnim, {
+            toValue: 0,
+            duration: 600,
+            useNativeDriver: true
+          })
+        ]).start();
+      }, firework.delay);
+    });
+    
+    // Clear effects after animation
+    setTimeout(() => {
+      setFallingTrophies([]);
+      setFireworks([]);
+    }, 3000);
   };
   
   // Handle next achievement
@@ -128,6 +212,52 @@ const NewAchievementsPopup = ({
           onPress={onClose}
         />
         
+        {/* Falling Trophy Effects */}
+        {fallingTrophies.map(trophy => (
+          <Animated.View
+            key={trophy.id}
+            style={[
+              styles.fallingTrophy,
+              {
+                left: trophy.x,
+                transform: [
+                  { 
+                    translateY: trophy.animValue 
+                  },
+                  { 
+                    rotate: trophy.rotation.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ['0deg', '360deg']
+                    })
+                  }
+                ]
+              }
+            ]}
+          >
+            <Ionicons name="trophy" size={30} color="#FFD700" />
+          </Animated.View>
+        ))}
+        
+        {/* Fireworks Effects */}
+        {fireworks.map(firework => (
+          <Animated.View
+            key={firework.id}
+            style={[
+              styles.firework,
+              {
+                left: firework.x,
+                top: firework.y,
+                opacity: firework.opacityAnim,
+                transform: [
+                  { scale: firework.scaleAnim }
+                ]
+              }
+            ]}
+          >
+            <Text style={styles.fireworkText}>✨</Text>
+          </Animated.View>
+        ))}
+        
         {/* Main Content */}
         <Animated.View 
           style={[
@@ -145,7 +275,7 @@ const NewAchievementsPopup = ({
         >
           {/* Header */}
           <LinearGradient
-            colors={['#3b82f6', '#1d4ed8']}
+            colors={theme.background === '#000000' ? ['#1a1a1a', '#2d2d2d'] : ['#3b82f6', '#1d4ed8']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.header}
@@ -369,6 +499,20 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  fallingTrophy: {
+    position: 'absolute',
+    zIndex: 5,
+  },
+  firework: {
+    position: 'absolute',
+    zIndex: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fireworkText: {
+    fontSize: 24,
+    color: '#FFD700',
   },
 });
 

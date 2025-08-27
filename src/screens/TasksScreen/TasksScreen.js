@@ -84,14 +84,47 @@ const TasksScreen = ({ route, navigation }) => {
     });
   }
   
-  // Handle screen focus for tour overlay timing
+  // Handle screen focus for tour overlay timing and data preparation
   useFocusEffect(
     React.useCallback(() => {
       if (isTourActive && currentStep === 'KANBAN_INTRO') {
         console.log('🎯 TasksScreen: Screen focused during tour, step =', currentStep);
         // Screen is now focused and ready for tour overlay
       }
-    }, [isTourActive, currentStep])
+      
+      // Check if we're in the SCHEDULE_DEDICATED_TIME step and need to prepare tour data
+      if (isTourActive && currentStep === 'SCHEDULE_DEDICATED_TIME') {
+        console.log('🎯 TasksScreen: In SCHEDULE_DEDICATED_TIME step, checking for in-progress task');
+        
+        // Look for the in-progress task to store globally for timeblock creation
+        const inProgressTask = tasks?.find(task => task.status === 'in-progress');
+        
+        if (inProgressTask && !global.tourSelectedTask) {
+          console.log('🎯 TasksScreen: Found in-progress task, storing globally:', inProgressTask.title);
+          
+          const milestone = milestones?.find(m => m.id === inProgressTask.milestoneId);
+          const goal = milestone ? mainGoals?.find(g => g.id === milestone.goalId) : null;
+          
+          if (milestone && goal) {
+            console.log('🎯 TasksScreen: Storing task data globally for timeblock creation:', {
+              task: inProgressTask.title,
+              milestone: milestone.title,
+              goal: goal.title
+            });
+            
+            global.tourSelectedTask = inProgressTask;
+            global.tourSelectedMilestone = milestone;
+            global.tourSelectedGoal = goal;
+          } else {
+            console.error('🎯 TasksScreen: Could not find milestone or goal for in-progress task');
+          }
+        } else if (inProgressTask && global.tourSelectedTask) {
+          console.log('🎯 TasksScreen: In-progress task found and global data already exists');
+        } else {
+          console.log('🎯 TasksScreen: No in-progress task found in SCHEDULE_DEDICATED_TIME step');
+        }
+      }
+    }, [isTourActive, currentStep, tasks, milestones, mainGoals])
   );
   
   // Tour scroll position for kanban demonstration - always start at todo (position 0)
@@ -1143,33 +1176,7 @@ const TasksScreen = ({ route, navigation }) => {
       notification.showSuccess(`Milestone moved to ${newStatus === 'todo' ? 'To Do' : newStatus === 'in_progress' ? 'In Progress' : 'Done'}`);
     }
     
-    // Tour detection: Check if user moved milestone to In Progress during tour
-    if (isTourActive && (currentStep === 'PICK_CURRENT_FOCUS' || currentStep === 'TASK_MOVED_CELEBRATION') && newStatus === 'in_progress') {
-      console.log('🎯 Tour: User moved milestone to In Progress! Triggering celebration step');
-      
-      // Store the selected milestone data for timeblock creation
-      const goal = mainGoals.find(g => g.id === milestoneToUpdate.goalId);
-      
-      if (goal) {
-        console.log('🎯 Tour: Storing milestone data globally for timeblock creation:', {
-          milestone: milestoneToUpdate.title,
-          goal: goal.title
-        });
-        
-        // For milestone-focused timeblocks, we don't have a specific task
-        global.tourSelectedTask = null;
-        global.tourSelectedMilestone = milestoneToUpdate;
-        global.tourSelectedGoal = goal;
-      } else {
-        console.error('🎯 Tour: ERROR - Could not find goal for milestone:', milestoneToUpdate);
-      }
-      
-      setTimeout(() => {
-        if (global.tourTaskMoved) {
-          global.tourTaskMoved();
-        }
-      }, 1000); // Small delay to let success notification show
-    }
+    // Note: Milestone tour detection removed since kanban board only shows tasks during tour
   };
   
   // Render milestone actions menu
@@ -1282,16 +1289,43 @@ const TasksScreen = ({ route, navigation }) => {
     navigation.navigate('MilestoneDetails', { milestoneId: milestone.id, mode: 'edit' });
   };
 
-  // NEW FUNCTION: Handle task press in Kanban view
+  // NEW FUNCTION: Handle task press in Kanban view - Navigate to Time screen to schedule time block
   const handleKanbanTaskPress = (task) => {
     const milestoneId = task.milestoneId;
-    if (milestoneId) {
-      navigation.navigate('MilestoneDetails', { 
-        milestoneId: milestoneId, 
-        mode: 'edit',
-        initialTask: task.id
-      });
+    if (!milestoneId) {
+      console.warn('Task has no milestoneId, cannot create time block');
+      return;
     }
+
+    // Find the milestone associated with this task
+    const milestone = milestones.find(m => m.id === milestoneId);
+    if (!milestone) {
+      console.warn('Milestone not found for task:', task.title);
+      return;
+    }
+
+    // Find the goal associated with this milestone
+    const goalsToUse = Array.isArray(mainGoals) && mainGoals.length > 0 ? mainGoals : goals;
+    const goal = goalsToUse.find(g => g.id === milestone.goalId);
+    if (!goal) {
+      console.warn('Goal not found for milestone:', milestone.title);
+      return;
+    }
+
+    // Navigate to TimeTab first, then to TimeBlockScreen with pre-filled data
+    navigation.navigate('TimeTab', { 
+      screen: 'TimeBlock',
+      params: {
+        mode: 'create',
+        date: new Date(),
+        prefilledTask: task,
+        prefilledMilestone: milestone,
+        prefilledGoal: goal,
+        prefilledTaskId: task.id,
+        prefilledMilestoneId: milestone.id,
+        prefilledGoalId: goal.id
+      }
+    });
   };
   
   // Removed animateToggleButton as we no longer have the floating button

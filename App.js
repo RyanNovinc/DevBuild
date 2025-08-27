@@ -1417,11 +1417,23 @@ function AppContent({ navigationRef }) {
       console.log('🎯 Onboarding completion detected, starting transition');
       setTransitionState('transitioning');
       
+      // Set the hasCompletedOnboarding flag for the tour system
+      AsyncStorage.setItem('hasCompletedOnboarding', 'true').then(() => {
+        console.log('🎯 Set hasCompletedOnboarding flag for app tour');
+      }).catch(console.error);
+      
       // Give the system time to process all state changes
       InteractionManager.runAfterInteractions(() => {
         setTimeout(() => {
           console.log('🎯 Transition complete, showing main app');
           setTransitionState('stable');
+          
+          // Start the app tour after a brief delay to let the main app fully render
+          setTimeout(() => {
+            console.log('🎯 Starting app tour after onboarding completion');
+            // The useAppTour hook will pick up the hasCompletedOnboarding flag
+            // and automatically start the tour since hasSeenAppTour won't be set yet
+          }, 1500); // Extra delay to ensure smooth transition
         }, 1000); // Short transition period
       });
     }

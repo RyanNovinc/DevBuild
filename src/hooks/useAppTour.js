@@ -53,7 +53,8 @@ export const useAppTour = (navigation = null) => {
     'SCHEDULE_DEDICATED_TIME',
     'TIME_BLOCK_CREATED',
     'SYSTEM_CONFIDENCE',
-    'SUPPORTING_TOOLS_OVERVIEW'
+    'SUPPORTING_TOOLS_OVERVIEW',
+    'AI_FAREWELL'
   ];
   
   // Screen navigation map for tour steps
@@ -65,12 +66,25 @@ export const useAppTour = (navigation = null) => {
     'SCHEDULE_DEDICATED_TIME': 'Time',
     'TIME_BLOCK_CREATED': 'Time',
     'SYSTEM_CONFIDENCE': 'Time',
-    'SUPPORTING_TOOLS_OVERVIEW': 'TodoTab'
+    'SUPPORTING_TOOLS_OVERVIEW': 'TodoTab',
+    'AI_FAREWELL': 'TodoTab'
   };
   
   // Check if tour should start
   useEffect(() => {
     checkTourStatus();
+    
+    // Also check periodically for onboarding completion
+    const interval = setInterval(() => {
+      checkTourStatus();
+    }, 1000); // Check every second for the first few seconds after app load
+    
+    // Clear interval after 10 seconds
+    setTimeout(() => {
+      clearInterval(interval);
+    }, 10000);
+    
+    return () => clearInterval(interval);
   }, []);
   
   const checkTourStatus = async () => {
@@ -185,6 +199,7 @@ export const useAppTour = (navigation = null) => {
       console.log('🤖 DEV COMMANDS AVAILABLE:');
       console.log('- global.jumpToTourStep("PICK_CURRENT_FOCUS") // Start at step 3');
       console.log('- global.jumpToTourStep("SUPPORTING_TOOLS_OVERVIEW") // Start at step 6');
+      console.log('- global.jumpToTourStep("AI_FAREWELL") // Start at AI farewell step');
       console.log('- startTour("GOAL_ACHIEVEMENT_VALIDATION") // Start new tour');
     }
     
@@ -210,6 +225,11 @@ export const useAppTour = (navigation = null) => {
         nextScreen,
         navigationAvailable: !!navigation 
       });
+      
+      // Special debug for AI_FAREWELL transition
+      if (nextStepName === 'AI_FAREWELL') {
+        console.log('🎭 About to transition to AI_FAREWELL step!');
+      }
       
       // Navigate to next screen if needed
       if (nextScreen && nextScreen !== currentScreen && navigation) {
@@ -239,10 +259,18 @@ export const useAppTour = (navigation = null) => {
       } else {
         console.log('📍 Setting step to:', nextStepName, '(no navigation needed)');
         
+        // Special debug for AI_FAREWELL
+        if (nextStepName === 'AI_FAREWELL') {
+          console.log('🎭 Now updating to AI_FAREWELL step');
+        }
+        
         updateGlobalTourState({ currentStep: nextStepName });
       }
     } else {
       // Tour complete
+      console.log('🎭 Tour sequence complete - calling completeTour()');
+      console.log('🎭 Current step was:', currentStep);
+      console.log('🎭 Current index was:', currentIndex, 'of', TOUR_SEQUENCE.length - 1);
       completeTour();
     }
   };

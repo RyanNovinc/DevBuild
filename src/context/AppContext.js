@@ -146,6 +146,19 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     laterTodosRef.current = laterTodos;
   }, [laterTodos]);
+
+  // Generate additional recurring instances when timeBlocks changes or when app starts
+  useEffect(() => {
+    if (timeBlocks.length > 0 && !isLoading) {
+      // Check for recurring blocks that need more instances every time timeBlocks change
+      // Use a timeout to avoid doing this during rapid state updates
+      const timer = setTimeout(() => {
+        generateAdditionalRecurringInstances();
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [timeBlocks, isLoading]);
   
   // Notification context for feedback
   const { showSuccess, showError } = useNotification() || {
@@ -2127,11 +2140,19 @@ export const AppProvider = ({ children }) => {
         return null;
       }
       
-      // Update state
-      setTimeBlocks(prevTimeBlocks => [...prevTimeBlocks, newTimeBlock]);
+      const blocksToAdd = [newTimeBlock];
+      
+      // Generate recurring instances if this is a recurring time block
+      if (newTimeBlock.isRepeating) {
+        const recurringInstances = generateRecurringInstances(newTimeBlock);
+        blocksToAdd.push(...recurringInstances);
+      }
+      
+      // Update state with all blocks (original + recurring instances)
+      setTimeBlocks(prevTimeBlocks => [...prevTimeBlocks, ...blocksToAdd]);
       
       // Save to AsyncStorage
-      const updatedTimeBlocks = [...timeBlocks, newTimeBlock];
+      const updatedTimeBlocks = [...timeBlocks, ...blocksToAdd];
       await saveData(STORAGE_KEYS.TIME_BLOCKS, updatedTimeBlocks);
       
       return newTimeBlock;
@@ -2139,6 +2160,226 @@ export const AppProvider = ({ children }) => {
       console.error('Error adding time block:', error);
       showError('Failed to add time block');
       throw error;
+    }
+  };
+
+  // Helper function to generate recurring instances when creating a recurring time block
+  const generateRecurringInstances = (originalBlock) => {
+    const instances = [];
+    const today = new Date();
+    
+    // Get the original block start date
+    const originalStartDate = new Date(originalBlock.startTime);
+    const originalEndDate = new Date(originalBlock.endTime);
+    const durationMs = originalEndDate.getTime() - originalStartDate.getTime();
+    
+    // Determine how far ahead to generate instances
+    let endGenerationDate;
+    if (originalBlock.repeatIndefinitely) {
+      // For indefinite repeating, generate instances for 6 months ahead to ensure continuity
+      endGenerationDate = new Date();
+      endGenerationDate.setMonth(endGenerationDate.getMonth() + 6);
+    } else if (originalBlock.repeatUntil) {
+      // Use the specified end date
+      endGenerationDate = new Date(originalBlock.repeatUntil);
+    } else {
+      // Default fallback - 3 months ahead
+      endGenerationDate = new Date();
+      endGenerationDate.setMonth(endGenerationDate.getMonth() + 3);
+    }
+    
+    // Generate instances based on frequency
+    let currentDate = new Date(originalStartDate);
+    
+    switch (originalBlock.repeatFrequency) {
+      case 'daily':
+        // Start from the day after the original
+        currentDate.setDate(currentDate.getDate() + 1);
+        
+        while (currentDate <= endGenerationDate) {
+          const instanceStartTime = new Date(currentDate);
+          const instanceEndTime = new Date(instanceStartTime.getTime() + durationMs);
+          
+          const instance = {
+            ...originalBlock,
+            id: `${originalBlock.id}_${currentDate.toISOString().split('T')[0]}`, // Use date for cleaner IDs
+            startTime: instanceStartTime.toISOString(),
+            endTime: instanceEndTime.toISOString(),
+            isRepeating: false, // Instance is not repeating itself
+            isRepeatingInstance: true,
+            originalTimeBlockId: originalBlock.id,
+            seriesId: originalBlock.id // For series deletion
+          };
+          
+          instances.push(instance);
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
+        break;
+        
+      case 'weekly':
+        // Start from one week after the original
+        currentDate.setDate(currentDate.getDate() + 7);
+        
+        while (currentDate <= endGenerationDate) {
+          const instanceStartTime = new Date(currentDate);
+          const instanceEndTime = new Date(instanceStartTime.getTime() + durationMs);
+          
+          const instance = {
+            ...originalBlock,
+            id: `${originalBlock.id}_${currentDate.toISOString().split('T')[0]}`, // Use date for cleaner IDs
+            startTime: instanceStartTime.toISOString(),
+            endTime: instanceEndTime.toISOString(),
+            isRepeating: false, // Instance is not repeating itself
+            isRepeatingInstance: true,
+            originalTimeBlockId: originalBlock.id,
+            seriesId: originalBlock.id // For series deletion
+          };
+          
+          instances.push(instance);
+          currentDate.setDate(currentDate.getDate() + 7);
+        }
+        break;
+        
+      case 'monthly':
+        // Start from one month after the original
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        
+        while (currentDate <= endGenerationDate) {
+          const instanceStartTime = new Date(currentDate);
+          const instanceEndTime = new Date(instanceStartTime.getTime() + durationMs);
+          
+          const instance = {
+            ...originalBlock,
+            id: `${originalBlock.id}_${currentDate.toISOString().split('T')[0]}`, // Use date for cleaner IDs
+            startTime: instanceStartTime.toISOString(),
+            endTime: instanceEndTime.toISOString(),
+            isRepeating: false, // Instance is not repeating itself
+            isRepeatingInstance: true,
+            originalTimeBlockId: originalBlock.id,
+            seriesId: originalBlock.id // For series deletion
+          };
+          
+          instances.push(instance);
+          currentDate.setMonth(currentDate.getMonth() + 1);
+        }
+        break;
+    }
+    
+    console.log(`Generated ${instances.length} recurring instances for ${originalBlock.repeatFrequency} time block`);
+    return instances;
+  };
+
+  // Function to generate additional recurring instances for blocks that need them
+  // This should be called periodically to ensure recurring blocks continue appearing
+  const generateAdditionalRecurringInstances = async () => {
+    try {
+      console.log('Checking for recurring blocks that need additional instances...');
+      
+      const blocksToAdd = [];
+      const today = new Date();
+      const threeMonthsAhead = new Date();
+      threeMonthsAhead.setMonth(threeMonthsAhead.getMonth() + 3);
+      
+      // Find all original recurring blocks
+      const recurringBlocks = timeBlocks.filter(block => 
+        block.isRepeating && !block.isRepeatingInstance
+      );
+      
+      for (const originalBlock of recurringBlocks) {
+        // Check if we need to generate more instances for this block
+        const existingInstances = timeBlocks.filter(block => 
+          block.originalTimeBlockId === originalBlock.id
+        );
+        
+        // Find the latest instance date
+        let latestInstanceDate = new Date(originalBlock.startTime);
+        for (const instance of existingInstances) {
+          const instanceDate = new Date(instance.startTime);
+          if (instanceDate > latestInstanceDate) {
+            latestInstanceDate = instanceDate;
+          }
+        }
+        
+        // Check if we need more instances (if latest is less than 3 months ahead)
+        if (latestInstanceDate < threeMonthsAhead) {
+          console.log(`Generating additional instances for ${originalBlock.title}`);
+          
+          // Determine end generation date
+          let endGenerationDate;
+          if (originalBlock.repeatIndefinitely) {
+            endGenerationDate = new Date();
+            endGenerationDate.setMonth(endGenerationDate.getMonth() + 6); // Always stay 6 months ahead
+          } else if (originalBlock.repeatUntil) {
+            endGenerationDate = new Date(originalBlock.repeatUntil);
+          } else {
+            endGenerationDate = threeMonthsAhead;
+          }
+          
+          // Generate instances from the day after the latest instance
+          const originalStartDate = new Date(originalBlock.startTime);
+          const originalEndDate = new Date(originalBlock.endTime);
+          const durationMs = originalEndDate.getTime() - originalStartDate.getTime();
+          
+          let currentDate = new Date(latestInstanceDate);
+          
+          // Move to next occurrence
+          switch (originalBlock.repeatFrequency) {
+            case 'daily':
+              currentDate.setDate(currentDate.getDate() + 1);
+              break;
+            case 'weekly':
+              currentDate.setDate(currentDate.getDate() + 7);
+              break;
+            case 'monthly':
+              currentDate.setMonth(currentDate.getMonth() + 1);
+              break;
+          }
+          
+          // Generate new instances
+          while (currentDate <= endGenerationDate) {
+            const instanceStartTime = new Date(currentDate);
+            const instanceEndTime = new Date(instanceStartTime.getTime() + durationMs);
+            
+            const instance = {
+              ...originalBlock,
+              id: `${originalBlock.id}_${currentDate.toISOString().split('T')[0]}`,
+              startTime: instanceStartTime.toISOString(),
+              endTime: instanceEndTime.toISOString(),
+              isRepeating: false,
+              isRepeatingInstance: true,
+              originalTimeBlockId: originalBlock.id,
+              seriesId: originalBlock.id
+            };
+            
+            blocksToAdd.push(instance);
+            
+            // Move to next occurrence
+            switch (originalBlock.repeatFrequency) {
+              case 'daily':
+                currentDate.setDate(currentDate.getDate() + 1);
+                break;
+              case 'weekly':
+                currentDate.setDate(currentDate.getDate() + 7);
+                break;
+              case 'monthly':
+                currentDate.setMonth(currentDate.getMonth() + 1);
+                break;
+            }
+          }
+        }
+      }
+      
+      if (blocksToAdd.length > 0) {
+        console.log(`Adding ${blocksToAdd.length} additional recurring instances`);
+        
+        // Add new instances to state and storage
+        setTimeBlocks(prevTimeBlocks => [...prevTimeBlocks, ...blocksToAdd]);
+        const updatedTimeBlocks = [...timeBlocks, ...blocksToAdd];
+        await saveData(STORAGE_KEYS.TIME_BLOCKS, updatedTimeBlocks);
+      }
+      
+    } catch (error) {
+      console.error('Error generating additional recurring instances:', error);
     }
   };
   
@@ -2165,15 +2406,150 @@ export const AppProvider = ({ children }) => {
       throw error;
     }
   };
-  
-  // Delete a time block
-  const deleteTimeBlock = async (timeBlockId) => {
+
+  // Update entire time block series
+  const updateTimeBlockSeries = async (seriesId, updatedData) => {
     try {
+      const updatedTimeBlocks = timeBlocks.map(timeBlock => {
+        // Update all blocks that are part of this series
+        const isPartOfSeries = 
+          timeBlock.id === seriesId ||
+          timeBlock.seriesId === seriesId ||
+          timeBlock.originalTimeBlockId === seriesId;
+          
+        if (isPartOfSeries) {
+          // Update series-level properties but preserve instance-specific properties
+          return {
+            ...timeBlock,
+            ...updatedData,
+            // Always keep original id
+            id: timeBlock.id,
+            // For recurring instances, keep their specific start/end times (they have their own schedule)
+            // For the original series block, use the updated times
+            startTime: timeBlock.isRepeatingInstance ? timeBlock.startTime : updatedData.startTime,
+            endTime: timeBlock.isRepeatingInstance ? timeBlock.endTime : updatedData.endTime,
+          };
+        }
+        return timeBlock;
+      });
+      
       // Update state
-      setTimeBlocks(prevTimeBlocks => prevTimeBlocks.filter(timeBlock => timeBlock.id !== timeBlockId));
+      setTimeBlocks(updatedTimeBlocks);
       
       // Save to AsyncStorage
-      const updatedTimeBlocks = timeBlocks.filter(timeBlock => timeBlock.id !== timeBlockId);
+      await saveData(STORAGE_KEYS.TIME_BLOCKS, updatedTimeBlocks);
+      
+      console.log(`Updated entire series for seriesId: ${seriesId}`);
+      return true;
+    } catch (error) {
+      console.error('Error updating time block series:', error);
+      showError('Failed to update time block series');
+      throw error;
+    }
+  };
+
+  // Create new time block series from an instance (break away and create new series)
+  const createNewTimeBlockSeries = async (timeBlockData) => {
+    try {
+      // Generate new series ID
+      const newSeriesId = `series_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Create the new recurring timeblock with series ID
+      const newTimeBlock = {
+        ...timeBlockData,
+        id: newSeriesId,
+        seriesId: null, // This is the original, not an instance
+        originalTimeBlockId: null,
+        isRepeating: true,
+        isRepeatingInstance: false,
+      };
+      
+      // Add the new series
+      await addTimeBlock(newTimeBlock);
+      
+      console.log(`Created new time block series with ID: ${newSeriesId}`);
+      return newTimeBlock;
+    } catch (error) {
+      console.error('Error creating new time block series:', error);
+      showError('Failed to create new time block series');
+      throw error;
+    }
+  };
+
+  // Check for time conflicts when creating/updating timeblocks
+  const checkTimeBlockConflicts = (newTimeBlock, excludeIds = []) => {
+    const newStart = new Date(newTimeBlock.startTime);
+    const newEnd = new Date(newTimeBlock.endTime);
+    
+    const conflicts = timeBlocks.filter(existingBlock => {
+      // Skip if it's the same block or in exclude list
+      if (excludeIds.includes(existingBlock.id)) return false;
+      
+      // Skip if it's on a different date
+      const existingStart = new Date(existingBlock.startTime);
+      const existingEnd = new Date(existingBlock.endTime);
+      
+      // Check if they're on the same date (ignore time for date comparison)
+      const newDate = newStart.toDateString();
+      const existingDate = existingStart.toDateString();
+      if (newDate !== existingDate) return false;
+      
+      // Check for time overlap
+      return (
+        (newStart < existingEnd && newEnd > existingStart) || // Times overlap
+        (existingStart < newEnd && existingEnd > newStart)    // Existing overlaps new
+      );
+    });
+    
+    return conflicts;
+  };
+  
+  // Delete a time block
+  const deleteTimeBlock = async (timeBlockId, deleteType = null) => {
+    try {
+      let updatedTimeBlocks;
+      const blockToDelete = timeBlocks.find(block => block.id === timeBlockId);
+      
+      console.log(`Delete request: ID=${timeBlockId}, type=${deleteType}, block:`, {
+        isRepeating: blockToDelete?.isRepeating,
+        isRepeatingInstance: blockToDelete?.isRepeatingInstance,
+        seriesId: blockToDelete?.seriesId,
+        originalTimeBlockId: blockToDelete?.originalTimeBlockId
+      });
+      
+      if (deleteType === 'series') {
+        // Delete all instances with the same seriesId or originalTimeBlockId
+        const seriesIdToDelete = blockToDelete?.seriesId || blockToDelete?.originalTimeBlockId || timeBlockId;
+        updatedTimeBlocks = timeBlocks.filter(timeBlock => 
+          timeBlock.id !== timeBlockId && 
+          timeBlock.seriesId !== seriesIdToDelete && 
+          timeBlock.originalTimeBlockId !== seriesIdToDelete &&
+          timeBlock.id !== seriesIdToDelete
+        );
+        console.log(`Deleting entire series for seriesId: ${seriesIdToDelete}`);
+      } else if (deleteType === 'single') {
+        // Delete ONLY the specific instance, regardless of whether it's original or not
+        updatedTimeBlocks = timeBlocks.filter(timeBlock => timeBlock.id !== timeBlockId);
+        console.log(`Deleting single instance ${timeBlockId} (forced single deletion)`);
+      } else {
+        // Default behavior - delete single block (and all its instances if it's a repeating original)
+        if (blockToDelete && blockToDelete.isRepeating && !blockToDelete.isRepeatingInstance) {
+          // Deleting the original repeating block - remove all instances too
+          updatedTimeBlocks = timeBlocks.filter(timeBlock => 
+            timeBlock.id !== timeBlockId && timeBlock.originalTimeBlockId !== timeBlockId
+          );
+          console.log(`Deleting original repeating block and all its instances`);
+        } else {
+          // Just delete the single block
+          updatedTimeBlocks = timeBlocks.filter(timeBlock => timeBlock.id !== timeBlockId);
+          console.log(`Deleting single non-repeating block ${timeBlockId}`);
+        }
+      }
+      
+      // Update state
+      setTimeBlocks(updatedTimeBlocks);
+      
+      // Save to AsyncStorage
       await saveData(STORAGE_KEYS.TIME_BLOCKS, updatedTimeBlocks);
       
       showSuccess('Time block deleted successfully');
@@ -3197,8 +3573,12 @@ export const AppProvider = ({ children }) => {
     // Time block functions
     addTimeBlock,
     updateTimeBlock,
+    updateTimeBlockSeries,
+    createNewTimeBlockSeries,
+    checkTimeBlockConflicts,
     deleteTimeBlock,
     countTimeBlocksThisWeek,
+    generateAdditionalRecurringInstances,
     
     // Todo functions
     addTodo,

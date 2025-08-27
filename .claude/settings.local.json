@@ -112,7 +112,9 @@
       "Bash(cat:*)",
       "Bash(npx expo:*)",
       "Bash(timeout:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Read(/D:\\Apps Productions Builds\\LCiOS-2\\DevBuild - Copy (24)\\src\\screens\\TimeScreen/**)",
+      "Read(/D:\\Apps Productions Builds\\LCiOS-2\\DevBuild - Copy (24)\\src\\screens\\TimeScreen/**)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
