@@ -40,6 +40,7 @@ import DomainColorPickerModal from './DomainColorPickerModal';
 import ThemeColorPickerModal from './ThemeColorPickerModal';
 import ProGiftSurprise from '../../components/ProGiftSurprise';
 import AppTourOverlay from '../../components/AppTourOverlay';
+import FoundationBuilderIntro from '../../components/FoundationBuilderIntro';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -84,6 +85,16 @@ const ProfileScreen = ({ navigation, route }) => {
     skipTour
   } = useAppTour(navigation);
   
+  // DEBUG: Log tour state in ProfileScreen
+  useEffect(() => {
+    console.log('🎯 ProfileScreen - Tour state:', {
+      isTourActive,
+      currentStep,
+      spotlightTarget,
+      shouldShowOverlay: isTourActive && currentStep === 'GOAL_ACHIEVEMENT_VALIDATION'
+    });
+  }, [isTourActive, currentStep]);
+  
   // Refs
   const scrollViewRef = useRef(null);
   
@@ -93,8 +104,16 @@ const ProfileScreen = ({ navigation, route }) => {
   
   // Handle tour step transitions
   useEffect(() => {
+    console.log('🏆 ProfileScreen tour state:', {
+      isTourActive,
+      currentStep,
+      shouldShowFoundationBuilder: isTourActive && currentStep === 'FOUNDATION_BUILDER_INTRO'
+    });
+    
     if (isTourActive) {
-      if (currentStep === 'GOAL_ACHIEVEMENT_VALIDATION') {
+      if (currentStep === 'FOUNDATION_BUILDER_INTRO') {
+        console.log('🏆 Foundation Builder intro step detected - modal should show');
+      } else if (currentStep === 'GOAL_ACHIEVEMENT_VALIDATION') {
         // Show stats for the new tour's first step
         tourStatsOpacity.setValue(1);
         tourDomainWheelOpacity.setValue(0);
@@ -105,6 +124,23 @@ const ProfileScreen = ({ navigation, route }) => {
       tourDomainWheelOpacity.setValue(0);
     }
   }, [isTourActive, currentStep]);
+  
+  // Handle Foundation Builder intro completion
+  const handleFoundationBuilderIntroContinue = async () => {
+    console.log('🏆 Foundation Builder intro dismissed, proceeding to next tour step');
+    
+    // Unlock the Foundation Builder achievement with non-clickable popup
+    try {
+      const { unlockAchievement } = await import('../../services/AchievementService');
+      await unlockAchievement('foundation-builder', null, false); // Show popup but make it non-clickable
+      console.log('🏆 Foundation Builder achievement unlocked');
+    } catch (error) {
+      console.error('🏆 Error unlocking Foundation Builder achievement:', error);
+    }
+    
+    // Continue to next tour step
+    nextStep();
+  };
   
   // Celebration animations state
   const [fallingTrophies, setFallingTrophies] = useState([]);
@@ -887,6 +923,12 @@ const ProfileScreen = ({ navigation, route }) => {
         onSkip={skipTour}
         spotlightTarget={spotlightTarget}
         navigation={navigation}
+      />
+      
+      {/* Foundation Builder Intro Modal */}
+      <FoundationBuilderIntro 
+        visible={isTourActive && currentStep === 'FOUNDATION_BUILDER_INTRO'}
+        onContinue={handleFoundationBuilderIntroContinue}
       />
       
       {/* Stats Row - rendered AFTER overlay during tour so it appears on top */}

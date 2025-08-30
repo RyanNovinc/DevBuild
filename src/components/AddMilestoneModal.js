@@ -248,13 +248,19 @@ const AddMilestoneModal = ({
     
     const updatedMilestoneData = {
       ...milestoneData,
+      id: Date.now().toString(),
       title: title.trim(),
       description: description.trim(),
-      tasks: tasks,
+      color: selectedGoalColor || '#4CAF50',
+      dueDate: hasDueDate ? dueDate.toISOString() : null,
+      progress: 0,
       goalId: selectedGoalId,
       goalTitle: selectedGoalTitle,
-      color: selectedGoalColor,
-      dueDate: hasDueDate ? dueDate.toISOString() : null,
+      icon: 'diamond', // Match overview screen
+      isMilestone: true, // Match overview screen
+      tasks: tasks,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
     
     onAdd(updatedMilestoneData);
@@ -536,15 +542,16 @@ const AddMilestoneModal = ({
         contentContainerStyle={{ 
           paddingHorizontal: spacing.m,
           paddingTop: spacing.s,
-          paddingBottom: spacing.l
+          paddingBottom: spacing.xl,
+          flexGrow: 1
         }}
         showsVerticalScrollIndicator={true}
         keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="none"
+        keyboardDismissMode="interactive"
         scrollEnabled={true}
         bounces={true}
       >
-        {/* Goal Selection Section */}
+        {/* Milestone Title - Now first and primary */}
         <Text 
           style={[
             styles.label, 
@@ -555,7 +562,42 @@ const AddMilestoneModal = ({
             }
           ]}
         >
-          Associated Goal *
+          Milestone Title *
+        </Text>
+        <TextInput
+          style={[
+            styles.input,
+            { 
+              backgroundColor: theme.inputBackground,
+              color: theme.text,
+              borderColor: theme.border,
+              borderWidth: 1,
+              borderRadius: 8,
+              paddingHorizontal: spacing.m,
+              paddingVertical: spacing.s,
+              fontSize: fontSizes.m,
+              marginBottom: spacing.m,
+            }
+          ]}
+          value={title}
+          onChangeText={setTitle}
+          placeholder="Enter milestone title"
+          placeholderTextColor={theme.textSecondary}
+          autoFocus={true}
+        />
+
+        {/* Goal Selection Section - Now optional */}
+        <Text 
+          style={[
+            styles.label, 
+            { 
+              color: theme.textSecondary,
+              fontSize: fontSizes.m,
+              marginBottom: spacing.xs,
+            }
+          ]}
+        >
+          Link to Goal (Optional)
         </Text>
         
         {/* Goal Selector Button */}
@@ -576,15 +618,7 @@ const AddMilestoneModal = ({
             }
           ]}
           onPress={() => {
-            if (goals.length === 0) {
-              Alert.alert(
-                "No Goals Available", 
-                "You need to create at least one goal before creating a milestone.",
-                [{ text: "OK" }]
-              );
-            } else {
-              setShowGoalList(!showGoalList);
-            }
+            setShowGoalList(!showGoalList);
           }}
         >
           {selectedGoalId ? (
@@ -613,8 +647,8 @@ const AddMilestoneModal = ({
                 }}
               >
                 {goals.length > 0 
-                  ? "Select a goal for this project (required)" 
-                  : "No goals available - create a goal first"}
+                  ? "Select a goal to link this milestone (optional)" 
+                  : "No goals available to link"}
               </Text>
             </View>
           )}
@@ -647,42 +681,6 @@ const AddMilestoneModal = ({
             {renderGoalsList()}
           </View>
         </Animated.View>
-        
-        {/* Goal validation removed - milestones can be standalone */}
-        
-        <Text 
-          style={[
-            styles.label, 
-            { 
-              color: theme.textSecondary,
-              fontSize: fontSizes.m,
-              marginBottom: spacing.xs,
-            }
-          ]}
-        >
-          Milestone Title *
-        </Text>
-        <TextInput
-          style={[
-            styles.input,
-            { 
-              backgroundColor: theme.inputBackground,
-              color: theme.text,
-              borderColor: theme.border,
-              borderWidth: 1,
-              borderRadius: 8,
-              paddingHorizontal: spacing.m,
-              paddingVertical: spacing.s,
-              fontSize: fontSizes.m,
-              marginBottom: spacing.m,
-            }
-          ]}
-          value={title}
-          onChangeText={setTitle}
-          placeholder="Enter milestone title"
-          placeholderTextColor={theme.textSecondary}
-          autoFocus={false}
-        />
         
         <Text 
           style={[
@@ -807,11 +805,12 @@ const AddMilestoneModal = ({
         contentContainerStyle={{ 
           paddingHorizontal: spacing.m,
           paddingTop: spacing.s,
-          paddingBottom: spacing.l
+          paddingBottom: spacing.xl,
+          flexGrow: 1
         }}
         showsVerticalScrollIndicator={true}
         keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="none"
+        keyboardDismissMode="interactive"
         scrollEnabled={true}
         bounces={true}
       >
@@ -993,8 +992,7 @@ const AddMilestoneModal = ({
                   borderTopRightRadius: scaleWidth(16),
                   padding: spacing.m,
                   paddingBottom: Math.max(insets.bottom, spacing.m),
-                  maxHeight: '95%', // Increased by half (0.5x)
-                  minHeight: scaleHeight(625), // Increased minimum by half
+                  height: scaleHeight(550), // Fixed height - simple approach
                 }
               ]}>
                 {/* Swipe indicator */}
@@ -1003,21 +1001,29 @@ const AddMilestoneModal = ({
                   { backgroundColor: theme.textSecondary + '40' }
                 ]} />
           <View style={[styles.modalHeader, { marginBottom: spacing.xs }]}>
-            <Text 
-              style={[
-                styles.modalTitle, 
-                { 
-                  color: theme.text,
-                  fontSize: fontSizes.xl,
-                  fontWeight: 'bold',
-                }
-              ]}
-              maxFontSizeMultiplier={1.5}
-              accessible={true}
-              accessibilityRole="header"
-            >
-              Create Milestone
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons 
+                name="diamond" 
+                size={scaleWidth(24)} 
+                color={theme.primary} 
+                style={{ marginRight: spacing.xs }}
+              />
+              <Text 
+                style={[
+                  styles.modalTitle, 
+                  { 
+                    color: theme.text,
+                    fontSize: fontSizes.xl,
+                    fontWeight: 'bold',
+                  }
+                ]}
+                maxFontSizeMultiplier={1.5}
+                accessible={true}
+                accessibilityRole="header"
+              >
+                Create Milestone
+              </Text>
+            </View>
             <TouchableOpacity 
               style={[
                 styles.closeButton,
@@ -1041,7 +1047,7 @@ const AddMilestoneModal = ({
           
           {/* React Navigation Tab Navigator for swipeable tabs */}
           <View style={{
-            height: scaleHeight(475), // Increased tab container by half
+            height: scaleHeight(320), // Even smaller to guarantee button space
             marginBottom: spacing.s,
           }}>
             <NavigationContainer 
@@ -1126,8 +1132,8 @@ const AddMilestoneModal = ({
             style={[
               styles.addButton, 
               { 
-                backgroundColor: goals.length === 0 ? theme.textSecondary : buttonColor,
-                opacity: goals.length === 0 ? 0.7 : 1,
+                backgroundColor: buttonColor,
+                opacity: 1,
                 borderRadius: scaleWidth(12),
                 paddingVertical: spacing.m,
                 alignItems: 'center',
@@ -1142,7 +1148,7 @@ const AddMilestoneModal = ({
               }
             ]}
             onPress={handleAddMilestone}
-            disabled={goals.length === 0}
+            disabled={false}
             accessible={true}
             accessibilityRole="button"
             accessibilityLabel="Create project"
@@ -1160,7 +1166,7 @@ const AddMilestoneModal = ({
               ]}
               maxFontSizeMultiplier={1.5}
             >
-              {goals.length === 0 ? 'Create a Goal First' : 'Create Milestone'}
+              Create Milestone
             </Text>
           </TouchableOpacity>
 

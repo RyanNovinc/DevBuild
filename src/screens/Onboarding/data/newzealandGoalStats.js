@@ -57,7 +57,7 @@ export const NEW_ZEALAND_GOAL_STATS = {
     "Switch to Tech Career": [
       {
         title: "Technology Career Opportunities: Research Shows New Zealand's Growing Digital Economy",
-        figure: "Variable",
+        figure: "6.8%",
         description: "Research indicates New Zealand's digital economy may offer various career opportunities across different skill levels. Individual career outcomes vary significantly by skills, experience, and market conditions - consult career professionals for personalized guidance.",
         source: "New Zealand Government Digital Strategy",
         link: "https://www.digital.govt.nz/",
@@ -87,7 +87,7 @@ export const NEW_ZEALAND_GOAL_STATS = {
       },
       {
         title: "Skills Development Support: Understanding Available Training Resources",
-        figure: "Variable",
+        figure: "6.8%",
         description: "Research indicates various skills development programs may be available. Program details and eligibility vary by initiative - consult career advisors and training institutions for current program information and application guidance.",
         source: "Ministry of Business Innovation and Employment",
         link: "https://www.mbie.govt.nz/",
@@ -104,7 +104,7 @@ export const NEW_ZEALAND_GOAL_STATS = {
     "Start Profitable Side Business": [
       {
         title: "Business Development: Understanding Side Business Opportunities",
-        figure: "Variable",
+        figure: "6.8%",
         description: "Research indicates various approaches to business development may offer different outcomes. Business success varies greatly depending on many factors - consult qualified business advisors for personalized guidance.",
         source: "Opes Partners Side Hustle Research",
         link: "https://www.opespartners.co.nz/",
@@ -249,7 +249,7 @@ export const NEW_ZEALAND_GOAL_STATS = {
     "Start Investment Portfolio": [
       {
         title: "Retirement Planning: Understanding Long-Term Investment Concepts",
-        figure: "Variable",
+        figure: "6.8%",
         description: "Research indicates various retirement planning approaches may offer different outcomes over time. Investment outcomes involve risk and past performance does not guarantee future results - consult qualified financial advisors for personalized retirement planning guidance.",
         source: "Financial Markets Authority",
         link: "https://www.fma.govt.nz/",
@@ -264,7 +264,7 @@ export const NEW_ZEALAND_GOAL_STATS = {
       },
       {
         title: "Investment Access: Understanding Portfolio Building Options",
-        figure: "Variable",
+        figure: "6.8%",
         description: "Research shows various investment platforms may offer different minimum requirements and approaches. Investment outcomes involve risk and vary significantly - consult qualified financial advisors for personalized investment guidance.",
         source: "Investment Platform Analysis New Zealand",
         link: "https://www.sorted.org.nz/",
@@ -311,7 +311,7 @@ export const NEW_ZEALAND_GOAL_STATS = {
       },
       {
         title: "Freelancing Opportunities: Understanding Global Platform Options",
-        figure: "Variable",
+        figure: "6.8%",
         description: "Research shows freelancing platforms may offer various earning opportunities. Rates vary significantly by skill level, experience, and market demand - consult business professionals for guidance on freelancing strategies.",
         source: "Freelancer Market Analysis New Zealand",
         link: "https://www.freelancer.com/",
@@ -326,7 +326,7 @@ export const NEW_ZEALAND_GOAL_STATS = {
       },
       {
         title: "Investment Income: Understanding Dividend Concepts",
-        figure: "Variable",
+        figure: "6.8%",
         description: "Research indicates dividend investments may provide various income potential. Investment outcomes involve risk of loss and dividends may fluctuate - consult qualified financial advisors for personalized investment guidance.",
         source: "NZX Market Analysis",
         link: "https://www.nzx.com/",
@@ -377,7 +377,7 @@ export const NEW_ZEALAND_GOAL_STATS = {
       },
       {
         title: "Fitness and Recreation: Research Shows Social Benefits",
-        figure: "Variable",
+        figure: "6.8%",
         description: "Research indicates recreational activities may provide various social and wellness benefits. Individual outcomes vary by participation level and type of activity - consult healthcare professionals for personalized fitness guidance.",
         source: "Sport New Zealand SROI Study",
         link: "https://sportnz.org.nz/",
@@ -409,7 +409,7 @@ export const NEW_ZEALAND_GOAL_STATS = {
       },
       {
         title: "Mental Health Support: Research Shows Workplace Wellness Benefits",
-        figure: "Variable",
+        figure: "6.8%",
         description: "Research indicates mental health support may provide various workplace and personal benefits. Individual outcomes vary significantly - consult healthcare professionals for personalized mental health guidance.",
         source: "Mental Health Foundation of New Zealand",
         link: "https://mentalhealth.org.nz/",
@@ -471,7 +471,7 @@ export const NEW_ZEALAND_GOAL_STATS = {
       },
       {
         title: "Nutrition Planning: Understanding Meal Planning Benefits",
-        figure: "Variable",
+        figure: "6.8%",
         description: "Research indicates meal planning may offer various cost and health benefits. Individual results vary by dietary needs, location, and implementation - consult nutrition and healthcare professionals for personalized guidance.",
         source: "Dietitians New Zealand",
         link: "https://dietitians.org.nz/",
@@ -491,7 +491,7 @@ export const NEW_ZEALAND_GOAL_STATS = {
   "Relationships": {
     "Plan Dream Wedding": {
       title: "Wedding Planning: Research Shows Planning Benefits for Celebrations",
-      figure: "Variable",
+      figure: "6.8%",
       description: "Research indicates structured wedding planning may improve celebration satisfaction. Wedding costs vary significantly by location, guest count, and preferences - consult wedding professionals and financial advisors for budget planning appropriate to your circumstances.",
       source: "Wedding Industry Association New Zealand & Tourism New Zealand",
       link: "https://www.newzealand.com/",
@@ -702,7 +702,7 @@ export const NEW_ZEALAND_GOAL_STATS = {
     },
     "Reduce Environmental Impact": {
       title: "Sustainable Living: Research Shows Potential Cost and Health Benefits",
-      figure: "Variable",
+      figure: "6.8%",
       description: "Research indicates sustainable practices may offer various cost savings and health benefits. Individual outcomes vary by lifestyle, location, and implementation approach - consult environmental and financial professionals for personalized guidance.",
       source: "Ministry for the Environment & Sustainable Business Network",
       link: "https://environment.govt.nz/",

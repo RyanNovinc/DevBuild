@@ -69,6 +69,7 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
   const [ageVerified, setAgeVerified] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [hasLoadedPreviousLegalAcceptance, setHasLoadedPreviousLegalAcceptance] = useState(false);
   
   // Animation values for modals
   const modalFadeAnim = useRef(new Animated.Value(0)).current;
@@ -218,6 +219,42 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
       }]);
     }
   }, [domain, goal, country, currentLanguage]); // Make sure this effect reruns when domain, goal, or country changes
+
+  // Load previous legal acceptance status when component mounts
+  useEffect(() => {
+    const loadPreviousLegalAcceptance = async () => {
+      try {
+        const [savedAgeVerified, savedTermsAccepted, savedPrivacyAccepted] = await Promise.all([
+          AsyncStorage.getItem('ageVerified'),
+          AsyncStorage.getItem('termsAccepted'),
+          AsyncStorage.getItem('privacyAccepted')
+        ]);
+        
+        // If all legal requirements were previously accepted, set them to true
+        if (savedAgeVerified === 'true') {
+          setAgeVerified(true);
+        }
+        if (savedTermsAccepted === 'true') {
+          setTermsAccepted(true);
+        }
+        if (savedPrivacyAccepted === 'true') {
+          setPrivacyAccepted(true);
+        }
+        
+        setHasLoadedPreviousLegalAcceptance(true);
+        console.log('🔒 Loaded previous legal acceptance:', {
+          age: savedAgeVerified === 'true',
+          terms: savedTermsAccepted === 'true',
+          privacy: savedPrivacyAccepted === 'true'
+        });
+      } catch (error) {
+        console.error('Error loading previous legal acceptance:', error);
+        setHasLoadedPreviousLegalAcceptance(true);
+      }
+    };
+    
+    loadPreviousLegalAcceptance();
+  }, []);
   
   // Show tap prompt when message is complete
   useEffect(() => {
@@ -471,7 +508,7 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
   };
 
   // Handle completion with protection against multiple calls
-  const handleComplete = () => {
+  const handleComplete = async () => {
     // Prevent multiple completion calls
     if (hasCompleted || isNavigating) {
       return;
@@ -487,12 +524,22 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
     // Set completion state to prevent further calls
     setHasCompleted(true);
     
-    // Store age verification
+    // Store all legal acceptance data
     try {
-      AsyncStorage.setItem('ageVerified', 'true');
-      AsyncStorage.setItem('ageVerificationDate', new Date().toISOString());
+      // At this point, all legal requirements must be accepted (button only appears when all are true)
+      const savePromises = [
+        AsyncStorage.setItem('ageVerified', 'true'),
+        AsyncStorage.setItem('ageVerificationDate', new Date().toISOString()),
+        AsyncStorage.setItem('termsAccepted', 'true'),
+        AsyncStorage.setItem('termsAcceptedDate', new Date().toISOString()),
+        AsyncStorage.setItem('privacyAccepted', 'true'),
+        AsyncStorage.setItem('privacyAcceptedDate', new Date().toISOString())
+      ];
+      
+      await Promise.all(savePromises);
+      console.log('🔒 Saved all legal acceptance data');
     } catch (error) {
-      console.error('Error storing age verification:', error);
+      console.error('Error storing legal acceptance:', error);
     }
     
     // Call the parent's onComplete function
@@ -676,8 +723,8 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
       
       {/* Removed tap to continue prompt - not needed */}
       
-      {/* Terms, Privacy, and Age Checkboxes - Only show when not all accepted */}
-      {allMessagesComplete && (!termsAccepted || !privacyAccepted || !ageVerified) && (
+      {/* Terms, Privacy, and Age Checkboxes - Only show when not all accepted and we've loaded the previous state */}
+      {allMessagesComplete && hasLoadedPreviousLegalAcceptance && (!termsAccepted || !privacyAccepted || !ageVerified) && (
         <SafeAreaView style={styles.termsSection}>
           <Animated.View style={[styles.termsContainer, { opacity: buttonOpacity }]}>
             <View style={styles.checkboxContainer}>
@@ -739,8 +786,22 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
         </SafeAreaView>
       )}
 
-      {/* Start Using App Button - Only show when all requirements are accepted */}
-      {allMessagesComplete && termsAccepted && privacyAccepted && ageVerified && (
+      {/* Legal Requirements Already Met Message - Only show when all were previously accepted */}
+      {allMessagesComplete && hasLoadedPreviousLegalAcceptance && termsAccepted && privacyAccepted && ageVerified && (
+        <SafeAreaView style={styles.termsSection}>
+          <Animated.View style={[styles.termsContainer, { opacity: buttonOpacity }]}>
+            <View style={styles.legalAlreadyAcceptedContainer}>
+              <Ionicons name="checkmark-circle" size={24} color="#4ade80" />
+              <ResponsiveText style={styles.legalAlreadyAcceptedText}>
+                Legal requirements previously accepted
+              </ResponsiveText>
+            </View>
+          </Animated.View>
+        </SafeAreaView>
+      )}
+
+      {/* Start Using App Button - Only show when all requirements are accepted and we've loaded the previous state */}
+      {allMessagesComplete && hasLoadedPreviousLegalAcceptance && termsAccepted && privacyAccepted && ageVerified && (
         <SafeAreaView style={styles.buttonSafeArea}>
           <Animated.View style={[styles.startButtonContainer, { opacity: buttonOpacity }]}>
             <TouchableOpacity
@@ -762,7 +823,8 @@ const CompletionPage = ({ onComplete, onBack, isNavigating, domain, goal, countr
               ) : (
                 <>
                   <ResponsiveText style={styles.startButtonText}>
-                    {translate('startUsing', 'common')}
+                    {/* Check if all legal requirements were previously accepted */}
+                    Continue to LifeCompass
                   </ResponsiveText>
                   <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
                 </>
@@ -1291,6 +1353,20 @@ const styles = StyleSheet.create({
   },
   disabledButtonText: {
     color: '#666666',
+  },
+  // Styles for legal requirements already accepted message
+  legalAlreadyAcceptedContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+  },
+  legalAlreadyAcceptedText: {
+    color: '#4ade80',
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 8,
+    textAlign: 'center',
   },
 });
 

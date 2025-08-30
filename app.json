@@ -31,10 +31,7 @@
       },
       "bundleIdentifier": "com.lifecompass.app",
       "jsEngine": "jsc",
-      "minimalIOSVersion": "16.0",
-      "entitlements": {
-        "aps-environment": "development"
-      }
+      "minimalIOSVersion": "16.0"
     },
     "android": {
       "adaptiveIcon": {
@@ -44,7 +41,10 @@
         "RECEIVE_BOOT_COMPLETED",
         "VIBRATE",
         "READ_CALENDAR",
-        "WRITE_CALENDAR"
+        "WRITE_CALENDAR",
+        "POST_NOTIFICATIONS",
+        "SCHEDULE_EXACT_ALARM",
+        "USE_EXACT_ALARM"
       ],
       "package": "com.lifecompass.app",
       "jsEngine": "jsc"

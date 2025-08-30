@@ -22,7 +22,9 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useNotification } from '../context/NotificationContext';
 import { useProfile } from '../context/ProfileContext';
+import { useFocusEffect } from '@react-navigation/native';
 import FeatureExplorerTracker from '../services/FeatureExplorerTracker';
+import AchievementService from '../services/AchievementService';
 
 // Import AI login components
 import { LoginScreen } from '../components/ai/LoginScreen';
@@ -634,20 +636,46 @@ const EditProfileScreen = ({ navigation, route }) => {
   };
 
   // Calculate total referral limit based on achievements
+  const [referralLimit, setReferralLimit] = React.useState(2); // Default base limit
+  
+  // Load referral limit from achievements
+  React.useEffect(() => {
+    const loadReferralLimit = async () => {
+      try {
+        const limit = await AchievementService.getReferralLimit();
+        setReferralLimit(limit);
+      } catch (error) {
+        console.error('Error loading referral limit:', error);
+      }
+    };
+    
+    loadReferralLimit();
+  }, []);
+  
+  // Refresh referral limit when screen is focused (catches achievement unlocks)
+  useFocusEffect(
+    React.useCallback(() => {
+      const loadReferralLimit = async () => {
+        try {
+          const limit = await AchievementService.getReferralLimit();
+          setReferralLimit(limit);
+        } catch (error) {
+          console.error('Error refreshing referral limit:', error);
+        }
+      };
+      
+      loadReferralLimit();
+    }, [])
+  );
+  
   const getTotalReferralLimit = () => {
-    const currentStreak = streakData.currentStreak;
-    let limit = 3; // Base limit
-    
-    if (currentStreak >= 90) limit += 1; // 90-day achievement adds 1
-    if (currentStreak >= 180) limit += 1; // 180-day achievement adds 1
-    
-    return limit; // Max of 5 total
+    return referralLimit;
   };
 
   // Calculate referrals remaining vs total limit (0/X format)
   const getReferralProgress = () => {
     const total = getTotalReferralLimit();
-    const used = referralStats?.converted || 0;
+    const used = referralStats?.sent || 0; // Changed from converted to sent
     const remaining = Math.max(0, total - used);
     return { 
       remaining: remaining, 

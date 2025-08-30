@@ -19,6 +19,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { useAppContext } from '../../context/AppContext';
+import { useProfile } from '../../context/ProfileContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNotification } from '../../context/NotificationContext';
 import { 
@@ -317,6 +318,7 @@ const MonthTab = React.memo(({
           handlePrev={handlePrev}
           handleNext={handleNext}
           getMonthName={getMonthName}
+          navigation={navigation}
         />
       </ScrollView>
     </View>
@@ -374,6 +376,7 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
   const safeSpacing = useSafeSpacing();
   const { width, height } = useScreenDimensions();
   const isLandscape = useIsLandscape();
+  const { profile } = useProfile();
   
   // App Tour Hook
   const { 
@@ -512,7 +515,6 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
   })();
   const [selectedWeekDay, setSelectedWeekDay] = useState(todayWeekDay);
   const [selectedMonthDay, setSelectedMonthDay] = useState(new Date().getDate() - 1); // 0-based index
-  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [selectedTab, setSelectedTab] = useState('Day'); // Track active tab
   const [tabNavigatorKey, setTabNavigatorKey] = useState(0); // Key to force remount
   const [showTourTimePickerPopup, setShowTourTimePickerPopup] = useState(false); // Tour time picker popup
@@ -524,7 +526,6 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
   const [showTourContinueButton, setShowTourContinueButton] = useState(false); // Show continue button after time block created
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [limitModalType, setLimitModalType] = useState('');
-  const isSelectingWithinWeekRef = useRef(false);
   
   // Navigation ref for tour tab switching
   const tabNavigatorRef = useRef(null);
@@ -626,6 +627,14 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
   useFocusEffect(
     useCallback(() => {
       console.log('🎯 TimeScreen: Screen focused');
+      
+      // Check if we should return to Month tab from fullscreen calendar
+      if (typeof global !== 'undefined' && global.returnToMonthTab) {
+        console.log('🎯 TimeScreen: Returning to Month tab from fullscreen calendar');
+        setSelectedTab('Month');
+        global.returnToMonthTab = false; // Clear the flag
+        return;
+      }
       
       // Check if we're returning from TimeBlock navigation
       if (isReturningFromTimeBlock.current && dateBeforeTimeBlock.current) {
@@ -800,18 +809,13 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
 
   // Update week and month dates when current date changes
   useEffect(() => {
-    // Don't recalculate week dates if we're just selecting within the current week
-    if (!isSelectingWithinWeekRef.current) {
-      const dates = getWeekDates(currentDate);
-      setWeekDates(dates);
-      
-      const day = currentDate.getDay();
-      const weekDayIndex = day === 0 ? 6 : day - 1;
-      setSelectedWeekDay(weekDayIndex);
-    } else {
-      // Reset the flag after handling the selection
-      isSelectingWithinWeekRef.current = false;
-    }
+    const dates = getWeekDates(currentDate);
+    setWeekDates(dates);
+    
+    // Set selectedWeekDay to match currentDate (for navigation purposes)
+    const day = currentDate.getDay();
+    const weekDayIndex = day === 0 ? 6 : day - 1;
+    setSelectedWeekDay(weekDayIndex);
     
     const month = currentDate.getMonth();
     const year = currentDate.getFullYear();
@@ -991,18 +995,13 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
       return;
     }
     
-    // Set flag to indicate we're selecting within the current week
-    // This prevents recalculating week dates in the useEffect
-    isSelectingWithinWeekRef.current = true;
-    
-    // Update both the selected week day and current date
+    // Only update the selected week day index - don't change currentDate
+    // currentDate should remain the base date for navigation
     setSelectedWeekDay(index);
-    setCurrentDate(newDate);
   };
   
   // Handle month day selection
   const handleMonthDaySelect = (index) => {
-    setSelectedMonthDay(index);
     const newDate = new Date(monthDates[index]);
     
     // Check for free tier planning horizon
@@ -1012,7 +1011,9 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
       return;
     }
     
-    setCurrentDate(newDate);
+    // Only update the selected month day index - don't change currentDate
+    // currentDate should remain the base date for navigation
+    setSelectedMonthDay(index);
   };
 
   // Handle tour special actions
@@ -1588,15 +1589,24 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
   const handleAddTimeBlock = () => {
     animateButtonPress();
     
+    // Determine which date to use based on current tab
+    let dateToUse = currentDate;
+    if (selectedTab === 'Week' && weekDates && weekDates[selectedWeekDay]) {
+      dateToUse = weekDates[selectedWeekDay];
+    } else if (selectedTab === 'Month' && monthDates && monthDates[selectedMonthDay]) {
+      dateToUse = monthDates[selectedMonthDay];
+    }
+    
     // Store current date before navigation so we can return to it
     // Use latestNavigatedDate.current to get the most recent date (bypasses React state timing)
     const dateToStore = latestNavigatedDate.current;
     dateBeforeTimeBlock.current = dateToStore;
     isReturningFromTimeBlock.current = true;
     console.log('🎯 TimeScreen: Storing current date before navigation (add):', dateToStore);
+    console.log('🎯 TimeScreen: Using date for time block creation:', dateToUse, 'from tab:', selectedTab);
     
     // Check for free tier planning horizon
-    if (!isPremium && isBeyondFreePlanningHorizon(currentDate)) {
+    if (!isPremium && isBeyondFreePlanningHorizon(dateToUse)) {
       setLimitModalType('horizon');
       setShowLimitModal(true);
       return;
@@ -1611,21 +1621,30 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
       return;
     }
     
-    navigation.navigate('TimeBlock', { mode: 'create', date: currentDate, isPremium });
+    navigation.navigate('TimeBlock', { mode: 'create', date: dateToUse, isPremium });
   };
 
   // Function to add a new time block with pre-filled times
   const handleAddTimeBlockWithTime = (startTime, endTime) => {
     animateButtonPress();
     
+    // Determine which date to use based on current tab
+    let dateToUse = currentDate;
+    if (selectedTab === 'Week' && weekDates && weekDates[selectedWeekDay]) {
+      dateToUse = weekDates[selectedWeekDay];
+    } else if (selectedTab === 'Month' && monthDates && monthDates[selectedMonthDay]) {
+      dateToUse = monthDates[selectedMonthDay];
+    }
+    
     // Store current date before navigation so we can return to it
     // Use latestNavigatedDate.current to get the most recent date (bypasses React state timing)
     const dateToStore = latestNavigatedDate.current;
     dateBeforeTimeBlock.current = dateToStore;
     console.log('🎯 TimeScreen: Storing current date before navigation (add with time):', dateToStore);
+    console.log('🎯 TimeScreen: Using date for time block creation (with time):', dateToUse, 'from tab:', selectedTab);
     
     // Check for free tier planning horizon
-    if (!isPremium && isBeyondFreePlanningHorizon(currentDate)) {
+    if (!isPremium && isBeyondFreePlanningHorizon(dateToUse)) {
       setLimitModalType('horizon');
       setShowLimitModal(true);
       return;
@@ -1642,11 +1661,11 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
     
     navigation.navigate('TimeBlock', { 
       mode: 'create', 
-      date: currentDate, 
+      date: dateToUse, 
       isPremium,
       prefilledStartTime: startTime,
       prefilledEndTime: endTime,
-      returnDate: currentDate
+      returnDate: dateToUse
     });
   };
   
@@ -1947,8 +1966,8 @@ const handleSharePDF = (tabName) => {
     return;
   }
   
+  
   generateAndSharePDF({
-    setIsGeneratingPDF,
     selectedView: (tabName || '').toLowerCase(),
     currentDate,
     formatDate,
@@ -1960,7 +1979,8 @@ const handleSharePDF = (tabName) => {
     isToday,
     getDayName,
     formatTime,
-    addWatermark: !isPremium // Add watermark for free users
+    addWatermark: !isPremium, // Add watermark for free users
+    userName: profile?.name || 'User' // Add user name from profile
   });
   
   // Track achievement for Day Export
@@ -2794,6 +2814,7 @@ const handleCalendarViewToggle = () => {
             isDarkMode={isDarkMode}
             isPremium={isPremium}
             showDotsOnly={!isPremium} // Free tier shows dots only
+            navigation={navigation}
           />
         </ScrollView>
       </View>
@@ -3106,43 +3127,6 @@ const handleCalendarViewToggle = () => {
       </Animated.View>
       )}
       
-      {/* PDF Generation Loading Modal */}
-      {isGeneratingPDF && (
-        <Modal 
-          transparent={true} 
-          visible={isGeneratingPDF}
-          animationType="fade"
-        >
-          <View style={styles.loadingModalContainer}>
-            <View style={[
-              styles.loadingModalContent, 
-              { 
-                backgroundColor: theme.card,
-                padding: scaleWidth(20),
-                borderRadius: scaleWidth(10),
-              }
-            ]}>
-              <ActivityIndicator 
-                size="large" 
-                color={theme.primary} 
-                style={styles.loadingIndicator} 
-              />
-              <Text 
-                style={[
-                  styles.loadingText, 
-                  { 
-                    color: '#FFFFFF', // White text for dark theme
-                    fontSize: scaleFontSize(16),
-                  }
-                ]}
-                maxFontSizeMultiplier={1.3}
-              >
-                Generating PDF...
-              </Text>
-            </View>
-          </View>
-        </Modal>
-      )}
       
       {/* Free Tier Limit Modal */}
       <FreeTierLimitModal 

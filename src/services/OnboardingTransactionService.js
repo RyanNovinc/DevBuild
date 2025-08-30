@@ -265,6 +265,45 @@ export class OnboardingTransactionService {
     console.log('🎉 Finalizing onboarding');
 
     try {
+      // Store original values for rollback
+      const originalHasCompletedOnboarding = await AsyncStorage.getItem('hasCompletedOnboarding');
+      const originalHasSeenAppTour = await AsyncStorage.getItem('hasSeenAppTour');
+      const originalTourSkipped = await AsyncStorage.getItem('appTourSkipped');
+      
+      this.addRollbackAction(async () => {
+        console.log('🔄 Rolling back tour-related flags');
+        try {
+          if (originalHasCompletedOnboarding === null) {
+            await AsyncStorage.removeItem('hasCompletedOnboarding');
+          } else {
+            await AsyncStorage.setItem('hasCompletedOnboarding', originalHasCompletedOnboarding);
+          }
+          
+          if (originalHasSeenAppTour === null) {
+            await AsyncStorage.removeItem('hasSeenAppTour');
+          } else {
+            await AsyncStorage.setItem('hasSeenAppTour', originalHasSeenAppTour);
+          }
+          
+          if (originalTourSkipped === null) {
+            await AsyncStorage.removeItem('appTourSkipped');
+          } else {
+            await AsyncStorage.setItem('appTourSkipped', originalTourSkipped);
+          }
+        } catch (error) {
+          console.warn('Failed to rollback tour flags:', error);
+        }
+      });
+
+      // Set the hasCompletedOnboarding flag for app tour triggering
+      await AsyncStorage.setItem('hasCompletedOnboarding', 'true');
+      console.log('🎯 Set hasCompletedOnboarding flag for app tour system');
+
+      // Reset tour flags to ensure tour starts after fresh onboarding
+      await AsyncStorage.removeItem('hasSeenAppTour');
+      await AsyncStorage.removeItem('appTourSkipped');
+      console.log('🎯 Reset tour flags to ensure tour starts after onboarding');
+
       // Give the system time to process all the changes
       await new Promise(resolve => setTimeout(resolve, 200));
 

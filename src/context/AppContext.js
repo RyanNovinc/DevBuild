@@ -1695,7 +1695,14 @@ export const AppProvider = ({ children }) => {
       
       // 1. First remove from AsyncStorage to ensure persistence
       const updatedMilestones = milestones.filter(milestone => milestone.id !== milestoneId);
-      await AsyncStorage.setItem(STORAGE_KEYS.MILESTONES, JSON.stringify(updatedMilestones));
+      try {
+        await AsyncStorage.setItem(STORAGE_KEYS.MILESTONES, JSON.stringify(updatedMilestones));
+        console.log(`✅ Milestone deletion persisted to storage, ${updatedMilestones.length} milestones remaining`);
+      } catch (storageError) {
+        console.error('❌ Critical: Failed to persist milestone deletion to storage:', storageError);
+        showError('Failed to delete milestone - storage error');
+        throw storageError;
+      }
       
       // 2. Then update state (AFTER storage is updated)
       setMilestones(updatedMilestones);
@@ -1703,8 +1710,15 @@ export const AppProvider = ({ children }) => {
       // 3. Clean up associated tasks if they exist
       if (Array.isArray(tasks) && tasks.length > 0) {
         const updatedTasks = tasks.filter(task => task.milestoneId !== milestoneId);
-        await AsyncStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(updatedTasks));
-        setTasks(updatedTasks);
+        try {
+          await AsyncStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(updatedTasks));
+          console.log(`✅ Associated tasks cleanup persisted to storage, ${updatedTasks.length} tasks remaining`);
+          setTasks(updatedTasks);
+        } catch (storageError) {
+          console.error('❌ Failed to persist task cleanup after milestone deletion:', storageError);
+          // Don't throw here - milestone deletion already succeeded
+          showError('Warning: Some associated tasks may not have been cleaned up properly');
+        }
       }
       
       // 4. Update milestone-goal link map if needed
@@ -1979,8 +1993,17 @@ export const AppProvider = ({ children }) => {
       // Update state
       setTasks(updatedTasks);
       
-      // Save to AsyncStorage
-      await saveData(STORAGE_KEYS.TASKS, updatedTasks);
+      // Save to AsyncStorage with error handling
+      try {
+        await saveData(STORAGE_KEYS.TASKS, updatedTasks);
+        console.log(`✅ Task deletion persisted to storage, ${updatedTasks.length} tasks remaining`);
+      } catch (storageError) {
+        console.error('❌ Critical: Failed to persist task deletion to storage:', storageError);
+        // Revert state change if storage fails
+        setTasks(tasks);
+        showError('Failed to delete task - storage error');
+        throw storageError;
+      }
       
       // Find the current milestone
       const milestone = milestonesRef.current.find(p => p.id === milestoneId);

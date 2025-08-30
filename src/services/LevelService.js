@@ -3,20 +3,22 @@
 /**
  * Stage threshold definitions
  * Each stage requires the specified number of points to reach
+ * Rebalanced to ensure Stage 5+ requires premium achievements
+ * Stage 12 requires all 1,125 possible points (100% completion)
  */
 const STAGE_THRESHOLDS = [
   0,      // Stage 1 starts at 0
   50,     // Stage 2 starts at 50
   100,    // Stage 3 starts at 100
   175,    // Stage 4 starts at 175
-  250,    // Stage 5 starts at 250
-  350,    // Stage 6 starts at 350
-  450,    // Stage 7 starts at 450
-  550,    // Stage 8 starts at 550
-  650,    // Stage 9 starts at 650
-  730,    // Stage 10 starts at 730
-  830,    // Stage 11 starts at 830
-  1030    // Stage 12 starts at 1030
+  300,    // Stage 5 starts at 300 (Premium gate - free users max 290 points)
+  400,    // Stage 6 starts at 400
+  500,    // Stage 7 starts at 500
+  600,    // Stage 8 starts at 600
+  750,    // Stage 9 starts at 750
+  900,    // Stage 10 starts at 900
+  1000,   // Stage 11 starts at 1000
+  1125    // Stage 12 starts at 1125 (Ultimate achievement - all points required)
 ];
 
 /**

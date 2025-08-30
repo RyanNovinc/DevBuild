@@ -30,7 +30,20 @@ const TimeBlock = ({
   const { theme } = useTheme();
   
   // Check if block is recurring
-  const isRecurring = timeBlock.isRepeating || timeBlock.isRepeatingInstance || false;
+  const isRecurring = timeBlock.isRepeating || timeBlock.isRepeatingInstance || timeBlock.seriesId || false;
+  
+  // Debug logging to identify series vs instances
+  if (compact && (timeBlock.isRepeating || timeBlock.repeatFrequency)) {
+    console.log('🔄 TimeBlock Border Debug:', {
+      title: timeBlock.title,
+      isRepeating: timeBlock.isRepeating,
+      isRepeatingInstance: timeBlock.isRepeatingInstance,
+      seriesId: timeBlock.seriesId,
+      repeatFrequency: timeBlock.repeatFrequency,
+      hasBorder: 'checking...',
+      borderStyle: (timeBlock.isRepeating || timeBlock.isRepeatingInstance || timeBlock.seriesId) ? 'dashed' : 'solid'
+    });
+  }
 
   // Check if project and task information is available
   const hasProject = timeBlock.projectTitle && !timeBlock.isGeneralActivity;
@@ -64,11 +77,19 @@ const TimeBlock = ({
             borderLeftColor: domainColor,
             backgroundColor: theme.card,
             borderLeftWidth: scaleWidth(4),
+            borderRadius: scaleWidth(8),
             minHeight: minTouchHeight,
+            // Enhanced shadow for better timeblock definition
+            shadowColor: theme.background === '#000000' ? '#FFFFFF' : '#000000',
+            shadowOffset: { 
+              width: 0, 
+              height: (timeBlock.isRepeating || timeBlock.isRepeatingInstance || timeBlock.seriesId || timeBlock.repeatFrequency) ? 3 : 2 
+            },
+            shadowOpacity: (timeBlock.isRepeating || timeBlock.isRepeatingInstance || timeBlock.seriesId || timeBlock.repeatFrequency) ? 0.25 : 0.15,
+            shadowRadius: (timeBlock.isRepeating || timeBlock.isRepeatingInstance || timeBlock.seriesId || timeBlock.repeatFrequency) ? 4 : 2,
+            elevation: (timeBlock.isRepeating || timeBlock.isRepeatingInstance || timeBlock.seriesId || timeBlock.repeatFrequency) ? 5 : 3,
           },
-          timeBlock.isCompleted && styles.completedBlock,
-          // Add dashed border for recurring blocks
-          isRecurring && styles.recurringBlock
+          timeBlock.isCompleted && styles.completedBlock
         ]}
         onPress={onPress}
         onLongPress={onLongPress}
@@ -103,18 +124,39 @@ const TimeBlock = ({
             >
               {timeBlock.title}
             </Text>
-            {isRecurring && (
-              <View style={[
-                styles.compactFrequencyBadge, 
-                { backgroundColor: theme.primary }
-              ]}>
-                <Text style={[styles.compactFrequencyText, { color: '#FFFFFF' }]}>
-                  {timeBlock.repeatFrequency === 'daily' ? 'D' : 
-                   timeBlock.repeatFrequency === 'weekly' ? 'W' : 
-                   timeBlock.repeatFrequency === 'monthly' ? 'M' : 'R'}
-                </Text>
-              </View>
-            )}
+            <View style={styles.compactSymbolsContainer}>
+              {/* Custom icon for general activities */}
+              {timeBlock.isGeneralActivity && timeBlock.customIcon && (
+                <Ionicons 
+                  name={timeBlock.customIcon} 
+                  size={scaleWidth(14)} 
+                  color={domainColor} 
+                  style={[styles.compactCustomIcon, { marginRight: scaleWidth(4) }]}
+                />
+              )}
+              {/* Recurring symbol */}
+              {isRecurring && (
+                <Ionicons 
+                  name="repeat-outline" 
+                  size={scaleWidth(12)} 
+                  color={theme.textSecondary} 
+                  style={[styles.compactRecurringSymbol, { marginRight: scaleWidth(4) }]}
+                />
+              )}
+              {/* Frequency badge */}
+              {isRecurring && (
+                <View style={[
+                  styles.compactFrequencyBadge, 
+                  { backgroundColor: theme.primary }
+                ]}>
+                  <Text style={[styles.compactFrequencyText, { color: '#FFFFFF' }]}>
+                    {timeBlock.repeatFrequency === 'daily' ? 'D' : 
+                     timeBlock.repeatFrequency === 'weekly' ? 'W' : 
+                     timeBlock.repeatFrequency === 'monthly' ? 'M' : 'R'}
+                  </Text>
+                </View>
+              )}
+            </View>
           </View>
           
           <View style={styles.compactFooter}>
@@ -129,25 +171,38 @@ const TimeBlock = ({
               </Text>
             </View>
             
-            {/* Show project and task if available in compact mode */}
-            {(hasProject || hasTask) && (
+            {/* Show goal, milestone, project and task if available in compact mode */}
+            {(timeBlock.goalTitle || timeBlock.milestoneTitle || hasProject || hasTask) && (
               <View style={styles.compactProjectTaskContainer}>
-                {hasProject && (
-                  <View style={styles.compactProjectContainer}>
-                    <Ionicons name="folder-outline" size={scaleWidth(11)} color={theme.textSecondary} />
+                {timeBlock.goalTitle && (
+                  <View style={styles.compactGoalContainer}>
+                    <Ionicons name="flag-outline" size={scaleWidth(11)} color={theme.textSecondary} />
                     <Text 
                       style={[styles.compactProjectTaskText, { color: theme.textSecondary }]} 
                       numberOfLines={1}
                       maxFontSizeMultiplier={1.8}
                     >
-                      {timeBlock.projectTitle}
+                      {timeBlock.goalTitle}
+                    </Text>
+                  </View>
+                )}
+                
+                {timeBlock.milestoneTitle && (
+                  <View style={styles.compactMilestoneContainer}>
+                    <Ionicons name="diamond-outline" size={scaleWidth(11)} color={theme.textSecondary} />
+                    <Text 
+                      style={[styles.compactProjectTaskText, { color: theme.textSecondary }]} 
+                      numberOfLines={1}
+                      maxFontSizeMultiplier={1.8}
+                    >
+                      {timeBlock.milestoneTitle}
                     </Text>
                   </View>
                 )}
                 
                 {hasTask && (
                   <View style={styles.compactTaskContainer}>
-                    <Ionicons name="checkbox-outline" size={scaleWidth(11)} color={theme.textSecondary} />
+                    <Ionicons name="checkmark-done-outline" size={scaleWidth(11)} color={theme.textSecondary} />
                     <Text 
                       style={[styles.compactProjectTaskText, { color: theme.textSecondary }]} 
                       numberOfLines={1}
@@ -160,17 +215,6 @@ const TimeBlock = ({
               </View>
             )}
             
-            {/* Show custom icon for general activities that don't have project/task - TEMPORARILY DISABLED */}
-            {false && timeBlock.isGeneralActivity && timeBlock.customIcon && !hasProject && !hasTask && (
-              <View style={styles.compactCustomIconContainer}>
-                <Ionicons 
-                  name={timeBlock.customIcon} 
-                  size={scaleWidth(14)} 
-                  color={domainColor} 
-                  style={{ opacity: 0.8 }}
-                />
-              </View>
-            )}
             
             {timeBlock.location && (
               <View style={styles.compactLocation}>
@@ -554,6 +598,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  compactSymbolsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  compactCustomIcon: {
+    opacity: 0.8,
+  },
+  compactRecurringSymbol: {
+    opacity: 0.7,
+  },
   compactTitle: {
     fontSize: fontSizes.s,
     fontWeight: '500',
@@ -596,6 +650,16 @@ const styles = StyleSheet.create({
   // Project and Task compact styles
   compactProjectTaskContainer: {
     marginBottom: spacing.xxs,
+  },
+  compactGoalContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.xxxs,
+  },
+  compactMilestoneContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.xxxs,
   },
   compactProjectContainer: {
     flexDirection: 'row',

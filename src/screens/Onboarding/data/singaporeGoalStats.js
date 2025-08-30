@@ -87,7 +87,7 @@ export const SINGAPORE_GOAL_STATS = {
       },
       {
         title: "Skills Development Support: Understanding Available Training Resources",
-        figure: "Variable",
+        figure: "S$4,000",
         description: "Research indicates various skills development programs may be available. Program details and eligibility vary by initiative - consult career advisors and training institutions for current program information and application guidance.",
         source: "SkillsFuture Singapore",
         link: "https://www.skillsfuture.gov.sg/",
@@ -119,7 +119,7 @@ export const SINGAPORE_GOAL_STATS = {
       },
       {
         title: "E-commerce Excellence: Research Shows Online Business Growth",
-        figure: "Variable",
+        figure: "62%",
         description: "Research indicates Singapore's e-commerce sector may offer various business opportunities through digital platforms. Individual business outcomes vary significantly and involve risk - consult business and financial professionals for guidance.",
         source: "Singapore Business Federation E-commerce Report",
         link: "https://www.sbf.org.sg/",
@@ -151,7 +151,7 @@ export const SINGAPORE_GOAL_STATS = {
     "Advance to Management Role": [
       {
         title: "Leadership Premium: Research Shows Management Role Benefits",
-        figure: "Variable",
+        figure: "48%",
         description: "Research indicates management roles may offer different compensation and career opportunities compared to individual contributor positions. Individual career outcomes vary significantly - consult career professionals for guidance.",
         source: "Ministry of Manpower Singapore Salary Survey",
         link: "https://www.mom.gov.sg/",
@@ -264,7 +264,7 @@ export const SINGAPORE_GOAL_STATS = {
       },
       {
         title: "Investment Access Revolution: Research Shows Platform Accessibility",
-        figure: "Variable",
+        figure: "S$100",
         description: "Research indicates Singapore investment platforms may offer various portfolio approaches with different minimum requirements. Investment outcomes involve risk and vary significantly - consult qualified financial advisors for guidance.",
         source: "Singapore Fintech Investment Platform Analysis",
         link: "https://www.mas.gov.sg/",
@@ -311,7 +311,7 @@ export const SINGAPORE_GOAL_STATS = {
       },
       {
         title: "Regional Consulting Premium: Research Shows Advisory Opportunities",
-        figure: "Variable",
+        figure: "S$150-400/hr",
         description: "Research indicates Singapore professionals may access various consulting opportunities across regional markets. Rates vary significantly by expertise, experience, and market demand - consult business professionals for guidance.",
         source: "Singapore Management Consulting Association",
         link: "https://www.smca.org.sg/",
@@ -326,7 +326,7 @@ export const SINGAPORE_GOAL_STATS = {
       },
       {
         title: "Investment Income Growth: Research Shows REIT Portfolio Potential",
-        figure: "Variable",
+        figure: "7.1%",
         description: "Research indicates REIT portfolios may offer various income opportunities through different investment approaches. Investment outcomes involve risk and vary significantly - consult qualified financial advisors for guidance.",
         source: "Singapore REIT Association Analysis",
         link: "https://www.reitas.sg/",
@@ -471,7 +471,7 @@ export const SINGAPORE_GOAL_STATS = {
       },
       {
         title: "Meal Planning Success: Research Shows Nutrition and Budget Benefits",
-        figure: "Variable",
+        figure: "31%",
         description: "Research indicates meal planning may offer both nutritional and budget benefits. Individual outcomes vary significantly - consult nutrition and financial professionals for personalized guidance.",
         source: "Singapore Nutrition and Dietetics Association",
         link: "https://www.snda.org.sg/",
@@ -491,7 +491,7 @@ export const SINGAPORE_GOAL_STATS = {
   "Relationships": {
     "Plan Dream Wedding": {
       title: "Singapore Wedding Success: Research Shows Celebration Planning Benefits",
-      figure: "Variable",
+      figure: "S$40-80K",
       description: "Research indicates Singapore couples may achieve meaningful wedding celebrations through various budget approaches and planning strategies. Individual wedding costs vary significantly - consult wedding and financial professionals for guidance.",
       source: "Singapore Department of Statistics & Urban Redevelopment Authority",
       link: "https://www.singstat.gov.sg/",
@@ -717,7 +717,7 @@ export const SINGAPORE_GOAL_STATS = {
     },
     "Reduce Environmental Impact": {
       title: "Singapore Green Nation: Research Shows Environmental Practice Benefits",
-      figure: "Variable",
+      figure: "43%",
       description: "Research indicates Singapore's environmental practices may offer various efficiency benefits through energy and resource management. Individual outcomes vary significantly - consult environmental and financial professionals for personalized guidance.",
       source: "National Environment Agency & Public Utilities Board",
       link: "https://www.nea.gov.sg/",

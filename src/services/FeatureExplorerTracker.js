@@ -50,6 +50,11 @@ const TRACKING_KEYS = {
   FEATURE_INFLUENCER: 'achievement_tracker_feature_influencer',
   // Insider Status tracking key
   INSIDER_STATUS: 'achievement_tracker_insider_status',
+  // Navigation achievements tracking keys
+  NOTES_NAVIGATOR: 'achievement_tracker_notes_navigator',
+  COMPLETED_GOALS_EXPLORER: 'achievement_tracker_completed_goals_explorer',
+  // Tour completion tracking key
+  TOUR_GRADUATE: 'achievement_tracker_tour_graduate',
 };
 
 // Debug flag
@@ -133,13 +138,14 @@ export const trackOnboardingCompletion = async (showSuccess = null) => {
     
     if (hasTrackedOnboarding !== 'true') {
       // This is the first time completing onboarding
-      logDebug('First onboarding completion, unlocking achievement');
+      logDebug('First onboarding completion, setting tracking flag');
       
       // Set tracking flag
       await AsyncStorage.setItem(TRACKING_KEYS.ONBOARDING_COMPLETED, 'true');
       
-      // Unlock the achievement
-      await AchievementService.unlockAchievement('foundation-builder', showSuccess);
+      // NOTE: Achievement unlock moved to tour Foundation Builder intro step
+      // The tour will handle showing the achievement intro and unlocking it
+      console.log('🏆 Onboarding completion tracked - Foundation Builder achievement will be unlocked in tour');
     }
   } catch (error) {
     console.error('Error tracking onboarding completion:', error);
@@ -1369,6 +1375,81 @@ export const trackInsiderStatus = async (showSuccess = null) => {
   }
 };
 
+/**
+ * Track Notes Navigator achievement when user navigates to notes screen
+ * @param {Function} showSuccess - Optional success notification function
+ */
+export const trackNotesNavigator = async (showSuccess = null) => {
+  try {
+    logDebug('Tracking Notes Navigator achievement');
+    
+    // Check if we've already tracked this achievement
+    const hasTrackedNotesNavigator = await AsyncStorage.getItem(TRACKING_KEYS.NOTES_NAVIGATOR);
+    
+    if (hasTrackedNotesNavigator !== 'true') {
+      logDebug('First time navigating to notes screen, unlocking achievement');
+      
+      // Set tracking flag
+      await AsyncStorage.setItem(TRACKING_KEYS.NOTES_NAVIGATOR, 'true');
+      
+      // Unlock the achievement
+      await AchievementService.unlockAchievement('notes-navigator', showSuccess);
+    }
+  } catch (error) {
+    console.error('Error tracking Notes Navigator achievement:', error);
+  }
+};
+
+/**
+ * Track Completed Goals Explorer achievement when user navigates to completed goals view
+ * @param {Function} showSuccess - Optional success notification function
+ */
+export const trackCompletedGoalsExplorer = async (showSuccess = null) => {
+  try {
+    logDebug('Tracking Completed Goals Explorer achievement');
+    
+    // Check if we've already tracked this achievement
+    const hasTrackedCompletedGoalsExplorer = await AsyncStorage.getItem(TRACKING_KEYS.COMPLETED_GOALS_EXPLORER);
+    
+    if (hasTrackedCompletedGoalsExplorer !== 'true') {
+      logDebug('First time navigating to completed goals view, unlocking achievement');
+      
+      // Set tracking flag
+      await AsyncStorage.setItem(TRACKING_KEYS.COMPLETED_GOALS_EXPLORER, 'true');
+      
+      // Unlock the achievement
+      await AchievementService.unlockAchievement('completed-goals-explorer', showSuccess);
+    }
+  } catch (error) {
+    console.error('Error tracking Completed Goals Explorer achievement:', error);
+  }
+};
+
+/**
+ * Track Tour Graduate achievement when user completes the app tour
+ * @param {Function} showSuccess - Optional success notification function
+ */
+export const trackTourGraduate = async (showSuccess = null) => {
+  try {
+    logDebug('Tracking Tour Graduate achievement');
+    
+    // Check if we've already tracked this achievement
+    const hasTrackedTourGraduate = await AsyncStorage.getItem(TRACKING_KEYS.TOUR_GRADUATE);
+    
+    if (hasTrackedTourGraduate !== 'true') {
+      logDebug('First time completing app tour, unlocking achievement');
+      
+      // Set tracking flag
+      await AsyncStorage.setItem(TRACKING_KEYS.TOUR_GRADUATE, 'true');
+      
+      // Unlock the achievement (show popup but make it non-clickable)
+      await AchievementService.unlockAchievement('tour-graduate', showSuccess, false);
+    }
+  } catch (error) {
+    console.error('Error tracking Tour Graduate achievement:', error);
+  }
+};
+
 export default {
   trackProfilePictureUpdate,
   trackThemeColorChange,
@@ -1412,5 +1493,10 @@ export default {
   trackFeatureInfluencer,
   // Insider Status tracking function
   trackInsiderStatus,
+  // Navigation achievements tracking functions
+  trackNotesNavigator,
+  trackCompletedGoalsExplorer,
+  // Tour completion tracking function
+  trackTourGraduate,
   TRACKING_KEYS
 };

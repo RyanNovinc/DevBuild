@@ -12,18 +12,20 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   ScrollView,
-  Switch,
   Animated,
   Easing,
   Dimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { useTheme } from '../context/ThemeContext';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useAppContext } from '../context/AppContext';
 import { FREE_PLAN_LIMITS } from '../services/SubscriptionService';
 import TextInputPopup from './TextInputPopup';
 import IconPicker from './IconPicker';
+import FreeTierLimitModal from '../screens/TimeScreen/FreeTierLimitModal';
+import { useNavigation } from '@react-navigation/native';
 
 // Import responsive utilities
 import responsive, { 
@@ -49,6 +51,7 @@ const AddTimeBlockModal = ({
   color
 }) => {
   const { theme } = useTheme();
+  const navigation = useNavigation();
   const appContext = useAppContext();
   const { 
     userSubscriptionStatus,
@@ -67,13 +70,13 @@ const AddTimeBlockModal = ({
   const [location, setLocation] = useState('');
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
-  const [isAllDay, setIsAllDay] = useState(false);
   
   // Date picker state
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
   const [pickerMode, setPickerMode] = useState('date');
+  const [useCalendarView, setUseCalendarView] = useState(false);
   
   // NEW: Advanced mode toggle
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
@@ -101,6 +104,10 @@ const AddTimeBlockModal = ({
   // Modal animation values
   const backgroundOpacityAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(Dimensions.get('window').height)).current;
+  const translateY = useRef(new Animated.Value(0)).current;
+
+  // Limit modal state
+  const [showLimitModal, setShowLimitModal] = useState(false);
   
   // Get available data from app context
   const goals = appContext?.goals || appContext?.mainGoals || [];
@@ -217,6 +224,7 @@ const AddTimeBlockModal = ({
       // Reset animation values
       backgroundOpacityAnim.setValue(0);
       slideAnim.setValue(Dimensions.get('window').height);
+      translateY.setValue(0); // Reset gesture translation
       
       // Animate in with staggered timing
       Animated.sequence([
@@ -319,7 +327,6 @@ const AddTimeBlockModal = ({
       setEndDate(parsedEndDate);
       console.log(`==============================================`);
       
-      setIsAllDay(timeBlockData.isAllDay || false);
       
       // Set goal/project/task if available
       if (timeBlockData.goalId) {
@@ -357,7 +364,6 @@ const AddTimeBlockModal = ({
     setLocation('');
     setStartDate(getDefaultStartTime());
     setEndDate(getDefaultEndTime(getDefaultStartTime()));
-    setIsAllDay(false);
     
     // Reset advanced options
     setShowAdvancedOptions(false);
@@ -392,6 +398,51 @@ const AddTimeBlockModal = ({
     ]).start(() => {
       onClose();
     });
+  };
+  
+  // Gesture handlers for swipe-to-dismiss
+  const onGestureEvent = Animated.event(
+    [{ nativeEvent: { translationY: translateY } }],
+    { useNativeDriver: true }
+  );
+
+  // Handle swipe gesture
+  const handleGestureEnd = (event) => {
+    const { translationY, velocityY } = event.nativeEvent;
+    const screenHeight = Dimensions.get('window').height;
+    const dismissThreshold = screenHeight * 0.2;
+    const fastSwipeVelocity = 1200;
+    
+    const shouldDismiss = translationY > dismissThreshold || velocityY > fastSwipeVelocity;
+    
+    if (shouldDismiss) {
+      // Animate to dismiss
+      Animated.parallel([
+        Animated.timing(slideAnim, {
+          toValue: screenHeight,
+          duration: 250,
+          useNativeDriver: true,
+          easing: Easing.out(Easing.ease)
+        }),
+        Animated.timing(backgroundOpacityAnim, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: true,
+          easing: Easing.out(Easing.ease)
+        })
+      ]).start(() => {
+        translateY.setValue(0);
+        onClose();
+      });
+    } else {
+      // Snap back
+      Animated.spring(translateY, {
+        toValue: 0,
+        tension: 150,
+        friction: 8,
+        useNativeDriver: true
+      }).start();
+    }
   };
   
   // Handle add time block
@@ -445,7 +496,6 @@ const AddTimeBlockModal = ({
       location: location.trim(),
       startTime: startTimeISO,
       endTime: endTimeISO,
-      isAllDay: isAllDay,
       // Store original time strings for reference
       originalStartTimeString: originalStartTimeString,
       originalEndTimeString: originalEndTimeString,
@@ -625,8 +675,8 @@ const AddTimeBlockModal = ({
         {
           text: "Upgrade to Pro",
           onPress: () => {
-            // TODO: Navigate to upgrade screen
-            Alert.alert("Upgrade to Pro", "Navigate to upgrade screen - implement this navigation");
+            // Show the beautiful limit modal
+            setShowLimitModal(true);
           }
         },
         {
@@ -690,6 +740,7 @@ const AddTimeBlockModal = ({
   };
   
   return (
+    <>
     <Modal
       visible={visible}
       transparent={true}
@@ -707,14 +758,24 @@ const AddTimeBlockModal = ({
           }
         ]}
       >
-        <Animated.View
-          style={[
-            styles.gestureContainer,
-            {
-              transform: [{ translateY: slideAnim }]
+        <PanGestureHandler
+          onGestureEvent={onGestureEvent}
+          onHandlerStateChange={(event) => {
+            if (event.nativeEvent.state === State.END) {
+              handleGestureEnd(event);
             }
-          ]}
+          }}
         >
+          <Animated.View
+            style={[
+              styles.gestureContainer,
+              {
+                transform: [
+                  { translateY: Animated.add(slideAnim, translateY) }
+                ]
+              }
+            ]}
+          >
           <KeyboardAvoidingView 
             style={styles.keyboardContainer} 
             behavior={Platform.OS === 'ios' ? 'padding' : null}
@@ -731,17 +792,28 @@ const AddTimeBlockModal = ({
                 }
               ]}
             >
+            {/* Swipe indicator */}
+            <View style={styles.swipeHandle}>
+              <View style={[
+                styles.swipeIndicator,
+                { backgroundColor: theme.textSecondary + '40' }
+              ]} />
+            </View>
+            
           <View style={styles.modalHeader}>
-            <Text 
-              style={[
-                styles.modalTitle, 
-                { color: theme.text }
-              ]}
-              maxFontSizeMultiplier={1.3}
-              accessibilityRole="header"
-            >
-              Schedule Time Block
-            </Text>
+            <View style={styles.titleWithIcon}>
+              <Ionicons name="calendar" size={scaleWidth(20)} color={buttonColor} style={styles.titleIcon} />
+              <Text 
+                style={[
+                  styles.modalTitle, 
+                  { color: theme.text }
+                ]}
+                maxFontSizeMultiplier={1.3}
+                accessibilityRole="header"
+              >
+                Schedule Time Block
+              </Text>
+            </View>
             <TouchableOpacity 
               style={[
                 styles.closeButton,
@@ -807,31 +879,6 @@ const AddTimeBlockModal = ({
               </View>
             </TouchableWithoutFeedback>
             
-            {/* All Day Switch - Always visible */}
-            <View style={styles.switchContainer}>
-              <Text 
-                style={[
-                  styles.switchLabel, 
-                  { color: theme.text }
-                ]}
-                maxFontSizeMultiplier={1.3}
-                accessible={true}
-                accessibilityRole="text"
-              >
-                All day
-              </Text>
-              <Switch
-                value={isAllDay}
-                onValueChange={setIsAllDay}
-                trackColor={{ false: theme.border, true: buttonColor + '80' }}
-                thumbColor={isAllDay ? buttonColor : theme.textSecondary}
-                accessible={true}
-                accessibilityRole="switch"
-                accessibilityLabel="All day time block"
-                accessibilityHint="Toggle between all day and specific time"
-                accessibilityState={{ checked: isAllDay }}
-              />
-            </View>
             
             {/* Date and Time Selectors - Always visible */}
             <View style={styles.dateTimeSection}>
@@ -877,9 +924,9 @@ const AddTimeBlockModal = ({
                 </Text>
               </TouchableOpacity>
               
-              {/* Time Selectors - Hidden if All Day is selected */}
-              {!isAllDay && (
-                <>
+
+              {/* Time Selectors */}
+              <>
                   <View style={styles.timeRow}>
                     <Text 
                       style={[
@@ -962,7 +1009,6 @@ const AddTimeBlockModal = ({
                     </TouchableOpacity>
                   </View>
                 </>
-              )}
             </View>
             
             {/* Goal/Project/Task Info (Read-Only) - Only shown if any is selected and advanced options are hidden */}
@@ -1722,14 +1768,67 @@ const AddTimeBlockModal = ({
                   </Text>
                 </TouchableOpacity>
               </View>
+              
+              {/* View mode selector (only shown for date picking) */}
+              {showStartDatePicker && (
+                <View style={styles.viewModeContainer}>
+                  <TouchableOpacity 
+                    style={[
+                      styles.viewModeButton,
+                      !useCalendarView && { 
+                        backgroundColor: `${buttonColor}20`, 
+                        borderColor: buttonColor 
+                      }
+                    ]}
+                    onPress={() => setUseCalendarView(false)}
+                  >
+                    <Ionicons 
+                      name="options-outline" 
+                      size={16} 
+                      color={!useCalendarView ? buttonColor : theme.textSecondary} 
+                    />
+                    <Text style={[
+                      styles.viewModeText,
+                      { color: !useCalendarView ? buttonColor : theme.textSecondary }
+                    ]}>
+                      Wheel
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={[
+                      styles.viewModeButton,
+                      useCalendarView && { 
+                        backgroundColor: `${buttonColor}20`, 
+                        borderColor: buttonColor 
+                      }
+                    ]}
+                    onPress={() => setUseCalendarView(true)}
+                  >
+                    <Ionicons 
+                      name="calendar-outline" 
+                      size={16} 
+                      color={useCalendarView ? buttonColor : theme.textSecondary} 
+                    />
+                    <Text style={[
+                      styles.viewModeText,
+                      { color: useCalendarView ? buttonColor : theme.textSecondary }
+                    ]}>
+                      Calendar
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+              
               <DateTimePicker
                 value={showStartDatePicker || showStartTimePicker ? startDate : endDate}
                 mode={pickerMode}
-                display="spinner"
+                display={pickerMode === 'date' ? (useCalendarView ? 'inline' : 'spinner') : 'spinner'}
                 onChange={handleDateChange}
-                style={styles.picker}
+                style={[styles.picker, { height: useCalendarView && pickerMode === 'date' ? scaleHeight(320) : scaleHeight(200) }]}
                 textColor={theme.text}
-                minimumDate={pickerMode === 'time' && showEndTimePicker ? startDate : undefined}
+                minimumDate={pickerMode === 'date' ? new Date() : (pickerMode === 'time' && showEndTimePicker ? startDate : undefined)}
+                accentColor={buttonColor}
                 accessibilityLabel={
                   pickerMode === 'date' ? "Select date" : 
                   showStartTimePicker ? "Select start time" : 
@@ -1746,8 +1845,9 @@ const AddTimeBlockModal = ({
                 <DateTimePicker
                   value={startDate}
                   mode="date"
-                  display="default"
+                  display={useCalendarView ? 'calendar' : 'default'}
                   onChange={handleDateChange}
+                  minimumDate={new Date()}
                   accessibilityLabel="Select date"
                 />
               )}
@@ -1806,9 +1906,24 @@ const AddTimeBlockModal = ({
           />
             </View>
           </KeyboardAvoidingView>
-        </Animated.View>
+          </Animated.View>
+        </PanGestureHandler>
       </Animated.View>
     </Modal>
+
+    {/* Limit Modal */}
+    <FreeTierLimitModal
+      visible={showLimitModal}
+      theme={theme}
+      limitType="weeklyLimit"
+      onClose={() => setShowLimitModal(false)}
+      onUpgrade={() => {
+        setShowLimitModal(false);
+        navigation.navigate('PricingScreen');
+      }}
+      isDarkMode={theme.background === '#000000'}
+    />
+    </>
   );
 };
 
@@ -1839,6 +1954,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: spacing.m
+  },
+  titleWithIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  titleIcon: {
+    marginRight: spacing.xs,
   },
   modalTitle: {
     fontSize: fontSizes.xl,
@@ -1894,17 +2016,6 @@ const styles = StyleSheet.create({
   clickableTextAreaIcon: {
     marginTop: spacing.xxxs,
     marginLeft: spacing.xs,
-  },
-  // Switch styles
-  switchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginVertical: spacing.m
-  },
-  switchLabel: {
-    fontSize: fontSizes.m,
-    fontWeight: '500'
   },
   // Date and time styles
   dateTimeSection: {
@@ -2092,7 +2203,40 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: scaleHeight(40)
-  }
+  },
+  // View mode selector styles
+  viewModeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: spacing.s,
+    marginBottom: spacing.s,
+  },
+  viewModeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.m,
+    paddingVertical: spacing.xs,
+    borderRadius: scaleWidth(20),
+    marginHorizontal: spacing.xs,
+    borderWidth: 1,
+    borderColor: '#dddddd',
+  },
+  viewModeText: {
+    fontSize: fontSizes.xs,
+    fontWeight: '500',
+    marginLeft: spacing.xxxs,
+  },
+  // Swipe gesture styles
+  swipeHandle: {
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.s,
+    alignItems: 'center',
+  },
+  swipeIndicator: {
+    width: scaleWidth(40),
+    height: scaleHeight(4),
+    borderRadius: scaleWidth(2),
+  },
 });
 
 export default AddTimeBlockModal;

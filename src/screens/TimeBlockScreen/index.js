@@ -866,48 +866,33 @@ const TimeBlockScreen = ({ route, navigation }) => {
     let newNotificationId = null;
     if (enableNotification) {
       try {
-        // Check if the notification time is in the future
-        const now = new Date();
-        let notificationDateTime = new Date(startTime);
+        console.log(`Scheduling notification for time block: ${timeBlock.title}`);
+        console.log(`Notification time preference: ${notificationTime}`);
+        console.log(`Custom minutes: ${validatedMinutes}`);
         
-        // Adjust based on preference
-        if (notificationTime === 'custom' && validatedMinutes) {
-          // Convert custom minutes to milliseconds and subtract from start time
-          const minutesMs = parseInt(validatedMinutes, 10) * 60 * 1000;
-          notificationDateTime = new Date(startTime.getTime() - minutesMs);
-        }
-        // For 'exact', no adjustment needed
+        // Use the updated notification helper which handles all the timing logic
+        newNotificationId = await scheduleTimeBlockNotificationSimple(timeBlock);
         
-        // Only schedule if the notification time is in the future
-        if (notificationDateTime > now) {
-          console.log(`Scheduling notification for future time: ${notificationDateTime.toLocaleString()}`);
-          
-          // Use the simpler notification helper
-          newNotificationId = await scheduleTimeBlockNotificationSimple({
-            ...timeBlock,
-            notification: true,
-            notificationDateTime: notificationDateTime.toISOString()
-          });
-          
-          if (newNotificationId) {
-            console.log(`Notification scheduled with ID: ${newNotificationId}`);
-            // Update the notification ID in the time block
-            timeBlock.notificationId = newNotificationId;
-          } else {
-            console.log('Failed to schedule notification');
-          }
+        if (newNotificationId) {
+          console.log(`Notification scheduled with ID: ${newNotificationId}`);
+          // Update the notification ID in the time block
+          timeBlock.notificationId = newNotificationId;
         } else {
-          console.log('Notification time is in the past, not scheduling');
+          console.log('Failed to schedule notification - likely in the past');
           // If scheduling failed but notifications were enabled, tell the user
           Alert.alert(
             'Notification Not Scheduled',
-            'The notification could not be scheduled because the time has already passed.',
+            'The notification could not be scheduled. This may be because the reminder time has already passed.',
             [{ text: 'OK' }]
           );
         }
       } catch (error) {
         console.error('Error scheduling notification:', error);
-        // Continue with saving the time block even if notification fails
+        Alert.alert(
+          'Notification Error',
+          'There was an error scheduling your notification. The time block will still be saved.',
+          [{ text: 'OK' }]
+        );
       }
     }
     

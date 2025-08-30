@@ -174,6 +174,19 @@ const AchievementGridItem = ({ achievement, theme, isUnlocked, onPress, userSubs
             <Ionicons name="star" size={10} color={(isUnlocked && !isPremiumLocked) ? '#000000' : '#F59E0B'} />
           </View>
         )}
+        
+        {/* Reward indicator (present badge) */}
+        {achievement.reward && (
+          <View style={[
+            styles.gridRewardIndicator,
+            { backgroundColor: (isUnlocked && !isPremiumLocked) ? '#FF6B6B' : '#2A2A2A' }
+          ]}>
+            <Text style={[
+              styles.gridRewardText,
+              { color: (isUnlocked && !isPremiumLocked) ? '#FFFFFF' : '#FF6B6B' }
+            ]}>🎁</Text>
+          </View>
+        )}
         </TouchableOpacity>
       </Animated.View>
     </Animated.View>
@@ -1286,6 +1299,20 @@ const styles = StyleSheet.create({
     borderRadius: 9,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  gridRewardIndicator: {
+    position: 'absolute',
+    top: 4,
+    left: 4,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  gridRewardText: {
+    fontSize: 10,
+    lineHeight: 12,
   },
   emptyGridSpace: {
     flex: 1,

@@ -17,6 +17,7 @@ import { BlurView } from 'expo-blur';
 import TypingAnimation from '../screens/Onboarding/components/TypingAnimation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
+import { useTheme } from '../context/ThemeContext';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -34,6 +35,9 @@ const AppTourOverlay = ({
   navigation, // Navigation object for dev buttons
   children
 }) => {
+  // Theme hook for dynamic styling
+  const { theme } = useTheme();
+  
   // Animation values
   const overlayOpacity = useRef(new Animated.Value(0)).current;
   const messageOpacity = useRef(new Animated.Value(0)).current;
@@ -62,6 +66,12 @@ const AppTourOverlay = ({
   
   // Tour steps configuration - New streamlined 6-step tour
   const TOUR_STEPS = {
+    FOUNDATION_BUILDER_INTRO: {
+      message: "", // This step uses FoundationBuilderIntro modal instead
+      isModal: true, // Special flag to indicate this step uses a modal
+      nextButton: "",
+      position: 'center'
+    },
     GOAL_ACHIEVEMENT_VALIDATION: {
       message: "Great! We've created your goal and broken it down. That's a big step - now you have a clear plan to follow.",
       spotlight: { x: 20, y: 200, width: SCREEN_WIDTH - 40, height: 150 },
@@ -121,6 +131,7 @@ const AppTourOverlay = ({
   // Progress calculation by screen
   const getScreenNumber = (step) => {
     switch(step) {
+      case 'FOUNDATION_BUILDER_INTRO':
       case 'GOAL_ACHIEVEMENT_VALIDATION':
         return 1; // Profile screen
       case 'KANBAN_SYSTEM_INTRO':
@@ -153,6 +164,8 @@ const AppTourOverlay = ({
   // Get step-specific delay timing
   const getStepDelay = (step) => {
     switch(step) {
+      case 'FOUNDATION_BUILDER_INTRO':
+        return 200; // Quick delay for modal display
       case 'GOAL_ACHIEVEMENT_VALIDATION':
         return 800; // Wait for profile screen to fully load
       case 'KANBAN_SYSTEM_INTRO':
@@ -553,8 +566,10 @@ const AppTourOverlay = ({
     };
   }, [currentStep]);
 
-  // Don't show if we're waiting for task to be moved
-  if (!isVisible || (currentStep === 'TASK_MOVED_CELEBRATION' && global.tourWaitingForTaskMove)) {
+  // Don't show if we're waiting for task to be moved or if it's a modal step
+  if (!isVisible || 
+      (currentStep === 'TASK_MOVED_CELEBRATION' && global.tourWaitingForTaskMove) ||
+      (currentStep === 'FOUNDATION_BUILDER_INTRO')) {
     return null;
   }
 
@@ -680,30 +695,30 @@ const AppTourOverlay = ({
         onRequestClose={() => setShowSkipModal(false)}
       >
         <View style={styles.skipModalOverlay}>
-          <View style={styles.skipModalContainer}>
+          <View style={[styles.skipModalContainer, { backgroundColor: theme.background, borderColor: '#FFFFFF', borderWidth: 1 }]}>
             {/* Header */}
-            <View style={styles.skipModalHeader}>
-              <Text style={styles.skipModalTitle}>Skip Interactive Tour?</Text>
+            <View style={[styles.skipModalHeader, { borderBottomColor: theme.border }]}>
+              <Text style={[styles.skipModalTitle, { color: theme.text }]}>Skip Interactive Tour?</Text>
             </View>
             
             {/* Content */}
             <View style={styles.skipModalContent}>
-              <Text style={styles.skipModalDescription}>
+              <Text style={[styles.skipModalDescription, { color: theme.textSecondary }]}>
                 The tour takes just 1 minute and shows you how to use the goal system you created.
               </Text>
               
               <View style={styles.skipModalBenefits}>
                 <View style={styles.skipModalBenefit}>
                   <Ionicons name="trophy-outline" size={16} color="#F59E0B" style={styles.skipModalIcon} />
-                  <Text style={styles.skipModalBenefitText}>Earn 'Quick Learner' achievement</Text>
+                  <Text style={[styles.skipModalBenefitText, { color: theme.text }]}>Earn 'Quick Learner' achievement</Text>
                 </View>
                 <View style={styles.skipModalBenefit}>
-                  <Ionicons name="time-outline" size={16} color="#6B7280" style={styles.skipModalIcon} />
-                  <Text style={styles.skipModalBenefitText}>Only 60 seconds</Text>
+                  <Ionicons name="time-outline" size={16} color={theme.textSecondary} style={styles.skipModalIcon} />
+                  <Text style={[styles.skipModalBenefitText, { color: theme.text }]}>Only 60 seconds</Text>
                 </View>
                 <View style={styles.skipModalBenefit}>
                   <Ionicons name="checkmark-circle-outline" size={16} color="#10B981" style={styles.skipModalIcon} />
-                  <Text style={styles.skipModalBenefitText}>Learn your personalized system</Text>
+                  <Text style={[styles.skipModalBenefitText, { color: theme.text }]}>Learn your personalized system</Text>
                 </View>
               </View>
             </View>
@@ -711,7 +726,7 @@ const AppTourOverlay = ({
             {/* Buttons */}
             <View style={styles.skipModalButtons}>
               <TouchableOpacity 
-                style={styles.skipModalContinueButton}
+                style={[styles.skipModalContinueButton, { backgroundColor: theme.primary }]}
                 onPress={() => setShowSkipModal(false)}
                 activeOpacity={0.8}
               >
@@ -719,14 +734,14 @@ const AppTourOverlay = ({
               </TouchableOpacity>
               
               <TouchableOpacity 
-                style={styles.skipModalSkipButton}
+                style={[styles.skipModalSkipButton, { borderColor: theme.border }]}
                 onPress={() => {
                   setShowSkipModal(false);
                   handleSkip();
                 }}
                 activeOpacity={0.8}
               >
-                <Text style={styles.skipModalSkipText}>Skip</Text>
+                <Text style={[styles.skipModalSkipText, { color: theme.textSecondary }]}>Skip</Text>
               </TouchableOpacity>
             </View>
           </View>

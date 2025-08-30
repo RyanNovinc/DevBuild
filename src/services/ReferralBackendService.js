@@ -383,6 +383,41 @@ class ReferralBackendService {
       console.error('Error processing sync queue:', error);
     }
   }
+
+  // Validate if a referral code can still accept conversions (check if sender has reached limit)
+  async validateReferralCodeAvailability(referralCode) {
+    try {
+      if (!await this.checkConnectivity()) {
+        // If offline, assume the code is valid to prevent false negatives
+        return true;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/validate-referral-availability`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          referralCode
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        console.error('Error validating referral availability:', result.error);
+        // On error, assume available to prevent false negatives
+        return true;
+      }
+
+      // The lambda returns available: boolean
+      return result.available === true;
+    } catch (error) {
+      console.error('Error validating referral code availability:', error);
+      // On error, assume available to prevent false negatives
+      return true;
+    }
+  }
 }
 
 export const referralBackendService = new ReferralBackendService();

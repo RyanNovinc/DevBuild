@@ -128,9 +128,10 @@ export const clearNewAchievementsQueue = () => {
  * Unlock an achievement with improved notification and state refresh
  * @param {string} achievementId - The ID of the achievement to unlock
  * @param {function} showSuccess - Optional notification function
+ * @param {boolean} skipGlobalNotification - Skip showing the global achievement toast
  * @returns {boolean} - Whether the achievement was newly unlocked
  */
-export const unlockAchievement = async (achievementId, showSuccess = null) => {
+export const unlockAchievement = async (achievementId, showSuccess = null, skipGlobalNotification = false) => {
   // Validate the achievement exists
   if (!ACHIEVEMENTS[achievementId]) {
     console.error(`Achievement ${achievementId} does not exist`);
@@ -210,9 +211,9 @@ export const unlockAchievement = async (achievementId, showSuccess = null) => {
       logDebug('Called showSuccess notification function');
     }
     
-    // IMPORTANT: Show the achievement notification using our direct method
+    // IMPORTANT: Show the achievement notification using our direct method (unless skipped)
     const achievement = ACHIEVEMENTS[achievementId];
-    if (achievement) {
+    if (achievement && !skipGlobalNotification) {
       logDebug('Showing achievement notification for:', achievement.title);
       console.log(`[AchievementService] Showing notification for: ${achievement.title}`);
       
@@ -250,6 +251,9 @@ export const unlockAchievement = async (achievementId, showSuccess = null) => {
       if (!alreadyShown) {
         await markAchievementAsShown(achievementId);
       }
+    } else if (achievement && skipGlobalNotification) {
+      logDebug('Skipped global notification for:', achievement.title);
+      console.log(`[AchievementService] Skipped global notification for: ${achievement.title}`);
     }
     
     // Try to refresh the achievement context if it exists
@@ -302,6 +306,12 @@ export const markAchievementsAsSeen = async (achievementIds) => {
 export const checkAchievements = async (context, showSuccess = null) => {
   logDebug('Checking achievements for context:', context?.type);
   console.log('[AchievementService] Checking achievements for context:', context?.type);
+  
+  // Validate context
+  if (!context || !context.type) {
+    console.error('[AchievementService] Invalid context provided to checkAchievements:', context);
+    return;
+  }
   
   // Goal creation
   if (context.type === 'goal_created') {
@@ -409,10 +419,45 @@ export const checkAchievements = async (context, showSuccess = null) => {
 /**
  * Force unlock an achievement directly (for testing)
  */
-export const forceUnlockAchievement = async (achievementId) => {
-  logDebug(`Force unlocking achievement: ${achievementId}`);
-  console.log(`[AchievementService] Force unlocking achievement: ${achievementId}`);
-  return await unlockAchievement(achievementId);
+export const forceUnlockAchievement = async (achievementId, skipGlobalNotification = false) => {
+  logDebug(`Force unlocking achievement: ${achievementId}`, skipGlobalNotification ? '(skip notification)' : '');
+  console.log(`[AchievementService] Force unlocking achievement: ${achievementId}`, skipGlobalNotification ? '(skip notification)' : '');
+  return await unlockAchievement(achievementId, null, skipGlobalNotification);
+};
+
+/**
+ * Test achievement notification system (for debugging)
+ */
+export const testAchievementNotifications = async () => {
+  logDebug('Testing achievement notification system');
+  console.log('[AchievementService] Testing notification system...');
+  
+  // Test with a non-onboarding/tour achievement to verify notifications work
+  const testAchievements = [
+    'goal-pioneer',
+    'task-completer', 
+    'ai-apprentice',
+    'profile-personalizer'
+  ];
+  
+  for (const achievementId of testAchievements) {
+    if (ACHIEVEMENTS[achievementId]) {
+      console.log(`[AchievementService] Testing notification for: ${achievementId}`);
+      
+      // Check if already unlocked
+      const isUnlocked = await isAchievementUnlocked(achievementId);
+      if (!isUnlocked) {
+        // Force unlock to test notification
+        await forceUnlockAchievement(achievementId);
+        // Wait a bit before next test
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      } else {
+        console.log(`[AchievementService] ${achievementId} already unlocked, skipping test`);
+      }
+    }
+  }
+  
+  console.log('[AchievementService] Notification system test completed');
 };
 
 /**
@@ -444,6 +489,38 @@ export const resetAllAchievements = async () => {
   }
 };
 
+/**
+ * Calculate total referral limit based on unlocked achievements
+ * Base: 3 referrals
+ * +1 for unlocking 30-Day Momentum achievement (total: 4)
+ * +1 for unlocking 90-Day Transformation achievement (total: 5)
+ * Max: 5 referrals total
+ */
+const getReferralLimit = async () => {
+  try {
+    const unlockedAchievements = await getUnlockedAchievements();
+    let limit = 3; // Base limit is 3 referrals
+    
+    // Check for 30-day achievement (+1 referral)
+    if (unlockedAchievements['30-day-momentum']?.unlocked === true) {
+      limit += 1;
+      logDebug('30-Day Momentum achievement unlocked, adding +1 referral');
+    }
+    
+    // Check for 90-day achievement (+1 referral) 
+    if (unlockedAchievements['90-day-transformation']?.unlocked === true) {
+      limit += 1;
+      logDebug('90-Day Transformation achievement unlocked, adding +1 referral');
+    }
+    
+    logDebug(`Total referral limit calculated: ${limit}`);
+    return Math.min(limit, 5); // Cap at 5 referrals max
+  } catch (error) {
+    console.error('Error calculating referral limit:', error);
+    return 3; // Fallback to base limit
+  }
+};
+
 export default {
   unlockAchievement,
   forceUnlockAchievement,
@@ -453,5 +530,7 @@ export default {
   clearNewAchievementsQueue,
   markAchievementsAsSeen,
   checkAchievements,
-  resetAllAchievements
+  resetAllAchievements,
+  getReferralLimit,
+  testAchievementNotifications
 };

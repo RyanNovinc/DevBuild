@@ -88,6 +88,10 @@ const SettingsModal = ({
   // Restart onboarding modal state
   const [restartOnboardingModalVisible, setRestartOnboardingModalVisible] = useState(false);
   
+  // Referral status state
+  const [hasWorkingReferralCode, setHasWorkingReferralCode] = useState(false);
+  const [workingReferralCode, setWorkingReferralCode] = useState('');
+  
   // Export user data function
   const handleExportData = () => {
     setShowExportModal(true);
@@ -574,7 +578,31 @@ const SettingsModal = ({
     }
   }, [visible, isEdgeSwipeActive, modalVisible, isDismissing]);
 
+  // Check for working referral code when modal opens
+  useEffect(() => {
+    const checkWorkingReferralCode = async () => {
+      if (visible) {
+        try {
+          const hasSuccessfulCode = await AsyncStorage.getItem('referralCodeWorked');
+          const existingCode = await AsyncStorage.getItem('enteredReferralCode');
+          
+          if (hasSuccessfulCode === 'true' && existingCode) {
+            setHasWorkingReferralCode(true);
+            setWorkingReferralCode(existingCode);
+          } else {
+            setHasWorkingReferralCode(false);
+            setWorkingReferralCode('');
+          }
+        } catch (error) {
+          console.error('Error checking working referral code:', error);
+          setHasWorkingReferralCode(false);
+          setWorkingReferralCode('');
+        }
+      }
+    };
 
+    checkWorkingReferralCode();
+  }, [visible]);
 
   // Handle close request with animation
   const handleClose = (callback) => {
@@ -732,52 +760,110 @@ const SettingsModal = ({
               </TouchableOpacity>
             )}
 
-            {/* Received a referral code? Button - For Free Users Only */}
-            {screenState.userSubscriptionStatus === 'free' && !screenState.hasEnteredReferralCode && (
-              <TouchableOpacity 
-                style={[styles.settingButton, { 
-                  backgroundColor: theme.card,
-                  borderColor: '#4CAF50',
-                  borderWidth: 1,
-                  marginBottom: 16
-                }]}
-                onPress={() => {
-                  setReferralModalVisible(true);
-                }}
-                accessible={true}
-                accessibilityRole="button"
-                accessibilityLabel="Received a referral code?"
-                accessibilityHint="Enter a referral code to get 500 AI credits"
-              >
-                <View style={styles.settingButtonContent}>
-                  <View style={[styles.settingIconContainer, { 
-                    backgroundColor: '#4CAF5020' 
-                  }]}>
-                    <Ionicons name="ticket-outline" size={20} color="#4CAF50" />
+            {/* Referral Code Section - For Free Users Only */}
+            {screenState.userSubscriptionStatus === 'free' && (
+              <>
+                {/* Show "Referral locked in" status if user has working referral code */}
+                {hasWorkingReferralCode ? (
+                  <View
+                    style={[styles.settingButton, { 
+                      backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                      borderColor: '#4CAF50',
+                      borderWidth: 1,
+                      marginBottom: 16
+                    }]}
+                  >
+                    <View style={styles.settingButtonContent}>
+                      <View style={[styles.settingIconContainer, { 
+                        backgroundColor: '#4CAF50' 
+                      }]}>
+                        <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
+                      </View>
+                      <View style={styles.settingTextContainer}>
+                        <Text 
+                          style={[styles.settingButtonText, { 
+                            color: theme.text,
+                            fontWeight: 'bold'
+                          }]}
+                          maxFontSizeMultiplier={1.3}
+                          numberOfLines={1}
+                        >
+                          Referral Locked In ✓
+                        </Text>
+                        <Text 
+                          style={[styles.settingButtonSubtext, { color: theme.textSecondary }]}
+                          maxFontSizeMultiplier={1.5}
+                          numberOfLines={2}
+                        >
+                          Code: {workingReferralCode} • Bonus will be automatically applied at Pro checkout
+                        </Text>
+                      </View>
+                    </View>
+                    <View style={[styles.referralStatusBadge, {
+                      backgroundColor: '#4CAF50',
+                      paddingHorizontal: 8,
+                      paddingVertical: 4,
+                      borderRadius: 12
+                    }]}>
+                      <Text style={[styles.referralStatusText, {
+                        color: '#FFFFFF',
+                        fontSize: 10,
+                        fontWeight: 'bold'
+                      }]}>
+                        ACTIVE
+                      </Text>
+                    </View>
                   </View>
-                  <View style={styles.settingTextContainer}>
-                    <Text 
-                      style={[styles.settingButtonText, { color: theme.text }]}
-                      maxFontSizeMultiplier={1.3}
-                      numberOfLines={1}
+                ) : (
+                  /* Show "Received a referral code?" button if no working code yet */
+                  !screenState.hasEnteredReferralCode && (
+                    <TouchableOpacity 
+                      style={[styles.settingButton, { 
+                        backgroundColor: theme.card,
+                        borderColor: '#4CAF50',
+                        borderWidth: 1,
+                        marginBottom: 16
+                      }]}
+                      onPress={() => {
+                        setReferralModalVisible(true);
+                      }}
+                      accessible={true}
+                      accessibilityRole="button"
+                      accessibilityLabel="Received a referral code?"
+                      accessibilityHint="Enter a referral code to get x1 month AI Light when you sign up"
                     >
-                      Received a referral code?
-                    </Text>
-                    <Text 
-                      style={[styles.settingButtonSubtext, { color: theme.textSecondary }]}
-                      maxFontSizeMultiplier={1.5}
-                      numberOfLines={1}
-                    >
-                      Get x1 month AI Light when you sign up
-                    </Text>
-                  </View>
-                </View>
-                <Ionicons 
-                  name="chevron-forward" 
-                  size={20} 
-                  color={theme.textSecondary} 
-                />
-              </TouchableOpacity>
+                      <View style={styles.settingButtonContent}>
+                        <View style={[styles.settingIconContainer, { 
+                          backgroundColor: '#4CAF5020' 
+                        }]}>
+                          <Ionicons name="ticket-outline" size={20} color="#4CAF50" />
+                        </View>
+                        <View style={styles.settingTextContainer}>
+                          <Text 
+                            style={[styles.settingButtonText, { color: theme.text }]}
+                            maxFontSizeMultiplier={1.3}
+                            numberOfLines={1}
+                          >
+                            Received a referral code?
+                          </Text>
+                          <Text 
+                            style={[styles.settingButtonSubtext, { color: theme.textSecondary }]}
+                            maxFontSizeMultiplier={1.5}
+                            numberOfLines={1}
+                          >
+                            Get x1 month AI Light when you sign up
+                          </Text>
+                        </View>
+                      </View>
+                      <Ionicons 
+                        name="chevron-forward" 
+                        size={20} 
+                        color={theme.textSecondary} 
+                      />
+                    </TouchableOpacity>
+                  )
+                )}
+              </>
             )}
             
             {/* Pro Badge for Pro Users */}
@@ -1299,39 +1385,6 @@ const SettingsModal = ({
               )}
             </TouchableOpacity>
             
-            {/* Debug AsyncStorage Button - Development Only */}
-            {__DEV__ && (
-              <TouchableOpacity 
-                style={[styles.settingButton, { 
-                  backgroundColor: 'rgba(255, 165, 0, 0.05)',
-                  borderColor: 'rgba(255, 165, 0, 0.3)',
-                  borderWidth: 1,
-                  marginBottom: 16
-                }]}
-                onPress={debugAsyncStorage}
-                accessible={true}
-                accessibilityRole="button"
-                accessibilityLabel="Debug AsyncStorage"
-                accessibilityHint="Show all task/goal/milestone data in storage"
-              >
-                <View style={styles.settingButtonContent}>
-                  <View style={[styles.settingIconContainer, { 
-                    backgroundColor: 'rgba(255, 165, 0, 0.1)'
-                  }]}>
-                    <Ionicons name="bug-outline" size={18} color="#FFA500" />
-                  </View>
-                  <View style={styles.settingTextContainer}>
-                    <Text style={[styles.settingTitle, { color: '#FFA500' }]}>
-                      Debug Storage
-                    </Text>
-                    <Text style={[styles.settingSubtitle, { color: theme.textSecondary }]}>
-                      Analyze AsyncStorage for task data
-                    </Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={18} color="#FFA500" />
-                </View>
-              </TouchableOpacity>
-            )}
 
             {/* Delete All Data Button - GDPR/CCPA Right to Erasure */}
             <TouchableOpacity 
@@ -1490,149 +1543,8 @@ const SettingsModal = ({
                   />
                 </View>
                 
-                {/* Test Gift Surprise Button */}
-                <TouchableOpacity
-                  style={[styles.settingButton, {
-                    backgroundColor: theme.card,
-                    borderColor: theme.border,
-                    marginTop: 12
-                  }]}
-                  onPress={() => {
-                    if (onTriggerAIPlusUpgrade) {
-                      onTriggerAIPlusUpgrade();
-                      onClose(); // Close the settings modal to see the upgrade notification
-                    }
-                  }}
-                  accessible={true}
-                  accessibilityRole="button"
-                  accessibilityLabel="Test Pro Gift Surprise"
-                  accessibilityHint="Triggers the Pro member gift surprise for testing"
-                >
-                  <View style={styles.settingButtonContent}>
-                    <View style={[styles.settingIconContainer, {
-                      backgroundColor: '#FFD70020'
-                    }]}>
-                      <Ionicons name="gift" size={20} color="#FFD700" />
-                    </View>
-                    <View style={styles.settingTextContainer}>
-                      <Text 
-                        style={[styles.settingButtonText, { color: theme.text }]}
-                        maxFontSizeMultiplier={1.3}
-                        numberOfLines={1}
-                      >
-                        Upgraded to AI Plus!
-                      </Text>
-                      <Text 
-                        style={[styles.settingButtonSubtext, { color: theme.textSecondary }]}
-                        maxFontSizeMultiplier={1.5}
-                        numberOfLines={1}
-                      >
-                        Thank you for being an early user
-                      </Text>
-                    </View>
-                  </View>
-                  <Ionicons 
-                    name="chevron-forward" 
-                    size={18} 
-                    color={theme.textSecondary} 
-                  />
-                </TouchableOpacity>
 
-                {/* Claim Next Gift Button */}
-                <TouchableOpacity
-                  style={[styles.settingButton, {
-                    backgroundColor: theme.card,
-                    borderColor: theme.border,
-                    marginTop: 8
-                  }]}
-                  onPress={() => {
-                    if (onTriggerGiftSurprise) {
-                      onTriggerGiftSurprise();
-                      onClose(); // Close the settings modal to see the color gift
-                    }
-                  }}
-                  accessible={true}
-                  accessibilityRole="button"
-                  accessibilityLabel="Claim Custom Colors"
-                  accessibilityHint="Claim your next early user gift - custom theme colors"
-                >
-                  <View style={styles.settingButtonContent}>
-                    <View style={[styles.settingIconContainer, {
-                      backgroundColor: '#FF69B420'
-                    }]}>
-                      <Ionicons name="color-palette" size={20} color="#FF69B4" />
-                    </View>
-                    <View style={styles.settingTextContainer}>
-                      <Text 
-                        style={[styles.settingButtonText, { color: theme.text }]}
-                        maxFontSizeMultiplier={1.3}
-                        numberOfLines={1}
-                      >
-                        Claim Next Gift
-                      </Text>
-                      <Text 
-                        style={[styles.settingButtonSubtext, { color: theme.textSecondary }]}
-                        maxFontSizeMultiplier={1.5}
-                        numberOfLines={1}
-                      >
-                        Choose any theme colour
-                      </Text>
-                    </View>
-                  </View>
-                  <Ionicons 
-                    name="chevron-forward" 
-                    size={18} 
-                    color={theme.textSecondary} 
-                  />
-                </TouchableOpacity>
 
-                {/* Test Second Onboarding Button */}
-                <TouchableOpacity
-                  style={[styles.settingButton, {
-                    backgroundColor: theme.card,
-                    borderColor: theme.border,
-                    marginTop: 8
-                  }]}
-                  onPress={() => {
-                    if (onTestSecondOnboarding) {
-                      onTestSecondOnboarding();
-                      onClose(); // Close the settings modal to see the tour
-                    }
-                  }}
-                  accessible={true}
-                  accessibilityRole="button"
-                  accessibilityLabel="Test Second Onboarding"
-                  accessibilityHint="Test the app tour that guides users through main features"
-                >
-                  <View style={styles.settingButtonContent}>
-                    <View style={[styles.settingIconContainer, {
-                      backgroundColor: '#3b82f620'
-                    }]}>
-                      <Ionicons name="map-outline" size={20} color="#3b82f6" />
-                    </View>
-                    <View style={styles.settingTextContainer}>
-                      <Text 
-                        style={[styles.settingButtonText, { color: theme.text }]}
-                        maxFontSizeMultiplier={1.3}
-                        numberOfLines={1}
-                      >
-                        Test App Tour
-                      </Text>
-                      <Text 
-                        style={[styles.settingButtonSubtext, { color: theme.textSecondary }]}
-                        maxFontSizeMultiplier={1.5}
-                        numberOfLines={1}
-                      >
-                        Guided tour of main features
-                      </Text>
-                    </View>
-                  </View>
-                  <Ionicons 
-                    name="chevron-forward" 
-                    size={18} 
-                    color={theme.textSecondary} 
-                  />
-                </TouchableOpacity>
 
                 {/* Tour 2 Button - New streamlined tour */}
                 <TouchableOpacity
@@ -1726,6 +1638,9 @@ const SettingsModal = ({
             if (onScreenStateUpdate) {
               onScreenStateUpdate({ hasEnteredReferralCode: true });
             }
+            // Update local state to show "Referral locked in" status
+            setHasWorkingReferralCode(true);
+            setWorkingReferralCode(referralCode);
             setReferralModalVisible(false);
           }}
         />
@@ -2076,6 +1991,16 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: 'bold',
     fontSize: 12
+  },
+  
+  // Referral status badge for "Referral locked in" display
+  referralStatusBadge: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0, // Prevent badge from squishing
+  },
+  referralStatusText: {
+    textAlign: 'center',
   },
   
   // Lock icon container for locked features

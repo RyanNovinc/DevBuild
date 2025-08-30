@@ -278,6 +278,9 @@ const GlobalAchievementToast = () => {
   // Don't render anything if not visible
   if (!visible || !currentAchievement) return null;
   
+  // Check if this is a non-clickable achievement (onboarding/tour flow)
+  const isNonClickableAchievement = currentAchievement?.id === 'foundation-builder' || currentAchievement?.id === 'tour-graduate';
+  
   return (
     <>
       {/* Falling Trophy Effects */}
@@ -343,32 +346,60 @@ const GlobalAchievementToast = () => {
         accessibilityLabel={`Achievement unlocked: ${currentAchievement.title}`}
         {...panResponder.panHandlers} // Apply pan responder for swipe gestures
       >
-        <TouchableOpacity 
-          style={[
-            styles.toastContent,
-            { backgroundColor: theme.cardElevated } // Apply theme
-          ]}
-          activeOpacity={0.8}
-          onPress={navigateToAchievementsScreen}
-          accessibilityRole="button"
-          accessibilityHint="Tap to view achievement details"
-        >
-        <View style={[styles.iconContainer, { backgroundColor: currentAchievement.color || '#4CAF50' }]}>
-          <Ionicons 
-            name={currentAchievement.icon || "trophy"} 
-            size={24} 
-            color="#FFFFFF" 
-          />
-        </View>
-        <View style={styles.textContainer}>
-          <Text style={[styles.title, { color: theme.text }]} numberOfLines={1} ellipsizeMode="tail">
-            {currentAchievement.title || 'Achievement Unlocked'}
-          </Text>
-          <Text style={[styles.subtitle, { color: theme.textSecondary }]} numberOfLines={1} ellipsizeMode="tail">
-            Achievement Unlocked
-          </Text>
-        </View>
-      </TouchableOpacity>
+        {isNonClickableAchievement ? (
+          <View 
+            style={[
+              styles.toastContent,
+              { backgroundColor: theme.cardElevated } // Apply theme
+            ]}
+            accessible={true}
+            accessibilityRole="text"
+            accessibilityLabel={`Achievement unlocked: ${currentAchievement.title}`}
+          >
+            <View style={[styles.iconContainer, { backgroundColor: currentAchievement.color || '#4CAF50' }]}>
+              <Ionicons 
+                name={currentAchievement.icon || "trophy"} 
+                size={24} 
+                color="#FFFFFF" 
+              />
+            </View>
+            <View style={styles.textContainer}>
+              <Text style={[styles.title, { color: theme.text }]} numberOfLines={1} ellipsizeMode="tail">
+                {currentAchievement.title || 'Achievement Unlocked'}
+              </Text>
+              <Text style={[styles.subtitle, { color: theme.textSecondary }]} numberOfLines={1} ellipsizeMode="tail">
+                Achievement Unlocked
+              </Text>
+            </View>
+          </View>
+        ) : (
+          <TouchableOpacity 
+            style={[
+              styles.toastContent,
+              { backgroundColor: theme.cardElevated } // Apply theme
+            ]}
+            activeOpacity={0.8}
+            onPress={navigateToAchievementsScreen}
+            accessibilityRole="button"
+            accessibilityHint="Tap to view achievement details"
+          >
+            <View style={[styles.iconContainer, { backgroundColor: currentAchievement.color || '#4CAF50' }]}>
+              <Ionicons 
+                name={currentAchievement.icon || "trophy"} 
+                size={24} 
+                color="#FFFFFF" 
+              />
+            </View>
+            <View style={styles.textContainer}>
+              <Text style={[styles.title, { color: theme.text }]} numberOfLines={1} ellipsizeMode="tail">
+                {currentAchievement.title || 'Achievement Unlocked'}
+              </Text>
+              <Text style={[styles.subtitle, { color: theme.textSecondary }]} numberOfLines={1} ellipsizeMode="tail">
+                Achievement Unlocked
+              </Text>
+            </View>
+          </TouchableOpacity>
+        )}
     </Animated.View>
     </>
   );

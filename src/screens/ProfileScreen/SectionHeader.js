@@ -9,7 +9,9 @@ const SectionHeader = ({
   theme, 
   onActionPress, 
   actionIcon = "chevron-forward",
-  actionText
+  actionText,
+  onInfoPress,
+  showInfoButton = false
 }) => {
   return (
     <View style={styles.sectionHeaderContainer}>
@@ -19,6 +21,16 @@ const SectionHeader = ({
           <Text style={[styles.sectionTitle, { color: theme.text }]}>
             {title.toUpperCase()}
           </Text>
+          {showInfoButton && (
+            <TouchableOpacity 
+              style={styles.infoButton}
+              onPress={onInfoPress}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityLabel={`Information about ${title}`}
+            >
+              <Ionicons name="information-circle-outline" size={20} color={theme.textSecondary} />
+            </TouchableOpacity>
+          )}
         </View>
         
         {onActionPress && (
@@ -69,6 +81,10 @@ const styles = StyleSheet.create({
   actionText: {
     fontSize: 14,
     marginRight: 4,
+  },
+  infoButton: {
+    marginLeft: 8,
+    padding: 4,
   },
   divider: {
     height: 1,

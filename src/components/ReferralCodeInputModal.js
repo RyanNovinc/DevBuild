@@ -30,8 +30,7 @@ const ReferralCodeInputModal = ({ visible, onClose, theme, onSuccess }) => {
 
   useEffect(() => {
     if (visible) {
-      loadAttemptData();
-      showModal();
+      checkIfAlreadyHasCode();
     } else {
       hideModal();
     }
@@ -42,6 +41,34 @@ const ReferralCodeInputModal = ({ visible, onClose, theme, onSuccess }) => {
       }
     };
   }, [visible]);
+
+  // Check if user already has a WORKING referral code
+  const checkIfAlreadyHasCode = async () => {
+    try {
+      const hasSuccessfulCode = await AsyncStorage.getItem('referralCodeWorked');
+      const existingCode = await AsyncStorage.getItem('enteredReferralCode');
+      
+      if (hasSuccessfulCode === 'true' && existingCode) {
+        Alert.alert(
+          'Referral Code Already Used',
+          `You have already successfully used referral code: ${existingCode}\n\nOnly one working referral code can be used per account.`,
+          [
+            { text: 'OK', onPress: onClose }
+          ]
+        );
+        return;
+      }
+      
+      // If no successful code, proceed with normal modal flow
+      loadAttemptData();
+      showModal();
+    } catch (error) {
+      console.error('Error checking existing referral code:', error);
+      // If error checking, proceed anyway
+      loadAttemptData();
+      showModal();
+    }
+  };
 
   const showModal = () => {
     Animated.parallel([
@@ -167,6 +194,7 @@ const ReferralCodeInputModal = ({ visible, onClose, theme, onSuccess }) => {
         await AsyncStorage.setItem('enteredReferralCode', trimmedCode);
         await AsyncStorage.setItem('hasEnteredReferralCode', 'true');
         await AsyncStorage.removeItem('referralCodeAttempts'); // Clear attempts on success
+        // NOTE: referralCodeWorked flag is set later during purchase in ReferralService
         
         // Sync the referral code with backend
         try {

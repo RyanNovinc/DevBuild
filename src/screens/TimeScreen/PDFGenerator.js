@@ -3,6 +3,34 @@ import { Alert, Platform, Share } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
+import { generateFullscreenCalendarHTML } from './TimeScreenHelpers';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+/**
+ * Load calendar icons from AsyncStorage
+ */
+const loadCalendarIcons = async () => {
+  try {
+    const storedIcons = await AsyncStorage.getItem('calendarIcons');
+    return storedIcons ? JSON.parse(storedIcons) : {};
+  } catch (error) {
+    console.error('Error loading calendar icons:', error);
+    return {};
+  }
+};
+
+/**
+ * Load current view mode from AsyncStorage
+ */
+const loadViewMode = async () => {
+  try {
+    const storedViewMode = await AsyncStorage.getItem('monthViewMode');
+    return storedViewMode || 'dots'; // Default to dots if nothing saved
+  } catch (error) {
+    console.error('Error loading view mode:', error);
+    return 'dots';
+  }
+};
 
 /**
  * Generate a simplified HTML content for PDF export
@@ -12,12 +40,36 @@ export const generateSimplifiedHTML = (
   selectedView, 
   currentDate, 
   formatDate, 
-  getTimeBlocksForDate
+  getTimeBlocksForDate,
+  userName = 'User',
+  weekDates = null
 ) => {
   try {
-    // Get the date in a readable format
-    const formattedDate = formatDate(currentDate, 'long');
-    const viewType = (selectedView || 'day').charAt(0).toUpperCase() + (selectedView || 'day').slice(1);
+    // Generate proper titles based on view type
+    let title;
+    if (selectedView === 'day') {
+      // "John's Daily Schedule - Wednesday, August 28, 2025"
+      const formattedDate = formatDate(currentDate, 'long');
+      title = `${userName}'s Daily Schedule - ${formattedDate}`;
+    } else if (selectedView === 'week') {
+      // "John's Weekly Schedule - Aug 25 - Aug 31, 2025"
+      if (weekDates && weekDates.length > 0) {
+        const startDate = weekDates[0];
+        const endDate = weekDates[6];
+        const startFormatted = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const endFormatted = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        title = `${userName}'s Weekly Schedule - ${startFormatted} - ${endFormatted}`;
+      } else {
+        // Fallback if weekDates not provided
+        const formattedDate = formatDate(currentDate, 'long');
+        title = `${userName}'s Weekly Schedule - Week of ${formattedDate}`;
+      }
+    } else {
+      // Fallback for other views
+      const formattedDate = formatDate(currentDate, 'long');
+      const viewType = (selectedView || 'day').charAt(0).toUpperCase() + (selectedView || 'day').slice(1);
+      title = `${userName}'s ${viewType} Schedule - ${formattedDate}`;
+    }
     
     // Get blocks for the current date - with error checking
     const blocksForDay = getTimeBlocksForDate(currentDate) || [];
@@ -111,11 +163,32 @@ export const generateSimplifiedHTML = (
             font-style: italic;
             padding: 20px 0;
           }
+          .watermark {
+            margin-top: 20px;
+            padding: 15px;
+            text-align: center;
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+          }
+          .watermark-logo {
+            font-size: 18px;
+            font-weight: bold;
+            color: #3b5998;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+          }
+          .watermark-text {
+            font-size: 11px;
+            color: #666;
+          }
         </style>
       </head>
       <body>
-        <h1>TimeBlocks Calendar</h1>
-        <h2>${viewType} View - ${formattedDate}</h2>
+        <h1>${title}</h1>
         
         <div class="content">
           ${blocksForDay.length > 0 ? 
@@ -175,6 +248,15 @@ export const generateSimplifiedHTML = (
         <div class="footer">
           Generated on ${new Date().toLocaleString()}
         </div>
+        
+        <div class="watermark">
+          <div class="watermark-logo">
+            🧭 LifeCompass
+          </div>
+          <div class="watermark-text">
+            Navigate Your Life with Purpose • lifecompass.app
+          </div>
+        </div>
       </body>
       </html>
     `;
@@ -205,28 +287,46 @@ export const generateSimplifiedHTML = (
  */
 export const generateAndSharePDF = async (options) => {
   const {
-    setIsGeneratingPDF,
     selectedView,
     currentDate,
     formatDate,
-    getTimeBlocksForDate
+    getTimeBlocksForDate,
+    monthDates,
+    selectedMonthDay,
+    userName
   } = options;
   
   // File path for temporary PDF
   let tempFilePath = null;
   
   try {
-    // Show loading indicator
-    setIsGeneratingPDF(true);
     
     // Step 1: Generate HTML content with error boundary
     console.log('Generating HTML content...');
-    const htmlContent = generateSimplifiedHTML(
-      selectedView,
-      currentDate,
-      formatDate,
-      getTimeBlocksForDate
-    );
+    
+    let htmlContent;
+    if (selectedView === 'month') {
+      // Use fullscreen calendar HTML for month view with current view mode
+      const monthDate = new Date(monthDates[0].getFullYear(), monthDates[0].getMonth(), 1);
+      const calendarIcons = await loadCalendarIcons();
+      const currentViewMode = await loadViewMode();
+      const viewModeForPDF = currentViewMode === 'addIcons' ? 'addIcons' : currentViewMode;
+      htmlContent = generateFullscreenCalendarHTML(monthDate, calendarIcons, [], userName || 'User', viewModeForPDF, getTimeBlocksForDate);
+    } else {
+      // For other views, use the selected date
+      const dateForPDF = selectedView === 'month' && monthDates && selectedMonthDay !== undefined
+        ? monthDates[selectedMonthDay] 
+        : currentDate;
+      
+      htmlContent = generateSimplifiedHTML(
+        selectedView,
+        dateForPDF,
+        formatDate,
+        getTimeBlocksForDate,
+        userName || 'User',
+        options.weekDates
+      );
+    }
     
     // Step 2: Create PDF file with optimized settings
     console.log('Creating PDF file...');
@@ -272,37 +372,45 @@ export const generateAndSharePDF = async (options) => {
     console.log('PDF shared successfully');
   } catch (error) {
     console.error('PDF generation error:', error);
+    console.log('Error message:', error?.message);
+    console.log('Error code:', error?.code);
     
-    // Check if user canceled the operation
+    // Check if user canceled the operation - be more comprehensive
     const errorMsg = error?.message?.toLowerCase() || '';
+    const errorCode = error?.code?.toLowerCase() || '';
     const isUserCancelled = 
       errorMsg.includes('cancel') || 
       errorMsg.includes('dismiss') || 
       errorMsg.includes('aborted') ||
+      errorMsg.includes('user cancelled') ||
+      errorMsg.includes('user canceled') ||
+      errorMsg.includes('operation was cancelled') ||
+      errorMsg.includes('operation was canceled') ||
+      errorMsg.includes('printing did not complete') || // iOS PDF sharing canceled
+      errorCode === 'e_cancelled' ||
+      errorCode === 'cancelled' ||
+      errorCode === 'canceled' ||
       error?.code === 'E_CANCELLED';
     
+    console.log('Is user cancelled:', isUserCancelled);
+    
     if (!isUserCancelled) {
-      // Use a small timeout to ensure modal is closed before showing the alert
-      setTimeout(() => {
-        Alert.alert(
-          'PDF Generation Failed',
-          'There was a problem creating your PDF. Would you like to try sharing as text instead?',
-          [
-            { 
-              text: 'No', 
-              style: 'cancel' 
-            },
-            { 
-              text: 'Share as Text', 
-              onPress: () => shareAsText(options) 
-            }
-          ]
-        );
-      }, 100);
+      Alert.alert(
+        'PDF Generation Failed',
+        'There was a problem creating your PDF. Would you like to try sharing as text instead?',
+        [
+          { 
+            text: 'No', 
+            style: 'cancel' 
+          },
+          { 
+            text: 'Share as Text', 
+            onPress: () => shareAsText(options) 
+          }
+        ]
+      );
     }
   } finally {
-    // Always hide the loading indicator
-    setIsGeneratingPDF(false);
     
     // Clean up temporary file if it exists and we're on Android
     // iOS manages its temp files automatically
@@ -325,14 +433,22 @@ export const shareAsText = async (options) => {
     selectedView,
     currentDate,
     formatDate,
-    getTimeBlocksForDate
+    getTimeBlocksForDate,
+    monthDates,
+    selectedMonthDay,
+    userName
   } = options;
   
   try {
+    // For month view, use the selected month day instead of current date
+    const dateForText = selectedView === 'month' && monthDates && selectedMonthDay !== undefined
+      ? monthDates[selectedMonthDay] 
+      : currentDate;
+      
     // Create a simple text summary with better formatting
-    const formattedDate = formatDate(currentDate, 'long');
+    const formattedDate = formatDate(dateForText, 'long');
     const viewType = (selectedView || 'day').charAt(0).toUpperCase() + (selectedView || 'day').slice(1);
-    const blocksForDay = getTimeBlocksForDate(currentDate) || [];
+    const blocksForDay = getTimeBlocksForDate(dateForText) || [];
     
     let textContent = `📅 TimeBlocks ${viewType} - ${formattedDate}\n\n`;
     

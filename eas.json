@@ -15,7 +15,7 @@
         "EXPO_USE_HERMES": "0",
         "RCT_NEW_ARCH_ENABLED": "0"
       },
-      "prebuildCommand": "./eas-hooks/prebuild/fix-privacy-info.sh"
+      "prebuildCommand": "./eas-hooks/prebuild/fix-privacy-files.sh"
     },
     "preview": {
       "distribution": "internal"

@@ -41,17 +41,8 @@ export const CATEGORIES = [
 
 // Achievements
 export const ACHIEVEMENTS = {
-  // Strategic Progress (8)
+  // Strategic Progress (8) - Updated count after adding Tour Graduate
   // 5 Free, 3 Premium (37.5% premium)
-  'vision-setter': {
-    id: 'vision-setter',
-    title: 'Vision Setter',
-    description: 'Create your first life direction statement',
-    icon: 'navigate',
-    category: 'strategic',
-    criteria: 'Create and save your first life direction statement in your profile.',
-    points: 5
-  },
   'foundation-builder': {
     id: 'foundation-builder',
     title: 'Foundation Builder',
@@ -59,6 +50,15 @@ export const ACHIEVEMENTS = {
     icon: 'construct',
     category: 'strategic',
     criteria: 'Complete the entire onboarding process by selecting a domain, goal, and setting up your personalized life compass.',
+    points: 10
+  },
+  'tour-graduate': {
+    id: 'tour-graduate',
+    title: 'Tour Graduate',
+    description: 'Complete the guided app tour',
+    icon: 'school',
+    category: 'strategic',
+    criteria: 'Successfully complete the guided app tour to learn all the key features.',
     points: 10
   },
   'goal-pioneer': {
@@ -73,10 +73,10 @@ export const ACHIEVEMENTS = {
   'strategic-thinker': {
     id: 'strategic-thinker',
     title: 'Strategic Thinker',
-    description: 'Link a project to a goal',
+    description: 'Link a milestone to a goal',
     icon: 'link',
     category: 'strategic',
-    criteria: 'Create a project and link it to an existing goal.',
+    criteria: 'Create a milestone and link it to an existing goal.',
     points: 10
   },
   'milestone-marker': {
@@ -128,8 +128,36 @@ export const ACHIEVEMENTS = {
     premium: true
   },
 
-  // Consistency Champions (5)
-  // 3 Free, 2 Premium (40% premium)
+  // Consistency Champions (8) - Added daily check-in streaks
+  // 5 Free, 3 Premium (37.5% premium)
+  'daily-check-in-starter': {
+    id: 'daily-check-in-starter',
+    title: 'Daily Check-in Starter',
+    description: 'Complete daily check-ins for 2 consecutive days',
+    icon: 'checkbox',
+    category: 'consistency',
+    criteria: 'Complete daily check-ins for 2 consecutive days.',
+    points: 5
+  },
+  'weekly-check-in-champion': {
+    id: 'weekly-check-in-champion',
+    title: 'Weekly Check-in Champion',
+    description: 'Complete daily check-ins for 7 consecutive days',
+    icon: 'calendar',
+    category: 'consistency',
+    criteria: 'Complete daily check-ins for 7 consecutive days.',
+    points: 15
+  },
+  'monthly-check-in-master': {
+    id: 'monthly-check-in-master',
+    title: 'Monthly Check-in Master',
+    description: 'Complete daily check-ins for 30 consecutive days',
+    icon: 'medal',
+    category: 'consistency',
+    criteria: 'Complete daily check-ins for 30 consecutive days.',
+    points: 50,
+    premium: true
+  },
   '7-day-streak': {
     id: '7-day-streak',
     title: '7-Day Streak',
@@ -142,21 +170,21 @@ export const ACHIEVEMENTS = {
   '30-day-momentum': {
     id: '30-day-momentum',
     title: '30-Day Momentum',
-    description: 'Use the app for 30 consecutive days',
+    description: 'Use the app for 30 consecutive days\n🎁 +1 additional referral unlock',
     icon: 'trending-up',
     category: 'consistency',
     criteria: 'Open the app at least once per day for 30 consecutive days.',
-    reward: '+1 referral code',
+    reward: true,
     points: 30
   },
   '90-day-transformation': {
     id: '90-day-transformation',
     title: '90-Day Transformation',
-    description: 'Use the app for 90 consecutive days',
+    description: 'Use the app for 90 consecutive days\n🎁 +1 additional referral unlock',
     icon: 'trophy',
     category: 'consistency',
     criteria: 'Open the app at least once per day for 90 consecutive days.',
-    reward: '+1 referral code',
+    reward: true,
     points: 50
   },
   'half-year-mastermind': {
@@ -203,10 +231,10 @@ export const ACHIEVEMENTS = {
   'strategic-advisor': {
     id: 'strategic-advisor',
     title: 'Strategic Advisor',
-    description: 'Use AI to generate a new goal or project',
+    description: 'Use AI to generate a new goal or milestone',
     icon: 'bulb',
     category: 'ai',
-    criteria: 'Generate a goal or project using AI and add it to your system.',
+    criteria: 'Generate a goal or milestone using AI and add it to your system.',
     points: 15
   },
   'time-optimizer': {
@@ -230,8 +258,8 @@ export const ACHIEVEMENTS = {
     premium: true
   },
 
-  // Feature Explorer (9) - UPDATED
-  // 7 Free, 2 Premium (22% premium)
+  // Feature Explorer (10) - UPDATED (removed Dashboard Navigator, added 2 navigation achievements)
+  // 8 Free, 2 Premium (20% premium)
   'profile-personalizer': {
     id: 'profile-personalizer',
     title: 'Profile Personalizer',
@@ -250,23 +278,32 @@ export const ACHIEVEMENTS = {
     criteria: 'Change the app\'s theme color by tapping the profile banner.',
     points: 10
   },
-  'dashboard-navigator': {
-    id: 'dashboard-navigator',
-    title: 'Dashboard Navigator',
-    description: 'Access holistic view from dashboard',
-    icon: 'apps',
-    category: 'explorer',
-    criteria: 'Tap on goals, projects, or tasks section in the dashboard to see the full system view.',
-    points: 10
-  },
   'domain-focus-master': {
     id: 'domain-focus-master',
     title: 'Domain Focus Master',
-    description: 'Switch to active focus area view',
+    description: 'Switch to Current Focus view',
     icon: 'compass',
     category: 'explorer',
-    criteria: 'Tap the middle of the equal domain balance wheel.',
+    criteria: 'Tap the middle of the equal domain balance wheel to switch to Current Focus view.',
     points: 15
+  },
+  'completed-goals-explorer': {
+    id: 'completed-goals-explorer',
+    title: 'Completed Goals Explorer',
+    description: 'Navigate to completed goals view',
+    icon: 'checkmark-done-circle',
+    category: 'explorer',
+    criteria: 'Go to the Life Plan Overview screen and tap the bottom navigation icon to switch to completed goals view.',
+    points: 10
+  },
+  'notes-navigator': {
+    id: 'notes-navigator',
+    title: 'Notes Navigator',
+    description: 'Navigate to notes screen',
+    icon: 'document-text',
+    category: 'explorer',
+    criteria: 'Go to the To-Do screen and tap the bottom navigation to switch to the notes view.',
+    points: 10
   },
   'note-creator': {
     id: 'note-creator',

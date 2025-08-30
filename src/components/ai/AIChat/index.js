@@ -91,11 +91,12 @@ const AIChat = ({
   
   // Common suggestions
   const suggestions = [
-    { id: '1', text: 'Create a goal for me' },
-    { id: '2', text: 'Help me break down a big goal' },
-    { id: '3', text: 'Schedule time for an activity' },
-    { id: '4', text: 'Tips for staying consistent' },
-    { id: '5', text: 'Add to-dos for today' }
+    { id: 'info', icon: 'information-circle-outline', isInfo: true },
+    { id: '1', text: 'Help me figure out what I want to work on' },
+    { id: '2', text: 'Break down my overwhelming goal into steps' },
+    { id: '3', text: 'Create a milestone for my current goal' },
+    { id: '4', text: 'Generate tasks I can do this week' },
+    { id: '5', text: 'Block time in my calendar for deep work' }
   ];
   
   // Check for screen reader status

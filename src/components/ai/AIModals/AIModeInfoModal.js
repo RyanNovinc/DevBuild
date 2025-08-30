@@ -37,7 +37,7 @@ const AIModeInfoModal = ({
           useCases: [
             'Organize daily tasks',
             'Schedule reminders',
-            'Create simple to-do lists',
+            'Plan projects and milestones',
             'Basic time management'
           ]
         };

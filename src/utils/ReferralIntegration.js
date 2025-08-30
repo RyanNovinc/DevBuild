@@ -54,9 +54,9 @@ class ReferralIntegration {
   // Call this from your Founder's Access purchase flow when user enters referral code
   static async processReferralCode(referralCode, purchaserEmail = null) {
     try {
-      const success = await ReferralService.recordReferralCodeUsage(referralCode, purchaserEmail);
+      const result = await ReferralService.recordReferralCodeUsage(referralCode, purchaserEmail);
       
-      if (success) {
+      if (result.success) {
         return {
           success: true,
           message: 'Referral code applied! You and your friend will both get 50% off your next AI subscription!',
@@ -65,7 +65,7 @@ class ReferralIntegration {
       } else {
         return {
           success: false,
-          message: 'Invalid or expired referral code',
+          message: result.error || 'Invalid or expired referral code',
           discountAmount: 0
         };
       }

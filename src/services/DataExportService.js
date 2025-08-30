@@ -15,23 +15,36 @@ class DataExportService {
   static USER_DATA_KEYS = {
     // Core life management data
     GOALS: 'goals',
-    MILESTONES: 'projects', 
+    MILESTONES: 'milestones', // Fixed: was 'projects', now 'milestones'
     TASKS: 'tasks',
     TODOS: 'todos',
     TOMORROW_TODOS: 'tomorrowTodos',
     LATER_TODOS: 'laterTodos',
-    MILESTONE_GOAL_LINK_MAP: 'projectGoalLinkMap',
+    MILESTONE_GOAL_LINK_MAP: 'milestoneGoalLinkMap', // Fixed: now uses milestones
+    TIME_BLOCKS: 'timeBlocks', // Added: missing time blocks
+    DOMAINS: 'domains', // Added: domain configuration
+    TAGS: 'tags', // Added: tags system
+    FILTERS: 'filters', // Added: filtering preferences
     
     // Financial tracker data
     FINANCIAL_TRACKER: 'financialTrackerData',
+    FINANCIAL_TRACKER_CONGRATS: 'financialTrackerCongratsShown', // Added: financial tracker congrats flag
     
     // Streak tracker data  
     STREAK_DATA: 'streakData',
     DAILY_STANDUP_STREAK: 'dailyStandupStreak',
+    DAILY_STANDUP_DATA: 'dailyStandupData', // Added: standup data
+    STANDUP_NOTES: 'standupNotes', // Added: standup notes
+    DAILY_STANDUP_FOCUS_MODE: 'dailyStandupFocusMode', // Added: daily reflection focus mode
     
     // AI conversation data
     CONVERSATIONS: 'conversations',
+    LOCAL_CONVERSATIONS: 'localConversations', // Added: local conversation storage
     CURRENT_CONVERSATION_ID: 'currentConversationId',
+    TEMP_CONVERSATION_ID: 'tempConversationId', // Added: temporary conversations
+    AI_USAGE_DATA: 'aiUsageData', // Added: AI usage tracking
+    AI_CREDITS: 'aiCredits', // Added: AI credits system
+    CUSTOM_INTRO_MESSAGES: 'customIntroMessages', // Added: custom intro messages
     
     // User profile and preferences
     USER_PROFILE: 'userProfile',
@@ -39,10 +52,16 @@ class DataExportService {
     THEME_COLOR: 'themeColor',
     APP_SETTINGS: 'appSettings',
     CUSTOM_THEMES: 'customThemes',
+    SUBSCRIPTION_STATUS: 'subscriptionStatus', // Added: subscription status
+    USER_COUNTRY: 'userCountry', // Added: user country
+    LIFE_DIRECTION: 'lifeDirection', // Added: life direction data
     
     // Documents and knowledge
     USER_KNOWLEDGE_FILES: 'userKnowledgeFiles',
     DOCUMENT_CONTEXT: 'documentContext',
+    ASSISTANT_DOCUMENT_CONTEXT: 'assistantDocumentContext', // Added: AI document context
+    DOCUMENT_CONTEXT_CACHE: 'documentContextCache', // Added: document cache
+    PROCESSED_DOCUMENTS_CONTENT: 'processedDocumentsContent', // Added: processed docs
     
     // Calendar data
     CALENDAR_SETTINGS: 'calendarSettings',
@@ -51,7 +70,19 @@ class DataExportService {
     // Notes and additional data
     NOTES: 'notes',
     TODO_NOTES: 'todoNotes',
-    DAILY_NOTES: 'dailyNotes'
+    DAILY_NOTES: 'dailyNotes',
+    
+    // Referral and notification data
+    REFERRAL_CODE: 'referralCode', // Added: user's referral code
+    REFERRAL_NOTIFICATIONS: 'referralNotifications', // Added: referral notifications
+    REFERRALS_REMAINING: 'referralsRemaining', // Added: remaining referrals
+    HAS_ENTERED_REFERRAL_CODE: 'hasEnteredReferralCode', // Added: referral status
+    
+    // App state and settings
+    ONBOARDING_COMPLETED: 'onboardingCompleted', // Added: onboarding status
+    SHOW_AI_BUTTON: 'showAIButton', // Added: AI button visibility
+    DATA_CLEANUP_COMPLETED: 'dataCleanupCompleted', // Added: cleanup tracking
+    FORCE_PROFILE_CLEAR: 'forceProfileClear' // Added: force profile clear flag
   };
 
   /**
@@ -110,12 +141,32 @@ class DataExportService {
         console.log(`📊 Total conversations exported: ${Object.keys(exportData.aiConversations).length}`);
       }
 
-      // 3. Export achievement data (user progress)
+      // 3. Export achievement data and tracking flags
       try {
         const achievements = await AsyncStorage.getItem('unlockedAchievements');
         if (achievements) {
           exportData.userData.achievements = JSON.parse(achievements);
           console.log('✅ Exported achievements data');
+        }
+
+        // Export achievement tracking flags
+        const allKeys = await AsyncStorage.getAllKeys();
+        const achievementKeys = allKeys.filter(key => 
+          key.startsWith('achievement_shown_') ||
+          key.startsWith('achievement_tracker_') ||
+          key.startsWith('firstMessageSent_') ||
+          key === 'pendingOnboardingAchievement'
+        );
+        
+        if (achievementKeys.length > 0) {
+          exportData.achievementTracking = {};
+          for (const key of achievementKeys) {
+            const value = await AsyncStorage.getItem(key);
+            if (value) {
+              exportData.achievementTracking[key] = value;
+            }
+          }
+          console.log(`✅ Exported ${achievementKeys.length} achievement tracking flags`);
         }
       } catch (error) {
         console.log('❌ Error exporting achievements:', error.message);
@@ -145,7 +196,51 @@ class DataExportService {
         console.log('❌ Error exporting streak tracking:', error.message);
       }
 
-      // 5. Create and save the export file
+      // 5. Export Feature Explorer tracking data
+      try {
+        const allKeys = await AsyncStorage.getAllKeys();
+        const featureKeys = allKeys.filter(key => 
+          key.startsWith('feature_explorer_') ||
+          key.startsWith('level_milestone_') ||
+          key.startsWith('tracking_') ||
+          key.includes('hasExplored') ||
+          key.includes('isUnlocked')
+        );
+        
+        if (featureKeys.length > 0) {
+          exportData.featureExploring = {};
+          for (const key of featureKeys) {
+            const value = await AsyncStorage.getItem(key);
+            if (value) {
+              exportData.featureExploring[key] = value;
+            }
+          }
+          console.log(`✅ Exported ${featureKeys.length} feature explorer tracking flags`);
+        }
+      } catch (error) {
+        console.log('❌ Error exporting feature explorer data:', error.message);
+      }
+
+      // 6. Export daily standup/reflection entries
+      try {
+        const allKeys = await AsyncStorage.getAllKeys();
+        const standupKeys = allKeys.filter(key => key.startsWith('dailyStandup_'));
+        
+        if (standupKeys.length > 0) {
+          exportData.dailyReflections = {};
+          for (const key of standupKeys) {
+            const value = await AsyncStorage.getItem(key);
+            if (value) {
+              exportData.dailyReflections[key] = JSON.parse(value);
+            }
+          }
+          console.log(`✅ Exported ${standupKeys.length} daily reflection entries`);
+        }
+      } catch (error) {
+        console.log('❌ Error exporting daily reflections:', error.message);
+      }
+
+      // 7. Create and save the export file
       const fileName = `LifeCompass_DataExport_${new Date().toISOString().split('T')[0]}.json`;
       const fileUri = `${FileSystem.documentDirectory}${fileName}`;
       
@@ -514,7 +609,8 @@ class DataExportService {
           'achievement',
           'widget_',
           'conversation_',
-          'dailyStandup_',
+          'tempConversationId',  // Added: temporary conversations
+          'dailyStandup_',       // This will catch dailyStandup_YYYY-MM-DD entries
           'standup',
           'notes',
           'todo',
@@ -524,6 +620,7 @@ class DataExportService {
           'project',             // Old milestone storage key
           'projects_backup',     // Backup of projects
           'financial',
+          'financialTrackerCongrats', // Added: financial tracker congratulations
           'streak',
           'calendar',
           'user',
@@ -548,7 +645,18 @@ class DataExportService {
           'userKnowledgeFiles',        // User knowledge files
           'localConversations',        // Local conversation storage
           'unlockedAchievements',      // Achievement data
-          'dailyStandupFocusMode'      // Daily standup data
+          'dailyStandupFocusMode',     // Daily standup data
+          'customIntroMessages',       // Added: custom intro messages
+          'aiUsageData',              // Added: AI usage data
+          'aiCredits',                // Added: AI credits
+          'lifeDirection',            // Added: life direction
+          'referralNotifications',    // Added: referral notifications
+          'dataCleanupCompleted',     // Added: cleanup tracking
+          'feature_explorer_',        // Added: feature explorer tracking
+          'tracking_',                // Added: general tracking data
+          'firstMessageSent_',        // Added: first message tracking
+          'achievement_tracker_',     // Added: achievement tracker data
+          'achievement_shown_'        // Added: shown achievement flags
         ];
         
         let comprehensiveDeleteCount = 0;

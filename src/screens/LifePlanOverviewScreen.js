@@ -26,6 +26,7 @@ import MinimalistConfirmDialog from '../components/MinimalistConfirmDialog';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppTourOverlay from '../components/AppTourOverlay';
 import useAppTour from '../hooks/useAppTour';
+import AchievementService from '../services/AchievementService';
 import {
   scaleWidth,
   scaleHeight,
@@ -1643,7 +1644,7 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
     });
   };
 
-  const handleGoalComplete = (goalId) => {
+  const handleGoalComplete = async (goalId) => {
     // Find the goal and update it to completed/uncompleted
     const goal = goals.find(g => g.id === goalId);
     
@@ -1674,6 +1675,16 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
         // Trigger global fireworks animation
         triggerFireworks(colors.fireworks, 5000);
         showSuccess('Goal completed! 🎆');
+        
+        // Track achievement for goal completion
+        try {
+          await AchievementService.checkAchievements({
+            type: 'goal_completed',
+            isPro: subscription?.status === 'pro' || subscription?.status === 'unlimited'
+          }, showSuccess);
+        } catch (error) {
+          console.error('Error tracking goal completion achievement:', error);
+        }
       }
     }
   };

@@ -26,6 +26,106 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 const { width } = Dimensions.get('window');
 
+// Custom Time Input Modal Component
+const CustomTimeModal = ({
+  visible,
+  onClose,
+  onConfirm,
+  initialValue,
+  theme,
+  customColor
+}) => {
+  const [minutes, setMinutes] = useState(initialValue || '10');
+  
+  const handleConfirm = () => {
+    const numericValue = parseInt(minutes);
+    if (!isNaN(numericValue) && numericValue > 0) {
+      onConfirm(minutes);
+      onClose();
+    }
+  };
+  
+  return (
+    <Modal
+      visible={visible}
+      transparent={true}
+      animationType="fade"
+      onRequestClose={onClose}
+    >
+      <View style={[
+        styles.modalOverlay, 
+        { backgroundColor: 'rgba(0,0,0,0.5)' }
+      ]}>
+        <View style={[
+          styles.customTimeModalContainer, 
+          { 
+            backgroundColor: theme.background,
+            borderWidth: 1,
+            borderColor: theme.border
+          }
+        ]}>
+          <View style={styles.modalHeader}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>
+              Custom Reminder Time
+            </Text>
+            <TouchableOpacity 
+              style={styles.closeButton}
+              onPress={onClose}
+            >
+              <Ionicons name="close" size={24} color={theme.textSecondary} />
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.customTimeModalContent}>
+            <Text style={[styles.customTimeModalLabel, { color: theme.textSecondary }]}>
+              Minutes before event:
+            </Text>
+            <TextInput
+              style={[styles.customTimeModalInput, { 
+                color: theme.text, 
+                backgroundColor: theme.card, 
+                borderColor: customColor
+              }]}
+              value={minutes}
+              onChangeText={setMinutes}
+              placeholder="e.g. 10"
+              placeholderTextColor={theme.textSecondary}
+              keyboardType="numeric"
+              autoFocus={true}
+              selectTextOnFocus={true}
+            />
+            
+            <View style={styles.customTimeModalButtons}>
+              <TouchableOpacity 
+                style={[styles.customTimeModalButton, { 
+                  backgroundColor: theme.card,
+                  borderColor: theme.border
+                }]} 
+                onPress={onClose}
+              >
+                <Text style={[styles.customTimeModalButtonText, { color: theme.textSecondary }]}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.customTimeModalButton, { 
+                  backgroundColor: customColor,
+                  borderColor: customColor
+                }]} 
+                onPress={handleConfirm}
+              >
+                <Text style={[styles.customTimeModalButtonText, { color: '#FFFFFF' }]}>
+                  Confirm
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
 // Goal Selector Component
 const GoalSelector = ({ 
   visible, 
@@ -255,6 +355,9 @@ const TimeBlockForm = ({
   // State for showing goal selector modal
   const [showGoalModal, setShowGoalModal] = useState(false);
   
+  // State for showing custom time modal
+  const [showCustomTimeModal, setShowCustomTimeModal] = useState(false);
+  
   // Duration state for displaying time block length
   const [duration, setDuration] = useState('');
   
@@ -328,6 +431,13 @@ const TimeBlockForm = ({
       setDomain(goal.title);
       setDomainColor(goal.color);
     }
+  };
+
+  // Function to handle custom time confirmation
+  const handleCustomTimeConfirm = (minutes) => {
+    setCustomMinutes(minutes);
+    setNotificationTime('custom');
+    setShowCustomTimeInput(false);
   };
 
   const renderBasicDetails = () => (
@@ -900,7 +1010,6 @@ const TimeBlockForm = ({
                     { key: '5', label: '5 min', minutes: 5 },
                     { key: '15', label: '15 min', minutes: 15 },
                     { key: '30', label: '30 min', minutes: 30 },
-                    { key: '60', label: '1 hour', minutes: 60 },
                     { key: 'custom', label: 'Custom', minutes: null }
                   ].map((time) => (
                     <TouchableOpacity 
@@ -915,15 +1024,27 @@ const TimeBlockForm = ({
                         }
                       ]}
                       onPress={() => {
-                        setNotificationTime(time.key);
                         if (time.key === 'custom') {
-                          setShowCustomTimeInput(true);
+                          setShowCustomTimeModal(true);
                         } else {
+                          setNotificationTime(time.key);
                           setShowCustomTimeInput(false);
                         }
                       }}
                       activeOpacity={0.8}
                     >
+                      {/* Badge for custom time showing current value */}
+                      {time.key === 'custom' && customMinutes && (
+                        <View style={[
+                          styles.customTimeBadge, 
+                          { backgroundColor: domain ? domainColor : customColor }
+                        ]}>
+                          <Text style={styles.customTimeBadgeText}>
+                            {customMinutes}m
+                          </Text>
+                        </View>
+                      )}
+                      
                       <Ionicons 
                         name={time.key === 'custom' ? 'time-outline' : 'alarm-outline'} 
                         size={16} 
@@ -940,34 +1061,6 @@ const TimeBlockForm = ({
                     </TouchableOpacity>
                   ))}
                 </View>
-                
-                {/* Custom time input */}
-                {showCustomTimeInput && (
-                  <View style={styles.customTimeContainer}>
-                    <Text style={[styles.customTimeLabel, { color: theme.textSecondary }]}>
-                      Minutes before event:
-                    </Text>
-                    <TextInput
-                      style={[styles.customTimeInput, { 
-                        color: theme.text, 
-                        backgroundColor: theme.card, 
-                        borderColor: domain ? domainColor : customColor
-                      }]}
-                      value={customMinutes}
-                      onChangeText={setCustomMinutes}
-                      placeholder="e.g. 10"
-                      placeholderTextColor={theme.textSecondary}
-                      keyboardType="numeric"
-                      onBlur={() => {
-                        if (customMinutes && !isNaN(customMinutes)) {
-                          // Valid number, keep it
-                        } else {
-                          setCustomMinutes('10'); // Default fallback
-                        }
-                      }}
-                    />
-                  </View>
-                )}
               </View>
             )}
           </View>
@@ -1142,6 +1235,16 @@ const TimeBlockForm = ({
         onClose={() => setShowIconPicker(false)}
         selectedIcon={customIcon}
         onSelectIcon={setCustomIcon}
+        customColor={customColor}
+      />
+
+      {/* Custom Time Modal */}
+      <CustomTimeModal
+        visible={showCustomTimeModal}
+        onClose={() => setShowCustomTimeModal(false)}
+        onConfirm={handleCustomTimeConfirm}
+        initialValue={customMinutes}
+        theme={theme}
         customColor={customColor}
       />
     </View>
@@ -1522,47 +1625,95 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     marginBottom: 12,
+    gap: 8,
   },
   notificationTimeCard: {
     flex: 0,
-    flexBasis: '30%',
+    flexBasis: '48%',
     flexDirection: 'column',
     alignItems: 'center',
-    padding: 10,
+    padding: 12,
     marginBottom: 8,
     borderRadius: 12,
     borderWidth: 1,
-    minHeight: 56,
+    minHeight: 64,
     justifyContent: 'center',
+    position: 'relative',
   },
   notificationTimeText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
     marginTop: 4,
     letterSpacing: 0.2,
     textAlign: 'center',
   },
-  customTimeContainer: {
-    marginTop: 8,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.1)',
+  customTimeBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 24,
+    height: 20,
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  customTimeLabel: {
-    fontSize: 12,
+  customTimeBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  // Custom Time Modal Styles
+  customTimeModalContainer: {
+    width: '85%',
+    maxWidth: 400,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  customTimeModalContent: {
+    padding: 20,
+  },
+  customTimeModalLabel: {
+    fontSize: 14,
     fontWeight: '600',
-    marginBottom: 8,
+    marginBottom: 12,
+    textAlign: 'center',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    opacity: 0.7,
   },
-  customTimeInput: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    fontWeight: '500',
+  customTimeModalInput: {
+    borderWidth: 2,
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 18,
+    fontWeight: '600',
     textAlign: 'center',
+    marginBottom: 20,
+  },
+  customTimeModalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  customTimeModalButton: {
+    flex: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  customTimeModalButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 0.2,
   },
   frequencyCard: {
     flex: 1,

@@ -3,21 +3,38 @@ import * as Notifications from 'expo-notifications';
 import { Platform, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Configure notifications with enhanced iOS settings
+// Configure notifications with enhanced iOS settings for PRODUCTION
 export const configureNotifications = async () => {
-  console.log('Configuring notifications...');
+  console.log('Configuring notifications for production...');
   
   try {
-    // Set up Android notification channel
+    // Set up Android notification channel with all required settings
     if (Platform.OS === 'android') {
+      // Create the primary channel
       await Notifications.setNotificationChannelAsync('time-blocks', {
         name: 'Time Block Reminders',
         importance: Notifications.AndroidImportance.HIGH,
         sound: true,
         vibrationPattern: [0, 250, 250, 250],
         lightColor: '#4CAF50',
+        enableVibrate: true,
+        showBadge: true,
+        lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
       });
-      console.log('Android notification channel set up successfully');
+      
+      // Create a high priority channel for urgent reminders
+      await Notifications.setNotificationChannelAsync('urgent-reminders', {
+        name: 'Urgent Reminders',
+        importance: Notifications.AndroidImportance.MAX,
+        sound: true,
+        vibrationPattern: [0, 500, 200, 500],
+        lightColor: '#FF5722',
+        enableVibrate: true,
+        showBadge: true,
+        lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+      });
+      
+      console.log('Android notification channels set up successfully');
     }
 
     // Configure how device handles notifications when app is in ANY state
@@ -103,21 +120,40 @@ export const scheduleTimeBlockNotification = async (timeBlock) => {
     
     // Adjust time based on notification preference
     switch (timeBlock.notificationTime) {
-      case '15min':
+      case '5':
+        notificationTime.setMinutes(notificationTime.getMinutes() - 5);
+        console.log('Set to 5 minutes before start');
+        break;
+      case '15':
         notificationTime.setMinutes(notificationTime.getMinutes() - 15);
         console.log('Set to 15 minutes before start');
         break;
-      case '30min':
+      case '30':
         notificationTime.setMinutes(notificationTime.getMinutes() - 30);
         console.log('Set to 30 minutes before start');
         break;
+      case 'custom':
+        // Use custom minutes from timeBlock.customMinutes
+        const customMins = parseInt(timeBlock.customMinutes) || 10;
+        notificationTime.setMinutes(notificationTime.getMinutes() - customMins);
+        console.log(`Set to ${customMins} minutes before start (custom)`);
+        break;
+      // Keep backward compatibility with old format
+      case '15min':
+        notificationTime.setMinutes(notificationTime.getMinutes() - 15);
+        console.log('Set to 15 minutes before start (legacy)');
+        break;
+      case '30min':
+        notificationTime.setMinutes(notificationTime.getMinutes() - 30);
+        console.log('Set to 30 minutes before start (legacy)');
+        break;
       case '1hour':
         notificationTime.setHours(notificationTime.getHours() - 1);
-        console.log('Set to 1 hour before start');
+        console.log('Set to 1 hour before start (legacy)');
         break;
       case '1day':
         notificationTime.setDate(notificationTime.getDate() - 1);
-        console.log('Set to 1 day before start');
+        console.log('Set to 1 day before start (legacy)');
         break;
       default: // exact time
         console.log('Set to exact start time');
@@ -148,7 +184,7 @@ export const scheduleTimeBlockNotification = async (timeBlock) => {
     // Create notification content with more details for better visibility
     const content = {
       title: timeBlock.title,
-      body: `${timeBlock.isRepeating ? '🔄 ' : ''}Starting ${formatTimeRelative(timeBlock.notificationTime)}${timeBlock.location ? ` at ${timeBlock.location}` : ''}`,
+      body: `${timeBlock.isRepeating ? '🔄 ' : ''}Starting ${formatTimeRelative(timeBlock.notificationTime, timeBlock.customMinutes)}${timeBlock.location ? ` at ${timeBlock.location}` : ''}`,
       sound: true,
       priority: 'high',
       // Add iOS specific fields for better presentation
@@ -293,7 +329,7 @@ export const cancelTimeBlockNotification = async (notificationId) => {
   }
 };
 
-// Schedule all notifications - with better error handling
+// Schedule all notifications - with better error handling for single and recurring events
 export const scheduleAllTimeBlockNotifications = async (timeBlocks = []) => {
   if (!Array.isArray(timeBlocks) || timeBlocks.length === 0) {
     console.log('No time blocks provided for scheduling notifications');
@@ -317,28 +353,43 @@ export const scheduleAllTimeBlockNotifications = async (timeBlocks = []) => {
     const eligibleTimeBlocks = timeBlocks.filter(block => 
       block && 
       block.notification && 
-      new Date(block.startTime) > now &&
-      !block.isRepeatingInstance // Only schedule for base time blocks
+      !block.isRepeatingInstance // Only schedule for base time blocks, not instances
     );
     
     console.log(`Found ${eligibleTimeBlocks.length} eligible time blocks for notifications`);
     
     // Schedule notifications for eligible time blocks
-    const scheduledNotifications = [];
+    const allScheduledNotifications = [];
     let successCount = 0;
     let failCount = 0;
     
     for (const block of eligibleTimeBlocks) {
       try {
-        const notificationId = await scheduleTimeBlockNotification(block);
-        if (notificationId) {
-          scheduledNotifications.push({
-            blockId: block.id,
-            notificationId
-          });
-          successCount++;
+        if (block.isRepeating) {
+          // Handle recurring time blocks
+          console.log(`Scheduling recurring notifications for: ${block.title}`);
+          const recurringNotifications = await scheduleRecurringNotifications(block);
+          allScheduledNotifications.push(...recurringNotifications);
+          successCount += recurringNotifications.length;
         } else {
-          failCount++;
+          // Handle single time blocks
+          if (new Date(block.startTime) > now) {
+            console.log(`Scheduling single notification for: ${block.title}`);
+            const notificationId = await scheduleTimeBlockNotification(block);
+            if (notificationId) {
+              allScheduledNotifications.push({
+                blockId: block.id,
+                notificationId,
+                date: block.startTime,
+                isSingle: true
+              });
+              successCount++;
+            } else {
+              failCount++;
+            }
+          } else {
+            console.log(`Skipping past event: ${block.title}`);
+          }
         }
       } catch (error) {
         console.error(`Error scheduling notification for block ${block.id}:`, error);
@@ -347,9 +398,125 @@ export const scheduleAllTimeBlockNotifications = async (timeBlocks = []) => {
     }
     
     console.log(`Successfully scheduled ${successCount} notifications, ${failCount} failed`);
-    return scheduledNotifications;
+    console.log(`Total scheduled notifications: ${allScheduledNotifications.length}`);
+    
+    return allScheduledNotifications;
   } catch (error) {
     console.error('Error in scheduleAllTimeBlockNotifications:', error);
+    return [];
+  }
+};
+
+// Schedule notifications for recurring events
+export const scheduleRecurringNotifications = async (timeBlock) => {
+  if (!timeBlock.isRepeating || !timeBlock.notification) {
+    console.log('Time block is not recurring or notifications disabled');
+    return [];
+  }
+
+  try {
+    console.log(`Scheduling recurring notifications for: ${timeBlock.title}`);
+    
+    // Make sure permissions are granted
+    const { status } = await Notifications.getPermissionsAsync();
+    if (status !== 'granted') {
+      console.log('Notification permissions not granted');
+      return [];
+    }
+
+    const scheduledNotifications = [];
+    const originalStart = new Date(timeBlock.startTime);
+    const now = new Date();
+    
+    // Determine how far ahead to schedule (max 64 notifications as per iOS limit)
+    const maxNotifications = 64;
+    let scheduledCount = 0;
+    
+    // Calculate end date for repetition (30 days ahead or specified end date)
+    const defaultEndDate = new Date();
+    defaultEndDate.setDate(defaultEndDate.getDate() + 30);
+    
+    let repeatEndDate = defaultEndDate;
+    if (!timeBlock.repeatIndefinitely && timeBlock.repeatUntil) {
+      const specifiedEndDate = new Date(timeBlock.repeatUntil);
+      repeatEndDate = specifiedEndDate < defaultEndDate ? specifiedEndDate : defaultEndDate;
+    }
+
+    // Start from the next occurrence
+    let currentDate = new Date(originalStart);
+    
+    // If the original time is in the future, schedule it first
+    if (originalStart > now) {
+      const notificationId = await scheduleTimeBlockNotification(timeBlock);
+      if (notificationId) {
+        scheduledNotifications.push({
+          blockId: timeBlock.id,
+          notificationId,
+          date: originalStart.toISOString(),
+          isOriginal: true
+        });
+        scheduledCount++;
+      }
+    }
+
+    // Move to next occurrence based on frequency
+    switch (timeBlock.repeatFrequency) {
+      case 'daily':
+        currentDate.setDate(currentDate.getDate() + 1);
+        break;
+      case 'weekly':
+        currentDate.setDate(currentDate.getDate() + 7);
+        break;
+      case 'monthly':
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        break;
+    }
+
+    // Schedule future occurrences
+    while (currentDate <= repeatEndDate && scheduledCount < maxNotifications) {
+      // Only schedule if this occurrence is in the future
+      if (currentDate > now) {
+        // Create a time block instance for this occurrence
+        const instanceTimeBlock = {
+          ...timeBlock,
+          id: `${timeBlock.id}-repeat-${currentDate.toISOString()}`,
+          startTime: currentDate.toISOString(),
+          endTime: new Date(currentDate.getTime() + (new Date(timeBlock.endTime) - originalStart)).toISOString(),
+          isRepeatingInstance: true,
+          originalTimeBlockId: timeBlock.id
+        };
+
+        const notificationId = await scheduleTimeBlockNotification(instanceTimeBlock);
+        if (notificationId) {
+          scheduledNotifications.push({
+            blockId: instanceTimeBlock.id,
+            notificationId,
+            date: currentDate.toISOString(),
+            isRecurring: true
+          });
+          scheduledCount++;
+        }
+      }
+
+      // Move to next occurrence
+      switch (timeBlock.repeatFrequency) {
+        case 'daily':
+          currentDate.setDate(currentDate.getDate() + 1);
+          break;
+        case 'weekly':
+          currentDate.setDate(currentDate.getDate() + 7);
+          break;
+        case 'monthly':
+          currentDate.setMonth(currentDate.getMonth() + 1);
+          break;
+      }
+    }
+
+    console.log(`Scheduled ${scheduledCount} recurring notifications for: ${timeBlock.title}`);
+    return scheduledNotifications;
+    
+  } catch (error) {
+    console.error('Error scheduling recurring notifications:', error);
     return [];
   }
 };
@@ -507,8 +674,18 @@ const formatTime = (date) => {
 };
 
 // Format time relative to notification preference
-const formatTimeRelative = (preference) => {
+const formatTimeRelative = (preference, customMinutes = null) => {
   switch (preference) {
+    case '5':
+      return 'in 5 minutes';
+    case '15':
+      return 'in 15 minutes';
+    case '30':
+      return 'in 30 minutes';
+    case 'custom':
+      const mins = parseInt(customMinutes) || 10;
+      return `in ${mins} minute${mins !== 1 ? 's' : ''}`;
+    // Keep backward compatibility
     case '15min':
       return 'in 15 minutes';
     case '30min':
@@ -519,6 +696,238 @@ const formatTimeRelative = (preference) => {
       return 'tomorrow';
     default:
       return 'now';
+  }
+};
+
+// Test comprehensive notification functionality
+export const testNotificationSystem = async () => {
+  try {
+    console.log('🧪 Starting comprehensive notification system test...');
+    
+    // 1. Check permissions
+    const { status } = await Notifications.getPermissionsAsync();
+    console.log(`📱 Permission status: ${status}`);
+    
+    if (status !== 'granted') {
+      const { status: requestStatus } = await Notifications.requestPermissionsAsync();
+      if (requestStatus !== 'granted') {
+        throw new Error('Notification permissions not granted');
+      }
+    }
+    
+    // 2. Test immediate notification
+    await sendTestNotification('🔔 Test 1', 'Immediate notification test');
+    
+    // 3. Test 5-minute reminder
+    const testTimeBlock5min = {
+      id: 'test-5min',
+      title: '🕔 5-Min Reminder Test',
+      startTime: new Date(Date.now() + 5 * 60 * 1000).toISOString(), // 5 minutes from now
+      endTime: new Date(Date.now() + 6 * 60 * 1000).toISOString(),
+      notification: true,
+      notificationTime: '5',
+      location: 'Test Location',
+      isRepeating: false
+    };
+    
+    const notification5min = await scheduleTimeBlockNotification(testTimeBlock5min);
+    console.log(`📅 5-minute test scheduled: ${notification5min}`);
+    
+    // 4. Test custom time reminder (2 minutes)
+    const testTimeBlockCustom = {
+      id: 'test-custom',
+      title: '🎯 Custom Reminder Test',
+      startTime: new Date(Date.now() + 4 * 60 * 1000).toISOString(), // 4 minutes from now
+      endTime: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+      notification: true,
+      notificationTime: 'custom',
+      customMinutes: '2', // 2 minutes before
+      isRepeating: false
+    };
+    
+    const notificationCustom = await scheduleTimeBlockNotification(testTimeBlockCustom);
+    console.log(`🎯 Custom test scheduled: ${notificationCustom}`);
+    
+    // 5. Test recurring notification (daily for next 3 days)
+    const testTimeBlockRecurring = {
+      id: 'test-recurring',
+      title: '🔄 Recurring Test',
+      startTime: new Date(Date.now() + 10 * 60 * 1000).toISOString(), // 10 minutes from now
+      endTime: new Date(Date.now() + 11 * 60 * 1000).toISOString(),
+      notification: true,
+      notificationTime: '5',
+      isRepeating: true,
+      repeatFrequency: 'daily',
+      repeatIndefinitely: false,
+      repeatUntil: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString() // 3 days from now
+    };
+    
+    const recurringNotifications = await scheduleRecurringNotifications(testTimeBlockRecurring);
+    console.log(`🔄 Recurring test scheduled: ${recurringNotifications.length} notifications`);
+    
+    // 6. Check all scheduled notifications
+    const allScheduled = await Notifications.getAllScheduledNotificationsAsync();
+    console.log(`📊 Total scheduled notifications: ${allScheduled.length}`);
+    
+    // 7. Return test summary
+    return {
+      success: true,
+      permissionStatus: status,
+      immediate: true,
+      fiveMinute: !!notification5min,
+      custom: !!notificationCustom,
+      recurring: recurringNotifications.length,
+      totalScheduled: allScheduled.length,
+      message: `Test complete! Scheduled ${allScheduled.length} notifications. Check your device in the next few minutes.`
+    };
+    
+  } catch (error) {
+    console.error('❌ Notification test failed:', error);
+    return {
+      success: false,
+      error: error.message,
+      message: 'Notification test failed. Check console for details.'
+    };
+  }
+};
+
+// Get detailed notification status for debugging
+export const getNotificationStatus = async () => {
+  try {
+    const permissions = await Notifications.getPermissionsAsync();
+    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+    
+    const status = {
+      permissions: {
+        status: permissions.status,
+        canAskAgain: permissions.canAskAgain,
+        granted: permissions.granted
+      },
+      scheduled: {
+        count: scheduled.length,
+        notifications: scheduled.map(n => ({
+          id: n.identifier,
+          title: n.content.title,
+          triggerDate: n.trigger.date ? new Date(n.trigger.date).toLocaleString() : 'Immediate',
+          triggerType: n.trigger.type
+        }))
+      },
+      platform: Platform.OS
+    };
+    
+    if (Platform.OS === 'ios' && permissions.ios) {
+      status.permissions.ios = {
+        alert: permissions.ios.allowsAlert,
+        badge: permissions.ios.allowsBadge,
+        sound: permissions.ios.allowsSound,
+        announcement: permissions.ios.allowsAnnouncements,
+        notificationCenter: permissions.ios.allowsDisplayInNotificationCenter,
+        lockScreen: permissions.ios.allowsDisplayOnLockScreen
+      };
+    }
+    
+    console.log('📱 Notification Status:', JSON.stringify(status, null, 2));
+    return status;
+    
+  } catch (error) {
+    console.error('Error getting notification status:', error);
+    return { error: error.message };
+  }
+};
+
+// Production readiness check
+export const checkProductionReadiness = async () => {
+  const issues = [];
+  const warnings = [];
+  
+  try {
+    console.log('🔍 Checking notification production readiness...');
+    
+    // 1. Check permissions
+    const { status, canAskAgain } = await Notifications.getPermissionsAsync();
+    if (status !== 'granted') {
+      issues.push('Notification permissions not granted');
+      if (!canAskAgain) {
+        issues.push('Cannot request permissions - user must enable in system settings');
+      }
+    }
+    
+    // 2. Check platform-specific settings
+    if (Platform.OS === 'ios') {
+      const { ios } = await Notifications.getPermissionsAsync();
+      if (ios) {
+        if (!ios.allowsAlert) warnings.push('iOS alerts not enabled');
+        if (!ios.allowsSound) warnings.push('iOS notification sounds disabled');
+        if (!ios.allowsBadge) warnings.push('iOS badge updates disabled');
+        if (!ios.allowsDisplayInNotificationCenter) warnings.push('iOS notification center disabled');
+        if (!ios.allowsDisplayOnLockScreen) warnings.push('iOS lock screen notifications disabled');
+      }
+    }
+    
+    // 3. Test basic notification scheduling
+    try {
+      const testId = await Notifications.scheduleNotificationAsync({
+        content: {
+          title: 'Test',
+          body: 'Production test',
+        },
+        trigger: { seconds: 3600 } // 1 hour from now
+      });
+      
+      if (testId) {
+        // Clean up test notification
+        await Notifications.cancelScheduledNotificationAsync(testId);
+      } else {
+        issues.push('Unable to schedule test notification');
+      }
+    } catch (error) {
+      issues.push(`Notification scheduling failed: ${error.message}`);
+    }
+    
+    // 4. Check existing scheduled notifications
+    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+    
+    // 5. Platform-specific checks
+    if (Platform.OS === 'android') {
+      // Check if our notification channels exist
+      try {
+        const channels = await Notifications.getNotificationChannelsAsync();
+        const hasTimeBlockChannel = channels.some(ch => ch.id === 'time-blocks');
+        if (!hasTimeBlockChannel) {
+          warnings.push('Android time-blocks notification channel not found - call configureNotifications()');
+        }
+      } catch (error) {
+        warnings.push('Unable to check Android notification channels');
+      }
+    }
+    
+    const result = {
+      ready: issues.length === 0,
+      issues: issues,
+      warnings: warnings,
+      permissionStatus: status,
+      scheduledCount: scheduled.length,
+      platform: Platform.OS,
+      timestamp: new Date().toISOString()
+    };
+    
+    console.log('📊 Production Readiness Report:', result);
+    
+    if (result.ready) {
+      console.log('✅ Notifications are ready for production!');
+    } else {
+      console.log('❌ Production issues found:', issues);
+    }
+    
+    return result;
+    
+  } catch (error) {
+    return {
+      ready: false,
+      issues: [`Production check failed: ${error.message}`],
+      warnings: [],
+      error: error.message
+    };
   }
 };
 

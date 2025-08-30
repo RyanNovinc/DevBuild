@@ -84,16 +84,41 @@ const ReferralService = {
     return `https://lifecompass.app/r/${code}`;
   },
   
-  // Get number of referrals remaining (calculated from stats)
+  // Get number of referrals remaining (calculated from active referrals)
   async getReferralsRemaining() {
-    const stats = await this.getReferralStats();
-    const maxReferrals = 3; // Maximum referrals allowed
-    return Math.max(0, maxReferrals - stats.converted);
+    try {
+      // Get current achievement-based referral limit
+      const AchievementService = require('../../services/AchievementService').default;
+      const currentLimit = await AchievementService.getReferralLimit();
+      
+      // Count active referrals (sent but not converted)
+      const sentReferrals = await this.getSentReferrals();
+      const activeReferrals = sentReferrals.filter(ref => 
+        ref.status !== 'subscribed' && ref.status !== 'expired'
+      ).length;
+      
+      // Remaining = current limit - active referrals
+      return Math.max(0, currentLimit - activeReferrals);
+    } catch (error) {
+      console.error('Error getting referrals remaining:', error);
+      // Fallback to safe calculation
+      const sentReferrals = await this.getSentReferrals();
+      const activeReferrals = sentReferrals.filter(ref => 
+        ref.status !== 'subscribed' && ref.status !== 'expired'
+      ).length;
+      return Math.max(0, 3 - activeReferrals);
+    }
   },
   
   // Record a referral share
   async trackReferralShare(showSuccess = null) {
     try {
+      // Check if user has reached referral limit first
+      const remaining = await this.getReferralsRemaining();
+      if (remaining <= 0) {
+        throw new Error('You have reached your referral limit. Complete achievements to unlock more referral slots!');
+      }
+      
       // Increment sent count in stats
       const statsStr = await AsyncStorage.getItem(KEYS.REFERRALS_STATS);
       const stats = statsStr ? JSON.parse(statsStr) : { sent: 0, clicked: 0, converted: 0, plansEarned: 0, plansGifted: 0 };
@@ -406,10 +431,35 @@ const ReferralService = {
     }
   },
 
+  // Validate if a referral code can still accept conversions
+  async validateReferralCodeAvailability(referralCode) {
+    try {
+      // This should check with backend if the referral code owner
+      // has reached their limit. For now, return true since we don't
+      // have access to other users' data locally
+      const isValid = await referralBackendService.validateReferralCodeAvailability(referralCode);
+      return isValid;
+    } catch (error) {
+      console.error('Error validating referral code:', error);
+      // On error, allow the conversion to prevent false negatives
+      return true;
+    }
+  },
+
   // Record that a referral code was used during purchase
   // This should be called from your purchase flow when someone enters a referral code
   async recordReferralCodeUsage(referralCode, purchaserEmail = null) {
     try {
+      // First validate that the referral code can still accept conversions
+      const isAvailable = await this.validateReferralCodeAvailability(referralCode);
+      if (!isAvailable) {
+        console.log('Referral code has reached its limit:', referralCode);
+        return {
+          success: false,
+          error: 'This referral code has reached its limit. The person who shared it cannot accept more referrals right now.'
+        };
+      }
+
       const deviceId = await deviceIdentifier.getDeviceId();
       const success = await referralBackendService.recordReferralConversion(referralCode, deviceId);
       
@@ -431,13 +481,20 @@ const ReferralService = {
         conversions.push(newConversion);
         await AsyncStorage.setItem('earned_conversions', JSON.stringify(conversions));
         
-        return true;
+        // Mark that the user has successfully used a referral code
+        await AsyncStorage.setItem('referralCodeWorked', 'true');
+        
+        return { success: true };
       }
       
-      return false;
+      // If referral failed, clear the stored code so user can try a different one
+      await AsyncStorage.removeItem('enteredReferralCode');
+      await AsyncStorage.removeItem('hasEnteredReferralCode');
+      
+      return { success: false, error: 'Could not process referral conversion' };
     } catch (error) {
       console.error('Error recording referral code usage:', error);
-      return false;
+      return { success: false, error: 'Error processing referral code' };
     }
   },
 

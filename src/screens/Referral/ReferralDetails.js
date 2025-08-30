@@ -86,7 +86,7 @@ const ReferralDetails = ({ data, onRefresh, showSuccess, showError, theme }) => 
   const shareReferral = async (method = 'default') => {
     try {
       if (remainingCount <= 0) {
-        showError('You have used all your available referrals.');
+        showError('You have reached your referral limit! Complete achievements like maintaining a 30-day or 90-day streak to unlock more referral slots.');
         return;
       }
       

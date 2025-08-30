@@ -1,6 +1,7 @@
 // src/screens/TodoListScreen/components/notes/NotesSection.js
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert, Modal, Animated, TextInput } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { styles } from '../../TodoListStyles';
 import { getContrastText, formatNoteDate } from '../../TodoUtils';
@@ -158,19 +159,29 @@ const NotesSection = ({
         { 
           text: "Delete", 
           style: "destructive",
-          onPress: () => {
-            setNotes(notes.filter(note => note.id !== noteId));
-            
-            // If we're currently editing this note, close the editor
-            if (editingNote && editingNote.id === noteId) {
-              setEditingNote(null);
-              setEditNoteTitle('');
-              setEditNoteContent('');
-              setShowFullScreenNote(false);
-              setIsCreatingNote(false);
+          onPress: async () => {
+            try {
+              const updatedNotes = notes.filter(note => note.id !== noteId);
+              setNotes(updatedNotes);
+              
+              // CRITICAL FIX: Persist deletion to AsyncStorage
+              await AsyncStorage.setItem('notes', JSON.stringify(updatedNotes));
+              console.log('Note deletion persisted to AsyncStorage, remaining count:', updatedNotes.length);
+              
+              // If we're currently editing this note, close the editor
+              if (editingNote && editingNote.id === noteId) {
+                setEditingNote(null);
+                setEditNoteTitle('');
+                setEditNoteContent('');
+                setShowFullScreenNote(false);
+                setIsCreatingNote(false);
+              }
+              
+              showSuccess('Note deleted');
+            } catch (error) {
+              console.error('Error deleting note from storage:', error);
+              showError('Failed to delete note');
             }
-            
-            showSuccess('Note deleted');
           }
         }
       ]
@@ -209,67 +220,81 @@ const NotesSection = ({
         { 
           text: "Delete All", 
           style: "destructive",
-          onPress: () => {
-            if (isSearchActive && searchQuery.trim()) {
-              // Delete only notes that match the search query
-              const idsToDelete = filteredNotes.map(note => note.id);
-              setNotes(notes.filter(note => !idsToDelete.includes(note.id)));
-              showSuccess(`Deleted ${noteCount} notes matching search`);
-            }
-            else if (activeTagFilter === 'NO_TAGS') {
-              // Delete notes with no tags
-              setNotes(notes.filter(note => {
-                // Keep notes that don't match the folder filter
-                if (activeNoteFolder !== null && note.folderId !== activeNoteFolder) {
-                  return true;
-                }
-                
-                // Keep notes that have tags
-                return note.tags && note.tags.length > 0;
-              }));
+          onPress: async () => {
+            try {
+              let updatedNotes;
               
-              showSuccess(`Notes with no tags deleted`);
-            } else if (activeTagFilter) {
-              // Only delete notes with the active tag
-              setNotes(notes.filter(note => {
-                // Keep notes that don't match the folder filter
-                if (activeNoteFolder !== null && note.folderId !== activeNoteFolder) {
-                  return true;
-                }
-                
-                // Keep notes that don't have the tag
-                return !(note.tags && note.tags.includes(activeTagFilter));
-              }));
-              
-              showSuccess(`Notes with tag "${activeTagFilter}" deleted`);
-            } else if (activeNoteFolder === null) {
-              // Clear all notes
-              setNotes([]);
-              showSuccess('All notes cleared');
-            } else {
-              // Clear only notes in the current folder
-              setNotes(notes.filter(note => note.folderId !== activeNoteFolder));
-              showSuccess('All notes in this folder cleared');
-            }
-            
-            // Reset search if active
-            if (isSearchActive) {
-              setIsSearchActive(false);
-              setSearchQuery('');
-            }
-            
-            // If we're currently editing a note that's being deleted, close the editor
-            if (editingNote && (activeNoteFolder === null || editingNote.folderId === activeNoteFolder)) {
-              if (
-                (activeTagFilter === 'NO_TAGS' && (!editingNote.tags || editingNote.tags.length === 0)) ||
-                (!activeTagFilter || (editingNote.tags && editingNote.tags.includes(activeTagFilter)))
-              ) {
-                setEditingNote(null);
-                setEditNoteTitle('');
-                setEditNoteContent('');
-                setShowFullScreenNote(false);
-                setIsCreatingNote(false);
+              if (isSearchActive && searchQuery.trim()) {
+                // Delete only notes that match the search query
+                const idsToDelete = filteredNotes.map(note => note.id);
+                updatedNotes = notes.filter(note => !idsToDelete.includes(note.id));
+                setNotes(updatedNotes);
+                showSuccess(`Deleted ${noteCount} notes matching search`);
               }
+              else if (activeTagFilter === 'NO_TAGS') {
+                // Delete notes with no tags
+                updatedNotes = notes.filter(note => {
+                  // Keep notes that don't match the folder filter
+                  if (activeNoteFolder !== null && note.folderId !== activeNoteFolder) {
+                    return true;
+                  }
+                  
+                  // Keep notes that have tags
+                  return note.tags && note.tags.length > 0;
+                });
+                setNotes(updatedNotes);
+                showSuccess(`Notes with no tags deleted`);
+              } else if (activeTagFilter) {
+                // Only delete notes with the active tag
+                updatedNotes = notes.filter(note => {
+                  // Keep notes that don't match the folder filter
+                  if (activeNoteFolder !== null && note.folderId !== activeNoteFolder) {
+                    return true;
+                  }
+                  
+                  // Keep notes that don't have the tag
+                  return !(note.tags && note.tags.includes(activeTagFilter));
+                });
+                setNotes(updatedNotes);
+                showSuccess(`Notes with tag "${activeTagFilter}" deleted`);
+              } else if (activeNoteFolder === null) {
+                // Clear all notes
+                updatedNotes = [];
+                setNotes(updatedNotes);
+                showSuccess('All notes cleared');
+              } else {
+                // Clear only notes in the current folder
+                updatedNotes = notes.filter(note => note.folderId !== activeNoteFolder);
+                setNotes(updatedNotes);
+                showSuccess('All notes in this folder cleared');
+              }
+              
+              // CRITICAL FIX: Persist bulk deletion to AsyncStorage
+              await AsyncStorage.setItem('notes', JSON.stringify(updatedNotes));
+              console.log('Bulk note deletion persisted to AsyncStorage, remaining count:', updatedNotes.length);
+              
+              // Reset search if active
+              if (isSearchActive) {
+                setIsSearchActive(false);
+                setSearchQuery('');
+              }
+              
+              // If we're currently editing a note that's being deleted, close the editor
+              if (editingNote && (activeNoteFolder === null || editingNote.folderId === activeNoteFolder)) {
+                if (
+                  (activeTagFilter === 'NO_TAGS' && (!editingNote.tags || editingNote.tags.length === 0)) ||
+                  (!activeTagFilter || (editingNote.tags && editingNote.tags.includes(activeTagFilter)))
+                ) {
+                  setEditingNote(null);
+                  setEditNoteTitle('');
+                  setEditNoteContent('');
+                  setShowFullScreenNote(false);
+                  setIsCreatingNote(false);
+                }
+              }
+            } catch (error) {
+              console.error('Error persisting bulk note deletion to storage:', error);
+              showError('Failed to delete notes');
             }
           }
         }

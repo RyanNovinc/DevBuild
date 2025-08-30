@@ -166,30 +166,49 @@ export const scheduleTimeBlockNotificationSimple = async (timeBlock) => {
     const startTime = new Date(timeBlock.startTime);
     let notificationTime = new Date(startTime);
     
-    // Adjust time based on notification preference
+    // Adjust time based on notification preference (updated for new options)
     switch (timeBlock.notificationTime) {
-      case '15min':
+      case '5':
+        notificationTime.setMinutes(notificationTime.getMinutes() - 5);
+        console.log('Set to 5 minutes before start');
+        break;
+      case '15':
         notificationTime.setMinutes(notificationTime.getMinutes() - 15);
         console.log('Set to 15 minutes before start');
         break;
-      case '30min':
+      case '30':
         notificationTime.setMinutes(notificationTime.getMinutes() - 30);
         console.log('Set to 30 minutes before start');
         break;
+      case 'custom':
+        // Use custom minutes from timeBlock.customMinutes
+        const customMins = parseInt(timeBlock.customMinutes) || 10;
+        notificationTime.setMinutes(notificationTime.getMinutes() - customMins);
+        console.log(`Set to ${customMins} minutes before start (custom)`);
+        break;
+      // Keep backward compatibility with old format
+      case '15min':
+        notificationTime.setMinutes(notificationTime.getMinutes() - 15);
+        console.log('Set to 15 minutes before start (legacy)');
+        break;
+      case '30min':
+        notificationTime.setMinutes(notificationTime.getMinutes() - 30);
+        console.log('Set to 30 minutes before start (legacy)');
+        break;
       case '1hour':
         notificationTime.setHours(notificationTime.getHours() - 1);
-        console.log('Set to 1 hour before start');
+        console.log('Set to 1 hour before start (legacy)');
         break;
       case '1day':
         notificationTime.setDate(notificationTime.getDate() - 1);
-        console.log('Set to 1 day before start');
+        console.log('Set to 1 day before start (legacy)');
         break;
       default: // exact time
         console.log('Set to exact start time');
     }
     
     // Create notification body
-    const body = `${timeBlock.isRepeating ? '🔄 ' : ''}${formatTimeRelative(timeBlock.notificationTime)}${timeBlock.location ? ` at ${timeBlock.location}` : ''}`;
+    const body = `${timeBlock.isRepeating ? '🔄 ' : ''}${formatTimeRelative(timeBlock.notificationTime, timeBlock.customMinutes)}${timeBlock.location ? ` at ${timeBlock.location}` : ''}`;
     
     // Schedule the notification
     return scheduleFutureNotification(
@@ -209,9 +228,70 @@ export const scheduleTimeBlockNotificationSimple = async (timeBlock) => {
   }
 };
 
+// Test the notification system with all new options
+export const testNewNotificationOptions = async () => {
+  try {
+    console.log('🧪 Testing new notification options...');
+    
+    // Test 5-minute reminder
+    const test5min = {
+      id: 'test-5min',
+      title: '5-Min Test',
+      startTime: new Date(Date.now() + 6 * 60 * 1000).toISOString(), // 6 minutes from now
+      notification: true,
+      notificationTime: '5' // 5 minutes before
+    };
+    
+    // Test custom reminder (3 minutes)
+    const testCustom = {
+      id: 'test-custom',
+      title: 'Custom Test (3min)',
+      startTime: new Date(Date.now() + 5 * 60 * 1000).toISOString(), // 5 minutes from now
+      notification: true,
+      notificationTime: 'custom',
+      customMinutes: '3' // 3 minutes before
+    };
+    
+    const result5min = await scheduleTimeBlockNotificationSimple(test5min);
+    const resultCustom = await scheduleTimeBlockNotificationSimple(testCustom);
+    
+    console.log(`5-min test result: ${result5min}`);
+    console.log(`Custom test result: ${resultCustom}`);
+    
+    // Check scheduled notifications
+    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+    console.log(`Total scheduled: ${scheduled.length}`);
+    
+    return {
+      success: true,
+      fiveMinuteScheduled: !!result5min,
+      customScheduled: !!resultCustom,
+      totalScheduled: scheduled.length,
+      message: `Tests scheduled! You should get 2 notifications: one in 1 minute (5-min test) and one in 2 minutes (custom test).`
+    };
+    
+  } catch (error) {
+    console.error('Test failed:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+};
+
 // Format time relative to notification preference
-const formatTimeRelative = (preference) => {
+const formatTimeRelative = (preference, customMinutes = null) => {
   switch (preference) {
+    case '5':
+      return 'Starting in 5 minutes';
+    case '15':
+      return 'Starting in 15 minutes';
+    case '30':
+      return 'Starting in 30 minutes';
+    case 'custom':
+      const mins = parseInt(customMinutes) || 10;
+      return `Starting in ${mins} minute${mins !== 1 ? 's' : ''}`;
+    // Keep backward compatibility
     case '15min':
       return 'Starting in 15 minutes';
     case '30min':

@@ -1,4 +1,4 @@
-// src/components/AddTodoModal.js
+// src/components/AddTodoModal.js - Enhanced with bulk creation capabilities
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
@@ -15,12 +15,16 @@ import {
   Alert,
   Animated,
   Easing,
-  Dimensions
+  Dimensions,
+  FlatList
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { useTheme } from '../context/ThemeContext';
 import { useAppContext } from '../context/AppContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import FreeTierLimitModal from '../screens/TimeScreen/FreeTierLimitModal';
+import { useNavigation } from '@react-navigation/native';
 
 // Todo limits for free users
 const TODO_LIMITS = {
@@ -47,9 +51,11 @@ const AddTodoModal = ({
   visible, 
   onClose, 
   onAdd, 
-  todoData
+  todoData, // Single todo for backward compatibility
+  aiSuggestions = [] // Array of AI suggestions
 }) => {
   const { theme } = useTheme();
+  const navigation = useNavigation();
   const safeSpacing = useSafeSpacing();
   const { 
     userSubscriptionStatus, 
@@ -64,30 +70,52 @@ const AddTodoModal = ({
   // Modal animation values
   const backgroundOpacityAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(Dimensions.get('window').height)).current;
+  const translateY = useRef(new Animated.Value(0)).current;
   
-  // Todo state
-  const [title, setTitle] = useState('');
-  const [tab, setTab] = useState('today'); // 'today', 'tomorrow', 'later'
-  const [isGroup, setIsGroup] = useState(false);
+  // Main tab state
+  const [activeTab, setActiveTab] = useState('add'); // 'add' or 'review'
+  
+  // Individual todo input state
+  const [todoTitle, setTodoTitle] = useState('');
+  const [selectedTab, setSelectedTab] = useState('today'); // 'today', 'tomorrow', 'later'
+  
+  // Group creation state
+  const [isCreatingGroup, setIsCreatingGroup] = useState(false);
+  const [groupTitle, setGroupTitle] = useState('');
   const [groupItems, setGroupItems] = useState([]);
-  const [newItemText, setNewItemText] = useState('');
+  const [newGroupItemText, setNewGroupItemText] = useState('');
+  
+  // Pending todos organized by tab
+  const [pendingTodos, setPendingTodos] = useState({
+    today: [],
+    tomorrow: [],
+    later: []
+  });
+
+  // Limit modal state
+  const [showLimitModal, setShowLimitModal] = useState(false);
   
   // Get theme-aware button color
   const buttonColor = theme.primary;
-
-  // Function to get current todo count for a specific tab
-  const getCurrentTodoCount = (targetTab) => {
-    switch (targetTab) {
-      case 'today':
-        return todos.length;
-      case 'tomorrow':
-        return tomorrowTodos.length;
-      case 'later':
-        return laterTodos.length;
-      default:
-        return 0;
-    }
+  
+  // Helper functions for todo management
+  const getTodoCount = (tabName) => {
+    return pendingTodos[tabName]?.length || 0;
   };
+  
+  const getTotalTodoCount = () => {
+    return Object.values(pendingTodos).reduce((total, todos) => total + todos.length, 0);
+  };
+  
+  const getCurrentTodoCount = (tabName) => {
+    const existingTodos = {
+      today: todos.length,
+      tomorrow: tomorrowTodos.length,
+      later: laterTodos.length
+    };
+    return existingTodos[tabName] || 0;
+  };
+
 
   // Function to check if adding todos would exceed limits
   const checkTodoLimits = (targetTab, itemsToAdd = 1) => {
@@ -161,8 +189,8 @@ const AddTodoModal = ({
     alertButtons.push({
       text: "Upgrade to Pro",
       onPress: () => {
-        // TODO: Navigate to upgrade screen
-        Alert.alert("Upgrade to Pro", "Navigate to upgrade screen - implement this navigation");
+        // Show the beautiful limit modal
+        setShowLimitModal(true);
       }
     });
     
@@ -186,6 +214,7 @@ const AddTodoModal = ({
       // Reset animation values
       backgroundOpacityAnim.setValue(0);
       slideAnim.setValue(Dimensions.get('window').height);
+      translateY.setValue(0); // Reset gesture translation
       
       // Animate in with staggered timing
       Animated.sequence([
@@ -207,37 +236,125 @@ const AddTodoModal = ({
     }
   }, [visible]);
 
-  // Update form when editing a todo
+  // Handle pre-filling from AI suggestions
   useEffect(() => {
-    if (visible && todoData) {
-      setTitle(todoData.title || '');
-      setTab(todoData.tab || 'today');
-      setIsGroup(todoData.isGroup || false);
+    if (visible && (todoData || aiSuggestions.length > 0)) {
+      console.log('Pre-filling modal with AI data:');
+      console.log('- Single todoData:', todoData);
+      console.log('- AI suggestions array:', aiSuggestions);
       
-      // Set group items if this is a group and has items
-      if (todoData.isGroup && Array.isArray(todoData.items)) {
-        setGroupItems([...todoData.items]);
-      } else {
-        setGroupItems([]);
+      // Handle multiple AI suggestions (preferred method)
+      if (aiSuggestions.length > 0) {
+        console.log('Processing', aiSuggestions.length, 'AI suggestions');
+        
+        const newPendingTodos = {
+          today: [],
+          tomorrow: [],
+          later: []
+        };
+        
+        aiSuggestions.forEach((suggestion, index) => {
+          const targetTab = suggestion.tab || 'today';
+          
+          if (suggestion.isGroup && suggestion.items) {
+            // Add as group
+            const groupItem = {
+              id: `ai_group_${Date.now()}_${index}`,
+              title: suggestion.title,
+              tab: targetTab,
+              isGroup: true,
+              items: [...suggestion.items]
+            };
+            newPendingTodos[targetTab].push(groupItem);
+          } else {
+            // Add as individual todo
+            const todoItem = {
+              id: `ai_todo_${Date.now()}_${index}`,
+              title: suggestion.title,
+              tab: targetTab,
+              isGroup: false
+            };
+            newPendingTodos[targetTab].push(todoItem);
+          }
+        });
+        
+        setPendingTodos(newPendingTodos);
+        // Switch to review tab to show all AI suggestions
+        setActiveTab('review');
       }
+      // Handle single todoData (auto-populate to Review & Save)
+      else if (todoData) {
+        const targetTab = todoData.tab || 'today';
+        
+        if (todoData.isGroup && todoData.items) {
+          // Auto-add group to pending todos (go straight to Review & Save)
+          console.log('Auto-adding group to Review & Save with', todoData.items.length, 'items');
+          
+          const groupItem = {
+            id: `ai_single_group_${Date.now()}`,
+            title: todoData.title,
+            tab: targetTab,
+            isGroup: true,
+            items: [...todoData.items]
+          };
+          
+          setPendingTodos({
+            today: targetTab === 'today' ? [groupItem] : [],
+            tomorrow: targetTab === 'tomorrow' ? [groupItem] : [],
+            later: targetTab === 'later' ? [groupItem] : []
+          });
+          
+          // Go to review tab to show the pre-populated group
+          setActiveTab('review');
+        } else {
+          // Auto-add single todo to pending todos (go straight to Review & Save)
+          console.log('Auto-adding single todo to Review & Save:', todoData.title);
+          
+          const todoItem = {
+            id: `ai_single_todo_${Date.now()}`,
+            title: todoData.title,
+            tab: targetTab,
+            isGroup: false
+          };
+          
+          setPendingTodos({
+            today: targetTab === 'today' ? [todoItem] : [],
+            tomorrow: targetTab === 'tomorrow' ? [todoItem] : [],
+            later: targetTab === 'later' ? [todoItem] : []
+          });
+          
+          // Go to review tab to show the pre-populated todo
+          setActiveTab('review');
+        }
+      }
+    } else if (visible && !todoData && aiSuggestions.length === 0) {
+      // No AI data, start fresh
+      resetForm();
     } else if (!visible) {
-      // Reset form when closing
+      // Modal closing, reset everything
       resetForm();
     }
-  }, [todoData, visible]);
+  }, [visible, todoData, aiSuggestions]);
   
   // Reset form
   const resetForm = () => {
-    setTitle('');
-    setTab('today');
-    setIsGroup(false);
+    setActiveTab('add');
+    setTodoTitle('');
+    setSelectedTab('today');
+    setIsCreatingGroup(false);
+    setGroupTitle('');
     setGroupItems([]);
-    setNewItemText('');
+    setNewGroupItemText('');
+    setPendingTodos({
+      today: [],
+      tomorrow: [],
+      later: []
+    });
   };
   
-  // Handle add todo
-  const handleAddTodo = async () => {
-    if (!title.trim()) {
+  // Add individual todo to selected tab
+  const addTodoToTab = () => {
+    if (!todoTitle.trim()) {
       Alert.alert(
         "Title Required", 
         "Please enter a title for this to-do.",
@@ -246,8 +363,34 @@ const AddTodoModal = ({
       return;
     }
     
-    // For groups, ensure we have at least one item
-    if (isGroup && groupItems.length === 0) {
+    const newTodo = {
+      id: `todo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      title: todoTitle.trim(),
+      tab: selectedTab,
+      isGroup: false
+    };
+    
+    setPendingTodos(prev => ({
+      ...prev,
+      [selectedTab]: [...prev[selectedTab], newTodo]
+    }));
+    
+    setTodoTitle(''); // Reset title
+    setActiveTab('review'); // Switch to review tab
+  };
+  
+  // Add group to selected tab
+  const addGroupToTab = () => {
+    if (!groupTitle.trim()) {
+      Alert.alert(
+        "Group Title Required", 
+        "Please enter a title for this group.",
+        [{ text: "OK" }]
+      );
+      return;
+    }
+    
+    if (groupItems.length === 0) {
       Alert.alert(
         "Add Items", 
         "Please add at least one item to this group.",
@@ -255,83 +398,176 @@ const AddTodoModal = ({
       );
       return;
     }
-
-    // Check limits for free users
-    if (!isPro) {
-      const itemsToAdd = isGroup ? groupItems.length : 1;
-      const limitCheck = checkTodoLimits(tab, itemsToAdd);
-      
-      if (!limitCheck.canAdd) {
-        showLimitExceededAlert(limitCheck, itemsToAdd);
-        return;
-      }
-    }
     
-    try {
-      // Create the updated todo data
-      const updatedTodoData = {
-        ...todoData,
-        title: title.trim(),
-        tab: tab,
-        isGroup: isGroup,
-        completed: false,
-        createdAt: new Date().toISOString(),
-      };
-      
-      // Generate a new ID if this is a new todo
-      if (!updatedTodoData.id) {
-        updatedTodoData.id = `todo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      }
-      
-      // If it's a group, add the items
-      if (isGroup) {
-        // Handle group items creation
-        const groupId = updatedTodoData.id;
-        const formattedItems = groupItems.map(item => ({
-          id: item.id || `todo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          title: item.title,
-          completed: false,
-          groupId: groupId,
-          createdAt: new Date().toISOString(),
-        }));
-        
-        // Store items separately for API (will be combined in storage)
-        updatedTodoData.items = formattedItems;
-      }
-      
-      // Call parent handler (this will handle the storage in TodoListScreen)
-      onAdd(updatedTodoData);
-      
-    } catch (error) {
-      console.error('Error adding todo:', error);
-      Alert.alert('Error', 'Failed to add to-do. Please try again.');
-    }
+    const newGroup = {
+      id: `group_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      title: groupTitle.trim(),
+      tab: selectedTab,
+      isGroup: true,
+      items: [...groupItems]
+    };
+    
+    setPendingTodos(prev => ({
+      ...prev,
+      [selectedTab]: [...prev[selectedTab], newGroup]
+    }));
+    
+    // Reset group form
+    setGroupTitle('');
+    setGroupItems([]);
+    setNewGroupItemText('');
+    setIsCreatingGroup(false);
+    setActiveTab('review'); // Switch to review tab
   };
   
-  // Add a new item to the group
-  const handleAddGroupItem = () => {
-    if (!newItemText.trim()) return;
+  // Add item to group
+  const addItemToGroup = () => {
+    if (!newGroupItemText.trim()) return;
     
     const newItem = {
-      id: `todo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      title: newItemText.trim(),
+      id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      title: newGroupItemText.trim(),
       completed: false
     };
     
     setGroupItems([...groupItems, newItem]);
-    setNewItemText('');
+    setNewGroupItemText('');
   };
   
-  // Update an item
-  const handleUpdateGroupItem = (id, newTitle) => {
+  // Remove item from group
+  const removeItemFromGroup = (itemId) => {
+    setGroupItems(groupItems.filter(item => item.id !== itemId));
+  };
+  
+  // Remove todo/group from pending list
+  const removePendingItem = (tabName, itemId) => {
+    setPendingTodos(prev => ({
+      ...prev,
+      [tabName]: prev[tabName].filter(item => item.id !== itemId)
+    }));
+  };
+  
+  // Gesture handlers for swipe-to-dismiss
+  const onGestureEvent = Animated.event(
+    [{ nativeEvent: { translationY: translateY } }],
+    { useNativeDriver: true }
+  );
+
+  // Handle swipe gesture
+  const handleGestureEnd = (event) => {
+    const { translationY, velocityY } = event.nativeEvent;
+    const screenHeight = Dimensions.get('window').height;
+    const dismissThreshold = screenHeight * 0.2;
+    const fastSwipeVelocity = 1200;
+    
+    const shouldDismiss = translationY > dismissThreshold || velocityY > fastSwipeVelocity;
+    
+    if (shouldDismiss) {
+      // Animate to dismiss
+      Animated.parallel([
+        Animated.timing(slideAnim, {
+          toValue: screenHeight,
+          duration: 250,
+          useNativeDriver: true,
+          easing: Easing.out(Easing.ease)
+        }),
+        Animated.timing(backgroundOpacityAnim, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: true,
+          easing: Easing.out(Easing.ease)
+        })
+      ]).start(() => {
+        translateY.setValue(0);
+        onClose();
+      });
+    } else {
+      // Snap back
+      Animated.spring(translateY, {
+        toValue: 0,
+        tension: 150,
+        friction: 8,
+        useNativeDriver: true
+      }).start();
+    }
+  };
+  
+  // Handle save all pending todos
+  const handleSaveAllTodos = async () => {
+    const totalTodos = getTotalTodoCount();
+    
+    if (totalTodos === 0) {
+      Alert.alert('No Todos', 'Please add at least one to-do before saving');
+      return;
+    }
+    
+    // Check limits for free users
+    if (!isPro) {
+      for (const [tabName, todos] of Object.entries(pendingTodos)) {
+        if (todos.length > 0) {
+          const itemsToAdd = todos.reduce((count, todo) => {
+            return count + (todo.isGroup ? todo.items.length : 1);
+          }, 0);
+          
+          const limitCheck = checkTodoLimits(tabName, itemsToAdd);
+          if (!limitCheck.canAdd) {
+            showLimitExceededAlert(limitCheck, itemsToAdd);
+            return;
+          }
+        }
+      }
+    }
+    
+    try {
+      // Process all pending todos - preserve groups and individual todos
+      let delayIndex = 0;
+      
+      Object.entries(pendingTodos).forEach(([tabName, todos]) => {
+        todos.forEach(todo => {
+          setTimeout(() => {
+            if (todo.isGroup) {
+              // Create as group - TodoScreen will handle displaying individual items
+              onAdd({
+                id: todo.id,
+                title: todo.title,
+                tab: tabName,
+                isGroup: true,
+                items: todo.items,
+                completed: false,
+                createdAt: new Date().toISOString()
+              });
+            } else {
+              // Create as individual todo
+              onAdd({
+                id: todo.id,
+                title: todo.title,
+                tab: tabName,
+                isGroup: false,
+                completed: false,
+                createdAt: new Date().toISOString()
+              });
+            }
+          }, delayIndex * 15);
+          delayIndex++;
+        });
+      });
+      
+      // Close modal after all items are processed
+      setTimeout(() => {
+        handleClose();
+      }, delayIndex * 15 + 100);
+      
+    } catch (error) {
+      console.error('Error adding todos:', error);
+      Alert.alert('Error', 'Failed to add to-dos. Please try again.');
+    }
+  };
+  
+  // Update a group item
+  const updateGroupItem = (itemId, newTitle) => {
     setGroupItems(groupItems.map(item => 
-      item.id === id ? { ...item, title: newTitle } : item
+      item.id === itemId ? { ...item, title: newTitle } : item
     ));
-  };
-  
-  // Remove an item
-  const handleRemoveGroupItem = (id) => {
-    setGroupItems(groupItems.filter(item => item.id !== id));
   };
   
   // Dismiss keyboard when clicking outside inputs
@@ -364,6 +600,7 @@ const AddTodoModal = ({
   };
   
   return (
+    <>
     <Modal
       visible={visible}
       transparent={true}
@@ -381,14 +618,24 @@ const AddTodoModal = ({
           }
         ]}
       >
-        <Animated.View
-          style={[
-            styles.gestureContainer,
-            {
-              transform: [{ translateY: slideAnim }]
+        <PanGestureHandler
+          onGestureEvent={onGestureEvent}
+          onHandlerStateChange={(event) => {
+            if (event.nativeEvent.state === State.END) {
+              handleGestureEnd(event);
             }
-          ]}
+          }}
         >
+          <Animated.View
+            style={[
+              styles.gestureContainer,
+              {
+                transform: [
+                  { translateY: Animated.add(slideAnim, translateY) }
+                ]
+              }
+            ]}
+          >
           <TouchableWithoutFeedback onPress={dismissKeyboard}>
             <KeyboardAvoidingView 
               style={styles.keyboardContainer} 
@@ -404,6 +651,14 @@ const AddTodoModal = ({
                   borderTopRightRadius: scaleWidth(16),
                 }
               ]}>
+              {/* Swipe indicator */}
+              <View style={styles.swipeHandle}>
+                <View style={[
+                  styles.swipeIndicator,
+                  { backgroundColor: theme.textSecondary + '40' }
+                ]} />
+              </View>
+              
             <View style={styles.modalHeader}>
               <Text style={[
                 styles.modalTitle, 
@@ -413,7 +668,7 @@ const AddTodoModal = ({
                   maxFontSizeMultiplier: 1.3,
                 }
               ]}>
-                {isGroup ? 'Create To-Do Group' : 'Create To-Do'}
+                Create To-Dos
               </Text>
               <TouchableOpacity 
                 style={[
@@ -431,450 +686,372 @@ const AddTodoModal = ({
             </View>
             
             <ScrollView 
-              style={styles.formContainer}
-              contentContainerStyle={{ paddingBottom: spacing.xl }}
+              style={[styles.formContainer, { flex: 1 }]}
+              contentContainerStyle={{ paddingBottom: spacing.xl, flexGrow: 1 }}
+              showsVerticalScrollIndicator={false}
             >
-              {/* Type Selector */}
-              <View style={styles.typeSelector}>
+              {/* Main Tabs */}
+              <View style={[styles.mainTabs, { borderBottomColor: theme.border }]}>
                 <TouchableOpacity
                   style={[
-                    styles.typeOption,
-                    !isGroup && styles.typeOptionSelected,
-                    { 
-                      backgroundColor: !isGroup ? buttonColor : theme.cardElevated,
-                      borderColor: theme.border,
-                      minHeight: accessibility.minTouchTarget,
-                    }
+                    styles.mainTab,
+                    activeTab === 'add' && { borderBottomColor: theme.primary, borderBottomWidth: 2 }
                   ]}
-                  onPress={() => setIsGroup(false)}
-                  accessible={true}
-                  accessibilityRole="radio"
-                  accessibilityLabel="Single to-do"
-                  accessibilityState={{ checked: !isGroup }}
-                  accessibilityHint="Select to create a single to-do item"
+                  onPress={() => setActiveTab('add')}
                 >
                   <Ionicons 
-                    name="checkbox-outline" 
+                    name="add-circle-outline" 
                     size={scaleWidth(20)} 
-                    color={!isGroup ? '#FFFFFF' : theme.textSecondary} 
+                    color={activeTab === 'add' ? theme.primary : theme.textSecondary} 
                   />
                   <Text style={[
-                    styles.typeOptionText, 
+                    styles.mainTabText,
                     { 
-                      color: !isGroup ? '#FFFFFF' : theme.text,
-                      fontSize: scaleFontSize(14),
-                      marginLeft: spacing.xs,
-                      maxFontSizeMultiplier: 1.3,
+                      color: activeTab === 'add' ? theme.primary : theme.textSecondary,
+                      marginLeft: spacing.xs
                     }
                   ]}>
-                    Single To-Do
+                    Add Items
                   </Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity
                   style={[
-                    styles.typeOption,
-                    isGroup && styles.typeOptionSelected,
-                    { 
-                      backgroundColor: isGroup ? buttonColor : theme.cardElevated,
-                      borderColor: theme.border,
-                      minHeight: accessibility.minTouchTarget,
-                    }
+                    styles.mainTab,
+                    activeTab === 'review' && { borderBottomColor: theme.primary, borderBottomWidth: 2 }
                   ]}
-                  onPress={() => setIsGroup(true)}
-                  accessible={true}
-                  accessibilityRole="radio"
-                  accessibilityLabel="To-do group"
-                  accessibilityState={{ checked: isGroup }}
-                  accessibilityHint="Select to create a group of to-do items"
+                  onPress={() => setActiveTab('review')}
                 >
                   <Ionicons 
                     name="list-outline" 
                     size={scaleWidth(20)} 
-                    color={isGroup ? '#FFFFFF' : theme.textSecondary} 
+                    color={activeTab === 'review' ? theme.primary : theme.textSecondary} 
                   />
                   <Text style={[
-                    styles.typeOptionText, 
+                    styles.mainTabText,
                     { 
-                      color: isGroup ? '#FFFFFF' : theme.text,
-                      fontSize: scaleFontSize(14),
-                      marginLeft: spacing.xs,
-                      maxFontSizeMultiplier: 1.3,
+                      color: activeTab === 'review' ? theme.primary : theme.textSecondary,
+                      marginLeft: spacing.xs
                     }
                   ]}>
-                    To-Do Group
+                    Review & Save ({getTotalTodoCount()})
                   </Text>
                 </TouchableOpacity>
               </View>
               
-              {/* Tab Selector */}
-              <Text style={[
-                styles.sectionTitle, 
-                { 
-                  color: theme.textSecondary,
-                  fontSize: scaleFontSize(15),
-                  marginTop: spacing.m,
-                  maxFontSizeMultiplier: 1.3,
-                }
-              ]}>
-                Add to:
-              </Text>
-              <View style={styles.tabSelector}>
-                <TouchableOpacity
-                  style={[
-                    styles.tabOption,
-                    tab === 'today' && styles.tabOptionSelected,
-                    { 
-                      backgroundColor: tab === 'today' ? buttonColor : theme.cardElevated,
-                      borderColor: theme.border,
-                      minHeight: accessibility.minTouchTarget,
-                    }
-                  ]}
-                  onPress={() => setTab('today')}
-                  accessible={true}
-                  accessibilityRole="radio"
-                  accessibilityLabel="Today tab"
-                  accessibilityState={{ checked: tab === 'today' }}
-                  accessibilityHint="Add to-do to today's list"
-                >
-                  <Ionicons 
-                    name="today-outline" 
-                    size={scaleWidth(20)} 
-                    color={tab === 'today' ? '#FFFFFF' : theme.textSecondary} 
-                  />
-                  <Text style={[
-                    styles.tabOptionText, 
-                    { 
-                      color: tab === 'today' ? '#FFFFFF' : theme.text,
-                      fontSize: scaleFontSize(14),
-                      marginLeft: spacing.xs,
-                      maxFontSizeMultiplier: 1.3,
-                    }
-                  ]}>
-                    Today
+              {/* Add Tab Content */}
+              {activeTab === 'add' && (
+                <View style={{ marginTop: spacing.m }}>
+                  {/* Tab Selector for where to add */}
+                  <Text style={[styles.sectionTitle, { color: theme.textSecondary, fontSize: scaleFontSize(15) }]}>
+                    Add to:
                   </Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity
-                  style={[
-                    styles.tabOption,
-                    tab === 'tomorrow' && styles.tabOptionSelected,
-                    { 
-                      backgroundColor: tab === 'tomorrow' ? buttonColor : theme.cardElevated,
-                      borderColor: theme.border,
-                      minHeight: accessibility.minTouchTarget,
-                    }
-                  ]}
-                  onPress={() => setTab('tomorrow')}
-                  accessible={true}
-                  accessibilityRole="radio"
-                  accessibilityLabel="Tomorrow tab"
-                  accessibilityState={{ checked: tab === 'tomorrow' }}
-                  accessibilityHint="Add to-do to tomorrow's list"
-                >
-                  <Ionicons 
-                    name="calendar-outline" 
-                    size={scaleWidth(20)} 
-                    color={tab === 'tomorrow' ? '#FFFFFF' : theme.textSecondary} 
-                  />
-                  <Text style={[
-                    styles.tabOptionText, 
-                    { 
-                      color: tab === 'tomorrow' ? '#FFFFFF' : theme.text,
-                      fontSize: scaleFontSize(14),
-                      marginLeft: spacing.xs,
-                      maxFontSizeMultiplier: 1.3,
-                    }
-                  ]}>
-                    Tomorrow
-                  </Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity
-                  style={[
-                    styles.tabOption,
-                    tab === 'later' && styles.tabOptionSelected,
-                    { 
-                      backgroundColor: tab === 'later' ? buttonColor : theme.cardElevated,
-                      borderColor: theme.border,
-                      minHeight: accessibility.minTouchTarget,
-                    }
-                  ]}
-                  onPress={() => setTab('later')}
-                  accessible={true}
-                  accessibilityRole="radio"
-                  accessibilityLabel="Later tab"
-                  accessibilityState={{ checked: tab === 'later' }}
-                  accessibilityHint="Add to-do to later list"
-                >
-                  <Ionicons 
-                    name="time-outline" 
-                    size={scaleWidth(20)} 
-                    color={tab === 'later' ? '#FFFFFF' : theme.textSecondary} 
-                  />
-                  <Text style={[
-                    styles.tabOptionText, 
-                    { 
-                      color: tab === 'later' ? '#FFFFFF' : theme.text,
-                      fontSize: scaleFontSize(14),
-                      marginLeft: spacing.xs,
-                      maxFontSizeMultiplier: 1.3,
-                    }
-                  ]}>
-                    Later
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              
-              {/* Title Field */}
-              <Text style={[
-                styles.label, 
-                { 
-                  color: theme.textSecondary,
-                  fontSize: scaleFontSize(15),
-                  marginTop: spacing.m,
-                  maxFontSizeMultiplier: 1.3,
-                }
-              ]}>
-                {isGroup ? 'Group Title' : 'To-Do Title'} *
-              </Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  { 
-                    backgroundColor: theme.inputBackground,
-                    color: theme.text,
-                    borderColor: theme.border,
-                    fontSize: scaleFontSize(16),
-                    paddingHorizontal: spacing.m,
-                    paddingVertical: spacing.s,
-                    minHeight: accessibility.minTouchTarget,
-                  }
-                ]}
-                value={title}
-                onChangeText={setTitle}
-                placeholder={isGroup ? "Enter group title (e.g., 'Work Tasks')" : "Enter to-do title (e.g., 'Finish report')"}
-                placeholderTextColor={theme.textSecondary}
-                autoFocus={false}
-                maxFontSizeMultiplier={1.3}
-                accessible={true}
-                accessibilityLabel={isGroup ? "Group title" : "To-do title"}
-                accessibilityHint={isGroup ? "Enter a name for your group" : "Enter a name for your to-do"}
-              />
-              
-              {/* Group Items Section */}
-              {isGroup && (
-                <View style={[
-                  styles.groupItemsSection,
-                  { marginTop: spacing.m }
-                ]}>
-                  <Text style={[
-                    styles.sectionTitle, 
-                    { 
-                      color: theme.textSecondary,
-                      fontSize: scaleFontSize(15),
-                      maxFontSizeMultiplier: 1.3,
-                    }
-                  ]}>
-                    Items in Group ({groupItems.length})
-                  </Text>
-                  
-                  {/* Group Items List */}
-                  {groupItems.map((item, index) => (
-                    <View 
-                      key={item.id || index} 
+                  <View style={styles.tabSelector}>
+                    <TouchableOpacity
                       style={[
-                        styles.groupItemContainer,
-                        { marginTop: index > 0 ? spacing.xs : spacing.s }
-                      ]}
-                    >
-                      <View style={[
-                        styles.groupItemIconContainer,
-                        {
-                          minWidth: accessibility.minTouchTarget * 0.8,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }
-                      ]}>
-                        <Ionicons 
-                          name="radio-button-off" 
-                          size={scaleWidth(20)} 
-                          color={theme.textSecondary} 
-                        />
-                      </View>
-                      <TextInput
-                        style={[
-                          styles.groupItemInput,
-                          { 
-                            backgroundColor: theme.inputBackground,
-                            color: theme.text,
-                            borderColor: theme.border,
-                            fontSize: scaleFontSize(15),
-                            paddingHorizontal: spacing.s,
-                            paddingVertical: spacing.xs,
-                            flex: 1,
-                            minHeight: accessibility.minTouchTarget,
-                            textAlignVertical: 'top',
-                          }
-                        ]}
-                        value={item.title}
-                        onChangeText={(text) => handleUpdateGroupItem(item.id, text)}
-                        placeholder={`Item ${index + 1}`}
-                        placeholderTextColor={theme.textSecondary}
-                        multiline={true}
-                        scrollEnabled={false}
-                        maxFontSizeMultiplier={1.3}
-                        accessible={true}
-                        accessibilityLabel={`Group item ${index + 1}`}
-                        accessibilityHint="Edit this group item"
-                      />
-                      <TouchableOpacity 
-                        style={[
-                          styles.removeItemButton,
-                          ensureAccessibleTouchTarget({ width: 30, height: 30 })
-                        ]}
-                        onPress={() => handleRemoveGroupItem(item.id)}
-                        accessible={true}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Remove item ${index + 1}`}
-                        accessibilityHint="Removes this item from the group"
-                      >
-                        <Ionicons 
-                          name="close-circle" 
-                          size={scaleWidth(22)} 
-                          color={theme.error || 'red'} 
-                        />
-                      </TouchableOpacity>
-                    </View>
-                  ))}
-                  
-                  {/* Add New Item Input */}
-                  <View style={[
-                    styles.addItemContainer,
-                    { marginTop: spacing.m }
-                  ]}>
-                    <View style={[
-                      styles.groupItemIconContainer,
-                      {
-                        minWidth: accessibility.minTouchTarget * 0.8,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }
-                    ]}>
-                      <Ionicons 
-                        name="add-circle-outline" 
-                        size={scaleWidth(20)} 
-                        color={buttonColor} 
-                      />
-                    </View>
-                    <TextInput
-                      style={[
-                        styles.groupItemInput,
+                        styles.tabOption,
+                        selectedTab === 'today' && styles.tabOptionSelected,
                         { 
-                          backgroundColor: theme.inputBackground,
-                          color: theme.text,
+                          backgroundColor: selectedTab === 'today' ? buttonColor : theme.cardElevated,
                           borderColor: theme.border,
-                          fontSize: scaleFontSize(15),
-                          paddingHorizontal: spacing.s,
-                          paddingVertical: spacing.xs,
-                          flex: 1,
-                          minHeight: accessibility.minTouchTarget,
                         }
                       ]}
-                      value={newItemText}
-                      onChangeText={setNewItemText}
-                      placeholder="Add new item"
-                      placeholderTextColor={theme.textSecondary}
-                      onSubmitEditing={handleAddGroupItem}
-                      returnKeyType="done"
-                      maxFontSizeMultiplier={1.3}
-                      accessible={true}
-                      accessibilityLabel="New group item"
-                      accessibilityHint="Enter text for a new item in this group"
-                    />
-                    <TouchableOpacity 
-                      style={[
-                        styles.addItemButton, 
-                        { 
-                          backgroundColor: buttonColor,
-                          minHeight: accessibility.minTouchTarget,
-                          paddingHorizontal: spacing.m,
-                          justifyContent: 'center',
-                        }
-                      ]}
-                      onPress={handleAddGroupItem}
-                      disabled={!newItemText.trim()}
-                      accessible={true}
-                      accessibilityRole="button"
-                      accessibilityLabel="Add item"
-                      accessibilityHint="Adds the new item to the group"
-                      accessibilityState={{ disabled: !newItemText.trim() }}
+                      onPress={() => setSelectedTab('today')}
                     >
-                      <Text style={[
-                        styles.addItemButtonText,
-                        {
-                          fontSize: scaleFontSize(14),
-                          maxFontSizeMultiplier: 1.3,
+                      <Ionicons name="today-outline" size={scaleWidth(18)} color={selectedTab === 'today' ? '#FFFFFF' : theme.textSecondary} />
+                      <Text style={[styles.tabOptionText, { color: selectedTab === 'today' ? '#FFFFFF' : theme.text, marginLeft: spacing.xs }]}>
+                        Today ({getTodoCount('today')})
+                      </Text>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity
+                      style={[
+                        styles.tabOption,
+                        selectedTab === 'tomorrow' && styles.tabOptionSelected,
+                        { 
+                          backgroundColor: selectedTab === 'tomorrow' ? buttonColor : theme.cardElevated,
+                          borderColor: theme.border,
                         }
-                      ]}>
-                        Add
+                      ]}
+                      onPress={() => setSelectedTab('tomorrow')}
+                    >
+                      <Ionicons name="calendar-outline" size={scaleWidth(18)} color={selectedTab === 'tomorrow' ? '#FFFFFF' : theme.textSecondary} />
+                      <Text style={[styles.tabOptionText, { color: selectedTab === 'tomorrow' ? '#FFFFFF' : theme.text, marginLeft: spacing.xs }]}>
+                        Tomorrow ({getTodoCount('tomorrow')})
+                      </Text>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity
+                      style={[
+                        styles.tabOption,
+                        selectedTab === 'later' && styles.tabOptionSelected,
+                        { 
+                          backgroundColor: selectedTab === 'later' ? buttonColor : theme.cardElevated,
+                          borderColor: theme.border,
+                        }
+                      ]}
+                      onPress={() => setSelectedTab('later')}
+                    >
+                      <Ionicons name="time-outline" size={scaleWidth(18)} color={selectedTab === 'later' ? '#FFFFFF' : theme.textSecondary} />
+                      <Text style={[styles.tabOptionText, { color: selectedTab === 'later' ? '#FFFFFF' : theme.text, marginLeft: spacing.xs }]}>
+                        Later ({getTodoCount('later')})
                       </Text>
                     </TouchableOpacity>
                   </View>
                   
-                  {/* Empty Group Warning */}
-                  {groupItems.length === 0 && (
-                    <Text style={[
-                      styles.emptyGroupWarning, 
-                      { 
-                        color: theme.textSecondary,
-                        fontSize: scaleFontSize(14),
-                        marginTop: spacing.m,
-                        fontStyle: 'italic',
-                        textAlign: 'center',
-                        maxFontSizeMultiplier: 1.3,
-                      }
-                    ]}>
-                      Add at least one item to your group
-                    </Text>
+                  {/* Type Toggle */}
+                  <View style={styles.typeToggle}>
+                    <TouchableOpacity
+                      style={[
+                        styles.typeOption,
+                        !isCreatingGroup && styles.typeOptionSelected,
+                        { 
+                          backgroundColor: !isCreatingGroup ? buttonColor : theme.cardElevated,
+                          borderColor: theme.border,
+                        }
+                      ]}
+                      onPress={() => setIsCreatingGroup(false)}
+                    >
+                      <Ionicons name="checkbox-outline" size={scaleWidth(18)} color={!isCreatingGroup ? '#FFFFFF' : theme.textSecondary} />
+                      <Text style={[styles.typeOptionText, { color: !isCreatingGroup ? '#FFFFFF' : theme.text, marginLeft: spacing.xs }]}>
+                        Single To-Do
+                      </Text>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity
+                      style={[
+                        styles.typeOption,
+                        isCreatingGroup && styles.typeOptionSelected,
+                        { 
+                          backgroundColor: isCreatingGroup ? buttonColor : theme.cardElevated,
+                          borderColor: theme.border,
+                        }
+                      ]}
+                      onPress={() => setIsCreatingGroup(true)}
+                    >
+                      <Ionicons name="list" size={scaleWidth(18)} color={isCreatingGroup ? '#FFFFFF' : theme.textSecondary} />
+                      <Text style={[styles.typeOptionText, { color: isCreatingGroup ? '#FFFFFF' : theme.text, marginLeft: spacing.xs }]}>
+                        Group
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                  
+                  {!isCreatingGroup ? (
+                    // Single Todo Form
+                    <View>
+                      <Text style={[styles.label, { color: theme.textSecondary, fontSize: scaleFontSize(15), marginTop: spacing.m }]}>
+                        To-Do Title *
+                      </Text>
+                      <TextInput
+                        style={[
+                          styles.input,
+                          { 
+                            backgroundColor: theme.inputBackground,
+                            color: theme.text,
+                            borderColor: theme.border,
+                            fontSize: scaleFontSize(16),
+                            paddingHorizontal: spacing.m,
+                            paddingVertical: spacing.s,
+                          }
+                        ]}
+                        value={todoTitle}
+                        onChangeText={setTodoTitle}
+                        placeholder="Enter to-do title (e.g., 'Finish report')"
+                        placeholderTextColor={theme.textSecondary}
+                        returnKeyType="done"
+                        onSubmitEditing={addTodoToTab}
+                      />
+                      
+                      <TouchableOpacity
+                        style={[
+                          styles.addButton,
+                          { 
+                            backgroundColor: !todoTitle.trim() ? (buttonColor + '50') : buttonColor,
+                            marginTop: spacing.m,
+                          }
+                        ]}
+                        onPress={addTodoToTab}
+                        disabled={!todoTitle.trim()}
+                      >
+                        <Text style={[styles.addButtonText, { color: !todoTitle.trim() ? 'rgba(255,255,255,0.7)' : '#FFFFFF' }]}>
+                          Add to {selectedTab.charAt(0).toUpperCase() + selectedTab.slice(1)}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    // Group Form
+                    <View>
+                      <Text style={[styles.label, { color: theme.textSecondary, fontSize: scaleFontSize(15), marginTop: spacing.m }]}>
+                        Group Title *
+                      </Text>
+                      <TextInput
+                        style={[
+                          styles.input,
+                          { 
+                            backgroundColor: theme.inputBackground,
+                            color: theme.text,
+                            borderColor: theme.border,
+                          }
+                        ]}
+                        value={groupTitle}
+                        onChangeText={setGroupTitle}
+                        placeholder="Enter group title (e.g., 'House Cleaning')"
+                        placeholderTextColor={theme.textSecondary}
+                      />
+                      
+                      <Text style={[styles.label, { color: theme.textSecondary, fontSize: scaleFontSize(15) }]}>
+                        Group Items ({groupItems.length})
+                      </Text>
+                      
+                      {/* Group Items List */}
+                      {groupItems.map((item, index) => (
+                        <View key={item.id} style={[styles.groupItemContainer, { backgroundColor: theme.cardElevated, borderColor: theme.border }]}>
+                          <TextInput
+                            style={[styles.groupItemInput, { color: theme.text, backgroundColor: 'transparent', flex: 1 }]}
+                            value={item.title}
+                            onChangeText={(text) => updateGroupItem(item.id, text)}
+                            placeholder={`Item ${index + 1}`}
+                            placeholderTextColor={theme.textSecondary}
+                          />
+                          <TouchableOpacity onPress={() => removeItemFromGroup(item.id)} style={styles.removeItemButton}>
+                            <Ionicons name="close-circle" size={scaleWidth(20)} color={theme.error || '#ff4444'} />
+                          </TouchableOpacity>
+                        </View>
+                      ))}
+                      
+                      {/* Add New Item */}
+                      <View style={[styles.addItemContainer, { backgroundColor: theme.cardElevated, borderColor: theme.border }]}>
+                        <TextInput
+                          style={[styles.groupItemInput, { color: theme.text, backgroundColor: 'transparent', flex: 1 }]}
+                          value={newGroupItemText}
+                          onChangeText={setNewGroupItemText}
+                          placeholder="Add new item"
+                          placeholderTextColor={theme.textSecondary}
+                          returnKeyType="done"
+                          onSubmitEditing={addItemToGroup}
+                        />
+                        <TouchableOpacity 
+                          onPress={addItemToGroup}
+                          style={[styles.addItemButton, { backgroundColor: buttonColor }]}
+                          disabled={!newGroupItemText.trim()}
+                        >
+                          <Text style={[styles.addItemButtonText, { color: '#FFFFFF' }]}>Add</Text>
+                        </TouchableOpacity>
+                      </View>
+                      
+                      <TouchableOpacity
+                        style={[
+                          styles.addButton,
+                          { 
+                            backgroundColor: (!groupTitle.trim() || groupItems.length === 0) ? (buttonColor + '50') : buttonColor,
+                            marginTop: spacing.m,
+                          }
+                        ]}
+                        onPress={addGroupToTab}
+                        disabled={!groupTitle.trim() || groupItems.length === 0}
+                      >
+                        <Text style={[styles.addButtonText, { color: (!groupTitle.trim() || groupItems.length === 0) ? 'rgba(255,255,255,0.7)' : '#FFFFFF' }]}>
+                          Add Group to {selectedTab.charAt(0).toUpperCase() + selectedTab.slice(1)}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
                   )}
                 </View>
               )}
               
-              <TouchableOpacity 
-                style={[
-                  styles.addButton, 
-                  { 
-                    backgroundColor: buttonColor,
-                    marginTop: spacing.l,
-                    paddingVertical: spacing.m,
-                    borderRadius: 8,
-                    minHeight: accessibility.minTouchTarget,
-                  }
-                ]}
-                onPress={handleAddTodo}
-                accessible={true}
-                accessibilityRole="button"
-                accessibilityLabel={isGroup ? "Create to-do group" : "Create to-do"}
-                accessibilityHint={isGroup ? "Creates a new to-do group with the specified items" : "Creates a new to-do item"}
-              >
-                <Text style={[
-                  styles.addButtonText,
-                  {
-                    fontSize: scaleFontSize(16),
-                    maxFontSizeMultiplier: 1.3,
-                  }
-                ]}>
-                  {isGroup ? 'Create To-Do Group' : 'Create To-Do'}
-                </Text>
-              </TouchableOpacity>
+              {/* Review Tab Content */}
+              {activeTab === 'review' && (
+                <View style={{ marginTop: spacing.m }}>
+                  {getTotalTodoCount() > 0 ? (
+                    <ScrollView style={{ maxHeight: scaleHeight(600) }}>
+                      {Object.entries(pendingTodos).map(([tabName, todos]) => (
+                        todos.length > 0 && (
+                          <View key={tabName} style={[styles.tabSection, { marginBottom: spacing.m }]}>
+                            <View style={[styles.tabHeader, { backgroundColor: theme.cardElevated }]}>
+                              <Ionicons 
+                                name={tabName === 'today' ? 'today-outline' : tabName === 'tomorrow' ? 'calendar-outline' : 'time-outline'} 
+                                size={scaleWidth(20)} 
+                                color={theme.primary} 
+                              />
+                              <Text style={[styles.tabHeaderText, { color: theme.text, marginLeft: spacing.xs }]}>
+                                {tabName.charAt(0).toUpperCase() + tabName.slice(1)} ({todos.length})
+                              </Text>
+                            </View>
+                            {todos.map((item) => (
+                              <View key={item.id} style={[styles.todoItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
+                                <View style={{ flex: 1 }}>
+                                  <Text style={[styles.todoItemText, { color: theme.text }]}>
+                                    {item.title}
+                                  </Text>
+                                  {item.isGroup && (
+                                    <View style={{ marginTop: spacing.xs }}>
+                                      {item.items.map((groupItem, index) => (
+                                        <Text key={groupItem.id} style={[styles.groupItemPreview, { color: theme.textSecondary }]}>
+                                          • {groupItem.title}
+                                        </Text>
+                                      ))}
+                                    </View>
+                                  )}
+                                </View>
+                                <TouchableOpacity
+                                  onPress={() => removePendingItem(tabName, item.id)}
+                                  style={styles.removeTodoButton}
+                                >
+                                  <Ionicons name="close-circle" size={scaleWidth(20)} color={theme.error || '#ff4444'} />
+                                </TouchableOpacity>
+                              </View>
+                            ))}
+                          </View>
+                        )
+                      ))}
+                      
+                      {/* Save All Button */}
+                      <TouchableOpacity
+                        style={[
+                          styles.saveAllButton,
+                          { backgroundColor: theme.success || buttonColor, marginTop: spacing.l }
+                        ]}
+                        onPress={handleSaveAllTodos}
+                      >
+                        <Text style={[styles.saveAllButtonText, { color: '#FFFFFF', fontWeight: '600' }]}>
+                          Save All ({getTotalTodoCount()})
+                        </Text>
+                      </TouchableOpacity>
+                    </ScrollView>
+                  ) : (
+                    <View style={styles.emptyStateContainer}>
+                      <Ionicons name="list-outline" size={scaleWidth(48)} color={theme.textSecondary} />
+                      <Text style={[styles.emptyStateText, { color: theme.textSecondary, marginTop: spacing.m }]}>
+                        No todos added yet. Switch to "Add Items" to get started.
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              )}
             </ScrollView>
               </View>
             </KeyboardAvoidingView>
           </TouchableWithoutFeedback>
-        </Animated.View>
+          </Animated.View>
+        </PanGestureHandler>
       </Animated.View>
     </Modal>
+
+    {/* Limit Modal */}
+    <FreeTierLimitModal
+      visible={showLimitModal}
+      theme={theme}
+      limitType="todos"
+      onClose={() => setShowLimitModal(false)}
+      onUpgrade={() => {
+        setShowLimitModal(false);
+        if (navigation && navigation.navigate) {
+          navigation.navigate('PricingScreen');
+        }
+      }}
+      isDarkMode={theme.background === '#000000'}
+    />
+    </>
   );
 };
 
@@ -899,7 +1076,9 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     padding: spacing.m,
-    maxHeight: '90%'
+    maxHeight: '95%',
+    minHeight: '85%',
+    height: '90%'
   },
   modalHeader: {
     flexDirection: 'row',
@@ -1022,7 +1201,163 @@ const styles = StyleSheet.create({
   addButtonText: {
     color: '#FFFFFF',
     fontWeight: '600'
-  }
+  },
+  // Swipe gesture styles
+  swipeHandle: {
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.s,
+    alignItems: 'center',
+  },
+  swipeIndicator: {
+    width: scaleWidth(40),
+    height: scaleHeight(4),
+    borderRadius: scaleWidth(2),
+  },
+  // Main tab styles
+  mainTabs: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    marginTop: spacing.m,
+  },
+  mainTab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.m,
+    paddingHorizontal: spacing.s,
+  },
+  mainTabText: {
+    fontSize: fontSizes.m,
+    fontWeight: '500',
+  },
+  // Type toggle styles
+  typeToggle: {
+    flexDirection: 'row',
+    marginTop: spacing.m,
+    marginBottom: spacing.m,
+    borderRadius: scaleWidth(8),
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    padding: spacing.xs,
+  },
+  typeOption: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.s,
+    paddingHorizontal: spacing.m,
+    borderRadius: scaleWidth(6),
+    borderWidth: 1,
+  },
+  typeOptionSelected: {
+    // backgroundColor set inline
+  },
+  typeOptionText: {
+    fontSize: fontSizes.s,
+    fontWeight: '500',
+  },
+  // Group item styles
+  groupItemContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.m,
+    paddingVertical: spacing.s,
+    borderRadius: scaleWidth(8),
+    borderWidth: 1,
+    marginBottom: spacing.xs,
+  },
+  groupItemInput: {
+    fontSize: fontSizes.m,
+    paddingVertical: spacing.xs,
+  },
+  addItemContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.m,
+    paddingVertical: spacing.s,
+    borderRadius: scaleWidth(8),
+    borderWidth: 1,
+    marginBottom: spacing.m,
+  },
+  addItemButton: {
+    paddingHorizontal: spacing.m,
+    paddingVertical: spacing.s,
+    borderRadius: scaleWidth(6),
+    marginLeft: spacing.s,
+  },
+  addItemButtonText: {
+    fontSize: fontSizes.s,
+    fontWeight: '500',
+  },
+  // Review tab styles
+  tabSection: {
+    marginBottom: spacing.m,
+  },
+  tabHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.m,
+    paddingVertical: spacing.s,
+    borderRadius: scaleWidth(8),
+    marginBottom: spacing.xs,
+  },
+  tabHeaderText: {
+    fontSize: fontSizes.m,
+    fontWeight: '600',
+  },
+  todoItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingHorizontal: spacing.m,
+    paddingVertical: spacing.s,
+    borderRadius: scaleWidth(8),
+    borderWidth: 1,
+    marginBottom: spacing.xs,
+  },
+  todoItemText: {
+    fontSize: fontSizes.m,
+    fontWeight: '500',
+  },
+  groupItemPreview: {
+    fontSize: fontSizes.s,
+    marginLeft: spacing.m,
+    lineHeight: 20,
+  },
+  removeTodoButton: {
+    padding: spacing.xs,
+  },
+  emptyStateContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.xl,
+  },
+  emptyStateText: {
+    fontSize: fontSizes.m,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  addButton: {
+    borderRadius: scaleWidth(8),
+    paddingVertical: spacing.m,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addButtonText: {
+    color: '#FFFFFF',
+    fontSize: fontSizes.m,
+    fontWeight: '600',
+  },
+  saveAllButton: {
+    borderRadius: scaleWidth(8),
+    paddingVertical: spacing.m,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  saveAllButtonText: {
+    fontSize: fontSizes.m,
+    fontWeight: '600',
+  },
 });
 
 export default AddTodoModal;

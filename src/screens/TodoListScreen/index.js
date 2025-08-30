@@ -54,7 +54,7 @@ import useAppTour from '../../hooks/useAppTour';
 import AppTourOverlay from '../../components/AppTourOverlay';
 
 // Import achievement tracking
-import FeatureExplorerTracker from '../../services/FeatureExplorerTracker';
+import FeatureExplorerTracker, { trackNotesNavigator } from '../../services/FeatureExplorerTracker';
 
 const TopTab = createMaterialTopTabNavigator();
 
@@ -230,6 +230,14 @@ const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen,
           (isTourActive && !['NOTES_FREE_FORM', 'FREE_NOTES_EXPLANATION', 'TODO_TODAY', 'TODO_TOMORROW', 'TODO_LATER'].includes(currentStep))) {
         console.log('📍 TodoScreen: Allowing route param change to:', newView);
         setCurrentView(newView);
+        
+        // Track notes navigation achievement when switching to notes view
+        if (newView === 'notes') {
+          console.log('🏆 TodoScreen: Tracking notes navigation achievement via route params');
+          trackNotesNavigator(showSuccess).catch(error => {
+            console.error('🏆 TodoScreen: Error tracking notes achievement via route params:', error);
+          });
+        }
       } else {
         console.log('📍 TodoScreen: Ignoring route param change during active tour step:', currentStep);
       }
@@ -696,6 +704,14 @@ const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen,
     console.log('🔄 Toggling view from', currentView, 'to', newView);
     setCurrentView(newView);
     
+    // Track notes navigation achievement
+    if (newView === 'notes') {
+      console.log('🏆 TodoListScreen: Tracking notes navigation achievement');
+      trackNotesNavigator(showSuccess).catch(error => {
+        console.error('🏆 TodoListScreen: Error tracking notes achievement:', error);
+      });
+    }
+    
     // Update route params for tab icon - access the parent tab navigator
     const tabNavigator = navigation.getParent();
     if (tabNavigator) {
@@ -947,7 +963,7 @@ const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen,
         >
           <TopTab.Screen 
             name="standup" 
-            options={{ tabBarLabel: 'Daily Standup' }}
+            options={{ tabBarLabel: 'Daily Check-in' }}
           >
             {() => (
               <DailyStandupRevamped

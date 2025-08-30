@@ -3,11 +3,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { InteractionManager } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { trackTourGraduate } from '../services/FeatureExplorerTracker';
 
 // Global tour state that persists across screens
 const globalTourState = {
   isTourActive: false,
-  currentStep: 'PROFILE_GOALS',
+  currentStep: 'FOUNDATION_BUILDER_INTRO',
   shouldCollapseAll: false,
   listeners: new Set(),
 };
@@ -46,6 +47,7 @@ export const useAppTour = (navigation = null) => {
   
   // Tour step sequence - New streamlined interactive tour
   const TOUR_SEQUENCE = [
+    'FOUNDATION_BUILDER_INTRO',
     'GOAL_ACHIEVEMENT_VALIDATION',
     'KANBAN_SYSTEM_INTRO', 
     'PICK_CURRENT_FOCUS',
@@ -59,6 +61,7 @@ export const useAppTour = (navigation = null) => {
   
   // Screen navigation map for tour steps
   const STEP_SCREENS = {
+    'FOUNDATION_BUILDER_INTRO': 'Profile', // Stay on Profile screen for achievement intro
     'GOAL_ACHIEVEMENT_VALIDATION': 'Profile',
     'KANBAN_SYSTEM_INTRO': 'Projects',
     'PICK_CURRENT_FOCUS': 'Projects',
@@ -70,48 +73,26 @@ export const useAppTour = (navigation = null) => {
     'AI_FAREWELL': 'TodoTab'
   };
   
-  // Check if tour should start
-  useEffect(() => {
-    checkTourStatus();
-    
-    // Also check periodically for onboarding completion
-    const interval = setInterval(() => {
-      checkTourStatus();
-    }, 1000); // Check every second for the first few seconds after app load
-    
-    // Clear interval after 10 seconds
-    setTimeout(() => {
-      clearInterval(interval);
-    }, 10000);
-    
-    return () => clearInterval(interval);
-  }, []);
+  // Note: Complex periodic checking system removed - tour now starts directly from App.js
+  // This simplifies the system and makes it more reliable
   
-  const checkTourStatus = async () => {
-    try {
-      // Check if user just completed onboarding
-      const hasCompletedOnboarding = await AsyncStorage.getItem('hasCompletedOnboarding');
-      const hasSeenAppTour = await AsyncStorage.getItem('hasSeenAppTour');
-      const tourSkipped = await AsyncStorage.getItem('appTourSkipped');
-      
-      if (hasCompletedOnboarding === 'true' && hasSeenAppTour !== 'true' && tourSkipped !== 'true') {
-        // Start the tour
-        setTimeout(() => {
-          startTour();
-        }, 500); // Small delay to let profile screen render
-      }
-    } catch (error) {
-      console.log('Error checking tour status:', error);
-    }
-  };
+  // Note: checkTourStatus function removed - no longer needed with direct tour triggering
   
-  const startTour = (startStep = 'GOAL_ACHIEVEMENT_VALIDATION') => {
+  const startTour = (startStep = 'FOUNDATION_BUILDER_INTRO') => {
+    console.log('🏆🎯 startTour called with step:', startStep);
+    console.log('🏆🎯 Before update - globalTourState:', globalTourState);
+    console.log('🏆🎯 TOUR_SEQUENCE[0]:', TOUR_SEQUENCE[0]);
+    
     updateGlobalTourState({
       isTourActive: true,
       currentStep: startStep
     });
+    
+    console.log('🏆🎯 After update - globalTourState:', globalTourState);
+    
     // Set global flag to hide floating AI button
     global.isAppTourActive = true;
+    console.log('🎯 Set global.isAppTourActive = true');
   };
   
   // Function to start tour from notes screen for testing
@@ -145,6 +126,13 @@ export const useAppTour = (navigation = null) => {
   useEffect(() => {
     global.startTourFromNotes = startTourFromNotes;
     global.updateGlobalTourState = updateGlobalTourState;
+    // Note: manualTourCheck removed as we no longer use periodic checking
+    
+    // Add direct tour starter for App.js to use after onboarding
+    global.startTourDirectly = () => {
+      console.log('🎯 Tour triggered directly from App.js after onboarding completion');
+      startTour('FOUNDATION_BUILDER_INTRO');
+    };
     
     // DEV: Easy way to jump to any tour step
     global.jumpToTourStep = (stepName, nav = null) => {
@@ -197,16 +185,17 @@ export const useAppTour = (navigation = null) => {
     // DEV: Console shortcut commands
     if (__DEV__) {
       console.log('🤖 DEV COMMANDS AVAILABLE:');
+      console.log('- global.startTourDirectly() // Start tour directly (same as post-onboarding)');
       console.log('- global.jumpToTourStep("PICK_CURRENT_FOCUS") // Start at step 3');
       console.log('- global.jumpToTourStep("SUPPORTING_TOOLS_OVERVIEW") // Start at step 6');
       console.log('- global.jumpToTourStep("AI_FAREWELL") // Start at AI farewell step');
-      console.log('- startTour("GOAL_ACHIEVEMENT_VALIDATION") // Start new tour');
     }
     
     return () => {
       delete global.startTourFromNotes;
       delete global.updateGlobalTourState;
       delete global.jumpToTourStep;
+      delete global.startTourDirectly;
     };
   }, []);
   
@@ -282,6 +271,14 @@ export const useAppTour = (navigation = null) => {
       setHasCompletedTour(true);
       // Clear global flag to show floating AI button again
       global.isAppTourActive = false;
+      
+      // Track tour completion achievement
+      try {
+        await trackTourGraduate();
+        console.log('🏆 Tour completion achievement tracked');
+      } catch (achievementError) {
+        console.error('Error tracking tour completion achievement:', achievementError);
+      }
     } catch (error) {
       console.log('Error completing tour:', error);
     }

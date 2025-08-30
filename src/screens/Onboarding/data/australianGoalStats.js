@@ -120,7 +120,7 @@ export const AUSTRALIAN_GOAL_STATS = {
     },
     "Prevent Chronic Disease": {
       title: "Poor Sleep: Research Shows Economic Impact",
-      figure: "Variable",
+      figure: "$66B",
       description: "Research indicates inadequate sleep may affect productivity and economic outcomes. Individual sleep and productivity outcomes vary significantly - consult health and wellness professionals for personalized guidance.",
       source: "Sleep Health Foundation Australia & Nature Humanities and Social Sciences Communications",
       link: "https://www.sleephealthfoundation.org.au/special-sleep-reports/asleep-on-the-job-costs-of-inadequate-sleep-in-australia",

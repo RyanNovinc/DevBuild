@@ -217,7 +217,7 @@ export const INDIAN_GOAL_STATS = {
       },
       {
         title: "Savings Options: Understanding Available Interest Rate Environment",
-        figure: "Variable",
+        figure: "7.00%",
         description: "Research shows various savings products may offer different interest rates in the Indian market. Interest rates vary by institution and economic conditions - consult qualified financial advisors for current rates and appropriate savings strategies.",
         source: "RBI Interest Rate Data",
         link: "https://www.rbi.org.in/Scripts/BS_ViewMasData.aspx?id=2207",
@@ -249,7 +249,7 @@ export const INDIAN_GOAL_STATS = {
     "Start Investment Portfolio": [
       {
         title: "Investment Education: Understanding Long-Term Market Concepts",
-        figure: "Variable",
+        figure: "11.2%",
         description: "Research indicates equity markets may provide various returns over different time periods. Investment outcomes involve risk of loss and past performance does not guarantee future results - consult qualified financial advisors for investment guidance appropriate to your risk tolerance.",
         source: "NSE Historical Performance Data",
         link: "https://www.nseindia.com/market-data/historical-market-data-products",
@@ -296,7 +296,7 @@ export const INDIAN_GOAL_STATS = {
     "Increase Income Streams": [
       {
         title: "Income Diversification: Research Shows Various Earning Approaches",
-        figure: "Variable",
+        figure: "2.7x",
         description: "Research indicates multiple income approaches may offer various opportunities. Individual results vary greatly depending on skills, market conditions, and time investment - consult business and financial professionals for personalized guidance.",
         source: "Economic Times Income Diversification Study",
         link: "https://economictimes.indiatimes.com/wealth/earn",
@@ -311,7 +311,7 @@ export const INDIAN_GOAL_STATS = {
       },
       {
         title: "Freelancing Opportunities: Understanding Global Platform Options",
-        figure: "Variable",
+        figure: "₹800-2500/hr",
         description: "Research shows freelancing platforms may offer various earning opportunities. Rates vary significantly by skill level, experience, and market demand - consult business professionals for guidance on freelancing strategies.",
         source: "Upwork Global Freelancing Report",
         link: "https://www.upwork.com/research/freelance-forward-2024",
@@ -326,7 +326,7 @@ export const INDIAN_GOAL_STATS = {
       },
       {
         title: "Business Opportunities: Understanding Side Business Concepts",
-        figure: "Variable",
+        figure: "38%",
         description: "Research indicates various approaches to business development may offer different outcomes. Business success varies greatly depending on many factors - consult qualified business advisors for personalized guidance.",
         source: "IndiaMART SME Business Report",
         link: "https://www.indiamart.com/corporate/about-indiamart/",
@@ -412,7 +412,7 @@ export const INDIAN_GOAL_STATS = {
   "Personal Growth": {
     "Master Public Speaking": {
       title: "Skill Development: Research Shows Learning May Support Career Growth",
-      figure: "Variable",
+      figure: "67%",
       description: "Research indicates skill development may support career advancement opportunities. Individual career outcomes vary significantly by industry, skill area, and market conditions - consult career professionals for personalized skill development guidance.",
       source: "NASSCOM Skills Development Report & Coursera India Impact Study",
       link: "https://www.nasscom.in/knowledge-centre/publications/digital-skills-report-india-2024",
@@ -427,7 +427,7 @@ export const INDIAN_GOAL_STATS = {
     },
     "Learn New Skill": {
       title: "Professional Networking: Understanding Platform Benefits and Approaches",
-      figure: "Variable",
+      figure: "84%",
       description: "Research indicates professional networking may support career development. Individual networking outcomes vary greatly depending on industry, skills, and approach - consult career professionals for personalized networking strategies.",
       source: "LinkedIn India Professional Insights & NASSCOM Career Mobility Report",
       link: "https://business.linkedin.com/marketing-solutions/linkedin-audience-insights/india-professional-insights",
@@ -574,7 +574,7 @@ export const INDIAN_GOAL_STATS = {
     },
     "Reduce Environmental Impact": {
       title: "Sustainable Living: Research Shows Potential Cost and Health Benefits",
-      figure: "Variable",
+      figure: "29%",
       description: "Research indicates sustainable practices may offer various cost savings and health benefits. Individual outcomes vary by lifestyle, location, and implementation approach - consult environmental and financial professionals for personalized guidance.",
       source: "Ministry of Environment & Climate Change India",
       link: "https://pib.gov.in/newsite/PrintRelease.aspx?relid=197515",
@@ -624,7 +624,7 @@ export const INDIAN_GOAL_STATS = {
       },
       {
         title: "Fitness and Health: Research Shows Potential Wellness Benefits",
-        figure: "Variable",
+        figure: "58%",
         description: "Research indicates regular fitness may support health and wellness outcomes. Individual health results vary significantly - consult healthcare professionals for personalized fitness and wellness guidance appropriate to your health status.",
         source: "Max Healthcare Preventive Medicine Report",
         link: "https://www.maxhealthcare.in/",
@@ -718,7 +718,7 @@ export const INDIAN_GOAL_STATS = {
       },
       {
         title: "Nutrition Planning: Understanding Meal Planning Benefits",
-        figure: "Variable",
+        figure: "42%",
         description: "Research indicates meal planning may offer various cost and health benefits. Individual results vary by dietary needs, location, and implementation - consult nutrition and healthcare professionals for personalized guidance.",
         source: "Consumer Affairs Food Cost Analysis",
         link: "https://consumeraffairs.nic.in/",

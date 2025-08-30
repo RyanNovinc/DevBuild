@@ -7,6 +7,7 @@ import {
   StyleSheet, 
   FlatList 
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 /**
  * AISuggestionChips - Displays suggestion chips for common questions
@@ -23,9 +24,13 @@ const AISuggestionChips = ({
       style={styles.suggestionChip}
       onPress={() => onPress(item)}
     >
-      <Text style={styles.suggestionText} numberOfLines={1}>
-        {item.text}
-      </Text>
+      {item.icon ? (
+        <Ionicons name={item.icon} size={16} color="#FFFFFF" />
+      ) : (
+        <Text style={styles.suggestionText} numberOfLines={1}>
+          {item.text}
+        </Text>
+      )}
     </TouchableOpacity>
   );
   

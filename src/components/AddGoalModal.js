@@ -515,19 +515,27 @@ const AddGoalModal = ({
                   { backgroundColor: theme.textSecondary + '40' }
                 ]} />
             <View style={styles.modalHeader}>
-              <Text 
-                style={[
-                  styles.modalTitle, 
-                  { 
-                    color: theme.text,
-                    fontSize: fontSizes.xl
-                  }
-                ]}
-                maxFontSizeMultiplier={1.5}
-                accessibilityRole="header"
-              >
-                {goalData ? 'Edit Goal' : 'Create Goal'}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons 
+                  name="flag" 
+                  size={scaleWidth(24)} 
+                  color={theme.primary} 
+                  style={{ marginRight: spacing.xs }}
+                />
+                <Text 
+                  style={[
+                    styles.modalTitle, 
+                    { 
+                      color: theme.text,
+                      fontSize: fontSizes.xl
+                    }
+                  ]}
+                  maxFontSizeMultiplier={1.5}
+                  accessibilityRole="header"
+                >
+                  Create Goal
+                </Text>
+              </View>
               <TouchableOpacity 
                 style={[
                   styles.closeButton, 

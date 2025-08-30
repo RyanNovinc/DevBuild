@@ -15,6 +15,7 @@ import {
   Dimensions,
   Platform
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { Share, Clipboard } from 'react-native';
 import NoteTagsManager from './NoteTagsManager';
@@ -403,15 +404,27 @@ const FullScreenNoteModal = ({
           { 
             text: "Delete", 
             style: "destructive",
-            onPress: () => {
-              if (isCreatingNote) {
-                // Remove any temporary notes
-                setNotes(prevNotes => prevNotes.filter(note => !note._tempId));
-                closeNoteEditor();
-              } else {
-                setNotes(notes.filter(note => note.id !== editingNote.id));
-                closeNoteEditor();
-                showSuccess('Note deleted');
+            onPress: async () => {
+              try {
+                if (isCreatingNote) {
+                  // Remove any temporary notes
+                  const updatedNotes = notes.filter(note => !note._tempId);
+                  setNotes(updatedNotes);
+                  // CRITICAL FIX: Persist deletion to AsyncStorage
+                  await AsyncStorage.setItem('notes', JSON.stringify(updatedNotes));
+                  closeNoteEditor();
+                } else {
+                  const updatedNotes = notes.filter(note => note.id !== editingNote.id);
+                  setNotes(updatedNotes);
+                  // CRITICAL FIX: Persist deletion to AsyncStorage
+                  await AsyncStorage.setItem('notes', JSON.stringify(updatedNotes));
+                  console.log('Note deletion persisted to AsyncStorage, remaining count:', updatedNotes.length);
+                  closeNoteEditor();
+                  showSuccess('Note deleted');
+                }
+              } catch (error) {
+                console.error('Error deleting note from storage:', error);
+                showError('Failed to delete note');
               }
             }
           }

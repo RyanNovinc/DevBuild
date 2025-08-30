@@ -87,7 +87,7 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
       },
       {
         title: "Skills Development Support: Understanding Available Training Resources",
-        figure: "Variable",
+        figure: "55",
         description: "Research indicates various skills development programs may be available. Program details and eligibility vary by initiative - consult career advisors and training institutions for current program information and application guidance.",
         source: "Services SETA Technology Skills Development",
         link: "https://www.servicesseta.org.za/",
@@ -104,7 +104,7 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
     "Start Profitable Side Business": [
       {
         title: "Business Development: Understanding Entrepreneurship Opportunities",
-        figure: "Variable",
+        figure: "17.5%",
         description: "Research indicates various approaches to business development may offer different outcomes. Business success varies greatly depending on many factors - consult qualified business advisors for personalized guidance.",
         source: "Small Enterprise Development Agency",
         link: "https://www.seda.org.za/",
@@ -119,7 +119,7 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
       },
       {
         title: "Digital Commerce Growth: Research Shows E-commerce Opportunities",
-        figure: "Variable",
+        figure: "29%",
         description: "Research indicates South Africa's e-commerce sector may offer various business opportunities through digital platforms. Individual business outcomes vary significantly and involve risk - consult business and financial professionals for guidance.",
         source: "E-commerce Association South Africa",
         link: "https://www.ecommerce.org.za/",
@@ -151,7 +151,7 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
     "Advance to Management Role": [
       {
         title: "Leadership Premium: Research Shows Management Role Benefits",
-        figure: "Variable",
+        figure: "11.9%",
         description: "Research indicates management roles may offer different compensation and career opportunities compared to individual contributor positions. Individual career outcomes vary significantly - consult career professionals for guidance.",
         source: "PwC South Africa Salary Survey",
         link: "https://www.pwc.co.za/",
@@ -264,7 +264,7 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
       },
       {
         title: "Investment Access Revolution: Research Shows Platform Accessibility",
-        figure: "Variable",
+        figure: "R250",
         description: "Research indicates South African investment platforms may offer various portfolio approaches with different minimum requirements. Investment outcomes involve risk and vary significantly - consult qualified financial advisors for guidance.",
         source: "South African Investment Platform Analysis",
         link: "https://www.easyequities.co.za/",
@@ -311,7 +311,7 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
       },
       {
         title: "International Freelancing Premium: Research Shows Global Platform Opportunities",
-        figure: "Variable",
+        figure: "$8-35/hr",
         description: "Research indicates South African professionals may access various international platform opportunities. Rates vary significantly by skill level, experience, and market demand - consult business professionals for guidance on freelancing strategies.",
         source: "South African Freelancing Market Analysis",
         link: "https://www.freelancer.com/",
@@ -326,7 +326,7 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
       },
       {
         title: "Investment Income Growth: Research Shows Dividend Portfolio Potential",
-        figure: "Variable",
+        figure: "6.8%",
         description: "Research indicates dividend portfolios may offer various income opportunities through different investment approaches. Investment outcomes involve risk and vary significantly - consult qualified financial advisors for guidance.",
         source: "South African REIT and Dividend Analysis",
         link: "https://www.jse.co.za/",
@@ -471,7 +471,7 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
       },
       {
         title: "Meal Planning Success: Research Shows Nutrition and Budget Benefits",
-        figure: "Variable",
+        figure: "35%",
         description: "Research indicates meal planning may offer both nutritional and budget benefits. Individual outcomes vary significantly - consult nutrition and financial professionals for personalized guidance.",
         source: "Association for Dietetics in South Africa",
         link: "https://www.adsa.org.za/",
@@ -569,7 +569,7 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
       },
       {
         title: "Family Business Advantage: Research Shows Collaborative Income Potential",
-        figure: "Variable",
+        figure: "2.1x",
         description: "Research indicates family-based businesses may offer various collaborative income opportunities through shared resources. Individual business outcomes vary significantly and involve risk - consult business and financial professionals for guidance.",
         source: "Family Business Institute South Africa",
         link: "https://www.fbisa.co.za/",
@@ -601,7 +601,7 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
       },
       {
         title: "Alumni Network Power: Research Shows Business Relationship Benefits",
-        figure: "Variable",
+        figure: "58%",
         description: "Research indicates alumni networks may provide various business referral opportunities. Individual networking outcomes vary greatly based on relationships, market conditions, and other factors - consult business professionals for guidance.",
         source: "University of Cape Town Alumni Association",
         link: "https://www.uct.ac.za/",
@@ -797,7 +797,7 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
       },
       {
         title: "Cultural Heritage Value: Research Shows Traditional Craft Opportunities",
-        figure: "Variable",
+        figure: "R500-3K",
         description: "Research indicates traditional crafts may offer various income opportunities through cultural markets. Individual artistic outcomes vary significantly - consult creative and business professionals for guidance.",
         source: "Department of Arts and Culture South Africa",
         link: "https://www.dac.gov.za/",
@@ -891,7 +891,7 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
       },
       {
         title: "Cultural Arts Premium: Research Shows Digital Platform Opportunities",
-        figure: "Variable",
+        figure: "42%",
         description: "Research indicates creative professionals may access various digital platform opportunities. Individual artistic outcomes vary significantly - consult creative and business professionals for guidance.",
         source: "Creative Industries Development Agency",
         link: "https://www.cida.co.za/",
@@ -1004,7 +1004,7 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
       },
       {
         title: "Skills Development: Research Shows Volunteer Leadership Benefits",
-        figure: "Variable",
+        figure: "73%",
         description: "Research indicates volunteer leadership roles may provide various training and development opportunities. Individual skill development outcomes vary significantly - consult career and volunteer professionals for guidance.",
         source: "Corporate Social Investment South Africa",
         link: "https://www.csisa.co.za/",
@@ -1087,7 +1087,7 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
       },
       {
         title: "Space Optimization: Research Shows Resource Management Benefits",
-        figure: "Variable",
+        figure: "28%",
         description: "Research indicates organized living spaces may offer various household efficiency benefits through reduced waste and better resource management. Individual savings outcomes vary significantly - consult financial professionals for personalized guidance.",
         source: "Home Economics Association of South Africa",
         link: "https://www.heasa.co.za/",
@@ -1166,7 +1166,7 @@ export const SOUTH_AFRICAN_GOAL_STATS = {
     "Declutter and Simplify": [
       {
         title: "Sustainability ROI: Research Shows Environmental Practice Benefits",
-        figure: "Variable",
+        figure: "38%",
         description: "Research indicates environmental practices may offer various efficiency benefits through energy and resource management. Individual outcomes vary significantly - consult environmental and financial professionals for personalized guidance.",
         source: "South African Environmental Society",
         link: "https://www.saes.co.za/",

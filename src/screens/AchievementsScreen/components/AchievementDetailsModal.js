@@ -334,7 +334,7 @@ const AchievementDetailsModal = ({
                     <View style={styles.rewardRow}>
                       <Ionicons name="gift-outline" size={18} color={getCategoryColor()} />
                       <Text style={[styles.rewardText, { color: theme.text }]}>
-                        {achievement.reward}
+                        {typeof achievement.reward === 'string' ? achievement.reward : '+1 additional referral code'}
                       </Text>
                     </View>
                   </View>

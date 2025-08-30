@@ -233,6 +233,8 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
   const [todoModalVisible, setTodoModalVisible] = useState(false);
   const [conversationLimitModalVisible, setConversationLimitModalVisible] = useState(false);
   const [conversationSizeWarningShown, setConversationSizeWarningShown] = useState(false);
+  const [aiInfoModalVisible, setAiInfoModalVisible] = useState(false);
+  const [aiInfoModalView, setAiInfoModalView] = useState('capabilities'); // 'capabilities' or 'personalKnowledge'
   const [currentGoalData, setCurrentGoalData] = useState(null);
   const [currentProjectData, setCurrentProjectData] = useState(null);
   const [currentTimeBlockData, setCurrentTimeBlockData] = useState(null);
@@ -763,11 +765,13 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
       return;
     }
     
+    
     const action = actions[currentIndex];
     setActionProgress(currentIndex);
     
-    console.log(`Processing action ${currentIndex + 1}/${actions.length}: ${action.type}`);
-    console.log('Full action object:', JSON.stringify(action, null, 2));
+    console.log(`🔄 Processing action ${currentIndex + 1}/${actions.length}: ${action.type}`);
+    console.log('🔄 Full action object:', JSON.stringify(action, null, 2));
+    console.log('🔄 About to enter switch statement for:', action.type);
     
     // Handle each action type
     switch (action.type) {
@@ -788,9 +792,10 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
         setGoalModalVisible(true);
         break;
         
-      case 'createProject':
-        console.log('Creating project modal');
-        // Link project to last created goal if available
+      case 'createMilestone':
+      case 'createProject': // Keep for backward compatibility
+        console.log('Creating milestone modal');
+        // Link milestone to last created goal if available
         if (lastCreatedGoalRef.current.id && action.data.goalTitle) {
           action.data.goalId = lastCreatedGoalRef.current.id;
         }
@@ -812,31 +817,10 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
         setTimeBlockModalVisible(true);
         break;
         
-      case 'createTodo':
-      case 'createTodoGroup':
-        console.log('Creating todo modal');
-        console.log('Action type:', action.type);
-        console.log('Action data:', JSON.stringify(action.data, null, 2));
-        // Handle both todo types
-        const todoData = {
-          ...action.data,
-          // Ensure isGroup is set for createTodoGroup actions
-          isGroup: action.type === 'createTodoGroup'
-        };
-        console.log('Final todoData:', JSON.stringify(todoData, null, 2));
-        console.log('Todo items structure:', todoData.items);
-        if (todoData.items && Array.isArray(todoData.items)) {
-          console.log('First item:', todoData.items[0]);
-          console.log('Items length:', todoData.items.length);
-        }
-        setCurrentTodoData(todoData);
-        setTodoModalVisible(true);
-        console.log('Todo modal should now be visible');
-        break;
         
       default:
         console.log(`Unknown action type: ${action.type}`);
-        console.log('Available action types are: createGoal, createProject, createTask, createTimeBlock, createTodo, createTodoGroup');
+        console.log('Available action types are: createGoal, createMilestone, createTask, createTimeBlock');
         // Skip to next action
         processNextAction(actions, currentIndex + 1);
     }
@@ -1405,55 +1389,80 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
     setTaskModalVisible(false);
     
     try {
-      const { updateProject, projects } = appContext; // Get from app context
+      const { addTask, milestones } = appContext;
       
-      // Check if we have a project to add the task to
-      if (taskData.projectId || taskData.projectTitle) {
-        // Find the project
-        const project = projects.find(p => 
-          p.id === taskData.projectId || 
-          p.title === taskData.projectTitle
-        );
-        
-        if (project && typeof updateProject === 'function') {
-          // Create the new task
-          const newTask = {
-            id: Date.now().toString(),
-            title: taskData.title,
-            description: taskData.description || '',
-            status: taskData.status || 'todo',
-            completed: taskData.completed || false,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          };
+      // Process the task data from our modal (could be single task or array)
+      const taskList = Array.isArray(taskData) ? taskData : [taskData];
+      
+      for (const task of taskList) {
+        // Check if we have a milestone to add the task to
+        if (task.projectId || task.projectTitle) {
+          // Find the milestone (using project fields for backward compatibility)
+          const milestone = milestones.find(m => 
+            m.id === task.projectId || 
+            m.title === task.projectTitle
+          );
           
-          // Update the project with the new task
-          const updatedProject = {
-            ...project,
-            tasks: [...(project.tasks || []), newTask],
-            updatedAt: new Date().toISOString()
-          };
-          
-          await updateProject(updatedProject);
-          
-          console.log(`Created task: "${newTask.title}" in project: "${project.title}"`);
-          
-          const successMessage = {
-            id: (Date.now() + 1).toString(),
-            text: `Task "${newTask.title}" added to project "${project.title}" successfully!`,
-            type: 'ai',
-            timestamp: new Date().toISOString()
-          };
-          
-          dispatch({ type: 'ADD_MESSAGE', payload: successMessage });
-        } else if (!project) {
-          throw new Error(`Project "${taskData.projectTitle || taskData.projectId}" not found`);
+          if (milestone && typeof addTask === 'function') {
+            // Create the new task with proper structure for milestone
+            const newTaskData = {
+              title: task.title,
+              description: task.description || '',
+              status: task.status || 'todo',
+              completed: task.completed || false,
+              goalId: task.goalId || milestone.goalId || null,
+              goalTitle: task.goalTitle || milestone.goalTitle || null,
+              milestoneId: milestone.id,
+              milestoneTitle: milestone.title,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            };
+            
+            await addTask(newTaskData);
+            
+            const successMessage = {
+              id: (Date.now() + 1).toString(),
+              text: `Task "${task.title}" added to milestone "${milestone.title}" successfully!`,
+              type: 'ai',
+              timestamp: new Date().toISOString()
+            };
+            
+            dispatch({ type: 'ADD_MESSAGE', payload: successMessage });
+          } else if (!milestone) {
+            throw new Error(`Milestone "${task.projectTitle || task.projectId}" not found`);
+          } else {
+            throw new Error('addTask function not available');
+          }
         } else {
-          throw new Error('updateProject function not available');
+          // Standalone task - no milestone required
+          if (typeof addTask === 'function') {
+            const newTaskData = {
+              title: task.title,
+              description: task.description || '',
+              status: task.status || 'todo',
+              completed: task.completed || false,
+              goalId: task.goalId || null,
+              goalTitle: task.goalTitle || null,
+              milestoneId: null,
+              milestoneTitle: null,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            };
+            
+            await addTask(newTaskData);
+            
+            const successMessage = {
+              id: (Date.now() + 1).toString(),
+              text: `Standalone task "${task.title}" created successfully!`,
+              type: 'ai',
+              timestamp: new Date().toISOString()
+            };
+            
+            dispatch({ type: 'ADD_MESSAGE', payload: successMessage });
+          } else {
+            throw new Error('addTask function not available');
+          }
         }
-      } else {
-        // No project specified
-        throw new Error('No project selected. Tasks must belong to a project.');
       }
       
       // Process next action if any
@@ -1646,6 +1655,8 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
   const handleTodoModalCancel = () => {
     console.log('Todo modal cancelled');
     setTodoModalVisible(false);
+    setCurrentTodoData(null);
+    setCurrentTodoAISuggestions([]);
     setPendingActions([]);
   };
   
@@ -1692,7 +1703,14 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
         isStreaming={isStreaming}
         showSuggestions={showSuggestions}
         onSendMessage={handleSendMessage}
-        onSuggestionPress={(suggestion) => suggestion?.text ? handleSendMessage(suggestion.text) : null}
+        onSuggestionPress={(suggestion) => {
+          if (suggestion?.isInfo) {
+            setAiInfoModalView('capabilities'); // Reset to capabilities view
+            setAiInfoModalVisible(true);
+          } else if (suggestion?.text) {
+            handleSendMessage(suggestion.text);
+          }
+        }}
         onNewConversation={createNewConversation}
         style={aiModelTier}
         conversationId={conversationId}
@@ -1886,6 +1904,7 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
         onClose={handleTodoModalCancel}
         onAdd={handleTodoConfirm}
         todoData={currentTodoData}
+        aiSuggestions={[]}
       />
       
       {/* Conversation Limit Modal */}
@@ -1906,6 +1925,196 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
         onClose={() => dispatch({ type: 'SET_MODAL_VISIBILITY', payload: { modal: 'modeInfoVisible', visible: false } })}
         theme={theme}
       />
+      
+      {/* AI Info Modal */}
+      <Modal
+        visible={aiInfoModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setAiInfoModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[
+            styles.aiInfoModal, 
+            { 
+              backgroundColor: theme.card || theme.background,
+              marginTop: safeSpacing.top,
+              marginBottom: safeSpacing.bottom,
+              marginLeft: spacing.m,
+              marginRight: spacing.m
+            }
+          ]}>
+            {/* Toggle Button - positioned relative to modal container for consistent placement */}
+            <TouchableOpacity
+              style={styles.personalKnowledgeToggleInModal}
+              onPress={() => {
+                setAiInfoModalView(aiInfoModalView === 'capabilities' ? 'personalKnowledge' : 'capabilities');
+              }}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={aiInfoModalView === 'capabilities' ? 'Personal Knowledge Info' : 'AI Capabilities'}
+              accessibilityHint={aiInfoModalView === 'capabilities' ? 'Shows information about AI\'s personal knowledge capabilities' : 'Shows information about AI\'s general capabilities'}
+            >
+              <Ionicons 
+                name={aiInfoModalView === 'capabilities' ? "person-circle-outline" : "sparkles"} 
+                size={scaleWidth(20)} 
+                color="#FFFFFF"
+              />
+            </TouchableOpacity>
+
+            <View style={styles.aiInfoModalHeader}>
+              <Ionicons 
+                name={aiInfoModalView === 'capabilities' ? "sparkles" : "person-circle"} 
+                size={scaleWidth(40)} 
+                color={aiInfoModalView === 'capabilities' ? "#3B82F6" : theme.primary} 
+              />
+              <Text 
+                style={[styles.aiInfoModalTitle, { color: theme.text }]}
+                maxFontSizeMultiplier={1.3}
+              >
+                {aiInfoModalView === 'capabilities' ? 'Your AI Assistant' : 'Personal AI Knowledge'}
+              </Text>
+            </View>
+            
+            {/* Conditional Content Based on View */}
+            {aiInfoModalView === 'capabilities' ? (
+              <>
+                <Text 
+                  style={[styles.aiInfoModalMessage, { color: theme.text }]}
+                  maxFontSizeMultiplier={1.3}
+                >
+                  I can help you transform your ideas into actionable plans by creating goals, breaking them down into manageable steps, and organizing your daily tasks.
+                </Text>
+                
+                <View style={styles.modalContentArea}>
+                  <View style={styles.aiCapabilitiesList}>
+                    <View style={styles.aiCapabilityItem}>
+                      <Ionicons name="flag" size={scaleWidth(20)} color="#3B82F6" />
+                      <Text style={[styles.aiCapabilityText, { color: theme.text }]}>
+                        Set goals that actually matter to you
+                      </Text>
+                    </View>
+                    <View style={styles.aiCapabilityItem}>
+                      <Ionicons name="diamond" size={scaleWidth(20)} color="#3B82F6" />
+                      <Text style={[styles.aiCapabilityText, { color: theme.text }]}>
+                        Turn big goals into manageable milestones
+                      </Text>
+                    </View>
+                    <View style={styles.aiCapabilityItem}>
+                      <Ionicons name="checkmark-done-outline" size={scaleWidth(20)} color="#3B82F6" />
+                      <Text style={[styles.aiCapabilityText, { color: theme.text }]}>
+                        Break milestones into tasks you can complete
+                      </Text>
+                    </View>
+                    <View style={styles.aiCapabilityItem}>
+                      <Ionicons name="calendar" size={scaleWidth(20)} color="#3B82F6" />
+                      <Text style={[styles.aiCapabilityText, { color: theme.text }]}>
+                        Block focused time for what matters most
+                      </Text>
+                    </View>
+                    <View style={styles.aiCapabilityItem}>
+                      <Ionicons name="checkbox" size={scaleWidth(20)} color="#3B82F6" />
+                      <Text style={[styles.aiCapabilityText, { color: theme.text }]}>
+                        Manage daily tasks so nothing falls through
+                      </Text>
+                    </View>
+                  </View>
+                  
+                  <TouchableOpacity
+                    style={[
+                      styles.aiInfoCloseButton, 
+                      { backgroundColor: '#3B82F6' },
+                      { minHeight: accessibility.minTouchTarget }
+                    ]}
+                    onPress={() => setAiInfoModalVisible(false)}
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel="Done"
+                    accessibilityHint="Closes the AI capabilities information"
+                  >
+                    <Ionicons name="checkmark" size={scaleWidth(18)} color="#FFFFFF" style={{marginRight: spacing.xs}} />
+                    <Text 
+                      style={styles.aiInfoCloseButtonText}
+                      maxFontSizeMultiplier={1.3}
+                    >
+                      Got it
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            ) : (
+              <>
+                <Text 
+                  style={[styles.aiInfoModalMessage, { color: theme.text }]}
+                  maxFontSizeMultiplier={1.3}
+                >
+                  With personal knowledge enabled, the AI can analyze your goals, milestones, and tasks to provide contextual guidance tailored to your specific situation and objectives.
+                </Text>
+                
+                <View style={styles.modalContentArea}>
+                  <View style={styles.personalKnowledgeList}>
+                    <View style={styles.personalKnowledgeSection}>
+                      <Text style={[styles.personalKnowledgeSectionTitle, { color: theme.text }]}>
+                        What I Can Read:
+                      </Text>
+                      <View style={styles.personalKnowledgeItem}>
+                        <Ionicons name="flag" size={scaleWidth(16)} color={theme.primary} />
+                        <Text style={[styles.personalKnowledgeItemText, { color: theme.text }]}>
+                          Your goals and progress across all life domains
+                        </Text>
+                      </View>
+                      <View style={styles.personalKnowledgeItem}>
+                        <Ionicons name="diamond" size={scaleWidth(16)} color={theme.primary} />
+                        <Text style={[styles.personalKnowledgeItemText, { color: theme.text }]}>
+                          Current milestones and completion status
+                        </Text>
+                      </View>
+                      <View style={styles.personalKnowledgeItem}>
+                        <Ionicons name="checkmark-done-outline" size={scaleWidth(16)} color={theme.primary} />
+                        <Text style={[styles.personalKnowledgeItemText, { color: theme.text }]}>
+                          Active tasks and what you're working on
+                        </Text>
+                      </View>
+                      <View style={styles.personalKnowledgeItem}>
+                        <Ionicons name="document-text" size={scaleWidth(16)} color={theme.primary} />
+                        <Text style={[styles.personalKnowledgeItemText, { color: theme.text }]}>
+                          Any documents that help me understand you (resumes, personality tests, etc.)
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                  
+                  <TouchableOpacity
+                    style={[
+                      styles.personalKnowledgeUploadButton, 
+                      { backgroundColor: theme.primary },
+                      { minHeight: accessibility.minTouchTarget }
+                    ]}
+                    onPress={() => {
+                      setAiInfoModalVisible(false);
+                      // Navigate to Personal Knowledge screen
+                      navigation.navigate('PersonalKnowledgeScreen');
+                    }}
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel="Upload Documents"
+                    accessibilityHint="Opens the personal knowledge screen to upload documents"
+                  >
+                    <Ionicons name="cloud-upload" size={scaleWidth(18)} color="#FFFFFF" style={{marginRight: spacing.xs}} />
+                    <Text 
+                      style={styles.personalKnowledgeUploadButtonText}
+                      maxFontSizeMultiplier={1.3}
+                    >
+                      Upload Documents
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
       
       {/* Upgrade Modal (NEW) */}
       <Modal
@@ -2113,6 +2322,149 @@ const styles = StyleSheet.create({
   },
   laterButtonText: {
     fontSize: fontSizes.s,
+  },
+  // AI Info Modal Styles
+  aiInfoModal: {
+    width: '90%',
+    maxWidth: 500,
+    borderRadius: scaleWidth(20),
+    padding: spacing.xl,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  aiInfoModalHeader: {
+    alignItems: 'center',
+    marginBottom: spacing.l,
+  },
+  aiInfoModalTitle: {
+    fontSize: fontSizes.xl,
+    fontWeight: 'bold',
+    marginTop: spacing.m,
+    textAlign: 'center',
+  },
+  aiInfoModalMessage: {
+    fontSize: fontSizes.m,
+    textAlign: 'center',
+    marginBottom: spacing.l,
+    lineHeight: scaleHeight(24),
+    paddingHorizontal: spacing.s,
+  },
+  aiCapabilitiesList: {
+    alignSelf: 'stretch',
+    marginBottom: spacing.xl,
+  },
+  aiCapabilityItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.m,
+    paddingHorizontal: spacing.s,
+  },
+  aiCapabilityText: {
+    fontSize: fontSizes.s,
+    marginLeft: spacing.m,
+    flex: 1,
+    lineHeight: scaleHeight(20),
+  },
+  aiInfoCloseButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.m,
+    paddingHorizontal: spacing.l,
+    borderRadius: scaleWidth(16),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  aiInfoCloseButtonText: {
+    color: '#FFFFFF',
+    fontSize: fontSizes.m,
+    fontWeight: 'bold',
+  },
+  // Modal Content Area - ensures consistent sizing
+  modalContentArea: {
+    alignSelf: 'stretch',
+    minHeight: scaleHeight(280), // Fixed minimum height for consistency
+    justifyContent: 'space-between',
+  },
+  // Personal Knowledge Toggle Button Style - positioned relative to modal container
+  personalKnowledgeToggleInModal: {
+    position: 'absolute',
+    top: spacing.m,
+    right: spacing.m,
+    backgroundColor: 'rgba(59, 130, 246, 0.1)', // Light blue background
+    borderRadius: scaleWidth(20), // Slightly more rounded
+    width: scaleWidth(40), // Slightly larger
+    height: scaleWidth(40), // Slightly larger
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(59, 130, 246, 0.3)', // Colored border
+    shadowColor: '#3B82F6', // Colored shadow
+    shadowOffset: { width: 0, height: 4 }, // More pronounced shadow
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
+    zIndex: 1000,
+  },
+  // Personal Knowledge Styles (used in combined modal)
+  personalKnowledgeList: {
+    alignSelf: 'stretch',
+    marginBottom: spacing.l,
+  },
+  personalKnowledgeSection: {
+    marginBottom: spacing.l,
+  },
+  personalKnowledgeSectionTitle: {
+    fontSize: fontSizes.m,
+    fontWeight: 'bold',
+    marginBottom: spacing.m,
+    paddingHorizontal: spacing.s,
+  },
+  personalKnowledgeItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.s,
+    paddingHorizontal: spacing.s,
+  },
+  personalKnowledgeItemText: {
+    fontSize: fontSizes.s,
+    marginLeft: spacing.m,
+    flex: 1,
+    lineHeight: scaleHeight(20),
+  },
+  personalKnowledgeUploadButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.m,
+    paddingHorizontal: spacing.l,
+    borderRadius: scaleWidth(16),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+    marginBottom: spacing.m,
+  },
+  personalKnowledgeUploadButtonText: {
+    color: '#FFFFFF',
+    fontSize: fontSizes.m,
+    fontWeight: 'bold',
+  },
+  personalKnowledgeCloseButton: {
+    paddingVertical: spacing.s,
+    paddingHorizontal: spacing.m,
+  },
+  personalKnowledgeCloseButtonText: {
+    fontSize: fontSizes.s,
+    fontWeight: '500',
   }
 });
 

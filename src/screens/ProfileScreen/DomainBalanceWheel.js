@@ -12,8 +12,12 @@ import {
   Vibration,
   Platform,
   AccessibilityInfo,
-  Dimensions
+  Dimensions,
+  Linking,
+  Alert
 } from 'react-native';
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
+import { NavigationContainer } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppContext } from '../../context/AppContext';
 import SectionHeader from './SectionHeader';
@@ -109,6 +113,11 @@ const DomainBalanceWheel = ({ theme, navigation, isTourActive = false, currentSt
   const [highlightedDomain, setHighlightedDomain] = useState(null);
   const [isScreenReaderEnabled, setIsScreenReaderEnabled] = useState(false);
   const [showLabels, setShowLabels] = useState(true); // Toggle for domain labels visibility
+  const [showInfoModal, setShowInfoModal] = useState(false); // Info modal state
+  const [activeInfoTab, setActiveInfoTab] = useState('usage'); // Tab state: 'usage' or 'research'
+  
+  // Create the TopTab navigator
+  const InfoModalTab = createMaterialTopTabNavigator();
   
   // Animation
   const wheelRotation = useRef(new Animated.Value(0)).current;
@@ -578,6 +587,105 @@ const DomainBalanceWheel = ({ theme, navigation, isTourActive = false, currentSt
     return result;
   };
 
+  // Handle research link press
+  const handleResearchLinkPress = async () => {
+    const url = 'https://www.researchgate.net/publication/365375169_The_Wheel_of_Life_as_a_Coaching_Tool_to_Audit_Life_Priorities';
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert('Error', 'Unable to open link');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Unable to open link');
+    }
+  };
+
+  // Usage tab content component
+  const UsageTabContent = () => (
+    <ScrollView style={styles.infoModalContent}>
+      <Text style={[styles.infoModalText, { color: theme.textSecondary }]}>
+        This visualization shows you where you're allocating your finite time and energy resources across different areas of your life.
+      </Text>
+      
+      <Text style={[styles.infoModalSubtitle, { color: theme.text }]}>
+        How to Read the Wheel:
+      </Text>
+      
+      <View style={styles.infoModalList}>
+        <Text style={[styles.infoModalListItem, { color: theme.textSecondary }]}>
+          • Each segment represents a life domain where you have active goals
+        </Text>
+        <Text style={[styles.infoModalListItem, { color: theme.textSecondary }]}>
+          • Numbers in segments show how many goals you have in that domain
+        </Text>
+        <Text style={[styles.infoModalListItem, { color: theme.textSecondary }]}>
+          • Colours help you quickly identify and differentiate between domains
+        </Text>
+        <Text style={[styles.infoModalListItem, { color: theme.textSecondary }]}>
+          • Tap any segment to see detailed progress and statistics
+        </Text>
+      </View>
+      
+      <Text style={[styles.infoModalSubtitle, { color: theme.text }]}>
+        Finding Your Focus:
+      </Text>
+      
+      <Text style={[styles.infoModalText, { color: theme.textSecondary }]}>
+        Everyone is different, and what works for someone else may not work for you. Having goals across 
+        many domains gives you progress in all areas of life, while focusing on fewer domains helps you 
+        make more significant progress in those specific areas. It's up to you and what you want to achieve.
+      </Text>
+    </ScrollView>
+  );
+
+  // Research tab content component
+  const ResearchTabContent = () => (
+    <ScrollView style={styles.infoModalContent}>
+      <Text style={[styles.infoModalText, { color: theme.textSecondary }]}>
+        These 8 domains are based on the "Wheel of Life" framework, backed by 30+ years of psychological research and validation studies.
+      </Text>
+      
+      <View style={[styles.researchHighlights, { backgroundColor: theme.cardElevated }]}>
+        <Text style={[styles.infoModalListItem, { color: theme.text }]}>
+          ✓ Covers all essential areas of life
+        </Text>
+        <Text style={[styles.infoModalListItem, { color: theme.text }]}>
+          ✓ Validated across multiple cultures
+        </Text>
+        <Text style={[styles.infoModalListItem, { color: theme.text }]}>
+          ✓ Balanced framework based on research
+        </Text>
+      </View>
+      
+      <Text style={[styles.infoModalSubtitle, { color: theme.text }]}>
+        Scientific Foundation:
+      </Text>
+      
+      <Text style={[styles.infoModalText, { color: theme.textSecondary }]}>
+        The Wheel of Life is a well-established assessment tool used by psychologists and life coaches worldwide. 
+        It provides a comprehensive view of life satisfaction across multiple domains.
+      </Text>
+      
+      <Text style={[styles.infoModalText, { color: theme.textSecondary }]}>
+        Research shows that balance across life domains correlates with overall well-being and life satisfaction, 
+        making it an effective framework for personal development and goal setting.
+      </Text>
+      
+      <TouchableOpacity 
+        style={[styles.researchLink, { borderColor: theme.primary }]}
+        onPress={handleResearchLinkPress}
+        accessibilityLabel="Learn more about Wheel of Life research"
+      >
+        <Ionicons name="link-outline" size={16} color={theme.primary} />
+        <Text style={[styles.researchLinkText, { color: theme.primary }]}>
+          ResearchGate: Wheel of Life validation study
+        </Text>
+      </TouchableOpacity>
+    </ScrollView>
+  );
+
   // Handle press on a domain slice
   const handleDomainPress = (domain) => {
     if (Platform.OS === 'ios' || Platform.OS === 'android') {
@@ -755,6 +863,8 @@ const DomainBalanceWheel = ({ theme, navigation, isTourActive = false, currentSt
         theme={theme}
         onActionPress={toggleLabelVisibility}
         actionIcon={showLabels ? "eye" : "eye-off"}
+        showInfoButton={true}
+        onInfoPress={() => setShowInfoModal(true)}
       />
       
       {/* Main Wheel Visualization */}
@@ -1346,6 +1456,105 @@ const DomainBalanceWheel = ({ theme, navigation, isTourActive = false, currentSt
           </View>
         </View>
       </Modal>
+      
+      {/* Info Modal */}
+      <Modal
+        visible={showInfoModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowInfoModal(false)}
+      >
+        <View style={styles.infoModalOverlay}>
+          <View 
+            style={[styles.infoModalContainer, { backgroundColor: theme.background || '#FFFFFF' }]}
+          >
+            <View style={styles.infoModalHeader}>
+              <Text style={[styles.infoModalTitle, { color: theme.text }]}>
+                About Life Domains
+              </Text>
+              <TouchableOpacity 
+                onPress={() => {
+                  setShowInfoModal(false);
+                  setActiveInfoTab('usage'); // Reset to first tab
+                }}
+                style={styles.infoModalClose}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Ionicons name="close" size={24} color={theme.textSecondary} />
+              </TouchableOpacity>
+            </View>
+            
+            {/* Tab Navigator - EXACT TodoScreen approach */}
+            <NavigationContainer independent={true} key="infoModal">
+              <InfoModalTab.Navigator
+                initialRouteName="usage"
+                screenOptions={({ route }) => ({
+                  tabBarActiveTintColor: '#FFFFFF', // White text on active tab for better contrast
+                  tabBarInactiveTintColor: theme.textSecondary,
+                  tabBarStyle: {
+                    backgroundColor: theme.cardElevated,
+                    borderBottomColor: theme.border,
+                    borderBottomWidth: 0.5,
+                    elevation: 0,
+                    shadowOpacity: 0,
+                    borderRadius: 25,
+                    marginHorizontal: 20,
+                    marginTop: 8,
+                    marginBottom: 12,
+                    height: 44, // Fixed height
+                    overflow: 'hidden', // Ensure content is hidden when height is 0
+                  },
+                  tabBarIndicatorStyle: {
+                    backgroundColor: theme.primary,
+                    height: 38,
+                    borderRadius: 19,
+                    margin: 3, // Consistent 3px spacing on all sides
+                    width: `${100/2 - 2}%`, // Each tab is 1/2 width minus margin
+                  },
+                  tabBarLabelStyle: {
+                    fontSize: 16,
+                    fontWeight: '600',
+                    textTransform: 'none',
+                    zIndex: 2, // Ensure text is above indicator
+                    marginTop: 1, // Move text down slightly to center it
+                  },
+                  tabBarItemStyle: {
+                    zIndex: 2, // Ensure tab content is above indicator
+                  },
+                  // Enable swipe but disable problematic animations
+                  swipeEnabled: true,
+                  animationEnabled: false,
+                  tabBarPressColor: 'transparent', // Remove press ripple that might interfere
+                  tabBarPressOpacity: 1, // Prevent opacity changes on press
+                  lazy: false, // Ensure all tabs are rendered for smooth swiping
+                })}
+                sceneContainerStyle={{ 
+                  flex: 1,
+                  backgroundColor: 'transparent' 
+                }}
+              >
+                <InfoModalTab.Screen 
+                  name="usage" 
+                  options={{ tabBarLabel: 'Guide' }}
+                >
+                  {() => (
+                    <UsageTabContent />
+                  )}
+                </InfoModalTab.Screen>
+                
+                <InfoModalTab.Screen 
+                  name="research" 
+                  options={{ tabBarLabel: 'Research' }}
+                >
+                  {() => (
+                    <ResearchTabContent />
+                  )}
+                </InfoModalTab.Screen>
+              </InfoModalTab.Navigator>
+            </NavigationContainer>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -1574,6 +1783,96 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginRight: 8,
+  },
+  
+  // Info Modal Styles
+  infoModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  infoModalContainer: {
+    borderRadius: 16,
+    maxWidth: 400,
+    width: '100%',
+    height: '75%',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  infoModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 10,
+  },
+  infoModalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    flex: 1,
+  },
+  infoModalClose: {
+    padding: 4,
+  },
+  infoModalContent: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  infoModalText: {
+    fontSize: 16,
+    lineHeight: 24,
+    marginBottom: 16,
+  },
+  infoModalSubtitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 12,
+    marginTop: 8,
+  },
+  infoModalList: {
+    marginBottom: 16,
+  },
+  infoModalListItem: {
+    fontSize: 16,
+    lineHeight: 24,
+    marginBottom: 8,
+  },
+  
+  
+  // Research Tab Styles
+  researchHighlights: {
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  researchLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 16,
+  },
+  researchLinkText: {
+    fontSize: 14,
+    marginLeft: 8,
+    textDecorationLine: 'underline',
   },
 });
 

@@ -83,7 +83,7 @@ const FreeTierLimitModal = ({
         return {
           icon: 'calendar',
           title: 'Weekly Time Block Limit',
-          message: 'Free accounts are limited to 5 time blocks per week. Upgrade to Pro for unlimited time blocks and better planning.',
+          message: 'Free accounts are limited to 10 time blocks per week. Upgrade to Pro for unlimited time blocks and better planning.',
           upgradeText: 'Upgrade to Pro'
         };
         
@@ -109,6 +109,62 @@ const FreeTierLimitModal = ({
           title: 'Limited Repeating Options',
           message: 'Free accounts are limited to weekly repeating only. Upgrade to Pro for all repeating patterns (daily, weekly, monthly).',
           upgradeText: 'Unlock All Repeating Options'
+        };
+        
+      case 'goals':
+        return {
+          icon: 'flag',
+          title: 'Goal Limit Reached',
+          message: 'Free accounts are limited to 2 active goals. Complete or archive existing goals, or upgrade to Pro for unlimited goals.',
+          upgradeText: 'Unlock Unlimited Goals'
+        };
+        
+      case 'milestonesPerGoal':
+        return {
+          icon: 'checkmark-circle',
+          title: 'Milestone Limit Reached',
+          message: 'Free accounts are limited to 2 milestones per goal. Remove existing milestones or upgrade to Pro for unlimited milestones.',
+          upgradeText: 'Get Unlimited Milestones'
+        };
+        
+      case 'standaloneMilestones':
+        return {
+          icon: 'diamond',
+          title: 'Standalone Milestone Limit',
+          message: 'Free accounts are limited to 2 standalone milestones. Complete existing ones or upgrade to Pro for unlimited standalone milestones.',
+          upgradeText: 'Unlock More Milestones'
+        };
+        
+      case 'standaloneTasks':
+        return {
+          icon: 'list',
+          title: 'Standalone Task Limit',
+          message: 'Free accounts are limited to 2 standalone tasks. Complete existing ones or upgrade to Pro for unlimited standalone tasks.',
+          upgradeText: 'Get More Tasks'
+        };
+        
+      case 'totalTasks':
+        return {
+          icon: 'clipboard',
+          title: 'Total Task Limit Reached',
+          message: 'Free accounts are limited to 8 total tasks across all goals, projects, and standalone items. Complete tasks or upgrade to Pro.',
+          upgradeText: 'Unlock Unlimited Tasks'
+        };
+        
+      case 'todos':
+        return {
+          icon: 'checkbox',
+          title: 'Todo List Limit',
+          message: 'Free accounts have limited todo capacity. Upgrade to Pro for unlimited todos and better organization.',
+          upgradeText: 'Get Unlimited Todos'
+        };
+        
+      case 'reflectionLength':
+        return {
+          icon: 'journal',
+          title: 'Reflection Length Limit',
+          message: 'Free accounts have character limits on daily reflections. Upgrade to Pro for unlimited reflection space and deeper self-discovery.',
+          upgradeText: 'Unlock Unlimited Reflections'
         };
         
       default:
@@ -215,7 +271,7 @@ const FreeTierLimitModal = ({
                   {limitType === 'weeklyLimit' && (
                     <View style={styles.comparisonItem}>
                       <Ionicons name="calendar-outline" size={18} color={theme.textSecondary} />
-                      <Text style={[styles.comparisonText, { color: theme.text }]}>5 time blocks/week</Text>
+                      <Text style={[styles.comparisonText, { color: theme.text }]}>10 time blocks/week</Text>
                     </View>
                   )}
                   {limitType === 'horizon' && (
@@ -234,6 +290,48 @@ const FreeTierLimitModal = ({
                     <View style={styles.comparisonItem}>
                       <Ionicons name="repeat-outline" size={18} color={theme.textSecondary} />
                       <Text style={[styles.comparisonText, { color: theme.text }]}>Weekly repeating only</Text>
+                    </View>
+                  )}
+                  {limitType === 'goals' && (
+                    <View style={styles.comparisonItem}>
+                      <Ionicons name="flag-outline" size={18} color={theme.textSecondary} />
+                      <Text style={[styles.comparisonText, { color: theme.text }]}>2 active goals max</Text>
+                    </View>
+                  )}
+                  {limitType === 'milestonesPerGoal' && (
+                    <View style={styles.comparisonItem}>
+                      <Ionicons name="checkmark-circle-outline" size={18} color={theme.textSecondary} />
+                      <Text style={[styles.comparisonText, { color: theme.text }]}>2 milestones per goal</Text>
+                    </View>
+                  )}
+                  {limitType === 'standaloneMilestones' && (
+                    <View style={styles.comparisonItem}>
+                      <Ionicons name="diamond-outline" size={18} color={theme.textSecondary} />
+                      <Text style={[styles.comparisonText, { color: theme.text }]}>2 standalone milestones</Text>
+                    </View>
+                  )}
+                  {limitType === 'standaloneTasks' && (
+                    <View style={styles.comparisonItem}>
+                      <Ionicons name="list-outline" size={18} color={theme.textSecondary} />
+                      <Text style={[styles.comparisonText, { color: theme.text }]}>2 standalone tasks</Text>
+                    </View>
+                  )}
+                  {limitType === 'totalTasks' && (
+                    <View style={styles.comparisonItem}>
+                      <Ionicons name="clipboard-outline" size={18} color={theme.textSecondary} />
+                      <Text style={[styles.comparisonText, { color: theme.text }]}>8 total tasks max</Text>
+                    </View>
+                  )}
+                  {limitType === 'todos' && (
+                    <View style={styles.comparisonItem}>
+                      <Ionicons name="checkbox-outline" size={18} color={theme.textSecondary} />
+                      <Text style={[styles.comparisonText, { color: theme.text }]}>Limited todos</Text>
+                    </View>
+                  )}
+                  {limitType === 'reflectionLength' && (
+                    <View style={styles.comparisonItem}>
+                      <Ionicons name="journal-outline" size={18} color={theme.textSecondary} />
+                      <Text style={[styles.comparisonText, { color: theme.text }]}>150/100 char limits</Text>
                     </View>
                   )}
                 </View>
@@ -262,6 +360,48 @@ const FreeTierLimitModal = ({
                     <View style={styles.comparisonItem}>
                       <Ionicons name="repeat-outline" size={18} color={theme.primary} />
                       <Text style={[styles.comparisonText, { color: theme.text }]}>Daily, weekly, monthly</Text>
+                    </View>
+                  )}
+                  {limitType === 'goals' && (
+                    <View style={styles.comparisonItem}>
+                      <Ionicons name="infinite-outline" size={18} color={theme.primary} />
+                      <Text style={[styles.comparisonText, { color: theme.text }]}>Unlimited goals</Text>
+                    </View>
+                  )}
+                  {limitType === 'milestonesPerGoal' && (
+                    <View style={styles.comparisonItem}>
+                      <Ionicons name="infinite-outline" size={18} color={theme.primary} />
+                      <Text style={[styles.comparisonText, { color: theme.text }]}>Unlimited milestones</Text>
+                    </View>
+                  )}
+                  {limitType === 'standaloneMilestones' && (
+                    <View style={styles.comparisonItem}>
+                      <Ionicons name="infinite-outline" size={18} color={theme.primary} />
+                      <Text style={[styles.comparisonText, { color: theme.text }]}>Unlimited milestones</Text>
+                    </View>
+                  )}
+                  {limitType === 'standaloneTasks' && (
+                    <View style={styles.comparisonItem}>
+                      <Ionicons name="infinite-outline" size={18} color={theme.primary} />
+                      <Text style={[styles.comparisonText, { color: theme.text }]}>Unlimited tasks</Text>
+                    </View>
+                  )}
+                  {limitType === 'totalTasks' && (
+                    <View style={styles.comparisonItem}>
+                      <Ionicons name="infinite-outline" size={18} color={theme.primary} />
+                      <Text style={[styles.comparisonText, { color: theme.text }]}>Unlimited tasks</Text>
+                    </View>
+                  )}
+                  {limitType === 'todos' && (
+                    <View style={styles.comparisonItem}>
+                      <Ionicons name="infinite-outline" size={18} color={theme.primary} />
+                      <Text style={[styles.comparisonText, { color: theme.text }]}>Unlimited todos</Text>
+                    </View>
+                  )}
+                  {limitType === 'reflectionLength' && (
+                    <View style={styles.comparisonItem}>
+                      <Ionicons name="infinite-outline" size={18} color={theme.primary} />
+                      <Text style={[styles.comparisonText, { color: theme.text }]}>Unlimited characters</Text>
                     </View>
                   )}
                 </View>

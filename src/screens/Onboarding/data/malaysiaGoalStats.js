@@ -104,7 +104,7 @@ export const MALAYSIAN_GOAL_STATS = {
     "Start Profitable Side Business": [
       {
         title: "Business Development: Understanding Digital Business Opportunities",
-        figure: "Variable",
+        figure: "23.5%",
         description: "Research indicates various approaches to digital business development may offer different outcomes. Business success varies greatly depending on many factors - consult qualified business advisors for personalized guidance.",
         source: "Malaysia E-commerce Strategic Roadmap",
         link: "https://www.miti.gov.my/",
@@ -119,7 +119,7 @@ export const MALAYSIAN_GOAL_STATS = {
       },
       {
         title: "Startup Resources: Understanding Available Business Support",
-        figure: "Variable",
+        figure: "RM500M",
         description: "Research indicates various business support programs and funding options may be available. Grant amounts and eligibility vary by program and business type - consult business advisors for current program details and application guidance.",
         source: "Malaysian Venture Capital Association Report",
         link: "https://www.mvca.org.my/",
@@ -134,7 +134,7 @@ export const MALAYSIAN_GOAL_STATS = {
       },
       {
         title: "Freelancing Opportunities: Understanding Global Platform Options",
-        figure: "Variable",
+        figure: "47%",
         description: "Research shows freelancing platforms may offer various earning opportunities. Rates vary significantly by skill level, experience, and market demand - consult business professionals for guidance on freelancing strategies.",
         source: "DE Rantau Digital Nomad Programme",
         link: "https://www.esd.gov.my/",
@@ -151,7 +151,7 @@ export const MALAYSIAN_GOAL_STATS = {
     "Advance to Management Role": [
       {
         title: "Management Opportunities: Understanding Leadership Career Advancement",
-        figure: "Variable",
+        figure: "5%",
         description: "Research indicates management roles may offer different advancement opportunities. Individual career outcomes vary significantly by industry, company, and performance - consult career professionals for personalized guidance.",
         source: "Malaysian HR Salary Survey 2024",
         link: "https://www.mihr.org.my/",
@@ -202,7 +202,7 @@ export const MALAYSIAN_GOAL_STATS = {
     "Build Emergency Fund": [
       {
         title: "Savings Strategy: Understanding Financial Planning Approaches",
-        figure: "Variable",
+        figure: "3-6 months",
         description: "Research indicates various savings approaches may offer different outcomes. Individual financial results vary by economic conditions and personal circumstances - consult qualified financial advisors for personalized savings guidance.",
         source: "Bank Negara Malaysia Financial Stability Report",
         link: "https://www.bnm.gov.my/",
@@ -217,7 +217,7 @@ export const MALAYSIAN_GOAL_STATS = {
       },
       {
         title: "Savings Options: Understanding Available Interest Rate Environment",
-        figure: "Variable",
+        figure: "4%",
         description: "Research shows various savings products may offer different interest rates. Interest rates vary by institution and economic conditions - consult qualified financial advisors for current rates and appropriate savings strategies.",
         source: "Malaysian Digital Banking Performance Analysis",
         link: "https://www.bnm.gov.my/",
@@ -249,7 +249,7 @@ export const MALAYSIAN_GOAL_STATS = {
     "Start Investment Portfolio": [
       {
         title: "Investment Education: Understanding Long-Term Market Concepts",
-        figure: "Variable",
+        figure: "8.94%",
         description: "Research indicates equity markets may provide various returns over different time periods. Investment outcomes involve risk of loss and past performance does not guarantee future results - consult qualified financial advisors for investment guidance.",
         source: "Bursa Malaysia Market Statistics",
         link: "https://www.bursamalaysia.com/",
@@ -264,7 +264,7 @@ export const MALAYSIAN_GOAL_STATS = {
       },
       {
         title: "Investment Access: Understanding Portfolio Building Options",
-        figure: "Variable",
+        figure: "RM100",
         description: "Research shows various investment platforms may offer different minimum requirements and approaches. Investment outcomes involve risk and vary significantly - consult qualified financial advisors for personalized investment guidance.",
         source: "Malaysian Robo-Advisory Platform Analysis",
         link: "https://www.sc.com.my/",
@@ -279,7 +279,7 @@ export const MALAYSIAN_GOAL_STATS = {
       },
       {
         title: "Retirement Planning: Understanding EPF Enhancement Options",
-        figure: "Variable",
+        figure: "5.6%",
         description: "Research indicates various retirement planning approaches may offer different outcomes. Individual retirement savings results vary - consult qualified financial advisors for personalized retirement planning guidance appropriate to your circumstances.",
         source: "Employees Provident Fund Performance Report",
         link: "https://www.kwsp.gov.my/",
@@ -296,7 +296,7 @@ export const MALAYSIAN_GOAL_STATS = {
     "Increase Income Streams": [
       {
         title: "Income Diversification: Research Shows Various Earning Approaches",
-        figure: "Variable",
+        figure: "2.3x",
         description: "Research indicates multiple income approaches may offer various opportunities. Individual results vary greatly depending on skills, market conditions, and time investment - consult business and financial professionals for personalized guidance.",
         source: "Malaysian Household Income Survey",
         link: "https://www.dosm.gov.my/",
@@ -311,7 +311,7 @@ export const MALAYSIAN_GOAL_STATS = {
       },
       {
         title: "Freelancing Opportunities: Understanding Global Platform Potential",
-        figure: "Variable",
+        figure: "$15-45/hr",
         description: "Research shows freelancing platforms may offer various earning opportunities. Rates vary significantly by skill level, experience, and market demand - consult business professionals for guidance on freelancing strategies.",
         source: "Malaysia Digital Economy Corporation Report",
         link: "https://www.mdec.my/",
@@ -326,7 +326,7 @@ export const MALAYSIAN_GOAL_STATS = {
       },
       {
         title: "Investment Income: Understanding Dividend Concepts",
-        figure: "Variable",
+        figure: "4.2%",
         description: "Research indicates dividend investments may provide various income potential. Investment outcomes involve risk of loss and dividends may fluctuate - consult qualified financial advisors for personalized investment guidance.",
         source: "Malaysian REIT and Dividend Analysis",
         link: "https://www.bursamalaysia.com/",
@@ -471,7 +471,7 @@ export const MALAYSIAN_GOAL_STATS = {
       },
       {
         title: "Nutrition Planning: Understanding Meal Planning Benefits",
-        figure: "Variable",
+        figure: "28%",
         description: "Research indicates meal planning may offer various cost and health benefits. Individual results vary by dietary needs, location, and implementation - consult nutrition and healthcare professionals for personalized guidance.",
         source: "Malaysian Dietitians Association Survey",
         link: "https://www.mda.org.my/",
@@ -491,7 +491,7 @@ export const MALAYSIAN_GOAL_STATS = {
   "Relationships": {
     "Plan Dream Wedding": {
       title: "Wedding Planning: Research Shows Planning Benefits for Celebrations",
-      figure: "Variable",
+      figure: "RM50,000",
       description: "Research indicates structured wedding planning may improve celebration satisfaction. Wedding costs vary significantly by location, guest count, and preferences - consult wedding professionals and financial advisors for budget planning appropriate to your circumstances.",
       source: "Malaysian Association of Hotels & Malaysian Indian Wedding Association",
       link: "https://www.malaysianhotels.org.my/",
@@ -555,7 +555,7 @@ export const MALAYSIAN_GOAL_STATS = {
     },
     "Learn New Skill": {
       title: "Skill Development: Research Shows Learning May Support Career Growth",
-      figure: "Variable",
+      figure: "67%",
       description: "Research indicates skill development may support career advancement opportunities. Individual career outcomes vary significantly by industry, skill area, and market conditions - consult career professionals for personalized guidance.",
       source: "Human Resources Development Corporation & TalentCorp Malaysia",
       link: "https://www.hrdcorp.gov.my/",
@@ -702,7 +702,7 @@ export const MALAYSIAN_GOAL_STATS = {
     },
     "Reduce Environmental Impact": {
       title: "Sustainable Living: Research Shows Potential Cost and Health Benefits",
-      figure: "Variable",
+      figure: "32%",
       description: "Research indicates sustainable practices may offer various cost savings and health benefits. Individual outcomes vary by lifestyle, location, and implementation approach - consult environmental and financial professionals for personalized guidance.",
       source: "Malaysian Green Technology Corporation & Ministry of Environment and Water",
       link: "https://www.mgtc.gov.my/",

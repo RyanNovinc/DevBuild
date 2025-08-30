@@ -69,6 +69,7 @@ import { Amplify } from 'aws-amplify';
 // Import GlobalAchievementToast for achievement notifications
 import GlobalAchievementToast from './src/components/GlobalAchievementToast';
 
+
 // Import the AppContextUpdater to handle automatic app summary updates
 import AppContextUpdater from './src/context/AppContextUpdater';
 
@@ -244,6 +245,7 @@ import MilestoneDetailsScreen from './src/screens/MilestoneDetailsScreen';
 import GoalDetailsScreen from './src/screens/GoalDetailsScreen';
 import TaskDetailsScreen from './src/screens/TaskDetailsScreen';
 import TodoListScreen from './src/screens/TodoListScreen';
+import FullscreenCalendarScreen from './src/screens/TimeScreen/FullscreenCalendarScreen';
 // UPDATED: Import both AuthNavigator and LoginScreen from LoginScreen module
 import AuthNavigator, { LoginScreen } from './src/components/ai/LoginScreen';
 import FeedbackScreen from './src/screens/FeedbackScreen';
@@ -603,6 +605,16 @@ const GoalsTabNavigator = ({ navigation, route }) => {
       setViewMode(prev => {
         const newMode = prev === 'overview' ? 'completed' : 'overview';
         console.log('Toggling goals view mode from', prev, 'to', newMode);
+        
+        // Track achievement for navigating to completed goals view
+        if (newMode === 'completed') {
+          try {
+            FeatureExplorerTracker.trackCompletedGoalsExplorer();
+          } catch (error) {
+            console.error('Error tracking completed goals explorer achievement:', error);
+          }
+        }
+        
         return newMode;
       });
       
@@ -883,6 +895,40 @@ const TimeStack = () => {
       />
       <Stack.Screen name="TimeBlock" component={TimeBlockScreen} />
       <Stack.Screen name="NotificationTest" component={NotificationTestScreen} />
+      <Stack.Screen 
+        name="FullscreenCalendarScreen" 
+        component={FullscreenCalendarScreen}
+        options={{
+          presentation: 'modal',
+          gestureDirection: 'vertical',
+          transitionSpec: {
+            open: {
+              animation: 'timing',
+              config: { duration: 300 }
+            },
+            close: {
+              animation: 'timing', 
+              config: { duration: 300 }
+            }
+          },
+          cardStyleInterpolator: ({ current, layouts }) => {
+            const progress = current.progress;
+            
+            return {
+              cardStyle: {
+                transform: [
+                  {
+                    translateY: progress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [layouts.screen.height, 0]
+                    })
+                  }
+                ]
+              }
+            };
+          }
+        }}
+      />
     </Stack.Navigator>
   );
 };
@@ -1409,10 +1455,17 @@ function AppContent({ navigationRef }) {
   const onboardingCompleted = settings?.onboardingCompleted || false;
   
   // Track onboarding completion state changes for smooth transitions
-  const prevOnboardingCompleted = useRef(onboardingCompleted);
+  const prevOnboardingCompleted = useRef(null); // Initialize to null to track first load
+  const [hasCheckedInitialTourState, setHasCheckedInitialTourState] = useState(false);
   
   useEffect(() => {
-    // Detect when onboarding completion state changes
+    // On first load, just set the previous state without triggering tour
+    if (prevOnboardingCompleted.current === null) {
+      prevOnboardingCompleted.current = onboardingCompleted;
+      return;
+    }
+    
+    // Detect when onboarding completion state changes from false to true
     if (prevOnboardingCompleted.current === false && onboardingCompleted === true) {
       console.log('🎯 Onboarding completion detected, starting transition');
       setTransitionState('transitioning');
@@ -1428,11 +1481,34 @@ function AppContent({ navigationRef }) {
           console.log('🎯 Transition complete, showing main app');
           setTransitionState('stable');
           
-          // Start the app tour after a brief delay to let the main app fully render
-          setTimeout(() => {
-            console.log('🎯 Starting app tour after onboarding completion');
-            // The useAppTour hook will pick up the hasCompletedOnboarding flag
-            // and automatically start the tour since hasSeenAppTour won't be set yet
+          // Check if user has already seen the app tour before starting it
+          setTimeout(async () => {
+            try {
+              const hasSeenAppTour = await AsyncStorage.getItem('hasSeenAppTour');
+              if (hasSeenAppTour !== 'true') {
+                console.log('🎯 Starting app tour after onboarding completion - first time user');
+                
+                // Retry mechanism to wait for global.startTourDirectly to become available
+                const attemptTourStart = (attempt = 1, maxAttempts = 10) => {
+                  if (global.startTourDirectly && typeof global.startTourDirectly === 'function') {
+                    console.log(`🎯 Tour function available on attempt ${attempt}, starting tour`);
+                    global.startTourDirectly();
+                  } else if (attempt < maxAttempts) {
+                    console.log(`🎯 Attempt ${attempt}: startTourDirectly not available yet, retrying in 500ms`);
+                    setTimeout(() => attemptTourStart(attempt + 1, maxAttempts), 500);
+                  } else {
+                    console.error('🎯 Failed to start tour after 10 attempts - startTourDirectly never became available');
+                  }
+                };
+                
+                attemptTourStart();
+              } else {
+                console.log('🎯 User has already seen app tour, skipping');
+              }
+            } catch (error) {
+              console.error('🎯 Error checking tour status:', error);
+              // If there's an error, don't start the tour to be safe
+            }
           }, 1500); // Extra delay to ensure smooth transition
         }, 1000); // Short transition period
       });

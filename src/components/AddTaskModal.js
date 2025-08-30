@@ -211,31 +211,6 @@ const AddTaskModal = ({
     }
   }, [showProjectList, availableProjects.length]);
   
-  // Add task to list
-  const handleAddTask = () => {
-    if (!title.trim()) {
-      Alert.alert('Required Field', 'Please enter a task name');
-      return;
-    }
-    
-    // Goal and project selection now optional for flexible hierarchy
-    // Tasks can be standalone, under goals only, or under milestones
-    
-    const newTask = {
-      id: Date.now().toString(),
-      title: title.trim(),
-      goalId: selectedGoalId || null,
-      goalTitle: selectedGoalTitle || null,
-      projectId: selectedProjectId || null,
-      projectTitle: selectedProjectTitle || null,
-      status: 'todo',
-      completed: false
-    };
-    
-    setTaskList([...taskList, newTask]);
-    setTitle(''); // Reset only the title
-    setActiveTab('list'); // Switch to list tab
-  };
   
   // Remove task from list
   const handleRemoveTask = (taskId) => {
@@ -432,15 +407,23 @@ const AddTaskModal = ({
                   </PanGestureHandler>
                   
                   <View style={[styles.modalHeader, { marginBottom: spacing.m }]}>
-                    <Text style={[
-                      styles.modalTitle, 
-                      { 
-                        color: theme.text,
-                        maxWidth: accessibility.maxTextWidth
-                      }
-                    ]}>
-                      Add Tasks
-                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <Ionicons 
+                        name="checkbox-outline" 
+                        size={scaleWidth(24)} 
+                        color={theme.primary} 
+                        style={{ marginRight: spacing.xs }}
+                      />
+                      <Text style={[
+                        styles.modalTitle, 
+                        { 
+                          color: theme.text,
+                          maxWidth: accessibility.maxTextWidth
+                        }
+                      ]}>
+                        Create Task
+                      </Text>
+                    </View>
                     <TouchableOpacity 
                       style={styles.closeButton} 
                       onPress={handleClose}
@@ -489,21 +472,38 @@ const AddTaskModal = ({
                       style={styles.scrollContent}
                       showsVerticalScrollIndicator={false}
                     >
-                      {/* Warning message when no goals exist */}
-                      {goals.length === 0 && (
-                        <View style={[styles.warningContainer, { backgroundColor: theme.warningBackground || 'rgba(255, 193, 7, 0.1)', borderColor: theme.warning || '#FFC107' }]}>
-                          <Ionicons name="warning-outline" size={20} color={theme.warning || '#FFC107'} />
-                          <Text style={[styles.warningText, { color: theme.warning || '#FFC107' }]}>
-                            No goals found. Tasks created without goals will be standalone and may be harder to organize. 
-                            Consider creating a goal first for better structure.
+                      {/* Task Title - Now first and primary */}
+                      <View style={[styles.inputSection, { zIndex: 4 }]}>
+                        <Text style={[styles.inputLabel, { color: theme.text }]}>
+                          Task Name *
+                        </Text>
+                        <TouchableOpacity
+                          style={[
+                            styles.input,
+                            { 
+                              backgroundColor: theme.inputBackground,
+                              borderColor: theme.border,
+                              justifyContent: 'center'
+                            }
+                          ]}
+                          onPress={() => setShowTaskInputModal(true)}
+                          accessible={true}
+                          accessibilityLabel="Task name input"
+                          accessibilityHint="Tap to enter the name for your task"
+                        >
+                          <Text style={[
+                            styles.inputText,
+                            { color: title ? theme.text : theme.textSecondary }
+                          ]}>
+                            {title || "Enter task name"}
                           </Text>
-                        </View>
-                      )}
-                      
-                      {/* Goal Selection - First */}
+                        </TouchableOpacity>
+                      </View>
+
+                      {/* Goal Selection - Now optional */}
                       <View style={[styles.inputSection, { zIndex: 3 }]}>
                         <Text style={[styles.inputLabel, { color: theme.text }]}>
-                          Goal
+                          Link to Goal (Optional)
                         </Text>
                         <TouchableOpacity
                           style={[
@@ -526,7 +526,7 @@ const AddTaskModal = ({
                             styles.dropdownText,
                             { color: selectedGoalTitle ? theme.text : theme.textSecondary }
                           ]}>
-                            {selectedGoalTitle || "Select a goal"}
+                            {selectedGoalTitle || "Select a goal to link (optional)"}
                           </Text>
                           <Ionicons 
                             name={showGoalList ? "chevron-up" : "chevron-down"} 
@@ -570,11 +570,12 @@ const AddTaskModal = ({
                         </Animated.View>
                       </View>
                       
-                      {/* Project Selection - Second */}
-                      <View style={[styles.inputSection, { zIndex: 2 }]}>
-                        <Text style={[styles.inputLabel, { color: theme.text }]}>
-                          Project
-                        </Text>
+                      {/* Milestone Selection - Only show when goal is selected */}
+                      {selectedGoalId && (
+                        <View style={[styles.inputSection, { zIndex: 2 }]}>
+                          <Text style={[styles.inputLabel, { color: theme.text }]}>
+                            Link to Milestone (Optional)
+                          </Text>
                         <TouchableOpacity
                           style={[
                             styles.dropdown,
@@ -595,14 +596,14 @@ const AddTaskModal = ({
                           disabled={!selectedGoalId}
                           accessible={true}
                           accessibilityRole="button"
-                          accessibilityLabel={selectedProjectTitle || "Select a project"}
-                          accessibilityHint={selectedGoalId ? "Tap to show project options" : "Select a goal first"}
+                          accessibilityLabel={selectedProjectTitle || "Select a milestone"}
+                          accessibilityHint="Tap to show milestone options"
                         >
                           <Text style={[
                             styles.dropdownText,
                             { color: selectedProjectTitle ? theme.text : theme.textSecondary }
                           ]}>
-                            {selectedProjectTitle || (selectedGoalId ? "Select a project" : "Select a goal first")}
+                            {selectedProjectTitle || "Select a milestone (optional)"}
                           </Text>
                           <Ionicons 
                             name={showProjectList ? "chevron-up" : "chevron-down"} 
@@ -637,61 +638,15 @@ const AddTaskModal = ({
                             ) : (
                               <View style={styles.emptyDropdown}>
                                 <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
-                                  No projects for this goal
+                                  No milestones for this goal
                                 </Text>
                               </View>
                             )}
                           </ScrollView>
                         </Animated.View>
-                      </View>
+                        </View>
+                      )}
                       
-                      {/* Task Title */}
-                      <View style={[styles.inputSection, { zIndex: 1 }]}>
-                        <Text style={[styles.inputLabel, { color: theme.text }]}>
-                          Task Name
-                        </Text>
-                        <TouchableOpacity
-                          style={[
-                            styles.input,
-                            { 
-                              backgroundColor: theme.inputBackground,
-                              borderColor: theme.border,
-                              justifyContent: 'center'
-                            }
-                          ]}
-                          onPress={() => setShowTaskInputModal(true)}
-                          accessible={true}
-                          accessibilityLabel="Task name input"
-                          accessibilityHint="Tap to enter the name for your task"
-                        >
-                          <Text style={[
-                            styles.inputText,
-                            { color: title ? theme.text : theme.textSecondary }
-                          ]}>
-                            {title || "Enter task name"}
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                      
-                      {/* Add Task Button */}
-                      <TouchableOpacity
-                        style={[
-                          styles.addButton,
-                          { 
-                            backgroundColor: theme.primary,
-                            opacity: title.trim() ? 1 : 0.5
-                          }
-                        ]}
-                        onPress={handleAddTask}
-                        disabled={!title.trim()}
-                        accessible={true}
-                        accessibilityRole="button"
-                        accessibilityLabel="Add task to list"
-                        accessibilityHint="Adds the current task to your task list"
-                      >
-                        <Ionicons name="add" size={24} color="#FFFFFF" />
-                        <Text style={styles.addButtonText}>Add Task to List</Text>
-                      </TouchableOpacity>
                     </ScrollView>
                   ) : (
                     <View style={styles.listContainer}>
@@ -749,9 +704,17 @@ const AddTaskModal = ({
       <TaskInputModal
         visible={showTaskInputModal}
         onClose={() => setShowTaskInputModal(false)}
-        onConfirm={(taskName) => {
-          setTitle(taskName);
+        onAddToList={(newTask) => {
+          setTaskList([...taskList, newTask]);
+          setTitle(''); // Reset title
+          setActiveTab('list'); // Switch to list tab
           setShowTaskInputModal(false);
+        }}
+        taskData={{
+          selectedGoalId,
+          selectedGoalTitle,
+          selectedProjectId,
+          selectedProjectTitle
         }}
         initialValue={title}
       />

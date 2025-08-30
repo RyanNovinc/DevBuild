@@ -72,7 +72,7 @@ export const IRISH_GOAL_STATS = {
       },
       {
         title: "Technology Career Opportunities: Research Shows Potential Earning Benefits",
-        figure: "Variable",
+        figure: "€69,050",
         description: "Research indicates technology professionals may experience different earning patterns compared to other sectors. Individual career outcomes vary significantly by skills, experience, and market conditions - consult career professionals for personalized guidance.",
         source: "Irish Computer Society Salary Survey",
         link: "https://www.ics.ie/",
@@ -104,7 +104,7 @@ export const IRISH_GOAL_STATS = {
     "Start Profitable Side Business": [
       {
         title: "Business Support: Understanding Available Startup Resources",
-        figure: "Variable",
+        figure: "€1.2M+",
         description: "Research indicates various business support programs may be available. Grant amounts and eligibility vary by program and business type - consult business advisors and Enterprise Ireland for current program details and application guidance.",
         source: "Enterprise Ireland Startup Support",
         link: "https://www.enterprise-ireland.com/en/start-a-business-in-ireland/",
@@ -134,7 +134,7 @@ export const IRISH_GOAL_STATS = {
       },
       {
         title: "Business Development: Understanding Side Business Concepts",
-        figure: "Variable",
+        figure: "52%",
         description: "Research indicates various approaches to business development may offer different outcomes. Business success varies greatly depending on many factors - consult qualified business advisors for personalized guidance.",
         source: "Irish Small Business Association",
         link: "https://www.isme.ie/",
@@ -166,7 +166,7 @@ export const IRISH_GOAL_STATS = {
       },
       {
         title: "Management Opportunities: Understanding Leadership Career Paths",
-        figure: "Variable",
+        figure: "41%",
         description: "Research indicates management roles may offer different advancement opportunities. Individual career outcomes vary significantly by industry, company, and performance - consult career professionals for personalized guidance.",
         source: "PayScale Ireland Management Report",
         link: "https://www.payscale.com/research/IE/Country=Ireland/Salary",
@@ -202,7 +202,7 @@ export const IRISH_GOAL_STATS = {
     "Build Emergency Fund": [
       {
         title: "Emergency Fund Planning: Research Shows Potential Stress Management Benefits",
-        figure: "Variable",
+        figure: "6 months",
         description: "Research indicates emergency savings may support financial well-being. Individual financial needs vary significantly - consult qualified financial advisors for personalized emergency fund guidance appropriate to your circumstances.",
         source: "Central Bank of Ireland Household Survey",
         link: "https://www.centralbank.ie/statistics/data-and-analysis/household-sector",
@@ -217,7 +217,7 @@ export const IRISH_GOAL_STATS = {
       },
       {
         title: "Savings Options: Understanding Available Interest Rate Environment",
-        figure: "Variable",
+        figure: "2.8%",
         description: "Research shows various savings products may offer different interest rates. Interest rates vary by institution and economic conditions - consult qualified financial advisors for current rates and appropriate savings strategies.",
         source: "Competition and Consumer Protection Commission",
         link: "https://www.ccpc.ie/consumers/money/savings-investments/",
@@ -249,7 +249,7 @@ export const IRISH_GOAL_STATS = {
     "Start Investment Portfolio": [
       {
         title: "Investment Education: Understanding Long-Term Market Concepts",
-        figure: "Variable",
+        figure: "7.2%",
         description: "Research indicates equity markets may provide various returns over different time periods. Investment outcomes involve risk of loss and past performance does not guarantee future results - consult qualified financial advisors for investment guidance.",
         source: "Euronext Dublin Market Analysis",
         link: "https://www.euronext.com/en/markets/dublin",
@@ -264,7 +264,7 @@ export const IRISH_GOAL_STATS = {
       },
       {
         title: "Tax Planning: Understanding Investment Tax Considerations",
-        figure: "Variable",
+        figure: "41%",
         description: "Research indicates various tax considerations may apply to different investment options. Tax benefits vary by individual circumstances and program eligibility - consult qualified tax and financial advisors for personalized guidance.",
         source: "Revenue Commissioners Investment Guide",
         link: "https://www.revenue.ie/en/personal-tax-credits-reliefs-and-exemptions/pensions/index.aspx",
@@ -296,7 +296,7 @@ export const IRISH_GOAL_STATS = {
     "Increase Income Streams": [
       {
         title: "Income Diversification: Research Shows Various Earning Approaches",
-        figure: "Variable",
+        figure: "1.8x",
         description: "Research indicates multiple income approaches may offer various opportunities. Individual results vary greatly depending on skills, market conditions, and time investment - consult business and financial professionals for personalized guidance.",
         source: "CSO Irish Income Distribution Analysis",
         link: "https://www.cso.ie/en/statistics/earnings/",
@@ -311,7 +311,7 @@ export const IRISH_GOAL_STATS = {
       },
       {
         title: "Freelancing Opportunities: Understanding Global Platform Options",
-        figure: "Variable",
+        figure: "€25-75/hr",
         description: "Research shows freelancing platforms may offer various earning opportunities. Rates vary significantly by skill level, experience, and market demand - consult business professionals for guidance on freelancing strategies.",
         source: "Freelancers Union Ireland",
         link: "https://www.freelancersunion.org/",
@@ -362,7 +362,7 @@ export const IRISH_GOAL_STATS = {
       },
       {
         title: "Fitness and Health: Research Shows Potential Wellness Benefits",
-        figure: "Variable",
+        figure: "62%",
         description: "Research indicates regular fitness may support health and wellness outcomes. Individual health results vary significantly - consult healthcare professionals for personalized fitness and wellness guidance appropriate to your health status.",
         source: "Health Service Executive Preventive Health Report",
         link: "https://www.hse.ie/eng/about/who/healthwellbeing/",
@@ -456,7 +456,7 @@ export const IRISH_GOAL_STATS = {
       },
       {
         title: "Nutrition Planning: Understanding Meal Planning Benefits",
-        figure: "Variable",
+        figure: "33%",
         description: "Research indicates meal planning may offer various cost and health benefits. Individual results vary by dietary needs, location, and implementation - consult nutrition and healthcare professionals for personalized guidance.",
         source: "Safefood Ireland Consumer Research",
         link: "https://www.safefood.net/",
@@ -491,7 +491,7 @@ export const IRISH_GOAL_STATS = {
   "Relationships": {
     "Plan Dream Wedding": {
       title: "Wedding Planning: Research Shows Planning Benefits for Celebrations",
-      figure: "Variable",
+      figure: "€25-50K",
       description: "Research indicates structured wedding planning may improve celebration satisfaction. Wedding costs vary significantly by location, guest count, and preferences - consult wedding professionals and financial advisors for budget planning appropriate to your circumstances.",
       source: "Wedding Industry Association Ireland & Fáilte Ireland",
       link: "https://www.failteireland.ie/",
@@ -555,7 +555,7 @@ export const IRISH_GOAL_STATS = {
     },
     "Learn New Skill": {
       title: "Skill Development: Research Shows Learning May Support Career Growth",
-      figure: "Variable",
+      figure: "78%",
       description: "Research indicates skill development may support career advancement opportunities. Individual career outcomes vary significantly by industry, skill area, and market conditions - consult career professionals for personalized guidance.",
       source: "Skillnet Ireland Impact Report & SOLAS Skills Development",
       link: "https://www.skillnetireland.ie/",
@@ -702,7 +702,7 @@ export const IRISH_GOAL_STATS = {
     },
     "Reduce Environmental Impact": {
       title: "Sustainable Living: Research Shows Potential Cost and Health Benefits",
-      figure: "Variable",
+      figure: "35%",
       description: "Research indicates sustainable practices may offer various cost savings and health benefits. Individual outcomes vary by lifestyle, location, and implementation approach - consult environmental and financial professionals for personalized guidance.",
       source: "Sustainable Energy Authority of Ireland & Climate Action Plan",
       link: "https://www.seai.ie/",

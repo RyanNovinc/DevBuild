@@ -25,12 +25,19 @@ import { DEFAULT_PROMPTS } from './PromptLibrary';
 import { StandupStreakService } from './StandupStreakService';
 import StandupHistory from './StandupHistory';
 import PromptSelector from './PromptSelector';
+import FreeTierLimitModal from '../../../TimeScreen/FreeTierLimitModal';
+import { useAppContext } from '../../../../context/AppContext';
+import { useNavigation } from '@react-navigation/native';
 
 /**
  * Daily Standup component with research-backed prompts
  * 3 prompts max: 2 morning intention, 1 evening reflection
  */
 const DailyStandup = ({ theme, showSuccess }) => {
+  // Get subscription status and navigation
+  const { userSubscriptionStatus } = useAppContext();
+  const navigation = useNavigation();
+  const isPro = userSubscriptionStatus === 'pro' || userSubscriptionStatus === 'unlimited';
   // Today's date for storage key - use local date
   const getLocalDateString = () => {
     const now = new Date();
@@ -64,11 +71,35 @@ const DailyStandup = ({ theme, showSuccess }) => {
   const [showPromptSelector, setShowPromptSelector] = useState(false);
   const [celebrationMessage, setCelebrationMessage] = useState('');
 
+  // Limit modal state
+  const [showLimitModal, setShowLimitModal] = useState(false);
+
   // Character limits (research: 50-150 words optimal)
   const CHAR_LIMITS = {
     morningPriority: 150,
     morningGratitude: 100,
     eveningHighlight: 150
+  };
+
+  // Handle text input with limit enforcement
+  const handleTextChange = (field, newText) => {
+    const limit = CHAR_LIMITS[field];
+    
+    // For Pro users, allow unlimited characters
+    if (isPro) {
+      updateResponse(field, newText);
+      return;
+    }
+    
+    // For free users, check limit
+    if (newText.length > limit) {
+      // Show popup when they try to exceed
+      setShowLimitModal(true);
+      return; // Don't update the text
+    }
+    
+    // Update normally if within limit
+    updateResponse(field, newText);
   };
 
   // Load today's standup data and streak info
@@ -219,16 +250,11 @@ const DailyStandup = ({ theme, showSuccess }) => {
                 }
               ]}
               value={standupData[prompt.field]}
-              onChangeText={(text) => {
-                if (text.length <= CHAR_LIMITS[prompt.field]) {
-                  updateResponse(prompt.field, text);
-                }
-              }}
+              onChangeText={(text) => handleTextChange(prompt.field, text)}
               placeholder={prompt.placeholder}
               placeholderTextColor={theme.textSecondary}
               multiline={true}
               numberOfLines={3}
-              maxLength={CHAR_LIMITS[prompt.field]}
               textAlignVertical="top"
             />
             <Text style={[styles.charCount, { color: theme.textSecondary }]}>
@@ -276,7 +302,7 @@ const DailyStandup = ({ theme, showSuccess }) => {
       <View style={styles.header}>
         <View style={styles.headerMain}>
           <Text style={[styles.headerTitle, { color: theme.text }]}>
-            Daily Standup
+            Daily Check-in
           </Text>
           <Text style={[styles.headerDate, { color: theme.textSecondary }]}>
             {new Date().toLocaleDateString('en-US', { 
@@ -395,6 +421,19 @@ const DailyStandup = ({ theme, showSuccess }) => {
         currentPrompts={currentPrompts}
         theme={theme}
         showSuccess={showSuccess}
+      />
+
+      {/* Limit Modal */}
+      <FreeTierLimitModal
+        visible={showLimitModal}
+        theme={theme}
+        limitType="reflectionLength"
+        onClose={() => setShowLimitModal(false)}
+        onUpgrade={() => {
+          setShowLimitModal(false);
+          navigation.navigate('PricingScreen');
+        }}
+        isDarkMode={theme.background === '#000000'}
       />
     </ScrollView>
   );

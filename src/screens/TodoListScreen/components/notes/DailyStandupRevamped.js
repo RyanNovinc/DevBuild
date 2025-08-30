@@ -34,6 +34,9 @@ import { DEFAULT_PROMPTS, getAllThemes } from './PromptLibrary';
 import { StandupStreakService } from './StandupStreakService';
 import StandupHistoryRevamped from './StandupHistoryRevamped';
 import PromptSelectorRevamped from './PromptSelectorRevamped';
+import FreeTierLimitModal from '../../../TimeScreen/FreeTierLimitModal';
+import { useAppContext } from '../../../../context/AppContext';
+import { useNavigation } from '@react-navigation/native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -42,6 +45,10 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
  * Features: Cards UI, Progress indicators, Smooth animations, Better visual hierarchy, Swipeable tabs
  */
 const DailyStandupRevamped = ({ theme, showSuccess, isFullscreen }) => {
+  // Get subscription status and navigation
+  const { userSubscriptionStatus } = useAppContext();
+  const navigation = useNavigation();
+  const isPro = userSubscriptionStatus === 'pro' || userSubscriptionStatus === 'unlimited';
   // Core state - use local date instead of UTC
   const getLocalDateString = () => {
     const now = new Date();
@@ -74,6 +81,9 @@ const DailyStandupRevamped = ({ theme, showSuccess, isFullscreen }) => {
   const [researchMessageIndex, setResearchMessageIndex] = useState(null); // null = use default daily message
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
+  // Limit modal state
+  const [showLimitModal, setShowLimitModal] = useState(false);
+
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
@@ -89,6 +99,27 @@ const DailyStandupRevamped = ({ theme, showSuccess, isFullscreen }) => {
     morningPriority: 150,
     morningGratitude: 100,
     eveningHighlight: 150
+  };
+
+  // Handle text input with limit enforcement
+  const handleTextChange = (field, newText) => {
+    const limit = CHAR_LIMITS[field];
+    
+    // For Pro users, allow unlimited characters
+    if (isPro) {
+      updateResponse(field, newText);
+      return;
+    }
+    
+    // For free users, check limit
+    if (newText.length > limit) {
+      // Show popup when they try to exceed
+      setShowLimitModal(true);
+      return; // Don't update the text
+    }
+    
+    // Update normally if within limit
+    updateResponse(field, newText);
   };
 
   // Load data on mount
@@ -811,16 +842,11 @@ const DailyStandupRevamped = ({ theme, showSuccess, isFullscreen }) => {
             }
           ]}
           value={fieldValue}
-          onChangeText={(text) => {
-            if (text.length <= CHAR_LIMITS[prompt.field]) {
-              updateResponse(prompt.field, text);
-            }
-          }}
+          onChangeText={(text) => handleTextChange(prompt.field, text)}
           placeholder={currentPrompt.placeholder}
           placeholderTextColor={theme.textSecondary + '80'}
           multiline={true}
           numberOfLines={3}
-          maxLength={CHAR_LIMITS[prompt.field]}
           textAlignVertical="top"
           onFocus={() => setFocusedInput(prompt.field)}
           onBlur={() => setFocusedInput(null)}
@@ -943,7 +969,7 @@ const DailyStandupRevamped = ({ theme, showSuccess, isFullscreen }) => {
                 {getGreeting()} {getCurrentTimeEmoji()}
               </Text>
               <Text style={[styles.headerTitle, { color: theme.text }]}>
-                Daily Reflection
+                Daily Check-in
               </Text>
               <Text style={[styles.headerDate, { color: theme.textSecondary }]}>
                 {new Date().toLocaleDateString('en-US', { 
@@ -1207,6 +1233,19 @@ const DailyStandupRevamped = ({ theme, showSuccess, isFullscreen }) => {
           </SafeAreaView>
         </View>
       </Modal>
+
+      {/* Limit Modal */}
+      <FreeTierLimitModal
+        visible={showLimitModal}
+        theme={theme}
+        limitType="reflectionLength"
+        onClose={() => setShowLimitModal(false)}
+        onUpgrade={() => {
+          setShowLimitModal(false);
+          navigation.navigate('PricingScreen');
+        }}
+        isDarkMode={theme.background === '#000000'}
+      />
     </View>
   );
 };

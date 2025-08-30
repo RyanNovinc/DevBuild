@@ -797,4 +797,343 @@ export const generateMonthViewHTML = async (currentDate, monthDates, selectedMon
   
   html += '</div></div>';
   return html;
+};/**
+ * Generate HTML content for fullscreen calendar PDF export
+ */
+export const generateFullscreenCalendarHTML = (selectedDate, calendarIcons, iconLibrary, userName = 'User', viewMode = 'addIcons', getTimeBlocksForDate = null) => {
+  const formatDate = (date, format = 'long') => {
+    const options = format === 'long' 
+      ? { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' }
+      : { year: 'numeric', month: 'short', day: 'numeric' };
+    return date.toLocaleDateString('en-US', options);
+  };
+
+  const getIconsForDate = (date) => {
+    const dateKey = date.toISOString().split('T')[0];
+    const iconsForDate = calendarIcons[dateKey] || [];
+    
+    // Handle both old format (single icon) and new format (array of icons)
+    if (Array.isArray(iconsForDate)) {
+      return iconsForDate;
+    } else if (iconsForDate) {
+      return [iconsForDate];
+    }
+    return [];
+  };
+
+  const getIconDisplay = (iconName) => {
+    // Check if it's an emoji (starts with emoji character)
+    if (/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F700}-\u{1F77F}]|[\u{1F780}-\u{1F7FF}]|[\u{1F800}-\u{1F8FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(iconName)) {
+      return iconName;
+    }
+    
+    // Look up icon in library
+    const icon = iconLibrary.find(i => i.name === iconName);
+    return icon ? icon.icon : '📅';
+  };
+
+  // Get current month info
+  const currentMonth = selectedDate.getMonth();
+  const currentYear = selectedDate.getFullYear();
+  const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+  const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
+  const startOfCalendar = new Date(firstDayOfMonth);
+  startOfCalendar.setDate(startOfCalendar.getDate() - firstDayOfMonth.getDay());
+  
+  const monthName = selectedDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+  
+  let html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Calendar Icons - ${monthName}</title>
+      <style>
+        body { 
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+          margin: 20px;
+          color: #333;
+          line-height: 1.4;
+        }
+        h1 { 
+          font-size: 24px; 
+          margin-bottom: 10px; 
+          color: #222;
+          text-align: center;
+        }
+        h2 { 
+          font-size: 18px; 
+          margin: 15px 0 10px; 
+          color: #333;
+          text-align: center;
+        }
+        .calendar-grid {
+          display: grid;
+          grid-template-columns: repeat(7, 1fr);
+          gap: 0;
+          background-color: #333;
+          border: 2px solid #333;
+          margin: 20px 0;
+          border-collapse: collapse;
+        }
+        .day-header {
+          background-color: #f5f5f5;
+          padding: 8px 4px;
+          text-align: center;
+          font-weight: bold;
+          font-size: 12px;
+          color: #666;
+          border: 1px solid #333;
+          border-bottom: 2px solid #333;
+        }
+        .calendar-day {
+          background-color: white;
+          min-height: 80px;
+          padding: 6px;
+          position: relative;
+          border: 1px solid #333;
+        }
+        .calendar-day.other-month {
+          background-color: #f8f8f8;
+          color: #ccc;
+          border: 1px solid #333;
+        }
+        .calendar-day.today {
+          background-color: #e3f2fd;
+          border: 2px solid #2196F3;
+        }
+        .day-number {
+          font-size: 14px;
+          font-weight: bold;
+          margin-bottom: 6px;
+          padding-bottom: 2px;
+          border-bottom: 1px solid #eee;
+          color: #333;
+        }
+        .calendar-day.other-month .day-number {
+          color: #999;
+        }
+        .calendar-day.today .day-number {
+          color: #2196F3;
+        }
+        .day-icons {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 3px;
+          justify-content: center;
+          align-items: center;
+          min-height: 45px;
+          margin-top: 4px;
+        }
+        .calendar-icon {
+          font-size: 16px;
+          line-height: 1;
+          padding: 2px 4px;
+          background-color: #f8f9fa;
+          border-radius: 4px;
+          margin: 1px;
+          display: inline-block;
+        }
+        .calendar-dot {
+          display: inline-block;
+          border-radius: 50%;
+          width: 12px;
+          height: 12px;
+          margin: 2px;
+          border: 1px solid rgba(0,0,0,0.1);
+        }
+        .footer { 
+          margin-top: 30px; 
+          padding-top: 10px;
+          border-top: 1px solid #eee;
+          font-size: 12px; 
+          color: #777; 
+          text-align: center; 
+        }
+        .watermark {
+          margin-top: 20px;
+          padding: 15px;
+          text-align: center;
+          background-color: #f8f9fa;
+          border: 1px solid #e9ecef;
+          border-radius: 8px;
+        }
+        .watermark-logo {
+          font-size: 18px;
+          font-weight: bold;
+          color: #3b5998;
+          margin-bottom: 5px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+        }
+        .watermark-text {
+          font-size: 11px;
+          color: #666;
+        }
+        @media print {
+          body { margin: 0; }
+          .calendar-grid { page-break-inside: avoid; }
+        }
+      </style>
+    </head>
+    <body>
+      <h1>📅 ${userName}'s Calendar</h1>
+      <h2>${monthName}</h2>
+      
+      <div class="calendar-grid">
+        <!-- Day headers -->
+        <div class="day-header">Sun</div>
+        <div class="day-header">Mon</div>
+        <div class="day-header">Tue</div>
+        <div class="day-header">Wed</div>
+        <div class="day-header">Thu</div>
+        <div class="day-header">Fri</div>
+        <div class="day-header">Sat</div>
+  `;
+
+  // Generate calendar days
+  const today = new Date();
+  const currentDate = new Date(startOfCalendar);
+  
+  for (let i = 0; i < 42; i++) { // 6 weeks * 7 days
+    const isCurrentMonth = currentDate.getMonth() === currentMonth;
+    const isToday = currentDate.toDateString() === today.toDateString();
+    
+    let dayClass = 'calendar-day';
+    if (!isCurrentMonth) dayClass += ' other-month';
+    if (isToday) dayClass += ' today';
+    
+    html += `
+      <div class="${dayClass}">
+        <div class="day-number">${currentDate.getDate()}</div>
+        <div class="day-icons">
+    `;
+    
+    // Handle different view modes
+    if (viewMode === 'addIcons') {
+      // Show calendar-only icons (user-added icons/emojis)
+      const icons = getIconsForDate(currentDate);
+      if (icons.length > 0) {
+        icons.forEach(iconName => {
+          const iconDisplay = getIconDisplay(iconName);
+          html += `<span class="calendar-icon">${iconDisplay}</span>`;
+        });
+      }
+    } else if (viewMode === 'icons' && getTimeBlocksForDate) {
+      // Show timeblock icons - ONLY for general activities with custom icons (match calendar exactly)
+      const timeBlocks = getTimeBlocksForDate(currentDate);
+      if (timeBlocks && timeBlocks.length > 0) {
+        // Get unique icons for the day (up to 6) - ONLY for general activities (no goal association)
+        const blockIcons = timeBlocks
+          .filter(block => block.isGeneralActivity && block.customIcon) // Only general activities with custom icons
+          .map(block => block.customIcon)
+          .filter((icon, index, self) => self.indexOf(icon) === index) // Remove duplicates
+          .slice(0, 6);
+        
+        // Map Ionicon names to emojis for PDF
+        const iconNameToEmoji = {
+          'car-outline': '🚗',
+          'car': '🚗',
+          'airplane-outline': '✈️',
+          'airplane': '✈️',
+          'home-outline': '🏠',
+          'home': '🏠',
+          'restaurant-outline': '🍽️',
+          'restaurant': '🍽️',
+          'fitness-outline': '💪',
+          'fitness': '💪',
+          'book-outline': '📚',
+          'book': '📚',
+          'medical-outline': '⚕️',
+          'medical': '⚕️',
+          'briefcase-outline': '💼',
+          'briefcase': '💼',
+          'heart-outline': '❤️',
+          'heart': '❤️',
+          'pizza-outline': '🍕',
+          'pizza': '🍕',
+          'basketball-outline': '🏀',
+          'basketball': '🏀',
+          'bicycle-outline': '🚲',
+          'bicycle': '🚲',
+          'camera-outline': '📷',
+          'camera': '📷',
+          'headset-outline': '🎧',
+          'headset': '🎧',
+          'laptop-outline': '💻',
+          'laptop': '💻',
+          'phone-portrait-outline': '📱',
+          'phone-portrait': '📱',
+          'walk-outline': '🚶',
+          'walk': '🚶',
+          'bed-outline': '🛏️',
+          'bed': '🛏️',
+          'cafe-outline': '☕',
+          'cafe': '☕',
+          'gift-outline': '🎁',
+          'gift': '🎁',
+          'musical-notes-outline': '🎵',
+          'musical-notes': '🎵'
+        };
+        
+        blockIcons.forEach(iconName => {
+          // Check if it's already an emoji, if not try to map from Ionicon name
+          const isEmoji = /[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F700}-\u{1F77F}]|[\u{1F780}-\u{1F7FF}]|[\u{1F800}-\u{1F8FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(iconName);
+          
+          if (isEmoji) {
+            html += `<span class="calendar-icon">${iconName}</span>`;
+          } else {
+            const emoji = iconNameToEmoji[iconName] || '📅'; // Default to calendar emoji
+            html += `<span class="calendar-icon">${emoji}</span>`;
+          }
+        });
+      }
+    } else if (viewMode === 'dots' && getTimeBlocksForDate) {
+      // Show colored dots - match calendar exactly
+      const timeBlocks = getTimeBlocksForDate(currentDate);
+      if (timeBlocks && timeBlocks.length > 0) {
+        // Get unique colors for the day (up to 6) - exactly like calendar view
+        const blockColors = timeBlocks
+          .map(block => block.isGeneralActivity ? block.customColor : block.domainColor)
+          .filter(color => color && color !== 'undefined') // Filter out null/undefined colors
+          .filter((color, index, self) => self.indexOf(color) === index) // Remove duplicates
+          .slice(0, 6);
+        
+        blockColors.forEach(color => {
+          html += `<span style="color: ${color}; font-size: 14px;">●</span>`;
+        });
+      }
+    }
+    
+    html += `
+        </div>
+      </div>
+    `;
+    
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+  
+  html += `
+      </div>
+      
+      <div class="footer">
+        Generated on ${new Date().toLocaleString()}
+      </div>
+      
+      <div class="watermark">
+        <div class="watermark-logo">
+          🧭 LifeCompass
+        </div>
+        <div class="watermark-text">
+          Navigate Your Life with Purpose • lifecompass.app
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+  
+  return html;
 };

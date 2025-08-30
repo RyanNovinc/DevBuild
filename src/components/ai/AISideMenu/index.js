@@ -1,5 +1,6 @@
 // src/components/ai/AISideMenu/index.js
 import React, { useEffect, useState, useRef } from 'react';
+import AchievementService from '../../../services/AchievementService';
 import { 
   View, 
   Text, 
@@ -215,46 +216,57 @@ const ClaimAILightButton = ({ theme, subscriptionStatus, realSubscriptionInfo })
   // Check if user should see the AI Light claim button
   useEffect(() => {
     checkShouldShowAILightButton();
-  }, [subscriptionStatus, realSubscriptionInfo]);
+  }, [subscriptionStatus, realSubscriptionInfo, isAuthenticated]);
 
   const checkShouldShowAILightButton = async () => {
     try {
       console.log('ClaimAILightButton DEBUG:', {
         subscriptionStatus,
         realSubscriptionInfo,
-        isProTier: realSubscriptionInfo?.isProTier
+        isProTier: realSubscriptionInfo?.isProTier,
+        isAuthenticated
       });
       
-      // Check if user has premium/pro status (mock or real)
+      // Only show if user is authenticated (logged in)
+      if (!isAuthenticated) {
+        setShouldShowButton(false);
+        console.log('ClaimAILightButton: NOT showing - user not authenticated');
+        return;
+      }
+      
+      // Check if user is a founder (first 1000 users who bought the app)
+      const proAccessPurchased = await AsyncStorage.getItem('proAccessPurchased');
+      const isFounder = proAccessPurchased === 'true';
+      
+      // Check if user has premium/pro status (real subscription)
       const isPremiumMock = subscriptionStatus === 'pro' || 
                            subscriptionStatus === 'unlimited' ||
                            realSubscriptionInfo?.isProTier;
       
-      // FORCE SHOW for dev testing - only when authenticated
-      const forceShowForDev = true; // Set to false in production
-      const showForDev = forceShowForDev && isAuthenticated; // Only show if authenticated
+      // Only show for founders or premium users
+      const shouldShow = isFounder || isPremiumMock;
       
+      console.log('ClaimAILightButton isFounder:', isFounder);
       console.log('ClaimAILightButton isPremiumMock:', isPremiumMock);
-      console.log('ClaimAILightButton showForDev:', showForDev);
-      console.log('ClaimAILightButton isAuthenticated:', isAuthenticated);
+      console.log('ClaimAILightButton shouldShow:', shouldShow);
       
-      if (isPremiumMock || showForDev) {
+      if (shouldShow) {
         // Check if already claimed
         const alreadyClaimedAILight = await AsyncStorage.getItem('aiLightGiftClaimed');
         
         if (!alreadyClaimedAILight) {
           // Only show if not yet claimed
           setShouldShowButton(true);
-          console.log('ClaimAILightButton: SHOWING - premium user, not yet claimed');
+          console.log('ClaimAILightButton: SHOWING - founder/premium user, not yet claimed');
         } else {
           // Already claimed, don't show
           setShouldShowButton(false);
           console.log('ClaimAILightButton: NOT showing - already claimed');
         }
       } else {
-        // For non-premium: don't show
+        // For non-founder/non-premium: don't show
         setShouldShowButton(false);
-        console.log('ClaimAILightButton: NOT showing - not premium');
+        console.log('ClaimAILightButton: NOT showing - not founder/premium');
       }
     } catch (error) {
       console.error('Error checking AI Light eligibility:', error);
@@ -899,20 +911,32 @@ const AISideMenu = ({
   };
 
   // Calculate total referral limit based on achievements
+  const [referralLimit, setReferralLimit] = React.useState(2); // Default base limit
+  
+  // Load referral limit from achievements
+  React.useEffect(() => {
+    if (visible) {
+      const loadReferralLimit = async () => {
+        try {
+          const limit = await AchievementService.getReferralLimit();
+          setReferralLimit(limit);
+        } catch (error) {
+          console.error('Error loading referral limit:', error);
+        }
+      };
+      
+      loadReferralLimit();
+    }
+  }, [visible]);
+  
   const getTotalReferralLimit = () => {
-    const currentStreak = streakData.currentStreak;
-    let limit = 3; // Base limit
-    
-    if (currentStreak >= 90) limit += 1; // 90-day achievement adds 1
-    if (currentStreak >= 180) limit += 1; // 180-day achievement adds 1
-    
-    return limit; // Max of 5 total
+    return referralLimit;
   };
 
   // Calculate referrals remaining vs total limit (0/X format)
   const getReferralProgress = () => {
     const total = getTotalReferralLimit();
-    const used = referralStats?.converted || 0;
+    const used = referralStats?.sent || 0; // Changed from converted to sent
     const remaining = Math.max(0, total - used);
     
     console.log('getReferralProgress DEBUG:', {

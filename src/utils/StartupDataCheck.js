@@ -8,9 +8,48 @@ import { initializeFeedbackTable } from '../lib/supabase';
  * This will run silently in the background unless major issues are found
  */
 
+/**
+ * Clean up old backup files to prevent storage bloat
+ * Keeps only the most recent 3 backup files
+ */
+const cleanupOldBackups = async () => {
+  try {
+    const allKeys = await AsyncStorage.getAllKeys();
+    const backupKeys = allKeys.filter(key => key.startsWith('backup_startup_'));
+    
+    if (backupKeys.length <= 3) {
+      console.log(`📁 Found ${backupKeys.length} backup files (within limit)`);
+      return;
+    }
+    
+    // Sort by timestamp (newest first)
+    const sortedBackups = backupKeys.sort((a, b) => {
+      const timestampA = parseInt(a.replace('backup_startup_', ''));
+      const timestampB = parseInt(b.replace('backup_startup_', ''));
+      return timestampB - timestampA;
+    });
+    
+    // Keep only the 3 most recent backups
+    const backupsToKeep = sortedBackups.slice(0, 3);
+    const backupsToDelete = sortedBackups.slice(3);
+    
+    if (backupsToDelete.length > 0) {
+      console.log(`🗑️ Cleaning up ${backupsToDelete.length} old backup files...`);
+      await AsyncStorage.multiRemove(backupsToDelete);
+      console.log(`✅ Deleted old backups, kept ${backupsToKeep.length} most recent`);
+    }
+  } catch (error) {
+    console.warn('⚠️ Error cleaning up old backups:', error);
+    // Don't throw - this is not critical
+  }
+};
+
 const checkDataIntegrity = async () => {
   try {
     console.log('🔍 Starting startup data integrity check...');
+    
+    // First, cleanup old backup files
+    await cleanupOldBackups();
     
     // Get all data
     const goalsJson = await AsyncStorage.getItem('goals');
@@ -51,11 +90,17 @@ const checkDataIntegrity = async () => {
     if (orphanedMilestones.length > 0 || orphanedTasks.length > 0) {
       console.log('🔧 Found data issues, fixing automatically...');
       
-      // Create backup
+      // Create backup with error handling
       const timestamp = new Date().getTime();
-      await AsyncStorage.setItem(`backup_startup_${timestamp}`, JSON.stringify({
-        goals, milestones, tasks
-      }));
+      try {
+        await AsyncStorage.setItem(`backup_startup_${timestamp}`, JSON.stringify({
+          goals, milestones, tasks
+        }));
+        console.log(`💾 Backup created: backup_startup_${timestamp}`);
+      } catch (backupError) {
+        console.warn('⚠️ Failed to create backup, proceeding with cleanup anyway:', backupError);
+        // Continue with cleanup even if backup fails
+      }
       
       // Fix orphaned milestones
       const cleanMilestones = milestones.filter(p => !p.goalId || validGoalIds.includes(p.goalId));
@@ -66,10 +111,23 @@ const checkDataIntegrity = async () => {
       // Fix orphaned tasks
       const cleanTasks = tasks.filter(t => !t.milestoneId || updatedMilestoneIds.includes(t.milestoneId));
       
-      // Save cleaned data
-      await AsyncStorage.setItem('milestones', JSON.stringify(cleanMilestones));
+      // Save cleaned data with error handling
+      try {
+        await AsyncStorage.setItem('milestones', JSON.stringify(cleanMilestones));
+        console.log(`✅ Cleaned milestones saved (${cleanMilestones.length} remaining)`);
+      } catch (error) {
+        console.error('❌ Failed to save cleaned milestones:', error);
+        throw new Error('Critical: Failed to save cleaned milestones');
+      }
+      
       if (cleanTasks.length !== tasks.length) {
-        await AsyncStorage.setItem('tasks', JSON.stringify(cleanTasks));
+        try {
+          await AsyncStorage.setItem('tasks', JSON.stringify(cleanTasks));
+          console.log(`✅ Cleaned tasks saved (${cleanTasks.length} remaining)`);
+        } catch (error) {
+          console.error('❌ Failed to save cleaned tasks:', error);
+          throw new Error('Critical: Failed to save cleaned tasks');
+        }
       }
       
       console.log(`✨ Successfully fixed data:

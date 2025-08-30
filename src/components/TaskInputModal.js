@@ -23,7 +23,14 @@ import {
   accessibility
 } from '../utils/responsive';
 
-const TaskInputModal = ({ visible, onClose, onConfirm, initialValue = '' }) => {
+const TaskInputModal = ({ 
+  visible, 
+  onClose, 
+  onConfirm, 
+  onAddToList,
+  taskData = {},
+  initialValue = '' 
+}) => {
   const { theme } = useTheme();
   const [taskName, setTaskName] = useState(initialValue);
   const inputRef = useRef(null);
@@ -71,7 +78,23 @@ const TaskInputModal = ({ visible, onClose, onConfirm, initialValue = '' }) => {
 
   const handleConfirm = () => {
     if (taskName.trim()) {
-      onConfirm(taskName.trim());
+      if (onAddToList) {
+        // Create full task object and add to list directly
+        const newTask = {
+          id: Date.now().toString(),
+          title: taskName.trim(),
+          goalId: taskData.selectedGoalId || null,
+          goalTitle: taskData.selectedGoalTitle || null,
+          projectId: taskData.selectedProjectId || null,
+          projectTitle: taskData.selectedProjectTitle || null,
+          status: 'todo',
+          completed: false
+        };
+        onAddToList(newTask);
+      } else if (onConfirm) {
+        // Legacy behavior - just return the task name
+        onConfirm(taskName.trim());
+      }
       handleClose();
     }
   };
@@ -172,7 +195,9 @@ const TaskInputModal = ({ visible, onClose, onConfirm, initialValue = '' }) => {
               onPress={handleConfirm}
               disabled={!taskName.trim()}
             >
-              <Text style={[styles.buttonText, styles.confirmButtonText]}>Add</Text>
+              <Text style={[styles.buttonText, styles.confirmButtonText]}>
+                {onAddToList ? 'Add to List' : 'Add'}
+              </Text>
             </TouchableOpacity>
           </View>
         </Animated.View>

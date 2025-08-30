@@ -12,7 +12,7 @@ import {
 } from '../../../../utils/responsive';
 
 /**
- * Toggle component for switching between Daily Standup and Free Notes modes
+ * Toggle component for switching between Daily Check-in and Free Notes modes
  */
 const NotesToggle = ({ notesMode, setNotesMode, theme }) => {
   return (
@@ -25,7 +25,7 @@ const NotesToggle = ({ notesMode, setNotesMode, theme }) => {
         onPress={() => setNotesMode('standup')}
         accessible={true}
         accessibilityRole="button"
-        accessibilityLabel="Switch to Daily Standup mode"
+        accessibilityLabel="Switch to Daily Check-in mode"
       >
         <Ionicons 
           name="bar-chart-outline" 
@@ -38,7 +38,7 @@ const NotesToggle = ({ notesMode, setNotesMode, theme }) => {
           { color: notesMode === 'standup' ? '#FFFFFF' : theme.textSecondary },
           notesMode === 'standup' && styles.activeText
         ]}>
-          Daily Standup
+          Daily Check-in
         </Text>
       </TouchableOpacity>
 

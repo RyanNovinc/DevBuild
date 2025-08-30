@@ -1,5 +1,6 @@
 // src/components/ReferralSummaryPopup.js
 import React, { useState, useEffect } from 'react';
+import AchievementService from '../services/AchievementService';
 import {
   View,
   Text,
@@ -119,29 +120,44 @@ const ReferralSummaryPopup = ({ visible, onClose, onNavigateToReferrals }) => {
     }, 300);
   };
 
-  // Calculate total referral limit based on streak achievements
+  // Calculate total referral limit based on achievements
+  const [referralLimit, setReferralLimit] = React.useState(2); // Default base limit
+  
+  // Load referral limit from achievements
+  React.useEffect(() => {
+    if (visible) {
+      const loadReferralLimit = async () => {
+        try {
+          const limit = await AchievementService.getReferralLimit();
+          setReferralLimit(limit);
+        } catch (error) {
+          console.error('Error loading referral limit:', error);
+        }
+      };
+      
+      loadReferralLimit();
+    }
+  }, [visible]);
+  
   const getTotalReferralLimit = () => {
-    const currentStreak = streakData.currentStreak;
-    let limit = 3; // Base limit
-    
-    if (currentStreak >= 90) limit += 1; // 90-day achievement adds 1
-    if (currentStreak >= 180) limit += 1; // 180-day achievement adds 1
-    
-    return limit; // Max of 5 total
+    return referralLimit;
   };
 
-  // Calculate referrals remaining vs total limit
+  // Calculate referrals remaining vs total limit  
   const getReferralsRemaining = () => {
-    if (!referralStats) return getTotalReferralLimit();
+    if (!referralData || !referralData.sentReferrals) return getTotalReferralLimit();
     const total = getTotalReferralLimit();
-    const used = referralStats.converted || 0;
-    return Math.max(0, total - used);
+    // Count active referrals (not yet converted or expired)
+    const active = referralData.sentReferrals.filter(ref => 
+      ref.status !== 'subscribed' && ref.status !== 'expired'
+    ).length;
+    return Math.max(0, total - active);
   };
 
   // Get referral progress in X/Y format
   const getReferralProgress = () => {
     const total = getTotalReferralLimit();
-    const used = referralStats?.converted || 0;
+    const used = referralStats?.sent || 0; // Changed from converted to sent
     const remaining = Math.max(0, total - used);
     return { remaining, total };
   };

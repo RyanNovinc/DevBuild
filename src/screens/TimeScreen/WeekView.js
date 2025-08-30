@@ -36,10 +36,14 @@ const WeekView = ({
     setInternalSelectedDay(selectedWeekDay);
   }, [selectedWeekDay]);
   
-  // Internal handler that ONLY changes visual state - no parent calls
+  // Internal handler that updates both visual state and parent state
   const handleInternalDaySelect = (index) => {
+    console.log('🗓️ WeekView: Selected day index:', index, 'date:', weekDates[index]);
     setInternalSelectedDay(index);
-    // DO NOT call parent handler to avoid any state changes that could cause scroll reset
+    // Call parent handler to update the selectedWeekDay state for plus button
+    if (handleWeekDaySelect) {
+      handleWeekDaySelect(index);
+    }
   };
   
   // Local handler for time block long press (similar to DayView)
