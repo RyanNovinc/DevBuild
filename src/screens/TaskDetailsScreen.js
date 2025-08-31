@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../context/ThemeContext';
 import { useAppContext } from '../context/AppContext';
 import { useNotification } from '../context/NotificationContext';
@@ -30,8 +31,8 @@ import {
 
 const Tab = createMaterialTopTabNavigator();
 
-// Add Task Tab Component - Memoized to prevent keyboard dismissal
-const AddTaskTab = React.memo(({ 
+// Add Task Tab Component
+const AddTaskTab = ({ 
   taskDetailsState,
   handlers
 }) => {
@@ -53,20 +54,51 @@ const AddTaskTab = React.memo(({
     handleAddToList
   } = handlers;
 
+  // Get selected goal for domain color integration
+  const selectedGoal = goals.find(g => g.id === selectedGoalId);
+  const domainColor = selectedGoal?.color || theme.primary;
+
   return (
     <ScrollView style={[styles.content, { backgroundColor: theme.background }]} showsVerticalScrollIndicator={false}>
-      {/* Task Title */}
-      <View style={styles.formGroup}>
-        <Text style={[styles.label, { color: theme.text }]}>
+      {/* Task Title Card */}
+      <View style={[
+        styles.formCard,
+        {
+          backgroundColor: theme.card,
+          borderRadius: 16,
+          padding: spacing.m,
+          marginBottom: spacing.m,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+          shadowRadius: 8,
+          elevation: 3,
+        }
+      ]}>
+        <Text style={[
+          styles.label, 
+          { 
+            color: theme.textSecondary,
+            fontSize: fontSizes.m,
+            fontWeight: '600',
+            marginBottom: spacing.xs
+          }
+        ]}>
           Task Title *
         </Text>
         <TextInput
           style={[
             styles.textInput,
             {
-              backgroundColor: theme.card,
+              backgroundColor: theme.inputBackground,
               borderColor: theme.border,
-              color: theme.text
+              color: theme.text,
+              borderRadius: 12,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.05,
+              shadowRadius: 4,
+              elevation: 1,
             }
           ]}
           value={title}
@@ -80,20 +112,47 @@ const AddTaskTab = React.memo(({
         />
       </View>
       
-      {/* Task Description */}
+      {/* Task Description Card */}
       {isEditing && (
-        <View style={styles.formGroup}>
-          <Text style={[styles.label, { color: theme.text }]}>
-            Description
+        <View style={[
+          styles.formCard,
+          {
+            backgroundColor: theme.card,
+            borderRadius: 16,
+            padding: spacing.m,
+            marginBottom: spacing.m,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+            shadowRadius: 8,
+            elevation: 3,
+          }
+        ]}>
+          <Text style={[
+            styles.label, 
+            { 
+              color: theme.textSecondary,
+              fontSize: fontSizes.m,
+              fontWeight: '600',
+              marginBottom: spacing.xs
+            }
+          ]}>
+            Description (Optional)
           </Text>
           <TextInput
             style={[
               styles.textInput,
               styles.textArea,
               {
-                backgroundColor: theme.card,
+                backgroundColor: theme.inputBackground,
                 borderColor: theme.border,
-                color: theme.text
+                color: theme.text,
+                borderRadius: 12,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.05,
+                shadowRadius: 4,
+                elevation: 1,
               }
             ]}
             value={description}
@@ -107,10 +166,31 @@ const AddTaskTab = React.memo(({
         </View>
       )}
       
-      {/* Goal Selection */}
-      <View style={styles.formGroup}>
-        <Text style={[styles.label, { color: theme.text }]}>
-          Goal
+      {/* Goal Selection Card */}
+      <View style={[
+        styles.formCard,
+        {
+          backgroundColor: theme.card,
+          borderRadius: 16,
+          padding: spacing.m,
+          marginBottom: spacing.m,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+          shadowRadius: 8,
+          elevation: 3,
+        }
+      ]}>
+        <Text style={[
+          styles.label, 
+          { 
+            color: theme.textSecondary,
+            fontSize: fontSizes.m,
+            fontWeight: '600',
+            marginBottom: spacing.xs
+          }
+        ]}>
+          Link to Goal (Optional)
         </Text>
         <View style={styles.optionsList}>
           {/* Standalone Task option */}
@@ -118,8 +198,15 @@ const AddTaskTab = React.memo(({
             style={[
               styles.optionButton,
               {
-                backgroundColor: !selectedGoalId ? theme.primary : theme.card,
-                borderColor: theme.border
+                backgroundColor: !selectedGoalId ? domainColor : theme.inputBackground,
+                borderColor: !selectedGoalId ? domainColor : theme.border,
+                borderRadius: 12,
+                shadowColor: !selectedGoalId ? domainColor : '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: !selectedGoalId ? 0.3 : 0.05,
+                shadowRadius: 4,
+                elevation: !selectedGoalId ? 3 : 1,
+                overflow: 'hidden'
               }
             ]}
             onPress={() => {
@@ -127,9 +214,28 @@ const AddTaskTab = React.memo(({
               setSelectedMilestoneId(null);
             }}
           >
+            {!selectedGoalId && (
+              <LinearGradient
+                colors={['rgba(255,255,255,0.2)', 'rgba(255,255,255,0)']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  top: 0,
+                  height: '50%',
+                  borderTopLeftRadius: 12,
+                  borderTopRightRadius: 12
+                }}
+              />
+            )}
             <Text style={[
               styles.optionText,
-              { color: !selectedGoalId ? '#FFFFFF' : theme.text }
+              { 
+                color: !selectedGoalId ? '#FFFFFF' : theme.text,
+                fontWeight: !selectedGoalId ? '600' : '500'
+              }
             ]}>
               Standalone Task
             </Text>
@@ -142,8 +248,15 @@ const AddTaskTab = React.memo(({
               style={[
                 styles.optionButton,
                 {
-                  backgroundColor: selectedGoalId === goal.id ? theme.primary : theme.card,
-                  borderColor: theme.border
+                  backgroundColor: selectedGoalId === goal.id ? goal.color : theme.inputBackground,
+                  borderColor: selectedGoalId === goal.id ? goal.color : theme.border,
+                  borderRadius: 12,
+                  shadowColor: selectedGoalId === goal.id ? goal.color : '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: selectedGoalId === goal.id ? 0.3 : 0.05,
+                  shadowRadius: 4,
+                  elevation: selectedGoalId === goal.id ? 3 : 1,
+                  overflow: 'hidden'
                 }
               ]}
               onPress={() => {
@@ -151,22 +264,75 @@ const AddTaskTab = React.memo(({
                 setSelectedMilestoneId(null); // Reset milestone when goal changes
               }}
             >
-              <Text style={[
-                styles.optionText,
-                { color: selectedGoalId === goal.id ? '#FFFFFF' : theme.text }
-              ]}>
-                {goal.title || goal.name}
-              </Text>
+              {selectedGoalId === goal.id && (
+                <LinearGradient
+                  colors={['rgba(255,255,255,0.2)', 'rgba(255,255,255,0)']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 0, y: 1 }}
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    height: '50%',
+                    borderTopLeftRadius: 12,
+                    borderTopRightRadius: 12
+                  }}
+                />
+              )}
+              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                <View style={[
+                  styles.goalColorDot,
+                  {
+                    backgroundColor: goal.color,
+                    width: scaleWidth(14),
+                    height: scaleWidth(14),
+                    borderRadius: scaleWidth(7),
+                    marginRight: spacing.s
+                  }
+                ]} />
+                <Text style={[
+                  styles.optionText,
+                  { 
+                    color: selectedGoalId === goal.id ? '#FFFFFF' : theme.text,
+                    fontWeight: selectedGoalId === goal.id ? '600' : '500',
+                    flex: 1
+                  }
+                ]}>
+                  {goal.title || goal.name}
+                </Text>
+              </View>
             </TouchableOpacity>
           ))}
         </View>
       </View>
       
-      {/* Milestone Selection - Only show if a goal is selected */}
+      {/* Milestone Selection Card - Only show if a goal is selected */}
       {selectedGoalId && (
-        <View style={styles.formGroup}>
-          <Text style={[styles.label, { color: theme.text }]}>
-            Milestone
+        <View style={[
+          styles.formCard,
+          {
+            backgroundColor: theme.card,
+            borderRadius: 16,
+            padding: spacing.m,
+            marginBottom: spacing.m,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+            shadowRadius: 8,
+            elevation: 3,
+          }
+        ]}>
+          <Text style={[
+            styles.label, 
+            { 
+              color: theme.textSecondary,
+              fontSize: fontSizes.m,
+              fontWeight: '600',
+              marginBottom: spacing.xs
+            }
+          ]}>
+            Link to Milestone (Optional)
           </Text>
           {(() => {
             // Get milestones (projects) that belong to the selected goal
@@ -178,15 +344,41 @@ const AddTaskTab = React.memo(({
                   style={[
                     styles.optionButton,
                     {
-                      backgroundColor: !selectedMilestoneId ? theme.primary : theme.card,
-                      borderColor: theme.border
+                      backgroundColor: !selectedMilestoneId ? domainColor : theme.inputBackground,
+                      borderColor: !selectedMilestoneId ? domainColor : theme.border,
+                      borderRadius: 12,
+                      shadowColor: !selectedMilestoneId ? domainColor : '#000',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: !selectedMilestoneId ? 0.3 : 0.05,
+                      shadowRadius: 4,
+                      elevation: !selectedMilestoneId ? 3 : 1,
+                      overflow: 'hidden'
                     }
                   ]}
                   onPress={() => setSelectedMilestoneId(null)}
                 >
+                  {!selectedMilestoneId && (
+                    <LinearGradient
+                      colors={['rgba(255,255,255,0.2)', 'rgba(255,255,255,0)']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 0, y: 1 }}
+                      style={{
+                        position: 'absolute',
+                        left: 0,
+                        right: 0,
+                        top: 0,
+                        height: '50%',
+                        borderTopLeftRadius: 12,
+                        borderTopRightRadius: 12
+                      }}
+                    />
+                  )}
                   <Text style={[
                     styles.optionText,
-                    { color: !selectedMilestoneId ? '#FFFFFF' : theme.text }
+                    { 
+                      color: !selectedMilestoneId ? '#FFFFFF' : theme.text,
+                      fontWeight: !selectedMilestoneId ? '600' : '500'
+                    }
                   ]}>
                     Standalone Task
                   </Text>
@@ -198,18 +390,57 @@ const AddTaskTab = React.memo(({
                     style={[
                       styles.optionButton,
                       {
-                        backgroundColor: selectedMilestoneId === milestone.id ? theme.primary : theme.card,
-                        borderColor: theme.border
+                        backgroundColor: selectedMilestoneId === milestone.id ? domainColor : theme.inputBackground,
+                        borderColor: selectedMilestoneId === milestone.id ? domainColor : theme.border,
+                        borderRadius: 12,
+                        shadowColor: selectedMilestoneId === milestone.id ? domainColor : '#000',
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: selectedMilestoneId === milestone.id ? 0.3 : 0.05,
+                        shadowRadius: 4,
+                        elevation: selectedMilestoneId === milestone.id ? 3 : 1,
+                        overflow: 'hidden'
                       }
                     ]}
                     onPress={() => setSelectedMilestoneId(milestone.id)}
                   >
-                    <Text style={[
-                      styles.optionText,
-                      { color: selectedMilestoneId === milestone.id ? '#FFFFFF' : theme.text }
-                    ]}>
-                      {milestone.title || milestone.name}
-                    </Text>
+                    {selectedMilestoneId === milestone.id && (
+                      <LinearGradient
+                        colors={['rgba(255,255,255,0.2)', 'rgba(255,255,255,0)']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 0, y: 1 }}
+                        style={{
+                          position: 'absolute',
+                          left: 0,
+                          right: 0,
+                          top: 0,
+                          height: '50%',
+                          borderTopLeftRadius: 12,
+                          borderTopRightRadius: 12
+                        }}
+                      />
+                    )}
+                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                      <View style={[
+                        styles.milestoneColorDot,
+                        {
+                          backgroundColor: milestone.color || domainColor,
+                          width: scaleWidth(10),
+                          height: scaleWidth(10),
+                          borderRadius: scaleWidth(5),
+                          marginRight: spacing.s
+                        }
+                      ]} />
+                      <Text style={[
+                        styles.optionText,
+                        { 
+                          color: selectedMilestoneId === milestone.id ? '#FFFFFF' : theme.text,
+                          fontWeight: selectedMilestoneId === milestone.id ? '600' : '500',
+                          flex: 1
+                        }
+                      ]}>
+                        {milestone.title || milestone.name}
+                      </Text>
+                    </View>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -219,7 +450,7 @@ const AddTaskTab = React.memo(({
       )}
     </ScrollView>
   );
-});
+};
 
 // Task List Tab Component - Memoized to prevent unnecessary re-renders
 const TaskListTab = React.memo(({ 
@@ -250,12 +481,55 @@ const TaskListTab = React.memo(({
           }
         </ScrollView>
       ) : (
-        <View style={styles.emptyList}>
-          <Ionicons name="list-outline" size={scaleWidth(64)} color={theme.textSecondary} />
-          <Text style={[styles.emptyListTitle, { color: theme.text }]}>
+        <View style={[
+          styles.emptyList,
+          {
+            backgroundColor: theme.card,
+            borderRadius: 16,
+            padding: spacing.xl,
+            margin: spacing.m,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+            shadowRadius: 8,
+            elevation: 3,
+          }
+        ]}>
+          <View style={[
+            styles.emptyIconContainer,
+            {
+              backgroundColor: theme.primary + '20',
+              width: scaleWidth(80),
+              height: scaleWidth(80),
+              borderRadius: scaleWidth(40),
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: spacing.m
+            }
+          ]}>
+            <Ionicons name="list-outline" size={scaleWidth(40)} color={theme.primary} />
+          </View>
+          <Text style={[
+            styles.emptyListTitle, 
+            { 
+              color: theme.text,
+              fontSize: fontSizes.xl,
+              fontWeight: '700',
+              textAlign: 'center',
+              marginBottom: spacing.s
+            }
+          ]}>
             No tasks added yet
           </Text>
-          <Text style={[styles.emptyListText, { color: theme.textSecondary }]}>
+          <Text style={[
+            styles.emptyListText, 
+            { 
+              color: theme.textSecondary,
+              fontSize: fontSizes.m,
+              textAlign: 'center',
+              lineHeight: fontSizes.m * 1.4
+            }
+          ]}>
             Switch to the "Add Task" tab to create tasks for bulk saving.
           </Text>
         </View>
@@ -266,7 +540,7 @@ const TaskListTab = React.memo(({
 
 const TaskDetailsScreen = ({ route, navigation }) => {
   const { theme } = useTheme();
-  const { addTask, updateTask, goals = [] } = useAppContext();
+  const { addTask, updateTask, goals = [], projects = [] } = useAppContext();
   const { showSuccess, showError } = useNotification();
   
   // Get params
@@ -295,6 +569,10 @@ const TaskDetailsScreen = ({ route, navigation }) => {
   const expansionAnims = useRef({}).current;
   // Animation for milestone expansion
   const milestoneExpansionAnims = useRef({}).current;
+
+  // Get domain color for visual consistency
+  const selectedGoal = goals.find(g => g.id === selectedGoalId);
+  const domainColor = selectedGoal?.color || theme.primary;
   
   // Initialize form when editing (single task only)
   useEffect(() => {
@@ -405,6 +683,12 @@ const TaskDetailsScreen = ({ route, navigation }) => {
   };
   
   const handleSave = async () => {
+    // If on 'add' tab and there's a title, add to list instead of saving
+    if (activeTab === 'add' && title.trim()) {
+      handleAddToList();
+      return;
+    }
+    
     // If editing single task
     if (isEditing) {
       if (!title.trim()) {
@@ -570,15 +854,51 @@ const TaskDetailsScreen = ({ route, navigation }) => {
     }
   }, [activeTab, taskList]);
   
-  // Render task item - Memoized to prevent unnecessary re-renders
+  // Render task item - Enhanced with professional styling
   const renderTaskItem = React.useCallback((item) => {
     return (
-      <View key={item.id} style={[styles.taskItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
+      <View key={item.id} style={[
+        styles.taskItem, 
+        { 
+          backgroundColor: theme.card, 
+          borderColor: theme.border,
+          borderRadius: 12,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: theme.background === '#000000' ? 0.12 : 0.06,
+          shadowRadius: 4,
+          elevation: 2,
+        }
+      ]}>
         <View style={styles.taskItemContent}>
-          <Text style={[styles.taskItemTitle, { color: theme.text }]}>{item.title}</Text>
+          <Text style={[
+            styles.taskItemTitle, 
+            { 
+              color: theme.text,
+              fontSize: fontSizes.m,
+              fontWeight: '600'
+            }
+          ]}>
+            {item.title}
+          </Text>
         </View>
-        <TouchableOpacity onPress={() => handleRemoveFromList(item.id)} style={styles.removeButton}>
-          <Ionicons name="close-circle" size={scaleWidth(20)} color={theme.error} />
+        <TouchableOpacity 
+          onPress={() => handleRemoveFromList(item.id)} 
+          style={[
+            styles.removeButton,
+            {
+              backgroundColor: theme.errorLight,
+              borderRadius: scaleWidth(16),
+              padding: spacing.xs,
+              shadowColor: theme.error,
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.2,
+              shadowRadius: 3,
+              elevation: 2
+            }
+          ]}
+        >
+          <Ionicons name="close-circle" size={scaleWidth(18)} color={theme.error} />
         </TouchableOpacity>
       </View>
     );
@@ -587,7 +907,7 @@ const TaskDetailsScreen = ({ route, navigation }) => {
   // Render milestone section
   const renderMilestoneSection = (milestoneId, tasks, goalId) => {
     const goal = goals.find(g => g.id === goalId);
-    const milestone = goal?.projects?.find(p => p.id === milestoneId);
+    const milestone = projects.find(p => p.id === milestoneId);
     const milestoneTitle = milestone ? (milestone.title || milestone.name) : 'Unknown Milestone';
     const key = `${goalId}-${milestoneId}`;
     const isExpanded = expandedMilestones[key];
@@ -795,7 +1115,7 @@ const TaskDetailsScreen = ({ route, navigation }) => {
     setSelectedGoalId,
     setSelectedMilestoneId,
     handleAddToList
-  }), [handleAddToList]);
+  }), [handleAddToList, setTitle, setDescription, setSelectedGoalId, setSelectedMilestoneId]);
 
   // Memoized task details state to prevent unnecessary re-renders
   const taskDetailsState = React.useMemo(() => ({
@@ -831,16 +1151,47 @@ const TaskDetailsScreen = ({ route, navigation }) => {
   if (isEditing) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-        {/* Header */}
-        <View style={[styles.header, { borderBottomColor: theme.border }]}>
+        {/* Enhanced Header */}
+        <View style={[
+          styles.header, 
+          { 
+            borderBottomColor: theme.border,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: theme.background === '#000000' ? 0.2 : 0.1,
+            shadowRadius: 8,
+            elevation: 4,
+            backgroundColor: theme.card,
+            paddingVertical: spacing.m
+          }
+        ]}>
           <TouchableOpacity
-            style={styles.headerButton}
+            style={[
+              styles.headerButton,
+              {
+                backgroundColor: theme.inputBackground,
+                borderRadius: scaleWidth(12),
+                padding: spacing.s,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+                elevation: 2
+              }
+            ]}
             onPress={handleCancel}
           >
-            <Ionicons name="close" size={scaleWidth(24)} color={theme.text} />
+            <Ionicons name="close" size={scaleWidth(20)} color={theme.text} />
           </TouchableOpacity>
           
-          <Text style={[styles.headerTitle, { color: theme.text }]}>
+          <Text style={[
+            styles.headerTitle, 
+            { 
+              color: theme.text,
+              fontSize: fontSizes.xl,
+              fontWeight: '700'
+            }
+          ]}>
             Edit Task
           </Text>
           
@@ -848,12 +1199,44 @@ const TaskDetailsScreen = ({ route, navigation }) => {
             style={[
               styles.headerButton,
               styles.saveButton,
-              { backgroundColor: theme.primary }
+              { 
+                backgroundColor: domainColor,
+                borderRadius: scaleWidth(12),
+                paddingHorizontal: spacing.m,
+                paddingVertical: spacing.s,
+                shadowColor: domainColor,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 8,
+                elevation: 4,
+                overflow: 'hidden'
+              }
             ]}
             onPress={handleSave}
           >
-            <Text style={[styles.saveButtonText, { color: '#FFFFFF' }]}>
-              Save
+            <LinearGradient
+              colors={['rgba(255,255,255,0.2)', 'rgba(255,255,255,0)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+              style={{
+                position: 'absolute',
+                left: 0,
+                right: 0,
+                top: 0,
+                height: '50%',
+                borderTopLeftRadius: scaleWidth(12),
+                borderTopRightRadius: scaleWidth(12)
+              }}
+            />
+            <Text style={[
+              styles.saveButtonText, 
+              { 
+                color: '#FFFFFF',
+                fontSize: fontSizes.m,
+                fontWeight: '600'
+              }
+            ]}>
+              {activeTab === 'add' && title.trim() ? 'Add to List' : 'Save'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -870,16 +1253,47 @@ const TaskDetailsScreen = ({ route, navigation }) => {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { borderBottomColor: theme.border }]}>
+      {/* Enhanced Header */}
+      <View style={[
+        styles.header, 
+        { 
+          borderBottomColor: theme.border,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: theme.background === '#000000' ? 0.2 : 0.1,
+          shadowRadius: 8,
+          elevation: 4,
+          backgroundColor: theme.card,
+          paddingVertical: spacing.m
+        }
+      ]}>
         <TouchableOpacity
-          style={styles.headerButton}
+          style={[
+            styles.headerButton,
+            {
+              backgroundColor: theme.inputBackground,
+              borderRadius: scaleWidth(12),
+              padding: spacing.s,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.1,
+              shadowRadius: 4,
+              elevation: 2
+            }
+          ]}
           onPress={handleCancel}
         >
-          <Ionicons name="close" size={scaleWidth(24)} color={theme.text} />
+          <Ionicons name="close" size={scaleWidth(20)} color={theme.text} />
         </TouchableOpacity>
         
-        <Text style={[styles.headerTitle, { color: theme.text }]}>
+        <Text style={[
+          styles.headerTitle, 
+          { 
+            color: theme.text,
+            fontSize: fontSizes.xl,
+            fontWeight: '700'
+          }
+        ]}>
           Add Tasks
         </Text>
         
@@ -887,13 +1301,45 @@ const TaskDetailsScreen = ({ route, navigation }) => {
           style={[
             styles.headerButton,
             styles.saveButton,
-            { backgroundColor: theme.primary }
+            { 
+              backgroundColor: domainColor,
+              borderRadius: scaleWidth(12),
+              paddingHorizontal: spacing.m,
+              paddingVertical: spacing.s,
+              shadowColor: domainColor,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.3,
+              shadowRadius: 8,
+              elevation: 4,
+              overflow: 'hidden'
+            }
           ]}
           onPress={handleSave}
         >
+          <LinearGradient
+            colors={['rgba(255,255,255,0.2)', 'rgba(255,255,255,0)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={{
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              top: 0,
+              height: '50%',
+              borderTopLeftRadius: scaleWidth(12),
+              borderTopRightRadius: scaleWidth(12)
+            }}
+          />
           <Animated.View style={{ transform: [{ scale: tabCountAnim }] }}>
-            <Text style={[styles.saveButtonText, { color: '#FFFFFF' }]}>
-              {taskList.length > 0 ? `Save All (${taskList.length})` : 'Save'}
+            <Text style={[
+              styles.saveButtonText, 
+              { 
+                color: '#FFFFFF',
+                fontSize: fontSizes.m,
+                fontWeight: '600'
+              }
+            ]}>
+              {activeTab === 'add' && title.trim() ? 'Add to List' : taskList.length > 0 ? `Save All (${taskList.length})` : 'Save'}
             </Text>
           </Animated.View>
         </TouchableOpacity>
@@ -903,48 +1349,51 @@ const TaskDetailsScreen = ({ route, navigation }) => {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-        {/* Tab Navigator with swipe enabled */}
+        {/* Enhanced Tab Navigator */}
         <NavigationContainer independent={true} key="task-details-navigator">
           <Tab.Navigator
             initialRouteName="Add Task"
             backBehavior="none"
             screenOptions={{
-              tabBarActiveTintColor: theme.text,
+              tabBarActiveTintColor: '#FFFFFF',
               tabBarInactiveTintColor: theme.textSecondary,
               tabBarStyle: { 
                 backgroundColor: theme.card,
-                elevation: 0,
-                shadowOpacity: 0,
-                borderRadius: scaleWidth(8),
+                borderRadius: scaleWidth(12),
                 marginHorizontal: spacing.m,
-                marginBottom: 0,
-                height: scaleHeight(44),
+                marginBottom: spacing.s,
+                height: scaleHeight(48),
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+                shadowRadius: 8,
+                elevation: 4,
               },
               tabBarIndicatorStyle: { 
-                backgroundColor: theme.primary,
-                height: scaleHeight(38),
-                borderRadius: scaleWidth(6),
-                marginBottom: 3,
-                marginLeft: 3,
-                width: '47%', // Adjust for proper fit
-                zIndex: 1,
+                backgroundColor: 'transparent',
+                height: 0
               },
               tabBarLabelStyle: {
                 fontSize: scaleFontSize(14),
                 fontWeight: '600',
                 textTransform: 'none',
+                marginTop: 0,
                 zIndex: 2,
               },
               tabBarItemStyle: {
-                paddingVertical: 0,
-                height: scaleHeight(38),
+                paddingVertical: spacing.xs,
+                paddingHorizontal: spacing.xs,
+                borderRadius: scaleWidth(8),
+                marginVertical: spacing.xs,
+                marginHorizontal: spacing.xs,
+                backgroundColor: 'transparent',
                 zIndex: 2,
               },
               swipeEnabled: true,
               animationEnabled: true,
               tabBarPressOpacity: 0.8,
-              lazy: false, // Render both tabs immediately
-              removeClippedSubviews: false, // Keep both tabs in memory
+              lazy: false,
+              removeClippedSubviews: false,
             }}
             screenListeners={{
               state: (e) => {
@@ -962,6 +1411,41 @@ const TaskDetailsScreen = ({ route, navigation }) => {
               options={{
                 tabBarLabel: 'Add Task',
                 tabBarAccessibilityLabel: "Add Task tab",
+                tabBarBackground: () => (
+                  activeTab === 'add' ? (
+                    <LinearGradient
+                      colors={[domainColor, domainColor + 'DD']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={{
+                        flex: 1,
+                        borderRadius: scaleWidth(8),
+                        marginVertical: spacing.xs,
+                        marginHorizontal: spacing.xs,
+                        shadowColor: domainColor,
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.3,
+                        shadowRadius: 4,
+                        elevation: 3
+                      }}
+                    >
+                      <LinearGradient
+                        colors={['rgba(255,255,255,0.2)', 'rgba(255,255,255,0)']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 0, y: 1 }}
+                        style={{
+                          position: 'absolute',
+                          left: 0,
+                          right: 0,
+                          top: 0,
+                          height: '50%',
+                          borderTopLeftRadius: scaleWidth(8),
+                          borderTopRightRadius: scaleWidth(8)
+                        }}
+                      />
+                    </LinearGradient>
+                  ) : null
+                )
               }}
             />
             <Tab.Screen 
@@ -972,13 +1456,48 @@ const TaskDetailsScreen = ({ route, navigation }) => {
                   <Animated.Text style={{ 
                     fontSize: scaleFontSize(14),
                     fontWeight: '600',
-                    color: activeTab === 'list' ? theme.text : theme.textSecondary,
+                    color: activeTab === 'list' ? '#FFFFFF' : theme.textSecondary,
                     transform: [{ scale: tabCountAnim }]
                   }}>
                     Task List ({taskList.length})
                   </Animated.Text>
                 ),
                 tabBarAccessibilityLabel: `Task List tab with ${taskList.length} tasks`,
+                tabBarBackground: () => (
+                  activeTab === 'list' ? (
+                    <LinearGradient
+                      colors={[domainColor, domainColor + 'DD']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={{
+                        flex: 1,
+                        borderRadius: scaleWidth(8),
+                        marginVertical: spacing.xs,
+                        marginHorizontal: spacing.xs,
+                        shadowColor: domainColor,
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.3,
+                        shadowRadius: 4,
+                        elevation: 3
+                      }}
+                    >
+                      <LinearGradient
+                        colors={['rgba(255,255,255,0.2)', 'rgba(255,255,255,0)']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 0, y: 1 }}
+                        style={{
+                          position: 'absolute',
+                          left: 0,
+                          right: 0,
+                          top: 0,
+                          height: '50%',
+                          borderTopLeftRadius: scaleWidth(8),
+                          borderTopRightRadius: scaleWidth(8)
+                        }}
+                      />
+                    </LinearGradient>
+                  ) : null
+                )
               }}
             />
           </Tab.Navigator>
@@ -1020,6 +1539,9 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: spacing.m,
   },
+  formCard: {
+    // Card styles applied inline for better theme integration
+  },
   formGroup: {
     marginBottom: spacing.l,
   },
@@ -1038,11 +1560,6 @@ const styles = StyleSheet.create({
   textArea: {
     minHeight: scaleHeight(100),
   },
-  helpText: {
-    fontSize: fontSizes.s,
-    marginTop: spacing.xs,
-    fontStyle: 'italic',
-  },
   optionsList: {
     gap: spacing.xs,
   },
@@ -1052,14 +1569,17 @@ const styles = StyleSheet.create({
     borderRadius: scaleWidth(8),
     borderWidth: 1,
     alignItems: 'center',
+    flexDirection: 'row',
   },
   optionText: {
     fontSize: fontSizes.s,
     fontWeight: '500',
   },
-  content: {
-    flex: 1,
-    padding: spacing.m,
+  goalColorDot: {
+    // Styles applied inline
+  },
+  milestoneColorDot: {
+    // Styles applied inline
   },
   listContainer: {
     flex: 1,
@@ -1076,6 +1596,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.l,
     paddingTop: spacing.m,
   },
+  emptyIconContainer: {
+    // Styles applied inline
+  },
   emptyListTitle: {
     fontSize: fontSizes.xl,
     fontWeight: '600',
@@ -1088,37 +1611,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: fontSizes.m * 1.4,
   },
-  switchTabButton: {
-    paddingHorizontal: spacing.l,
-    paddingVertical: spacing.m,
-    borderRadius: scaleWidth(8),
-    marginTop: spacing.l,
-  },
-  switchTabText: {
-    color: '#FFFFFF',
-    fontSize: fontSizes.m,
-    fontWeight: '600',
-  },
-  addToListButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.m,
-    paddingHorizontal: spacing.l,
-    borderRadius: scaleWidth(8),
-    marginTop: spacing.m,
-  },
-  addButtonText: {
-    color: '#FFFFFF',
-    fontSize: fontSizes.m,
-    fontWeight: '600',
-    marginLeft: spacing.s,
-  },
   taskItem: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing.m,
-    borderRadius: scaleWidth(12),
     borderWidth: 1,
     marginBottom: spacing.s,
   },
@@ -1128,10 +1624,6 @@ const styles = StyleSheet.create({
   taskItemTitle: {
     fontSize: fontSizes.m,
     fontWeight: '500',
-  },
-  taskItemSubtitle: {
-    fontSize: fontSizes.s,
-    marginTop: spacing.xs,
   },
   removeButton: {
     padding: spacing.s,

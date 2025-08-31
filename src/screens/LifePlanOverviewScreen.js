@@ -203,20 +203,12 @@ const TaskCard = ({ task, onComplete, onDelete, isEditMode, onDrag, isActive, is
         
         {/* Completion Status */}
         {task.completed && (
-          <View style={[styles.taskCompletedBadge, {
-            backgroundColor: theme.success,
-            paddingHorizontal: 8,
-            paddingVertical: 4,
-            borderRadius: 10
-          }]}>
-            <Text style={[styles.completedText, {
-              color: '#FFFFFF',
-              fontSize: 10,
-              fontWeight: '600'
-            }]}>
-              ✓
-            </Text>
-          </View>
+          <Ionicons 
+            name="checkmark-circle" 
+            size={20} 
+            color={theme.success || '#4CAF50'} 
+            style={{ marginLeft: 8 }}
+          />
         )}
       </View>
     </TouchableOpacity>
@@ -252,19 +244,19 @@ const MilestoneCard = ({ milestone, goalColor, tasks, onExpandToggle, onComplete
   const [showContextMenu, setShowContextMenu] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [longPressPosition, setLongPressPosition] = useState({ x: 0, y: 0 });
-  // Get tasks for this milestone - check both milestoneId and projectId
+  // Get tasks for this milestone - prioritize milestoneId over projectId for accuracy
   const milestoneTasks = tasks.filter(task => {
-    const belongsToMilestone = task.milestoneId === milestone.id || task.projectId === milestone.id;
-    if (belongsToMilestone) {
-      console.log('🔍 Task belongs to milestone:', { 
-        taskTitle: task.title, 
-        taskMilestoneId: task.milestoneId, 
-        taskProjectId: task.projectId, 
-        milestoneId: milestone.id 
-      });
-    }
+    // First check milestoneId (more reliable), then fallback to projectId for backward compatibility
+    const belongsToMilestone = (task.milestoneId === milestone.id) || 
+                               (!task.milestoneId && task.projectId === milestone.id);
     return belongsToMilestone;
   });
+  
+  // Debug: Check for the problematic task
+  const hasProblematicTask = milestoneTasks.some(t => t.id === 'task_1756631863775_soxqegbpx');
+  if (hasProblematicTask) {
+    console.warn(`🔍 Problematic task found in milestone ${milestone.id}:`, milestone.title);
+  }
   const completedTasks = milestoneTasks.filter(task => task.completed);
   const totalTasks = milestoneTasks.length;
   // If milestone is completed, show 100%, otherwise calculate based on tasks
@@ -485,15 +477,41 @@ const MilestoneCard = ({ milestone, goalColor, tasks, onExpandToggle, onComplete
       {expanded && (
         <View style={styles.tasksContainer}>
           {milestoneTasks.length === 0 ? (
-            <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
-              No tasks yet
-            </Text>
+            <View>
+              <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
+                No tasks yet
+              </Text>
+              
+              {/* Add Task Button for empty milestone */}
+              {!milestone.isVirtual && navigation && (
+                <View style={styles.emptyMilestoneActions}>
+                  <TouchableOpacity
+                    style={[styles.createTaskButton, { 
+                      backgroundColor: theme.surface,
+                      borderColor: theme.border,
+                      marginTop: 0
+                    }]}
+                    onPress={() => {
+                      navigation.navigate('TaskDetails', {
+                        mode: 'create',
+                        preselectedGoalId: goalId === 'standalone-milestones' ? null : goalId,  // null for standalone milestones
+                        preselectedMilestoneId: milestone.id
+                      });
+                    }}
+                  >
+                    <Ionicons name="add" size={16} color={theme.primary} />
+                    <Text style={[styles.createTaskText, { color: theme.primary }]}>
+                      Add Task
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
           ) : isEditMode ? (
             <DraggableFlatList
               data={milestoneTasks}
               renderItem={({ item: task, drag, isActive }) => (
                 <TaskCard
-                  key={task.id || `task-${milestoneTasks.indexOf(task)}`}
                   task={task}
                   onComplete={() => onTaskComplete(task.id)}
                   onDelete={() => onTaskDelete(task.id)}
@@ -503,7 +521,7 @@ const MilestoneCard = ({ milestone, goalColor, tasks, onExpandToggle, onComplete
                   isDraggable={true}
                 />
               )}
-              keyExtractor={(item, index) => item.id || `task-${item.title}-${index}`}
+              keyExtractor={(item, index) => item.id || `milestone-${milestone.id}-task-${index}`}
               onDragEnd={({ data }) => onTaskReorder && onTaskReorder(data, milestone.id)}
             />
           ) : (
@@ -520,7 +538,7 @@ const MilestoneCard = ({ milestone, goalColor, tasks, onExpandToggle, onComplete
           )}
           
           {/* Create Task Button */}
-          {!milestone.isVirtual && navigation && goalId && (
+          {!milestone.isVirtual && navigation && milestoneTasks.length > 0 && (
             <TouchableOpacity
               style={[styles.createTaskButton, { 
                 backgroundColor: theme.surface,
@@ -529,7 +547,7 @@ const MilestoneCard = ({ milestone, goalColor, tasks, onExpandToggle, onComplete
               onPress={() => {
                 navigation.navigate('TaskDetails', {
                   mode: 'create',
-                  preselectedGoalId: goalId,
+                  preselectedGoalId: goalId === 'standalone-milestones' ? null : goalId,  // null for standalone milestones
                   preselectedMilestoneId: milestone.id
                 });
               }}
@@ -633,19 +651,22 @@ const getTimeExpression = (goal) => {
 };
 
 // Goal Card Component
-const GoalCard = ({ goal, milestones, tasks, onExpandToggle, onEdit, onDelete, onComplete, isEditMode, expanded, onTaskComplete, onTaskDelete, onMilestoneComplete, onMilestoneEdit, onMilestoneDelete, onDrag, isActive, isDraggable = false, navigation, onMilestoneReorder, onTaskReorder, isTourMode = false, expandedMilestones: externalExpandedMilestones, onMilestoneExpandToggle }) => {
+const GoalCard = ({ goal, milestones, tasks, onExpandToggle, onEdit, onDelete, onComplete, isEditMode, expanded, onTaskComplete, onTaskDelete, onMilestoneComplete, onMilestoneEdit, onMilestoneDelete, onDrag, isActive, isDraggable = false, navigation, onMilestoneReorder, onTaskReorder, isTourMode = false, expandedMilestones: externalExpandedMilestones, onMilestoneExpandToggle, onClearAllStandaloneTasks, onClearAllStandaloneMilestones }) => {
   const { theme } = useTheme();
   const goalMilestones = milestones.filter(milestone => milestone.goalId === goal.id);
   
   // Find standalone tasks within this goal (tasks that belong to goal but not to any milestone)
-  const goalStandaloneTasks = tasks.filter(task => 
-    task.goalId === goal.id && 
-    !task.milestoneId && 
-    !task.projectId
-  );
+  // Special handling for the standalone-tasks fake goal
+  const goalStandaloneTasks = goal.id === 'standalone-tasks' 
+    ? tasks // For standalone section, all passed tasks are standalone
+    : tasks.filter(task => 
+        task.goalId === goal.id && 
+        !task.milestoneId && 
+        !task.projectId
+      );
   
-  // Create a virtual milestone for standalone tasks if they exist
-  const standaloneTasksMilestone = goalStandaloneTasks.length > 0 ? {
+  // Create a virtual milestone for standalone tasks if they exist (but NOT for the standalone-tasks section itself)
+  const standaloneTasksMilestone = (goal.id !== 'standalone-tasks' && goalStandaloneTasks.length > 0) ? {
     id: `${goal.id}-standalone-tasks`,
     title: 'Standalone Tasks',
     goalId: goal.id,
@@ -659,25 +680,88 @@ const GoalCard = ({ goal, milestones, tasks, onExpandToggle, onEdit, onDelete, o
     : goalMilestones;
   
   const completedMilestones = goalMilestones.filter(milestone => milestone.completed);
-  const progressPercentage = goalMilestones.length > 0 ? Math.round((completedMilestones.length / goalMilestones.length) * 100) : 0;
+  
+  // Calculate progress percentage differently for standalone sections
+  let progressPercentage;
+  if (goal.id === 'standalone-tasks') {
+    // For standalone tasks, calculate based on task completion
+    const completedStandaloneTasks = tasks.filter(task => task.completed || task.status === 'done').length;
+    progressPercentage = tasks.length > 0 ? Math.round((completedStandaloneTasks / tasks.length) * 100) : 0;
+  } else if (goal.id === 'standalone-milestones') {
+    // For standalone milestones, calculate based on milestone completion
+    const completedStandaloneMilestones = milestones.filter(milestone => milestone.completed).length;
+    progressPercentage = milestones.length > 0 ? Math.round((completedStandaloneMilestones / milestones.length) * 100) : 0;
+  } else {
+    // Regular goals use milestone-based progress
+    progressPercentage = goalMilestones.length > 0 ? Math.round((completedMilestones.length / goalMilestones.length) * 100) : 0;
+  }
+  
   const completedMilestonesCount = completedMilestones.length;
   
   // Calculate total task count for this goal (including tasks in milestones)
-  const directTasks = tasks.filter(task => 
-    task.goalId === goal.id && (!task.projectId || task.projectId === null)
-  );
+  // Special handling for standalone sections
+  let goalTasks;
+  if (goal.id === 'standalone-tasks') {
+    // For standalone tasks section, use all passed tasks
+    goalTasks = tasks;
+  } else if (goal.id === 'standalone-milestones') {
+    // For standalone milestones section, no direct tasks
+    goalTasks = [];
+  } else {
+    // Regular goal processing
+    // Direct tasks are those that belong to the goal but NOT to any milestone
+    const directTasks = tasks.filter(task => 
+      task.goalId === goal.id && 
+      !task.milestoneId && 
+      !task.projectId
+    );
+    
+    // Get all milestone/project IDs for this goal
+    const goalMilestoneIds = goalMilestones.map(milestone => milestone.id);
+    
+    // Get tasks that belong to milestones of this goal
+    // Deduplicate tasks - prefer milestoneId over projectId
+    const seenTaskIds = new Set();
+    const milestoneTasks = tasks.filter(task => {
+      // Skip if we've already seen this task
+      if (seenTaskIds.has(task.id)) return false;
+      
+      // Check if task belongs to any milestone of this goal
+      const belongsToGoalMilestone = 
+        (task.milestoneId && goalMilestoneIds.includes(task.milestoneId)) ||
+        (!task.milestoneId && task.projectId && goalMilestoneIds.includes(task.projectId));
+      
+      if (belongsToGoalMilestone) {
+        seenTaskIds.add(task.id);
+        return true;
+      }
+      return false;
+    });
+    
+    // Combine direct tasks and milestone tasks (already deduplicated)
+    // Use Set to ensure no duplicates when combining
+    const allTaskIds = new Set();
+    const combinedTasks = [];
+    
+    // Add direct tasks
+    directTasks.forEach(task => {
+      if (!allTaskIds.has(task.id)) {
+        allTaskIds.add(task.id);
+        combinedTasks.push(task);
+      }
+    });
+    
+    // Add milestone tasks
+    milestoneTasks.forEach(task => {
+      if (!allTaskIds.has(task.id)) {
+        allTaskIds.add(task.id);
+        combinedTasks.push(task);
+      }
+    });
+    
+    goalTasks = combinedTasks;
+  }
   
-  // Get all milestone/project IDs for this goal
-  const goalMilestoneIds = goalMilestones.map(milestone => milestone.id);
-  
-  // Get tasks that belong to milestones of this goal (check both projectId and milestoneId)
-  const milestoneTasks = tasks.filter(task => 
-    (task.projectId && goalMilestoneIds.includes(task.projectId)) ||
-    (task.milestoneId && goalMilestoneIds.includes(task.milestoneId))
-  );
-  
-  // Combine direct tasks and milestone tasks
-  const goalTasks = [...directTasks, ...milestoneTasks];
   const taskCount = goalTasks.length;
   const completedTaskCount = goalTasks.filter(task => task.completed).length;
   
@@ -921,24 +1005,58 @@ const GoalCard = ({ goal, milestones, tasks, onExpandToggle, onEdit, onDelete, o
                 </Text>
               </TouchableOpacity>
             ) : progressPercentage === 100 ? (
-              <TouchableOpacity 
-                style={{
-                  backgroundColor: goalColor,
-                  paddingHorizontal: 16,
-                  paddingVertical: 10,
-                  borderRadius: 24,
-                  marginRight: 12
-                }}
-                onPress={onComplete}
-              >
-                <Text style={{
-                  color: '#FFFFFF',
-                  fontSize: 13,
-                  fontWeight: '600'
-                }}>
-                  {goalMilestones.length > 0 && completedMilestonesCount === goalMilestones.length ? '🎉 Complete' : 'Complete'}
-                </Text>
-              </TouchableOpacity>
+              goal.isStandalone ? (
+                // Clear All button for standalone sections
+                <TouchableOpacity 
+                  style={{
+                    backgroundColor: theme.error || '#FF5252',
+                    paddingHorizontal: 16,
+                    paddingVertical: 10,
+                    borderRadius: 24,
+                    marginRight: 12,
+                    flexDirection: 'row',
+                    alignItems: 'center'
+                  }}
+                  onPress={() => {
+                    if (goal.id === 'standalone-tasks') {
+                      // Clear all standalone tasks
+                      onClearAllStandaloneTasks && onClearAllStandaloneTasks();
+                    } else if (goal.id === 'standalone-milestones') {
+                      // Clear all standalone milestones
+                      onClearAllStandaloneMilestones && onClearAllStandaloneMilestones();
+                    }
+                  }}
+                >
+                  <Ionicons name="trash-outline" size={16} color="#FFFFFF" style={{ marginRight: 4 }} />
+                  <Text style={{
+                    color: '#FFFFFF',
+                    fontSize: 13,
+                    fontWeight: '600'
+                  }}>
+                    Clear All
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                // Complete button for regular goals
+                <TouchableOpacity 
+                  style={{
+                    backgroundColor: goalColor,
+                    paddingHorizontal: 16,
+                    paddingVertical: 10,
+                    borderRadius: 24,
+                    marginRight: 12
+                  }}
+                  onPress={onComplete}
+                >
+                  <Text style={{
+                    color: '#FFFFFF',
+                    fontSize: 13,
+                    fontWeight: '600'
+                  }}>
+                    {goalMilestones.length > 0 && completedMilestonesCount === goalMilestones.length ? '🎉 Complete' : 'Complete'}
+                  </Text>
+                </TouchableOpacity>
+              )
             ) : null}
             
             <TouchableOpacity 
@@ -963,10 +1081,219 @@ const GoalCard = ({ goal, milestones, tasks, onExpandToggle, onEdit, onDelete, o
       
       {expanded && (
         <View style={styles.milestonesContainer}>
-          {allMilestones.length === 0 ? (
-            <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
-              No milestones yet
-            </Text>
+          {/* Special rendering for standalone tasks - show tasks directly without milestones */}
+          {goal.id === 'standalone-tasks' ? (
+            goalStandaloneTasks.length === 0 ? (
+              <View style={{ width: '100%' }}>
+                <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
+                  No standalone tasks yet
+                </Text>
+                
+                {/* Add Task Button for empty standalone tasks */}
+                {navigation && (
+                  <View style={styles.emptyGoalActions}>
+                    <TouchableOpacity
+                      style={[styles.createTaskButton, { 
+                        backgroundColor: theme.surface,
+                        borderColor: theme.border,
+                        marginTop: 8
+                      }]}
+                      onPress={() => navigation.navigate('TaskDetails', { 
+                        mode: 'create',
+                        preselectedGoalId: null // Explicitly null for standalone
+                      })}
+                    >
+                      <Ionicons name="add-circle-outline" size={20} color={theme.primary} />
+                      <Text style={[styles.createButtonText, { color: theme.primary }]}>
+                        Add Task
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            ) : (
+              <View>
+                <View style={styles.tasksContainer}>
+                  {isEditMode ? (
+                    <DraggableFlatList
+                      data={goalStandaloneTasks}
+                      renderItem={({ item: task, drag, isActive }) => (
+                        <TaskCard
+                          task={task}
+                          onComplete={() => onTaskComplete(task.id)}
+                          onDelete={() => onTaskDelete(task.id)}
+                          isEditMode={isEditMode}
+                          onDrag={drag}
+                          isActive={isActive}
+                          isDraggable={true}
+                        />
+                      )}
+                      keyExtractor={(item, index) => item.id || `standalone-task-${index}`}
+                      onDragEnd={({ data }) => onTaskReorder && onTaskReorder(data, 'standalone')}
+                    />
+                  ) : (
+                    goalStandaloneTasks.map((task, index) => (
+                      <TaskCard
+                        key={task.id || `task-${index}`}
+                        task={task}
+                        onComplete={() => onTaskComplete(task.id)}
+                        onDelete={() => onTaskDelete(task.id)}
+                        isEditMode={isEditMode}
+                        isDraggable={false}
+                      />
+                    ))
+                  )}
+                </View>
+                
+                {/* Add Task Button when there are existing tasks */}
+                {navigation && (
+                  <TouchableOpacity
+                    style={[styles.createTaskButton, { 
+                      backgroundColor: theme.surface,
+                      borderColor: theme.border,
+                      margin: 12,
+                      marginTop: 8
+                    }]}
+                    onPress={() => navigation.navigate('TaskDetails', { 
+                      mode: 'create',
+                      preselectedGoalId: null // Explicitly null for standalone
+                    })}
+                  >
+                    <Ionicons name="add-circle-outline" size={20} color={theme.primary} />
+                    <Text style={[styles.createButtonText, { color: theme.primary }]}>
+                      Add Another Task
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )
+          ) : goal.id === 'standalone-milestones' ? (
+            /* Special rendering for standalone milestones - show milestones directly */
+            allMilestones.length === 0 ? (
+              <View style={{ width: '100%' }}>
+                <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
+                  No standalone milestones yet
+                </Text>
+                
+                {/* Add Milestone Button for empty standalone milestones */}
+                {navigation && (
+                  <View style={styles.emptyGoalActions}>
+                    <TouchableOpacity
+                      style={[styles.createMilestoneButton, { 
+                        backgroundColor: theme.surface,
+                        borderColor: theme.border,
+                        marginTop: 8
+                      }]}
+                      onPress={() => navigation.navigate('ProjectDetails', { 
+                        mode: 'create',
+                        preselectedGoalId: null // Explicitly null for standalone
+                      })}
+                    >
+                      <Ionicons name="flag-outline" size={20} color={theme.primary} />
+                      <Text style={[styles.createButtonText, { color: theme.primary }]}>
+                        Add Milestone
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            ) : (
+              <View>
+                {allMilestones.map((milestone, index) => (
+                <MilestoneCard
+                  key={milestone.id || `milestone-${index}`}
+                  milestone={milestone}
+                  goalColor={goalColor}
+                  tasks={tasks.filter(task => 
+                    task.milestoneId === milestone.id || task.projectId === milestone.id
+                  )}
+                  expanded={expandedMilestones[milestone.id]}
+                  onExpandToggle={() => toggleMilestone(milestone.id)}
+                  onComplete={() => onMilestoneComplete(milestone.id)}
+                  onEdit={() => onMilestoneEdit(milestone.id)}
+                  onDelete={() => onMilestoneDelete(milestone.id)}
+                  isEditMode={isEditMode}
+                  onTaskComplete={onTaskComplete}
+                  onTaskDelete={onTaskDelete}
+                  navigation={navigation}
+                  goalId={goal.id}
+                  onTaskReorder={onTaskReorder}
+                />
+              ))}
+                
+                {/* Add Milestone Button when there are existing milestones */}
+                {navigation && (
+                  <TouchableOpacity
+                    style={[styles.createMilestoneButton, { 
+                      backgroundColor: theme.surface,
+                      borderColor: theme.border,
+                      margin: 12,
+                      marginTop: 8
+                    }]}
+                    onPress={() => navigation.navigate('ProjectDetails', { 
+                      mode: 'create',
+                      preselectedGoalId: null // Explicitly null for standalone
+                    })}
+                  >
+                    <Ionicons name="flag-outline" size={20} color={theme.primary} />
+                    <Text style={[styles.createButtonText, { color: theme.primary }]}>
+                      Add Another Milestone
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )
+          ) : allMilestones.length === 0 ? (
+            <View>
+              <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
+                No milestones or tasks
+              </Text>
+              
+              {/* Action buttons for empty goal */}
+              {!goal.isStandalone && navigation && (
+                <View style={styles.emptyGoalActions}>
+                  <TouchableOpacity
+                    style={[styles.createMilestoneButton, { 
+                      backgroundColor: theme.surface,
+                      borderColor: theme.border 
+                    }]}
+                    onPress={() => {
+                      navigation.navigate('MilestoneDetails', {
+                        mode: 'create',
+                        goalId: goal.id,
+                        goalTitle: goal.title,
+                        goalColor: goal.color
+                      });
+                    }}
+                  >
+                    <Ionicons name="add" size={20} color={theme.primary} />
+                    <Text style={[styles.createMilestoneText, { color: theme.primary }]}>
+                      Add Milestone
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={[styles.createTaskButton, { 
+                      backgroundColor: theme.surface,
+                      borderColor: theme.border,
+                      marginTop: 8
+                    }]}
+                    onPress={() => {
+                      navigation.navigate('TaskDetails', {
+                        mode: 'create',
+                        preselectedGoalId: goal.id,
+                        preselectedMilestoneId: null
+                      });
+                    }}
+                  >
+                    <Ionicons name="add" size={16} color={theme.primary} />
+                    <Text style={[styles.createTaskText, { color: theme.primary }]}>
+                      Add Task
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
           ) : isEditMode ? (
             <DraggableFlatList
               data={allMilestones.filter(m => !m.isVirtual)}
@@ -1037,6 +1364,29 @@ const GoalCard = ({ goal, milestones, tasks, onExpandToggle, onEdit, onDelete, o
                   <Ionicons name="add" size={20} color={theme.primary} />
                   <Text style={[styles.createMilestoneText, { color: theme.primary }]}>
                     Create Milestone
+                  </Text>
+                </TouchableOpacity>
+              )}
+              
+              {/* Create Task Button at goal level */}
+              {!goal.isStandalone && navigation && (
+                <TouchableOpacity
+                  style={[styles.createTaskButton, { 
+                    backgroundColor: theme.surface,
+                    borderColor: theme.border,
+                    marginTop: 8
+                  }]}
+                  onPress={() => {
+                    navigation.navigate('TaskDetails', {
+                      mode: 'create',
+                      preselectedGoalId: goal.id,
+                      preselectedMilestoneId: null
+                    });
+                  }}
+                >
+                  <Ionicons name="add" size={16} color={theme.primary} />
+                  <Text style={[styles.createTaskText, { color: theme.primary }]}>
+                    Create Task
                   </Text>
                 </TouchableOpacity>
               )}
@@ -1319,10 +1669,19 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
           updatedAt: new Date().toISOString()
         }));
         
-        // Merge the reordered tasks with other tasks not in this milestone
-        const otherTasks = tasks.filter(task => 
-          task.milestoneId !== milestoneId && task.projectId !== milestoneId
-        );
+        // Merge the reordered tasks with other tasks
+        let otherTasks;
+        if (milestoneId === 'standalone') {
+          // For standalone tasks, filter out all standalone tasks and add the reordered ones
+          otherTasks = tasks.filter(task => 
+            task.milestoneId || task.projectId || task.goalId  // Keep tasks that belong to something
+          );
+        } else {
+          // For regular milestones, filter out tasks from this specific milestone
+          otherTasks = tasks.filter(task => 
+            task.milestoneId !== milestoneId && task.projectId !== milestoneId
+          );
+        }
         const reorderedAllTasks = [...otherTasks, ...reorderedTasks];
         setTasks(reorderedAllTasks);
       } catch (error) {
@@ -1383,7 +1742,7 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
   // Modern delete confirmation dialog states
   const [showFirstDeleteConfirm, setShowFirstDeleteConfirm] = useState(false);
   const [showFinalDeleteConfirm, setShowFinalDeleteConfirm] = useState(false);
-  const [actualDeleteCounts, setActualDeleteCounts] = useState({ goals: 0, milestones: 0, tasks: 0 });
+  const [actualDeleteCounts, setActualDeleteCounts] = useState({ goals: 0, activeGoals: 0, completedGoals: 0, milestones: 0, tasks: 0 });
 
   // Use internal edit mode if onEditModeToggle is not provided
   const editMode = onEditModeToggle ? isEditMode : internalEditMode;
@@ -1438,6 +1797,55 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
   // Debug: Check goals data
   const completedGoals = goals.filter(goal => goal.completed);
 
+  // Define standalone items (always needed for rendering)
+  // More comprehensive check for standalone milestones
+  const standaloneMilestones = milestones.filter(milestone => {
+    // Check for any falsy goalId value
+    const goalId = milestone.goalId;
+    const hasNoGoal = 
+      goalId === null ||
+      goalId === undefined ||
+      goalId === '' ||
+      goalId === 'null' ||
+      goalId === 'undefined' ||
+      goalId === 'NULL' ||
+      goalId === 'UNDEFINED' ||
+      !goalId;
+    
+    // Only include non-completed milestones
+    return hasNoGoal && !milestone.completed;
+  });
+  
+  const standaloneTasks = tasks.filter(task => !task.projectId && !task.milestoneId && !task.goalId);
+  
+  // Debug: Check for duplicate task IDs
+  const taskIds = tasks.map(t => t.id);
+  const duplicateIds = taskIds.filter((id, index) => taskIds.indexOf(id) !== index);
+  if (duplicateIds.length > 0) {
+    console.warn('⚠️ Duplicate task IDs found in tasks array:', duplicateIds);
+  }
+  
+  // Debug: Check if any standalone task also has a milestoneId/projectId (shouldn't happen)
+  standaloneTasks.forEach(task => {
+    if (task.id === 'task_1756631863775_soxqegbpx') {
+      console.warn('🔍 Found problematic task in standalone:', task);
+    }
+  });
+  
+  // Check if the problematic task appears in milestone tasks
+  tasks.forEach(task => {
+    if (task.id === 'task_1756631863775_soxqegbpx') {
+      console.warn('🔍 Found problematic task in all tasks:', {
+        id: task.id,
+        milestoneId: task.milestoneId,
+        projectId: task.projectId,
+        goalId: task.goalId,
+        title: task.title
+      });
+    }
+  });
+  
+  
   // Process data based on filter
   let processedGoals = [];
   let filteredMilestones = [];
@@ -1460,25 +1868,27 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
   
   // Only add standalone items when showing full hierarchy (no filter)
   if (!filter) {
-    // Add standalone milestones goal if there are standalone milestones
-    const standaloneMilestones = milestones.filter(milestone => !milestone.goalId);
-    if (standaloneMilestones.length > 0) {
+    // Check if standalone sections already exist to avoid duplicates
+    const hasStandaloneTasks = processedGoals.some(g => g.id === 'standalone-tasks');
+    const hasStandaloneMilestones = processedGoals.some(g => g.id === 'standalone-milestones');
+    
+    // Add standalone milestones goal if there are standalone milestones and not already added
+    if (standaloneMilestones.length > 0 && !hasStandaloneMilestones) {
       processedGoals.push({
         id: 'standalone-milestones',
         title: 'Standalone Milestones',
         isStandalone: true,
-        color: '#FFFFFF'
+        color: '#9CA3AF'  // Changed to a gray color for better visibility
       });
     }
     
-    // Add standalone tasks goal if there are standalone tasks
-    const standaloneTasks = tasks.filter(task => !task.projectId && !task.milestoneId && !task.goalId);
-    if (standaloneTasks.length > 0) {
+    // Add standalone tasks goal if there are standalone tasks and not already added
+    if (standaloneTasks.length > 0 && !hasStandaloneTasks) {
       processedGoals.push({
         id: 'standalone-tasks',
         title: 'Standalone Tasks',
         isStandalone: true,
-        color: '#FFFFFF'
+        color: '#9CA3AF'  // Changed to a gray color for better visibility
       });
     }
   }
@@ -1545,6 +1955,54 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
   };
 
   // Event Handlers
+  const handleClearAllStandaloneTasks = async () => {
+    try {
+      // Get all completed standalone tasks
+      const completedStandaloneTasks = standaloneTasks.filter(task => task.completed || task.status === 'done');
+      
+      if (completedStandaloneTasks.length === 0) return;
+      
+      // Delete each completed standalone task
+      for (const task of completedStandaloneTasks) {
+        if (deleteTask) {
+          await deleteTask(null, task.id); // null for milestoneId since these are standalone
+        }
+      }
+      
+      // Trigger fireworks animation with a nice color
+      const celebrationColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'];
+      triggerFireworks(celebrationColors, 5000);
+      showSuccess(`Cleared ${completedStandaloneTasks.length} completed tasks! 🎆`);
+    } catch (error) {
+      console.error('Error clearing standalone tasks:', error);
+      showError('Failed to clear tasks');
+    }
+  };
+
+  const handleClearAllStandaloneMilestones = async () => {
+    try {
+      // Get all completed standalone milestones
+      const completedStandaloneMilestones = standaloneMilestones.filter(milestone => milestone.completed);
+      
+      if (completedStandaloneMilestones.length === 0) return;
+      
+      // Delete each completed standalone milestone
+      for (const milestone of completedStandaloneMilestones) {
+        if (deleteMilestone) {
+          await deleteMilestone(milestone.id);
+        }
+      }
+      
+      // Trigger fireworks animation
+      const celebrationColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'];
+      triggerFireworks(celebrationColors, 5000);
+      showSuccess(`Cleared ${completedStandaloneMilestones.length} completed milestones! 🎆`);
+    } catch (error) {
+      console.error('Error clearing standalone milestones:', error);
+      showError('Failed to clear milestones');
+    }
+  };
+
   const handleTaskComplete = (taskId) => {
     
     // Find the task to get its projectId/milestoneId and current status
@@ -1560,14 +2018,24 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
     // Use projectId or milestoneId (they should be the same for milestones)
     const milestoneId = task.projectId || task.milestoneId;
     
-    if (updateTask && milestoneId) {
-      updateTask(milestoneId, taskId, { 
-        completed: newCompletedStatus, 
-        status: newCompletedStatus ? 'done' : 'todo',
-        updatedAt: new Date().toISOString()
-      });
+    // For standalone tasks (no milestoneId), call updateTask differently
+    if (updateTask) {
+      if (milestoneId) {
+        // Task belongs to a milestone
+        updateTask(milestoneId, taskId, { 
+          completed: newCompletedStatus, 
+          status: newCompletedStatus ? 'done' : 'todo',
+          updatedAt: new Date().toISOString()
+        });
+      } else {
+        // Standalone task - call updateTask with null milestoneId
+        updateTask(null, taskId, { 
+          completed: newCompletedStatus, 
+          status: newCompletedStatus ? 'done' : 'todo',
+          updatedAt: new Date().toISOString()
+        });
+      }
       showSuccess(newCompletedStatus ? 'Task completed!' : 'Task reopened!');
-    } else {
     }
   };
 
@@ -1709,8 +2177,14 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
       const actualMilestones = milestonesStorage ? JSON.parse(milestonesStorage) : [];
       const actualTasks = tasksStorage ? JSON.parse(tasksStorage) : [];
       
+      // Count completed vs active goals
+      const activeGoals = actualGoals.filter(goal => !goal.completed);
+      const completedGoals = actualGoals.filter(goal => goal.completed);
+      
       setActualDeleteCounts({
         goals: actualGoals.length,
+        activeGoals: activeGoals.length,
+        completedGoals: completedGoals.length,
         milestones: actualMilestones.length, 
         tasks: actualTasks.length
       });
@@ -1719,8 +2193,13 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
     } catch (error) {
       console.error('Error getting accurate counts:', error);
       // Fallback to AppContext counts
+      const activeGoals = goals.filter(goal => !goal.completed);
+      const completedGoals = goals.filter(goal => goal.completed);
+      
       setActualDeleteCounts({
         goals: goals.length,
+        activeGoals: activeGoals.length,
+        completedGoals: completedGoals.length,
         milestones: milestones.length,
         tasks: tasks.length
       });
@@ -1897,7 +2376,7 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
                            goal.id === 'standalone-tasks' ? [] : 
                            milestones.filter(milestone => milestone.goalId === goal.id)}
                 tasks={goal.id === 'standalone-tasks' ? standaloneTasks : 
-                       goal.id === 'standalone-milestones' ? [] :
+                       goal.id === 'standalone-milestones' ? tasks :  // Pass all tasks so milestones can filter
                        (() => {
                          // Get milestones for this goal
                          const goalMilestones = milestones.filter(m => m.goalId === goal.id);
@@ -1921,6 +2400,8 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
                 onMilestoneComplete={handleMilestoneComplete}
                 onMilestoneEdit={handleMilestoneEdit}
                 onMilestoneDelete={handleMilestoneDelete}
+                onClearAllStandaloneTasks={handleClearAllStandaloneTasks}
+                onClearAllStandaloneMilestones={handleClearAllStandaloneMilestones}
                 onDrag={drag}
                 isActive={isActive}
                 isDraggable={true}
@@ -1942,7 +2423,7 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
                     onPress={handleDeleteAll}
                   >
                     <Ionicons name="trash-outline" size={20} color="#FFFFFF" />
-                    <Text style={styles.deleteAllText}>Delete All Data</Text>
+                    <Text style={styles.deleteAllText}>Clear All Life Plan Data</Text>
                   </TouchableOpacity>
                 </View>
               ) : null
@@ -1978,7 +2459,7 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
                   <View style={styles.emptyState}>
                     <Ionicons name="folder-outline" size={64} color={theme.textSecondary} />
                     <Text style={[styles.emptyStateText, { color: theme.textSecondary }]} maxFontSizeMultiplier={1.3}>
-                      No milestones yet
+                      No milestones or tasks
                     </Text>
                     <Text style={[styles.emptyStateSubtext, { color: theme.textSecondary }]} maxFontSizeMultiplier={1.3}>
                       Create your first milestone to get started
@@ -2051,14 +2532,21 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
                         const goalMilestones = milestones.filter(m => m.goalId === goal.id);
                         const goalMilestoneIds = goalMilestones.map(m => m.id);
                         
-                        // Count direct tasks + tasks in milestones
-                        const directTasks = tasks.filter(t => t.goalId === goal.id);
-                        const milestoneTasks = tasks.filter(t => 
-                          goalMilestoneIds.includes(t.projectId) || 
-                          goalMilestoneIds.includes(t.milestoneId)
-                        );
+                        // Count unique tasks (direct + milestone tasks)
+                        const taskSet = new Set();
                         
-                        return directTasks.length + milestoneTasks.length;
+                        // Add direct tasks (those without milestone/project)
+                        tasks.filter(t => 
+                          t.goalId === goal.id && !t.milestoneId && !t.projectId
+                        ).forEach(t => taskSet.add(t.id));
+                        
+                        // Add milestone tasks
+                        tasks.filter(t => 
+                          (t.milestoneId && goalMilestoneIds.includes(t.milestoneId)) ||
+                          (!t.milestoneId && t.projectId && goalMilestoneIds.includes(t.projectId))
+                        ).forEach(t => taskSet.add(t.id));
+                        
+                        return taskSet.size;
                       })()} tasks
                     </Text>
                   </View>
@@ -2067,9 +2555,6 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
             ) : (
               // Default: Show full hierarchy (hide during tour to avoid double rendering)
               !(isTourActive && currentStep === 'OVERVIEW_PLAN') && processedGoals.map((goal) => {
-                const standaloneMilestones = milestones.filter(milestone => !milestone.goalId);
-                const standaloneTasks = tasks.filter(task => !task.projectId && !task.milestoneId && !task.goalId);
-                
                 return (
                   <GoalCard
                     key={goal.id}
@@ -2078,7 +2563,7 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
                                goal.id === 'standalone-tasks' ? [] : 
                                milestones.filter(milestone => milestone.goalId === goal.id)}
                     tasks={goal.id === 'standalone-tasks' ? standaloneTasks : 
-                           goal.id === 'standalone-milestones' ? [] :
+                           goal.id === 'standalone-milestones' ? tasks :  // Pass all tasks so milestones can filter
                            (() => {
                              // Get milestones for this goal
                              const goalMilestones = milestones.filter(m => m.goalId === goal.id);
@@ -2102,6 +2587,8 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
                     onMilestoneComplete={handleMilestoneComplete}
                     onMilestoneEdit={handleMilestoneEdit}
                     onMilestoneDelete={handleMilestoneDelete}
+                    onClearAllStandaloneTasks={handleClearAllStandaloneTasks}
+                    onClearAllStandaloneMilestones={handleClearAllStandaloneMilestones}
                     navigation={navigation}
                     onMilestoneReorder={handleMilestoneReorder}
                     onTaskReorder={handleTaskReorder}
@@ -2121,7 +2608,7 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
                   onPress={handleDeleteAll}
                 >
                   <Ionicons name="trash-outline" size={20} color="#FFFFFF" />
-                  <Text style={styles.deleteAllText}>Delete All Data</Text>
+                  <Text style={styles.deleteAllText}>Clear All Life Plan Data</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -2145,9 +2632,9 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
       <MinimalistConfirmDialog
         visible={showFirstDeleteConfirm}
         onClose={() => setShowFirstDeleteConfirm(false)}
-        title="Delete All Data"
-        message={`This will permanently delete:\n\n• ${actualDeleteCounts.goals} ${actualDeleteCounts.goals === 1 ? 'goal' : 'goals'}\n• ${actualDeleteCounts.milestones} ${actualDeleteCounts.milestones === 1 ? 'milestone' : 'milestones'}\n• ${actualDeleteCounts.tasks} ${actualDeleteCounts.tasks === 1 ? 'task' : 'tasks'}\n\nThis action cannot be undone.`}
-        confirmText="Delete All"
+        title="Clear All Life Plan Data"
+        message={`This will permanently delete:\n\n• ${actualDeleteCounts.goals} ${actualDeleteCounts.goals === 1 ? 'goal' : 'goals'}${actualDeleteCounts.completedGoals > 0 ? ` (${actualDeleteCounts.activeGoals} active, ${actualDeleteCounts.completedGoals} completed)` : ''}\n• ${actualDeleteCounts.milestones} ${actualDeleteCounts.milestones === 1 ? 'milestone' : 'milestones'}\n• ${actualDeleteCounts.tasks} ${actualDeleteCounts.tasks === 1 ? 'task' : 'tasks'}\n\nThis action cannot be undone.`}
+        confirmText="Clear All"
         cancelText="Cancel"
         onConfirm={handleFirstDeleteConfirm}
         destructive={true}
@@ -2159,8 +2646,8 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
         visible={showFinalDeleteConfirm}
         onClose={() => setShowFinalDeleteConfirm(false)}
         title="Final Confirmation"
-        message="You are about to permanently delete all your goals, milestones, and tasks. This action cannot be reversed."
-        confirmText="Delete Everything"
+        message="You are about to permanently delete all your goals (including completed ones), milestones, and tasks. This action cannot be reversed."
+        confirmText="Clear Everything"
         cancelText="Cancel"
         onConfirm={handleFinalDeleteConfirm}
         destructive={true}
@@ -2186,7 +2673,7 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
                        processedGoals[0].id === 'standalone-tasks' ? [] : 
                        milestones.filter(milestone => milestone.goalId === processedGoals[0].id)}
             tasks={processedGoals[0].id === 'standalone-tasks' ? standaloneTasks : 
-                   processedGoals[0].id === 'standalone-milestones' ? [] :
+                   processedGoals[0].id === 'standalone-milestones' ? tasks :  // Pass all tasks
                    (() => {
                      // Get milestones for this goal
                      const goalMilestones = milestones.filter(m => m.goalId === processedGoals[0].id);
@@ -2512,6 +2999,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontStyle: 'italic',
     padding: 16,
+  },
+  emptyGoalActions: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  emptyMilestoneActions: {
+    paddingHorizontal: 0,
+    paddingTop: 8,
   },
   emptyState: {
     flex: 1,

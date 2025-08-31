@@ -44,7 +44,9 @@ const STORAGE_KEYS = {
   LATER_TODOS: 'laterTodos',
   // Add calendar storage keys
   CALENDAR_SETTINGS: 'calendarSettings',
-  CALENDAR_EVENTS: 'calendarEvents'
+  CALENDAR_EVENTS: 'calendarEvents',
+  // Add custom prompts storage key
+  CUSTOM_PROMPTS: 'customPrompts'
 };
 
 // Default app settings
@@ -98,6 +100,12 @@ export const AppProvider = ({ children }) => {
   });
   const [calendarEvents, setCalendarEvents] = useState([]);
   const [calendarPermissionStatus, setCalendarPermissionStatus] = useState('undetermined');
+
+  // Add custom prompts state
+  const [customPrompts, setCustomPrompts] = useState({
+    morning: [],
+    evening: []
+  });
 
   // Add user country state
   const [userCountry, setUserCountry] = useState(null);
@@ -264,6 +272,12 @@ export const AppProvider = ({ children }) => {
         const storedCalendarEvents = await AsyncStorage.getItem(STORAGE_KEYS.CALENDAR_EVENTS);
         if (storedCalendarEvents) {
           setCalendarEvents(JSON.parse(storedCalendarEvents));
+        }
+        
+        // Load custom prompts
+        const storedCustomPrompts = await AsyncStorage.getItem(STORAGE_KEYS.CUSTOM_PROMPTS);
+        if (storedCustomPrompts) {
+          setCustomPrompts(JSON.parse(storedCustomPrompts));
         }
         
         // Load purchase status (using the original key name for compatibility)
@@ -982,6 +996,81 @@ export const AppProvider = ({ children }) => {
     }
   };
   
+  // Custom Prompt functions
+  const addCustomPrompt = async (type, promptText) => {
+    try {
+      const promptId = Date.now().toString();
+      const newPrompt = {
+        id: promptId,
+        question: promptText,
+        placeholder: "Your thoughts...",
+        field: type === 'morning' ? 'morningCustom' : 'eveningCustom',
+        createdAt: new Date().toISOString()
+      };
+
+      const updatedCustomPrompts = {
+        ...customPrompts,
+        [type]: [...customPrompts[type], newPrompt]
+      };
+
+      setCustomPrompts(updatedCustomPrompts);
+      await saveData(STORAGE_KEYS.CUSTOM_PROMPTS, updatedCustomPrompts);
+      
+      console.log(`[AppContext] Added custom ${type} prompt:`, promptText);
+      return newPrompt;
+    } catch (error) {
+      console.error('[AppContext] Error adding custom prompt:', error);
+      showError('Failed to add custom prompt');
+      throw error;
+    }
+  };
+
+  const updateCustomPrompt = async (type, promptId, promptText) => {
+    try {
+      const updatedCustomPrompts = {
+        ...customPrompts,
+        [type]: customPrompts[type].map(prompt =>
+          prompt.id === promptId
+            ? { ...prompt, question: promptText, updatedAt: new Date().toISOString() }
+            : prompt
+        )
+      };
+
+      setCustomPrompts(updatedCustomPrompts);
+      await saveData(STORAGE_KEYS.CUSTOM_PROMPTS, updatedCustomPrompts);
+      
+      console.log(`[AppContext] Updated custom ${type} prompt:`, promptText);
+      return true;
+    } catch (error) {
+      console.error('[AppContext] Error updating custom prompt:', error);
+      showError('Failed to update custom prompt');
+      throw error;
+    }
+  };
+
+  const deleteCustomPrompt = async (type, promptId) => {
+    try {
+      const updatedCustomPrompts = {
+        ...customPrompts,
+        [type]: customPrompts[type].filter(prompt => prompt.id !== promptId)
+      };
+
+      setCustomPrompts(updatedCustomPrompts);
+      await saveData(STORAGE_KEYS.CUSTOM_PROMPTS, updatedCustomPrompts);
+      
+      console.log(`[AppContext] Deleted custom ${type} prompt:`, promptId);
+      return true;
+    } catch (error) {
+      console.error('[AppContext] Error deleting custom prompt:', error);
+      showError('Failed to delete custom prompt');
+      throw error;
+    }
+  };
+
+  const getCustomPromptsForType = (type) => {
+    return customPrompts[type] || [];
+  };
+  
   // Check if user can add more goals
   const canAddMoreGoals = () => {
     // Pro users have unlimited goals
@@ -1470,6 +1559,11 @@ export const AppProvider = ({ children }) => {
         newMilestone.progress = 0;
       }
       
+      // Generate unique ID if not provided
+      if (!newMilestone.id) {
+        newMilestone.id = `milestone_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      }
+
       // Now apply domain normalization
       const normalizedMilestone = normalizeDomain(newMilestone);
       
@@ -1785,8 +1879,8 @@ export const AppProvider = ({ children }) => {
       const taskWithId = { 
         ...taskData,
         id: taskData.id || `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        milestoneId: isStandaloneTask ? null : milestoneId, // Explicitly set to null for standalone tasks
-        milestoneId: taskData.milestoneId || (isStandaloneTask ? null : milestoneId), // Use milestoneId or fallback to milestoneId
+        milestoneId: taskData.milestoneId || (isStandaloneTask ? null : milestoneId), // Use provided milestoneId or fallback
+        projectId: taskData.projectId || taskData.milestoneId || (isStandaloneTask ? null : milestoneId), // Keep projectId for backward compatibility
         goalId: taskData.goalId || null, // Ensure goalId is set
         completed: taskData.completed || false,
         createdAt: taskData.createdAt || new Date().toISOString()
@@ -1865,8 +1959,8 @@ export const AppProvider = ({ children }) => {
   // Update a task - COMPLETELY REWRITTEN TO NEVER CHANGE MILESTONE STATUS
   const updateTask = async (milestoneId, taskId, updatedTask) => {
     try {
-      // Check if milestone exists
-      if (!isMilestoneActive(milestoneId)) {
+      // Check if milestone exists (skip check for standalone tasks where milestoneId is null)
+      if (milestoneId && !isMilestoneActive(milestoneId)) {
         console.warn(`Milestone with ID ${milestoneId} not found, cannot update task`);
         showError('Milestone not found');
         return null;
@@ -1878,11 +1972,18 @@ export const AppProvider = ({ children }) => {
         throw new Error('Tasks array not available');
       }
       
-      // Find the task
-      const taskIndex = tasks.findIndex(task => task.id === taskId && task.milestoneId === milestoneId);
+      // Find the task - handle both milestone tasks and standalone tasks
+      let taskIndex;
+      if (milestoneId) {
+        // Task belongs to a milestone
+        taskIndex = tasks.findIndex(task => task.id === taskId && task.milestoneId === milestoneId);
+      } else {
+        // Standalone task (no milestone, project, or goal)
+        taskIndex = tasks.findIndex(task => task.id === taskId && !task.milestoneId && !task.projectId && !task.goalId);
+      }
       
       if (taskIndex === -1) {
-        console.warn(`Task with ID ${taskId} not found in milestone ${milestoneId}`);
+        console.warn(`Task with ID ${taskId} not found${milestoneId ? ` in milestone ${milestoneId}` : ' (standalone)'}`);
         showError('Task not found');
         return null;
       }
@@ -1899,6 +2000,12 @@ export const AppProvider = ({ children }) => {
       
       // Save to AsyncStorage
       await saveData(STORAGE_KEYS.TASKS, newTasksArray);
+      
+      // For standalone tasks, we're done - no milestone progress to update
+      if (!milestoneId) {
+        console.log('[AppContext] Successfully updated standalone task');
+        return newTasksArray[taskIndex];
+      }
       
       // Find the current milestone
       const milestone = milestonesRef.current.find(p => p.id === milestoneId);
@@ -3608,6 +3715,13 @@ export const AppProvider = ({ children }) => {
     updateTodos,
     deleteTodo,
     toggleTodo,
+    
+    // Custom Prompt functions
+    customPrompts,
+    addCustomPrompt,
+    updateCustomPrompt,
+    deleteCustomPrompt,
+    getCustomPromptsForType,
     
     // Calendar functions
     requestCalendarPermissions,
