@@ -56,7 +56,13 @@ const SimpleTodayTab = ({
   showSuccess,
   isKeyboardVisible,
   canAddMoreTodos,
-  showFeatureLimitBanner
+  showFeatureLimitBanner,
+  activeSubtaskGroup,
+  onSubtaskModalToggle,
+  subscription,
+  moveIncompleteTodosToTomorrow,
+  moveTomorrowTodosToToday,
+  moveLaterItemsToTomorrow
 }) => {
   // Simple local state
   const [inputMode, setInputMode] = useState('todo'); // 'todo' or 'group'
@@ -203,6 +209,8 @@ const SimpleTodayTab = ({
           activeTab="today"
           canAddMoreTodos={canAddMoreTodos}
           showFeatureLimitBanner={showFeatureLimitBanner}
+          activeSubtaskGroup={activeSubtaskGroup}
+          onSubtaskModalToggle={onSubtaskModalToggle}
         />
       );
     }
@@ -227,100 +235,98 @@ const SimpleTodayTab = ({
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      {/* Input Section */}
-      <View style={styles.inputSection}>
-        <View style={[
-          sharedStyles.inputContainer, 
-          { 
-            backgroundColor: theme.card, 
-            borderColor: theme.border 
-          }
-        ]}>
-          {/* Toggle Button */}
-          <TouchableOpacity 
-            style={sharedStyles.inputIcon}
-            onPress={toggleInputMode}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Ionicons 
-              name={inputMode === 'todo' ? "checkbox-outline" : "folder-outline"} 
-              size={22} 
-              color={theme.primary} 
-            />
-          </TouchableOpacity>
-          
-          {/* Input Field */}
-          {inputMode === 'todo' ? (
-            <TextInput
-              ref={todoInputRef}
-              style={[sharedStyles.input, { color: theme.text }]}
-              placeholder="Add a new to-do..."
-              placeholderTextColor={theme.textSecondary}
-              value={newTodoText}
-              onChangeText={setNewTodoText}
-              onSubmitEditing={handleSubmitEditing}
-              returnKeyType="done"
-              autoCorrect={false}
-              autoCapitalize="none"
-              spellCheck={false}
-              blurOnSubmit={false} // Keep keyboard open
-            />
-          ) : (
-            <TextInput
-              ref={groupInputRef}
-              style={[sharedStyles.input, { color: theme.text }]}
-              placeholder="Create a new group..."
-              placeholderTextColor={theme.textSecondary}
-              value={newGroupName}
-              onChangeText={setNewGroupName}
-              onSubmitEditing={handleSubmitEditing}
-              returnKeyType="done"
-              autoCorrect={false}
-              autoCapitalize="none"
-              spellCheck={false}
-              blurOnSubmit={false} // Keep keyboard open
-            />
-          )}
-          
-          {/* Add Button */}
-          <TouchableOpacity
-            style={[sharedStyles.addTextButton, { backgroundColor: theme.primary }]}
-            onPress={handleAddItem}
-            activeOpacity={0.7}
-          >
-            <Text style={sharedStyles.addTextButtonText}>
-              {inputMode === 'todo' ? 'Add' : 'Create'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-        
-        {/* Mode Indicator */}
-        <View style={styles.modeIndicator}>
-          <Text style={[styles.modeText, { color: theme.textSecondary }]}>
-            {inputMode === 'todo' ? 'Adding to-do items' : 'Creating a group'} 
-            {' • '}
-            <Text 
-              onPress={toggleInputMode} 
-              style={{ color: theme.primary }}
-            >
-              Tap icon to switch
-            </Text>
-          </Text>
-        </View>
-      </View>
-      
-      {/* Todo List - Wrapped with TouchableWithoutFeedback to dismiss keyboard */}
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={{ flex: 1 }}>
-          <ScrollView 
-            style={sharedStyles.todoList}
-            keyboardShouldPersistTaps="handled"
-            maintainVisibleContentPosition={{
-              minIndexForVisible: 0,
-              autoscrollToTopThreshold: 100,
-            }}
-            contentContainerStyle={styles.scrollContent}
-          >
+      <ScrollView 
+        style={sharedStyles.todoList}
+        keyboardShouldPersistTaps="handled"
+        onScrollBeginDrag={Keyboard.dismiss}
+        maintainVisibleContentPosition={{
+          minIndexForVisible: 0,
+          autoscrollToTopThreshold: 100,
+        }}
+        contentContainerStyle={styles.scrollContent}
+      >
+            {/* Input Section */}
+            <View style={styles.inputSection}>
+              <View style={[
+                sharedStyles.inputContainer, 
+                { 
+                  backgroundColor: theme.card, 
+                  borderColor: theme.border 
+                }
+              ]}>
+                {/* Toggle Button */}
+                <TouchableOpacity 
+                  style={sharedStyles.inputIcon}
+                  onPress={toggleInputMode}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Ionicons 
+                    name={inputMode === 'todo' ? "checkbox-outline" : "folder-outline"} 
+                    size={22} 
+                    color={theme.primary} 
+                  />
+                </TouchableOpacity>
+                
+                {/* Input Field */}
+                {inputMode === 'todo' ? (
+                  <TextInput
+                    ref={todoInputRef}
+                    style={[sharedStyles.input, { color: theme.text }]}
+                    placeholder="Add a new to-do..."
+                    placeholderTextColor={theme.textSecondary}
+                    value={newTodoText}
+                    onChangeText={setNewTodoText}
+                    onSubmitEditing={handleSubmitEditing}
+                    returnKeyType="done"
+                    autoCorrect={false}
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    blurOnSubmit={false} // Keep keyboard open
+                  />
+                ) : (
+                  <TextInput
+                    ref={groupInputRef}
+                    style={[sharedStyles.input, { color: theme.text }]}
+                    placeholder="Create a new group..."
+                    placeholderTextColor={theme.textSecondary}
+                    value={newGroupName}
+                    onChangeText={setNewGroupName}
+                    onSubmitEditing={handleSubmitEditing}
+                    returnKeyType="done"
+                    autoCorrect={false}
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    blurOnSubmit={false} // Keep keyboard open
+                  />
+                )}
+                
+                {/* Add Button */}
+                <TouchableOpacity
+                  style={[sharedStyles.addTextButton, { backgroundColor: theme.primary }]}
+                  onPress={handleAddItem}
+                  activeOpacity={0.7}
+                >
+                  <Text style={sharedStyles.addTextButtonText}>
+                    {inputMode === 'todo' ? 'Add' : 'Create'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              
+              {/* Mode Indicator */}
+              <View style={styles.modeIndicator}>
+                <Text style={[styles.modeText, { color: theme.textSecondary }]}>
+                  {inputMode === 'todo' ? 'Adding to-do items' : 'Creating a group'} 
+                  {' • '}
+                  <Text 
+                    onPress={toggleInputMode} 
+                    style={{ color: theme.primary }}
+                  >
+                    Tap icon to switch
+                  </Text>
+                </Text>
+              </View>
+            </View>
+
             {topLevelItems.length > 0 ? (
               sortItemsByPriority(todos).map(renderTodoItem)
             ) : (
@@ -336,11 +342,9 @@ const SimpleTodayTab = ({
               </View>
             )}
             
-            {/* Bottom padding */}
-            <View style={styles.bottomPadding} />
-          </ScrollView>
-        </View>
-      </TouchableWithoutFeedback>
+        {/* Bottom padding */}
+        <View style={styles.bottomPadding} />
+      </ScrollView>
       
       {/* Bottom Action Buttons */}
       <TodoButtonOverlay
@@ -352,18 +356,14 @@ const SimpleTodayTab = ({
         laterTodos={laterTodos}
         setLaterTodos={setLaterTodos}
         isAddingSubtask={false}
-        moveIncompleteTodosToTomorrow={(completedTodos) => {
-          // Move incomplete todos to tomorrow
-          const incompleteTodos = todos.filter(todo => !todo.completed);
-          const newTomorrowTodos = [...tomorrowTodos, ...incompleteTodos.map(todo => ({...todo, tab: 'tomorrow'}))];
-          setTomorrowTodos(newTomorrowTodos);
-          setTodos(todos.filter(todo => todo.completed));
-          showSuccess(`${incompleteTodos.length} items moved to Tomorrow`);
-        }}
+        subscription={subscription}
         theme={theme}
         showSuccess={showSuccess}
         canAddMoreTodos={canAddMoreTodos}
         showFeatureLimitBanner={showFeatureLimitBanner}
+        moveIncompleteTodosToTomorrow={moveIncompleteTodosToTomorrow}
+        moveTomorrowTodosToToday={moveTomorrowTodosToToday}
+        moveLaterItemsToTomorrow={moveLaterItemsToTomorrow}
       />
     </View>
   );

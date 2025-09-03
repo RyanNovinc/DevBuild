@@ -164,41 +164,37 @@ const CompactView = ({ theme, data, openDetailModal, widgetName }) => {
         <View style={styles.progressContainer}>
           <View style={styles.progressBar}>
             {totalIncome > 0 && (
-              <>
+              <View style={styles.progressBarInner}>
+                {/* Green bar (Income) on the left */}
+                <View 
+                  style={[
+                    styles.progressSegment, 
+                    { 
+                      backgroundColor: '#10b981',
+                      flex: totalIncome / (totalIncome + totalExpenses || 1)
+                    }
+                  ]} 
+                />
+                {/* Red bar (Expenses) on the right */}
                 <View 
                   style={[
                     styles.progressSegment, 
                     { 
                       backgroundColor: '#ef4444',
-                      width: `${Math.min((totalExpenses / totalIncome) * 100, 100)}%`
+                      flex: totalExpenses / (totalIncome + totalExpenses || 1)
                     }
                   ]} 
                 />
-                {netCashFlow > 0 && (
-                  <View 
-                    style={[
-                      styles.progressSegment, 
-                      { 
-                        backgroundColor: '#10b981',
-                        width: `${Math.min((netCashFlow / totalIncome) * 100, 100)}%`,
-                        position: 'absolute',
-                        right: 0
-                      }
-                    ]} 
-                  />
-                )}
-              </>
+              </View>
             )}
           </View>
           <View style={styles.progressLabels}>
-            <Text style={[styles.progressLabel, { color: theme.textSecondary }]}>
-              Spent: {totalIncome > 0 ? Math.round((totalExpenses / totalIncome) * 100) : 0}%
+            <Text style={[styles.progressLabel, { color: '#10b981' }]}>
+              Income: {totalIncome > 0 ? Math.round((totalIncome / (totalIncome + totalExpenses)) * 100) : 0}%
             </Text>
-            {netCashFlow > 0 && (
-              <Text style={[styles.progressLabel, { color: '#10b981' }]}>
-                Saved: {Math.round((netCashFlow / totalIncome) * 100)}%
-              </Text>
-            )}
+            <Text style={[styles.progressLabel, { color: '#ef4444' }]}>
+              Expenses: {totalExpenses > 0 ? Math.round((totalExpenses / (totalIncome + totalExpenses)) * 100) : 0}%
+            </Text>
           </View>
         </View>
 
@@ -341,9 +337,13 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     position: 'relative',
   },
+  progressBarInner: {
+    flexDirection: 'row',
+    height: '100%',
+    width: '100%',
+  },
   progressSegment: {
     height: '100%',
-    borderRadius: 3,
   },
   progressLabels: {
     flexDirection: 'row',

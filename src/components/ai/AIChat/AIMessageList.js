@@ -39,8 +39,11 @@ const AIMessageList = forwardRef(({
   ListFooterComponent = null,
   keyboardVisible = false,
   isStreaming = false,
-  extraTopPadding = 80 // Default padding, can be overridden by parent
+  extraTopPadding = 80, // Default padding, can be overridden by parent
+  onActionLink = null, // Handler for action links
+  themeColor = '#19C37D' // Default green color
 }, ref) => {
+  console.log('🎨 AIMessageList received themeColor:', themeColor);
   // Track custom padding value
   const [customPadding, setCustomPadding] = useState(0);
   
@@ -151,6 +154,8 @@ const AIMessageList = forwardRef(({
             onPress={() => onMessagePress(messages[0].id)}
             style={style}
             hasUserMessages={hasUserMessages}
+            onActionLink={onActionLink}
+            themeColor={themeColor}
           />
         </View>
       </View>
@@ -168,6 +173,8 @@ const AIMessageList = forwardRef(({
       style={style}
       isLastUserMessage={item.type === 'user' && index === messages.findIndex(m => m.type === 'user')}
       hasUserMessages={hasUserMessages}
+      onActionLink={onActionLink}
+      themeColor={themeColor}
     />
   );
 

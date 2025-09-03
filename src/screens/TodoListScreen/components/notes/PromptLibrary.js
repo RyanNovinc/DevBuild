@@ -283,6 +283,15 @@ export const PROMPT_VARIATIONS = {
         field: 'eveningHighlight'
       }
     ]
+  },
+
+  // Custom user-created prompts
+  custom: {
+    name: "My Custom Prompts",
+    icon: "create-outline",
+    color: "#8E44AD",
+    morning: [], // Will be populated from user's custom prompts
+    evening: [] // Will be populated from user's custom prompts
   }
 };
 

@@ -117,6 +117,36 @@ export const generateRepeatingInstances = (timeBlocks, isPremium = false) => {
         }
         break;
         
+      case 'fortnightly':
+        // Only available for premium users
+        if (!isPremium) break;
+        
+        // Start from two weeks after the original
+        currentDate.setDate(currentDate.getDate() + 14);
+        
+        // Generate fortnightly instances
+        while (currentDate <= endGenerationDate) {
+          // Create instance for this date
+          const instanceStartTime = new Date(currentDate);
+          const instanceEndTime = new Date(instanceStartTime.getTime() + durationMs);
+          
+          // Create a copy of the block with the new dates
+          const instance = {
+            ...block,
+            id: `${block.id}_${currentDate.toISOString()}`,
+            startTime: instanceStartTime.toISOString(),
+            endTime: instanceEndTime.toISOString(),
+            isRepeatingInstance: true,
+            originalTimeBlockId: block.id
+          };
+          
+          repeatingBlocks.push(instance);
+          
+          // Move to next fortnight (14 days)
+          currentDate.setDate(currentDate.getDate() + 14);
+        }
+        break;
+        
       case 'monthly':
         // Only available for premium users
         if (!isPremium) break;
@@ -388,7 +418,8 @@ export const generateDayViewHTML = async (currentDate, getTimeBlocksForDate, for
       const isRecurring = block.isRepeating || block.isRepeatingInstance;
       const recurringText = isRecurring ? 
         `(${(block.repeatFrequency || '') === 'daily' ? 'Daily' : 
-           (block.repeatFrequency || '') === 'weekly' ? 'Weekly' : 'Monthly'})` : '';
+           (block.repeatFrequency || '') === 'weekly' ? 'Weekly' : 
+           (block.repeatFrequency || '') === 'fortnightly' ? 'Fortnightly' : 'Monthly'})` : '';
       
       html += `
         <div class="time-block" style="border-left-color: ${blockColor};">
@@ -557,7 +588,7 @@ export const generateWeekViewHTML = async (weekDates, getTimeBlocksForDate, form
             <div class="time-block-header">
               <span class="time-block-time">
                 ${formatTime(block.startTime)} - ${formatTime(block.endTime)}
-                ${isRecurring ? `<span class="recurring-indicator">(${block.repeatFrequency === 'daily' ? 'Daily' : block.repeatFrequency === 'weekly' ? 'Weekly' : 'Monthly'})</span>` : ''}
+                ${isRecurring ? `<span class="recurring-indicator">(${block.repeatFrequency === 'daily' ? 'Daily' : block.repeatFrequency === 'weekly' ? 'Weekly' : block.repeatFrequency === 'fortnightly' ? 'Fortnightly' : 'Monthly'})</span>` : ''}
               </span>
             </div>
             <h3 class="time-block-title">${block.title || 'Untitled'}</h3>
@@ -762,7 +793,7 @@ export const generateMonthViewHTML = async (currentDate, monthDates, selectedMon
           <div class="time-block-header">
             <span class="time-block-time">
               ${formatTime(block.startTime)} - ${formatTime(block.endTime)}
-              ${isRecurring ? `<span class="recurring-indicator">(${block.repeatFrequency === 'daily' ? 'Daily' : block.repeatFrequency === 'weekly' ? 'Weekly' : 'Monthly'})</span>` : ''}
+              ${isRecurring ? `<span class="recurring-indicator">(${block.repeatFrequency === 'daily' ? 'Daily' : block.repeatFrequency === 'weekly' ? 'Weekly' : block.repeatFrequency === 'fortnightly' ? 'Fortnightly' : 'Monthly'})</span>` : ''}
             </span>
           </div>
           <h3 class="time-block-title">${block.title || 'Untitled'}</h3>

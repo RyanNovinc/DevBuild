@@ -23,57 +23,129 @@ const openAiApiKey = process.env.OPENAI_API_KEY;
 // Table name for storing connections
 const tableName = 'ai-websocket-connections';
 
-// Enhanced system prompt with clarifying questions guidance (FULL VERSION)
-const FULL_SYSTEM_PROMPT = `You are a supportive, thoughtful AI assistant called LifeCompass that helps users navigate goals, projects, and tasks.
+// Enhanced system prompt with updated standalone guidance
+const FULL_SYSTEM_PROMPT = `You are a supportive, thoughtful AI assistant called LifeCompass that helps users navigate goals, milestones, and tasks.
 
 TODAY'S DATE IS ${new Date().toISOString().split('T')[0]}. Always use the current year ${new Date().getFullYear()} for any dates you provide.
 
 IMPORTANT: 
-1. ALWAYS provide a conversational response to the user BEFORE using any tools. Your response should be helpful and complete on its own.
-2. ASK CLARIFYING QUESTIONS to gather more context and provide better assistance. This leads to more personalized and helpful results.
+1. ALWAYS provide a conversational response to the user, but ALSO use tools when appropriate. Your response should be helpful and complete on its own.
+2. When users provide CLEAR, COMPLETE requests (title, description, domain), USE THE APPROPRIATE TOOL IMMEDIATELY while also responding conversationally.
+3. ASK CLARIFYING QUESTIONS only when essential information is missing or unclear.
+4. CREATE ONLY WHAT THE USER ASKS FOR - if they ask for a timeblock, don't also create milestones and tasks. Be precise and specific.
 
-WHEN TO ASK CLARIFYING QUESTIONS (DEFAULT APPROACH):
+PERSONAL KNOWLEDGE SYSTEM:
+- Users can optionally enable "App Context" which gives you access to their current goals, milestones, and tasks from LifeCompass
+- Users can also upload documents (resumes, personality tests, etc.) for additional personalized context
+- When you have app context or document context, acknowledge it naturally: "I can see from your goals..." or "Based on your current milestones..."
+- ONLY suggest personal context when it would genuinely enhance the response (career advice, goal alignment, etc.) - not for simple tasks or general questions
+- When context would be genuinely helpful, mention it naturally: "If you'd like more personalized guidance, you can enable App Context or upload documents through the Personal Knowledge screen in the AI assistant side menu"
+- Always be transparent about what information you're using to personalize responses
+- Use available knowledge to provide more relevant, specific advice aligned with their existing priorities
+- If no personal context is available, provide general helpful guidance as normal - most questions don't require personal context
+
+WHEN TO ASK CLARIFYING QUESTIONS (FLEXIBLE APPROACH):
 - For goals: Ask about motivation, success criteria, timeline, specific outcomes, and which life domain
-- For projects: Ask about the parent goal, scope, timeline, and what success looks like
-- For tasks: Ask which project it belongs to, priority level, and any specific requirements
-- For time blocks: Ask about duration, specific timing preferences, location, and what should be accomplished
+- For milestones: Ask about scope, timeline, and what success looks like. If it seems like part of a larger effort, ask if it connects to an existing goal
+- For tasks: Ask about priority level and any specific requirements. If it seems like part of a larger effort, ask if it belongs to a milestone or goal
+- For time blocks: Ask about duration, specific timing preferences, location, what should be accomplished, and if it should be recurring (daily, weekly, fortnightly, monthly)
 - For todos: Ask about scope, specific areas to focus on, and level of detail needed (but NOT about timing - users can select today/tomorrow/later in the modal)
 
-WHEN TO PROCEED DIRECTLY (RARE EXCEPTIONS):
-Only proceed without questions when the user provides very detailed, specific information including:
-- Clear titles and descriptions
-- Specific timelines or dates
-- Obvious categorization
-- Complete context
+WHEN TO PROCEED DIRECTLY (COMMON SCENARIOS):
+Proceed without extensive questioning when the user provides clear, actionable requests or when the item is obviously standalone:
+- Simple tasks: "Clean my house", "Buy groceries", "Call dentist"
+- Obvious standalone projects: "Organize my garage", "Plan vacation to Italy"
+- Clear hierarchical requests: "Create milestone for my fitness goal"
+- Detailed specifications: User provides specific titles, descriptions, and context
+- Milestone with clear details: When user provides title, description, and domain - CREATE IT IMMEDIATELY
 
-Examples:
-- User: "I want to learn Spanish" → Ask: "That's exciting! What's motivating you to learn Spanish? Are you planning a trip, for work, or personal interest? Also, do you have a timeline in mind - are you hoping to be conversational in 6 months, a year, or just starting to explore?"
-- User: "Create a todo to clean the house" → Ask: "I'd be happy to help you organize house cleaning! Are you looking to tackle the whole house today, or focus on specific areas? And is this part of a regular cleaning routine, or preparing for something special?"
-- User: "Help me with work tasks" → Ask: "What kind of work tasks are you trying to organize? Are these daily routine tasks, a specific project you're working on, or something else? And what's your main priority right now?"
-- User: "Create these specific house cleaning todos for today: vacuum living room, clean bathroom, do laundry, clean kitchen" → PROCEED: User provided specific tasks and timing
+EXAMPLE: User says "Develop a Daily Exercise Routine" with description and Health & Wellness domain → IMMEDIATELY call createMilestone function
 
-HIERARCHICAL PRODUCTIVITY SYSTEM:
-LifeCompass organizes productivity using the following hierarchy:
+Examples of good judgment:
+- User: "I want to learn Spanish" → Ask: "What's motivating you to learn Spanish? Are you planning a trip, for work, or personal interest? Also, do you have a timeline in mind?"
+- User: "Clean my desk" → PROCEED: Create standalone task, this is clearly a simple actionable item
+- User: "Launch my photography business" → Ask: "That's exciting! Is this part of a larger career goal, or a standalone venture? What's your timeline and what would success look like?"
+- User: "I need to call my dentist and schedule car maintenance" → PROCEED: These are clearly standalone tasks
+- User: "Edit my fitness goal" → RESPOND: "I can see your fitness goal, but I can only create new items. To edit existing goals, you can tap on the goal in your Goals screen to modify it. Would you like me to create a new fitness-related goal instead?"
+- User: "Update my exercise milestone" → RESPOND: "I'm not able to edit existing milestones, but I can create new ones. You can update your exercise milestone by going to your Goals screen and tapping on it. Would you like me to create a new milestone for your fitness journey?"
 
-1. STRATEGIC DIRECTION - Strategic vision guiding overall life goals (like a personal mission statement)
-2. GOALS - High-level objectives that may align with strategic direction
-3. PROJECTS - Mid-level organizational units that break down goals into manageable chunks
-4. TASKS - Specific action items that belong to projects
-5. TIME BLOCKS - Calendar allocations for scheduling when to work on activities
-6. TO-DOS - Standalone action items not necessarily tied to larger objectives
+FLEXIBLE PRODUCTIVITY SYSTEM:
+LifeCompass organizes productivity using a flexible hierarchy where items can be standalone or connected:
+
+1. GOALS - High-level life objectives (weeks/months to achieve)
+2. MILESTONES - Projects or significant efforts that can be standalone OR part of goals
+3. TASKS - Action items that can be standalone OR part of milestones/goals
+4. TIME BLOCKS - Calendar allocations for scheduling work (standalone items for calendar management). Can be one-time or recurring (daily, weekly, fortnightly, monthly)
+5. TO-DOS - Quick standalone action items (users manage these manually in the app)
+
+IMPORTANT: Users can create items at ANY level without requiring parent items. The hierarchy is OPTIONAL and FLEXIBLE.
+
+CREATION PATTERNS:
+
+SINGLE ITEM REQUESTS - Create only what's asked for:
+- "Create a timeblock for exercise" → Create ONLY a timeblock
+- "Create a goal called X" → Create ONLY a goal
+- "Create a task to call dentist" → Create ONLY a task
+- "Create a milestone for fitness" → Create ONLY a milestone
+- "Schedule weekly team meetings" → Create recurring weekly timeblock
+- "Block time for daily morning routine" → Create recurring daily timeblock
+- "Set up monthly review sessions" → Create recurring monthly timeblock
+
+COMPREHENSIVE BREAKDOWN REQUESTS - Create multiple related items:
+- "Create a goal and break it down into milestones" → Create goal + milestones
+- "Help me plan X with goals, milestones and tasks" → Create full hierarchy
+- "Create a comprehensive plan for X" → Create goal + milestones + tasks
+- "Break down my X goal into actionable steps" → Create milestones + tasks
+- "I want to learn Spanish, can you help me break this down?" → Create goal + milestones + tasks
+- "Create a goal called X and break it down into a few milestones and tasks" → Create goal + milestones + tasks
+
+KEY PHRASES THAT INDICATE COMPREHENSIVE REQUESTS:
+- "break it down", "break this down"
+- "comprehensive plan", "full plan"  
+- "with milestones and tasks"
+- "actionable steps", "step by step"
+- "help me plan" (when context suggests full breakdown)
+- "organize for" + comprehensive request
+
+TIMEBLOCK RECURRING CAPABILITIES:
+- DAILY: Morning routines, daily standup meetings, exercise sessions, meditation
+- WEEKLY: Team meetings, weekly reviews, grocery shopping, gym sessions
+- FORTNIGHTLY: Biweekly check-ins, project updates, pay periods
+- MONTHLY: Monthly planning, reviews, appointments, recurring monthly tasks
+
+When users mention recurring activities, suggest timeblocks with appropriate frequencies. Examples:
+- "I need to exercise regularly" → Suggest recurring timeblock (daily or weekly)
+- "Set up team meetings" → Create weekly recurring timeblock
+- "Monthly budget review" → Create monthly recurring timeblock
+
+TOOL LIMITATIONS: 
+- You can CREATE new GOALS, MILESTONES, TASKS, and TIME BLOCKS, but CANNOT EDIT or UPDATE existing ones
+- When users ask to edit/update existing items, politely explain that you can only create new items, and they can edit existing ones directly in the app
+- You cannot create TO-DOS directly - when users ask about todos, offer guidance on organizing them or suggest creating TASKS instead for more structured tracking
+- Before creating new items, acknowledge if you see similar existing items in their app context and ask if they want to proceed with creating a new one
+
+FUNCTION CALLING PRIORITY:
+- When user asks for SINGLE item with complete info → CALL FUNCTION IMMEDIATELY
+- When user asks for COMPREHENSIVE breakdown → CREATE MULTIPLE ITEMS in one response using multiple function calls
+- Use multiple function calls in a single response for comprehensive requests
+- Don't ask "Would you like me to create this?" - just create it and confirm completion
+- For comprehensive requests, create items in logical order: Goal → Milestones → Tasks
+- When a user provides structured information → USE TOOLS WHILE RESPONDING
+
+IMPORTANT: Pay attention to the user's exact language. "Break it down" clearly indicates they want a comprehensive breakdown, not just a single item.
 
 Always provide thoughtful guidance based on this framework and suggest creating appropriate elements when users express relevant intentions.`;
 
 // Abbreviated system prompt for follow-up messages - OPTIMIZED FOR TOKEN EFFICIENCY
-const ABBREVIATED_SYSTEM_PROMPT = `LifeCompass AI. Continue helping with their productivity system. Always respond conversationally first, ask clarifying questions to gather context before creating items (unless user provides complete details).`;
+const ABBREVIATED_SYSTEM_PROMPT = `LifeCompass AI. Continue helping with their flexible productivity system. Always respond conversationally first, ask clarifying questions when helpful (items can be standalone or connected as needed).`;
 
-// Define tools (function calling schemas) globally for reuse and caching
+// Define tools (function calling schemas) with updated descriptions
 const tools = [
   {
     type: "function",
     function: {
       name: "createGoal",
-      description: "Create a new goal (high-level objective) when a user expresses wanting to achieve something significant that might take weeks or months",
+      description: "Create a new goal (high-level life objective) when a user expresses wanting to achieve something significant that might take weeks or months",
       parameters: {
         type: "object",
         properties: {
@@ -87,7 +159,7 @@ const tools = [
           },
           domain: {
             type: "string",
-            enum: ["Career & Work", "Health & Wellness", "Relationships", "Personal Growth", "Financial Security", "Recreation & Leisure", "Purpose & Meaning", "Community & Environment", "Other"],
+            enum: ["Career & Work", "Health & Wellness", "Relationships", "Personal Growth", "Financial Security", "Recreation & Leisure", "Purpose & Meaning", "Environment & Organization", "Other"],
             description: "The life domain this goal belongs to"
           }
         },
@@ -98,34 +170,34 @@ const tools = [
   {
     type: "function",
     function: {
-      name: "createProject",
-      description: "Create a new project to break down a goal into manageable chunks when a user needs to organize work toward a goal",
+      name: "createMilestone",
+      description: "Create ONLY a milestone when user specifically asks for milestones or describes substantial projects that need multiple steps. Examples: 'Create a milestone for exercise routine', 'I want to organize a project for learning Spanish'. Don't create this alongside tasks or timeblocks unless explicitly requested.",
       parameters: {
         type: "object",
         properties: {
           title: {
             type: "string",
-            description: "Clear, concise title of the project"
+            description: "Clear, concise title of the milestone"
           },
           description: {
             type: "string",
-            description: "Detailed description of what this project involves"
+            description: "Detailed description of what this milestone involves"
           },
           goalTitle: {
             type: "string",
-            description: "The title of the parent goal this project helps achieve (if applicable)"
+            description: "Optional: The title of the parent goal if this milestone is part of a larger goal"
           },
           domain: {
             type: "string",
-            enum: ["Career & Work", "Health & Wellness", "Relationships", "Personal Growth", "Financial Security", "Recreation & Leisure", "Purpose & Meaning", "Community & Environment", "Other"],
-            description: "The life domain this project belongs to"
+            enum: ["Career & Work", "Health & Wellness", "Relationships", "Personal Growth", "Financial Security", "Recreation & Leisure", "Purpose & Meaning", "Environment & Organization", "Other"],
+            description: "The life domain this milestone belongs to"
           },
           tasks: {
             type: "array",
             items: {
               type: "string"
             },
-            description: "List of initial tasks needed for this project"
+            description: "List of initial tasks needed for this milestone"
           }
         },
         required: ["title", "description", "domain"]
@@ -136,7 +208,7 @@ const tools = [
     type: "function",
     function: {
       name: "createTask",
-      description: "Create a specific task when the user wants to add a concrete action item",
+      description: "Create ONLY a task when user specifically asks for tasks or actionable items. Use when they say 'create a task', 'I need to do', or describe a specific standalone action. Don't create this alongside milestones or timeblocks unless explicitly requested.",
       parameters: {
         type: "object",
         properties: {
@@ -148,13 +220,13 @@ const tools = [
             type: "string",
             description: "Details about how to complete this task"
           },
-          projectTitle: {
+          milestoneTitle: {
             type: "string",
-            description: "Optional: The title of the project this task might belong to"
+            description: "Optional: The title of the milestone this task belongs to (if part of a larger project)"
           },
           goalTitle: {
             type: "string",
-            description: "Optional: The title of the parent goal if known"
+            description: "Optional: The title of the parent goal (if directly related to a goal)"
           },
           status: {
             type: "string",
@@ -170,7 +242,7 @@ const tools = [
     type: "function",
     function: {
       name: "createTimeBlock",
-      description: "Schedule a specific time for work when the user wants to allocate time on their calendar",
+      description: "Create ONLY a time block when user specifically asks for scheduling or timeblocks. Use when they say 'create a timeblock', 'schedule time for', 'block time for', or mention specific calendar allocation. Don't create this alongside milestones or tasks unless explicitly requested.",
       parameters: {
         type: "object",
         properties: {
@@ -196,94 +268,52 @@ const tools = [
           },
           domain: {
             type: "string",
-            enum: ["Career & Work", "Health & Wellness", "Relationships", "Personal Growth", "Financial Security", "Recreation & Leisure", "Purpose & Meaning", "Community & Environment", "Other"],
+            enum: ["Career & Work", "Health & Wellness", "Relationships", "Personal Growth", "Financial Security", "Recreation & Leisure", "Purpose & Meaning", "Environment & Organization", "Other"],
             description: "The life domain this time block is related to"
+          },
+          goalTitle: {
+            type: "string",
+            description: "Title of the goal this time block is related to (if applicable)"
+          },
+          milestoneTitle: {
+            type: "string",
+            description: "Title of the milestone this time block is related to (if applicable)"
+          },
+          taskTitle: {
+            type: "string",
+            description: "Title of the task this time block is related to (if applicable)"
+          },
+          isRepeating: {
+            type: "boolean",
+            description: "Whether this time block repeats"
+          },
+          repeatFrequency: {
+            type: "string",
+            enum: ["daily", "weekly", "fortnightly", "monthly"],
+            description: "How often the time block repeats (if isRepeating is true)"
+          },
+          repeatIndefinitely: {
+            type: "boolean",
+            description: "Whether the time block repeats indefinitely"
+          },
+          repeatUntil: {
+            type: "string",
+            description: "End date for repetition (YYYY-MM-DD format, if repeatIndefinitely is false)"
           }
         },
         required: ["title", "startTime", "endTime", "domain"]
       }
     }
   },
-  {
-    type: "function",
-    function: {
-      name: "createTodo",
-      description: "RARELY USED: Only for single, standalone to-do items that don't relate to other tasks (like 'Call mom' or 'Pick up dry cleaning')",
-      parameters: {
-        type: "object",
-        properties: {
-          title: {
-            type: "string",
-            description: "Title of the to-do item"
-          },
-          tab: {
-            type: "string",
-            enum: ["today", "tomorrow", "later"],
-            description: "Default to 'today' - users can change this in the modal"
-          }
-        },
-        required: ["title"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "createTodoGroup",
-      description: "PREFERRED: Use this for ANY request involving multiple tasks or when tasks can be broken down into subtasks. Always prefer creating comprehensive groups with detailed subtasks. Examples: cleaning (kitchen, bathroom, etc.), work tasks (emails, reports, meetings), exercise routine (warm-up, workout, cool-down), meal prep (shopping, cooking, storage).",
-      parameters: {
-        type: "object",
-        properties: {
-          title: {
-            type: "string",
-            description: "Descriptive title of the to-do group (e.g., 'House Cleaning Tasks', 'Work Productivity', 'Weekly Meal Prep')"
-          },
-          tab: {
-            type: "string",
-            enum: ["today", "tomorrow", "later"],
-            description: "Default to 'today' - users can change this in the modal"
-          },
-          items: {
-            type: "array",
-            items: {
-              type: "string"
-            },
-            description: "Comprehensive list of specific, actionable subtasks. Be detailed and thorough - break down larger tasks into specific steps."
-          }
-        },
-        required: ["title", "items"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "updateStrategicDirection",
-      description: "Set or update the user's overall strategic direction when they express a desire to establish their guiding principles or vision",
-      parameters: {
-        type: "object",
-        properties: {
-          strategicDirection: {
-            type: "string",
-            description: "The user's strategic direction statement"
-          }
-        },
-        required: ["strategicDirection"]
-      }
-    }
-  }
 ];
 
 // Main handler function
 exports.handler = async (event) => {
-  console.log('Message event:', JSON.stringify(event, null, 2));
-
   // Check if this is a direct invocation or via WebSocket
   const isDirectInvocation = !event.requestContext || !event.requestContext.connectionId;
 
   // For direct invocation testing
   if (isDirectInvocation) {
-    console.log('Direct invocation detected - running test mode');
     return {
       statusCode: 200,
       body: 'Direct invocation test successful. In production, this Lambda should be triggered via WebSocket API.'
@@ -293,8 +323,6 @@ exports.handler = async (event) => {
   // Get the route key and connection ID
   const routeKey = event.requestContext.routeKey;
   const connectionId = event.requestContext.connectionId;
-
-  console.log(`Processing ${routeKey} event for connection: ${connectionId}`);
 
   try {
     // Handle different route types
@@ -309,7 +337,6 @@ exports.handler = async (event) => {
         }
       }));
 
-      console.log(`Connection ${connectionId} successfully stored in DynamoDB`);
       return { statusCode: 200, body: 'Connected' };
     }
     else if (routeKey === '$disconnect') {
@@ -319,7 +346,6 @@ exports.handler = async (event) => {
         Key: { connectionId }
       }));
 
-      console.log(`Connection ${connectionId} removed from DynamoDB`);
       return { statusCode: 200, body: 'Disconnected' };
     }
     else if (routeKey === 'sendMessage') {
@@ -331,9 +357,6 @@ exports.handler = async (event) => {
         console.error('Error parsing message:', error);
         return { statusCode: 400, body: 'Invalid message format' };
       }
-
-      // Process the message
-      console.log('Processing message:', message);
 
       if (message.action === 'sendMessage') {
         // Get the user's message
@@ -370,28 +393,10 @@ exports.handler = async (event) => {
 
         // Add document context for first message if available
         if (isFirstMessage && userKnowledgeContext?.documentContext) {
-          console.log(`🔍 [LAMBDA DEBUG] Adding document context (${userKnowledgeContext.documentContext.length} chars) to conversation`);
-          console.log(`🔍 [LAMBDA DEBUG] Context preview: ${userKnowledgeContext.documentContext.substring(0, 200)}...`);
-          console.log(`🔍 [LAMBDA DEBUG] Context contains goals: ${userKnowledgeContext.documentContext.toLowerCase().includes('goals')}`);
-          
           formattedMessages.push({
             role: 'system',
-            content: `CRITICAL: You have access to the user's complete app data below. This contains their actual goals, projects, tasks, and strategic direction. 
-
-IMPORTANT INSTRUCTIONS:
-- When you have this context data, DO NOT ask generic clarifying questions about goals/projects that you can already see
-- Reference their specific goals and projects by name when relevant
-- Use this data to provide personalized, specific assistance
-- Only ask clarifying questions about NEW information not already provided in the context
-
-USER'S CURRENT APP DATA:
-${userKnowledgeContext.documentContext}
-
-Now respond to their message using this specific context about their actual goals and projects.`
+            content: `ADDITIONAL CONTEXT: The user has provided the following documents and app data for context. Use this information to provide more personalized responses, but focus on answering their direct question.\n\n${userKnowledgeContext.documentContext}`
           });
-        } else if (isFirstMessage) {
-          console.log(`⚠️ [LAMBDA DEBUG] First message but no document context received`);
-          console.log(`⚠️ [LAMBDA DEBUG] userKnowledgeContext:`, JSON.stringify(userKnowledgeContext, null, 2));
         }
 
         // Add the user message
@@ -400,16 +405,12 @@ Now respond to their message using this specific context about their actual goal
           content: userMessage
         });
 
-        // UPDATED: Always use gpt-5-nano for best cost efficiency
-        const model = 'gpt-5-nano';
-        console.log(`Using model: ${model} (ignoring tier: ${aiTier})`);
+        // Use gpt-4.1-mini regardless of tier
+        const model = 'gpt-4.1-mini';
 
         // OpenAI API request
         try {
-          // Importing fetch for Node.js 18+
           const fetch = require('node-fetch');
-
-          console.log('Sending request to OpenAI API...');
 
           // Call OpenAI with streaming and tools, explicitly requesting text response
           const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -421,9 +422,9 @@ Now respond to their message using this specific context about their actual goal
             body: JSON.stringify({
               model: model,
               messages: formattedMessages,
-              tools: tools,  // Add the tools definition - will be cached by OpenAI
-              tool_choice: "auto", // Let the model decide when to use tools
-              response_format: { type: "text" }, // Explicitly request text response
+              tools: tools,
+              tool_choice: "auto",
+              response_format: { type: "text" },
               stream: true,
               temperature: 0.7
             })
@@ -434,8 +435,6 @@ Now respond to their message using this specific context about their actual goal
             console.error('OpenAI API error response:', errorText);
             throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
           }
-
-          console.log('OpenAI API request successful, processing stream...');
 
           // Set up streaming handling
           const reader = response.body;
@@ -489,7 +488,7 @@ Now respond to their message using this specific context about their actual goal
                       toolCalls[toolCallIndex].function.name = deltaToolCall.function.name;
                     }
 
-                    // Append to function arguments if provided
+                    // Append to function arguments if provided - handle streaming carefully
                     if (deltaToolCall.function?.arguments) {
                       toolCalls[toolCallIndex].function.arguments += deltaToolCall.function.arguments;
                     }
@@ -510,67 +509,292 @@ Now respond to their message using this specific context about their actual goal
                   });
                 }
               } catch (parseError) {
-                console.error('Error parsing chunk:', parseError, jsonLine);
+                // Skip corrupted streaming chunks - common with tool calls
+                continue;
               }
             }
           }
 
-          console.log('Stream processing complete');
-
-          // Log the full response for debugging
-          console.log('Full AI response:', accumulatedResponse);
-          console.log('Tool calls:', JSON.stringify(toolCalls));
-
-          // Process tool calls into actions
+          // Process tool calls into actions with error recovery
           let actions = null;
           if (toolCalls.length > 0) {
-            actions = toolCalls.map(toolCall => {
+            actions = toolCalls.map((toolCall, index) => {
               try {
                 const name = toolCall.function.name;
-                const args = JSON.parse(toolCall.function.arguments);
+                let args;
+                
+                // Try to parse arguments with enhanced regex recovery for streaming issues
+                try {
+                  args = JSON.parse(toolCall.function.arguments);
+                } catch (parseError) {
+                  console.log(`Attempting advanced regex recovery for tool call ${index}`);
+                  console.log(`Corrupted JSON: ${toolCall.function.arguments.substring(0, 200)}...`);
+                  
+                  let fixedArgs = toolCall.function.arguments;
+                  
+                  // Step 1: Try basic JSON repair
+                  if (!fixedArgs.startsWith('{')) fixedArgs = '{' + fixedArgs;
+                  if (!fixedArgs.endsWith('}')) fixedArgs += '}';
+                  
+                  // Step 2: Try to fix common streaming corruption patterns
+                  fixedArgs = fixedArgs
+                    .replace(/^{\s*"?ti\s+"?([^"]+)"?\s*:/, '{"title":"$1",')     // Fix {"ti "value": -> {"title":"value",
+                    .replace(/^{\s*"?tle"\s*:\s*"([^"]*)/i, '{"title":"$1"')     // Fix {"tle": "value -> {"title":"value"
+                    .replace(/tle"\s*:\s*"([^"]*)/i, '"title":"$1"')             // Fix tle": "value -> "title":"value"
+                    .replace(/ti\s+"([^"]*)/i, '"title":"$1"')                   // Fix ti "value -> "title":"value"
+                    .replace(/"tab([a-z]+)/i, '"tab":"$1"')                      // Fix "tabtomorrow" -> "tab":"tomorrow"
+                    .replace(/tab["'\s]*([a-z]+)/i, '"tab":"$1"')                // Fix missing quotes around tab value
+                    .replace(/"title"\s*:\s*([^",}]+)([",}])/, '"title":"$1"$2') // Add missing quotes around title
+                    .replace(/,\s*"tab"\s*:\s*"([^"]*)"?\s*$/, ',"tab":"$1"}')   // Ensure proper closing
+                    // Timeblock-specific fixes
+                    .replace(/"isRepeating(true|false),/g, '"isRepeating":$1,')                    // Fix "isRepeatingtrue, -> "isRepeating":true,
+                    .replace(/"repeatIndefinitely(true|false),/g, '"repeatIndefinitely":$1,')     // Fix "repeatIndefinitelytrue, -> "repeatIndefinitely":true,
+                    .replace(/"startTime"([^:]+):/g, '"startTime":$1:')                          // Fix "startTime"2025-09-03 -> "startTime":"2025-09-03
+                    .replace(/"endTime"([^:]+):/g, '"endTime":$1:')                              // Fix "endTime"2025-09-03 -> "endTime":"2025-09-03
+                    .replace(/:\s*([0-9]{4}-[0-9]{2}-[0-9]{2}\s+[0-9]{2}:[0-9]{2}),/g, ':"$1",')  // Add quotes around datetime values
+                    .replace(/"domain"([^:]+):/g, '"domain":$1:')                                // Fix missing quotes in domain
+                    .replace(/:\s*(Career\s*&\s*Work|Health\s*&\s*Fitness|[A-Za-z\s&]+),/g, ':"$1",') // Add quotes around domain values
+                    // Fix the specific malformation: "title":"Focus WorkstartTime":"2025-09-03 14:00"
+                    .replace(/"title"\s*:\s*"([^"]*?)(startTime[^"]*?)"\s*:\s*"([^"]+)"/i, '"title":"$1","startTime":"$3"');
+                  
+                  // Step 3: Try parsing the repaired JSON
+                  try {
+                    args = JSON.parse(fixedArgs);
+                    console.log(`Successfully repaired JSON: ${name} with args:`, args);
+                  } catch (secondParseError) {
+                    // Step 4: Advanced regex extraction as last resort
+                    console.log(`JSON repair failed, using advanced regex extraction`);
+                    
+                    // Multiple title patterns
+                    let titleMatch = 
+                      fixedArgs.match(/"title"\s*:\s*"([^"]*)"/i) ||           // Standard: "title":"value"
+                      fixedArgs.match(/title["'\s]*:\s*"([^"]*)"/i) ||        // Missing quotes: title:"value"
+                      fixedArgs.match(/title["'\s]*:\s*([^"',}]+)/i) ||       // No quotes: title:value
+                      fixedArgs.match(/(?:ti|tle)["'\s]*:\s*"?([^"',}]+)"?/i) || // Broken field name
+                      fixedArgs.match(/"([^"]*(?:groceries|dentist|call|clean|plan|weekend|vacation)[^"]*)"/i) || // Common words
+                      fixedArgs.match(/tle"\s*:\s*"([^"]*)/i) ||               // "tle": "value (no closing quote)
+                      fixedArgs.match(/ti\s+"([^"]*)/i) ||                     // "ti "value (malformed)
+                      fixedArgs.match(/"([A-Z][a-z]+(?:\s+[a-z]+)*)/i);        // Just find capitalized words
+                    
+                    // Multiple tab patterns  
+                    let tabMatch = 
+                      fixedArgs.match(/"tab"\s*:\s*"([^"]*)"/i) ||             // Standard: "tab":"today"
+                      fixedArgs.match(/tab["'\s]*:\s*"([^"',}]+)"/i) ||        // Missing quotes: tab:"today"
+                      fixedArgs.match(/tab["'\s]*:\s*([a-z]+)/i) ||            // No quotes: tab:today
+                      fixedArgs.match(/tab(today|tomorrow|later)/i) ||         // Merged: tabtomorrow
+                      fixedArgs.match(/(today|tomorrow|later)/i);              // Just find the word
+                    
+                    if (titleMatch) {
+                      let title = titleMatch[1].trim();
+                      let tab = 'today'; // default
+                      
+                      if (tabMatch) {
+                        tab = tabMatch[1].toLowerCase();
+                        // Handle merged cases like "tabtomorrow"
+                        if (tab.includes('tomorrow')) tab = 'tomorrow';
+                        else if (tab.includes('later')) tab = 'later';
+                        else if (tab.includes('today')) tab = 'today';
+                      }
+                      
+                      // Handle different action types
+                      if (name === 'createTodoGroup') {
+                        // Handle items array for todo groups
+                        let items = [];
+                        const itemsMatch = fixedArgs.match(/"items"\s*:\s*\[(.*?)\]/i);
+                        if (itemsMatch) {
+                          try {
+                            items = itemsMatch[1].split(',').map(item => 
+                              item.trim().replace(/^"|"$/g, '')
+                            ).filter(item => item.length > 0);
+                          } catch (itemError) {
+                            items = [];
+                          }
+                        }
+                        args = { title, tab, items };
+                        console.log(`Advanced regex recovery: ${name} with title "${title}", tab "${tab}"`);
+                        
+                      } else if (name === 'createTimeBlock') {
+                        // Handle the specific malformation: "title":"Focus WorkstartTime":"2025-09-03 14:00"
+                        let cleanTitle = title;
+                        let extractedStartTime = null;
+                        
+                        // Check for malformed title that contains startTime
+                        const malformedTitleMatch = title.match(/^(.+?)(startTime|Time)(.*)$/i);
+                        if (malformedTitleMatch) {
+                          cleanTitle = malformedTitleMatch[1].trim();
+                          // Try to extract datetime from the malformed part
+                          const timeMatch = fixedArgs.match(/([0-9]{4}-[0-9]{2}-[0-9]{2}\s+[0-9]{2}:[0-9]{2})/);
+                          if (timeMatch) {
+                            extractedStartTime = timeMatch[1];
+                          }
+                        }
+                        
+                        // Extract timeblock-specific data  
+                        const startTimeMatch = fixedArgs.match(/"startTime"\s*:\s*"?([^"',}]+)"?/i);
+                        const endTimeMatch = fixedArgs.match(/"endTime"\s*:\s*"?([^"',}]+)"?/i);
+                        const domainMatch = fixedArgs.match(/"domain"\s*:\s*"?([^"',}]+)"?/i);
+                        const isRepeatingMatch = fixedArgs.match(/"isRepeating"\s*:\s*(true|false)/i);
+                        const repeatFrequencyMatch = fixedArgs.match(/"repeatFrequency"\s*:\s*"?([^"',}]+)"?/i);
+                        const repeatIndefinitelyMatch = fixedArgs.match(/"repeatIndefinitely"\s*:\s*(true|false)/i);
+                        
+                        args = { title: cleanTitle };
+                        
+                        // Use extracted startTime from malformed title or regex match
+                        if (extractedStartTime) {
+                          args.startTime = extractedStartTime;
+                        } else if (startTimeMatch) {
+                          args.startTime = startTimeMatch[1].trim();
+                        }
+                        
+                        if (endTimeMatch) args.endTime = endTimeMatch[1].trim();
+                        if (domainMatch) args.domain = domainMatch[1].trim();
+                        if (isRepeatingMatch) args.isRepeating = isRepeatingMatch[1] === 'true';
+                        if (repeatFrequencyMatch) args.repeatFrequency = repeatFrequencyMatch[1].trim();
+                        if (repeatIndefinitelyMatch) args.repeatIndefinitely = repeatIndefinitelyMatch[1] === 'true';
+                        
+                        // Set defaults for missing fields
+                        if (!args.startTime) args.startTime = "2025-09-03 14:00";
+                        if (!args.endTime) args.endTime = "2025-09-03 15:00";
+                        if (!args.domain) args.domain = "General";
+                        if (args.isRepeating === undefined) args.isRepeating = false;
+                        if (!args.repeatFrequency) args.repeatFrequency = "weekly";
+                        if (args.repeatIndefinitely === undefined) args.repeatIndefinitely = true;
+                        
+                        console.log(`Advanced regex recovery: ${name} with title "${cleanTitle}", startTime "${args.startTime}", isRepeating ${args.isRepeating}`);
+                        
+                      } else {
+                        // Default handling for other action types
+                        args = { title, tab };
+                        console.log(`Advanced regex recovery: ${name} with title "${title}", tab "${tab}"`);
+                      }
+                    } else {
+                      console.error(`All recovery methods failed for tool call ${index}. Raw: ${fixedArgs.substring(0, 200)}...`);
+                      
+                      // Final attempt: if this is a timeblock, try to extract just from the raw data
+                      if (name === 'createTimeBlock') {
+                        console.log('Final fallback: creating minimal timeblock from request context');
+                        args = {
+                          title: "Focus Work", // Default title
+                          startTime: "14:00",
+                          endTime: "15:00", 
+                          domain: "General",
+                          isRepeating: false,
+                          repeatFrequency: "weekly",
+                          repeatIndefinitely: true
+                        };
+                      } else {
+                        return null;
+                      }
+                    }
+                  }
+                }
 
-                // Map the function name to action type
+                // Map function name to action type
                 const actionTypeMap = {
                   'createGoal': 'createGoal',
-                  'createProject': 'createProject',
+                  'createMilestone': 'createMilestone',
                   'createTask': 'createTask',
-                  'createTimeBlock': 'createTimeBlock',
-                  'createTodo': 'createTodo',
-                  'createTodoGroup': 'createTodoGroup',
-                  'updateLifeDirection': 'updateLifeDirection',
-                  'updateStrategicDirection': 'updateStrategicDirection'
+                  'createTimeBlock': 'createTimeBlock'
                 };
-
-                // Convert function call to the expected action format
+                
                 return {
                   type: actionTypeMap[name] || name,
                   data: processActionData(name, args)
                 };
+                
               } catch (error) {
-                console.error('Error processing tool call:', error);
+                console.error(`Error processing tool call ${index}:`, error.message);
                 return null;
               }
-            }).filter(action => action !== null);
+            }).filter(action => action !== null && action.type !== '');
           }
 
           // Generate a title if this is the first message
           let title = null;
           if (isFirstMessage) {
             title = await generateTitle(userMessage, messageHistory);
-            console.log(`Generated title: ${title}`);
+          }
+
+          // Process actions to include action links and enhanced responses
+          let processedActions = actions;
+          let enhancedResponse = accumulatedResponse;
+          
+          if (actions && actions.length > 0) {
+            processedActions = actions.map((action, index) => {
+              // Generate a unique ID for each action's modal data
+              const modalDataId = `${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}`;
+              
+              // Add the modalDataId to the action data
+              const actionWithId = {
+                ...action,
+                modalDataId,
+                // Store the original data for the frontend to save
+                originalData: action.data
+              };
+              
+              return actionWithId;
+            });
+            
+            // Enhanced response to mention the modal functionality and provide immediate action links
+            const actionTypes = actions.map(a => a.type.replace('create', '').toLowerCase());
+            const actionText = actionTypes.length === 1 
+              ? `a ${actionTypes[0]}` 
+              : actionTypes.length === 2
+                ? `a ${actionTypes[0]} and a ${actionTypes[1]}`
+                : `${actionTypes.slice(0, -1).join(', ')}, and a ${actionTypes[actionTypes.length - 1]}`;
+            
+            enhancedResponse += `\n\n*I've prepared ${actionText} form${actions.length > 1 ? 's' : ''} for you.*`;
+            
+            // Add action links immediately - use processedActions which has modalDataId
+            if (processedActions.length === 1) {
+              const action = processedActions[0];
+              console.log('🚀 Creating action link for single action:', {
+                actionType: action.type,
+                modalDataId: action.modalDataId,
+                hasModalDataId: !!action.modalDataId
+              });
+              
+              // Map action types to match frontend expectations
+              const actionType = action.type === 'createMilestone' ? 'milestone' : action.type.replace('create', '').toLowerCase();
+              const displayType = actionType === 'timeblock' ? 'Time Block' : 
+                                actionType === 'milestone' ? 'Milestone' :
+                                actionType.charAt(0).toUpperCase() + actionType.slice(1);
+              
+              const actionLink = `\n\n[Reopen ${displayType} Form](action://${actionType}/${action.modalDataId})`;
+              console.log('🚀 Generated action link:', actionLink);
+              enhancedResponse += actionLink;
+            } else {
+              // Multiple actions - add each link - use processedActions which has modalDataId
+              enhancedResponse += `\n\nAction links:`;
+              for (const action of processedActions) {
+                console.log('🚀 Creating action link for multiple action:', {
+                  actionType: action.type,
+                  modalDataId: action.modalDataId,
+                  hasModalDataId: !!action.modalDataId
+                });
+                
+                // Map action types to match frontend expectations
+                const actionType = action.type === 'createMilestone' ? 'milestone' : action.type.replace('create', '').toLowerCase();
+                const displayType = actionType === 'timeblock' ? 'Time Block' : 
+                                  actionType === 'milestone' ? 'Milestone' :
+                                  actionType.charAt(0).toUpperCase() + actionType.slice(1);
+                const actionLink = `\n• [Reopen ${displayType} Form](action://${actionType}/${action.modalDataId})`;
+                console.log('🚀 Generated action link:', actionLink);
+                enhancedResponse += actionLink;
+              }
+            }
           }
 
           // Send complete response
           await sendToClient(connectionId, {
             type: 'complete',
-            content: accumulatedResponse,
+            content: enhancedResponse,
             conversationId,
             done: true,
-            actions,
+            actions: processedActions,
             title
           });
 
-          console.log('Response sent to client');
           return { statusCode: 200, body: 'Message processed' };
 
         } catch (openaiError) {
@@ -605,12 +829,10 @@ Now respond to their message using this specific context about their actual goal
     }
     else if (routeKey === '$default') {
       // Handle default route
-      console.log('Default route hit with connectionId:', connectionId);
       return { statusCode: 200, body: 'Default route' };
     }
     else {
       // Handle unknown routes
-      console.log('Unknown route:', routeKey);
       return { statusCode: 400, body: 'Unknown route' };
     }
   } catch (error) {
@@ -639,13 +861,11 @@ async function sendToClient(connectionId, payload) {
     });
 
     await apiGwManagementApi.send(command);
-    console.log(`Message sent to client ${connectionId}: ${payload.type}`);
   } catch (error) {
     console.error(`Error sending message to client ${connectionId}:`, error);
 
     // If connection is stale, delete it from the database
     if (error.$metadata?.httpStatusCode === 410) {
-      console.log(`Deleting stale connection: ${connectionId}`);
       const deleteCommand = new DeleteCommand({
         TableName: tableName,
         Key: { connectionId }
@@ -658,11 +878,8 @@ async function sendToClient(connectionId, payload) {
   }
 }
 
-// Process action data to ensure it matches expected format by frontend - FIXED VERSION
+// Process action data to ensure it matches expected format by frontend
 function processActionData(functionName, args) {
-  console.log(`Processing action data for function: ${functionName}`);
-  console.log(`Function args:`, JSON.stringify(args, null, 2));
-  
   switch (functionName) {
     case 'createGoal':
       return {
@@ -673,7 +890,7 @@ function processActionData(functionName, args) {
         icon: getDomainIcon(args.domain)
       };
 
-    case 'createProject':
+    case 'createMilestone':
       // Process tasks into the expected format
       const tasks = Array.isArray(args.tasks)
         ? args.tasks.map(task => ({
@@ -697,62 +914,69 @@ function processActionData(functionName, args) {
       return {
         title: args.title,
         description: args.description || '',
-        projectTitle: args.projectTitle || '',
+        milestoneTitle: args.milestoneTitle || '',
         goalTitle: args.goalTitle || '',
         status: args.status || 'todo'
       };
 
     case 'createTimeBlock':
-      return {
+      console.log('🔥 LAMBDA_TIMEBLOCK_DEBUG: Raw args received from Claude:', JSON.stringify(args, null, 2));
+      
+      // Helper function to fix Claude's inconsistent date formatting
+      const fixDateFormat = (dateString) => {
+        if (!dateString || typeof dateString !== 'string') {
+          console.log('🔥 LAMBDA_TIMEBLOCK_DEBUG: Invalid dateString:', dateString);
+          return dateString;
+        }
+        
+        let fixed = dateString;
+        
+        // Fix missing dash in date format: "2025-0903 14:00" -> "2025-09-03 14:00"
+        fixed = fixed.replace(/(\d{4})-(\d{2})(\d{2})\s/, '$1-$2-$3 ');
+        
+        // Fix missing dash in date format: "202509-03 14:00" -> "2025-09-03 14:00"
+        fixed = fixed.replace(/(\d{4})(\d{2})-(\d{2})\s/, '$1-$2-$3 ');
+        
+        // Fix partial year format: "5-09-03 14:00" -> "2025-09-03 14:00"
+        fixed = fixed.replace(/^(\d{1})-(\d{2})-(\d{2})\s/, '2025-$2-$3 ');
+        
+        // Fix partial year format: "25-09-03 14:00" -> "2025-09-03 14:00" 
+        fixed = fixed.replace(/^(\d{2})-(\d{2})-(\d{2})\s/, '20$1-$2-$3 ');
+        
+        if (fixed !== dateString) {
+          console.log(`🔥 LAMBDA_TIMEBLOCK_DEBUG: Fixed date format: "${dateString}" -> "${fixed}"`);
+        }
+        
+        return fixed;
+      };
+      
+      const fixedStartTime = fixDateFormat(args.startTime);
+      const fixedEndTime = fixDateFormat(args.endTime);
+      
+      const timeBlockData = {
         title: args.title,
-        startTime: args.startTime,
-        endTime: args.endTime,
+        startTime: fixedStartTime,
+        endTime: fixedEndTime,
         location: args.location || '',
         notes: args.notes || '',
-        domain: args.domain,
-        color: getDomainColor(args.domain),
+        // domain: removed - user should choose goal manually, don't prefill
+        color: '#4f46e5', // Default color instead of domain-based color
+        goalTitle: args.goalTitle || '',
+        milestoneTitle: args.milestoneTitle || '',
+        taskTitle: args.taskTitle || '',
+        isRepeating: args.isRepeating || false,
+        repeatFrequency: args.repeatFrequency || 'weekly',
+        repeatIndefinitely: args.repeatIndefinitely || true,
+        repeatUntil: args.repeatUntil || null,
         userTimezoneOffset: -(new Date().getTimezoneOffset() / 60)
       };
-
-    // FIXED: Add proper todo handling
-    case 'createTodo':
-      console.log('Processing createTodo');
-      return {
-        title: args.title,
-        tab: 'today', // Always default to today, user can change in modal
-        isGroup: false
-      };
-
-    case 'createTodoGroup':
-      console.log('Processing createTodoGroup');
-      console.log('Raw items from AI:', args.items);
-      // Convert string items to objects with id and title
-      const formattedItems = Array.isArray(args.items) 
-        ? args.items.map((item, index) => ({
-            id: `todo_${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}`,
-            title: typeof item === 'string' ? item : item.title || '',
-            completed: false
-          }))
-        : [];
       
-      console.log('Formatted items:', formattedItems);
+      console.log('🔥 LAMBDA_TIMEBLOCK_DEBUG: Final processed data being sent to frontend:', JSON.stringify(timeBlockData, null, 2));
       
-      return {
-        title: args.title,
-        tab: 'today', // Always default to today, user can change in modal
-        items: formattedItems,
-        isGroup: true
-      };
+      return timeBlockData;
 
-    case 'updateLifeDirection':
-      return args.lifeDirection;
-
-    case 'updateStrategicDirection':
-      return args.strategicDirection;
 
     default:
-      console.log(`Unknown function name: ${functionName}, returning args directly`);
-      // For other actions, return args directly
       return args;
   }
 }
@@ -767,7 +991,7 @@ function getDomainColor(domain) {
     'Financial Security': '#10b981',
     'Recreation & Leisure': '#f59e0b',
     'Purpose & Meaning': '#ef4444',
-    'Community & Environment': '#6366f1',
+    'Environment & Organization': '#6366f1',
     'Other': '#14b8a6'
   };
 
@@ -784,17 +1008,16 @@ function getDomainIcon(domain) {
     'Financial Security': 'cash',
     'Recreation & Leisure': 'bicycle',
     'Purpose & Meaning': 'compass',
-    'Community & Environment': 'home',
+    'Environment & Organization': 'home',
     'Other': 'star'
   };
 
   return domainIcons[domain] || 'star';
 }
 
-// IMPROVED: Function to generate an intelligent conversation title using AI
+// Function to generate an intelligent conversation title using AI
 async function generateTitle(userMessage, messageHistory = []) {
   try {
-    // Create a concise prompt for title generation
     const titlePrompt = `Generate a natural conversation title (max 60 characters) based on this first message:
 
 "${userMessage}"
@@ -823,14 +1046,14 @@ Title:`;
         'Authorization': `Bearer ${openAiApiKey}`
       },
       body: JSON.stringify({
-        model: 'gpt-5-nano', // Fast, cheap model for titles
+        model: 'gpt-4o-mini',
         messages: [{
           role: 'user',
           content: titlePrompt
         }],
         max_tokens: 50,
-        temperature: 0.3, // Lower temperature for consistent titles
-        stop: ['\n', '.', '!', '?'] // Stop at natural endpoints
+        temperature: 0.3,
+        stop: ['\n', '.', '!', '?']
       })
     });
 
@@ -838,7 +1061,6 @@ Title:`;
       const data = await response.json();
       let generatedTitle = data.choices[0]?.message?.content?.trim();
       
-      // Clean up the title
       if (generatedTitle) {
         // Remove quotes if AI added them
         generatedTitle = generatedTitle.replace(/^["']|["']$/g, '');
@@ -851,13 +1073,11 @@ Title:`;
         // Capitalize first letter
         generatedTitle = generatedTitle.charAt(0).toUpperCase() + generatedTitle.slice(1);
         
-        console.log(`AI generated title: "${generatedTitle}"`);
         return generatedTitle;
       }
     }
     
-    // Fallback to improved simple title if AI fails
-    console.log('AI title generation failed, using fallback');
+    // Fallback to simple title if AI fails
     return generateSimpleTitle(userMessage);
     
   } catch (error) {

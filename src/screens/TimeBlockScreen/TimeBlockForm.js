@@ -345,6 +345,9 @@ const TimeBlockForm = ({
   isDarkMode,
   scrollToInput,
   validateCustomMinutes,
+  // Title props
+  title,
+  setTitle,
 }) => {
   
   // Ensure arrays are never undefined to prevent errors
@@ -421,10 +424,9 @@ const TimeBlockForm = ({
   // Function to handle goal selection
   const handleGoalSelect = (goal) => {
     if (goal === null) {
-      // Switch to general activity tab when "No Specific Goal" is selected
-      setActiveTab('general');
+      // Keep on goal tab but clear domain for "No Specific Goal"
       setDomain('');
-      setDomainColor(customColor);
+      setDomainColor(domainColor); // Keep existing color instead of switching to custom
     } else {
       // Switch to goal tab when a specific goal is selected
       setActiveTab('goal');
@@ -443,10 +445,10 @@ const TimeBlockForm = ({
   const renderBasicDetails = () => (
     <ScrollView 
       ref={basicScrollRef}
-      style={[styles.tabContent, { backgroundColor: theme.background }]}
+      style={[styles.tabContent, { backgroundColor: 'transparent' }]}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.scrollContent}
-      maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
+      keyboardShouldPersistTaps="handled"
     >
       <View style={styles.formContainer}>
         
@@ -870,7 +872,7 @@ const TimeBlockForm = ({
   const renderAdditionalOptions = () => (
     <ScrollView 
       ref={additionalScrollRef}
-      style={[styles.tabContent, { backgroundColor: theme.background }]}
+      style={[styles.tabContent, { backgroundColor: 'transparent' }]}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.scrollContent}
       maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
@@ -927,6 +929,7 @@ const TimeBlockForm = ({
                   {[
                     { key: 'daily', label: 'Daily', icon: 'calendar' },
                     { key: 'weekly', label: 'Weekly', icon: 'calendar-outline' },
+                    { key: 'fortnightly', label: 'Fortnightly', icon: 'calendar-sharp' },
                     { key: 'monthly', label: 'Monthly', icon: 'calendar-clear-outline' }
                   ].map((freq) => (
                     <TouchableOpacity 
@@ -958,6 +961,88 @@ const TimeBlockForm = ({
                       </Text>
                     </TouchableOpacity>
                   ))}
+                </View>
+                
+                {/* End Date Selection */}
+                <View style={styles.endDateSection}>
+                  <Text style={[styles.expandedLabel, { color: theme.textSecondary }]}>End Date</Text>
+                  <View style={styles.endDateOptions}>
+                    <TouchableOpacity 
+                      style={[
+                        styles.endDateOption, 
+                        { 
+                          backgroundColor: repeatIndefinitely ? 
+                            `${domain ? domainColor : customColor}15` : theme.background,
+                          borderColor: repeatIndefinitely ? 
+                            (domain ? domainColor : customColor) : theme.border
+                        }
+                      ]}
+                      onPress={() => setRepeatIndefinitely(true)}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons 
+                        name="infinite" 
+                        size={16} 
+                        color={repeatIndefinitely ? 
+                          (domain ? domainColor : customColor) : theme.textSecondary} 
+                      />
+                      <Text style={[
+                        styles.endDateOptionText, 
+                        { color: repeatIndefinitely ? 
+                          (domain ? domainColor : customColor) : theme.text }
+                      ]}>
+                        Forever
+                      </Text>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity 
+                      style={[
+                        styles.endDateOption, 
+                        { 
+                          backgroundColor: !repeatIndefinitely ? 
+                            `${domain ? domainColor : customColor}15` : theme.background,
+                          borderColor: !repeatIndefinitely ? 
+                            (domain ? domainColor : customColor) : theme.border
+                        }
+                      ]}
+                      onPress={() => setRepeatIndefinitely(false)}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons 
+                        name="calendar-outline" 
+                        size={16} 
+                        color={!repeatIndefinitely ? 
+                          (domain ? domainColor : customColor) : theme.textSecondary} 
+                      />
+                      <Text style={[
+                        styles.endDateOptionText, 
+                        { color: !repeatIndefinitely ? 
+                          (domain ? domainColor : customColor) : theme.text }
+                      ]}>
+                        Until Date
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                  
+                  {!repeatIndefinitely && (
+                    <TouchableOpacity 
+                      style={[
+                        styles.endDateSelector,
+                        { 
+                          backgroundColor: theme.background,
+                          borderColor: domain ? domainColor : customColor
+                        }
+                      ]}
+                      onPress={openRepeatUntilDatePicker}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons name="calendar" size={18} color={domain ? domainColor : customColor} />
+                      <Text style={[styles.endDateSelectorText, { color: theme.text }]}>
+                        {repeatUntil ? formatDate(repeatUntil) : 'Select End Date'}
+                      </Text>
+                      <Ionicons name="chevron-forward-outline" size={16} color={theme.textSecondary} />
+                    </TouchableOpacity>
+                  )}
                 </View>
               </View>
             )}
@@ -1145,17 +1230,17 @@ const TimeBlockForm = ({
 
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background, overflow: 'hidden' }]}>
+    <View style={[styles.container, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
       <TabView
         navigationState={{ index, routes }}
         renderScene={SceneMap({
           basic: () => (
-            <View style={{ flex: 1, backgroundColor: theme.background }} key="basic-tab">
+            <View style={{ flex: 1, backgroundColor: 'transparent' }} key="basic-tab">
               {renderBasicDetails()}
             </View>
           ),
           additional: () => (
-            <View style={{ flex: 1, backgroundColor: theme.background }} key="additional-tab">
+            <View style={{ flex: 1, backgroundColor: 'transparent' }} key="additional-tab">
               {renderAdditionalOptions()}
             </View>
           )
@@ -1167,11 +1252,11 @@ const TimeBlockForm = ({
             {...props}
             indicatorStyle={{ backgroundColor: theme.primary, height: 3 }}
             style={{ 
-              backgroundColor: theme.card,
+              backgroundColor: 'transparent',
               shadowColor: 'transparent',
               elevation: 0,
               marginHorizontal: 16,
-              marginTop: 16,
+              marginTop: 0,
               borderRadius: 12,
               overflow: 'hidden'
             }}
@@ -1616,6 +1701,7 @@ const styles = StyleSheet.create({
   },
   frequencyGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
   
@@ -1716,11 +1802,11 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   frequencyCard: {
-    flex: 1,
+    width: '48%',
     flexDirection: 'column',
     alignItems: 'center',
     padding: 12,
-    marginHorizontal: 4,
+    marginBottom: 8,
     borderRadius: 12,
     borderWidth: 1,
     minHeight: 64,
@@ -1730,6 +1816,51 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     marginTop: 6,
+    letterSpacing: 0.2,
+  },
+  
+  // End Date Selection Styles
+  endDateSection: {
+    marginTop: 20,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.1)',
+  },
+  endDateOptions: {
+    flexDirection: 'row',
+    marginBottom: 16,
+    gap: 8,
+  },
+  endDateOption: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    minHeight: 48,
+  },
+  endDateOptionText: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginLeft: 8,
+    letterSpacing: 0.2,
+  },
+  endDateSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    minHeight: 56,
+  },
+  endDateSelectorText: {
+    fontSize: 15,
+    fontWeight: '500',
+    flex: 1,
+    marginLeft: 12,
     letterSpacing: 0.2,
   },
   

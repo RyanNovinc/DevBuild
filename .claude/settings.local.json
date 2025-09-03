@@ -114,7 +114,18 @@
       "Bash(timeout:*)",
       "Bash(npm uninstall:*)",
       "Read(/D:\\Apps Productions Builds\\LCiOS-2\\DevBuild - Copy (24)\\src\\screens\\TimeScreen/**)",
-      "Read(/D:\\Apps Productions Builds\\LCiOS-2\\DevBuild - Copy (24)\\src\\screens\\TimeScreen/**)"
+      "Read(/D:\\Apps Productions Builds\\LCiOS-2\\DevBuild - Copy (24)\\src\\screens\\TimeScreen/**)",
+      "WebFetch(domain:chatgpt.com)",
+      "Bash(eas:*)",
+      "WebFetch(domain:www.malaysianhotels.org.my)",
+      "Bash(npm init:*)",
+      "Bash(copy:*)",
+      "Bash(npx react-native:*)",
+      "Bash(\"taskkill\" \"/F\" \"/IM\" \"node.exe\")",
+      "Read(D:\\Apps Productions Builds\\LCiOS-2\\DevBuild - Copy (24)\\src\\components/**)",
+      "Bash(\"C:\\Program Files\\Amazon\\AWSCLIV2\\aws.exe\" lambda update-function-code --function-name LifeCompass-WebSocketHandler --zip-file fileb://websocket-message-handler-improved.js --region ap-southeast-2)",
+      "Bash(\"C:\\Program Files\\Amazon\\AWSCLIV2\\aws.exe\" lambda update-function-code --function-name LifeCompass-WebSocketHandler --zip-file fileb://lambda-deployment-package.zip --region ap-southeast-2)",
+      "Bash(deploy-lambda-with-logging.bat)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

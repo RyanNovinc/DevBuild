@@ -126,21 +126,24 @@ const ProfileScreen = ({ navigation, route }) => {
   }, [isTourActive, currentStep]);
   
   // Handle Foundation Builder intro completion
-  const handleFoundationBuilderIntroContinue = async () => {
+  const handleFoundationBuilderIntroContinue = useCallback(async () => {
     console.log('🏆 Foundation Builder intro dismissed, proceeding to next tour step');
     
-    // Unlock the Foundation Builder achievement with non-clickable popup
-    try {
-      const { unlockAchievement } = await import('../../services/AchievementService');
-      await unlockAchievement('foundation-builder', null, false); // Show popup but make it non-clickable
-      console.log('🏆 Foundation Builder achievement unlocked');
-    } catch (error) {
-      console.error('🏆 Error unlocking Foundation Builder achievement:', error);
-    }
-    
-    // Continue to next tour step
+    // Immediately proceed to next step for responsive UI
     nextStep();
-  };
+    
+    // Unlock the Foundation Builder achievement with non-clickable popup after a brief delay
+    // This prevents modal dismiss/popup show conflicts
+    setTimeout(async () => {
+      try {
+        const { unlockAchievement } = await import('../../services/AchievementService');
+        await unlockAchievement('foundation-builder', null, false); // Show popup but make it non-clickable
+        console.log('🏆 Foundation Builder achievement unlocked');
+      } catch (error) {
+        console.error('🏆 Error unlocking Foundation Builder achievement:', error);
+      }
+    }, 500); // 500ms delay to allow modal dismiss animation to complete
+  }, [nextStep]);
   
   // Celebration animations state
   const [fallingTrophies, setFallingTrophies] = useState([]);

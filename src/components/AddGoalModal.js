@@ -19,6 +19,7 @@ import {
 } from 'react-native';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../context/ThemeContext';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -507,27 +508,64 @@ const AddGoalModal = ({
                   paddingBottom: Math.max(insets.bottom, spacing.m),
                   borderTopLeftRadius: scaleWidth(16),
                   borderTopRightRadius: scaleWidth(16),
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: -8 },
+                  shadowOpacity: theme.background === '#000000' ? 0.4 : 0.15,
+                  shadowRadius: 16,
+                  elevation: 12,
                 }
               ]}>
                 {/* Swipe indicator */}
                 <View style={[
                   styles.swipeIndicator,
-                  { backgroundColor: theme.textSecondary + '40' }
+                  { 
+                    backgroundColor: selectedDomain ? 
+                      (STANDARD_DOMAINS.find(d => d.name === selectedDomain)?.color + '60' || theme.textSecondary + '40') : 
+                      theme.textSecondary + '40',
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 2,
+                    elevation: 1,
+                  }
                 ]} />
             <View style={styles.modalHeader}>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Ionicons 
-                  name="flag" 
-                  size={scaleWidth(24)} 
-                  color={theme.primary} 
-                  style={{ marginRight: spacing.xs }}
-                />
+                <View style={[
+                  styles.headerIconContainer,
+                  {
+                    backgroundColor: selectedDomain ? 
+                      (STANDARD_DOMAINS.find(d => d.name === selectedDomain)?.color + '20' || theme.primary + '20') : 
+                      theme.primary + '20',
+                    borderRadius: scaleWidth(12),
+                    padding: spacing.xs,
+                    marginRight: spacing.s,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 4,
+                    elevation: 2,
+                  }
+                ]}>
+                  <Ionicons 
+                    name={selectedDomain ? 
+                      (STANDARD_DOMAINS.find(d => d.name === selectedDomain)?.icon || 'flag') : 
+                      'flag'
+                    } 
+                    size={scaleWidth(24)} 
+                    color={selectedDomain ? 
+                      (STANDARD_DOMAINS.find(d => d.name === selectedDomain)?.color || theme.primary) : 
+                      theme.primary
+                    } 
+                  />
+                </View>
                 <Text 
                   style={[
                     styles.modalTitle, 
                     { 
                       color: theme.text,
-                      fontSize: fontSizes.xl
+                      fontSize: fontSizes.xl,
+                      fontWeight: '700'
                     }
                   ]}
                   maxFontSizeMultiplier={1.5}
@@ -543,7 +581,14 @@ const AddGoalModal = ({
                     minWidth: minTouchSize, 
                     minHeight: minTouchSize,
                     alignItems: 'center',
-                    justifyContent: 'center'
+                    justifyContent: 'center',
+                    backgroundColor: theme.inputBackground,
+                    borderRadius: scaleWidth(8),
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 4,
+                    elevation: 2,
                   }
                 ]} 
                 onPress={handleClose}
@@ -564,246 +609,413 @@ const AddGoalModal = ({
               keyboardDismissMode="on-drag"
             >
               {/* Goal Title */}
-              <Text 
-                style={[
-                  styles.label, 
-                  { 
-                    color: theme.textSecondary,
-                    fontSize: fontSizes.m
-                  }
-                ]}
-                maxFontSizeMultiplier={1.5}
-              >
-                Goal Title *
-              </Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  { 
-                    backgroundColor: theme.inputBackground,
-                    color: theme.text,
-                    borderColor: theme.border,
-                    fontSize: fontSizes.m,
-                    paddingHorizontal: spacing.m,
-                    paddingVertical: spacing.s,
-                    borderRadius: scaleWidth(8)
-                  }
-                ]}
-                value={title}
-                onChangeText={setTitle}
-                placeholder="Enter goal title"
-                placeholderTextColor={theme.textSecondary}
-                autoFocus={false}
-                accessible={true}
-                accessibilityLabel="Goal title"
-                accessibilityHint="Enter the title of your goal"
-                maxFontSizeMultiplier={1.8}
-              />
-              
-              {/* Description */}
-              <Text 
-                style={[
-                  styles.label, 
-                  { 
-                    color: theme.textSecondary,
-                    fontSize: fontSizes.m
-                  }
-                ]}
-                maxFontSizeMultiplier={1.5}
-              >
-                Description (Optional)
-              </Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  styles.textArea,
-                  { 
-                    backgroundColor: theme.inputBackground,
-                    color: theme.text,
-                    borderColor: theme.border,
-                    fontSize: fontSizes.m,
-                    paddingHorizontal: spacing.m,
-                    paddingVertical: spacing.s,
-                    borderRadius: scaleWidth(8),
-                    minHeight: scaleHeight(100)
-                  }
-                ]}
-                value={description}
-                onChangeText={setDescription}
-                placeholder="Enter goal description"
-                placeholderTextColor={theme.textSecondary}
-                multiline
-                numberOfLines={4}
-                textAlignVertical="top"
-                accessible={true}
-                accessibilityLabel="Goal description"
-                accessibilityHint="Enter a detailed description of your goal"
-                maxFontSizeMultiplier={2.0}
-              />
-              
-              {/* Domain Selection - Horizontal Cards */}
-              <Text 
-                style={[
-                  styles.label, 
-                  { 
-                    color: theme.textSecondary,
-                    fontSize: fontSizes.m
-                  }
-                ]}
-                maxFontSizeMultiplier={1.5}
-              >
-                Choose a Domain
-              </Text>
-              
-              {/* Horizontal Scrolling Domain Layout */}
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={{ 
-                  height: scaleHeight(140),
-                  marginBottom: spacing.m 
-                }}
-                contentContainerStyle={{ 
-                  paddingRight: spacing.xl,
-                  alignItems: 'center',
-                  paddingVertical: spacing.s
-                }}
-                accessible={true}
-                accessibilityLabel="Domain selection"
-                accessibilityHint="Scroll horizontally to select a domain"
-                accessibilityRole="scrollbar"
-                nestedScrollEnabled={true}
-              >
-                {domainDisplayData.map((domain) => {
-                  // Match the selected domain with the current domain
-                  const isSelected = selectedDomain === domain.originalName;
-                  
-                  return (
-                    <TouchableOpacity 
-                      key={domain.originalName} 
-                      style={[
-                        styles.domainCard,
-                        {
-                          width: scaleWidth(180),
-                          height: scaleWidth(120),
-                          marginRight: spacing.m, 
-                          backgroundColor: isSelected
-                            ? `${domain.color}15` 
-                            : theme.backgroundSecondary,
-                          borderRadius: scaleWidth(10),
-                          padding: spacing.s,
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          borderWidth: isSelected ? 2 : 0,
-                          borderColor: isSelected ? domain.color : 'transparent'
-                        }
-                      ]}
-                      onPress={() => {
-                        console.log(`Domain selected: ${domain.originalName}`);
-                        handleDomainSelect(domain.originalName);
-                      }}
-                      accessible={true}
-                      accessibilityRole="button"
-                      accessibilityLabel={`${domain.name} domain${isSelected ? ', selected' : ''}`}
-                      accessibilityState={{ selected: isSelected }}
-                    >
-                      {/* Domain icon */}
-                      <View style={[
-                        styles.domainIcon,
-                        { 
-                          backgroundColor: domain.color,
-                          width: scaleWidth(50),
-                          height: scaleWidth(50),
-                          borderRadius: scaleWidth(25),
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          marginBottom: spacing.s
-                        }
-                      ]}>
-                        <Ionicons 
-                          name={domain.icon} 
-                          size={scaleWidth(26)} 
-                          color={domain.color === '#FFFFFF' ? '#000000' : getTextColorForBackground(domain.color)} 
-                        />
-                      </View>
-                      
-                      {/* Domain name */}
-                      <Text 
-                        style={[
-                          styles.domainName,
-                          { 
-                            color: isSelected ? domain.color : theme.text,
-                            fontSize: fontSizes.s,
-                            fontWeight: isSelected ? '600' : '400',
-                            textAlign: 'center',
-                            height: scaleHeight(44),
-                            paddingHorizontal: spacing.s
-                          }
-                        ]}
-                        numberOfLines={2}
-                        maxFontSizeMultiplier={1.3}
-                      >
-                        {domain.name}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
-              
-              {/* Target Date Toggle */}
               <View style={[
-                styles.toggleRow,
+                styles.inputSection,
                 {
-                  paddingVertical: spacing.s,
-                  minHeight: minTouchSize
+                  backgroundColor: theme.card,
+                  padding: spacing.m,
+                  borderRadius: scaleWidth(12),
+                  marginBottom: spacing.m,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+                  shadowRadius: 6,
+                  elevation: 3,
                 }
               ]}>
                 <Text 
                   style={[
                     styles.label, 
                     { 
-                      color: theme.textSecondary, 
-                      marginBottom: 0,
-                      fontSize: fontSizes.m
+                      color: theme.textSecondary,
+                      fontSize: fontSizes.m,
+                      fontWeight: '600',
+                      marginBottom: spacing.xs
                     }
                   ]}
                   maxFontSizeMultiplier={1.5}
                 >
-                  Set Target Date
+                  Goal Title *
                 </Text>
-                <Switch
-                  value={hasTargetDate}
-                  onValueChange={(value) => {
-                    setHasTargetDate(value);
-                    if (value) {
-                      setShowDatePicker(true);
-                    } else {
-                      setShowDatePicker(false);
+                <TextInput
+                  style={[
+                    styles.input,
+                    { 
+                      backgroundColor: theme.inputBackground,
+                      color: theme.text,
+                      borderColor: selectedDomain ? 
+                        (STANDARD_DOMAINS.find(d => d.name === selectedDomain)?.color || theme.border) : 
+                        theme.border,
+                      borderWidth: 1,
+                      fontSize: fontSizes.m,
+                      paddingHorizontal: spacing.m,
+                      paddingVertical: spacing.s,
+                      borderRadius: scaleWidth(12),
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.05,
+                      shadowRadius: 4,
+                      elevation: 1,
                     }
-                  }}
-                  trackColor={{ false: theme.border, true: buttonColor + '80' }}
-                  thumbColor={hasTargetDate ? buttonColor : '#f4f3f4'}
+                  ]}
+                  value={title}
+                  onChangeText={setTitle}
+                  placeholder="Enter goal title"
+                  placeholderTextColor={theme.textSecondary}
+                  autoFocus={false}
                   accessible={true}
-                  accessibilityRole="switch"
-                  accessibilityLabel="Set target date"
-                  accessibilityState={{ checked: hasTargetDate }}
-                  accessibilityHint={hasTargetDate ? "Toggle off to remove target date" : "Toggle on to set a target date"}
+                  accessibilityLabel="Goal title"
+                  accessibilityHint="Enter the title of your goal"
+                  maxFontSizeMultiplier={1.8}
                 />
+              </View>
+              
+              {/* Description */}
+              <View style={[
+                styles.inputSection,
+                {
+                  backgroundColor: theme.card,
+                  padding: spacing.m,
+                  borderRadius: scaleWidth(12),
+                  marginBottom: spacing.m,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+                  shadowRadius: 6,
+                  elevation: 3,
+                }
+              ]}>
+                <Text 
+                  style={[
+                    styles.label, 
+                    { 
+                      color: theme.textSecondary,
+                      fontSize: fontSizes.m,
+                      fontWeight: '600',
+                      marginBottom: spacing.xs
+                    }
+                  ]}
+                  maxFontSizeMultiplier={1.5}
+                >
+                  Description (Optional)
+                </Text>
+                <TextInput
+                  style={[
+                    styles.input,
+                    styles.textArea,
+                    { 
+                      backgroundColor: theme.inputBackground,
+                      color: theme.text,
+                      borderColor: selectedDomain ? 
+                        (STANDARD_DOMAINS.find(d => d.name === selectedDomain)?.color || theme.border) : 
+                        theme.border,
+                      borderWidth: 1,
+                      fontSize: fontSizes.m,
+                      paddingHorizontal: spacing.m,
+                      paddingVertical: spacing.s,
+                      borderRadius: scaleWidth(12),
+                      minHeight: scaleHeight(100),
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.05,
+                      shadowRadius: 4,
+                      elevation: 1,
+                    }
+                  ]}
+                  value={description}
+                  onChangeText={setDescription}
+                  placeholder="Enter goal description"
+                  placeholderTextColor={theme.textSecondary}
+                  multiline
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                  accessible={true}
+                  accessibilityLabel="Goal description"
+                  accessibilityHint="Enter a detailed description of your goal"
+                  maxFontSizeMultiplier={2.0}
+                />
+              </View>
+              
+              {/* Domain Selection - Horizontal Cards */}
+              <View style={[
+                styles.inputSection,
+                {
+                  backgroundColor: theme.card,
+                  padding: spacing.m,
+                  borderRadius: scaleWidth(12),
+                  marginBottom: spacing.m,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+                  shadowRadius: 6,
+                  elevation: 3,
+                }
+              ]}>
+                <Text 
+                  style={[
+                    styles.label, 
+                    { 
+                      color: theme.textSecondary,
+                      fontSize: fontSizes.m,
+                      fontWeight: '600',
+                      marginBottom: spacing.s
+                    }
+                  ]}
+                  maxFontSizeMultiplier={1.5}
+                >
+                  Choose a Domain
+                </Text>
+              
+                {/* Horizontal Scrolling Domain Layout */}
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={{ 
+                    height: scaleHeight(140),
+                  }}
+                  contentContainerStyle={{ 
+                    paddingRight: spacing.xl,
+                    alignItems: 'center',
+                    paddingVertical: spacing.s
+                  }}
+                  accessible={true}
+                  accessibilityLabel="Domain selection"
+                  accessibilityHint="Scroll horizontally to select a domain"
+                  accessibilityRole="scrollbar"
+                  nestedScrollEnabled={true}
+                >
+                  {domainDisplayData.map((domain) => {
+                    // Match the selected domain with the current domain
+                    const isSelected = selectedDomain === domain.originalName;
+                    
+                    return (
+                      <TouchableOpacity 
+                        key={domain.originalName} 
+                        style={[
+                          styles.domainCard,
+                          {
+                            width: scaleWidth(180),
+                            height: scaleWidth(120),
+                            marginRight: spacing.m, 
+                            borderRadius: scaleWidth(12),
+                            padding: spacing.s,
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            shadowColor: '#000',
+                            shadowOffset: { width: 0, height: 4 },
+                            shadowOpacity: isSelected ? 0.2 : (theme.background === '#000000' ? 0.15 : 0.08),
+                            shadowRadius: isSelected ? 8 : 6,
+                            elevation: isSelected ? 6 : 3,
+                            borderWidth: isSelected ? 2 : 0,
+                            borderColor: isSelected ? domain.color : 'transparent',
+                            overflow: 'hidden'
+                          }
+                        ]}
+                        onPress={() => {
+                          console.log(`Domain selected: ${domain.originalName}`);
+                          handleDomainSelect(domain.originalName);
+                        }}
+                        accessible={true}
+                        accessibilityRole="button"
+                        accessibilityLabel={`${domain.name} domain${isSelected ? ', selected' : ''}`}
+                        accessibilityState={{ selected: isSelected }}
+                      >
+                        {isSelected && (
+                          <LinearGradient
+                            colors={[domain.color + '20', domain.color + '10', domain.color + '05']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            style={{
+                              position: 'absolute',
+                              left: 0,
+                              right: 0,
+                              top: 0,
+                              bottom: 0,
+                            }}
+                          />
+                        )}
+                        <LinearGradient
+                          colors={isSelected ? 
+                            ['rgba(255,255,255,0.1)', 'rgba(255,255,255,0)'] : 
+                            [theme.backgroundSecondary, theme.backgroundSecondary]
+                          }
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 0, y: 1 }}
+                          style={{
+                            position: 'absolute',
+                            left: 0,
+                            right: 0,
+                            top: 0,
+                            bottom: 0,
+                          }}
+                        />
+                        
+                        {/* Domain icon */}
+                        <View style={[
+                          styles.domainIcon,
+                          { 
+                            backgroundColor: domain.color,
+                            width: scaleWidth(50),
+                            height: scaleWidth(50),
+                            borderRadius: scaleWidth(25),
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            marginBottom: spacing.s,
+                            shadowColor: domain.color,
+                            shadowOffset: { width: 0, height: 2 },
+                            shadowOpacity: isSelected ? 0.3 : 0.2,
+                            shadowRadius: 4,
+                            elevation: 2,
+                          }
+                        ]}>
+                          <Ionicons 
+                            name={domain.icon} 
+                            size={scaleWidth(26)} 
+                            color={domain.color === '#FFFFFF' ? '#000000' : getTextColorForBackground(domain.color)} 
+                          />
+                        </View>
+                        
+                        {/* Domain name */}
+                        <Text 
+                          style={[
+                            styles.domainName,
+                            { 
+                              color: isSelected ? domain.color : theme.text,
+                              fontSize: fontSizes.s,
+                              fontWeight: isSelected ? '600' : '500',
+                              textAlign: 'center',
+                              height: scaleHeight(44),
+                              paddingHorizontal: spacing.s
+                            }
+                          ]}
+                          numberOfLines={2}
+                          maxFontSizeMultiplier={1.3}
+                        >
+                          {domain.name}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+              
+              {/* Target Date Toggle */}
+              <View style={[
+                styles.inputSection,
+                {
+                  backgroundColor: theme.card,
+                  padding: spacing.m,
+                  borderRadius: scaleWidth(12),
+                  marginBottom: spacing.m,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+                  shadowRadius: 6,
+                  elevation: 3,
+                }
+              ]}>
+                <View style={[
+                  styles.toggleRow,
+                  {
+                    paddingVertical: 0,
+                    minHeight: minTouchSize
+                  }
+                ]}>
+                  <Text 
+                    style={[
+                      styles.label, 
+                      { 
+                        color: theme.textSecondary, 
+                        marginBottom: 0,
+                        fontSize: fontSizes.m,
+                        fontWeight: '600'
+                      }
+                    ]}
+                    maxFontSizeMultiplier={1.5}
+                  >
+                    Set Target Date
+                  </Text>
+                  <Switch
+                    value={hasTargetDate}
+                    onValueChange={(value) => {
+                      setHasTargetDate(value);
+                      if (value) {
+                        setShowDatePicker(true);
+                      } else {
+                        setShowDatePicker(false);
+                      }
+                    }}
+                    trackColor={{ 
+                      false: theme.border, 
+                      true: selectedDomain ? 
+                        (STANDARD_DOMAINS.find(d => d.name === selectedDomain)?.color + '80' || buttonColor + '80') : 
+                        buttonColor + '80'
+                    }}
+                    thumbColor={hasTargetDate ? 
+                      (selectedDomain ? 
+                        (STANDARD_DOMAINS.find(d => d.name === selectedDomain)?.color || buttonColor) : 
+                        buttonColor
+                      ) : 
+                      '#f4f3f4'
+                    }
+                    accessible={true}
+                    accessibilityRole="switch"
+                    accessibilityLabel="Set target date"
+                    accessibilityState={{ checked: hasTargetDate }}
+                    accessibilityHint={hasTargetDate ? "Toggle off to remove target date" : "Toggle on to set a target date"}
+                  />
+                </View>
               </View>
               
               {/* Date Picker Section */}
               {hasTargetDate && (
-                <View style={styles.dateSection}>
+                <View style={[
+                  styles.dateSection,
+                  styles.inputSection,
+                  {
+                    backgroundColor: theme.card,
+                    padding: spacing.m,
+                    borderRadius: scaleWidth(12),
+                    marginBottom: spacing.m,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+                    shadowRadius: 6,
+                    elevation: 3,
+                  }
+                ]}>
+                  <Text 
+                    style={[
+                      styles.label, 
+                      { 
+                        color: theme.textSecondary,
+                        fontSize: fontSizes.m,
+                        fontWeight: '600',
+                        marginBottom: spacing.s
+                      }
+                    ]}
+                    maxFontSizeMultiplier={1.5}
+                  >
+                    Target Date
+                  </Text>
                   <TouchableOpacity
                     style={[
                       styles.dateButton,
                       { 
                         backgroundColor: theme.inputBackground,
-                        borderColor: theme.border,
+                        borderColor: selectedDomain ? 
+                          (STANDARD_DOMAINS.find(d => d.name === selectedDomain)?.color || theme.border) : 
+                          theme.border,
+                        borderWidth: 1,
                         paddingHorizontal: spacing.m,
                         paddingVertical: spacing.s,
-                        borderRadius: scaleWidth(8),
-                        minHeight: minTouchSize
+                        borderRadius: scaleWidth(12),
+                        minHeight: minTouchSize,
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.05,
+                        shadowRadius: 4,
+                        elevation: 1,
                       }
                     ]}
                     onPress={() => setShowDatePicker(true)}
@@ -937,12 +1149,18 @@ const AddGoalModal = ({
                 style={[
                   styles.addButton, 
                   { 
-                    backgroundColor: buttonColor,
-                    paddingVertical: spacing.m,
-                    borderRadius: scaleWidth(8),
+                    borderRadius: scaleWidth(12),
                     marginTop: spacing.l,
                     marginBottom: spacing.l,
-                    minHeight: minTouchSize
+                    minHeight: minTouchSize,
+                    overflow: 'hidden',
+                    shadowColor: selectedDomain ? 
+                      (STANDARD_DOMAINS.find(d => d.name === selectedDomain)?.color || '#000') : 
+                      '#000',
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.3,
+                    shadowRadius: 8,
+                    elevation: 6,
                   }
                 ]}
                 onPress={handleAddGoal}
@@ -951,18 +1169,54 @@ const AddGoalModal = ({
                 accessibilityLabel={goalData ? "Update Goal" : "Create Goal"}
                 accessibilityHint={goalData ? "Updates the goal with your changes" : "Creates a new goal with your information"}
               >
-                <Text 
-                  style={[
-                    styles.addButtonText,
-                    {
-                      fontSize: fontSizes.m,
-                      color: buttonColor === '#FFFFFF' ? '#000000' : getTextColorForBackground(buttonColor)
-                    }
-                  ]}
-                  maxFontSizeMultiplier={1.5}
+                <LinearGradient
+                  colors={selectedDomain ? [
+                    STANDARD_DOMAINS.find(d => d.name === selectedDomain)?.color || buttonColor,
+                    (STANDARD_DOMAINS.find(d => d.name === selectedDomain)?.color || buttonColor) + 'DD'
+                  ] : [buttonColor, buttonColor + 'DD']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={{
+                    flex: 1,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    paddingVertical: spacing.m,
+                    paddingHorizontal: spacing.l,
+                  }}
                 >
-                  {goalData ? 'Update Goal' : 'Add Goal'}
-                </Text>
+                  <LinearGradient
+                    colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0)']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 0, y: 1 }}
+                    style={{
+                      position: 'absolute',
+                      left: 0,
+                      right: 0,
+                      top: 0,
+                      height: '50%',
+                    }}
+                  />
+                  <Ionicons 
+                    name="checkmark-circle" 
+                    size={scaleWidth(24)} 
+                    color="#FFFFFF" 
+                    style={{ marginRight: spacing.s }}
+                  />
+                  <Text 
+                    style={[
+                      styles.addButtonText,
+                      {
+                        fontSize: fontSizes.m,
+                        fontWeight: '600',
+                        color: '#FFFFFF'
+                      }
+                    ]}
+                    maxFontSizeMultiplier={1.5}
+                  >
+                    {goalData ? 'Update Goal' : 'Create Goal'}
+                  </Text>
+                </LinearGradient>
               </TouchableOpacity>
             </ScrollView>
               </View>
@@ -1008,7 +1262,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.m
   },
   modalTitle: {
-    fontWeight: 'bold'
+    fontWeight: '700'
+  },
+  headerIconContainer: {
+    // Styles applied inline
   },
   closeButton: {
     padding: spacing.xxs
@@ -1016,11 +1273,13 @@ const styles = StyleSheet.create({
   formContainer: {
     marginBottom: Platform.OS === 'ios' ? 0 : spacing.m
   },
+  inputSection: {
+    // Enhanced styling applied inline
+  },
   label: {
     marginBottom: spacing.s
   },
   input: {
-    borderWidth: 1,
     marginBottom: spacing.m
   },
   textArea: {

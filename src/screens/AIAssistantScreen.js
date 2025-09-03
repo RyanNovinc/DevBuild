@@ -60,10 +60,11 @@ import { Ionicons } from '@expo/vector-icons';
 
 // Import modals
 import AddGoalModal from '../components/AddGoalModal';
-import AddMilestoneModal from '../components/AddMilestoneModal';
-import AddTimeBlockModal from '../components/AddTimeBlockModal';
+import AddMilestoneModalRevamped from '../components/AddMilestoneModalRevamped'; // Using revamped version
+import TimeBlockExactModal from '../components/TimeBlockExactModal';
 import AddTaskModal from '../components/AddTaskModal';
 import AddTodoModal from '../components/AddTodoModal';
+import AIBulkCreateModal from '../components/AIBulkCreateModal';
 
 // Import AI-specific modals
 import {
@@ -147,6 +148,7 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
   }
   
   const { theme } = useTheme();
+  console.log('🎨 AIAssistantScreen theme.primary:', theme.primary);
   const appContext = useAppContext(); // Add app context
   const { user, isAuthenticated } = useAuth(); // Add authentication check
   const { 
@@ -250,8 +252,96 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
   const [actionProgress, setActionProgress] = useState(0);
   const [totalActions, setTotalActions] = useState(0);
   
+  // Bulk creation modal state
+  const [bulkCreateModalVisible, setBulkCreateModalVisible] = useState(false);
+  const [bulkCreateActions, setBulkCreateActions] = useState([]);
+  
   // Track if user has interacted with the conversation
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
+  
+  // Store modal data for action links
+  const [storedModalData, setStoredModalData] = useState({});
+  const [nextModalDataId, setNextModalDataId] = useState(1);
+  
+  // AsyncStorage keys for persistent modal data
+  const MODAL_DATA_KEY = 'aiAssistant_modalData';
+  const NEXT_MODAL_ID_KEY = 'aiAssistant_nextModalId';
+  
+  // Load modal data from AsyncStorage
+  const loadModalData = async () => {
+    try {
+      const [savedModalData, savedNextId] = await Promise.all([
+        AsyncStorage.getItem(MODAL_DATA_KEY),
+        AsyncStorage.getItem(NEXT_MODAL_ID_KEY)
+      ]);
+      
+      if (savedModalData) {
+        const parsedData = JSON.parse(savedModalData);
+        setStoredModalData(parsedData);
+        console.log('💾 Loaded modal data from storage:', Object.keys(parsedData));
+      }
+      
+      if (savedNextId) {
+        const nextId = parseInt(savedNextId, 10);
+        if (!isNaN(nextId)) {
+          setNextModalDataId(nextId);
+          console.log('💾 Loaded next modal ID from storage:', nextId);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading modal data from storage:', error);
+    }
+  };
+  
+  // Save modal data to AsyncStorage
+  const saveModalData = async (data, nextId) => {
+    try {
+      await Promise.all([
+        AsyncStorage.setItem(MODAL_DATA_KEY, JSON.stringify(data)),
+        AsyncStorage.setItem(NEXT_MODAL_ID_KEY, nextId.toString())
+      ]);
+      console.log('💾 Saved modal data to storage');
+    } catch (error) {
+      console.error('Error saving modal data to storage:', error);
+    }
+  };
+  
+  // Clean up old modal data (older than 7 days)
+  const cleanupOldModalData = async () => {
+    try {
+      const savedModalData = await AsyncStorage.getItem(MODAL_DATA_KEY);
+      if (!savedModalData) return;
+      
+      const parsedData = JSON.parse(savedModalData);
+      const now = Date.now();
+      const sevenDaysAgo = now - (7 * 24 * 60 * 60 * 1000); // 7 days in milliseconds
+      
+      let cleaned = false;
+      const cleanedData = {};
+      
+      for (const [id, modalInfo] of Object.entries(parsedData)) {
+        // Extract timestamp from the ID (format: timestamp_conversationIndex_randomString)
+        const idParts = id.split('_');
+        const timestamp = parseInt(idParts[0], 10);
+        
+        if (!isNaN(timestamp) && timestamp > sevenDaysAgo) {
+          // Keep data that's less than 7 days old
+          cleanedData[id] = modalInfo;
+        } else {
+          // Mark for cleanup
+          cleaned = true;
+        }
+      }
+      
+      if (cleaned) {
+        setStoredModalData(cleanedData);
+        await AsyncStorage.setItem(MODAL_DATA_KEY, JSON.stringify(cleanedData));
+        console.log('💾 Cleaned up old modal data');
+      }
+    } catch (error) {
+      console.error('Error cleaning up modal data:', error);
+    }
+  };
   
   // Goal session tracking
   const lastCreatedGoalRef = useRef({
@@ -346,6 +436,195 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
     }
   };
   
+  // Store modal data and return an ID for later retrieval
+  const storeModalData = (actionType, data) => {
+    const id = nextModalDataId.toString();
+    const newData = {
+      ...storedModalData,
+      [id]: { type: actionType, data }
+    };
+    const newNextId = nextModalDataId + 1;
+    
+    setStoredModalData(newData);
+    setNextModalDataId(newNextId);
+    
+    // Persist to AsyncStorage asynchronously
+    saveModalData(newData, newNextId).catch(error => {
+      console.error('Error persisting modal data:', error);
+    });
+    
+    return id;
+  };
+  
+  // Handle action links from chat messages
+  const handleActionLink = async (actionType, encodedDataId) => {
+    try {
+      console.log('🔗 handleActionLink called with:', { actionType, encodedDataId });
+      console.log('🔗 Current storedModalData:', storedModalData);
+      
+      // Reload from AsyncStorage to ensure we have the latest data
+      try {
+        const savedModalData = await AsyncStorage.getItem('storedModalData');
+        if (savedModalData) {
+          const parsedData = JSON.parse(savedModalData);
+          console.log('🔗 Reloaded modal data from AsyncStorage for latest updates');
+          console.log('🔗 AsyncStorage keys loaded:', Object.keys(parsedData));
+          console.log('🔗 Looking for ID:', encodedDataId);
+          console.log('🔗 ID exists in AsyncStorage?', encodedDataId in parsedData ? 'YES' : 'NO');
+          setStoredModalData(parsedData); // Update state with fresh data
+          
+          // Use fresh data for modal retrieval
+          const modalInfo = parsedData[encodedDataId];
+          if (modalInfo) {
+            console.log('✅ Found modal info in fresh data:', modalInfo);
+            console.log('✅ Full modal info data structure:', JSON.stringify(modalInfo, null, 2));
+            const { type, data } = modalInfo;
+            
+            // Verify type matches
+            if (type !== actionType) {
+              console.error('❌ Action type mismatch:', type, 'vs', actionType);
+              return;
+            }
+            
+            console.log('✅ Type matches, proceeding to open modal with fresh data');
+            
+            // Open modal with updated data
+            switch (actionType) {
+              case 'goal':
+                setCurrentGoalData(data);
+                setGoalModalVisible(true);
+                break;
+                
+              case 'milestone':
+              case 'project':
+                setCurrentProjectData(data);
+                setProjectModalVisible(true);
+                break;
+                
+              case 'task':
+                setCurrentTaskData(data);
+                setTaskModalVisible(true);
+                break;
+                
+              case 'timeblock':
+                console.log('🔗 Opening timeblock modal with fresh data:', data);
+                console.log('🔗 Fresh data includes isCreated?', data.isCreated);
+                console.log('🔗 Fresh data includes successMessage?', data.successMessage);
+                setCurrentTimeBlockData(data);
+                setTimeBlockModalVisible(true);
+                break;
+                
+              case 'todo':
+                setCurrentTodoData(data);
+                setTodoModalVisible(true);
+                break;
+                
+              default:
+                console.error('❌ Unknown action type:', actionType);
+            }
+            return;
+          }
+        }
+      } catch (storageError) {
+        console.error('Error reloading from AsyncStorage:', storageError);
+        // Fall back to using current state data
+      }
+      
+      // Fallback: Retrieve stored data from current state
+      const modalInfo = storedModalData[encodedDataId];
+      if (!modalInfo) {
+        console.error('❌ Modal data not found for ID:', encodedDataId);
+        console.error('❌ Available keys:', Object.keys(storedModalData));
+        
+        // Additional fallback: Check if we have recent data that matches the action type
+        if (actionType === 'timeblock' && currentTimeBlockData) {
+          console.log('🔄 Using current timeblock data as fallback:', currentTimeBlockData);
+          setTimeBlockModalVisible(true);
+          return;
+        } else if (actionType === 'goal' && currentGoalData) {
+          console.log('🔄 Using current goal data as fallback:', currentGoalData);
+          setGoalModalVisible(true);
+          return;
+        } else if (actionType === 'milestone' && currentProjectData) {
+          console.log('🔄 Using current project data as fallback:', currentProjectData);
+          setProjectModalVisible(true);
+          return;
+        } else if (actionType === 'task' && currentTaskData) {
+          console.log('🔄 Using current task data as fallback:', currentTaskData);
+          setTaskModalVisible(true);
+          return;
+        }
+        
+        return;
+      }
+      
+      console.log('✅ Found modal info:', modalInfo);
+      console.log('✅ Full modal info data structure:', JSON.stringify(modalInfo, null, 2));
+      const { type, data } = modalInfo;
+      
+      // Verify type matches
+      if (type !== actionType) {
+        console.error('❌ Action type mismatch:', type, 'vs', actionType);
+        return;
+      }
+      
+      console.log('✅ Type matches, proceeding to open modal');
+      
+      // Reopen the appropriate modal
+      switch (actionType) {
+        case 'goal':
+          if (!canAddMoreGoals()) {
+            showUpgradePrompt(
+              `You've reached the limit of ${LOCAL_MAX_GOALS} active goals in the free version. Upgrade to Pro to track unlimited goals.`
+            );
+            return;
+          }
+          setCurrentGoalData(data);
+          setGoalModalVisible(true);
+          break;
+          
+        case 'milestone':
+        case 'project': // Support both for backward compatibility
+          setCurrentProjectData(data);
+          setProjectModalVisible(true);
+          break;
+          
+        case 'task':
+          setCurrentTaskData(data);
+          setTaskModalVisible(true);
+          break;
+          
+        case 'timeblock':
+          console.log('🔗 Opening timeblock modal with data:', data);
+          console.log('🔗 Data includes isCreated?', data.isCreated);
+          console.log('🔗 Data includes successMessage?', data.successMessage);
+          setCurrentTimeBlockData(data);
+          setTimeBlockModalVisible(true);
+          break;
+          
+        case 'todo':
+          setCurrentTodoData(data);
+          setTodoModalVisible(true);
+          break;
+          
+        default:
+          console.error('❌ Unknown action type:', actionType);
+      }
+    } catch (error) {
+      console.error('Error handling action link:', error);
+    }
+  };
+  
+  
+  // Load modal data on mount and clean up old data
+  useEffect(() => {
+    const initializeModalData = async () => {
+      await loadModalData();
+      await cleanupOldModalData();
+    };
+    
+    initializeModalData();
+  }, []);
   
   // NEW: Check unlimited mode status on mount
   useEffect(() => {
@@ -495,12 +774,19 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
     return unsubscribe;
   }, [navigation, hasUserInteracted, conversationId]);
   
-  // Create new conversation when screen comes into focus
+  // Create new conversation when screen comes into focus (only if no existing conversation)
   useFocusEffect(
     React.useCallback(() => {
-      console.log('AI Assistant screen focused - creating new conversation');
-      createNewConversation();
-    }, [])
+      console.log('AI Assistant screen focused');
+      
+      // Only create new conversation if there's no route conversation ID and no current conversation
+      if (!routeConversationId && !conversationId) {
+        console.log('No existing conversation found - creating new conversation');
+        createNewConversation();
+      } else {
+        console.log('Existing conversation found, not creating new one:', routeConversationId || conversationId);
+      }
+    }, [routeConversationId, conversationId])
   );
 
   // Initialize conversation (keeping original logic for route-based navigation)
@@ -549,11 +835,31 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
             console.log(`Loaded conversation with ${savedConversation.length} messages`);
           } else {
             console.error('Invalid conversation format:', savedConversation);
-            await createNewConversation();
+            // Don't create new conversation, just use fallback message for the route conversation
+            const fallbackMessage = {
+              id: Date.now().toString(),
+              text: `${getRandomIntroMessage()}`,
+              type: 'ai',
+              timestamp: new Date().toISOString(),
+              centered: true
+            };
+            dispatch({ type: 'SET_CONVERSATION_ID', payload: routeConversationId });
+            dispatch({ type: 'SET_MESSAGES', payload: [fallbackMessage] });
+            dispatch({ type: 'SET_SHOW_SUGGESTIONS', payload: true });
           }
         } catch (error) {
           console.error('Error loading conversation from route:', error);
-          await createNewConversation();
+          // Don't create new conversation, preserve the route conversation ID and add fallback message
+          const fallbackMessage = {
+            id: Date.now().toString(),
+            text: `${getRandomIntroMessage()}`,
+            type: 'ai',
+            timestamp: new Date().toISOString(),
+            centered: true
+          };
+          dispatch({ type: 'SET_CONVERSATION_ID', payload: routeConversationId });
+          dispatch({ type: 'SET_MESSAGES', payload: [fallbackMessage] });
+          dispatch({ type: 'SET_SHOW_SUGGESTIONS', payload: true });
         }
       } catch (error) {
         console.error('Error initializing conversation:', error);
@@ -741,30 +1047,35 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
     setConversationLimitModalVisible(false);
   };
   
-  // Process actions
+  // Process actions - use bulk modal for multiple actions
   const processActions = (actions) => {
     if (!actions || !Array.isArray(actions) || actions.length === 0) return;
     
     console.log(`Processing ${actions.length} actions`);
     console.log('Actions to process:', JSON.stringify(actions, null, 2));
     
-    // Set up for multiple actions
-    setPendingActions(actions);
-    setTotalActions(actions.length);
-    setActionProgress(0);
-    
-    // Process the first action
-    processNextAction(actions, 0);
+    // If multiple actions, use bulk modal
+    if (actions.length > 1) {
+      setBulkCreateActions(actions);
+      setBulkCreateModalVisible(true);
+    } else {
+      // Single action - process individually as before
+      setPendingActions(actions);
+      setTotalActions(actions.length);
+      setActionProgress(0);
+      processNextAction(actions, 0);
+    }
   };
   
-  // Process the next action in the queue
+  // Process the next action in the queue with guaranteed continuation
   const processNextAction = (actions, currentIndex) => {
     if (currentIndex >= actions.length) {
       console.log('All actions processed successfully');
       setPendingActions([]);
+      setActionProgress(0);
+      setTotalActions(0);
       return;
     }
-    
     
     const action = actions[currentIndex];
     setActionProgress(currentIndex);
@@ -773,56 +1084,162 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
     console.log('🔄 Full action object:', JSON.stringify(action, null, 2));
     console.log('🔄 About to enter switch statement for:', action.type);
     
-    // Handle each action type
-    switch (action.type) {
-      case 'createGoal':
-        console.log('Creating goal modal');
+    // Helper function to continue to next action (always called)
+    const continueToNext = () => {
+      if (currentIndex < actions.length - 1) {
+        console.log(`🔄 Continuing to action ${currentIndex + 2}/${actions.length}`);
+        setTimeout(() => {
+          processNextAction(actions, currentIndex + 1);
+        }, 500);
+      } else {
+        console.log('🎉 All actions completed');
+        setPendingActions([]);
+        setActionProgress(0);
+        setTotalActions(0);
+      }
+    };
+    
+    // Store modal data if modalDataId is provided (with error protection)
+    try {
+      if (action.modalDataId && action.originalData) {
+        const mappedType = action.type === 'createMilestone' ? 'milestone' : action.type.replace('create', '').toLowerCase();
+        console.log('💾 Storing modal data:', {
+          modalDataId: action.modalDataId,
+          originalType: action.type,
+          mappedType: mappedType,
+          data: action.originalData
+        });
         
-        // Check if user can add more goals before showing the goal modal
-        if (!canAddMoreGoals()) {
-          console.log('Goal limit reached, showing upgrade modal');
-          showUpgradePrompt(
-            `You've reached the limit of ${LOCAL_MAX_GOALS} active goals in the free version. Upgrade to Pro to track unlimited goals.`
-          );
-          return;
-        }
+        // Use the persistent storage method instead of direct state update
+        const newData = {
+          ...storedModalData,
+          [action.modalDataId]: { 
+            type: mappedType, 
+            data: action.originalData 
+          }
+        };
         
-        // If user can add more goals, show the goal modal
-        setCurrentGoalData(action.data);
-        setGoalModalVisible(true);
-        break;
+        setStoredModalData(newData);
         
-      case 'createMilestone':
-      case 'createProject': // Keep for backward compatibility
-        console.log('Creating milestone modal');
-        // Link milestone to last created goal if available
-        if (lastCreatedGoalRef.current.id && action.data.goalTitle) {
-          action.data.goalId = lastCreatedGoalRef.current.id;
-        }
-        setCurrentProjectData(action.data);
-        setProjectModalVisible(true);
-        break;
+        // Persist to AsyncStorage (don't let this block processing)
+        saveModalData(newData, nextModalDataId).catch(error => {
+          console.error('Error persisting modal data in processNextAction:', error);
+        });
         
-      case 'createTask':
-        console.log('Creating task modal with data:', JSON.stringify(action.data));
-        // Simply set the task data and show the modal
-        // Let the user pick the correct project in the modal
-        setCurrentTaskData(action.data);
-        setTaskModalVisible(true);
-        break;
-        
-      case 'createTimeBlock':
-        console.log('Creating time block modal');
-        setCurrentTimeBlockData(action.data);
-        setTimeBlockModalVisible(true);
-        break;
-        
-        
-      default:
-        console.log(`Unknown action type: ${action.type}`);
-        console.log('Available action types are: createGoal, createMilestone, createTask, createTimeBlock');
-        // Skip to next action
-        processNextAction(actions, currentIndex + 1);
+        console.log('💾 Updated and persisted storedModalData for ID:', action.modalDataId);
+        console.log('💾 Stored data keys:', Object.keys(newData));
+        console.log('💾 Verification - can retrieve stored data:', newData[action.modalDataId] ? 'YES' : 'NO');
+      }
+    } catch (modalError) {
+      console.error('Error handling modal data, continuing anyway:', modalError);
+    }
+    
+    // Handle each action type with timeout protection
+    try {
+      // Set a timeout to prevent infinite hangs
+      const actionTimeout = setTimeout(() => {
+        console.error(`⏰ Action ${currentIndex + 1} timed out, continuing to next action`);
+        continueToNext();
+      }, 30000); // 30 second timeout
+      
+      const clearTimeoutAndContinue = () => {
+        clearTimeout(actionTimeout);
+        // Don't call continueToNext here - let the modal handlers do it
+      };
+      
+      switch (action.type) {
+        case 'createGoal':
+          console.log('Creating goal modal');
+          
+          // Check if user can add more goals before showing the goal modal
+          if (!canAddMoreGoals()) {
+            console.log('Goal limit reached, showing upgrade modal');
+            showUpgradePrompt(
+              `You've reached the limit of ${LOCAL_MAX_GOALS} active goals in the free version. Upgrade to Pro to track unlimited goals.`
+            );
+            clearTimeout(actionTimeout);
+            continueToNext(); // Continue to next action even if upgrade needed
+            return;
+          }
+          
+          // If user can add more goals, show the goal modal
+          setCurrentGoalData(action.data);
+          setTimeout(() => {
+            console.log('📱 Delayed goal modal visibility set');
+            setGoalModalVisible(true);
+          }, 100);
+          clearTimeoutAndContinue();
+          break;
+          
+        case 'createMilestone':
+        case 'createProject': // Keep for backward compatibility
+          console.log('Creating milestone modal');
+          console.log('📝 Milestone data before processing:', JSON.stringify(action.data, null, 2));
+          
+          // Link milestone to last created goal if available
+          if (lastCreatedGoalRef.current.id) {
+            console.log('🔗 Linking milestone to last created goal:', lastCreatedGoalRef.current);
+            action.data.goalId = lastCreatedGoalRef.current.id;
+            action.data.goalTitle = lastCreatedGoalRef.current.title;
+            action.data.domain = lastCreatedGoalRef.current.domain;
+          } else {
+            console.log('⚠️ No last created goal found to link milestone');
+          }
+          
+          console.log('📝 Milestone data after processing:', JSON.stringify(action.data, null, 2));
+          console.log('📱 Setting projectModalVisible to true and currentProjectData');
+          
+          // Add small delay to ensure state updates properly during bulk processing
+          setCurrentProjectData(action.data);
+          setTimeout(() => {
+            console.log('📱 Delayed modal visibility set');
+            setProjectModalVisible(true);
+          }, 100);
+          clearTimeoutAndContinue();
+          break;
+          
+        case 'createTask':
+          console.log('Creating task modal with data:', JSON.stringify(action.data));
+          // Simply set the task data and show the modal
+          // Let the user pick the correct project in the modal
+          setCurrentTaskData(action.data);
+          setTimeout(() => {
+            console.log('📱 Delayed task modal visibility set');
+            setTaskModalVisible(true);
+          }, 100);
+          clearTimeoutAndContinue();
+          break;
+          
+        case 'createTimeBlock':
+          console.log('🔥 FRONTEND_TIMEBLOCK_DEBUG: Creating time block modal');
+          console.log('🔥 FRONTEND_TIMEBLOCK_DEBUG: Raw action.data received from Lambda:', JSON.stringify(action.data, null, 2));
+          setCurrentTimeBlockData(action.data);
+          setTimeout(() => {
+            console.log('🔥 FRONTEND_TIMEBLOCK_DEBUG: Opening timeblock modal with data:', JSON.stringify(action.data, null, 2));
+            setTimeBlockModalVisible(true);
+          }, 100);
+          clearTimeoutAndContinue();
+          break;
+          
+        case 'createTodo':
+          console.log('Creating todo modal');
+          setCurrentTodoData(action.data);
+          setTimeout(() => {
+            console.log('📱 Delayed todo modal visibility set');
+            setTodoModalVisible(true);
+          }, 100);
+          clearTimeoutAndContinue();
+          break;
+          
+        default:
+          console.log(`Unknown action type: ${action.type}`);
+          console.log('Available action types are: createGoal, createMilestone, createTask, createTimeBlock, createTodo');
+          clearTimeout(actionTimeout);
+          continueToNext(); // Continue to next action even for unknown types
+      }
+    } catch (actionError) {
+      console.error(`Error processing action ${currentIndex + 1}:`, actionError);
+      continueToNext(); // Always continue even on errors
     }
   };
   
@@ -959,23 +1376,37 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
         } catch (error) {
           console.error('Error saving user message:', error);
           
-          // If conversation not found, create a new one
+          // If conversation not found, try to recreate it with current messages
           if (error.message && error.message.includes('Conversation not found')) {
-            console.log('Conversation not found, creating a new one');
-            await createNewConversation();
+            console.log('Conversation not found, attempting to recreate conversation with existing messages');
             
-            // This is no longer a temporary conversation
-            await AsyncStorage.removeItem(TEMP_CONVERSATION_KEY);
-            
-            // Try again with the new conversation
-            const newConversationId = state.conversation.conversationId;
-            if (newConversationId) {
-              try {
-                console.log(`Adding user message to new conversation ${newConversationId}`);
-                await AIService.addMessageToConversation(newConversationId, userMessage.text, 'user');
-              } catch (retryError) {
-                console.error('Error saving user message on retry:', retryError);
+            try {
+              // Try to recreate the conversation with current messages
+              const currentMessages = messages || [];
+              const newConversation = await AIService.createConversation(currentMessages);
+              
+              if (newConversation && newConversation._id) {
+                console.log('Successfully recreated conversation with ID:', newConversation._id);
+                
+                // Update the conversation ID but keep the messages
+                dispatch({ type: 'SET_CONVERSATION_ID', payload: newConversation._id });
+                
+                // Save to AsyncStorage
+                await AsyncStorage.setItem('currentConversationId', newConversation._id);
+                
+                // Now try to add the user message again
+                try {
+                  console.log(`Adding user message to recreated conversation ${newConversation._id}`);
+                  await AIService.addMessageToConversation(newConversation._id, userMessage.text, 'user');
+                } catch (retryError) {
+                  console.error('Error saving user message to recreated conversation:', retryError);
+                }
+              } else {
+                console.error('Failed to recreate conversation, continuing without backend sync');
               }
+            } catch (recreateError) {
+              console.error('Error recreating conversation:', recreateError);
+              // Continue without backend sync - the conversation will work locally
             }
           }
         }
@@ -1107,24 +1538,37 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
               } catch (error) {
                 console.error('Error saving AI message:', error);
                 
-                // If conversation not found, create a new one and add both messages
+                // If conversation not found, try to recreate it with current messages
                 if (error.message && error.message.includes('Conversation not found')) {
-                  console.log('Conversation not found when saving AI message, creating a new one');
-                  await createNewConversation();
+                  console.log('Conversation not found when saving AI message, attempting to recreate conversation');
                   
-                  // This is no longer a temporary conversation
-                  await AsyncStorage.removeItem(TEMP_CONVERSATION_KEY);
-                  
-                  // Try again with the new conversation
-                  const newConversationId = state.conversation.conversationId;
-                  if (newConversationId) {
-                    try {
-                      // Add both messages to the new conversation
-                      await AIService.addMessageToConversation(newConversationId, userMessage.text, 'user');
-                      await AIService.addMessageToConversation(newConversationId, finalText, 'ai');
-                    } catch (retryError) {
-                      console.error('Error saving messages on retry:', retryError);
+                  try {
+                    // Try to recreate the conversation with current messages (including the new AI message)
+                    const currentMessages = messages || [];
+                    const newConversation = await AIService.createConversation(currentMessages);
+                    
+                    if (newConversation && newConversation._id) {
+                      console.log('Successfully recreated conversation for AI message with ID:', newConversation._id);
+                      
+                      // Update the conversation ID but keep the messages
+                      dispatch({ type: 'SET_CONVERSATION_ID', payload: newConversation._id });
+                      
+                      // Save to AsyncStorage
+                      await AsyncStorage.setItem('currentConversationId', newConversation._id);
+                      
+                      // Try to add the AI message again
+                      try {
+                        console.log(`Adding AI message to recreated conversation ${newConversation._id}`);
+                        await AIService.addMessageToConversation(newConversation._id, finalText, 'ai');
+                      } catch (retryError) {
+                        console.error('Error saving AI message to recreated conversation:', retryError);
+                      }
+                    } else {
+                      console.error('Failed to recreate conversation for AI message, continuing without backend sync');
                     }
+                  } catch (recreateError) {
+                    console.error('Error recreating conversation for AI message:', recreateError);
+                    // Continue without backend sync - the conversation will work locally
                   }
                 }
               }
@@ -1134,39 +1578,23 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
             if (actions && Array.isArray(actions) && actions.length > 0) {
               console.log(`Found ${actions.length} actions to perform`);
               
-              // First check for goal actions
+              // Check if there are goal actions and if user can create more goals
               const goalAction = actions.find(action => action.type === 'createGoal');
-              if (goalAction) {
-                console.log('Found goal action');
+              if (goalAction && !canAddMoreGoals()) {
+                console.log('Goal limit reached, showing upgrade modal');
+                showUpgradePrompt(
+                  `You've reached the limit of ${LOCAL_MAX_GOALS} active goals in the free version. Upgrade to Pro to track unlimited goals.`
+                );
                 
-                // Check if user can add more goals before processing the goal action
-                if (!canAddMoreGoals()) {
-                  console.log('Goal limit reached, showing upgrade modal');
-                  showUpgradePrompt(
-                    `You've reached the limit of ${LOCAL_MAX_GOALS} active goals in the free version. Upgrade to Pro to track unlimited goals.`
-                  );
-                  
-                  // Process any remaining non-goal actions
-                  const otherActions = actions.filter(action => action.type !== 'createGoal');
-                  if (otherActions.length > 0) {
-                    console.log(`Processing ${otherActions.length} remaining non-goal actions`);
-                    processActions(otherActions);
-                  }
-                } else {
-                  // User can add more goals, proceed with goal action
-                  setCurrentGoalData(goalAction.data);
-                  setGoalModalVisible(true);
-                  
-                  // Process any remaining non-goal actions
-                  const otherActions = actions.filter(action => action.type !== 'createGoal');
-                  if (otherActions.length > 0) {
-                    console.log(`Processing ${otherActions.length} remaining non-goal actions`);
-                    processActions(otherActions);
-                  }
+                // Process any remaining non-goal actions
+                const otherActions = actions.filter(action => action.type !== 'createGoal');
+                if (otherActions.length > 0) {
+                  console.log(`Processing ${otherActions.length} remaining non-goal actions`);
+                  processActions(otherActions);
                 }
               } else {
-                // No goal actions, process all actions normally
-                console.log('No goal actions found, processing all actions normally');
+                // Process all actions using new bulk modal logic
+                console.log('Processing all actions with bulk modal logic');
                 processActions(actions);
               }
             }
@@ -1268,6 +1696,20 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
   const handleGoalConfirm = async (goalData) => {
     setGoalModalVisible(false);
     
+    // Helper to continue processing queue
+    const continueProcessing = () => {
+      if (pendingActions.length > 0 && actionProgress < pendingActions.length - 1) {
+        setTimeout(() => {
+          processNextAction(pendingActions, actionProgress + 1);
+        }, 500);
+      } else if (pendingActions.length > 0) {
+        // Clear pending actions when we're done
+        setPendingActions([]);
+        setActionProgress(0);
+        setTotalActions(0);
+      }
+    };
+    
     try {
       const { addGoal } = appContext; // Get from app context
       
@@ -1281,7 +1723,7 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
         
         await addGoal(newGoal);
         
-        // Track AI-generated goal achievement
+        // Track AI-generated goal achievement (don't let this block processing)
         try {
           await FeatureExplorerTracker.trackAIGenerated(newGoal, 'goal', showSuccess);
         } catch (error) {
@@ -1298,39 +1740,56 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
         
         console.log(`Created goal: "${newGoal.title}" with ID: ${newGoal.id}`);
         
+        // Create success message
+        const successText = `Goal "${newGoal.title}" created successfully! You can view and edit it in the Goals tab.`;
+        
         const successMessage = {
           id: (Date.now() + 1).toString(),
-          text: `Goal "${newGoal.title}" created successfully! You can view and edit it in the Goals tab.`,
+          text: successText,
           type: 'ai',
           timestamp: new Date().toISOString()
         };
         
         dispatch({ type: 'ADD_MESSAGE', payload: successMessage });
-        
-        // Process next action if any
-        if (pendingActions.length > 0 && actionProgress < pendingActions.length - 1) {
-          setTimeout(() => {
-            processNextAction(pendingActions, actionProgress + 1);
-          }, 500);
-        }
+      } else {
+        throw new Error('addGoal function not available');
       }
     } catch (error) {
       console.error('Error creating goal:', error);
       
+      // Enhanced error message with progress info
+      const progressInfo = pendingActions.length > 1 ? ` (Action ${actionProgress + 1} of ${pendingActions.length})` : '';
       const errorMessage = {
         id: (Date.now() + 1).toString(),
-        text: `I'm sorry, I couldn't create the goal: ${error.message}`,
+        text: `I'm sorry, I couldn't create the goal: ${error.message}${progressInfo}. Continuing to next item...`,
         type: 'ai',
         timestamp: new Date().toISOString()
       };
       
       dispatch({ type: 'ADD_MESSAGE', payload: errorMessage });
+    } finally {
+      // ALWAYS continue processing, even on errors
+      continueProcessing();
     }
   };
   
   // Handle Project creation
   const handleProjectConfirm = async (projectData) => {
     setProjectModalVisible(false);
+    
+    // Helper to continue processing queue
+    const continueProcessing = () => {
+      if (pendingActions.length > 0 && actionProgress < pendingActions.length - 1) {
+        setTimeout(() => {
+          processNextAction(pendingActions, actionProgress + 1);
+        }, 500);
+      } else if (pendingActions.length > 0) {
+        // Clear pending actions when we're done
+        setPendingActions([]);
+        setActionProgress(0);
+        setTotalActions(0);
+      }
+    };
     
     try {
       const { addProject } = appContext; // Get from app context
@@ -1345,7 +1804,7 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
         
         await addProject(newProject);
         
-        // Track AI-generated project achievement
+        // Track AI-generated project achievement (don't let this block processing)
         try {
           await FeatureExplorerTracker.trackAIGenerated(newProject, 'project', showSuccess);
         } catch (error) {
@@ -1354,39 +1813,56 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
           
         console.log(`Created project: "${newProject.title}"`);
         
+        // Create success message
+        const successText = `Project "${newProject.title}" created successfully!`;
+        
         const successMessage = {
           id: (Date.now() + 1).toString(),
-          text: `Project "${newProject.title}" created successfully!`,
+          text: successText,
           type: 'ai',
           timestamp: new Date().toISOString()
         };
         
         dispatch({ type: 'ADD_MESSAGE', payload: successMessage });
-        
-        // Process next action if any
-        if (pendingActions.length > 0 && actionProgress < pendingActions.length - 1) {
-          setTimeout(() => {
-            processNextAction(pendingActions, actionProgress + 1);
-          }, 500);
-        }
+      } else {
+        throw new Error('addProject function not available');
       }
     } catch (error) {
       console.error('Error creating project:', error);
       
+      // Enhanced error message with progress info
+      const progressInfo = pendingActions.length > 1 ? ` (Action ${actionProgress + 1} of ${pendingActions.length})` : '';
       const errorMessage = {
         id: (Date.now() + 1).toString(),
-        text: `I'm sorry, I couldn't create the project: ${error.message}`,
+        text: `I'm sorry, I couldn't create the project: ${error.message}${progressInfo}. Continuing to next item...`,
         type: 'ai',
         timestamp: new Date().toISOString()
       };
       
       dispatch({ type: 'ADD_MESSAGE', payload: errorMessage });
+    } finally {
+      // ALWAYS continue processing, even on errors
+      continueProcessing();
     }
   };
   
   // Handle Task creation
   const handleTaskConfirm = async (taskData) => {
     setTaskModalVisible(false);
+    
+    // Helper to continue processing queue
+    const continueProcessing = () => {
+      if (pendingActions.length > 0 && actionProgress < pendingActions.length - 1) {
+        setTimeout(() => {
+          processNextAction(pendingActions, actionProgress + 1);
+        }, 500);
+      } else if (pendingActions.length > 0) {
+        // Clear pending actions when we're done
+        setPendingActions([]);
+        setActionProgress(0);
+        setTotalActions(0);
+      }
+    };
     
     try {
       const { addTask, milestones } = appContext;
@@ -1420,9 +1896,12 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
             
             await addTask(newTaskData);
             
+            // Create success message
+            const successText = `Task "${task.title}" added to milestone "${milestone.title}" successfully!`;
+            
             const successMessage = {
               id: (Date.now() + 1).toString(),
-              text: `Task "${task.title}" added to milestone "${milestone.title}" successfully!`,
+              text: successText,
               type: 'ai',
               timestamp: new Date().toISOString()
             };
@@ -1451,9 +1930,12 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
             
             await addTask(newTaskData);
             
+            // Create success message
+            const successText = `Standalone task "${task.title}" created successfully!`;
+            
             const successMessage = {
               id: (Date.now() + 1).toString(),
-              text: `Standalone task "${task.title}" created successfully!`,
+              text: successText,
               type: 'ai',
               timestamp: new Date().toISOString()
             };
@@ -1464,30 +1946,42 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
           }
         }
       }
-      
-      // Process next action if any
-      if (pendingActions.length > 0 && actionProgress < pendingActions.length - 1) {
-        setTimeout(() => {
-          processNextAction(pendingActions, actionProgress + 1);
-        }, 500);
-      }
     } catch (error) {
       console.error('Error creating task:', error);
       
+      // Enhanced error message with progress info
+      const progressInfo = pendingActions.length > 1 ? ` (Action ${actionProgress + 1} of ${pendingActions.length})` : '';
       const errorMessage = {
         id: (Date.now() + 1).toString(),
-        text: `I'm sorry, I couldn't create the task: ${error.message}`,
+        text: `I'm sorry, I couldn't create the task: ${error.message}${progressInfo}. Continuing to next item...`,
         type: 'ai',
         timestamp: new Date().toISOString()
       };
       
       dispatch({ type: 'ADD_MESSAGE', payload: errorMessage });
+    } finally {
+      // ALWAYS continue processing, even on errors
+      continueProcessing();
     }
   };
   
   // Handle TimeBlock creation
   const handleTimeBlockConfirm = async (timeBlockData) => {
     setTimeBlockModalVisible(false);
+    
+    // Helper to continue processing queue
+    const continueProcessing = () => {
+      if (pendingActions.length > 0 && actionProgress < pendingActions.length - 1) {
+        setTimeout(() => {
+          processNextAction(pendingActions, actionProgress + 1);
+        }, 500);
+      } else if (pendingActions.length > 0) {
+        // Clear pending actions when we're done
+        setPendingActions([]);
+        setActionProgress(0);
+        setTotalActions(0);
+      }
+    };
     
     try {
       const { addTimeBlock } = appContext; // Get from app context
@@ -1503,39 +1997,78 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
         
         console.log(`Created time block: "${newTimeBlock.title}"`);
         
+        // Create success message
+        const successText = `Time block "${newTimeBlock.title}" scheduled successfully!`;
+        
         const successMessage = {
-          id: (Date.now() + 1).toString(),
-          text: `Time block "${newTimeBlock.title}" scheduled successfully!`,
+          id: `${Date.now()}_success_${Math.random().toString(36).substr(2, 9)}`,
+          text: successText,
           type: 'ai',
           timestamp: new Date().toISOString()
         };
         
         dispatch({ type: 'ADD_MESSAGE', payload: successMessage });
         
-        // Process next action if any
-        if (pendingActions.length > 0 && actionProgress < pendingActions.length - 1) {
-          setTimeout(() => {
-            processNextAction(pendingActions, actionProgress + 1);
-          }, 500);
+        // Update stored modal data to mark as created (for persistence when reopening)
+        const currentAction = pendingActions[actionProgress];
+        if (currentAction && currentAction.modalDataId) {
+          const updatedModalData = {
+            ...storedModalData,
+            [currentAction.modalDataId]: {
+              ...storedModalData[currentAction.modalDataId],
+              data: {
+                ...storedModalData[currentAction.modalDataId]?.data,
+                isCreated: true,
+                createdAt: new Date().toISOString(),
+                successMessage: successText
+              }
+            }
+          };
+          setStoredModalData(updatedModalData);
+          await AsyncStorage.setItem('storedModalData', JSON.stringify(updatedModalData));
+          console.log('💾 Updated modal data with creation status:', currentAction.modalDataId);
+          console.log('💾 Updated data structure:', JSON.stringify(updatedModalData[currentAction.modalDataId], null, 2));
+          console.log('💾 Verification - success message in updated data:', updatedModalData[currentAction.modalDataId]?.data?.successMessage);
         }
+      } else {
+        throw new Error('addTimeBlock function not available');
       }
     } catch (error) {
       console.error('Error creating time block:', error);
       
+      // Enhanced error message with progress info
+      const progressInfo = pendingActions.length > 1 ? ` (Action ${actionProgress + 1} of ${pendingActions.length})` : '';
       const errorMessage = {
-        id: (Date.now() + 1).toString(),
-        text: `I'm sorry, I couldn't create the time block: ${error.message}`,
+        id: `${Date.now()}_error_${Math.random().toString(36).substr(2, 9)}`,
+        text: `I'm sorry, I couldn't create the time block: ${error.message}${progressInfo}. Continuing to next item...`,
         type: 'ai',
         timestamp: new Date().toISOString()
       };
       
       dispatch({ type: 'ADD_MESSAGE', payload: errorMessage });
+    } finally {
+      // ALWAYS continue processing, even on errors
+      continueProcessing();
     }
   };
   
   // Handle Todo creation
   const handleTodoConfirm = async (todoData) => {
     setTodoModalVisible(false);
+    
+    // Helper to continue processing queue
+    const continueProcessing = () => {
+      if (pendingActions.length > 0 && actionProgress < pendingActions.length - 1) {
+        setTimeout(() => {
+          processNextAction(pendingActions, actionProgress + 1);
+        }, 500);
+      } else if (pendingActions.length > 0) {
+        // Clear pending actions when we're done
+        setPendingActions([]);
+        setActionProgress(0);
+        setTotalActions(0);
+      }
+    };
     
     try {
       const { addTodo, updateTodos, todos, tomorrowTodos, laterTodos } = appContext;
@@ -1604,60 +2137,134 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
         console.log('Available appContext methods:', Object.keys(appContext).filter(key => typeof appContext[key] === 'function'));
         throw new Error('No method available to add todos. Check AppContext implementation.');
       }
-      
-      // Process next action if any
-      if (pendingActions.length > 0 && actionProgress < pendingActions.length - 1) {
-        setTimeout(() => {
-          processNextAction(pendingActions, actionProgress + 1);
-        }, 500);
-      }
     } catch (error) {
       console.error('Error creating todo:', error);
       console.error('Todo data was:', todoData);
       
+      // Enhanced error message with progress info
+      const progressInfo = pendingActions.length > 1 ? ` (Action ${actionProgress + 1} of ${pendingActions.length})` : '';
       const errorMessage = {
         id: (Date.now() + 1).toString(),
-        text: `I'm sorry, I couldn't create the to-do: ${error.message}`,
+        text: `I'm sorry, I couldn't create the to-do: ${error.message}${progressInfo}. Continuing to next item...`,
         type: 'ai',
         timestamp: new Date().toISOString()
       };
       
       dispatch({ type: 'ADD_MESSAGE', payload: errorMessage });
+    } finally {
+      // ALWAYS continue processing, even on errors
+      continueProcessing();
     }
   };
   
   
-  // Handle modal cancellations
+  // Handle modal cancellations (continue processing even when user cancels)
   const handleGoalModalCancel = () => {
-    console.log('Goal modal cancelled');
+    console.log('Goal modal cancelled - continuing to next action');
     setGoalModalVisible(false);
-    setPendingActions([]);
+    
+    // Continue to next action instead of clearing all pending actions
+    if (pendingActions.length > 0 && actionProgress < pendingActions.length - 1) {
+      setTimeout(() => {
+        processNextAction(pendingActions, actionProgress + 1);
+      }, 500);
+    } else if (pendingActions.length > 0) {
+      // Clear when we're done
+      setPendingActions([]);
+      setActionProgress(0);
+      setTotalActions(0);
+    }
   };
   
   const handleProjectModalCancel = () => {
-    console.log('Project modal cancelled');
+    console.log('Project modal cancelled - continuing to next action');
     setProjectModalVisible(false);
-    setPendingActions([]);
+    
+    // Continue to next action instead of clearing all pending actions
+    if (pendingActions.length > 0 && actionProgress < pendingActions.length - 1) {
+      setTimeout(() => {
+        processNextAction(pendingActions, actionProgress + 1);
+      }, 500);
+    } else if (pendingActions.length > 0) {
+      // Clear when we're done
+      setPendingActions([]);
+      setActionProgress(0);
+      setTotalActions(0);
+    }
   };
   
   const handleTaskModalCancel = () => {
-    console.log('Task modal cancelled');
+    console.log('Task modal cancelled - continuing to next action');
     setTaskModalVisible(false);
-    setPendingActions([]);
+    
+    // Continue to next action instead of clearing all pending actions
+    if (pendingActions.length > 0 && actionProgress < pendingActions.length - 1) {
+      setTimeout(() => {
+        processNextAction(pendingActions, actionProgress + 1);
+      }, 500);
+    } else if (pendingActions.length > 0) {
+      // Clear when we're done
+      setPendingActions([]);
+      setActionProgress(0);
+      setTotalActions(0);
+    }
   };
   
   const handleTimeBlockModalCancel = () => {
-    console.log('Time block modal cancelled');
+    console.log('Time block modal cancelled - continuing to next action');
     setTimeBlockModalVisible(false);
-    setPendingActions([]);
+    
+    // Continue to next action instead of clearing all pending actions
+    if (pendingActions.length > 0 && actionProgress < pendingActions.length - 1) {
+      setTimeout(() => {
+        processNextAction(pendingActions, actionProgress + 1);
+      }, 500);
+    } else if (pendingActions.length > 0) {
+      // Clear when we're done
+      setPendingActions([]);
+      setActionProgress(0);
+      setTotalActions(0);
+    }
   };
   
   const handleTodoModalCancel = () => {
-    console.log('Todo modal cancelled');
+    console.log('Todo modal cancelled - continuing to next action');
     setTodoModalVisible(false);
     setCurrentTodoData(null);
     setCurrentTodoAISuggestions([]);
-    setPendingActions([]);
+    
+    // Continue to next action instead of clearing all pending actions
+    if (pendingActions.length > 0 && actionProgress < pendingActions.length - 1) {
+      setTimeout(() => {
+        processNextAction(pendingActions, actionProgress + 1);
+      }, 500);
+    } else if (pendingActions.length > 0) {
+      // Clear when we're done
+      setPendingActions([]);
+      setActionProgress(0);
+      setTotalActions(0);
+    }
+  };
+  
+  // Bulk modal handlers
+  const handleBulkCreateComplete = (createdItems) => {
+    console.log('Bulk creation completed:', createdItems);
+    setBulkCreateModalVisible(false);
+    setBulkCreateActions([]);
+    
+    // Show a success notification
+    if (createdItems.goals?.length || createdItems.milestones?.length || createdItems.tasks?.length) {
+      const total = (createdItems.goals?.length || 0) + (createdItems.milestones?.length || 0) + (createdItems.tasks?.length || 0);
+      dispatch({ 
+        type: 'SHOW_TOAST', 
+        payload: `Successfully created ${total} item${total > 1 ? 's' : ''}!` 
+      });
+    }
+  };
+  
+  const handleBulkCreateClose = () => {
+    setBulkCreateModalVisible(false);
+    setBulkCreateActions([]);
   };
   
   
@@ -1717,6 +2324,8 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
         warningThreshold={AIService.getWarningThreshold(aiModelTier)}
         maxThreshold={AIService.getCharacterLimit(aiModelTier)}
         aiTier={aiModelTier}
+        onActionLink={handleActionLink}
+        themeColor={theme.primary}
       />
       
       {/* User Knowledge Indicator */}
@@ -1875,10 +2484,11 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
         color={theme.primary}
       />
       
-      <AddMilestoneModal
+      <AddMilestoneModalRevamped
         visible={projectModalVisible}
         onClose={handleProjectModalCancel}
         onAdd={handleProjectConfirm}
+        milestoneData={currentProjectData}
         projectData={currentProjectData}
         color={theme.primary}
       />
@@ -1891,12 +2501,12 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
         color={theme.primary}
       />
       
-      <AddTimeBlockModal
+      <TimeBlockExactModal
         visible={timeBlockModalVisible}
         onClose={handleTimeBlockModalCancel}
-        onAdd={handleTimeBlockConfirm}
+        onSave={handleTimeBlockConfirm}
         timeBlockData={currentTimeBlockData}
-        color={theme.primary}
+        initialDate={new Date()}
       />
       
       <AddTodoModal
@@ -1905,6 +2515,15 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
         onAdd={handleTodoConfirm}
         todoData={currentTodoData}
         aiSuggestions={[]}
+      />
+      
+      {/* Bulk Creation Modal */}
+      <AIBulkCreateModal
+        visible={bulkCreateModalVisible}
+        onClose={handleBulkCreateClose}
+        onComplete={handleBulkCreateComplete}
+        actions={bulkCreateActions}
+        color={theme.primary}
       />
       
       {/* Conversation Limit Modal */}

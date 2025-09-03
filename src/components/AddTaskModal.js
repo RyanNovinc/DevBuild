@@ -20,6 +20,7 @@ import {
 } from 'react-native';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../context/ThemeContext';
 import { useAppContext } from '../context/AppContext';
 import TaskInputModal from './TaskInputModal';
@@ -328,19 +329,92 @@ const AddTaskModal = ({
   );
   
   // Render task item
-  const renderTaskItem = ({ item }) => (
-    <View style={[styles.taskItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
-      <View style={styles.taskItemContent}>
-        <Text style={[styles.taskItemTitle, { color: theme.text }]}>{item.title}</Text>
-        <Text style={[styles.taskItemSubtitle, { color: theme.textSecondary }]}>
-          {item.goalTitle} → {item.projectTitle}
-        </Text>
+  const renderTaskItem = ({ item }) => {
+    const goalColor = item.goalTitle ? goals.find(g => g.title === item.goalTitle)?.color : null;
+    const projectColor = item.projectTitle ? allProjects.find(p => p.title === item.projectTitle)?.color : null;
+    
+    return (
+      <View style={[
+        styles.taskItem, 
+        { 
+          backgroundColor: theme.card, 
+          borderColor: goalColor || theme.border,
+          borderLeftWidth: goalColor ? 3 : 1,
+          borderRadius: scaleWidth(12),
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+          shadowRadius: 4,
+          elevation: 2,
+          marginBottom: spacing.m,
+        }
+      ]}>
+        <View style={styles.taskItemContent}>
+          <Text style={[
+            styles.taskItemTitle, 
+            { 
+              color: theme.text,
+              fontSize: fontSizes.m,
+              fontWeight: '600'
+            }
+          ]}>
+            {item.title}
+          </Text>
+          {(item.goalTitle || item.projectTitle) && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing.xs }}>
+              {item.goalTitle && goalColor && (
+                <View style={[
+                  styles.goalDot, 
+                  { 
+                    backgroundColor: goalColor,
+                    width: scaleWidth(8),
+                    height: scaleWidth(8),
+                    borderRadius: scaleWidth(4),
+                    marginRight: spacing.xs
+                  }
+                ]} />
+              )}
+              {item.projectTitle && projectColor && (
+                <View style={[
+                  styles.projectDot, 
+                  { 
+                    backgroundColor: projectColor,
+                    width: scaleWidth(6),
+                    height: scaleWidth(6),
+                    borderRadius: scaleWidth(3),
+                    marginRight: spacing.xs
+                  }
+                ]} />
+              )}
+              <Text style={[
+                styles.taskItemSubtitle, 
+                { 
+                  color: theme.textSecondary,
+                  fontSize: fontSizes.s,
+                  fontWeight: '500'
+                }
+              ]}>
+                {item.goalTitle}{item.goalTitle && item.projectTitle && ' → '}{item.projectTitle}
+              </Text>
+            </View>
+          )}
+        </View>
+        <TouchableOpacity 
+          onPress={() => handleRemoveTask(item.id)} 
+          style={[
+            styles.removeButton,
+            {
+              backgroundColor: theme.errorLight,
+              borderRadius: scaleWidth(20),
+              padding: spacing.xs
+            }
+          ]}
+        >
+          <Ionicons name="close-circle" size={20} color={theme.error} />
+        </TouchableOpacity>
       </View>
-      <TouchableOpacity onPress={() => handleRemoveTask(item.id)} style={styles.removeButton}>
-        <Ionicons name="close-circle" size={24} color={theme.error} />
-      </TouchableOpacity>
-    </View>
-  );
+    );
+  };
   
   return (
     <Modal
@@ -387,6 +461,11 @@ const AddTaskModal = ({
                     borderTopLeftRadius: scaleWidth(16),
                     borderTopRightRadius: scaleWidth(16),
                     height: '95%',
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: -4 },
+                    shadowOpacity: theme.background === '#000000' ? 0.3 : 0.15,
+                    shadowRadius: 12,
+                    elevation: 8,
                   }
                 ]}>
                   {/* Swipe indicator - This is the grab handle */}
@@ -418,6 +497,8 @@ const AddTaskModal = ({
                         styles.modalTitle, 
                         { 
                           color: theme.text,
+                          fontSize: fontSizes.xl,
+                          fontWeight: '700',
                           maxWidth: accessibility.maxTextWidth
                         }
                       ]}>
@@ -425,7 +506,19 @@ const AddTaskModal = ({
                       </Text>
                     </View>
                     <TouchableOpacity 
-                      style={styles.closeButton} 
+                      style={[
+                        styles.closeButton,
+                        {
+                          padding: spacing.xs,
+                          borderRadius: scaleWidth(8),
+                          backgroundColor: theme.inputBackground,
+                          shadowColor: '#000',
+                          shadowOffset: { width: 0, height: 2 },
+                          shadowOpacity: 0.1,
+                          shadowRadius: 4,
+                          elevation: 2,
+                        }
+                      ]} 
                       onPress={handleClose}
                       accessible={true}
                       accessibilityRole="button"
@@ -436,17 +529,38 @@ const AddTaskModal = ({
                   </View>
                   
                   {/* Tabs */}
-                  <View style={[styles.tabs, { borderBottomColor: theme.border }]}>
+                  <View style={[
+                    styles.tabs, 
+                    { 
+                      backgroundColor: theme.inputBackground,
+                      borderRadius: scaleWidth(12),
+                      padding: spacing.xs,
+                      marginBottom: spacing.m,
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.05,
+                      shadowRadius: 4,
+                      elevation: 1,
+                    }
+                  ]}>
                     <TouchableOpacity
                       style={[
                         styles.tab,
-                        activeTab === 'add' && { borderBottomColor: theme.primary }
+                        {
+                          backgroundColor: activeTab === 'add' ? theme.primary : 'transparent',
+                          borderRadius: scaleWidth(8),
+                          paddingVertical: spacing.s,
+                          paddingHorizontal: spacing.m,
+                        }
                       ]}
                       onPress={() => setActiveTab('add')}
                     >
                       <Text style={[
                         styles.tabText,
-                        { color: activeTab === 'add' ? theme.primary : theme.textSecondary }
+                        { 
+                          color: activeTab === 'add' ? '#FFFFFF' : theme.textSecondary,
+                          fontWeight: activeTab === 'add' ? '600' : '500'
+                        }
                       ]}>
                         Add Task
                       </Text>
@@ -454,13 +568,21 @@ const AddTaskModal = ({
                     <TouchableOpacity
                       style={[
                         styles.tab,
-                        activeTab === 'list' && { borderBottomColor: theme.primary }
+                        {
+                          backgroundColor: activeTab === 'list' ? theme.primary : 'transparent',
+                          borderRadius: scaleWidth(8),
+                          paddingVertical: spacing.s,
+                          paddingHorizontal: spacing.m,
+                        }
                       ]}
                       onPress={() => setActiveTab('list')}
                     >
                       <Text style={[
                         styles.tabText,
-                        { color: activeTab === 'list' ? theme.primary : theme.textSecondary }
+                        { 
+                          color: activeTab === 'list' ? '#FFFFFF' : theme.textSecondary,
+                          fontWeight: activeTab === 'list' ? '600' : '500'
+                        }
                       ]}>
                         Task List ({taskList.length})
                       </Text>
@@ -473,8 +595,30 @@ const AddTaskModal = ({
                       showsVerticalScrollIndicator={false}
                     >
                       {/* Task Title - Now first and primary */}
-                      <View style={[styles.inputSection, { zIndex: 4 }]}>
-                        <Text style={[styles.inputLabel, { color: theme.text }]}>
+                      <View style={[
+                        styles.inputSection, 
+                        { 
+                          zIndex: 4,
+                          backgroundColor: theme.card,
+                          padding: spacing.m,
+                          borderRadius: scaleWidth(12),
+                          marginBottom: spacing.m,
+                          shadowColor: '#000',
+                          shadowOffset: { width: 0, height: 2 },
+                          shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+                          shadowRadius: 6,
+                          elevation: 3,
+                        }
+                      ]}>
+                        <Text style={[
+                          styles.inputLabel, 
+                          { 
+                            color: theme.textSecondary,
+                            fontSize: fontSizes.m,
+                            fontWeight: '600',
+                            marginBottom: spacing.xs,
+                          }
+                        ]}>
                           Task Name *
                         </Text>
                         <TouchableOpacity
@@ -483,7 +627,13 @@ const AddTaskModal = ({
                             { 
                               backgroundColor: theme.inputBackground,
                               borderColor: theme.border,
-                              justifyContent: 'center'
+                              borderRadius: scaleWidth(12),
+                              justifyContent: 'center',
+                              shadowColor: '#000',
+                              shadowOffset: { width: 0, height: 2 },
+                              shadowOpacity: 0.05,
+                              shadowRadius: 4,
+                              elevation: 1,
                             }
                           ]}
                           onPress={() => setShowTaskInputModal(true)}
@@ -493,7 +643,11 @@ const AddTaskModal = ({
                         >
                           <Text style={[
                             styles.inputText,
-                            { color: title ? theme.text : theme.textSecondary }
+                            { 
+                              color: title ? theme.text : theme.textSecondary,
+                              fontSize: fontSizes.m,
+                              fontWeight: title ? '500' : '400'
+                            }
                           ]}>
                             {title || "Enter task name"}
                           </Text>
@@ -501,8 +655,30 @@ const AddTaskModal = ({
                       </View>
 
                       {/* Goal Selection - Now optional */}
-                      <View style={[styles.inputSection, { zIndex: 3 }]}>
-                        <Text style={[styles.inputLabel, { color: theme.text }]}>
+                      <View style={[
+                        styles.inputSection, 
+                        { 
+                          zIndex: 3,
+                          backgroundColor: theme.card,
+                          padding: spacing.m,
+                          borderRadius: scaleWidth(12),
+                          marginBottom: spacing.m,
+                          shadowColor: '#000',
+                          shadowOffset: { width: 0, height: 2 },
+                          shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+                          shadowRadius: 6,
+                          elevation: 3,
+                        }
+                      ]}>
+                        <Text style={[
+                          styles.inputLabel, 
+                          { 
+                            color: theme.textSecondary,
+                            fontSize: fontSizes.m,
+                            fontWeight: '600',
+                            marginBottom: spacing.xs,
+                          }
+                        ]}>
                           Link to Goal (Optional)
                         </Text>
                         <TouchableOpacity
@@ -510,7 +686,15 @@ const AddTaskModal = ({
                             styles.dropdown,
                             { 
                               backgroundColor: theme.inputBackground,
-                              borderColor: theme.border
+                              borderColor: selectedGoalId ? 
+                                (goals.find(g => g.id === selectedGoalId)?.color || theme.border) : 
+                                theme.border,
+                              borderRadius: scaleWidth(12),
+                              shadowColor: '#000',
+                              shadowOffset: { width: 0, height: 2 },
+                              shadowOpacity: 0.05,
+                              shadowRadius: 4,
+                              elevation: 1,
                             }
                           ]}
                           onPress={() => {
@@ -522,12 +706,27 @@ const AddTaskModal = ({
                           accessibilityLabel={selectedGoalTitle || "Select a goal"}
                           accessibilityHint="Tap to show goal options"
                         >
-                          <Text style={[
-                            styles.dropdownText,
-                            { color: selectedGoalTitle ? theme.text : theme.textSecondary }
-                          ]}>
-                            {selectedGoalTitle || "Select a goal to link (optional)"}
-                          </Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                            {selectedGoalId && (
+                              <View style={[
+                                styles.goalDot, 
+                                { 
+                                  backgroundColor: goals.find(g => g.id === selectedGoalId)?.color || theme.primary,
+                                  marginRight: spacing.s
+                                }
+                              ]} />
+                            )}
+                            <Text style={[
+                              styles.dropdownText,
+                              { 
+                                color: selectedGoalTitle ? theme.text : theme.textSecondary,
+                                fontSize: fontSizes.m,
+                                fontWeight: selectedGoalTitle ? '500' : '400'
+                              }
+                            ]}>
+                              {selectedGoalTitle || "Select a goal to link (optional)"}
+                            </Text>
+                          </View>
                           <Ionicons 
                             name={showGoalList ? "chevron-up" : "chevron-down"} 
                             size={scaleWidth(20)} 
@@ -541,14 +740,33 @@ const AddTaskModal = ({
                             height: goalDropdownHeight,
                             opacity: goalDropdownOpacity,
                             backgroundColor: theme.card,
-                            borderColor: theme.border
+                            borderColor: theme.border,
+                            borderRadius: scaleWidth(12),
+                            marginTop: spacing.xs,
+                            shadowColor: '#000',
+                            shadowOffset: { width: 0, height: 4 },
+                            shadowOpacity: theme.background === '#000000' ? 0.2 : 0.1,
+                            shadowRadius: 8,
+                            elevation: 5,
                           }
                         ]}>
                           <ScrollView nestedScrollEnabled={true}>
                             {goals.length === 0 ? (
-                              <View style={[styles.emptyStateContainer, { borderBottomColor: theme.border }]}>
+                              <View style={[
+                                styles.emptyStateContainer, 
+                                { 
+                                  borderBottomColor: theme.border,
+                                  padding: spacing.m
+                                }
+                              ]}>
                                 <Ionicons name="information-circle" size={20} color={theme.textSecondary} />
-                                <Text style={[styles.emptyStateText, { color: theme.textSecondary }]}>
+                                <Text style={[
+                                  styles.emptyStateText, 
+                                  { 
+                                    color: theme.textSecondary,
+                                    fontSize: fontSizes.m
+                                  }
+                                ]}>
                                   No goals available. Create a goal first to organize your tasks, or create standalone tasks.
                                 </Text>
                               </View>
@@ -556,11 +774,35 @@ const AddTaskModal = ({
                               goals.map((goal) => (
                                 <TouchableOpacity
                                   key={goal.id}
-                                  style={[styles.dropdownItem, { borderBottomColor: theme.border }]}
+                                  style={[
+                                    styles.dropdownItem, 
+                                    { 
+                                      borderBottomColor: theme.border,
+                                      paddingHorizontal: spacing.m,
+                                      paddingVertical: spacing.m,
+                                      backgroundColor: selectedGoalId === goal.id ? 
+                                        (goal.color + '20') : 'transparent',
+                                    }
+                                  ]}
                                   onPress={() => selectGoal(goal)}
                                 >
-                                  <View style={[styles.goalDot, { backgroundColor: goal.color }]} />
-                                  <Text style={[styles.dropdownItemText, { color: theme.text }]}>
+                                  <View style={[
+                                    styles.goalDot, 
+                                    { 
+                                      backgroundColor: goal.color,
+                                      width: scaleWidth(14),
+                                      height: scaleWidth(14),
+                                      borderRadius: scaleWidth(7),
+                                    }
+                                  ]} />
+                                  <Text style={[
+                                    styles.dropdownItemText, 
+                                    { 
+                                      color: theme.text,
+                                      fontSize: fontSizes.m,
+                                      fontWeight: selectedGoalId === goal.id ? '600' : '500'
+                                    }
+                                  ]}>
                                     {goal.title}
                                   </Text>
                                 </TouchableOpacity>
@@ -572,8 +814,30 @@ const AddTaskModal = ({
                       
                       {/* Milestone Selection - Only show when goal is selected */}
                       {selectedGoalId && (
-                        <View style={[styles.inputSection, { zIndex: 2 }]}>
-                          <Text style={[styles.inputLabel, { color: theme.text }]}>
+                        <View style={[
+                          styles.inputSection, 
+                          { 
+                            zIndex: 2,
+                            backgroundColor: theme.card,
+                            padding: spacing.m,
+                            borderRadius: scaleWidth(12),
+                            marginBottom: spacing.m,
+                            shadowColor: '#000',
+                            shadowOffset: { width: 0, height: 2 },
+                            shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+                            shadowRadius: 6,
+                            elevation: 3,
+                          }
+                        ]}>
+                          <Text style={[
+                            styles.inputLabel, 
+                            { 
+                              color: theme.textSecondary,
+                              fontSize: fontSizes.m,
+                              fontWeight: '600',
+                              marginBottom: spacing.xs,
+                            }
+                          ]}>
                             Link to Milestone (Optional)
                           </Text>
                         <TouchableOpacity
@@ -581,8 +845,16 @@ const AddTaskModal = ({
                             styles.dropdown,
                             { 
                               backgroundColor: theme.inputBackground,
-                              borderColor: theme.border,
-                              opacity: selectedGoalId ? 1 : 0.5
+                              borderColor: selectedProjectId ? 
+                                (allProjects.find(p => p.id === selectedProjectId)?.color || theme.border) : 
+                                theme.border,
+                              borderRadius: scaleWidth(12),
+                              opacity: selectedGoalId ? 1 : 0.5,
+                              shadowColor: '#000',
+                              shadowOffset: { width: 0, height: 2 },
+                              shadowOpacity: 0.05,
+                              shadowRadius: 4,
+                              elevation: 1,
                             }
                           ]}
                           onPress={() => {
@@ -599,12 +871,30 @@ const AddTaskModal = ({
                           accessibilityLabel={selectedProjectTitle || "Select a milestone"}
                           accessibilityHint="Tap to show milestone options"
                         >
-                          <Text style={[
-                            styles.dropdownText,
-                            { color: selectedProjectTitle ? theme.text : theme.textSecondary }
-                          ]}>
-                            {selectedProjectTitle || "Select a milestone (optional)"}
-                          </Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                            {selectedProjectId && (
+                              <View style={[
+                                styles.projectDot, 
+                                { 
+                                  backgroundColor: allProjects.find(p => p.id === selectedProjectId)?.color || theme.primary,
+                                  width: scaleWidth(10),
+                                  height: scaleWidth(10),
+                                  borderRadius: scaleWidth(5),
+                                  marginRight: spacing.s
+                                }
+                              ]} />
+                            )}
+                            <Text style={[
+                              styles.dropdownText,
+                              { 
+                                color: selectedProjectTitle ? theme.text : theme.textSecondary,
+                                fontSize: fontSizes.m,
+                                fontWeight: selectedProjectTitle ? '500' : '400'
+                              }
+                            ]}>
+                              {selectedProjectTitle || "Select a milestone (optional)"}
+                            </Text>
+                          </View>
                           <Ionicons 
                             name={showProjectList ? "chevron-up" : "chevron-down"} 
                             size={scaleWidth(20)} 
@@ -618,7 +908,14 @@ const AddTaskModal = ({
                             height: projectDropdownHeight,
                             opacity: projectDropdownOpacity,
                             backgroundColor: theme.card,
-                            borderColor: theme.border
+                            borderColor: theme.border,
+                            borderRadius: scaleWidth(12),
+                            marginTop: spacing.xs,
+                            shadowColor: '#000',
+                            shadowOffset: { width: 0, height: 4 },
+                            shadowOpacity: theme.background === '#000000' ? 0.2 : 0.1,
+                            shadowRadius: 8,
+                            elevation: 5,
                           }
                         ]}>
                           <ScrollView nestedScrollEnabled={true}>
@@ -626,18 +923,53 @@ const AddTaskModal = ({
                               availableProjects.map((project) => (
                                 <TouchableOpacity
                                   key={project.id}
-                                  style={[styles.dropdownItem, { borderBottomColor: theme.border }]}
+                                  style={[
+                                    styles.dropdownItem, 
+                                    { 
+                                      borderBottomColor: theme.border,
+                                      paddingHorizontal: spacing.m,
+                                      paddingVertical: spacing.m,
+                                      backgroundColor: selectedProjectId === project.id ? 
+                                        (project.color ? project.color + '20' : theme.primary + '20') : 'transparent',
+                                    }
+                                  ]}
                                   onPress={() => selectProject(project)}
                                 >
-                                  <View style={[styles.projectDot, { backgroundColor: project.color || theme.primary }]} />
-                                  <Text style={[styles.dropdownItemText, { color: theme.text }]}>
+                                  <View style={[
+                                    styles.projectDot, 
+                                    { 
+                                      backgroundColor: project.color || theme.primary,
+                                      width: scaleWidth(10),
+                                      height: scaleWidth(10),
+                                      borderRadius: scaleWidth(5),
+                                    }
+                                  ]} />
+                                  <Text style={[
+                                    styles.dropdownItemText, 
+                                    { 
+                                      color: theme.text,
+                                      fontSize: fontSizes.m,
+                                      fontWeight: selectedProjectId === project.id ? '600' : '500'
+                                    }
+                                  ]}>
                                     {project.title}
                                   </Text>
                                 </TouchableOpacity>
                               ))
                             ) : (
-                              <View style={styles.emptyDropdown}>
-                                <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
+                              <View style={[
+                                styles.emptyDropdown,
+                                {
+                                  padding: spacing.m
+                                }
+                              ]}>
+                                <Text style={[
+                                  styles.emptyText, 
+                                  { 
+                                    color: theme.textSecondary,
+                                    fontSize: fontSizes.m
+                                  }
+                                ]}>
                                   No milestones for this goal
                                 </Text>
                               </View>
@@ -680,7 +1012,15 @@ const AddTaskModal = ({
                         <TouchableOpacity
                           style={[
                             styles.saveAllButton,
-                            { backgroundColor: theme.primary }
+                            {
+                              borderRadius: scaleWidth(12),
+                              overflow: 'hidden',
+                              shadowColor: '#000',
+                              shadowOffset: { width: 0, height: 4 },
+                              shadowOpacity: 0.2,
+                              shadowRadius: 8,
+                              elevation: 5,
+                            }
                           ]}
                           onPress={handleSaveAll}
                           accessible={true}
@@ -688,8 +1028,48 @@ const AddTaskModal = ({
                           accessibilityLabel="Save all tasks"
                           accessibilityHint="Saves all tasks in the list"
                         >
-                          <Ionicons name="checkmark-circle" size={24} color="#FFFFFF" />
-                          <Text style={styles.saveAllButtonText}>Save All Tasks</Text>
+                          <LinearGradient
+                            colors={[theme.primary, theme.primary + 'DD']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            style={{
+                              flex: 1,
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              paddingVertical: spacing.m,
+                              paddingHorizontal: spacing.l,
+                            }}
+                          >
+                            <LinearGradient
+                              colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0)']}
+                              start={{ x: 0, y: 0 }}
+                              end={{ x: 0, y: 1 }}
+                              style={{
+                                position: 'absolute',
+                                left: 0,
+                                right: 0,
+                                top: 0,
+                                height: '50%',
+                              }}
+                            />
+                            <Ionicons 
+                              name="checkmark-circle" 
+                              size={scaleWidth(24)} 
+                              color="#FFFFFF" 
+                              style={{ marginRight: spacing.s }}
+                            />
+                            <Text style={[
+                              styles.saveAllButtonText,
+                              {
+                                fontSize: fontSizes.m,
+                                fontWeight: '600',
+                                color: '#FFFFFF'
+                              }
+                            ]}>
+                              Save All Tasks
+                            </Text>
+                          </LinearGradient>
                         </TouchableOpacity>
                       )}
                     </View>
@@ -761,7 +1141,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   closeButton: {
-    padding: spacing.xs,
     minHeight: accessibility.minTouchTarget,
     minWidth: accessibility.minTouchTarget,
     justifyContent: 'center',
@@ -769,34 +1148,27 @@ const styles = StyleSheet.create({
   },
   tabs: {
     flexDirection: 'row',
-    borderBottomWidth: 1,
-    marginBottom: spacing.m,
   },
   tab: {
     flex: 1,
-    paddingVertical: spacing.s,
     alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
+    justifyContent: 'center',
   },
   tabText: {
     fontSize: scaleFontSize(16),
-    fontWeight: '500',
   },
   scrollContent: {
     flex: 1,
   },
   inputSection: {
-    marginBottom: spacing.l,
+    // Enhanced styling applied inline
   },
   inputLabel: {
     fontSize: scaleFontSize(16),
     fontWeight: '500',
-    marginBottom: spacing.xs,
   },
   input: {
     borderWidth: 1,
-    borderRadius: scaleWidth(8),
     paddingHorizontal: spacing.m,
     paddingVertical: spacing.s,
     fontSize: scaleFontSize(16),
@@ -807,7 +1179,6 @@ const styles = StyleSheet.create({
   },
   dropdown: {
     borderWidth: 1,
-    borderRadius: scaleWidth(8),
     paddingHorizontal: spacing.m,
     paddingVertical: spacing.s,
     flexDirection: 'row',
@@ -817,17 +1188,12 @@ const styles = StyleSheet.create({
   },
   dropdownText: {
     fontSize: scaleFontSize(16),
-    flex: 1,
   },
   dropdownList: {
     borderWidth: 1,
-    borderRadius: scaleWidth(8),
-    marginTop: spacing.xs,
     overflow: 'hidden',
   },
   dropdownItem: {
-    paddingHorizontal: spacing.m,
-    paddingVertical: spacing.s,
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -835,10 +1201,9 @@ const styles = StyleSheet.create({
   dropdownItemText: {
     fontSize: scaleFontSize(14),
     flex: 1,
+    marginLeft: spacing.s,
   },
   emptyStateContainer: {
-    paddingHorizontal: spacing.m,
-    paddingVertical: spacing.l,
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -853,34 +1218,17 @@ const styles = StyleSheet.create({
     width: scaleWidth(12),
     height: scaleWidth(12),
     borderRadius: scaleWidth(6),
-    marginRight: spacing.s,
   },
   projectDot: {
     width: scaleWidth(8),
     height: scaleWidth(8),
     borderRadius: scaleWidth(4),
-    marginRight: spacing.s,
   },
   emptyDropdown: {
-    padding: spacing.m,
     alignItems: 'center',
   },
   emptyText: {
     fontSize: scaleFontSize(14),
-  },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.m,
-    borderRadius: scaleWidth(8),
-    marginTop: spacing.m,
-  },
-  addButtonText: {
-    color: '#FFFFFF',
-    fontSize: scaleFontSize(16),
-    fontWeight: '600',
-    marginLeft: spacing.s,
   },
   listContainer: {
     flex: 1,
@@ -892,9 +1240,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing.m,
-    borderRadius: scaleWidth(8),
     borderWidth: 1,
-    marginBottom: spacing.s,
   },
   taskItemContent: {
     flex: 1,
@@ -908,7 +1254,8 @@ const styles = StyleSheet.create({
     marginTop: spacing.xxs,
   },
   removeButton: {
-    padding: spacing.xs,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   emptyList: {
     flex: 1,
@@ -927,26 +1274,7 @@ const styles = StyleSheet.create({
     fontSize: scaleFontSize(16),
     fontWeight: '500',
   },
-  warningContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    padding: spacing.m,
-    borderRadius: scaleWidth(8),
-    borderWidth: 1,
-    marginBottom: spacing.m,
-  },
-  warningText: {
-    fontSize: scaleFontSize(14),
-    flex: 1,
-    marginLeft: spacing.s,
-    lineHeight: 20,
-  },
   saveAllButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.m,
-    borderRadius: scaleWidth(8),
     position: 'absolute',
     bottom: 0,
     left: 0,
@@ -956,7 +1284,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: scaleFontSize(16),
     fontWeight: '600',
-    marginLeft: spacing.s,
   },
 });
 

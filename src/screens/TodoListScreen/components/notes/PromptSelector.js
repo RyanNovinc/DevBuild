@@ -190,7 +190,7 @@ const PromptSelector = ({
           {/* Random Option */}
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: theme.text }]}>
-              🎲 Surprise Me
+              🎲 Random
             </Text>
             {renderThemeOption(
               { 

@@ -41,6 +41,8 @@ const QuickAddModal = ({ visible, onClose, onSave, onDelete, type, theme, editin
   }, [editingItem]);
 
   const handleSave = () => {
+    console.log('🔵 QuickAddModal handleSave called:', { name, amount, type, editingItem: !!editingItem });
+    
     if (!amount.trim()) {
       Alert.alert('Error', 'Please enter an amount.');
       return;
@@ -49,6 +51,7 @@ const QuickAddModal = ({ visible, onClose, onSave, onDelete, type, theme, editin
     // Use smart default if no name provided
     const finalName = name.trim() || (type === 'income' ? 'Income' : 'Expense');
     
+    console.log('🔵 QuickAddModal calling onSave:', { finalName, amount: parseFloat(amount), type });
     onSave(finalName, parseFloat(amount), editingItem);
     setName('');
     setAmount('');
@@ -136,17 +139,21 @@ const InlineIncomeView = ({ theme, data, handlers }) => {
     setShowQuickAdd(true);
   };
 
-  const handleQuickSave = (name, amount, editingItem) => {
+  const handleQuickSave = async (name, amount, editingItem) => {
+    console.log('🟢 InlineIncomeView handleQuickSave called:', { name, amount, editingItem: !!editingItem });
+    
     if (editingItem) {
       // Update existing income
+      console.log('🟢 Calling quickUpdateIncome');
       if (handlers?.quickUpdateIncome) {
-        handlers.quickUpdateIncome(editingItem.id, name, amount, editingItem.type);
+        await handlers.quickUpdateIncome(editingItem.id, name, amount, editingItem.type);
       }
       setEditingItem(null);
     } else {
       // Add new income
+      console.log('🟢 Calling quickAddIncome');
       if (handlers?.quickAddIncome) {
-        handlers.quickAddIncome(name, amount, 'primary');
+        await handlers.quickAddIncome(name, amount, 'primary');
       }
     }
   };
@@ -231,17 +238,21 @@ const InlineExpenseView = ({ theme, data, handlers }) => {
     setShowQuickAdd(true);
   };
 
-  const handleQuickSave = (name, amount, editingItem) => {
+  const handleQuickSave = async (name, amount, editingItem) => {
+    console.log('🔴 InlineExpenseView handleQuickSave called:', { name, amount, editingItem: !!editingItem });
+    
     if (editingItem) {
       // Update existing expense
+      console.log('🔴 Calling quickUpdateExpense');
       if (handlers?.quickUpdateExpense) {
-        handlers.quickUpdateExpense(editingItem.id, name, amount, editingItem.category);
+        await handlers.quickUpdateExpense(editingItem.id, name, amount, editingItem.category);
       }
       setEditingItem(null);
     } else {
       // Add new expense
+      console.log('🔴 Calling quickAddExpense');
       if (handlers?.quickAddExpense) {
-        handlers.quickAddExpense(name, amount, 'general');
+        await handlers.quickAddExpense(name, amount, 'general');
       }
     }
   };

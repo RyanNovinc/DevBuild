@@ -45,6 +45,8 @@ const ReferralScreen = ({ navigation }) => {
     stats: { sent: 0, clicked: 0, converted: 0, plansEarned: 0, plansGifted: 0 },
     referrals: [],
     remainingCount: 3,
+    currentLimit: 3,
+    usedCount: 0,
     loading: true
   });
   const [showCelebration, setShowCelebration] = useState(false);
@@ -93,12 +95,21 @@ const ReferralScreen = ({ navigation }) => {
       const stats = await ReferralService.getReferralStats();
       const remainingCount = await ReferralService.getReferralsRemaining();
       
+      // Get current referral limit (base 3 + achievements)
+      const AchievementService = require('../../services/AchievementService').default;
+      const currentLimit = await AchievementService.getReferralLimit();
+      
+      // Calculate used count (total limit - remaining)
+      const usedCount = Math.max(0, currentLimit - remainingCount);
+      
       setReferralData({
         code,
         link,
         stats,
         referrals,
         remainingCount,
+        currentLimit,
+        usedCount,
         loading: false
       });
       
@@ -576,14 +587,14 @@ const ReferralScreen = ({ navigation }) => {
             <View style={styles.progressRing}>
               <View style={[styles.progressFill, {
                 transform: [{
-                  rotate: `${((3 - referralData.remainingCount) / 3) * 360}deg`
+                  rotate: `${(referralData.usedCount / referralData.currentLimit) * 360}deg`
                 }]
               }]} />
               <View style={styles.progressInner}>
                 <Text style={styles.progressNumber}>
-                  {3 - referralData.remainingCount}
+                  {referralData.usedCount}
                 </Text>
-                <Text style={styles.progressLabel}>of 3</Text>
+                <Text style={styles.progressLabel}>of {referralData.currentLimit}</Text>
               </View>
             </View>
           </View>

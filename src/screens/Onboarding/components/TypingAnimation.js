@@ -37,11 +37,46 @@ const TypingAnimation = forwardRef(({
   // Track if animation was started
   const animationStartedRef = useRef(false);
   
+  // Skip debounce refs
+  const skipDebounceTimerRef = useRef(null);
+  const skipDebounceDelay = 100; // 100ms debounce to prevent rapid taps
+  
+  // Clear skip debounce timer helper
+  const clearSkipDebounceTimer = () => {
+    if (skipDebounceTimerRef.current) {
+      clearTimeout(skipDebounceTimerRef.current);
+      skipDebounceTimerRef.current = null;
+    }
+  };
+
+  // Handle skip with debouncing to prevent rapid taps
+  const handleSkip = () => {
+    // Check if component is mounted
+    if (!isMountedRef.current) {
+      return;
+    }
+    
+    // If already completed, do nothing
+    if (isCompletedRef.current) {
+      return;
+    }
+    
+    // Clear any existing debounce timer
+    clearSkipDebounceTimer();
+    
+    // Set up debounced skip execution
+    skipDebounceTimerRef.current = setTimeout(() => {
+      if (isMountedRef.current && !isCompletedRef.current) {
+        completeTypingImmediately();
+      }
+    }, skipDebounceDelay);
+  };
+
   // Expose methods to parent component via ref
   useImperativeHandle(ref, () => ({
     // Complete typing immediately - can be called by parent
     complete: () => {
-      completeTypingImmediately();
+      handleSkip();
     },
     // Check if typing is complete
     isComplete: () => {
@@ -50,7 +85,10 @@ const TypingAnimation = forwardRef(({
     // Reset and start over - added for language changes
     reset: () => {
       if (isMountedRef.current) {
-        // Reset state
+        // Clear skip debounce timer
+        clearSkipDebounceTimer();
+        
+        // Reset animation state
         textIndexRef.current = 0;
         displayedTextRef.current = '';
         isCompletedRef.current = false;
@@ -115,6 +153,7 @@ const TypingAnimation = forwardRef(({
       if (typingTimerRef.current) {
         clearTimeout(typingTimerRef.current);
       }
+      clearSkipDebounceTimer();
       clearTimeout(startTimeout);
     };
   }, []);

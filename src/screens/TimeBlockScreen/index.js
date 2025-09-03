@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   TextInput,
   SafeAreaView,
+  ScrollView,
   Keyboard,
   BackHandler,
   Platform,
@@ -71,7 +72,7 @@ const TimeBlockScreen = ({ route, navigation }) => {
     };
   }, []);
   const { theme } = useTheme();
-  const { mainGoals, milestones, tasks, addTimeBlock, updateTimeBlock, updateTimeBlockSeries, createNewTimeBlockSeries, checkTimeBlockConflicts, deleteTimeBlock, timeBlocks } = useAppContext();
+  const { mainGoals, milestones, tasks, addTimeBlock, addTimeBlockSkipConflicts, updateTimeBlock, updateTimeBlockSeries, createNewTimeBlockSeries, checkTimeBlockConflicts, checkRecurringTimeBlockConflicts, deleteTimeBlock, timeBlocks } = useAppContext();
   const notification = useNotification ? useNotification() : { 
     showSuccess: (msg) => console.log(msg),
     showError: (msg) => console.error(msg)
@@ -133,6 +134,7 @@ const TimeBlockScreen = ({ route, navigation }) => {
   // For conflict warning modal
   const [showConflictModal, setShowConflictModal] = useState(false);
   const [conflictDetails, setConflictDetails] = useState('');
+  const [conflictData, setConflictData] = useState(null);
   
   // Function to get all tasks - tasks are now stored separately, not nested under milestones
   const getAllTasks = () => {
@@ -636,42 +638,6 @@ const TimeBlockScreen = ({ route, navigation }) => {
     navigation.goBack();
   };
   
-  // Function to check for time block overlaps
-  const checkForOverlaps = () => {
-    // Make sure we're working with an array
-    if (!Array.isArray(timeBlocks)) return false;
-    
-    // Get the date string to compare only blocks on the same day
-    const blockDate = startTime.toDateString();
-    
-    const overlaps = timeBlocks.filter(block => {
-      // Skip the current block if we're editing
-      if (!isCreating && initialTimeBlock && block.id === initialTimeBlock.id) {
-        return false;
-      }
-      
-      // Only check blocks on the same day
-      const existingBlockDate = new Date(block.startTime).toDateString();
-      if (existingBlockDate !== blockDate) {
-        return false;
-      }
-      
-      const blockStart = new Date(block.startTime);
-      const blockEnd = new Date(block.endTime);
-      
-      // Check for overlap: 
-      // new start time is within an existing block
-      // OR new end time is within an existing block
-      // OR new block completely contains an existing block
-      return (
-        (startTime >= blockStart && startTime < blockEnd) ||
-        (endTime > blockStart && endTime <= blockEnd) ||
-        (startTime <= blockStart && endTime >= blockEnd)
-      );
-    });
-    
-    return overlaps.length > 0 ? overlaps : false;
-  };
   
   // Function to validate custom minutes input
   const validateCustomMinutes = (value) => {
@@ -728,6 +694,17 @@ const TimeBlockScreen = ({ route, navigation }) => {
   };
   
   const handleSave = async () => {
+    // Prevent save if conflict modal is showing or if already saving via Skip Conflicts
+    if (showConflictModal || isSaving) {
+      console.log('🚨 ALERT: Regular handleSave blocked - conflict modal showing or Skip Conflicts in progress');
+      return;
+    }
+    
+    // Set saving flag immediately to prevent race conditions
+    setIsSaving(true);
+    
+    try {
+      console.log('🚨 ALERT: Regular handleSave function called! This should NOT happen during Skip Conflicts!');
     // Animate the save button
     animateSaveButton();
     
@@ -740,45 +717,10 @@ const TimeBlockScreen = ({ route, navigation }) => {
       return;
     }
     
-    if (activeTab === 'goal' && !domain.trim()) {
-      notification.showError('Please select a goal');
-      return;
-    }
+    // Note: We allow empty domain for goal tab - this represents "No Specific Goal"
     
     // For general activities, use default category if none selected
     const finalCategory = activeTab === 'general' ? (category.trim() || 'Personal') : category;
-    
-    // Check for time block overlaps
-    const overlaps = checkForOverlaps();
-    if (overlaps) {
-      // Show error about overlapping time blocks
-      setTimeError('This time block overlaps with an existing time block.');
-      
-      // Get the first overlapping block for details
-      const firstOverlap = overlaps[0];
-      const overlapStart = new Date(firstOverlap.startTime);
-      const overlapEnd = new Date(firstOverlap.endTime);
-      
-      // Detailed error modal
-      Alert.alert(
-        'Time Conflict',
-        `This time block overlaps with "${firstOverlap.title}" scheduled from ${formatTime(overlapStart)} to ${formatTime(overlapEnd)}.`,
-        [
-          { 
-            text: 'Adjust Time',
-            style: 'cancel'
-          },
-          {
-            text: 'View Conflict',
-            onPress: () => {
-              navigation.goBack();
-              // You might add a way to highlight the conflicting block in TimeScreen
-            }
-          }
-        ]
-      );
-      return;
-    }
     
     // Find matching goal to get its color
     const selectedGoal = Array.isArray(mainGoals) ? 
@@ -861,6 +803,7 @@ const TimeBlockScreen = ({ route, navigation }) => {
     
     // Define the save logic as a function we can call conditionally
     const performSave = async () => {
+    console.log('🚨 CRITICAL: performSave called - this creates all timeblocks via regular addTimeBlock!');
     
     // Handle notification scheduling
     let newNotificationId = null;
@@ -962,22 +905,326 @@ const TimeBlockScreen = ({ route, navigation }) => {
     }
     }; // End of performSave function
     
-    // Check for time conflicts first (except when editing series)
-    if (isCreating || (!isEditingSeries && !initialTimeBlock?.isRepeating)) {
-      const excludeIds = isCreating ? [] : [initialTimeBlock?.id];
-      const conflicts = checkTimeBlockConflicts(timeBlock, excludeIds);
+    // Check for time conflicts - ALWAYS check except when in bypass mode
+    const excludeIds = isCreating ? [] : [initialTimeBlock?.id];
+    
+    // Determine if we're editing a series and get series ID
+    const editingSeriesId = isEditingSeries && initialTimeBlock ? 
+      (initialTimeBlock.seriesId || initialTimeBlock.originalTimeBlockId || initialTimeBlock.id) : null;
+    
+    console.log('🔍 Conflict Detection Debug:', {
+      isCreating,
+      isEditingSeries,
+      editingSeriesId,
+      timeBlockIsRepeating: timeBlock.isRepeating,
+      excludeIds
+    });
+    
+    // Use enhanced conflict detection for recurring timeblocks
+    const conflictResult = timeBlock.isRepeating ? 
+      checkRecurringTimeBlockConflicts(timeBlock, excludeIds, isEditingSeries, editingSeriesId) :
+      { conflicts: checkTimeBlockConflicts(timeBlock, excludeIds), conflictingInstances: [] };
+    
+    if (conflictResult.conflicts.length > 0) {
+      const conflictTitles = conflictResult.conflicts.map(c => c.title).join(', ');
+      setTimeError(`Time conflict with: ${conflictTitles}`);
+      setConflictDetails(conflictTitles);
+      setConflictData(conflictResult);
+      setShowConflictModal(true);
       
-      if (conflicts.length > 0) {
-        const conflictTitles = conflicts.map(c => c.title).join(', ');
-        setTimeError(`Time conflict with: ${conflictTitles}`);
-        setConflictDetails(conflictTitles);
-        setShowConflictModal(true);
-        return; // Exit early to show modal
-      }
+      console.log('🚨 CONFLICTS DETECTED: Stopping regular save, showing modal instead');
+      // CRITICAL: Reset saving flag so Skip Conflicts can work
+      setIsSaving(false);
+      return; // Exit early to show modal - performSave should NOT be called
     }
     
+    console.log('🚨 NO CONFLICTS: Proceeding with performSave');
     // No conflicts, proceed with save
     await performSave();
+  } catch (error) {
+    console.error('Error in handleSave:', error);
+    notification.showError('Failed to save time block');
+  } finally {
+    // Reset saving flag
+    setIsSaving(false);
+  }
+};
+
+  // Function to save timeblock bypassing conflict detection (for "Create Anyway" button)
+  const handleSaveBypassConflicts = async () => {
+    // Prevent Create Anyway from running if Skip Conflicts is in progress
+    if (isSaving) {
+      console.log('🚨 CREATE ANYWAY: Blocked - Skip Conflicts is in progress');
+      return;
+    }
+    
+    try {
+      console.log('🚨 CREATE ANYWAY: handleSaveBypassConflicts function called!');
+      
+      // Validate input
+      if (!title.trim()) {
+        notification.showError('Please enter a title');
+        return;
+      }
+      
+      // Note: We allow empty domain for goal tab - this represents "No Specific Goal"
+      
+      // For general activities, use default category if none selected
+      const finalCategory = activeTab === 'general' ? (category.trim() || 'Personal') : category;
+      
+      // Find matching goal to get its color
+      const selectedGoal = Array.isArray(mainGoals) ? 
+        mainGoals.find(goal => goal.title === domain) : null;
+      const selectedColor = selectedGoal ? selectedGoal.color : domainColor;
+      
+      // Get the milestone ID if a milestone is selected
+      const milestoneId = selectedMilestone ? selectedMilestone.id : null;
+      
+      // Get the task ID if a task is selected
+      const taskId = selectedTask ? selectedTask.id : null;
+      
+      // Also store the milestone and task titles
+      const milestoneTitle = selectedMilestone ? selectedMilestone.title : null;
+      const taskTitle = selectedTask ? selectedTask.title : null;
+      
+      console.log('🎯 Bypass Save Debug:', {
+        title,
+        domain,
+        isRepeating,
+        milestoneId,
+        taskId
+      });
+      
+      // If we're updating, cancel the existing notification if there is one
+      if (!isCreating && notificationId) {
+        try {
+          await cancelTimeBlockNotification(notificationId);
+        } catch (error) {
+          console.warn('Error cancelling existing notification:', error);
+        }
+      }
+      
+      // Validate custom minutes again if needed
+      const validatedMinutes = notificationTime === 'custom' && customMinutes ? 
+        validateCustomMinutes(customMinutes) || '15' : null;
+      
+      // Create time block object
+      const timeBlock = {
+        id: initialTimeBlock?.id || Date.now().toString(),
+        title,
+        isGeneralActivity: activeTab === 'general',
+        
+        // For Goal Focus time blocks
+        domain: activeTab === 'goal' ? domain : null,
+        domainColor: activeTab === 'goal' ? selectedColor : null,
+        milestoneId: activeTab === 'goal' ? milestoneId : null,
+        milestoneTitle: activeTab === 'goal' ? milestoneTitle : null,
+        taskId: activeTab === 'goal' ? taskId : null,
+        taskTitle: activeTab === 'goal' ? taskTitle : null,
+        
+        // For General Activity time blocks
+        category: activeTab === 'general' ? finalCategory : null,
+        customColor: activeTab === 'general' ? customColor : null,
+        customIcon: activeTab === 'general' ? customIcon : null,
+        
+        // Common fields
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+        location,
+        notes,
+        isCompleted,
+        
+        // Add repeating information
+        isRepeating,
+        repeatFrequency: isRepeating ? repeatFrequency : null,
+        repeatIndefinitely: isRepeating ? repeatIndefinitely : null,
+        repeatUntil: isRepeating && !repeatIndefinitely && repeatUntil ? repeatUntil.toISOString() : null,
+        
+        // Add notification information
+        notification: enableNotification,
+        notificationTime: enableNotification ? notificationTime : null,
+        customMinutes: enableNotification && notificationTime === 'custom' ? validatedMinutes : null,
+        notificationId: null
+      };
+      
+      // Handle notification scheduling
+      let newNotificationId = null;
+      if (enableNotification) {
+        try {
+          newNotificationId = await scheduleTimeBlockNotificationSimple(timeBlock);
+          if (newNotificationId) {
+            timeBlock.notificationId = newNotificationId;
+          }
+        } catch (error) {
+          console.error('Error scheduling notification:', error);
+        }
+      }
+      
+      // Save time block
+      if (isCreating) {
+        await addTimeBlock(timeBlock);
+        notification.showSuccess('Time block created');
+      } else {
+        // Handle editing logic similar to original
+        const wasRecurring = initialTimeBlock?.isRepeating || initialTimeBlock?.isRepeatingInstance;
+        const isNowRecurring = isRepeating;
+        const wasNonRecurringNowRecurring = !wasRecurring && isNowRecurring;
+        
+        if (isEditingSeries && wasRecurring) {
+          const seriesId = initialTimeBlock?.seriesId || initialTimeBlock?.originalTimeBlockId || initialTimeBlock?.id;
+          await updateTimeBlockSeries(seriesId, timeBlock);
+          notification.showSuccess('Series updated - all events changed');
+        } else if (!isEditingSeries && wasNonRecurringNowRecurring) {
+          const newSeriesTimeBlock = {
+            ...timeBlock,
+            id: initialTimeBlock.id,
+            seriesId: null,
+            originalTimeBlockId: null,
+            isRepeating: true,
+            isRepeatingInstance: false
+          };
+          await updateTimeBlock(newSeriesTimeBlock);
+          notification.showSuccess('New recurring series created');
+        } else {
+          await updateTimeBlock(timeBlock);
+          notification.showSuccess(isEditingSeries ? 'Time block updated' : 'Instance updated');
+        }
+      }
+      
+      // Reset hasUnsavedChanges flag
+      setHasUnsavedChanges(false);
+      
+      // Navigate back
+      navigation.goBack();
+      
+    } catch (error) {
+      console.error('Error saving time block (bypass conflicts):', error);
+      notification.showError('Failed to save time block');
+    }
+  };
+
+  // Add a flag to prevent multiple saves
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Function to save timeblock skipping conflicting instances  
+  const handleSaveSkipConflicts = async () => {
+    if (isSaving) {
+      console.log('Skip Conflicts: Already saving, ignoring duplicate call');
+      return;
+    }
+    
+    setIsSaving(true);
+    console.log('Skip Conflicts: Starting save process');
+    
+    try {
+      // Validate input
+      if (!title?.trim()) {
+        console.log('Skip Conflicts: Validation failed - no title');
+        notification.showError('Please enter a title');
+        return;
+      }
+      
+      // Note: We allow empty domain for goal tab - this represents "No Specific Goal"
+      
+      // For general activities, use default category if none selected
+      const finalCategory = activeTab === 'general' ? (category?.trim() || 'Personal') : category;
+      
+      // Find matching goal to get its color
+      const selectedGoal = Array.isArray(mainGoals) ? 
+        mainGoals.find(goal => goal.title === domain) : null;
+      const selectedColor = selectedGoal ? selectedGoal.color : domainColor;
+      
+      // Get the milestone ID if a milestone is selected
+      const milestoneId = selectedMilestone ? selectedMilestone.id : null;
+      
+      // Get the task ID if a task is selected
+      const taskId = selectedTask ? selectedTask.id : null;
+      
+      // Also store the milestone and task titles
+      const milestoneTitle = selectedMilestone ? selectedMilestone.title : null;
+      const taskTitle = selectedTask ? selectedTask.title : null;
+      
+      // Validate custom minutes again if needed
+      const validatedMinutes = notificationTime === 'custom' && customMinutes ? 
+        validateCustomMinutes(customMinutes) || '15' : null;
+      
+      // Create time block object
+      const timeBlock = {
+        id: initialTimeBlock?.id || Date.now().toString(),
+        title,
+        isGeneralActivity: activeTab === 'general',
+        
+        // For Goal Focus time blocks
+        domain: activeTab === 'goal' ? domain : null,
+        domainColor: activeTab === 'goal' ? selectedColor : null,
+        milestoneId: activeTab === 'goal' ? milestoneId : null,
+        milestoneTitle: activeTab === 'goal' ? milestoneTitle : null,
+        taskId: activeTab === 'goal' ? taskId : null,
+        taskTitle: activeTab === 'goal' ? taskTitle : null,
+        
+        // For General Activity time blocks
+        category: activeTab === 'general' ? finalCategory : null,
+        customColor: activeTab === 'general' ? customColor : null,
+        customIcon: activeTab === 'general' ? customIcon : null,
+        
+        // Common fields
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+        location,
+        notes,
+        isCompleted,
+        
+        // Add repeating information
+        isRepeating,
+        repeatFrequency: isRepeating ? repeatFrequency : null,
+        repeatIndefinitely: isRepeating ? repeatIndefinitely : null,
+        repeatUntil: isRepeating && !repeatIndefinitely && repeatUntil ? repeatUntil.toISOString() : null,
+        
+        // Add notification information
+        notification: enableNotification,
+        notificationTime: enableNotification ? notificationTime : null,
+        customMinutes: enableNotification && notificationTime === 'custom' ? validatedMinutes : null,
+        notificationId: null
+      };
+      
+      console.log('Skip Conflicts: Creating timeblock with conflict avoidance');
+      
+      // Use the skip conflicts functionality
+      const excludeIds = isCreating ? [] : [initialTimeBlock?.id];
+      
+      // Determine if we're editing a series and get series ID
+      const editingSeriesId = isEditingSeries && initialTimeBlock ? 
+        (initialTimeBlock.seriesId || initialTimeBlock.originalTimeBlockId || initialTimeBlock.id) : null;
+      
+      const result = await addTimeBlockSkipConflicts(timeBlock, excludeIds, isEditingSeries, editingSeriesId);
+      
+      if (result) {
+        const skipped = result.totalInstances - result.createdInstances;
+        
+        if (skipped > 0) {
+          notification.showSuccess(`Created ${result.createdInstances} timeblocks (skipped ${skipped} conflicts)`);
+          console.log(`Skip Conflicts: Created ${result.createdInstances} instances, skipped ${skipped} conflicting instances`);
+        } else {
+          notification.showSuccess('Time block created');
+          console.log('Skip Conflicts: Time block created successfully');
+        }
+        
+        // Reset hasUnsavedChanges flag
+        setHasUnsavedChanges(false);
+        
+        // Navigate back
+        navigation.goBack();
+      } else {
+        console.log('Skip Conflicts: All instances would conflict - no timeblocks created');
+        notification.showError('All instances would conflict - no timeblocks created');
+      }
+      
+    } catch (error) {
+      console.error('Skip Conflicts: Error occurred:', error);
+      notification.showError('Failed to create timeblock');
+    } finally {
+      setIsSaving(false);
+    }
   };
   
   const handleDelete = () => {
@@ -1381,9 +1628,11 @@ const TimeBlockScreen = ({ route, navigation }) => {
           <TouchableOpacity 
             style={[
               styles.saveButton,
-              ensureAccessibleTouchTarget(50, 44)
+              ensureAccessibleTouchTarget(50, 44),
+              (showConflictModal || isSaving) && { opacity: 0.3 } // Dim when disabled
             ]} 
             onPress={handleSave}
+            disabled={showConflictModal || isSaving}
             activeOpacity={0.7}
             accessibilityRole="button"
             accessibilityLabel="Save time block"
@@ -1917,7 +2166,7 @@ const TimeBlockScreen = ({ route, navigation }) => {
         </TouchableOpacity>
       </Modal>
 
-      {/* Conflict Warning Modal - Clean Professional Design */}
+      {/* Enhanced Conflict Warning Modal */}
       <Modal
         visible={showConflictModal}
         transparent={true}
@@ -1925,23 +2174,63 @@ const TimeBlockScreen = ({ route, navigation }) => {
         onRequestClose={() => setShowConflictModal(false)}
       >
         <TouchableOpacity 
-          style={styles.infoModalOverlay}
+          style={styles.conflictModalOverlay}
           activeOpacity={1}
           onPress={() => setShowConflictModal(false)}
         >
-          <View style={[styles.conflictModalContainer, { backgroundColor: theme.card }]}>
-            <View style={styles.infoModalContent}>
+          <View style={[styles.enhancedConflictModalContainer, { backgroundColor: theme.card }]}>
+            <ScrollView 
+              style={styles.conflictModalScroll}
+              contentContainerStyle={styles.conflictModalContent}
+              showsVerticalScrollIndicator={false}
+            >
               <View style={[styles.conflictModalIcon, { backgroundColor: '#FF3B3015' }]}>
                 <Ionicons name="warning" size={28} color="#FF3B30" />
               </View>
               
-              <Text style={[styles.infoModalTitle, { color: theme.text }]}>
-                Time Conflict
+              <Text style={[styles.conflictModalTitle, { color: theme.text }]}>
+                {conflictData?.conflictingInstances?.length > 0 ? 'Recurring Event Conflicts' : 'Time Conflict'}
               </Text>
               
-              <Text style={[styles.conflictModalDescription, { color: theme.textSecondary }]}>
-                This time overlaps with: {conflictDetails}
-              </Text>
+              {conflictData?.conflictingInstances?.length > 0 ? (
+                <>
+                  <Text style={[styles.conflictModalSummary, { color: theme.textSecondary }]}>
+                    {conflictData.conflictCount} of {conflictData.totalInstances} recurring events will conflict with existing timeblocks.
+                  </Text>
+                  
+                  <View style={styles.conflictDetailsList}>
+                    {conflictData.conflictingInstances.slice(0, 5).map((conflictInstance, index) => (
+                      <View key={index} style={[styles.conflictDetailItem, { backgroundColor: theme.surface }]}>
+                        <View style={styles.conflictItemHeader}>
+                          <Ionicons name="calendar" size={14} color={theme.textSecondary} />
+                          <Text style={[styles.conflictItemDate, { color: theme.text }]}>
+                            {new Date(conflictInstance.instance.startTime).toLocaleDateString('en-US', {
+                              weekday: 'short',
+                              month: 'short', 
+                              day: 'numeric'
+                            })}
+                          </Text>
+                          <Text style={[styles.conflictItemTime, { color: theme.textSecondary }]}>
+                            {formatTime(new Date(conflictInstance.instance.startTime))} - {formatTime(new Date(conflictInstance.instance.endTime))}
+                          </Text>
+                        </View>
+                        <Text style={[styles.conflictItemConflicts, { color: theme.textSecondary }]}>
+                          Conflicts with: {conflictInstance.conflicts.map(c => c.title).join(', ')}
+                        </Text>
+                      </View>
+                    ))}
+                    {conflictData.conflictingInstances.length > 5 && (
+                      <Text style={[styles.conflictMoreText, { color: theme.textSecondary }]}>
+                        +{conflictData.conflictingInstances.length - 5} more conflicts...
+                      </Text>
+                    )}
+                  </View>
+                </>
+              ) : (
+                <Text style={[styles.conflictModalDescription, { color: theme.textSecondary }]}>
+                  This time overlaps with: {conflictDetails}
+                </Text>
+              )}
               
               <View style={styles.conflictModalButtons}>
                 <TouchableOpacity
@@ -1949,22 +2238,58 @@ const TimeBlockScreen = ({ route, navigation }) => {
                   onPress={() => setShowConflictModal(false)}
                   activeOpacity={0.8}
                 >
-                  <Text style={[styles.conflictModalButtonText, { color: theme.text }]}>Cancel</Text>
+                  <Text style={[styles.conflictModalButtonText, { color: theme.text }]}>Adjust Time</Text>
                 </TouchableOpacity>
                 
+                {conflictData?.conflictingInstances?.length > 0 && (
+                  <TouchableOpacity
+                    style={[styles.conflictModalButton, styles.conflictSkipButton, { 
+                      backgroundColor: theme.primary,
+                      borderColor: theme.primary 
+                    }]}
+                    onPress={() => {
+                      // Prevent multiple clicks
+                      if (isSaving) {
+                        console.log('🚨 Skip Conflicts button clicked but already saving - ignoring');
+                        return;
+                      }
+
+                      console.log('Skip Conflicts: Creating only non-conflicting timeblock instances');
+                      setShowConflictModal(false);
+                      setTimeError('');
+                      
+                      // Call the skip conflicts function
+                      handleSaveSkipConflicts().catch(error => {
+                        console.error('Error in Skip Conflicts:', error);
+                      });
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.conflictModalButtonText, { color: '#FFFFFF' }]}>Skip Conflicts</Text>
+                  </TouchableOpacity>
+                )}
+                
                 <TouchableOpacity
-                  style={[styles.conflictModalButton, styles.conflictSaveButton, { backgroundColor: theme.primary }]}
+                  style={[styles.conflictModalButton, styles.conflictSaveButton, { backgroundColor: '#FF3B30' }]}
                   onPress={async () => {
+                    // Prevent Create Anyway if Skip Conflicts is in progress
+                    if (isSaving) {
+                      console.log('🚨 CREATE ANYWAY BUTTON: Blocked - Skip Conflicts in progress');
+                      return;
+                    }
+                    
+                    console.log('🚨 CREATE ANYWAY BUTTON: Pressed');
                     setShowConflictModal(false);
-                    setTimeError(''); // Clear error
-                    await performSave();
+                    setTimeError('');
+                    // Directly call the save logic bypassing conflict detection
+                    await handleSaveBypassConflicts();
                   }}
                   activeOpacity={0.8}
                 >
-                  <Text style={[styles.conflictModalButtonText, { color: '#FFFFFF' }]}>Save Anyway</Text>
+                  <Text style={[styles.conflictModalButtonText, { color: '#FFFFFF' }]}>Create Anyway</Text>
                 </TouchableOpacity>
               </View>
-            </View>
+            </ScrollView>
           </View>
         </TouchableOpacity>
       </Modal>
@@ -2280,17 +2605,31 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
   },
-  // Conflict Modal Styles
-  conflictModalContainer: {
+  // Enhanced Conflict Modal Styles
+  conflictModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  enhancedConflictModalContainer: {
     borderRadius: 16,
-    padding: 28,
-    maxWidth: 320,
+    maxWidth: 400,
     width: '100%',
+    maxHeight: '80%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 12,
     elevation: 12,
+  },
+  conflictModalScroll: {
+    maxHeight: '100%',
+  },
+  conflictModalContent: {
+    padding: 24,
+    alignItems: 'center',
   },
   conflictModalIcon: {
     width: 56,
@@ -2300,37 +2639,99 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 16,
   },
+  conflictModalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  conflictModalSummary: {
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
   conflictModalDescription: {
     fontSize: 15,
     lineHeight: 22,
     textAlign: 'center',
     marginBottom: 24,
   },
+  conflictDetailsList: {
+    width: '100%',
+    marginBottom: 24,
+  },
+  conflictDetailItem: {
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  conflictItemHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  conflictItemDate: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginLeft: 6,
+    flex: 1,
+  },
+  conflictItemTime: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  conflictItemConflicts: {
+    fontSize: 12,
+    lineHeight: 16,
+    marginLeft: 20,
+  },
+  conflictMoreText: {
+    fontSize: 12,
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginTop: 8,
+  },
   conflictModalButtons: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    alignItems: 'center',
     width: '100%',
+    flexWrap: 'wrap',
+    gap: 12,
+    paddingHorizontal: 4,
   },
   conflictModalButton: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    minWidth: 100,
+    maxWidth: 140,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 44,
-    marginHorizontal: 6,
+    minHeight: 48,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   conflictCancelButton: {
     borderWidth: 1,
     backgroundColor: 'transparent',
   },
+  conflictSkipButton: {
+    // Uses inline styles
+  },
   conflictSaveButton: {
-    // Uses theme.primary background from inline style
+    // Uses inline styles
   },
   conflictModalButtonText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
+    letterSpacing: 0.3,
+    textAlign: 'center',
   },
 });
 

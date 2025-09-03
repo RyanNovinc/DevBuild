@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { 
   View, 
   Text, 
@@ -20,6 +20,7 @@ const FoundationBuilderIntro = ({
   onContinue 
 }) => {
   const { theme } = useTheme();
+  const [isProcessing, setIsProcessing] = useState(false);
   
   console.log('🏆 FoundationBuilderIntro render:', { visible });
   
@@ -145,6 +146,32 @@ const FoundationBuilderIntro = ({
     }
   };
 
+  // Handle continue with debouncing to prevent double-tap issues
+  const handleContinue = async () => {
+    if (isProcessing) {
+      console.log('🏆 Continue already processing, ignoring tap');
+      return;
+    }
+    
+    console.log('🏆 Continue button pressed');
+    setIsProcessing(true);
+    
+    // Trigger extra celebration effects when continue is pressed
+    createFallingTrophies();
+    createFireworks();
+    
+    try {
+      await onContinue();
+    } catch (error) {
+      console.error('🏆 Error in continue handler:', error);
+    } finally {
+      // Reset processing state after a short delay
+      setTimeout(() => {
+        setIsProcessing(false);
+      }, 1000);
+    }
+  };
+
   if (!visible) return null;
 
   return (
@@ -249,15 +276,21 @@ const FoundationBuilderIntro = ({
           <TouchableOpacity 
             style={[
               styles.continueButton,
-              { borderColor: theme.border }
+              { 
+                borderColor: theme.border,
+                opacity: isProcessing ? 0.6 : 1
+              }
             ]}
-            onPress={onContinue}
+            onPress={handleContinue}
             activeOpacity={0.8}
+            disabled={isProcessing}
           >
             <Text style={[
               styles.continueText,
               { color: theme.text }
-            ]}>Continue</Text>
+            ]}>
+              {isProcessing ? 'Processing...' : 'Continue'}
+            </Text>
           </TouchableOpacity>
         </Animated.View>
       </View>

@@ -16,6 +16,7 @@ import { Share, Clipboard } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { generateExportContent } from '../TodoUtils';
 import ConfirmationModal from './ConfirmationModal';
+import ActionConfirmationModal from './ActionConfirmationModal';
 
 // Get screen dimensions for responsive layout
 const { width } = Dimensions.get('window');
@@ -27,7 +28,7 @@ const CONFIRMATION_SETTING_KEY = 'todo_action_confirmation_enabled';
  * A separate component for the bottom action buttons
  * Optimized for smooth animations and zero-flash state changes
  */
-const TodoButtonOverlay = React.memo(({
+const TodoButtonOverlay = ({
   activeTab,
   todos,
   setTodos,
@@ -36,18 +37,33 @@ const TodoButtonOverlay = React.memo(({
   laterTodos,
   setLaterTodos,
   isAddingSubtask,
-  moveIncompleteTodosToTomorrow,
-  moveTomorrowTodosToToday,
-  moveLaterItemsToTomorrow,
   theme,
   showSuccess,
   // Props for limit checking
   canAddMoreTodos,
-  showFeatureLimitBanner
+  showFeatureLimitBanner,
+  subscription,
+  // External move functions
+  moveIncompleteTodosToTomorrow,
+  moveTomorrowTodosToToday,
+  moveLaterItemsToTomorrow
 }) => {
   // State for confirmation setting - DEFAULT TO TRUE so it always asks for confirmation
   const [confirmationEnabled, setConfirmationEnabled] = useState(true);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  
+  // State for action confirmation modal
+  const [showActionModal, setShowActionModal] = useState(false);
+  const [actionModalConfig, setActionModalConfig] = useState({
+    title: '',
+    message: '',
+    onConfirm: () => {},
+    confirmText: 'Confirm',
+    cancelText: 'Cancel',
+    confirmColor: '#FF3B30',
+    icon: 'warning-outline',
+    iconColor: '#FF9500'
+  });
   
   // Animation values
   const fadeIn = useRef(new Animated.Value(0)).current;
@@ -110,6 +126,30 @@ const TodoButtonOverlay = React.memo(({
     
     saveConfirmationSetting();
   }, [confirmationEnabled]);
+  
+  // Helper function to show custom action confirmation modal
+  const showCustomAlert = useCallback(({
+    title,
+    message, 
+    onConfirm,
+    confirmText = 'Confirm',
+    cancelText = 'Cancel',
+    confirmColor = '#FF3B30',
+    icon = 'warning-outline',
+    iconColor = '#FF9500'
+  }) => {
+    setActionModalConfig({
+      title,
+      message,
+      onConfirm,
+      confirmText,
+      cancelText,
+      confirmColor,
+      icon,
+      iconColor
+    });
+    setShowActionModal(true);
+  }, []);
   
   // Get the correct todos array based on active tab
   const getCurrentTodos = useCallback(() => {
@@ -238,45 +278,55 @@ const TodoButtonOverlay = React.memo(({
   
   // Long press on counter to trigger cleanup
   const handleCounterLongPress = useCallback(() => {
-    Alert.alert(
-      "Cleanup Todo List",
-      "Do you want to clean up any invalid or orphaned items?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Clean Up", 
-          onPress: () => {
-            const cleaned = cleanupTodos();
-            if (!cleaned) {
-              showSuccess('No invalid items found');
-            }
+    if (confirmationEnabled) {
+      showCustomAlert({
+        title: "Cleanup Todo List",
+        message: "Do you want to clean up any invalid or orphaned items?",
+        onConfirm: () => {
+          const cleaned = cleanupTodos();
+          if (!cleaned) {
+            showSuccess('No invalid items found');
           }
-        }
-      ]
-    );
-  }, [cleanupTodos, showSuccess]);
+        },
+        confirmText: "Clean Up",
+        cancelText: "Cancel",
+        confirmColor: "#34C759", // Green for cleanup action
+        icon: "construct-outline",
+        iconColor: "#34C759"
+      });
+    } else {
+      // If confirmations are disabled, directly perform cleanup
+      const cleaned = cleanupTodos();
+      if (!cleaned) {
+        showSuccess('No invalid items found');
+      }
+    }
+  }, [cleanupTodos, showSuccess, showCustomAlert, confirmationEnabled]);
   
   // Clear completed todos for the current tab
   const clearCompleted = useCallback(() => {
     // Animate the button press
     animateButtonPress(2);
     
-    // Show confirmation dialog regardless of setting
-    Alert.alert(
-      "Clear Completed To-dos",
-      "Are you sure you want to clear all completed to-dos?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Clear", 
-          style: "destructive",
-          onPress: () => {
-            performClearCompleted();
-          }
-        }
-      ]
-    );
-  }, [animateButtonPress]);
+    // Check confirmation setting
+    if (confirmationEnabled) {
+      showCustomAlert({
+        title: "Clear Completed To-dos",
+        message: "Are you sure you want to clear all completed to-dos?",
+        onConfirm: () => {
+          performClearCompleted();
+        },
+        confirmText: "Clear",
+        cancelText: "Cancel",
+        confirmColor: "#FF3B30", // Red for destructive action
+        icon: "trash-outline",
+        iconColor: "#FF3B30"
+      });
+    } else {
+      // If confirmations are disabled, directly perform the action
+      performClearCompleted();
+    }
+  }, [animateButtonPress, showCustomAlert, confirmationEnabled, performClearCompleted]);
   
   // Actual implementation of clear completed
   const performClearCompleted = useCallback(() => {
@@ -377,195 +427,55 @@ const TodoButtonOverlay = React.memo(({
     }
   }, [animateButtonPress, getCurrentTodos, showSuccess]);
   
-  // Updated move functions with limit checking
-  const moveTomorrowTodosToTodayWithLimits = useCallback(() => {
-    if (tomorrowTodos.length === 0) {
-      showSuccess('No todos to move', { type: 'warning' });
-      return;
-    }
-    
-    // Calculate if this would exceed the today limit for free users
-    if (canAddMoreTodos && !canAddMoreTodos('today', false)) {
-      // Get weighted counts
-      const currentTodayCount = todos.length;
-      const tomorrowCount = tomorrowTodos.length;
-      
-      if ((currentTodayCount + tomorrowCount) > 10) { // Using hardcoded limit of 10 for Today
-        if (showFeatureLimitBanner) {
-          showFeatureLimitBanner(
-            `Moving all items would exceed today's limit of 10. Upgrade to Pro for unlimited todos.`
-          );
-        } else {
-          showSuccess(`Moving all items would exceed today's limit of 10`, { type: 'warning' });
-        }
-        return;
-      }
-    }
-    
-    if (moveTomorrowTodosToToday) {
-      moveTomorrowTodosToToday();
-    } else {
-      showSuccess('Move function not available', { type: 'error' });
-    }
-  }, [
-    tomorrowTodos, 
-    todos, 
-    canAddMoreTodos, 
-    showFeatureLimitBanner, 
-    showSuccess, 
-    moveTomorrowTodosToToday
-  ]);
   
-  const moveIncompleteTodosToTomorrowWithLimits = useCallback(() => {
-    const incompleteTodos = todos.filter(todo => !todo.completed);
-    
-    if (incompleteTodos.length === 0) {
-      showSuccess('No incomplete todos to move', { type: 'warning' });
-      return;
-    }
-    
-    // Calculate if this would exceed the tomorrow limit for free users
-    if (canAddMoreTodos && !canAddMoreTodos('tomorrow', false)) {
-      // Get counts
-      const currentTomorrowCount = tomorrowTodos.length;
-      const incompleteCount = incompleteTodos.length;
-      
-      if ((currentTomorrowCount + incompleteCount) > 7) { // Using hardcoded limit of 7 for Tomorrow
-        if (showFeatureLimitBanner) {
-          showFeatureLimitBanner(
-            `Moving all items would exceed tomorrow's limit of 7. Upgrade to Pro for unlimited todos.`
-          );
-        } else {
-          showSuccess(`Moving all items would exceed tomorrow's limit of 7`, { type: 'warning' });
-        }
-        return;
-      }
-    }
-    
-    if (moveIncompleteTodosToTomorrow) {
-      moveIncompleteTodosToTomorrow();
-    } else {
-      showSuccess('Move function not available', { type: 'error' });
-    }
-  }, [
-    todos, 
-    tomorrowTodos, 
-    canAddMoreTodos, 
-    showFeatureLimitBanner, 
-    showSuccess, 
-    moveIncompleteTodosToTomorrow
-  ]);
   
-  const moveLaterItemsToTomorrowWithLimits = useCallback(() => {
-    if (laterTodos.length === 0) {
-      showSuccess('No todos to move', { type: 'warning' });
-      return;
-    }
-    
-    // Calculate if this would exceed the tomorrow limit for free users
-    if (canAddMoreTodos && !canAddMoreTodos('tomorrow', false)) {
-      // Get counts
-      const currentTomorrowCount = tomorrowTodos.length;
-      const laterCount = laterTodos.length;
-      
-      if ((currentTomorrowCount + laterCount) > 7) { // Using hardcoded limit of 7 for Tomorrow
-        if (showFeatureLimitBanner) {
-          showFeatureLimitBanner(
-            `Moving all items would exceed tomorrow's limit of 7. Upgrade to Pro for unlimited todos.`
-          );
-        } else {
-          showSuccess(`Moving all items would exceed tomorrow's limit of 7`, { type: 'warning' });
-        }
-        return;
-      }
-    }
-    
-    if (moveLaterItemsToTomorrow) {
-      moveLaterItemsToTomorrow();
-    } else {
-      showSuccess('Move function not available', { type: 'error' });
-    }
-  }, [
-    laterTodos, 
-    tomorrowTodos, 
-    canAddMoreTodos, 
-    showFeatureLimitBanner, 
-    showSuccess, 
-    moveLaterItemsToTomorrow
-  ]);
   
-  // Handle move function - Use confirmation setting and limit checking
+
+  // Handle move function - using external move functions
   const handleMove = useCallback(() => {
     // Animate the button press
     animateButtonPress(3);
     
-    // Get the appropriate move function based on the active tab
-    const moveFunction = getMoveFunction();
-    const actionDescription = getMoveActionDescription();
+    // Get the correct move function and modal config
+    let moveFunction = null;
+    let title = 'Move Items';
+    let message = 'Move items?';
+    
+    if (activeTab === 'today') {
+      moveFunction = moveIncompleteTodosToTomorrow;
+      title = 'Move All To-dos';
+      message = 'Move all to-dos to Tomorrow?';
+    } else if (activeTab === 'tomorrow') {
+      moveFunction = moveTomorrowTodosToToday;
+      title = 'Move All To-dos';
+      message = 'Move all to-dos to Today?';
+    } else if (activeTab === 'later') {
+      moveFunction = moveLaterItemsToTomorrow;
+      title = 'Move All To-dos';
+      message = 'Move all to-dos to Tomorrow?';
+    }
+    
+    if (!moveFunction) return;
     
     if (confirmationEnabled) {
-      // Show confirmation dialog when enabled
-      Alert.alert(
-        actionDescription.title,
-        actionDescription.message,
-        [
-          { text: "Cancel", style: "cancel" },
-          { 
-            text: "Move", 
-            onPress: moveFunction
-          }
-        ]
-      );
+      // Use the same icon as the button
+      const modalIcon = getMoveIcon();
+      
+      showCustomAlert({
+        title,
+        message,
+        onConfirm: moveFunction,
+        confirmText: "Move",
+        cancelText: "Cancel",
+        confirmColor: "#007AFF",
+        icon: modalIcon,
+        iconColor: "#007AFF"
+      });
     } else {
-      // Execute without confirmation when disabled
       moveFunction();
     }
-  }, [confirmationEnabled, animateButtonPress]);
+  }, [activeTab, confirmationEnabled, animateButtonPress, showCustomAlert, moveIncompleteTodosToTomorrow, moveTomorrowTodosToToday, moveLaterItemsToTomorrow, getMoveIcon]);
   
-  // Get the right move function based on the active tab (now with limit checking)
-  const getMoveFunction = useCallback(() => {
-    switch (activeTab) {
-      case 'today':
-        return moveIncompleteTodosToTomorrowWithLimits;
-      case 'tomorrow':
-        return moveTomorrowTodosToTodayWithLimits;
-      case 'later':
-        return moveLaterItemsToTomorrowWithLimits;
-      default:
-        return () => {};
-    }
-  }, [
-    activeTab, 
-    moveIncompleteTodosToTomorrowWithLimits, 
-    moveTomorrowTodosToTodayWithLimits,
-    moveLaterItemsToTomorrowWithLimits
-  ]);
-  
-  // Get description for the move action based on active tab
-  const getMoveActionDescription = useCallback(() => {
-    switch (activeTab) {
-      case 'today':
-        return {
-          title: "Move Incomplete To-dos",
-          message: "Are you sure you want to move all incomplete to-dos to tomorrow?"
-        };
-      case 'tomorrow':
-        return {
-          title: "Move To-dos to Today",
-          message: "Are you sure you want to move all tomorrow's to-dos to today?"
-        };
-      case 'later':
-        return {
-          title: "Move To-dos to Tomorrow",
-          message: "Are you sure you want to move all later to-dos to tomorrow?"
-        };
-      default:
-        return {
-          title: "Move To-dos",
-          message: "Are you sure you want to move these to-dos?"
-        };
-    }
-  }, [activeTab]);
   
   // Get the right move icon based on the active tab
   const getMoveIcon = useCallback(() => {
@@ -575,7 +485,7 @@ const TodoButtonOverlay = React.memo(({
       case 'tomorrow':
         return "arrow-back-outline"; // Move to today
       case 'later':
-        return "arrow-forward-outline"; // Move to tomorrow
+        return "arrow-back-outline"; // Move to tomorrow (backward in timeline)
       default:
         return "arrow-forward-outline";
     }
@@ -680,9 +590,24 @@ const TodoButtonOverlay = React.memo(({
         confirmationEnabled={confirmationEnabled}
         theme={theme}
       />
+
+      {/* Action Confirmation Modal */}
+      <ActionConfirmationModal
+        visible={showActionModal}
+        onClose={() => setShowActionModal(false)}
+        onConfirm={actionModalConfig.onConfirm}
+        title={actionModalConfig.title}
+        message={actionModalConfig.message}
+        confirmText={actionModalConfig.confirmText}
+        cancelText={actionModalConfig.cancelText}
+        confirmColor={actionModalConfig.confirmColor}
+        icon={actionModalConfig.icon}
+        iconColor={actionModalConfig.iconColor}
+        theme={theme}
+      />
     </>
   );
-});
+};
 
 const styles = StyleSheet.create({
   container: {

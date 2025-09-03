@@ -679,13 +679,10 @@ const TasksScreen = ({ route, navigation }) => {
       return [];
     }
 
-    console.log('🔍 getFilteredTasks DEBUG:');
     console.log('- Total tasks:', tasks.length);
     console.log('- Selected Goal ID:', selectedGoalId);
     console.log('- Selected Milestone ID:', selectedMilestoneId);
     console.log('- Current viewMode:', viewMode);
-    console.log('- Sample task data:', tasks.slice(0, 3));
-    console.log('- Raw tasks array:', tasks);
     
     
     // First filter out orphaned tasks (tasks with goal IDs that don't exist)
@@ -746,11 +743,21 @@ const TasksScreen = ({ route, navigation }) => {
       return false;
     });
     
-    console.log('✅ getFilteredTasks RESULT:');
-    console.log('- Filtered tasks count:', filtered.length);
-    console.log('- First few filtered tasks:', filtered.slice(0, 3).map(t => ({ id: t.id, title: t.title, goalId: t.goalId, milestoneId: t.milestoneId })));
+    // Sort tasks by order property (matching LifePlanOverviewScreen logic)
+    const sortedFiltered = filtered.sort((a, b) => {
+      // Sort by order property if both tasks have it, otherwise maintain original position
+      if (a.order !== undefined && b.order !== undefined) {
+        return a.order - b.order;
+      } else if (a.order !== undefined) {
+        return -1; // a comes first
+      } else if (b.order !== undefined) {
+        return 1; // b comes first
+      }
+      return 0; // maintain original order
+    });
     
-    return filtered;
+    
+    return sortedFiltered;
   };
   
   // Filter milestones based on selected goal and milestone
@@ -761,11 +768,9 @@ const TasksScreen = ({ route, navigation }) => {
       return [];
     }
 
-    console.log('🔍 getFilteredMilestones DEBUG:');
     console.log('- Total milestones:', milestones.length);
     console.log('- Selected Goal ID:', selectedGoalId);
     console.log('- Selected Milestone ID:', selectedMilestoneId);
-    console.log('- Sample milestone data:', milestones.slice(0, 3));
     
     // First filter out orphaned milestones (milestones with goal IDs that don't exist)
     const goalsToUse = Array.isArray(mainGoals) && mainGoals.length > 0 ? mainGoals : goals;
@@ -797,7 +802,6 @@ const TasksScreen = ({ route, navigation }) => {
       filtered = filtered.filter(milestone => milestone.id === selectedMilestoneId);
     }
     
-    console.log('✅ getFilteredMilestones RESULT:');
     console.log('- Filtered milestones count:', filtered.length);
     console.log('- First few filtered milestones:', filtered.slice(0, 3).map(p => ({ id: p.id, title: p.title, goalId: p.goalId })));
     
@@ -1416,6 +1420,17 @@ const TasksScreen = ({ route, navigation }) => {
     const taskToUpdate = tasks.find(t => t.id === taskId);
     if (!taskToUpdate) return;
     
+    // Debug logging for standalone tasks
+    console.log('🎯 TasksScreen handleUpdateTaskStatus:', {
+      taskId,
+      newStatus,
+      taskTitle: taskToUpdate.title,
+      milestoneId: taskToUpdate.milestoneId,
+      projectId: taskToUpdate.projectId,
+      goalId: taskToUpdate.goalId,
+      isStandalone: !taskToUpdate.milestoneId && !taskToUpdate.projectId && !taskToUpdate.goalId
+    });
+    
     try {
       // Determine completion based on status
       const completed = newStatus === 'done';
@@ -1428,9 +1443,10 @@ const TasksScreen = ({ route, navigation }) => {
         updatedAt: new Date().toISOString()
       };
       
-      // Update the task
+      // Update the task - pass null for milestoneId if task is standalone
       if (typeof updateTask === 'function') {
-        await updateTask(taskToUpdate.milestoneId, taskToUpdate.id, updatedTask);
+        const milestoneId = taskToUpdate.milestoneId || taskToUpdate.projectId || null;
+        await updateTask(milestoneId, taskToUpdate.id, updatedTask);
         
         // Show success notification
         if (notification && notification.showSuccess) {
@@ -1895,6 +1911,63 @@ const TasksScreen = ({ route, navigation }) => {
         </Animated.View>
       )}
       
+      {/* Tour Action Guidance - shows after PICK_CURRENT_FOCUS AI message completes and no tasks in progress */}
+      {(() => {
+        const inProgressTasks = tasks.filter(task => task.status === 'in_progress');
+        const inProgressMilestones = milestones.filter(milestone => milestone.status === 'in_progress');
+        const totalInProgress = inProgressTasks.length + inProgressMilestones.length;
+        
+        // Show guidance only after AI message is complete (tourWaitingForTaskMove is set) and no tasks in progress
+        const shouldShowGuidance = isTourActive && 
+          global.tourWaitingForTaskMove && 
+          totalInProgress === 0;
+          
+        console.log('🎯 Action Guidance Debug:', {
+          isTourActive,
+          currentStep,
+          tourWaitingForTaskMove: global.tourWaitingForTaskMove,
+          totalInProgress,
+          shouldShowGuidance
+        });
+        
+        return shouldShowGuidance;
+      })() && (
+        <View style={{
+          position: 'absolute',
+          bottom: 40,
+          left: 20,
+          right: 20,
+          backgroundColor: theme.cardBackground,
+          borderRadius: 12,
+          padding: 16,
+          borderWidth: 2,
+          borderColor: 'white',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 8,
+          elevation: 4,
+        }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+            <Ionicons name="hand-left" size={20} color="#4CAF50" style={{ marginRight: 8 }} />
+            <Text style={{ 
+              color: theme.text, 
+              fontSize: 16, 
+              fontWeight: '600' 
+            }}>
+              Action Required
+            </Text>
+          </View>
+          <Text style={{ 
+            color: theme.textSecondary, 
+            fontSize: 14, 
+            lineHeight: 20 
+          }}>
+            Move one task to "In Progress".
+          </Text>
+        </View>
+      )}
+
       {/* Tour Continue Button - shows when user has moved exactly 1 task to In Progress */}
       {(() => {
         const inProgressTasks = tasks.filter(task => task.status === 'in_progress');

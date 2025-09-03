@@ -116,26 +116,37 @@ const KanbanBoard = ({
   
   // Function to get the color for a task based on its milestone's goal's color
   const getTaskColor = (task) => {
-    // Check both projectId and milestoneId for milestone association (match Overview screen logic)
-    if (!task.projectId && !task.milestoneId) return color;
+    // First check if task belongs to a milestone
+    if (task.projectId || task.milestoneId) {
+      // Find the milestone this task belongs to - check both properties
+      const milestone = allMilestones.find(p => p.id === task.projectId || p.id === task.milestoneId);
+      if (milestone && milestone.goalId) {
+        // Find the goal this milestone belongs to
+        const goal = allGoals.find(g => g.id === milestone.goalId);
+        if (goal) {
+          // Return the goal's color, or the milestone's color, or the default color
+          return goal.color || milestone.color || color;
+        }
+      }
+    }
     
-    // Find the milestone this task belongs to - check both properties
-    const milestone = allMilestones.find(p => p.id === task.projectId || p.id === task.milestoneId);
-    if (!milestone || !milestone.goalId) return color;
+    // For standalone tasks, check if task has a goalId (standalone tasks within a goal)
+    if (task.goalId) {
+      const goal = allGoals.find(g => g.id === task.goalId);
+      if (goal) {
+        return goal.color || color;
+      }
+    }
     
-    // Find the goal this milestone belongs to
-    const goal = allGoals.find(g => g.id === milestone.goalId);
-    if (!goal) return color;
-    
-    // Return the goal's color, or the milestone's color, or the default color
-    return goal.color || milestone.color || color;
+    // Default to the passed color (which could be goal-specific or theme.primary)
+    return color;
   };
   
   // Get column items based on status
   const getItemsByStatus = (status) => {
     if (isMilestoneLevel) {
-      // Milestone level - filter milestones by their status first, then progress
-      return milestones.filter(milestone => {
+      // Milestone level - filter milestones by their status first, then progress, then sort by order
+      const filteredMilestones = milestones.filter(milestone => {
         if (filterBy && filterBy.goalId && milestone.goalId !== filterBy.goalId) return false;
         
         // First check if the milestone has an explicit status property
@@ -150,13 +161,150 @@ const KanbanBoard = ({
         
         return false;
       });
+      
+      // Group milestones to apply the same sorting logic as LifePlanOverviewScreen
+      const groupedMilestones = {
+        goalAttached: [],          // Milestones with goal attachment
+        standalone: []             // Standalone milestones (no goalId)
+      };
+      
+      // Group milestones by type
+      filteredMilestones.forEach(milestone => {
+        if (milestone.goalId) {
+          // Milestone belongs to a goal
+          groupedMilestones.goalAttached.push(milestone);
+        } else {
+          // Standalone milestone
+          groupedMilestones.standalone.push(milestone);
+        }
+      });
+      
+      // Sort each group using the same logic as LifePlanOverviewScreen
+      const sortByOrder = (a, b) => {
+        if (a.order !== undefined && b.order !== undefined) {
+          return a.order - b.order;
+        } else if (a.order !== undefined) {
+          return -1; // a comes first
+        } else if (b.order !== undefined) {
+          return 1; // b comes first
+        }
+        return 0; // maintain original order
+      };
+      
+      // Sort goal-attached milestones
+      groupedMilestones.goalAttached.sort(sortByOrder);
+      
+      // Sort standalone milestones (matching LifePlanOverviewScreen logic)
+      groupedMilestones.standalone.sort(sortByOrder);
+      
+      // Combine all groups back together in order
+      const sortedMilestones = [
+        ...groupedMilestones.goalAttached,
+        ...groupedMilestones.standalone
+      ];
+      
+      return sortedMilestones;
     } else {
-      // Task level - filter tasks by their status
-      return tasks.filter(task => {
+      // Task level - filter tasks by their status and sort by order (matching LifePlanOverviewScreen)
+      // First, filter by status
+      const filteredTasks = tasks.filter(task => {
         // More explicit status checking
         const taskStatus = task.status || (task.completed ? 'done' : 'todo');
         return taskStatus === status;
       });
+      
+      // Group tasks to apply the same sorting logic as LifePlanOverviewScreen
+      const groupedTasks = {
+        milestoneAttached: {},      // Tasks with milestone/project attachment grouped by milestone
+        goalStandalone: {},         // Goal-level standalone tasks grouped by goal
+        completelyStandalone: []    // Tasks with no goal, milestone, or project
+      };
+      
+      // Group tasks by type
+      filteredTasks.forEach(task => {
+        if (task.milestoneId || task.projectId) {
+          // Task belongs to a milestone/project - group by milestone for proper ordering
+          const milestoneId = task.milestoneId || task.projectId;
+          if (!groupedTasks.milestoneAttached[milestoneId]) {
+            groupedTasks.milestoneAttached[milestoneId] = [];
+          }
+          groupedTasks.milestoneAttached[milestoneId].push(task);
+        } else if (task.goalId) {
+          // Goal-level standalone task
+          if (!groupedTasks.goalStandalone[task.goalId]) {
+            groupedTasks.goalStandalone[task.goalId] = [];
+          }
+          groupedTasks.goalStandalone[task.goalId].push(task);
+        } else {
+          // Completely standalone task
+          groupedTasks.completelyStandalone.push(task);
+        }
+      });
+      
+      // Sort tasks by order within each group (matching LifePlanOverviewScreen logic)
+      const sortByOrder = (a, b) => {
+        if (a.order !== undefined && b.order !== undefined) {
+          return a.order - b.order;
+        } else if (a.order !== undefined) {
+          return -1; // a comes first
+        } else if (b.order !== undefined) {
+          return 1; // b comes first
+        }
+        return 0; // maintain original order
+      };
+      
+      // Sort tasks within each milestone (matching LifePlanOverviewScreen milestoneTasks logic)
+      Object.keys(groupedTasks.milestoneAttached).forEach(milestoneId => {
+        groupedTasks.milestoneAttached[milestoneId].sort(sortByOrder);
+      });
+      
+      // Sort goal-level standalone tasks within each goal (matching LifePlanOverviewScreen logic)
+      Object.keys(groupedTasks.goalStandalone).forEach(goalId => {
+        groupedTasks.goalStandalone[goalId].sort(sortByOrder);
+      });
+      
+      // Sort completely standalone tasks
+      groupedTasks.completelyStandalone.sort(sortByOrder);
+      
+      // Now we need to order the milestones themselves and flatten properly
+      // Get milestone ordering by their order property
+      const orderedMilestoneTasks = [];
+      
+      // Create an array of milestone IDs with their order values for sorting
+      const milestoneOrders = Object.keys(groupedTasks.milestoneAttached).map(milestoneId => {
+        const milestone = allMilestones.find(m => m.id === milestoneId);
+        return {
+          milestoneId,
+          order: milestone?.order !== undefined ? milestone.order : 9999,
+          tasks: groupedTasks.milestoneAttached[milestoneId]
+        };
+      });
+      
+      // Sort milestones by their order property
+      milestoneOrders.sort((a, b) => {
+        if (a.order !== undefined && b.order !== undefined) {
+          return a.order - b.order;
+        } else if (a.order !== undefined) {
+          return -1;
+        } else if (b.order !== undefined) {
+          return 1;
+        }
+        return 0;
+      });
+      
+      // Flatten the ordered milestone tasks
+      milestoneOrders.forEach(({ tasks }) => {
+        orderedMilestoneTasks.push(...tasks);
+      });
+      
+      // Combine all groups back together in order (milestone tasks first, then goal standalone, then completely standalone)
+      const sortedTasks = [
+        ...orderedMilestoneTasks,
+        ...Object.values(groupedTasks.goalStandalone).flat(),
+        ...groupedTasks.completelyStandalone
+      ];
+      
+      return sortedTasks;
     }
   };
   
@@ -447,7 +595,26 @@ const KanbanBoard = ({
                         {(() => {
                           // Check both projectId and milestoneId for milestone association (match Overview screen logic)
                           const milestone = allMilestones.find(p => p.id === item.projectId || p.id === item.milestoneId);
-                          const goal = milestone ? allGoals.find(g => g.id === milestone.goalId) : null;
+                          
+                          // For goal, check milestone's goalId first, then check task's direct goalId for standalone tasks
+                          let goal = null;
+                          if (milestone) {
+                            if (milestone.goalId) {
+                              // Regular milestone with a goal
+                              goal = allGoals.find(g => g.id === milestone.goalId);
+                            } else {
+                              // Standalone milestone - create a virtual "Standalone Milestones" goal
+                              goal = {
+                                id: 'standalone-milestones',
+                                title: 'Standalone Milestones',
+                                color: '#9CA3AF',
+                                icon: 'layers-outline'
+                              };
+                            }
+                          } else if (item.goalId) {
+                            // Task directly belongs to a goal (goal-level standalone task)
+                            goal = allGoals.find(g => g.id === item.goalId);
+                          }
                           
                           return (
                             <View style={styles.taskMetaContainer}>
@@ -487,8 +654,26 @@ const KanbanBoard = ({
                                 </View>
                               )}
                               
-                              {/* Show standalone indicator only if no goal AND no milestone */}
-                              {!goal && !milestone && (
+                              {/* Show standalone indicator for goal-level standalone tasks (has goal but no milestone) */}
+                              {goal && !milestone && item.goalId && (
+                                <View style={[styles.taskMetaItem, { backgroundColor: '#9CA3AF15' }]}>
+                                  <Ionicons 
+                                    name="checkmark-circle-outline" 
+                                    size={10} 
+                                    color="#9CA3AF" 
+                                  />
+                                  <SafeText 
+                                    style={[styles.taskMetaText, { color: '#9CA3AF' }]}
+                                    numberOfLines={1}
+                                    ellipsizeMode="tail"
+                                  >
+                                    Standalone Task
+                                  </SafeText>
+                                </View>
+                              )}
+                              
+                              {/* Show standalone indicator only for completely standalone tasks (no goal, milestone, or project) */}
+                              {!goal && !milestone && !item.goalId && (
                                 <View style={[styles.taskMetaItem, { backgroundColor: '#9CA3AF15' }]}>
                                   <Ionicons 
                                     name="checkmark-circle-outline" 
@@ -722,7 +907,7 @@ const KanbanBoard = ({
       <MinimalistConfirmDialog
         visible={wipDialog.visible}
         title="Focus Mode Active"
-        message={`You have ${wipDialog.inProgressCount}/${wipLimit} ${wipDialog.type === 'task' ? 'tasks' : 'projects'} in progress. Complete current work before starting new items.`}
+        message={`You have ${wipDialog.inProgressCount}/${wipLimit} ${wipDialog.type === 'task' ? 'tasks' : 'projects'} in progress.\n\nWork-in-Progress limits help you stay focused and finish faster. Complete current work before starting new items.\n\nFeel overwhelmed? Use the -/+ buttons to adjust your limit. Start with 3, go lower if stressed, higher if you think you can take more on.`}
         confirmText="Learn More"
         cancelText="Got it"
         onConfirm={() => onShowWipEducation && onShowWipEducation()}

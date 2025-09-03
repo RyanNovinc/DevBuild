@@ -195,10 +195,47 @@ const DayView = ({
     const backgroundColor = blockColor + (isDarkMode ? 'CC' : 'E6'); // More visible: CC=20%, E6=10% opacity
     const solidBackgroundColor = blockColor;
     
+    // Function to calculate luminance of a color (for contrast calculation)
+    const calculateLuminance = (hexColor) => {
+      // Remove # if present and convert to RGB
+      const hex = hexColor.replace('#', '');
+      const r = parseInt(hex.substr(0, 2), 16) / 255;
+      const g = parseInt(hex.substr(2, 2), 16) / 255;
+      const b = parseInt(hex.substr(4, 2), 16) / 255;
+      
+      // Calculate relative luminance
+      const toLinear = (c) => c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+      return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
+    };
+    
+    // Determine if background is light or dark and choose appropriate text color
+    const backgroundLuminance = calculateLuminance(blockColor);
+    const isLightBackground = backgroundLuminance > 0.5; // Threshold for light vs dark
+    
+    // Debug logging for troubleshooting  
+    if (block.domain === 'other' || block.title === 'Test' || blockColor === '#FFFFFF' || blockColor.toLowerCase() === '#ffffff' || (block.domainColor && (block.domainColor === '#FFFFFF' || block.domainColor.toLowerCase() === '#ffffff'))) {
+      console.log(`🎨 TimeBlock "${block.title}":`);
+      console.log(`  - Domain: ${block.domain}`);
+      console.log(`  - Domain Color: ${block.domainColor}`);  
+      console.log(`  - Block Color: ${blockColor}`);
+      console.log(`  - Luminance: ${backgroundLuminance}`);
+      console.log(`  - Is Light Background: ${isLightBackground}`);
+      console.log(`  - Is Dark Mode: ${isDarkMode}`);
+      console.log(`  - Is General Activity: ${block.isGeneralActivity}`);
+    }
+    
     // High contrast text colors for readability against colored backgrounds
-    const primaryTextColor = isDarkMode ? '#FFFFFF' : '#1A1A1A'; // Very dark text for light backgrounds
-    const secondaryTextColor = isDarkMode ? '#E0E0E0' : '#404040'; // Medium contrast secondary text
-    const timeTextColor = isDarkMode ? '#E0E0E0' : '#505050'; // Readable time text
+    // Use luminance-based logic regardless of dark/light mode
+    const primaryTextColor = isLightBackground ? '#000000' : '#FFFFFF';
+    const secondaryTextColor = isLightBackground ? '#404040' : '#E0E0E0';
+    const timeTextColor = isLightBackground ? '#505050' : '#E0E0E0';
+    
+    // More debug logging
+    if (block.domain === 'other' || block.title === 'Test' || blockColor === '#FFFFFF' || blockColor.toLowerCase() === '#ffffff' || (block.domainColor && (block.domainColor === '#FFFFFF' || block.domainColor.toLowerCase() === '#ffffff'))) {
+      console.log(`  - Primary text color: ${primaryTextColor}`);
+      console.log(`  - Secondary text color: ${secondaryTextColor}`);
+      console.log(`  - Time text color: ${timeTextColor}`);
+    }
     
     // Use the block color for accents
     const accentColor = blockColor;
@@ -451,6 +488,7 @@ const DayView = ({
                   }}>
                     {block.repeatFrequency === 'daily' ? 'D' : 
                      block.repeatFrequency === 'weekly' ? 'W' : 
+                     block.repeatFrequency === 'fortnightly' ? 'F' : 
                      block.repeatFrequency === 'monthly' ? 'M' : 'R'}
                   </Text>
                 </View>
@@ -543,6 +581,7 @@ const DayView = ({
                       }}>
                         {block.repeatFrequency === 'daily' ? 'D' : 
                          block.repeatFrequency === 'weekly' ? 'W' : 
+                         block.repeatFrequency === 'fortnightly' ? 'F' : 
                          block.repeatFrequency === 'monthly' ? 'M' : 'R'}
                       </Text>
                     </View>
@@ -566,7 +605,7 @@ const DayView = ({
                           const maxSize = Math.min(height * 0.6, 60); // 60% of height, max 60px
                           return Math.min(Math.max(maxSize, 16), 60);
                         })()}
-                        color="#FFFFFF"
+                        color={isLightBackground ? '#000000' : '#FFFFFF'}
                         style={{ 
                           paddingTop: 2, // Fix Ionicons vertical alignment issue
                         }}
@@ -598,6 +637,7 @@ const DayView = ({
                           }}>
                             {block.repeatFrequency === 'daily' ? 'D' : 
                              block.repeatFrequency === 'weekly' ? 'W' : 
+                             block.repeatFrequency === 'fortnightly' ? 'F' : 
                              block.repeatFrequency === 'monthly' ? 'M' : 'R'}
                           </Text>
                         </View>
@@ -660,12 +700,12 @@ const DayView = ({
                         <Ionicons 
                           name="diamond-outline" 
                           size={scaleFontSize(12)} 
-                          color={isDarkMode ? '#CCCCCC' : '#666666'}
+                          color={isDarkMode ? '#CCCCCC' : '#333333'}
                           style={{ marginRight: scaleWidth(5) }}
                         />
                         <Text 
                           style={{
-                            color: isDarkMode ? '#CCCCCC' : '#666666',
+                            color: isDarkMode ? '#CCCCCC' : '#333333',
                             fontSize: scaleFontSize(11),
                             fontWeight: '600',
                             textAlign: 'center',
@@ -696,12 +736,12 @@ const DayView = ({
                         <Ionicons 
                           name="checkmark-done-outline" 
                           size={scaleFontSize(12)} 
-                          color={isDarkMode ? '#AAAAAA' : '#777777'}
+                          color={isDarkMode ? '#AAAAAA' : '#555555'}
                           style={{ marginRight: scaleWidth(5) }}
                         />
                         <Text 
                           style={{
-                            color: isDarkMode ? '#AAAAAA' : '#777777',
+                            color: isDarkMode ? '#AAAAAA' : '#555555',
                             fontSize: scaleFontSize(11),
                             fontWeight: '500',
                             textAlign: 'center',

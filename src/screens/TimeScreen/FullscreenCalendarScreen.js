@@ -12,10 +12,11 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import responsive from '../../utils/responsive';
 import IconPicker from '../../components/IconPicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { calendarStorage } from '../../utils/storage';
 import { useProfile } from '../../context/ProfileContext';
 import { generateFullscreenCalendarHTML } from './TimeScreenHelpers';
 import { generateAndSharePDF } from './PDFGenerator';
@@ -77,7 +78,8 @@ const FullscreenCalendarScreen = ({ route }) => {
     handleMonthDaySelect,
     theme,
     viewMode = 'dots',
-    onToggleView
+    onToggleView,
+    calendarIcons: initialCalendarIcons = {}
   } = route.params;
 
   // State for current month dates (starts with initial, but can be changed)
@@ -105,7 +107,7 @@ const FullscreenCalendarScreen = ({ route }) => {
   const [internalViewMode, setInternalViewMode] = useState(viewMode);
   const [showIconPicker, setShowIconPicker] = useState(false);
   const [selectedDateForIcon, setSelectedDateForIcon] = useState(null);
-  const [calendarIcons, setCalendarIcons] = useState({});
+  const [calendarIcons, setCalendarIcons] = useState(initialCalendarIcons);
   const [iconLibrary, setIconLibrary] = useState([]);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -128,26 +130,36 @@ const FullscreenCalendarScreen = ({ route }) => {
     );
   }
 
-  // Load calendar icons on mount
+  // Load icon library on mount (this doesn't change as often)
   React.useEffect(() => {
-    const loadCalendarIcons = async () => {
+    const loadIconLibrary = async () => {
       try {
-        const stored = await AsyncStorage.getItem('calendarIcons');
-        if (stored) {
-          setCalendarIcons(JSON.parse(stored));
-        }
-        
         const library = await AsyncStorage.getItem('iconLibrary');
         if (library) {
           setIconLibrary(JSON.parse(library));
         }
       } catch (error) {
-        console.error('Error loading calendar icons:', error);
+        console.error('Error loading icon library:', error);
       }
     };
     
-    loadCalendarIcons();
+    loadIconLibrary();
   }, []);
+
+  // Listen for navigation focus to reload icons when coming from minimized view
+  useFocusEffect(
+    React.useCallback(() => {
+      // Always reload icons when this screen gains focus (in case MonthView added icons)
+      const loadIcons = async () => {
+        const storedIcons = await calendarStorage.getCalendarIcons();
+        console.log('📅 FullscreenCalendarScreen: Reloaded icons on focus:', Object.keys(storedIcons).length, 'dates');
+        setCalendarIcons(storedIcons);
+      };
+      loadIcons();
+    }, [])
+  );
+
+  // No need for separate mount loading - useFocusEffect handles icon loading
 
   // Create week arrays for the calendar grid
   const weeks = useMemo(() => {
@@ -229,25 +241,25 @@ const FullscreenCalendarScreen = ({ route }) => {
     }
   };
 
-  // Handle icon selection
+  // Handle icon selection - back to AsyncStorage
   const handleIconSelect = async (icons) => {
     if (!selectedDateForIcon) return;
     
-    try {
-      const dateKey = getDateKey(selectedDateForIcon);
-      const newCalendarIcons = {
-        ...calendarIcons,
-        [dateKey]: icons
-      };
-      
-      setCalendarIcons(newCalendarIcons);
-      await AsyncStorage.setItem('calendarIcons', JSON.stringify(newCalendarIcons));
-      
-      setShowIconPicker(false);
-      setSelectedDateForIcon(null);
-    } catch (error) {
-      console.error('Error saving calendar icons:', error);
-    }
+    const dateKey = getDateKey(selectedDateForIcon);
+    const newCalendarIcons = {
+      ...calendarIcons,
+      [dateKey]: icons
+    };
+    
+    setCalendarIcons(newCalendarIcons);
+    await calendarStorage.setCalendarIcons(newCalendarIcons);
+    
+    // Set global flag to indicate MonthView should reload icons when we return
+    global.shouldReloadMonthViewIcons = true;
+    console.log('📅 FullscreenCalendarScreen: Set reload flag for MonthView');
+    
+    setShowIconPicker(false);
+    setSelectedDateForIcon(null);
   };
 
   // Handle date picker confirm

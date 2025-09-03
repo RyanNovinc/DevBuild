@@ -1972,18 +1972,38 @@ export const AppProvider = ({ children }) => {
         throw new Error('Tasks array not available');
       }
       
-      // Find the task - handle both milestone tasks and standalone tasks
+      // Find the task - handle milestone tasks, goal-level standalone tasks, and completely standalone tasks
       let taskIndex;
       if (milestoneId) {
         // Task belongs to a milestone
         taskIndex = tasks.findIndex(task => task.id === taskId && task.milestoneId === milestoneId);
       } else {
-        // Standalone task (no milestone, project, or goal)
-        taskIndex = tasks.findIndex(task => task.id === taskId && !task.milestoneId && !task.projectId && !task.goalId);
+        // For standalone tasks, we need to find the task by ID first to check its properties
+        const existingTask = tasks.find(task => task.id === taskId);
+        if (existingTask) {
+          if (existingTask.goalId && !existingTask.milestoneId && !existingTask.projectId) {
+            // Goal-level standalone task (has goalId but no milestoneId/projectId)
+            taskIndex = tasks.findIndex(task => task.id === taskId);
+          } else if (!existingTask.milestoneId && !existingTask.projectId && !existingTask.goalId) {
+            // Completely standalone task (no milestone, project, or goal)
+            taskIndex = tasks.findIndex(task => task.id === taskId && !task.milestoneId && !task.projectId && !task.goalId);
+          } else {
+            // Task has some other association we're not handling
+            taskIndex = tasks.findIndex(task => task.id === taskId);
+          }
+        } else {
+          taskIndex = -1;
+        }
       }
       
       if (taskIndex === -1) {
-        console.warn(`Task with ID ${taskId} not found${milestoneId ? ` in milestone ${milestoneId}` : ' (standalone)'}`);
+        const existingTask = tasks.find(task => task.id === taskId);
+        const taskType = existingTask 
+          ? existingTask.goalId && !existingTask.milestoneId ? ' (goal-level standalone)' 
+          : !existingTask.goalId && !existingTask.milestoneId ? ' (completely standalone)' 
+          : ' (milestone task)'
+          : ' (not found)';
+        console.warn(`Task with ID ${taskId} not found${milestoneId ? ` in milestone ${milestoneId}` : taskType}`);
         showError('Task not found');
         return null;
       }
@@ -2173,6 +2193,19 @@ export const AppProvider = ({ children }) => {
       return false;
     }
   };
+
+  // Update notes and persist to AsyncStorage
+  const updateNotes = async (newNotes) => {
+    try {
+      setNotes(newNotes);
+      await AsyncStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(newNotes));
+      console.log(`✅ Notes updated and persisted to storage, ${newNotes.length} notes total`);
+      return true;
+    } catch (error) {
+      console.error('❌ Failed to persist notes to storage:', error);
+      return false;
+    }
+  };
   
   // Function to update milestone progress from its tasks
   const updateMilestoneProgressFromTasks = async (milestoneId, currentTasks = null) => {
@@ -2264,6 +2297,9 @@ export const AppProvider = ({ children }) => {
   // Add a time block - WITH SUBSCRIPTION CHECK
   const addTimeBlock = async (newTimeBlock) => {
     try {
+      console.log('🚨 ALERT: Regular addTimeBlock called! Title:', newTimeBlock?.title, 'IsRepeating:', newTimeBlock?.isRepeating);
+      console.log('🚨 ALERT: This should NOT happen during Skip Conflicts flow!');
+      
       // Check subscription limits
       if (!canAddMoreTimeBlocks()) {
         showError(`Free version limited to ${FREE_PLAN_LIMITS.MAX_TIME_BLOCKS} time blocks per week. Remove a time block or upgrade to Pro.`);
@@ -2293,10 +2329,134 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  // Add time block with conflict skipping
+  const addTimeBlockSkipConflicts = async (newTimeBlock, excludeIds = [], isEditingSeries = false, seriesId = null) => {
+    try {
+      console.log('Skip Conflicts: Processing timeblock with conflict avoidance');
+
+      // Check subscription limits
+      if (!canAddMoreTimeBlocks()) {
+        console.log('🚨 AppContext STEP A2: Subscription limit reached, returning null');
+        showError(`Free version limited to ${FREE_PLAN_LIMITS.MAX_TIME_BLOCKS} time blocks per week. Remove a time block or upgrade to Pro.`);
+        return null;
+      }
+
+      console.log('🚨 AppContext STEP A3: Subscription limit check passed, proceeding...');
+      const blocksToAdd = [];
+      
+      // If editing a series, exclude all existing instances of that series
+      let finalExcludeIds = [...excludeIds];
+      if (isEditingSeries && seriesId) {
+        console.log('🚨 AppContext STEP A4: Editing series, getting series instance IDs...');
+        const seriesInstanceIds = getSeriesInstanceIds(seriesId);
+        finalExcludeIds = [...finalExcludeIds, ...seriesInstanceIds];
+        console.log(`🚨 AppContext STEP A5: Excluding ${seriesInstanceIds.length} series instances from conflict detection`);
+      }
+      
+      console.log('🚨 AppContext STEP A6: Final exclude IDs:', finalExcludeIds);
+      
+      if (newTimeBlock.isRepeating) {
+        console.log('🚨 AppContext STEP A7: Processing recurring timeblock...');
+        // For recurring blocks, check each instance for conflicts
+        const allInstances = [newTimeBlock, ...generateRecurringInstances(newTimeBlock)];
+        console.log(`🚨 AppContext STEP A8: Generated ${allInstances.length} total instances (including original)`);
+        
+        allInstances.forEach((instance, index) => {
+          const conflicts = checkTimeBlockConflicts(instance, finalExcludeIds);
+          console.log(`🚨 AppContext STEP A9.${index + 1}: Checking instance ${index + 1}:`, {
+            instanceDate: new Date(instance.startTime).toDateString(),
+            instanceTime: `${new Date(instance.startTime).toLocaleTimeString()} - ${new Date(instance.endTime).toLocaleTimeString()}`,
+            conflictsFound: conflicts.length,
+            conflictTitles: conflicts.map(c => c.title),
+            excludedIds: finalExcludeIds
+          });
+          
+          if (conflicts.length === 0) {
+            // No conflicts, add this instance
+            blocksToAdd.push(instance);
+            console.log(`🚨 AppContext STEP A10.${index + 1}: Instance ${index + 1} has NO conflicts - ADDING to blocksToAdd`);
+          } else {
+            console.log(`🚨 AppContext STEP A11.${index + 1}: Instance ${index + 1} has ${conflicts.length} conflicts - SKIPPING`, conflicts.map(c => c.title));
+          }
+        });
+        
+        console.log(`🚨 AppContext STEP A12: Final result - will create ${blocksToAdd.length} of ${allInstances.length} recurring instances (skipped ${allInstances.length - blocksToAdd.length} conflicts)`);
+      } else {
+        console.log('🚨 AppContext STEP A13: Processing single (non-recurring) timeblock...');
+        // For single blocks, check if there are conflicts
+        const conflicts = checkTimeBlockConflicts(newTimeBlock, finalExcludeIds);
+        console.log('🚨 AppContext STEP A14: Single timeblock conflict check result:', {
+          conflictsFound: conflicts.length,
+          conflictTitles: conflicts.map(c => c.title)
+        });
+        
+        if (conflicts.length === 0) {
+          blocksToAdd.push(newTimeBlock);
+          console.log('🚨 AppContext STEP A15: Single timeblock has no conflicts - ADDING');
+        } else {
+          console.log('🚨 AppContext STEP A16: Single timeblock has conflicts - SKIPPING and returning null');
+          return null;
+        }
+      }
+      
+      console.log('🚨 AppContext STEP A17: Final blocks to add count:', blocksToAdd.length);
+      console.log('🚨 AppContext STEP A17b: DETAILED blocks to add:', blocksToAdd.map(block => ({
+        id: block.id,
+        title: block.title,
+        date: new Date(block.startTime).toDateString(),
+        time: `${new Date(block.startTime).toLocaleTimeString()} - ${new Date(block.endTime).toLocaleTimeString()}`
+      })));
+      
+      if (blocksToAdd.length === 0) {
+        console.log('🚨 AppContext STEP A18: No blocks to add (all would conflict) - returning null');
+        showError('All instances would conflict with existing timeblocks');
+        return null;
+      }
+      
+      console.log('🚨 AppContext STEP A19: Updating timeBlocks state with new blocks...');
+      // Update state with conflict-free blocks
+      setTimeBlocks(prevTimeBlocks => {
+        const newTimeBlocks = [...prevTimeBlocks, ...blocksToAdd];
+        console.log('🚨 AppContext STEP A19b: NEW timeBlocks array will have', newTimeBlocks.length, 'total blocks');
+        console.log('🚨 AppContext STEP A19c: Just added blocks:', blocksToAdd.map(b => ({
+          id: b.id,
+          title: b.title,
+          date: new Date(b.startTime).toDateString()
+        })));
+        return newTimeBlocks;
+      });
+      
+      console.log('🚨 AppContext STEP A20: Saving to AsyncStorage...');
+      // Save to AsyncStorage
+      const updatedTimeBlocks = [...timeBlocks, ...blocksToAdd];
+      await saveData(STORAGE_KEYS.TIME_BLOCKS, updatedTimeBlocks);
+      
+      const result = {
+        ...newTimeBlock,
+        createdInstances: blocksToAdd.length,
+        totalInstances: newTimeBlock.isRepeating ? [newTimeBlock, ...generateRecurringInstances(newTimeBlock)].length : 1
+      };
+      
+      console.log('🚨 AppContext STEP A21: Successfully completed, returning result:', {
+        createdInstances: result.createdInstances,
+        totalInstances: result.totalInstances
+      });
+      
+      return result;
+    } catch (error) {
+      console.log('🚨 AppContext ERROR: Exception in addTimeBlockSkipConflicts:', error);
+      console.log('🚨 AppContext ERROR: Stack trace:', error.stack);
+      showError('Failed to add time block');
+      throw error;
+    }
+  };
+
   // Helper function to generate recurring instances when creating a recurring time block
   const generateRecurringInstances = (originalBlock) => {
     const instances = [];
     const today = new Date();
+    let instanceCounter = 1; // Counter to ensure unique IDs
+    const uniqueSuffix = `${Date.now()}_${Math.random().toString(36).substr(2, 4)}`; // Unique batch identifier
     
     // Get the original block start date
     const originalStartDate = new Date(originalBlock.startTime);
@@ -2332,7 +2492,7 @@ export const AppProvider = ({ children }) => {
           
           const instance = {
             ...originalBlock,
-            id: `${originalBlock.id}_${currentDate.toISOString().split('T')[0]}`, // Use date for cleaner IDs
+            id: `${originalBlock.id}_${currentDate.toISOString().split('T')[0]}_${uniqueSuffix}_${instanceCounter++}`, // Ensure unique IDs with counter
             startTime: instanceStartTime.toISOString(),
             endTime: instanceEndTime.toISOString(),
             isRepeating: false, // Instance is not repeating itself
@@ -2356,7 +2516,7 @@ export const AppProvider = ({ children }) => {
           
           const instance = {
             ...originalBlock,
-            id: `${originalBlock.id}_${currentDate.toISOString().split('T')[0]}`, // Use date for cleaner IDs
+            id: `${originalBlock.id}_${currentDate.toISOString().split('T')[0]}_${uniqueSuffix}_${instanceCounter++}`, // Ensure unique IDs with counter
             startTime: instanceStartTime.toISOString(),
             endTime: instanceEndTime.toISOString(),
             isRepeating: false, // Instance is not repeating itself
@@ -2380,7 +2540,7 @@ export const AppProvider = ({ children }) => {
           
           const instance = {
             ...originalBlock,
-            id: `${originalBlock.id}_${currentDate.toISOString().split('T')[0]}`, // Use date for cleaner IDs
+            id: `${originalBlock.id}_${currentDate.toISOString().split('T')[0]}_${uniqueSuffix}_${instanceCounter++}`, // Ensure unique IDs with counter
             startTime: instanceStartTime.toISOString(),
             endTime: instanceEndTime.toISOString(),
             isRepeating: false, // Instance is not repeating itself
@@ -2401,6 +2561,7 @@ export const AppProvider = ({ children }) => {
 
   // Function to generate additional recurring instances for blocks that need them
   // This should be called periodically to ensure recurring blocks continue appearing
+  // IMPORTANT: This now respects Skip Conflicts choices and only creates non-conflicting instances
   const generateAdditionalRecurringInstances = async () => {
     try {
       console.log('Checking for recurring blocks that need additional instances...');
@@ -2465,7 +2626,7 @@ export const AppProvider = ({ children }) => {
               break;
           }
           
-          // Generate new instances
+          // Generate new instances - but ONLY non-conflicting ones
           while (currentDate <= endGenerationDate) {
             const instanceStartTime = new Date(currentDate);
             const instanceEndTime = new Date(instanceStartTime.getTime() + durationMs);
@@ -2481,7 +2642,17 @@ export const AppProvider = ({ children }) => {
               seriesId: originalBlock.id
             };
             
-            blocksToAdd.push(instance);
+            // ⚠️ CRITICAL FIX: Check for conflicts before adding instance
+            // This prevents auto-generation from overriding Skip Conflicts user choices
+            const conflicts = checkTimeBlockConflicts(instance, []);
+            if (conflicts.length === 0) {
+              // No conflicts, safe to add this instance
+              blocksToAdd.push(instance);
+              console.log(`✅ Auto-generating non-conflicting instance for ${originalBlock.title} on ${currentDate.toDateString()}`);
+            } else {
+              // Has conflicts, respect the user's implicit Skip Conflicts choice
+              console.log(`🚫 Skipping auto-generation of conflicting instance for ${originalBlock.title} on ${currentDate.toDateString()} (conflicts with: ${conflicts.map(c => c.title).join(', ')})`);
+            }
             
             // Move to next occurrence
             switch (originalBlock.repeatFrequency) {
@@ -2500,12 +2671,14 @@ export const AppProvider = ({ children }) => {
       }
       
       if (blocksToAdd.length > 0) {
-        console.log(`Adding ${blocksToAdd.length} additional recurring instances`);
+        console.log(`Adding ${blocksToAdd.length} additional non-conflicting recurring instances`);
         
         // Add new instances to state and storage
         setTimeBlocks(prevTimeBlocks => [...prevTimeBlocks, ...blocksToAdd]);
         const updatedTimeBlocks = [...timeBlocks, ...blocksToAdd];
         await saveData(STORAGE_KEYS.TIME_BLOCKS, updatedTimeBlocks);
+      } else {
+        console.log('No additional non-conflicting instances to generate');
       }
       
     } catch (error) {
@@ -2632,6 +2805,66 @@ export const AppProvider = ({ children }) => {
     });
     
     return conflicts;
+  };
+
+  // Get all instances of a recurring series (for exclusion from conflict detection)
+  const getSeriesInstanceIds = (seriesId) => {
+    if (!seriesId) return [];
+    
+    return timeBlocks
+      .filter(block => 
+        block.seriesId === seriesId || 
+        block.originalTimeBlockId === seriesId ||
+        block.id === seriesId
+      )
+      .map(block => block.id);
+  };
+
+  // Enhanced conflict detection for recurring timeblocks
+  const checkRecurringTimeBlockConflicts = (newTimeBlock, excludeIds = [], isEditingSeries = false, seriesId = null) => {
+    if (!newTimeBlock.isRepeating) {
+      // For non-recurring blocks, use standard conflict detection
+      return { conflicts: checkTimeBlockConflicts(newTimeBlock, excludeIds), conflictingInstances: [] };
+    }
+
+    // If editing a series, exclude all existing instances of that series
+    let finalExcludeIds = [...excludeIds];
+    if (isEditingSeries && seriesId) {
+      const seriesInstanceIds = getSeriesInstanceIds(seriesId);
+      finalExcludeIds = [...finalExcludeIds, ...seriesInstanceIds];
+      console.log(`🔍 Excluding series instances from conflict detection: ${seriesInstanceIds.length} instances`);
+    }
+
+    // Generate all instances that would be created
+    const instances = [newTimeBlock, ...generateRecurringInstances(newTimeBlock)];
+    const conflictingInstances = [];
+    const allConflicts = [];
+
+    instances.forEach((instance, index) => {
+      const conflicts = checkTimeBlockConflicts(instance, finalExcludeIds);
+      if (conflicts.length > 0) {
+        conflictingInstances.push({
+          instanceIndex: index,
+          instance: instance,
+          conflicts: conflicts,
+          date: new Date(instance.startTime).toDateString(),
+          isOriginal: index === 0
+        });
+        allConflicts.push(...conflicts);
+      }
+    });
+
+    // Remove duplicate conflicts
+    const uniqueConflicts = allConflicts.filter((conflict, index, self) => 
+      self.findIndex(c => c.id === conflict.id) === index
+    );
+
+    return {
+      conflicts: uniqueConflicts,
+      conflictingInstances: conflictingInstances,
+      totalInstances: instances.length,
+      conflictCount: conflictingInstances.length
+    };
   };
   
   // Delete a time block
@@ -3655,6 +3888,7 @@ export const AppProvider = ({ children }) => {
     setMilestones,
     setProjects: setMilestones, // Alias for backward compatibility
     setTasks,
+    setNotes,
     setTodos,
     setTomorrowTodos,
     setLaterTodos,
@@ -3700,12 +3934,17 @@ export const AppProvider = ({ children }) => {
     updateTask,
     deleteTask,
     
+    // Note functions
+    updateNotes,
+    
     // Time block functions
     addTimeBlock,
+    addTimeBlockSkipConflicts,
     updateTimeBlock,
     updateTimeBlockSeries,
     createNewTimeBlockSeries,
     checkTimeBlockConflicts,
+    checkRecurringTimeBlockConflicts,
     deleteTimeBlock,
     countTimeBlocksThisWeek,
     generateAdditionalRecurringInstances,
@@ -3797,7 +4036,8 @@ export const useAppContext = () => {
     deleteMilestone: () => null,
     addTask: () => null,
     updateTask: () => null,
-    deleteTask: () => null
+    deleteTask: () => null,
+    setNotes: () => null
   };
 };
 

@@ -1,0 +1,11 @@
+exports.handler = async (event) => {
+  console.log('Starting referral cleanup process');
+  
+  // Simple logging only version - we'll implement the actual cleanup later
+  console.log('Cleanup would happen here');
+  
+  return {
+    statusCode: 200,
+    body: JSON.stringify({ message: 'Cleanup process ran successfully' })
+  };
+};

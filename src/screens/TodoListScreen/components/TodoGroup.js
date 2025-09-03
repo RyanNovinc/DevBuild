@@ -42,11 +42,15 @@ const TodoGroup = memo(({
   onAddingSubtask,
   activeTab,
   canAddMoreTodos,
-  showFeatureLimitBanner
+  showFeatureLimitBanner,
+  activeSubtaskGroup,
+  onSubtaskModalToggle
 }) => {
-  // State for adding subtasks and selection
-  const [addingSubtask, setAddingSubtask] = useState(false);
+  // State for selection only (subtask state is now centralized)
   const [isSelected, setIsSelected] = useState(false);
+  
+  // Check if this group is the active subtask group
+  const isAddingSubtask = activeSubtaskGroup === group.id;
   
   // Animation values with useRef to prevent recreating on each render
   const fadeAnim = useRef(new Animated.Value(isExpanded ? 1 : 0)).current;
@@ -155,16 +159,17 @@ const TodoGroup = memo(({
     
     // Use InteractionManager to ensure UI is ready
     InteractionManager.runAfterInteractions(() => {
-      // Toggle adding state
-      const isAdding = !addingSubtask;
-      setAddingSubtask(isAdding);
+      // Toggle subtask modal for this group using centralized state
+      if (onSubtaskModalToggle) {
+        onSubtaskModalToggle(group.id);
+      }
       
-      // Notify parent component about subtask mode
+      // Notify parent component about subtask mode (backward compatibility)
       if (onAddingSubtask) {
-        onAddingSubtask(isAdding);
+        onAddingSubtask(!isAddingSubtask);
       }
     });
-  }, [addingSubtask, onAddingSubtask]);
+  }, [isAddingSubtask, onAddingSubtask, onSubtaskModalToggle, group.id]);
   
   // Submit the new subtask with optimized handling
   const submitSubtask = useCallback((tab, groupId, text) => {
@@ -209,9 +214,14 @@ const TodoGroup = memo(({
   
   // Cancel adding a subtask
   const cancelAddSubtask = useCallback(() => {
-    setAddingSubtask(false);
+    // Use centralized toggle to close the modal
+    if (onSubtaskModalToggle) {
+      onSubtaskModalToggle(null);
+    }
+    
+    // Backward compatibility
     if (onAddingSubtask) onAddingSubtask(false);
-  }, [onAddingSubtask]);
+  }, [onAddingSubtask, onSubtaskModalToggle]);
   
   // Handle long press on the group
   const handleLongPress = useCallback(() => {
@@ -450,7 +460,7 @@ const TodoGroup = memo(({
       </Swipeable>
       
       {/* Subtask Input Modal (using our optimized component) */}
-      {addingSubtask && (
+      {isAddingSubtask && (
         <SubtaskInputModal
           onAddSubtask={submitSubtask}
           onCancel={cancelAddSubtask}
@@ -473,7 +483,7 @@ const TodoGroup = memo(({
       )}
       
       {/* Add First Task Button (Visible only when expanded and when there are no tasks yet) */}
-      {isExpanded && childTodos.length === 0 && !addingSubtask && (
+      {isExpanded && childTodos.length === 0 && !isAddingSubtask && (
         <TouchableOpacity
           style={[
             localStyles.emptyGroupAddButton,
@@ -503,7 +513,7 @@ const TodoGroup = memo(({
       )}
       
       {/* Add Task Button - Quick add button at the end of tasks when expanded */}
-      {isExpanded && childTodos.length > 0 && !addingSubtask && (
+      {isExpanded && childTodos.length > 0 && !isAddingSubtask && (
         <TouchableOpacity
           style={[
             localStyles.addTaskButton,

@@ -23,6 +23,10 @@ class AIMessage extends React.Component {
     this.isTypingComplete = false;
     this.charIndex = 0;
     this.isComponentMounted = false;
+    
+    // Progressive skip delay variables
+    this.skipDebounceTimer = null;
+    this.skipDebounceDelay = 100; // 100ms debounce to prevent rapid taps
   }
   
   componentDidMount() {
@@ -37,12 +41,20 @@ class AIMessage extends React.Component {
   componentWillUnmount() {
     this.isComponentMounted = false;
     this.clearTimer();
+    this.clearSkipDebounceTimer();
   }
   
   clearTimer() {
     if (this.animationTimer) {
       clearTimeout(this.animationTimer);
       this.animationTimer = null;
+    }
+  }
+  
+  clearSkipDebounceTimer() {
+    if (this.skipDebounceTimer) {
+      clearTimeout(this.skipDebounceTimer);
+      this.skipDebounceTimer = null;
     }
   }
   
@@ -79,9 +91,32 @@ class AIMessage extends React.Component {
     }
   };
   
-  // Complete typing immediately
+  // Handle skip with debouncing to prevent rapid taps
+  handleSkip = () => {
+    // Check if component is mounted
+    if (!this.isComponentMounted) {
+      return;
+    }
+    
+    // If already completed, do nothing
+    if (this.isTypingComplete) {
+      return;
+    }
+    
+    // Clear any existing debounce timer
+    this.clearSkipDebounceTimer();
+    
+    // Set up debounced skip execution
+    this.skipDebounceTimer = setTimeout(() => {
+      if (this.isComponentMounted && !this.isTypingComplete) {
+        this.completeTypingImmediately();
+      }
+    }, this.skipDebounceDelay);
+  };
+
+  // Complete typing immediately (internal method)
   completeTypingImmediately = () => {
-    if (!this.isComponentMounted) return;
+    if (!this.isComponentMounted || this.isTypingComplete) return;
     
     // Clear any existing timer
     this.clearTimer();
@@ -92,8 +127,8 @@ class AIMessage extends React.Component {
     });
     
     // Call completion callback if not already completed
-    if (!this.isTypingComplete && this.props.onTypingComplete) {
-      this.isTypingComplete = true;
+    this.isTypingComplete = true;
+    if (this.props.onTypingComplete) {
       this.props.onTypingComplete();
     }
   };
@@ -102,7 +137,7 @@ class AIMessage extends React.Component {
     return (
       <TouchableOpacity 
         style={styles.container}
-        onPress={this.completeTypingImmediately}
+        onPress={this.handleSkip}
         activeOpacity={0.9}
       >
         <View style={styles.messageContainer}>

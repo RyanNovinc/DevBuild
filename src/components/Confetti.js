@@ -1,5 +1,5 @@
 // Fixes for src/components/Confetti.js to make it work with the StreamlinedOnboardingScreen
-import React, { useState, useLayoutEffect } from 'react';
+import React, { useState, useLayoutEffect, useRef } from 'react';
 import { View, StyleSheet, Animated, Easing, Dimensions } from 'react-native';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -16,105 +16,123 @@ const Confetti = ({
   count = null // Optional particle count override
 }) => {
   const [particles, setParticles] = useState([]);
-  const [animations, setAnimations] = useState(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isRunning, setIsRunning] = useState(false);
   
-  // Initialize the effect when activated
+  // Create stable Animated.Value instances that persist across re-renders
+  const animationValuesRef = useRef(null);
+  
+  // Initialize the effect when activated - simplified dependencies
   useLayoutEffect(() => {
-    if (!active) {
-      if (animations) {
-        animations.stop();
-      }
+    if (!active || isInitialized || isRunning) {
       return;
     } 
     
-    if (!isInitialized) {
-      setIsInitialized(true);
-      
-      // FIXED: Removed timeout to start immediately
-      console.log(`${type} effect activated!`);
-      
-      if (type === 'fireworks') {
-        createFireworksEffect();
-      } else {
-        createConfettiEffect();
-      }
+    setIsInitialized(true);
+    setIsRunning(true);
+    
+    console.log(`${type} effect activated!`);
+    
+    if (type === 'fireworks') {
+      createFireworksEffect();
+    } else {
+      createConfettiEffect();
     }
-  }, [active, colors, duration, onComplete, isInitialized, animations, type]);
+  }, [active, type]); // Removed problematic dependencies
   
   const createConfettiEffect = () => {
     // Create confetti particles (falling from top)
     const particleCount = count || MAX_PARTICLES;
-    const newParticles = Array(particleCount).fill().map(() => {
+    
+    // Create or reuse stable animation values
+    if (!animationValuesRef.current) {
+      animationValuesRef.current = Array(MAX_PARTICLES).fill().map(() => ({
+        yAnimation: new Animated.Value(0),
+        xAnimation: new Animated.Value(0),
+        rotationAnimation: new Animated.Value(0),
+        opacityAnimation: new Animated.Value(1),
+      }));
+    }
+    
+    // Reset animation values to initial state
+    animationValuesRef.current.forEach(animValues => {
+      animValues.yAnimation.setValue(0);
+      animValues.xAnimation.setValue(0);
+      animValues.rotationAnimation.setValue(0);
+      animValues.opacityAnimation.setValue(1);
+    });
+    
+    const newParticles = Array(particleCount).fill().map((_, index) => {
       return {
-        id: Math.random().toString(),
+        id: `particle-${index}`,
         x: Math.random() * SCREEN_WIDTH,
         y: -150 - Math.random() * 200, // Much higher starting position (off-screen)
         size: 5 + Math.random() * 10,
         color: colors[Math.floor(Math.random() * colors.length)],
         rotation: Math.random() * 360,
         type: 'confetti',
-        // Animation values
-        yAnimation: new Animated.Value(0),
-        xAnimation: new Animated.Value(0),
-        rotationAnimation: new Animated.Value(0),
-        opacityAnimation: new Animated.Value(1),
+        // Use stable animation values
+        yAnimation: animationValuesRef.current[index].yAnimation,
+        xAnimation: animationValuesRef.current[index].xAnimation,
+        rotationAnimation: animationValuesRef.current[index].rotationAnimation,
+        opacityAnimation: animationValuesRef.current[index].opacityAnimation,
       };
     });
     
     setParticles(newParticles);
     
-    // Create staggered animations so particles fall at different times from the top
-    const particleAnimations = newParticles.map((particle, index) => {
+    // Create individual animations for each particle with staggered start times
+    console.log(`🎊 Starting confetti with ${particleCount} particles, duration ${duration}ms`);
+    
+    newParticles.forEach((particle, index) => {
       // Stagger start times - particles drop over a longer period (2 seconds)
       const delayTime = (index / particleCount) * 2000; // Spread release over 2 seconds
       
-      return Animated.parallel([
-        // Fall down with slight horizontal drift
-        Animated.timing(particle.yAnimation, {
-          toValue: 1,
-          duration: duration,
-          delay: delayTime, // Each particle starts at a different time
-          easing: Easing.ease,
-          useNativeDriver: true
-        }),
-        // Slight horizontal drift
-        Animated.timing(particle.xAnimation, {
-          toValue: (Math.random() - 0.5) * 300, // Further increased range for more spread
-          duration: duration,
-          delay: delayTime, // Same delay for consistent movement
-          easing: Easing.ease,
-          useNativeDriver: true
-        }),
-        // Rotate
-        Animated.timing(particle.rotationAnimation, {
-          toValue: 1,
-          duration: duration,
-          delay: delayTime, // Same delay for consistent movement
-          easing: Easing.linear,
-          useNativeDriver: true
-        }),
-        // Fade out
-        Animated.timing(particle.opacityAnimation, {
-          toValue: 0,
-          duration: duration * 0.4,
-          delay: delayTime + (duration * 0.6), // Fade starts relative to particle start time
-          easing: Easing.ease,
-          useNativeDriver: true
-        })
-      ]);
+      console.log(`🎊 Particle ${index} scheduled to start in ${delayTime}ms`);
+      
+      // Start each particle animation independently
+      setTimeout(() => {
+        console.log(`🎊 Particle ${index} STARTING animation at ${Date.now()}`);
+        
+        Animated.parallel([
+          // Fall down with slight horizontal drift
+          Animated.timing(particle.yAnimation, {
+            toValue: 1,
+            duration: duration, // Back to normal duration
+            easing: Easing.ease,
+            useNativeDriver: true
+          }),
+          // Slight horizontal drift
+          Animated.timing(particle.xAnimation, {
+            toValue: (Math.random() - 0.5) * 300,
+            duration: duration,
+            easing: Easing.ease,
+            useNativeDriver: true
+          }),
+          // Rotate
+          Animated.timing(particle.rotationAnimation, {
+            toValue: 1,
+            duration: duration,
+            easing: Easing.linear,
+            useNativeDriver: true
+          })
+        ]).start((result) => {
+          console.log(`🎊 Particle ${index} animation FINISHED at ${Date.now()}, finished: ${result.finished}`);
+        });
+      }, delayTime);
     });
     
-    // Start all animations at once (but they have individual delays)
-    const animationGroup = Animated.parallel(particleAnimations);
-    setAnimations(animationGroup);
+    // Clean up after all particles should be done (stagger time + animation duration + buffer)
+    const totalTime = 2000 + duration + 500; // 2 seconds stagger + 4 seconds animation + 0.5 second buffer
+    console.log(`🎊 Cleanup scheduled for ${totalTime}ms from now`);
     
-    animationGroup.start(() => {
-      console.log("Confetti animation complete");
+    setTimeout(() => {
+      console.log(`🎊 CLEANUP EXECUTING - removing ${particles.length} particles at ${Date.now()}`);
       setParticles([]);
       setIsInitialized(false);
+      setIsRunning(false);
       if (onComplete) onComplete();
-    });
+    }, totalTime);
   };
 
   const createFireworksEffect = () => {
@@ -211,17 +229,23 @@ const Confetti = ({
     });
     
     const animationGroup = Animated.parallel(particleAnimations);
-    setAnimations(animationGroup);
     
     animationGroup.start(() => {
       console.log("Fireworks animation complete");
       setParticles([]);
       setIsInitialized(false);
+      setIsRunning(false);
       if (onComplete) onComplete();
     });
   };
   
-  if (!active || particles.length === 0) return null;
+  // Only show particles if we have them and animation is running
+  if (!isRunning || particles.length === 0) {
+    console.log(`🎊 RENDER: Not showing particles. isRunning: ${isRunning}, particles.length: ${particles.length}`);
+    return null;
+  }
+  
+  console.log(`🎊 RENDER: Showing ${particles.length} particles`);
   
   return (
     <View style={styles.container} pointerEvents="none">
@@ -241,7 +265,7 @@ const Confetti = ({
                     {
                       translateY: particle.yAnimation.interpolate({
                         inputRange: [0, 1],
-                        outputRange: [particle.y, SCREEN_HEIGHT + 50]
+                        outputRange: [particle.y, SCREEN_HEIGHT + 300] // Extended fall distance
                       })
                     },
                     {

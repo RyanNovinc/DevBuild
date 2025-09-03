@@ -10,7 +10,10 @@ import {
   Animated,
   Dimensions,
   Platform,
-  Vibration
+  Vibration,
+  TextInput,
+  Alert,
+  PanResponder
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -27,6 +30,8 @@ import {
   fontSizes,
   isSmallDevice
 } from '../../../../utils/responsive';
+import { useAppContext } from '../../../../context/AppContext';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -71,6 +76,11 @@ const THEME_BENEFITS = {
     description: 'Practice appreciation and recognize the good things in your life',
     icon: '🙏',
     gradient: ['#FF3B30', '#FF9500']
+  },
+  custom: {
+    description: 'Use your own personalized prompts for morning and evening reflection',
+    icon: '✨',
+    gradient: ['#8E44AD', '#9B59B6']
   }
 };
 
@@ -88,8 +98,12 @@ const PromptSelectorRevamped = ({
   showSuccess 
 }) => {
   const [selectedTheme, setSelectedTheme] = useState(null);
-  const [activeTab, setActiveTab] = useState('themed'); // 'themed', 'random'
+  const [activeTab, setActiveTab] = useState('themed'); // 'themed', 'random', 'custom'
+  const [showCustomManagement, setShowCustomManagement] = useState(false);
+  const [newPromptText, setNewPromptText] = useState('');
+  const [promptType, setPromptType] = useState('morning'); // 'morning' or 'evening'
   
+  const { customPrompts, addCustomPrompt, updateCustomPrompt, deleteCustomPrompt } = useAppContext();
   const allThemes = getAllThemes();
 
   // Animation values
@@ -130,9 +144,21 @@ const PromptSelectorRevamped = ({
       Vibration.vibrate(10);
     }
     
-    setSelectedTheme(themeData);
-    onPromptSelect(themeData);
-    showSuccess?.(`Switched to ${themeData.name} prompts! ${THEME_BENEFITS[themeData.key]?.icon || '🎯'}`);
+    // If selecting custom theme, populate it with user's custom prompts
+    if (themeData.key === 'custom') {
+      const customThemeWithPrompts = {
+        ...themeData,
+        morning: customPrompts.morning || [],
+        evening: customPrompts.evening || []
+      };
+      setSelectedTheme(customThemeWithPrompts);
+      onPromptSelect(customThemeWithPrompts);
+      showSuccess?.(`Switched to Custom prompts! ✨`);
+    } else {
+      setSelectedTheme(themeData);
+      onPromptSelect(themeData);
+      showSuccess?.(`Switched to ${themeData.name} prompts! ${THEME_BENEFITS[themeData.key]?.icon || '🎯'}`);
+    }
     
     // Don't auto-close anymore - let user see the selection and use back button
   };
@@ -239,79 +265,106 @@ const PromptSelectorRevamped = ({
       onRequestClose={() => setVisible(false)}
     >
       <View style={[styles.container, { backgroundColor: theme.background }]}>
-        {/* Header */}
-        <View style={[styles.header, { borderBottomColor: theme.border }]}>
-          <TouchableOpacity onPress={() => setVisible(false)}>
-            <Ionicons name="close" size={scaleFontSize(24)} color={theme.text} />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: theme.text }]}>
-            Choose Your Focus
-          </Text>
-          <View style={{ width: scaleFontSize(24) }} />
-        </View>
-
-        {/* Hero Section */}
-        <LinearGradient
-          colors={[theme.primary + '20', 'transparent']}
-          style={styles.heroSection}
-        >
-          <Text style={[styles.heroTitle, { color: theme.text }]}>
-            Personalize Your Reflection
-          </Text>
-          <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
-            Each theme is scientifically designed to enhance specific areas of your life
-          </Text>
-        </LinearGradient>
-
-        {/* Tab Selector */}
-        <View style={[styles.tabContainer, { backgroundColor: theme.cardElevated }]}>
-          <TouchableOpacity
-            style={[
-              styles.tab,
-              activeTab === 'themed' && [styles.activeTab, { backgroundColor: theme.primary }]
-            ]}
-            onPress={() => setActiveTab('themed')}
-          >
-            <Ionicons 
-              name="color-palette" 
-              size={scaleFontSize(18)} 
-              color={activeTab === 'themed' ? '#FFFFFF' : theme.textSecondary} 
-            />
-            <Text style={[
-              styles.tabText,
-              { color: activeTab === 'themed' ? '#FFFFFF' : theme.textSecondary }
-            ]}>
-              Themes
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.tab,
-              activeTab === 'random' && [styles.activeTab, { backgroundColor: theme.primary }]
-            ]}
-            onPress={() => setActiveTab('random')}
-          >
-            <Ionicons 
-              name="shuffle" 
-              size={scaleFontSize(18)} 
-              color={activeTab === 'random' ? '#FFFFFF' : theme.textSecondary} 
-            />
-            <Text style={[
-              styles.tabText,
-              { color: activeTab === 'random' ? '#FFFFFF' : theme.textSecondary }
-            ]}>
-              Surprise
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Content */}
-        <ScrollView 
-          style={styles.content}
+        <KeyboardAwareScrollView 
+          style={styles.fullScrollView}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={styles.fullScrollContent}
+          bounces={true}
+          enableOnAndroid={true}
+          enableAutomaticScroll={true}
+          keyboardOpeningTime={0}
+          extraScrollHeight={spacing.xl}
+          keyboardShouldPersistTaps="handled"
         >
+          {/* Header */}
+          <View style={[styles.header, { borderBottomColor: theme.border }]}>
+            <TouchableOpacity onPress={() => setVisible(false)}>
+              <Ionicons name="close" size={scaleFontSize(24)} color={theme.text} />
+            </TouchableOpacity>
+            <Text style={[styles.headerTitle, { color: theme.text }]}>
+              Choose Your Focus
+            </Text>
+            <View style={{ width: scaleFontSize(24) }} />
+          </View>
+
+          {/* Hero Section */}
+          <LinearGradient
+            colors={[theme.primary + '20', 'transparent']}
+            style={styles.heroSection}
+          >
+            <Text style={[styles.heroTitle, { color: theme.text }]}>
+              Personalize Your Reflection
+            </Text>
+            <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
+              Each theme is scientifically designed to enhance specific areas of your life
+            </Text>
+          </LinearGradient>
+
+          {/* Tab Selector */}
+          <View style={[styles.tabContainer, { backgroundColor: theme.cardElevated }]}>
+            <TouchableOpacity
+              style={[
+                styles.tab,
+                activeTab === 'themed' && [styles.activeTab, { backgroundColor: theme.primary }]
+              ]}
+              onPress={() => setActiveTab('themed')}
+            >
+              <Ionicons 
+                name="color-palette" 
+                size={scaleFontSize(16)} 
+                color={activeTab === 'themed' ? '#FFFFFF' : theme.textSecondary} 
+              />
+              <Text style={[
+                styles.tabText,
+                { color: activeTab === 'themed' ? '#FFFFFF' : theme.textSecondary }
+              ]}>
+                Themes
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.tab,
+                activeTab === 'random' && [styles.activeTab, { backgroundColor: theme.primary }]
+              ]}
+              onPress={() => setActiveTab('random')}
+            >
+              <Ionicons 
+                name="shuffle" 
+                size={scaleFontSize(16)} 
+                color={activeTab === 'random' ? '#FFFFFF' : theme.textSecondary} 
+              />
+              <Text style={[
+                styles.tabText,
+                { color: activeTab === 'random' ? '#FFFFFF' : theme.textSecondary }
+              ]}>
+                Random
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.tab,
+                activeTab === 'custom' && [styles.activeTab, { backgroundColor: theme.primary }]
+              ]}
+              onPress={() => setActiveTab('custom')}
+            >
+              <Ionicons 
+                name="create" 
+                size={scaleFontSize(16)} 
+                color={activeTab === 'custom' ? '#FFFFFF' : theme.textSecondary} 
+              />
+              <Text style={[
+                styles.tabText,
+                { color: activeTab === 'custom' ? '#FFFFFF' : theme.textSecondary }
+              ]}>
+                Custom
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Content */}
+          <View style={styles.content}>
           {activeTab === 'themed' && (
             <View style={styles.themesGrid}>
               {allThemes.map((theme, index) => renderThemeCard(theme, index))}
@@ -332,7 +385,7 @@ const PromptSelectorRevamped = ({
                   )}
                   <Text style={styles.randomEmoji}>🎲</Text>
                   <Text style={styles.randomTitle}>
-                    {focusMode?.isRandomMode ? 'Daily Surprise Active' : 'Activate Daily Surprise'}
+                    {focusMode?.isRandomMode ? 'Daily Random Active' : 'Activate Daily Random'}
                   </Text>
                   <Text style={styles.randomDescription}>
                     {focusMode?.isRandomMode 
@@ -345,7 +398,7 @@ const PromptSelectorRevamped = ({
                     onPress={handleRandomSelect}
                   >
                     <Text style={styles.randomButtonText}>
-                      {focusMode?.isRandomMode ? 'Daily Surprise On' : 'Activate Daily Surprise'}
+                      {focusMode?.isRandomMode ? 'Daily Random On' : 'Activate Daily Random'}
                     </Text>
                     <Ionicons name="shuffle" size={scaleFontSize(20)} color={theme.primary} />
                   </TouchableOpacity>
@@ -354,9 +407,195 @@ const PromptSelectorRevamped = ({
             </View>
           )}
 
+          {activeTab === 'custom' && (
+            <View style={styles.customSection}>
+              <View style={styles.customHeader}>
+                <Text style={[styles.customTitle, { color: theme.text }]}>
+                  My Custom Prompts
+                </Text>
+                <Text style={[styles.customSubtitle, { color: theme.textSecondary }]}>
+                  Create personalized prompts for your daily reflection
+                </Text>
+              </View>
+
+              {/* Add New Prompt Section */}
+              <View style={[styles.addPromptCard, { backgroundColor: theme.cardElevated }]}>
+                <Text style={[styles.addPromptTitle, { color: theme.text }]}>
+                  Add New Prompt
+                </Text>
+                
+                <View style={styles.promptTypeSelector}>
+                  <TouchableOpacity
+                    style={[
+                      styles.typeButton,
+                      promptType === 'morning' && [styles.activeTypeButton, { backgroundColor: theme.primary }]
+                    ]}
+                    onPress={() => setPromptType('morning')}
+                  >
+                    <Text style={[
+                      styles.typeButtonText,
+                      { color: promptType === 'morning' ? '#FFFFFF' : theme.textSecondary }
+                    ]}>
+                      Morning
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.typeButton,
+                      promptType === 'evening' && [styles.activeTypeButton, { backgroundColor: theme.primary }]
+                    ]}
+                    onPress={() => setPromptType('evening')}
+                  >
+                    <Text style={[
+                      styles.typeButtonText,
+                      { color: promptType === 'evening' ? '#FFFFFF' : theme.textSecondary }
+                    ]}>
+                      Evening
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                <TextInput
+                  style={[styles.promptInput, { 
+                    backgroundColor: theme.background,
+                    color: theme.text,
+                    borderColor: theme.border
+                  }]}
+                  placeholder={`Enter your ${promptType} prompt...`}
+                  placeholderTextColor={theme.textSecondary}
+                  value={newPromptText}
+                  onChangeText={setNewPromptText}
+                  multiline
+                  numberOfLines={3}
+                />
+
+                <TouchableOpacity
+                  style={[styles.addPromptButton, { backgroundColor: theme.primary }]}
+                  onPress={async () => {
+                    if (newPromptText.trim()) {
+                      try {
+                        await addCustomPrompt(promptType, newPromptText.trim());
+                        setNewPromptText('');
+                        showSuccess?.(`Added custom ${promptType} prompt! ✨`);
+                      } catch (error) {
+                        Alert.alert('Error', 'Failed to add custom prompt');
+                      }
+                    }
+                  }}
+                  disabled={!newPromptText.trim()}
+                >
+                  <Ionicons name="add" size={scaleFontSize(20)} color="#FFFFFF" />
+                  <Text style={styles.addPromptButtonText}>
+                    Add {promptType.charAt(0).toUpperCase() + promptType.slice(1)} Prompt
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Custom Prompts Lists */}
+              <View style={styles.customPromptsContainer}>
+                {/* Morning Prompts */}
+                {customPrompts.morning?.length > 0 && (
+                  <View style={styles.promptsList}>
+                    <Text style={[styles.promptsListTitle, { color: theme.text }]}>
+                      Morning Prompts ({customPrompts.morning.length})
+                    </Text>
+                    {customPrompts.morning.map((prompt, index) => (
+                      <View key={prompt.id} style={[styles.promptItem, { backgroundColor: theme.cardElevated }]}>
+                        <Text style={[styles.promptText, { color: theme.text }]}>
+                          {prompt.question}
+                        </Text>
+                        <TouchableOpacity
+                          style={styles.deletePromptButton}
+                          onPress={() => {
+                            Alert.alert(
+                              'Delete Prompt',
+                              'Are you sure you want to delete this prompt?',
+                              [
+                                { text: 'Cancel', style: 'cancel' },
+                                { 
+                                  text: 'Delete', 
+                                  style: 'destructive',
+                                  onPress: async () => {
+                                    try {
+                                      await deleteCustomPrompt('morning', prompt.id);
+                                      showSuccess?.('Prompt deleted');
+                                    } catch (error) {
+                                      Alert.alert('Error', 'Failed to delete prompt');
+                                    }
+                                  }
+                                }
+                              ]
+                            );
+                          }}
+                        >
+                          <Ionicons name="trash" size={scaleFontSize(18)} color="#FF3B30" />
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                  </View>
+                )}
+
+                {/* Evening Prompts */}
+                {customPrompts.evening?.length > 0 && (
+                  <View style={styles.promptsList}>
+                    <Text style={[styles.promptsListTitle, { color: theme.text }]}>
+                      Evening Prompts ({customPrompts.evening.length})
+                    </Text>
+                    {customPrompts.evening.map((prompt, index) => (
+                      <View key={prompt.id} style={[styles.promptItem, { backgroundColor: theme.cardElevated }]}>
+                        <Text style={[styles.promptText, { color: theme.text }]}>
+                          {prompt.question}
+                        </Text>
+                        <TouchableOpacity
+                          style={styles.deletePromptButton}
+                          onPress={() => {
+                            Alert.alert(
+                              'Delete Prompt',
+                              'Are you sure you want to delete this prompt?',
+                              [
+                                { text: 'Cancel', style: 'cancel' },
+                                { 
+                                  text: 'Delete', 
+                                  style: 'destructive',
+                                  onPress: async () => {
+                                    try {
+                                      await deleteCustomPrompt('evening', prompt.id);
+                                      showSuccess?.('Prompt deleted');
+                                    } catch (error) {
+                                      Alert.alert('Error', 'Failed to delete prompt');
+                                    }
+                                  }
+                                }
+                              ]
+                            );
+                          }}
+                        >
+                          <Ionicons name="trash" size={scaleFontSize(18)} color="#FF3B30" />
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                  </View>
+                )}
+
+                {/* Empty State */}
+                {(!customPrompts.morning?.length && !customPrompts.evening?.length) && (
+                  <View style={styles.emptyState}>
+                    <Text style={[styles.emptyStateTitle, { color: theme.text }]}>
+                      No Custom Prompts Yet
+                    </Text>
+                    <Text style={[styles.emptyStateSubtitle, { color: theme.textSecondary }]}>
+                      Create your first custom prompt above to get started with personalized daily reflection
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          )}
+
           {/* Bottom padding */}
           <View style={{ height: scaleHeight(100) }} />
-        </ScrollView>
+          </View>
+        </KeyboardAwareScrollView>
       </View>
     </Modal>
   );
@@ -366,12 +605,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  fullScrollView: {
+    flex: 1,
+  },
+  fullScrollContent: {
+    flexGrow: 1,
+    paddingBottom: spacing.xl,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: spacing.m,
-    borderBottomWidth: 1,
+    paddingTop: spacing.l, // Add some extra padding at top for better spacing
   },
   headerTitle: {
     fontSize: scaleFontSize(20),
@@ -420,11 +666,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   content: {
-    flex: 1,
-  },
-  scrollContent: {
     paddingHorizontal: spacing.m,
-    paddingTop: spacing.s,
   },
   themesGrid: {
     gap: spacing.m,
@@ -715,6 +957,121 @@ const styles = StyleSheet.create({
     fontSize: scaleFontSize(15),
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  
+  // Custom Prompts Styles
+  customSection: {
+    paddingTop: spacing.l,
+  },
+  customHeader: {
+    alignItems: 'center',
+    marginBottom: spacing.l,
+  },
+  customTitle: {
+    fontSize: scaleFontSize(24),
+    fontWeight: '700',
+    marginBottom: spacing.xs,
+  },
+  customSubtitle: {
+    fontSize: scaleFontSize(14),
+    textAlign: 'center',
+  },
+  addPromptCard: {
+    borderRadius: 16,
+    padding: spacing.l,
+    marginBottom: spacing.l,
+  },
+  addPromptTitle: {
+    fontSize: scaleFontSize(18),
+    fontWeight: '600',
+    marginBottom: spacing.m,
+  },
+  promptTypeSelector: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    borderRadius: 10,
+    padding: 4,
+    marginBottom: spacing.m,
+  },
+  typeButton: {
+    flex: 1,
+    paddingVertical: spacing.s,
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  activeTypeButton: {
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  typeButtonText: {
+    fontSize: scaleFontSize(14),
+    fontWeight: '600',
+  },
+  promptInput: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: spacing.m,
+    fontSize: scaleFontSize(15),
+    textAlignVertical: 'top',
+    marginBottom: spacing.m,
+    minHeight: scaleHeight(80),
+  },
+  addPromptButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.m,
+    borderRadius: 12,
+    gap: spacing.s,
+  },
+  addPromptButtonText: {
+    color: '#FFFFFF',
+    fontSize: scaleFontSize(16),
+    fontWeight: '600',
+  },
+  customPromptsContainer: {
+    gap: spacing.l,
+  },
+  promptsList: {
+    gap: spacing.s,
+  },
+  promptsListTitle: {
+    fontSize: scaleFontSize(18),
+    fontWeight: '600',
+    marginBottom: spacing.s,
+  },
+  promptItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: spacing.m,
+    borderRadius: 12,
+    gap: spacing.s,
+  },
+  promptText: {
+    flex: 1,
+    fontSize: scaleFontSize(15),
+    lineHeight: scaleFontSize(20),
+  },
+  deletePromptButton: {
+    padding: spacing.s,
+  },
+  emptyState: {
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  emptyStateTitle: {
+    fontSize: scaleFontSize(18),
+    fontWeight: '600',
+    marginBottom: spacing.s,
+  },
+  emptyStateSubtitle: {
+    fontSize: scaleFontSize(14),
+    textAlign: 'center',
+    lineHeight: scaleFontSize(20),
   },
 });
 

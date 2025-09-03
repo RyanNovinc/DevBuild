@@ -45,8 +45,8 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
  * Features: Cards UI, Progress indicators, Smooth animations, Better visual hierarchy, Swipeable tabs
  */
 const DailyStandupRevamped = ({ theme, showSuccess, isFullscreen }) => {
-  // Get subscription status and navigation
-  const { userSubscriptionStatus } = useAppContext();
+  // Get subscription status, navigation, and custom prompts
+  const { userSubscriptionStatus, customPrompts } = useAppContext();
   const navigation = useNavigation();
   const isPro = userSubscriptionStatus === 'pro' || userSubscriptionStatus === 'unlimited';
   // Core state - use local date instead of UTC
@@ -188,10 +188,21 @@ const DailyStandupRevamped = ({ theme, showSuccess, isFullscreen }) => {
   // Save persistent focus mode
   const saveFocusMode = async (themeData, isRandomMode = false) => {
     try {
+      let processedThemeData = { ...themeData };
+      
+      // If this is a custom theme, populate it with user's actual custom prompts
+      if (themeData.key === 'custom') {
+        processedThemeData = {
+          ...themeData,
+          morning: customPrompts.morning || [],
+          evening: customPrompts.evening || []
+        };
+      }
+      
       const focusData = {
-        key: themeData.key,
-        name: themeData.name,
-        prompts: themeData,
+        key: processedThemeData.key,
+        name: processedThemeData.name,
+        prompts: processedThemeData,
         isRandomMode: isRandomMode,
         lastUpdated: new Date().toISOString()
       };
@@ -217,6 +228,27 @@ const DailyStandupRevamped = ({ theme, showSuccess, isFullscreen }) => {
   // Generate theme-specific prompt variations
   const getPromptVariations = (basePrompt, themeKey) => {
     const field = basePrompt.field;
+    
+    // Handle custom prompts
+    if (themeKey === 'custom') {
+      const timeType = field.includes('morning') ? 'morning' : 'evening';
+      const userCustomPrompts = customPrompts[timeType] || [];
+      
+      if (userCustomPrompts.length > 0) {
+        return userCustomPrompts.map(prompt => ({
+          question: prompt.question,
+          placeholder: prompt.placeholder || "Your thoughts...",
+          field: prompt.field
+        }));
+      }
+      
+      // Fallback if no custom prompts exist
+      return [{ 
+        question: `Add your own ${timeType} prompts in the Custom tab!`, 
+        placeholder: "Tap 'Choose Your Focus' → Custom to add prompts...",
+        field: basePrompt.field
+      }];
+    }
     
     // Theme-specific variations
     const themeVariations = {
@@ -524,19 +556,31 @@ const DailyStandupRevamped = ({ theme, showSuccess, isFullscreen }) => {
         
         // Check if we need to update to today's theme
         if (focusMode.key !== todaysTheme.key) {
+          let processedTodaysTheme = { ...todaysTheme };
+          
+          // If today's random theme is custom, populate with user's actual custom prompts
+          if (todaysTheme.key === 'custom') {
+            processedTodaysTheme = {
+              ...todaysTheme,
+              morning: customPrompts.morning || [],
+              evening: customPrompts.evening || []
+            };
+          }
+          
           const updatedFocusData = {
             ...focusMode,
-            key: todaysTheme.key,
-            name: todaysTheme.name,
-            prompts: todaysTheme,
+            key: processedTodaysTheme.key,
+            name: processedTodaysTheme.name,
+            prompts: processedTodaysTheme,
             lastUpdated: new Date().toISOString()
           };
           
           await AsyncStorage.setItem('dailyStandupFocusMode', JSON.stringify(updatedFocusData));
           setFocusMode(updatedFocusData);
-          setCurrentPrompts(todaysTheme);
+          setCurrentPrompts(processedTodaysTheme);
           
-          showSuccess?.(`Today's surprise theme: ${todaysTheme.name}! 🎲`);
+          const emoji = todaysTheme.key === 'custom' ? '✨' : '🎲';
+          showSuccess?.(`Today's surprise theme: ${processedTodaysTheme.name}! ${emoji}`);
         }
       }
     } catch (error) {
@@ -1100,7 +1144,18 @@ const DailyStandupRevamped = ({ theme, showSuccess, isFullscreen }) => {
         visible={showPromptSelector}
         setVisible={setShowPromptSelector}
         onPromptSelect={(themeData, isRandomMode = false) => {
-          setCurrentPrompts(themeData);
+          let processedThemeData = { ...themeData };
+          
+          // If this is a custom theme, populate it with user's actual custom prompts
+          if (themeData.key === 'custom') {
+            processedThemeData = {
+              ...themeData,
+              morning: customPrompts.morning || [],
+              evening: customPrompts.evening || []
+            };
+          }
+          
+          setCurrentPrompts(processedThemeData);
           saveFocusMode(themeData, isRandomMode);
         }}
         currentPrompts={currentPrompts}

@@ -1,0 +1,125 @@
+// Logger function for consistent log format
+function log(level, message, data = {}) {
+  console.log(JSON.stringify({
+    timestamp: new Date().toISOString(),
+    level,
+    message,
+    ...data
+  }));
+}
+
+// Function to detect platform
+function detectPlatform(userAgent) {
+  const ua = userAgent?.toLowerCase() || '';
+  if (ua.includes('iphone') || ua.includes('ipad') || ua.includes('ipod')) return 'ios';
+  else if (ua.includes('android')) return 'android';
+  else return 'desktop';
+}
+
+// Generate UUID
+function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    return (c == 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+
+// Main handler
+exports.handler = async (event, context) => {
+  const requestId = context.awsRequestId;
+  
+  try {
+    log('info', 'Received request', { 
+      requestId,
+      ip: event.requestContext?.identity?.sourceIp || 'unknown',
+      userAgent: event.headers['User-Agent'] || event.headers['user-agent'] || 'unknown'
+    });
+    
+    // Extract referral code
+    const referralCode = event.pathParameters?.referralCode;
+    
+    if (!referralCode) {
+      log('warn', 'Missing referral code', { requestId });
+      return {
+        statusCode: 400,
+        headers: { 'Content-Type': 'text/html' },
+        body: `<html><body><h1>Invalid Referral Link</h1><p>The referral link is invalid or missing a code.</p></body></html>`
+      };
+    }
+    
+    // Get platform
+    const userAgent = event.headers['User-Agent'] || event.headers['user-agent'] || '';
+    const platform = detectPlatform(userAgent);
+    log('info', 'Detected platform', { requestId, platform, referralCode });
+    
+    // Generate device ID
+    const deviceId = generateUUID();
+    
+    // Construct URLs
+    const deepLinkUrl = `lifecompass://r/${referralCode}`;
+    const appStoreUrl = `https://apps.apple.com/app/idYOUR_APP_ID?ct=${referralCode}`;
+    
+    // Log successful processing
+    log('info', 'Successfully processed referral link', { 
+      requestId, 
+      referralCode, 
+      platform,
+      deviceId 
+    });
+    
+    // Return landing page
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'text/html',
+        'Set-Cookie': `lcDeviceId=${deviceId}; Path=/; Max-Age=${30 * 24 * 60 * 60}; Secure; SameSite=None`,
+        'Cache-Control': 'no-store',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+        'Access-Control-Allow-Methods': 'GET,OPTIONS'
+      },
+      body: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LifeCompass - Get Started</title>
+  <style>
+    body { font-family: -apple-system, sans-serif; text-align: center; padding: 20px; }
+    .btn { background: #4CAF50; color: white; padding: 15px 30px; border-radius: 8px; 
+           text-decoration: none; display: inline-block; font-weight: bold; margin: 20px 0; }
+  </style>
+</head>
+<body>
+  <h1>You've Been Invited to LifeCompass!</h1>
+  <p>Download now to organize your goals and tasks better.</p>
+  <a href="${platform === 'ios' ? deepLinkUrl : appStoreUrl}" class="btn" id="downloadBtn">
+    ${platform === 'ios' ? 'Open in App' : 'Download on App Store'}
+  </a>
+  <script>
+    if ('${platform}' === 'ios') {
+      document.getElementById('downloadBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        window.location.href = '${deepLinkUrl}';
+        setTimeout(function() { window.location.href = '${appStoreUrl}'; }, 1500);
+      });
+    }
+  </script>
+</body>
+</html>`
+    };
+  } catch (error) {
+    log('error', 'Error processing referral link', { 
+      requestId,
+      error: error.message,
+      stack: error.stack
+    });
+    
+    return {
+      statusCode: 500,
+      headers: { 'Content-Type': 'text/html' },
+      body: `<html><body><h1>Oops!</h1><p>Something went wrong. Please try again later.</p></body></html>`
+    };
+  }
+};

@@ -93,6 +93,7 @@ const StreakDetailScreen = ({ navigation, route }) => {
   
   // Modal states - defining these first to avoid reference errors
   const [isEditing, setIsEditing] = useState(false);
+  const [editTab, setEditTab] = useState('customize'); // 'customize' or 'setstreak'
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showChecklistModal, setShowChecklistModal] = useState(false);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
@@ -101,6 +102,8 @@ const StreakDetailScreen = ({ navigation, route }) => {
   const [fileToDelete, setFileToDelete] = useState(null); // {id, name}
   const [showStorageLimitMsg, setShowStorageLimitMsg] = useState(false);
   const [newItem, setNewItem] = useState('');
+  const [isAddingItem, setIsAddingItem] = useState(false);
+  const [streakNumberInput, setStreakNumberInput] = useState('0');
   const [isSaving, setIsSaving] = useState(false);
   
   // Header title editing state
@@ -120,6 +123,7 @@ const StreakDetailScreen = ({ navigation, route }) => {
     checkInDates: {},
     nextMilestone: 7,
     notes: '',
+    startDate: new Date().toISOString().split('T')[0], // Default to today
     lastChecklistReset: null,
     checklist: [
       { id: '1', text: 'Complete daily activity', completed: false },
@@ -450,15 +454,28 @@ const StreakDetailScreen = ({ navigation, route }) => {
     }
   };
 
+  // Check saved instances limit before saving
+  const checkSavedInstancesLimit = async () => {
+    try {
+      await cleanupExcessFiles();
+      const allKeys = await AsyncStorage.getAllKeys();
+      const widgetDataKeys = allKeys.filter(key => key.startsWith('widget_data_streak_'));
+      
+      if (widgetDataKeys.length >= 3) {
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error('Error checking saved instances limit:', error);
+      return true; // Allow saving if there's an error checking
+    }
+  };
+
   // Start fresh streak
   const startFreshStreak = async () => {
-    // Clean up excess files first
-    await cleanupExcessFiles();
+    const canSave = await checkSavedInstancesLimit();
     
-    const allKeys = await AsyncStorage.getAllKeys();
-    const savedFiles = allKeys.filter(key => key.startsWith('widget_data_streak_'));
-    
-    if (savedFiles.length >= 3) {
+    if (!canSave) {
       setShowStorageLimitMsg(true);
       return;
     }
@@ -473,6 +490,7 @@ const StreakDetailScreen = ({ navigation, route }) => {
       checkInDates: {},
       nextMilestone: 7,
       notes: '',
+      startDate: new Date().toISOString().split('T')[0], // Default to today
       checklist: [
         { id: '1', text: 'Complete daily activity', completed: false },
         { id: '2', text: 'Track progress', completed: false },
@@ -609,9 +627,10 @@ const StreakDetailScreen = ({ navigation, route }) => {
     setEditData({
       streakName: streakData.streakName,
       streakIcon: streakData.streakIcon,
-      streakColor: streakData.streakColor,
-      notes: streakData.notes || ''
+      streakColor: streakData.streakColor
     });
+    setStreakNumberInput(streakData.currentStreak.toString());
+    setEditTab('customize'); // Always start on customize tab
     setIsEditing(true);
   };
 
@@ -626,8 +645,7 @@ const StreakDetailScreen = ({ navigation, route }) => {
       ...streakData,
       streakName: editData.streakName.trim(),
       streakIcon: editData.streakIcon,
-      streakColor: editData.streakColor,
-      notes: editData.notes
+      streakColor: editData.streakColor
     };
     
     const success = await saveStreakData(updatedData);
@@ -635,6 +653,49 @@ const StreakDetailScreen = ({ navigation, route }) => {
       setStreakData(updatedData);
       setIsEditing(false);
       showSuccess('Streak details updated successfully');
+    }
+  };
+
+  // Handle manual streak setting
+  const handleSetStreak = async () => {
+    const streakNumber = parseInt(streakNumberInput);
+    
+    if (isNaN(streakNumber) || streakNumber < 0) {
+      showError('Please enter a valid number (0 or greater)');
+      return;
+    }
+    
+    if (streakNumber > 9999) {
+      showError('Streak cannot be more than 9999 days');
+      return;
+    }
+    
+    // Calculate next milestone based on the new streak
+    let nextMilestone = 7;
+    if (streakNumber >= 7 && streakNumber < 30) {
+      nextMilestone = 30;
+    } else if (streakNumber >= 30 && streakNumber < 90) {
+      nextMilestone = 90;
+    } else if (streakNumber >= 90 && streakNumber < 180) {
+      nextMilestone = 180;
+    } else if (streakNumber >= 180 && streakNumber < 365) {
+      nextMilestone = 365;
+    } else if (streakNumber >= 365) {
+      nextMilestone = Math.ceil(streakNumber / 100) * 100; // Round up to next hundred
+    }
+    
+    const updatedData = {
+      ...streakData,
+      currentStreak: streakNumber,
+      longestStreak: Math.max(streakNumber, streakData.longestStreak),
+      nextMilestone
+    };
+    
+    const success = await saveStreakData(updatedData);
+    if (success) {
+      setStreakData(updatedData);
+      setIsEditing(false);
+      showSuccess(`Streak set to ${streakNumber} days!`);
     }
   };
 
@@ -758,6 +819,56 @@ const StreakDetailScreen = ({ navigation, route }) => {
     saveStreakData(updatedData);
     setStreakData(updatedData);
     setNewItem('');
+    setIsAddingItem(false);
+  };
+
+  // Start adding new item
+  const startAddingItem = () => {
+    if (streakData.checklist.length >= 10) {
+      showError('Maximum of 10 checklist items allowed');
+      return;
+    }
+    setIsAddingItem(true);
+  };
+
+  // Cancel adding item
+  const cancelAddingItem = () => {
+    setNewItem('');
+    setIsAddingItem(false);
+  };
+
+  // Move checklist item up
+  const moveChecklistItemUp = (index) => {
+    if (index === 0) return; // Can't move first item up
+    
+    const updatedChecklist = [...streakData.checklist];
+    const [item] = updatedChecklist.splice(index, 1);
+    updatedChecklist.splice(index - 1, 0, item);
+    
+    const updatedData = {
+      ...streakData,
+      checklist: updatedChecklist
+    };
+    
+    saveStreakData(updatedData);
+    setStreakData(updatedData);
+  };
+
+  // Move checklist item down
+  const moveChecklistItemDown = (index) => {
+    if (index === streakData.checklist.length - 1) return; // Can't move last item down
+    
+    const updatedChecklist = [...streakData.checklist];
+    const [item] = updatedChecklist.splice(index, 1);
+    updatedChecklist.splice(index + 1, 0, item);
+    
+    const updatedData = {
+      ...streakData,
+      checklist: updatedChecklist
+    };
+    
+    saveStreakData(updatedData);
+    setStreakData(updatedData);
   };
 
   // Delete checklist item
@@ -863,9 +974,16 @@ const StreakDetailScreen = ({ navigation, route }) => {
   // Calculate streak statistics
   const getStreakStats = () => {
     const checkIns = Object.keys(streakData.checkInDates || {}).length;
-    const startDate = checkIns > 0 
-      ? new Date(Object.keys(streakData.checkInDates).sort()[0]) 
-      : new Date();
+    
+    // Use custom start date if available, otherwise use first check-in date
+    let startDate;
+    if (streakData.startDate) {
+      startDate = new Date(streakData.startDate);
+    } else if (checkIns > 0) {
+      startDate = new Date(Object.keys(streakData.checkInDates).sort()[0]);
+    } else {
+      startDate = new Date();
+    }
     
     const daysSinceStart = Math.ceil((new Date() - startDate) / (1000 * 60 * 60 * 24));
     const consistency = daysSinceStart > 0 
@@ -963,7 +1081,7 @@ const StreakDetailScreen = ({ navigation, route }) => {
   const renderChecklistModal = () => (
     <Modal
       visible={showChecklistModal}
-      animationType="slide"
+      animationType="fade"
       transparent={true}
       onRequestClose={() => setShowChecklistModal(false)}
     >
@@ -978,23 +1096,83 @@ const StreakDetailScreen = ({ navigation, route }) => {
           
           <View style={styles.checklistInfo}>
             <Text style={[styles.checklistInfoText, { color: theme.textSecondary }]}>
-              {checklistCompletion}% complete • {streakData.checklist.length}/10 items
+              {checklistCompletion}% complete • {streakData.checklist.filter(item => item.completed).length}/{streakData.checklist.length} completed
             </Text>
           </View>
+
+          {/* Add item section at top */}
+          {!isAddingItem ? (
+            // Add item button when not in adding mode
+            <TouchableOpacity 
+              style={styles.addItemButton}
+              onPress={startAddingItem}
+              disabled={streakData.checklist.length >= 10}
+            >
+              <View style={styles.addItemButtonContent}>
+                <Ionicons 
+                  name="add" 
+                  size={20} 
+                  color={streakData.checklist.length >= 10 ? theme.textSecondary : streakData.streakColor} 
+                />
+                <Text style={[
+                  styles.addItemButtonText, 
+                  { 
+                    color: streakData.checklist.length >= 10 ? theme.textSecondary : theme.text,
+                    opacity: streakData.checklist.length >= 10 ? 0.5 : 1
+                  }
+                ]}>
+                  {streakData.checklist.length >= 10 ? 'Maximum items reached' : 'Add new task'}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ) : (
+            // Input field when in adding mode
+            <View style={styles.addItemContainer}>
+              <TextInput
+                style={[styles.addItemInput, { 
+                  backgroundColor: theme.inputBg, 
+                  color: theme.text, 
+                  borderColor: streakData.streakColor,
+                  borderWidth: 2
+                }]}
+                value={newItem}
+                onChangeText={setNewItem}
+                placeholder="Enter task name..."
+                placeholderTextColor={theme.textSecondary}
+                autoFocus={true}
+                onSubmitEditing={addChecklistItem}
+                returnKeyType="done"
+              />
+              <TouchableOpacity 
+                style={[styles.addButton, { backgroundColor: streakData.streakColor }]}
+                onPress={addChecklistItem}
+              >
+                <Ionicons name="checkmark" size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.cancelButton, { backgroundColor: theme.border }]}
+                onPress={cancelAddingItem}
+              >
+                <Ionicons name="close" size={18} color={theme.textSecondary} />
+              </TouchableOpacity>
+            </View>
+          )}
           
           <ScrollView style={styles.checklistScrollView}>
-            {streakData.checklist.map(item => (
-              <View key={item.id} style={styles.checklistItem}>
-                <TouchableOpacity 
-                  style={styles.checklistCheckbox}
-                  onPress={() => toggleChecklistItem(item.id)}
-                >
+            {streakData.checklist.map((item, index) => (
+              <TouchableOpacity 
+                key={item.id} 
+                style={styles.checklistItem}
+                onPress={() => toggleChecklistItem(item.id)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.checklistCheckbox}>
                   <Ionicons 
                     name={item.completed ? "checkbox" : "square-outline"} 
                     size={24} 
                     color={item.completed ? streakData.streakColor : theme.textSecondary} 
                   />
-                </TouchableOpacity>
+                </View>
                 
                 <Text 
                   style={[
@@ -1009,38 +1187,59 @@ const StreakDetailScreen = ({ navigation, route }) => {
                   {item.text}
                 </Text>
                 
-                <TouchableOpacity 
-                  style={styles.deleteButton}
-                  onPress={() => deleteChecklistItem(item.id)}
-                >
-                  <Ionicons name="trash-outline" size={20} color={theme.textSecondary} />
-                </TouchableOpacity>
-              </View>
+                <View style={styles.itemActions}>
+                  {/* Up button */}
+                  <TouchableOpacity 
+                    style={[styles.reorderButton, { 
+                      opacity: index === 0 ? 0.3 : 1 
+                    }]}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      moveChecklistItemUp(index);
+                    }}
+                    disabled={index === 0}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="chevron-up" size={16} color={theme.textSecondary} />
+                  </TouchableOpacity>
+
+                  {/* Down button */}
+                  <TouchableOpacity 
+                    style={[styles.reorderButton, { 
+                      opacity: index === streakData.checklist.length - 1 ? 0.3 : 1 
+                    }]}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      moveChecklistItemDown(index);
+                    }}
+                    disabled={index === streakData.checklist.length - 1}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="chevron-down" size={16} color={theme.textSecondary} />
+                  </TouchableOpacity>
+
+                  {/* Delete button */}
+                  <TouchableOpacity 
+                    style={[styles.deleteButton, { 
+                      width: 32,
+                      height: 32,
+                      borderRadius: 16,
+                      backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }]}
+                    onPress={(e) => {
+                      e.stopPropagation(); // Prevent triggering the parent onPress
+                      deleteChecklistItem(item.id);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="close" size={16} color="#EF4444" />
+                  </TouchableOpacity>
+                </View>
+              </TouchableOpacity>
             ))}
           </ScrollView>
-          
-          <View style={styles.addItemContainer}>
-            <TextInput
-              style={[styles.addItemInput, { backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border }]}
-              value={newItem}
-              onChangeText={setNewItem}
-              placeholder="Add new task..."
-              placeholderTextColor={theme.textSecondary}
-            />
-            <TouchableOpacity 
-              style={[
-                styles.addButton, 
-                { 
-                  backgroundColor: streakData.checklist.length >= 10 ? theme.border : streakData.streakColor,
-                  opacity: streakData.checklist.length >= 10 ? 0.5 : 1
-                }
-              ]}
-              onPress={addChecklistItem}
-              disabled={streakData.checklist.length >= 10}
-            >
-              <Ionicons name="add" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-          </View>
           
           <TouchableOpacity 
             style={[styles.infoButton, { backgroundColor: streakData.streakColor, marginTop: spacing.m }]}
@@ -1053,11 +1252,11 @@ const StreakDetailScreen = ({ navigation, route }) => {
     </Modal>
   );
 
-  // Edit modal for customizing streak
+  // Edit modal with tabs for customizing streak
   const renderEditModal = () => (
     <Modal
       visible={isEditing}
-      animationType="slide"
+      animationType="fade"
       transparent={true}
       onRequestClose={() => setIsEditing(false)}
     >
@@ -1067,98 +1266,161 @@ const StreakDetailScreen = ({ navigation, route }) => {
             Edit Streak
           </Text>
           
-          {/* Streak Name Input */}
-          <Text style={[styles.inputLabel, { color: theme.text }]}>Streak Name</Text>
-          <TextInput
-            style={[styles.textInput, { backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border }]}
-            value={editData.streakName}
-            onChangeText={(text) => setEditData({...editData, streakName: text})}
-            placeholder="Enter streak name"
-            placeholderTextColor={theme.textSecondary}
-            maxLength={30}
-          />
-          
-          {/* Color Selection */}
-          <Text style={[styles.inputLabel, { color: theme.text }]}>Color</Text>
-          <View style={styles.colorSelector}>
-            {DEFAULT_COLORS.map((color) => (
-              <TouchableOpacity
-                key={color}
-                style={[
-                  styles.colorOption,
-                  { backgroundColor: color },
-                  editData.streakColor === color && styles.selectedColorOption
-                ]}
-                onPress={() => setEditData({...editData, streakColor: color})}
-              >
-                {editData.streakColor === color && (
-                  <Ionicons name="checkmark" size={18} color="#FFFFFF" style={styles.colorCheck} />
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
-          
-          {/* Icon Selection */}
-          <Text style={[styles.inputLabel, { color: theme.text }]}>Icon</Text>
-          <View style={styles.iconSelector}>
-            {DEFAULT_ICONS.map((icon) => (
-              <TouchableOpacity
-                key={icon}
-                style={[
-                  styles.iconOption,
-                  { backgroundColor: theme.cardAlt },
-                  editData.streakIcon === icon && {
-                    backgroundColor: `${editData.streakColor}20`,
-                    borderColor: editData.streakColor
-                  }
-                ]}
-                onPress={() => setEditData({...editData, streakIcon: icon})}
-              >
-                <Ionicons 
-                  name={icon} 
-                  size={24} 
-                  color={editData.streakIcon === icon ? editData.streakColor : theme.textSecondary} 
-                />
-              </TouchableOpacity>
-            ))}
-          </View>
-          
-          {/* Notes Input */}
-          <Text style={[styles.inputLabel, { color: theme.text }]}>Notes (Optional)</Text>
-          <TextInput
-            style={[
-              styles.textInput,
-              styles.notesInput,
-              { backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border }
-            ]}
-            value={editData.notes}
-            onChangeText={(text) => setEditData({...editData, notes: text})}
-            placeholder="Enter notes about this streak"
-            placeholderTextColor={theme.textSecondary}
-            multiline={true}
-            textAlignVertical="top"
-          />
-          
-          {/* Buttons */}
-          <View style={styles.modalButtons}>
+          {/* Tabs */}
+          <View style={styles.tabContainer}>
             <TouchableOpacity
-              style={[styles.modalButton, styles.cancelButton, { borderColor: theme.border }]}
-              onPress={() => setIsEditing(false)}
+              style={[
+                styles.tab,
+                { borderBottomColor: editTab === 'customize' ? streakData.streakColor : 'transparent' }
+              ]}
+              onPress={() => setEditTab('customize')}
             >
-              <Text style={[styles.modalButtonText, { color: theme.textSecondary }]}>
-                Cancel
+              <Text style={[
+                styles.tabText,
+                { 
+                  color: editTab === 'customize' ? streakData.streakColor : theme.textSecondary,
+                  fontWeight: editTab === 'customize' ? '600' : '400'
+                }
+              ]}>
+                Customize
               </Text>
             </TouchableOpacity>
-            
             <TouchableOpacity
-              style={[styles.modalButton, styles.saveButton, { backgroundColor: editData.streakColor }]}
-              onPress={handleSaveEdit}
+              style={[
+                styles.tab,
+                { borderBottomColor: editTab === 'setstreak' ? streakData.streakColor : 'transparent' }
+              ]}
+              onPress={() => setEditTab('setstreak')}
             >
-              <Text style={[styles.modalButtonText, { color: '#FFFFFF' }]}>
-                Save
+              <Text style={[
+                styles.tabText,
+                { 
+                  color: editTab === 'setstreak' ? streakData.streakColor : theme.textSecondary,
+                  fontWeight: editTab === 'setstreak' ? '600' : '400'
+                }
+              ]}>
+                Set Streak
               </Text>
             </TouchableOpacity>
           </View>
+          
+          {/* Tab Content */}
+          {editTab === 'customize' ? (
+            <>
+              {/* Streak Name Input */}
+              <Text style={[styles.inputLabel, { color: theme.text }]}>Streak Name</Text>
+              <TextInput
+                style={[styles.textInput, { backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border }]}
+                value={editData.streakName}
+                onChangeText={(text) => setEditData({...editData, streakName: text})}
+                placeholder="Enter streak name"
+                placeholderTextColor={theme.textSecondary}
+                maxLength={30}
+              />
+              
+              {/* Color Selection */}
+              <Text style={[styles.inputLabel, { color: theme.text }]}>Color</Text>
+              <View style={styles.colorSelector}>
+                {DEFAULT_COLORS.map((color) => (
+                  <TouchableOpacity
+                    key={color}
+                    style={[
+                      styles.colorOption,
+                      { backgroundColor: color },
+                      editData.streakColor === color && styles.selectedColorOption
+                    ]}
+                    onPress={() => setEditData({...editData, streakColor: color})}
+                  >
+                    {editData.streakColor === color && (
+                      <Ionicons name="checkmark" size={18} color="#FFFFFF" style={styles.colorCheck} />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+              
+              {/* Icon Selection */}
+              <Text style={[styles.inputLabel, { color: theme.text }]}>Icon</Text>
+              <View style={styles.iconSelector}>
+                {DEFAULT_ICONS.map((icon) => (
+                  <TouchableOpacity
+                    key={icon}
+                    style={[
+                      styles.iconOption,
+                      { backgroundColor: theme.cardAlt },
+                      editData.streakIcon === icon && {
+                        backgroundColor: `${editData.streakColor}20`,
+                        borderColor: editData.streakColor
+                      }
+                    ]}
+                    onPress={() => setEditData({...editData, streakIcon: icon})}
+                  >
+                    <Ionicons 
+                      name={icon} 
+                      size={24} 
+                      color={editData.streakIcon === icon ? editData.streakColor : theme.textSecondary} 
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
+              
+              {/* Buttons */}
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.cancelButton, { borderColor: theme.border }]}
+                  onPress={() => setIsEditing(false)}
+                >
+                  <Text style={[styles.modalButtonText, { color: theme.textSecondary }]}>
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.saveButton, { backgroundColor: editData.streakColor }]}
+                  onPress={handleSaveEdit}
+                >
+                  <Text style={[styles.modalButtonText, { color: '#FFFFFF' }]}>
+                    Save
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          ) : (
+            <>
+              {/* Set Streak Number */}
+              <Text style={[styles.inputLabel, { color: theme.text }]}>Current Streak Days</Text>
+              <TextInput
+                style={[styles.textInput, styles.streakNumberInput, { backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border, fontSize: fontSizes.xl, textAlign: 'center', fontWeight: 'bold' }]}
+                value={streakNumberInput}
+                onChangeText={setStreakNumberInput}
+                placeholder="0"
+                placeholderTextColor={theme.textSecondary}
+                keyboardType="numeric"
+                maxLength={4}
+              />
+              <Text style={[styles.helperText, { color: theme.textSecondary, marginBottom: spacing.m }]}>
+                Set your streak to any number of days you want
+              </Text>
+              
+              {/* Buttons */}
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.cancelButton, { borderColor: theme.border }]}
+                  onPress={() => setIsEditing(false)}
+                >
+                  <Text style={[styles.modalButtonText, { color: theme.textSecondary }]}>
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.saveButton, { backgroundColor: streakData.streakColor }]}
+                  onPress={handleSetStreak}
+                >
+                  <Text style={[styles.modalButtonText, { color: '#FFFFFF' }]}>
+                    Set Streak
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
         </View>
       </View>
     </Modal>
@@ -1455,9 +1717,17 @@ const StreakDetailScreen = ({ navigation, route }) => {
         
         <View style={styles.titleContainer}>
           <TouchableOpacity onPress={handleHeaderTitlePress} style={styles.headerTitleTouchable}>
-            <Text style={[styles.headerTitle, { color: theme.text }]}>
-              {streakData.streakName}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={[styles.headerTitle, { color: theme.text }]}>
+                {streakData.streakName}
+              </Text>
+              <Ionicons 
+                name="create-outline" 
+                size={18} 
+                color={theme.textSecondary} 
+                style={{ marginLeft: 8, opacity: 0.7 }} 
+              />
+            </View>
           </TouchableOpacity>
           {isSaving && (
             <View style={styles.savingIndicator}>
@@ -1484,7 +1754,11 @@ const StreakDetailScreen = ({ navigation, route }) => {
           
           <TouchableOpacity
             style={styles.infoIconButton}
-            onPress={() => setShowInfoModal(true)}
+            onPress={() => {
+              console.log('Info button pressed');
+              setShowInfoModal(true);
+            }}
+            activeOpacity={0.7}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             accessible={true}
             accessibilityRole="button"
@@ -1495,7 +1769,11 @@ const StreakDetailScreen = ({ navigation, route }) => {
           
           <TouchableOpacity
             style={styles.editButton}
-            onPress={handleEdit}
+            onPress={() => {
+              console.log('Edit button pressed');
+              handleEdit();
+            }}
+            activeOpacity={0.7}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             accessible={true}
             accessibilityRole="button"
@@ -1635,7 +1913,7 @@ const StreakDetailScreen = ({ navigation, route }) => {
                 style={styles.viewAllButton}
               >
                 <Text style={[styles.viewAllText, { color: streakData.streakColor }]}>
-                  View All
+                  Edit
                 </Text>
                 <Ionicons name="chevron-forward" size={16} color={streakData.streakColor} />
               </TouchableOpacity>
@@ -1657,18 +1935,20 @@ const StreakDetailScreen = ({ navigation, route }) => {
                 </View>
               ) : (
                 <>
-                  {streakData.checklist.slice(0, 3).map(item => (
-                    <View key={item.id} style={styles.checklistPreviewItem}>
-                      <TouchableOpacity 
-                        style={styles.checklistCheckbox}
-                        onPress={() => toggleChecklistItem(item.id)}
-                      >
+                  {streakData.checklist.map(item => (
+                    <TouchableOpacity 
+                      key={item.id} 
+                      style={styles.checklistPreviewItem}
+                      onPress={() => toggleChecklistItem(item.id)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.checklistCheckbox}>
                         <Ionicons 
                           name={item.completed ? "checkbox" : "square-outline"} 
                           size={22} 
                           color={item.completed ? streakData.streakColor : theme.textSecondary} 
                         />
-                      </TouchableOpacity>
+                      </View>
                       
                       <Text 
                         style={[
@@ -1684,14 +1964,8 @@ const StreakDetailScreen = ({ navigation, route }) => {
                       >
                         {item.text}
                       </Text>
-                    </View>
+                    </TouchableOpacity>
                   ))}
-                  
-                  {streakData.checklist.length > 3 && (
-                    <Text style={[styles.moreItemsText, { color: theme.textSecondary }]}>
-                      +{streakData.checklist.length - 3} more items
-                    </Text>
-                  )}
                 </>
               )}
             </View>
@@ -1889,13 +2163,13 @@ const styles = StyleSheet.create({
     marginTop: -4, // Move the back button up a bit to fix cut-off
   },
   editButton: {
-    padding: spacing.xs,
     width: 40,
     height: 40,
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)'
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    zIndex: 10,
   },
   headerButtons: {
     flexDirection: 'column',
@@ -1903,22 +2177,25 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     gap: spacing.xs,
     marginTop: spacing.xs,
+    zIndex: 10,
   },
   infoIconButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)'
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    zIndex: 10,
   },
   saveDataButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)'
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    zIndex: 10,
   },
   scrollView: {
     flex: 1,
@@ -2148,20 +2425,45 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.m,
   },
   deleteButton: {
-    padding: spacing.xs,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'visible',
+  },
+  addItemButton: {
+    marginTop: spacing.m,
+    paddingVertical: spacing.m,
+    paddingHorizontal: spacing.l,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  addItemButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addItemButtonText: {
+    marginLeft: spacing.s,
+    fontSize: fontSizes.m,
+    fontWeight: '500',
   },
   addItemContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: spacing.s,
+    marginTop: spacing.m,
+    gap: spacing.s,
   },
   addItemInput: {
     flex: 1,
     height: 44,
     borderRadius: 8,
     paddingHorizontal: spacing.m,
-    marginRight: spacing.s,
-    borderWidth: 1,
+    fontSize: fontSizes.m,
   },
   addButton: {
     width: 44,
@@ -2169,6 +2471,26 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  cancelButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  itemActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  reorderButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   // Info modal
   modalHeader: {
@@ -2380,6 +2702,11 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginBottom: spacing.xs,
   },
+  helperText: {
+    fontSize: fontSizes.xs,
+    fontStyle: 'italic',
+    marginTop: spacing.xs,
+  },
   textInput: {
     height: scaleHeight(48),
     borderRadius: scaleWidth(8),
@@ -2453,6 +2780,24 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.m,
     fontWeight: '600',
   },
+  tabContainer: {
+    flexDirection: 'row',
+    marginBottom: spacing.m,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: spacing.m,
+    alignItems: 'center',
+    borderBottomWidth: 2,
+  },
+  tabText: {
+    fontSize: fontSizes.m,
+  },
+  streakNumberInput: {
+    height: 80,
+  },
   // Header title editing styles
   headerTitleEditContainer: {
     flex: 1,
@@ -2470,7 +2815,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     minWidth: 120,
     maxWidth: 160,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(255,255,255,0.2)',
     fontSize: fontSizes.l,
     fontWeight: '600',
     marginRight: spacing.s,

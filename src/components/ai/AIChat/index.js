@@ -53,7 +53,9 @@ const AIChat = ({
   warningThreshold = 40000,
   maxThreshold = 50000,
   aiTier = 'guide',
-  introMessageId = 'intro' // Add this prop to identify the intro message
+  introMessageId = 'intro', // Add this prop to identify the intro message
+  onActionLink = null, // Handler for action links in messages
+  themeColor = '#19C37D' // User's theme color
 }) => {
   const [inputText, setInputText] = useState('');
   const [selectedMessageId, setSelectedMessageId] = useState(null);
@@ -519,6 +521,8 @@ const AIChat = ({
             keyboardVisible={keyboardVisible}
             isStreaming={isStreaming}
             extraTopPadding={getExtraTopPadding()}
+            onActionLink={onActionLink}
+            themeColor={themeColor}
           />
         </View>
       </TouchableWithoutFeedback>

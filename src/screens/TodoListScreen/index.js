@@ -4,6 +4,8 @@ import {
   View, 
   Text,
   TouchableOpacity,
+  TouchableWithoutFeedback,
+  ScrollView,
   Keyboard,
   StyleSheet,
   Platform,
@@ -41,6 +43,7 @@ import {
 import SimpleTodayTab from './components/tabs/SimpleTodayTab';
 import SimpleTomorrowTab from './components/tabs/SimpleTomorrowTab';
 import SimpleLaterTab from './components/tabs/SimpleLaterTab';
+import TodoButtonOverlay from './components/TodoButtonOverlay';
 
 // Import notes components
 import NotesSection from './components/notes/NotesSection';
@@ -71,6 +74,9 @@ const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen,
     setTomorrowTodos,
     laterTodos,
     setLaterTodos,
+    notes,
+    setNotes,
+    updateNotes,
     subscription
   } = useAppContext();
 
@@ -146,9 +152,11 @@ const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen,
   const [newTomorrowTodoText, setNewTomorrowTodoText] = useState('');
   const [newLaterTodoText, setNewLaterTodoText] = useState('');
   const [newGroupName, setNewGroupName] = useState('');
+  
+  // Centralized subtask modal state to prevent duplication
+  const [activeSubtaskGroup, setActiveSubtaskGroup] = useState(null);
 
-  // Notes state
-  const [notes, setNotes] = useState([]);
+  // Notes state (notes and setNotes now come from AppContext)
   const [noteFolders, setNoteFolders] = useState([]);
   const [activeNoteFolder, setActiveNoteFolder] = useState(null);
   const [isAddingFolder, setIsAddingFolder] = useState(false);
@@ -244,13 +252,38 @@ const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen,
     }
   }, [route?.params?.currentView, currentView, isTourActive, currentStep]);
   
+  // Reset to first tab when screen gets focus and resets to 'todo' view
+  useFocusEffect(
+    React.useCallback(() => {
+      // When screen resets to todo view, also reset to first tab
+      if (currentView === 'todo' && activeTab !== 'today') {
+        console.log('TodoScreen: Resetting to first tab (Today) on screen focus');
+        setActiveTab('today');
+        setNavigatorKey(`navigator-${currentView}-reset-${Date.now()}`);
+        
+        // Force navigate to correct tab after a small delay to ensure navigator is ready
+        setTimeout(() => {
+          if (tabNavigatorRef.current) {
+            tabNavigatorRef.current.navigate('today');
+          }
+        }, 100);
+      }
+    }, [currentView, activeTab])
+  );
+  
   // Only remount navigator when currentView changes, not on every focus
   React.useEffect(() => {
     // Only update navigator key when switching between todo/notes views
     setNavigatorKey(`navigator-${currentView}-${Date.now()}`);
   }, [currentView]);
   
-  // No forced reset - let content match whatever tab is selected
+  // Also reset to first tab for notes view
+  React.useEffect(() => {
+    if (currentView === 'notes' && notesMode !== 'standup') {
+      console.log('TodoScreen: Resetting to first notes tab (Daily Check-in) on view change');
+      setNotesMode('standup');
+    }
+  }, [currentView]);
   
   // Handle tour todo screen lighting animation - start dark then light up
   useEffect(() => {
@@ -451,6 +484,16 @@ const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen,
     };
   }, [navigation]);
 
+  // Initialize notesMode properly when switching to notes view
+  React.useEffect(() => {
+    // When switching to notes view for the first time (not during tour), 
+    // default to freeform mode since that's where Add Note functionality is
+    if (currentView === 'notes' && !isTourActive && notesMode === 'standup') {
+      console.log('🎯 TodoScreen: Switching to notes view, setting notesMode to freeform for better UX');
+      setNotesMode('freeform');
+    }
+  }, [currentView, isTourActive]);
+
   // Simple add todo function
   const addTodo = (tab, groupId, text) => {
     if (!text || !text.trim()) return;
@@ -581,30 +624,28 @@ const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen,
     }
   };
 
-  // Move incomplete today's todos to tomorrow (triggers todo-organizer achievement)
-  const moveIncompleteTodosToTomorrow = () => {
-    const incompleteTodos = todos.filter(todo => !todo.completed);
-    
-    if (incompleteTodos.length === 0) {
-      showSuccess('No incomplete todos to move', { type: 'warning' });
+  // Move all today's todos to tomorrow (triggers todo-organizer achievement)
+  const moveAllTodosToTomorrow = () => {
+    if (todos.length === 0) {
+      showSuccess('No todos to move', { type: 'warning' });
       return;
     }
     
     // Check limits for free users
     if (subscription?.tier !== 'pro' && subscription?.tier !== 'founder') {
       const currentTomorrowCount = tomorrowTodos.length;
-      const incompleteCount = incompleteTodos.length;
+      const todayCount = todos.length;
       
-      if ((currentTomorrowCount + incompleteCount) > 7) { // Tomorrow limit
+      if ((currentTomorrowCount + todayCount) > 7) { // Tomorrow limit
         showSuccess(`Moving all items would exceed tomorrow's limit of 7. Upgrade to Pro for unlimited todos.`, { type: 'warning' });
         return;
       }
     }
     
-    // Move the todos
-    setTomorrowTodos([...tomorrowTodos, ...incompleteTodos]);
-    setTodos(todos.filter(todo => todo.completed));
-    showSuccess(`Today's incomplete to-dos moved to tomorrow`);
+    // Move all todos with updated tab property
+    setTomorrowTodos([...tomorrowTodos, ...todos.map(todo => ({...todo, tab: 'tomorrow'}))]);
+    setTodos([]);
+    showSuccess(`All to-dos moved to tomorrow`);
     
     // Track achievement for batch organization
     try {
@@ -632,7 +673,7 @@ const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen,
       }
     }
     
-    setTodos([...todos, ...tomorrowTodos]);
+    setTodos([...todos, ...tomorrowTodos.map(todo => ({...todo, tab: 'today'}))]);
     setTomorrowTodos([]);
     showSuccess(`Tomorrow's to-dos moved to today`);
   };
@@ -655,7 +696,7 @@ const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen,
       }
     }
     
-    setTomorrowTodos([...tomorrowTodos, ...laterTodos]);
+    setTomorrowTodos([...tomorrowTodos, ...laterTodos.map(todo => ({...todo, tab: 'tomorrow'}))]);
     setLaterTodos([]);
     showSuccess('Later items moved to Tomorrow');
   };
@@ -690,6 +731,11 @@ const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen,
 
   const showFeatureLimitBanner = (message) => {
     showSuccess(message, { type: 'warning' });
+  };
+
+  // Handle subtask modal state - ensure only one modal is open at a time
+  const handleSubtaskModalToggle = (groupId) => {
+    setActiveSubtaskGroup(activeSubtaskGroup === groupId ? null : groupId);
   };
 
   // Toggle between todos and notes
@@ -813,6 +859,12 @@ const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen,
               isKeyboardVisible={isKeyboardVisible}
               canAddMoreTodos={canAddMoreTodos}
               showFeatureLimitBanner={showFeatureLimitBanner}
+              activeSubtaskGroup={activeSubtaskGroup}
+              onSubtaskModalToggle={handleSubtaskModalToggle}
+              subscription={subscription}
+              moveIncompleteTodosToTomorrow={moveAllTodosToTomorrow}
+              moveTomorrowTodosToToday={moveTomorrowTodosToToday}
+              moveLaterItemsToTomorrow={moveLaterItemsToTomorrow}
             />
           )}
         </TopTab.Screen>
@@ -844,6 +896,12 @@ const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen,
               isKeyboardVisible={isKeyboardVisible}
               canAddMoreTodos={canAddMoreTodos}
               showFeatureLimitBanner={showFeatureLimitBanner}
+              activeSubtaskGroup={activeSubtaskGroup}
+              onSubtaskModalToggle={handleSubtaskModalToggle}
+              subscription={subscription}
+              moveIncompleteTodosToTomorrow={moveAllTodosToTomorrow}
+              moveTomorrowTodosToToday={moveTomorrowTodosToToday}
+              moveLaterItemsToTomorrow={moveLaterItemsToTomorrow}
             />
           )}
         </TopTab.Screen>
@@ -875,6 +933,12 @@ const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen,
               isKeyboardVisible={isKeyboardVisible}
               canAddMoreTodos={canAddMoreTodos}
               showFeatureLimitBanner={showFeatureLimitBanner}
+              activeSubtaskGroup={activeSubtaskGroup}
+              onSubtaskModalToggle={handleSubtaskModalToggle}
+              subscription={subscription}
+              moveIncompleteTodosToTomorrow={moveAllTodosToTomorrow}
+              moveTomorrowTodosToToday={moveTomorrowTodosToToday}
+              moveLaterItemsToTomorrow={moveLaterItemsToTomorrow}
             />
           )}
         </TopTab.Screen>
@@ -893,11 +957,15 @@ const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen,
       setNotesMode('standup');
     }
     
-    // FORCE: During tour, ALWAYS start with standup
-    let initialRoute = notesMode;
+    // Set initial route - default to standup for tours, otherwise use current notesMode
+    let initialRoute = 'standup'; // Safe default
     if (isTourActive && (currentStep === 'NOTES_DAILY_STANDUP' || currentStep === 'NOTES_FREE_FORM')) {
       initialRoute = 'standup';
-      console.log('🚨 TodoScreen: FORCING initialRouteName to standup during tour, ignoring notesMode:', notesMode);
+      console.log('🚨 TodoScreen: FORCING initialRouteName to standup during tour');
+    } else {
+      // For normal usage, start with freeform if that's what user wants
+      initialRoute = notesMode;
+      console.log('🎯 TodoScreen: Using notesMode for initialRoute:', notesMode);
     }
     
     console.log('🎯 TodoScreen: Final initialRouteName will be:', initialRoute);
@@ -910,8 +978,18 @@ const TodoListScreen = ({ navigation, route, isFullscreen: externalIsFullscreen,
               console.log('🚨 NOTES NAVIGATOR STATE CHANGE:', state);
               console.log('🚨 Current route index:', state?.index);
               console.log('🚨 Route names:', state?.routeNames);
-              if (state?.routes) {
-                console.log('🚨 Active route:', state.routes[state.index]?.name);
+              if (state?.routes && state?.index !== undefined) {
+                const activeRouteName = state.routes[state.index]?.name;
+                console.log('🚨 Active route:', activeRouteName);
+                
+                // Update notesMode based on active tab
+                if (activeRouteName === 'standup' && notesMode !== 'standup') {
+                  console.log('🚨 Switching to standup mode');
+                  setNotesMode('standup');
+                } else if (activeRouteName === 'freeform' && notesMode !== 'freeform') {
+                  console.log('🚨 Switching to freeform mode');
+                  setNotesMode('freeform');
+                }
               }
             }}
           screenOptions={({ route }) => ({

@@ -119,11 +119,15 @@ const TaskCard = ({ task, onComplete, onDelete, isEditMode, onDrag, isActive, is
   const { theme } = useTheme();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
+  // Minimal debug log
+  if (task.title === "Text" || task.title === "Bruh") {
+    console.log(`🔥 FOCUS: TaskCard "${task.title}" rendered - onComplete: ${!!onComplete}`);
+  }
+  
   const handleLongPress = () => {
-    if (isEditMode) {
-      onDrag && onDrag();
+    if (isEditMode && onDrag && isDraggable) {
+      onDrag();
     } else {
-      // Show delete confirmation
       setShowDeleteConfirm(true);
     }
   };
@@ -136,18 +140,25 @@ const TaskCard = ({ task, onComplete, onDelete, isEditMode, onDrag, isActive, is
   const CardContent = (
     <TouchableOpacity 
       style={[styles.taskCard, { 
-        backgroundColor: theme.card,
+        backgroundColor: task.completed ? theme.surface : theme.card,
         borderColor: task.completed ? theme.success : theme.border,
-        borderWidth: task.completed ? 2 : 1,
-        opacity: task.completed ? 0.85 : 1,
+        borderWidth: 1,
         shadowColor: task.completed ? theme.success : '#000',
         shadowOpacity: task.completed ? 0.1 : 0.05
       }]}
       onPress={() => {
-        onComplete();
+        console.log(`🔥 TAP: "${task.title}" tapped!`);
+        if (onComplete) {
+          onComplete();
+          console.log(`🔥 TAP: onComplete called for "${task.title}"`);
+        } else {
+          console.log(`🔥 TAP: ERROR - no onComplete for "${task.title}"`);
+        }
       }}
       onLongPress={handleLongPress}
       delayLongPress={500}
+      activeOpacity={0.7}
+      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
     >
       <View style={styles.taskContent}>
         {/* Professional Task Icon */}
@@ -244,12 +255,31 @@ const MilestoneCard = ({ milestone, goalColor, tasks, onExpandToggle, onComplete
   const [showContextMenu, setShowContextMenu] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [longPressPosition, setLongPressPosition] = useState({ x: 0, y: 0 });
+  
   // Get tasks for this milestone - prioritize milestoneId over projectId for accuracy
   const milestoneTasks = tasks.filter(task => {
-    // First check milestoneId (more reliable), then fallback to projectId for backward compatibility
+    // Special handling for virtual standalone tasks milestone
+    if (milestone.isVirtual && milestone.id.includes('-standalone-tasks')) {
+      // For virtual standalone tasks milestone, we want tasks with no milestone/project assignment
+      // but we've already received the correct tasks via props, so just return true
+      // (the filtering was already done in the parent component)
+      return true;
+    }
+    
+    // Regular milestone filtering
     const belongsToMilestone = (task.milestoneId === milestone.id) || 
                                (!task.milestoneId && task.projectId === milestone.id);
     return belongsToMilestone;
+  }).sort((a, b) => {
+    // Sort by order property if both tasks have it, otherwise maintain original position
+    if (a.order !== undefined && b.order !== undefined) {
+      return a.order - b.order;
+    } else if (a.order !== undefined) {
+      return -1; // a comes first
+    } else if (b.order !== undefined) {
+      return 1; // b comes first
+    }
+    return 0; // maintain original order
   });
   
   // Debug: Check for the problematic task
@@ -264,10 +294,14 @@ const MilestoneCard = ({ milestone, goalColor, tasks, onExpandToggle, onComplete
     (totalTasks > 0 ? Math.round((completedTasks.length / totalTasks) * 100) : 0);
   
   const handleLongPress = (event) => {
-    if (isEditMode && onDrag) {
+    console.log(`🔍 MilestoneCard handleLongPress - isEditMode: ${isEditMode}, onDrag: ${!!onDrag}, isDraggable: ${isDraggable}`);
+    
+    if (isEditMode && onDrag && isDraggable) {
       // Handle drag functionality
+      console.log(`🔍 Starting drag for milestone: ${milestone.title}`);
       onDrag();
     } else {
+      console.log(`🔍 Showing context menu for milestone: ${milestone.title}`);
       // Get touch position for context menu placement
       const { pageX, pageY } = event.nativeEvent;
       setLongPressPosition({ x: pageX, y: pageY });
@@ -306,6 +340,7 @@ const MilestoneCard = ({ milestone, goalColor, tasks, onExpandToggle, onComplete
         onPress={onExpandToggle}
         onLongPress={handleLongPress}
         delayLongPress={500}
+        activeOpacity={0.7}
       >
         {/* Professional Milestone Icon */}
         <View style={[styles.milestoneIconContainer, {
@@ -454,7 +489,8 @@ const MilestoneCard = ({ milestone, goalColor, tasks, onExpandToggle, onComplete
             width: 32,
             height: 32,
             borderRadius: 8, // Square with rounded corners
-            backgroundColor: milestone.completed ? "#4CAF50" : cardColor,
+            backgroundColor: milestone.completed ? "#4CAF50" : 
+              (!milestone.goalId ? "#000000" : cardColor),
             justifyContent: 'center',
             alignItems: 'center',
             shadowColor: '#000',
@@ -469,7 +505,11 @@ const MilestoneCard = ({ milestone, goalColor, tasks, onExpandToggle, onComplete
           {milestone.completed ? (
             <Ionicons name="checkmark" size={18} color="#FFFFFF" />
           ) : (
-            <Ionicons name="checkmark-outline" size={18} color="#FFFFFF" />
+            <Ionicons 
+              name="checkmark-outline" 
+              size={18} 
+              color="#FFFFFF"
+            />
           )}
         </TouchableOpacity>
       </TouchableOpacity>
@@ -483,7 +523,7 @@ const MilestoneCard = ({ milestone, goalColor, tasks, onExpandToggle, onComplete
               </Text>
               
               {/* Add Task Button for empty milestone */}
-              {!milestone.isVirtual && navigation && (
+              {navigation && (
                 <View style={styles.emptyMilestoneActions}>
                   <TouchableOpacity
                     style={[styles.createTaskButton, { 
@@ -508,22 +548,51 @@ const MilestoneCard = ({ milestone, goalColor, tasks, onExpandToggle, onComplete
               )}
             </View>
           ) : isEditMode ? (
-            <DraggableFlatList
-              data={milestoneTasks}
-              renderItem={({ item: task, drag, isActive }) => (
-                <TaskCard
-                  task={task}
-                  onComplete={() => onTaskComplete(task.id)}
-                  onDelete={() => onTaskDelete(task.id)}
-                  isEditMode={isEditMode}
-                  onDrag={drag}
-                  isActive={isActive}
-                  isDraggable={true}
-                />
-              )}
-              keyExtractor={(item, index) => item.id || `milestone-${milestone.id}-task-${index}`}
-              onDragEnd={({ data }) => onTaskReorder && onTaskReorder(data, milestone.id)}
-            />
+            <View>
+              {milestoneTasks.map((task, index) => (
+                <View key={task.id || `task-${index}`} style={styles.taskReorderItem}>
+                  <View style={styles.taskReorderButtons}>
+                    <TouchableOpacity
+                      style={[styles.reorderButton, { opacity: index === 0 ? 0.3 : 1 }]}
+                      onPress={() => {
+                        if (index > 0) {
+                          // Move task up
+                          const newOrder = [...milestoneTasks];
+                          [newOrder[index], newOrder[index - 1]] = [newOrder[index - 1], newOrder[index]];
+                          onTaskReorder && onTaskReorder(newOrder, milestone.id);
+                        }
+                      }}
+                      disabled={index === 0}
+                    >
+                      <Ionicons name="chevron-up" size={16} color={theme.textSecondary} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.reorderButton, { opacity: index === milestoneTasks.length - 1 ? 0.3 : 1 }]}
+                      onPress={() => {
+                        if (index < milestoneTasks.length - 1) {
+                          // Move task down
+                          const newOrder = [...milestoneTasks];
+                          [newOrder[index], newOrder[index + 1]] = [newOrder[index + 1], newOrder[index]];
+                          onTaskReorder && onTaskReorder(newOrder, milestone.id);
+                        }
+                      }}
+                      disabled={index === milestoneTasks.length - 1}
+                    >
+                      <Ionicons name="chevron-down" size={16} color={theme.textSecondary} />
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.taskReorderContent}>
+                    <TaskCard
+                      task={task}
+                      onComplete={() => onTaskComplete(task.id)}
+                      onDelete={() => onTaskDelete(task.id)}
+                      isEditMode={isEditMode}
+                      isDraggable={false}
+                    />
+                  </View>
+                </View>
+              ))}
+            </View>
           ) : (
             milestoneTasks.map((task, index) => (
               <TaskCard
@@ -538,7 +607,7 @@ const MilestoneCard = ({ milestone, goalColor, tasks, onExpandToggle, onComplete
           )}
           
           {/* Create Task Button */}
-          {!milestone.isVirtual && navigation && milestoneTasks.length > 0 && (
+          {navigation && milestoneTasks.length > 0 && (
             <TouchableOpacity
               style={[styles.createTaskButton, { 
                 backgroundColor: theme.surface,
@@ -651,19 +720,33 @@ const getTimeExpression = (goal) => {
 };
 
 // Goal Card Component
-const GoalCard = ({ goal, milestones, tasks, onExpandToggle, onEdit, onDelete, onComplete, isEditMode, expanded, onTaskComplete, onTaskDelete, onMilestoneComplete, onMilestoneEdit, onMilestoneDelete, onDrag, isActive, isDraggable = false, navigation, onMilestoneReorder, onTaskReorder, isTourMode = false, expandedMilestones: externalExpandedMilestones, onMilestoneExpandToggle, onClearAllStandaloneTasks, onClearAllStandaloneMilestones }) => {
+const GoalCard = ({ goal, milestones, tasks, onExpandToggle, onEdit, onDelete, onComplete, isEditMode, expanded, onTaskComplete, onTaskDelete, onMilestoneComplete, onMilestoneEdit, onMilestoneDelete, onDrag, isActive, isDraggable = false, navigation, onMilestoneReorder, onTaskReorder, isTourMode = false, expandedMilestones: externalExpandedMilestones, onMilestoneExpandToggle, onClearAllStandaloneTasks, onClearAllStandaloneMilestones, onVirtualMilestoneComplete, onVirtualMilestoneDelete }) => {
   const { theme } = useTheme();
-  const goalMilestones = milestones.filter(milestone => milestone.goalId === goal.id);
+  // Special handling for standalone milestones - use all milestones passed in
+  const goalMilestones = goal.id === 'standalone-milestones' 
+    ? milestones // For standalone milestones, milestones prop already contains the filtered standalone milestones
+    : milestones.filter(milestone => milestone.goalId === goal.id);
   
   // Find standalone tasks within this goal (tasks that belong to goal but not to any milestone)
   // Special handling for the standalone-tasks fake goal
-  const goalStandaloneTasks = goal.id === 'standalone-tasks' 
+  const goalStandaloneTasks = (goal.id === 'standalone-tasks' 
     ? tasks // For standalone section, all passed tasks are standalone
     : tasks.filter(task => 
         task.goalId === goal.id && 
         !task.milestoneId && 
         !task.projectId
-      );
+      )
+  ).sort((a, b) => {
+    // Sort by order property if both tasks have it, otherwise maintain original position
+    if (a.order !== undefined && b.order !== undefined) {
+      return a.order - b.order;
+    } else if (a.order !== undefined) {
+      return -1; // a comes first
+    } else if (b.order !== undefined) {
+      return 1; // b comes first
+    }
+    return 0; // maintain original order
+  });
   
   // Create a virtual milestone for standalone tasks if they exist (but NOT for the standalone-tasks section itself)
   const standaloneTasksMilestone = (goal.id !== 'standalone-tasks' && goalStandaloneTasks.length > 0) ? {
@@ -705,8 +788,12 @@ const GoalCard = ({ goal, milestones, tasks, onExpandToggle, onEdit, onDelete, o
     // For standalone tasks section, use all passed tasks
     goalTasks = tasks;
   } else if (goal.id === 'standalone-milestones') {
-    // For standalone milestones section, no direct tasks
-    goalTasks = [];
+    // For standalone milestones section, count tasks that belong to standalone milestones
+    const standaloneMilestoneIds = milestones.map(milestone => milestone.id);
+    goalTasks = tasks.filter(task => 
+      (task.milestoneId && standaloneMilestoneIds.includes(task.milestoneId)) ||
+      (task.projectId && standaloneMilestoneIds.includes(task.projectId))
+    );
   } else {
     // Regular goal processing
     // Direct tasks are those that belong to the goal but NOT to any milestone
@@ -1115,28 +1202,70 @@ const GoalCard = ({ goal, milestones, tasks, onExpandToggle, onEdit, onDelete, o
               <View>
                 <View style={styles.tasksContainer}>
                   {isEditMode ? (
-                    <DraggableFlatList
-                      data={goalStandaloneTasks}
-                      renderItem={({ item: task, drag, isActive }) => (
-                        <TaskCard
-                          task={task}
-                          onComplete={() => onTaskComplete(task.id)}
-                          onDelete={() => onTaskDelete(task.id)}
-                          isEditMode={isEditMode}
-                          onDrag={drag}
-                          isActive={isActive}
-                          isDraggable={true}
-                        />
-                      )}
-                      keyExtractor={(item, index) => item.id || `standalone-task-${index}`}
-                      onDragEnd={({ data }) => onTaskReorder && onTaskReorder(data, 'standalone')}
-                    />
+                    <View>
+                      {goalStandaloneTasks.map((task, index) => (
+                        <View key={task.id || `task-${index}`} style={styles.taskReorderItem}>
+                          <View style={styles.taskReorderButtons}>
+                            <TouchableOpacity
+                              style={[styles.reorderButton, { opacity: index === 0 ? 0.3 : 1 }]}
+                              onPress={() => {
+                                if (index > 0) {
+                                  // Move task up
+                                  const newOrder = [...goalStandaloneTasks];
+                                  [newOrder[index], newOrder[index - 1]] = [newOrder[index - 1], newOrder[index]];
+                                  onTaskReorder && onTaskReorder(newOrder, `${goal.id}-standalone-tasks`);
+                                }
+                              }}
+                              disabled={index === 0}
+                            >
+                              <Ionicons name="chevron-up" size={16} color={theme.textSecondary} />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[styles.reorderButton, { opacity: index === goalStandaloneTasks.length - 1 ? 0.3 : 1 }]}
+                              onPress={() => {
+                                if (index < goalStandaloneTasks.length - 1) {
+                                  // Move task down
+                                  const newOrder = [...goalStandaloneTasks];
+                                  [newOrder[index], newOrder[index + 1]] = [newOrder[index + 1], newOrder[index]];
+                                  onTaskReorder && onTaskReorder(newOrder, `${goal.id}-standalone-tasks`);
+                                }
+                              }}
+                              disabled={index === goalStandaloneTasks.length - 1}
+                            >
+                              <Ionicons name="chevron-down" size={16} color={theme.textSecondary} />
+                            </TouchableOpacity>
+                          </View>
+                          <View style={styles.taskReorderContent}>
+                            <TaskCard
+                              task={task}
+                              onComplete={() => onTaskComplete(task.id)}
+                              onDelete={() => onTaskDelete(task.id)}
+                              isEditMode={isEditMode}
+                              isDraggable={false}
+                            />
+                          </View>
+                        </View>
+                      ))}
+                    </View>
                   ) : (
-                    goalStandaloneTasks.map((task, index) => (
+                    (() => {
+                      console.log(`🟣 VIRTUAL MILESTONE DEBUG: Mapping ${goalStandaloneTasks.length} goalStandaloneTasks for virtual milestone`);
+                      goalStandaloneTasks.forEach((task, i) => {
+                        console.log(`🟣 VIRTUAL MILESTONE DEBUG: Task ${i + 1}: "${task.title}" (ID: ${task.id})`);
+                      });
+                      return goalStandaloneTasks;
+                    })().map((task, index) => (
                       <TaskCard
                         key={task.id || `task-${index}`}
                         task={task}
-                        onComplete={() => onTaskComplete(task.id)}
+                        onComplete={() => {
+                          console.log(`🔥 VIRTUAL: "${task.title}" onComplete triggered`);
+                          if (onTaskComplete) {
+                            onTaskComplete(task.id);
+                          } else {
+                            console.log(`🔥 VIRTUAL: ERROR - no onTaskComplete`);
+                          }
+                        }}
                         onDelete={() => onTaskDelete(task.id)}
                         isEditMode={isEditMode}
                         isDraggable={false}
@@ -1145,23 +1274,24 @@ const GoalCard = ({ goal, milestones, tasks, onExpandToggle, onEdit, onDelete, o
                   )}
                 </View>
                 
-                {/* Add Task Button when there are existing tasks */}
+                {/* Add Task Button when there are existing tasks - Made more consistent with milestone styling */}
                 {navigation && (
                   <TouchableOpacity
                     style={[styles.createTaskButton, { 
                       backgroundColor: theme.surface,
                       borderColor: theme.border,
                       margin: 12,
-                      marginTop: 8
+                      marginTop: 8,
+                      marginBottom: 4
                     }]}
                     onPress={() => navigation.navigate('TaskDetails', { 
                       mode: 'create',
                       preselectedGoalId: null // Explicitly null for standalone
                     })}
                   >
-                    <Ionicons name="add-circle-outline" size={20} color={theme.primary} />
-                    <Text style={[styles.createButtonText, { color: theme.primary }]}>
-                      Add Another Task
+                    <Ionicons name="add" size={16} color={theme.primary} />
+                    <Text style={[styles.createTaskText, { color: theme.primary }]}>
+                      Add Task
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -1197,7 +1327,47 @@ const GoalCard = ({ goal, milestones, tasks, onExpandToggle, onEdit, onDelete, o
                   </View>
                 )}
               </View>
+            ) : isEditMode ? (
+              /* Edit mode - use DraggableFlatList for standalone milestones */
+              (() => {
+                console.log(`🔍 Using DraggableFlatList for ${goal.title} with ${allMilestones.length} milestones`);
+                return (
+                  <DraggableFlatList
+                    data={allMilestones}
+                    scrollEnabled={true}
+                    nestedScrollEnabled={true}
+                    keyboardShouldPersistTaps="handled"
+                    renderItem={({ item: milestone, drag, isActive }) => (
+                      <MilestoneCard
+                        key={milestone.id || `milestone-${allMilestones.indexOf(milestone)}`}
+                        milestone={milestone}
+                        goalColor={goalColor}
+                        tasks={tasks.filter(task => 
+                          task.milestoneId === milestone.id || task.projectId === milestone.id
+                        )}
+                        expanded={expandedMilestones[milestone.id]}
+                        onExpandToggle={() => toggleMilestone(milestone.id)}
+                        onComplete={() => onMilestoneComplete(milestone.id)}
+                        onEdit={() => onMilestoneEdit(milestone.id)}
+                        onDelete={() => onMilestoneDelete(milestone.id)}
+                        isEditMode={isEditMode}
+                        onTaskComplete={onTaskComplete}
+                        onTaskDelete={onTaskDelete}
+                        onDrag={drag}
+                        isActive={isActive}
+                        isDraggable={true}
+                        navigation={navigation}
+                        goalId={goal.id}
+                        onTaskReorder={onTaskReorder}
+                      />
+                    )}
+                    keyExtractor={(item, index) => item.id || `milestone-${item.title}-${index}`}
+                    onDragEnd={({ data }) => onMilestoneReorder && onMilestoneReorder(data, goal.id)}
+                  />
+                );
+              })()
             ) : (
+              /* Normal mode - use regular rendering */
               <View>
                 {allMilestones.map((milestone, index) => (
                 <MilestoneCard
@@ -1215,6 +1385,7 @@ const GoalCard = ({ goal, milestones, tasks, onExpandToggle, onEdit, onDelete, o
                   isEditMode={isEditMode}
                   onTaskComplete={onTaskComplete}
                   onTaskDelete={onTaskDelete}
+                  isDraggable={false}
                   navigation={navigation}
                   goalId={goal.id}
                   onTaskReorder={onTaskReorder}
@@ -1295,9 +1466,18 @@ const GoalCard = ({ goal, milestones, tasks, onExpandToggle, onEdit, onDelete, o
               )}
             </View>
           ) : isEditMode ? (
-            <DraggableFlatList
-              data={allMilestones.filter(m => !m.isVirtual)}
-              renderItem={({ item: milestone, drag, isActive }) => (
+            <View>
+              {/* Regular milestones in DraggableFlatList */}
+              {(() => {
+                const regularMilestones = allMilestones.filter(m => !m.isVirtual);
+                console.log(`🔍 Using DraggableFlatList for ${goal.title} with ${regularMilestones.length} regular milestones`);
+                return regularMilestones.length > 0 ? (
+                  <DraggableFlatList
+                    data={regularMilestones}
+                    scrollEnabled={true}
+                    nestedScrollEnabled={true}
+                    keyboardShouldPersistTaps="handled"
+                    renderItem={({ item: milestone, drag, isActive }) => (
                 <MilestoneCard
                   key={milestone.id || `milestone-${allMilestones.indexOf(milestone)}`}
                   milestone={milestone}
@@ -1318,10 +1498,38 @@ const GoalCard = ({ goal, milestones, tasks, onExpandToggle, onEdit, onDelete, o
                   goalId={goal.id}
                   onTaskReorder={onTaskReorder}
                 />
-              )}
-              keyExtractor={(item, index) => item.id || `milestone-${item.title}-${index}`}
-              onDragEnd={({ data }) => onMilestoneReorder && onMilestoneReorder(data, goal.id)}
-            />
+                    )}
+                    keyExtractor={(item, index) => item.id || `milestone-${item.title}-${index}`}
+                    onDragEnd={({ data }) => onMilestoneReorder && onMilestoneReorder(data, goal.id)}
+                  />
+                ) : null;
+              })()}
+              
+              {/* Virtual milestones rendered normally even in edit mode */}
+              {allMilestones.filter(m => m.isVirtual).map((milestone, index) => (
+                <MilestoneCard
+                  key={milestone.id || `milestone-${index}`}
+                  milestone={milestone}
+                  goalColor={goalColor}
+                  tasks={milestone.isVirtual ? goalStandaloneTasks : tasks}
+                  expanded={expandedMilestones[milestone.id]}
+                  onExpandToggle={() => toggleMilestone(milestone.id)}
+                  onComplete={() => milestone.isVirtual ? onVirtualMilestoneComplete(milestone.id) : onMilestoneComplete(milestone.id)}
+                  onEdit={() => milestone.isVirtual ? null : onMilestoneEdit(milestone.id)}
+                  onDelete={() => milestone.isVirtual ? onVirtualMilestoneDelete(milestone.id) : onMilestoneDelete(milestone.id)}
+                  isEditMode={false} // Force virtual milestones to not be in edit mode
+                  onTaskComplete={(taskId) => {
+                    console.log(`🔥 VIRTUAL MILESTONE TAP: Task ${taskId} tapped in virtual milestone`);
+                    onTaskComplete(taskId);
+                  }}
+                  onTaskDelete={onTaskDelete}
+                  isDraggable={false}
+                  navigation={navigation}
+                  goalId={goal.id}
+                  onTaskReorder={onTaskReorder}
+                />
+              ))}
+            </View>
           ) : (
             <>
               {allMilestones.map((milestone, index) => (
@@ -1332,9 +1540,9 @@ const GoalCard = ({ goal, milestones, tasks, onExpandToggle, onEdit, onDelete, o
                   tasks={milestone.isVirtual ? goalStandaloneTasks : tasks}
                   expanded={expandedMilestones[milestone.id]}
                   onExpandToggle={() => toggleMilestone(milestone.id)}
-                  onComplete={() => milestone.isVirtual ? null : onMilestoneComplete(milestone.id)}
+                  onComplete={() => milestone.isVirtual ? onVirtualMilestoneComplete(milestone.id) : onMilestoneComplete(milestone.id)}
                   onEdit={() => milestone.isVirtual ? null : onMilestoneEdit(milestone.id)}
-                  onDelete={() => milestone.isVirtual ? null : onMilestoneDelete(milestone.id)}
+                  onDelete={() => milestone.isVirtual ? onVirtualMilestoneDelete(milestone.id) : onMilestoneDelete(milestone.id)}
                   isEditMode={isEditMode}
                   onTaskComplete={onTaskComplete}
                   onTaskDelete={onTaskDelete}
@@ -1524,6 +1732,14 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
       shouldShowOverlay: isTourActive && currentStep === 'OVERVIEW_PLAN'
     });
   }
+
+  // TEMPORARY FIX: Force clear tour state to enable task completion
+  React.useEffect(() => {
+    if (currentStep === 'GOAL_ACHIEVEMENT_VALIDATION' && skipTour) {
+      console.log('🟢 TASK COMPLETION: Force clearing tour state to enable task interactions');
+      skipTour();
+    }
+  }, [currentStep, skipTour]);
   
   // Handle screen focus for tour overlay timing
   useFocusEffect(
@@ -1647,7 +1863,16 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
         }));
         
         // Merge the reordered milestones with other milestones not in this goal
-        const otherMilestones = milestones.filter(m => m.goalId !== goalId);
+        // Special handling for standalone milestones
+        let otherMilestones;
+        if (goalId === 'standalone-milestones') {
+          // For standalone milestones, exclude milestones with null goalId
+          otherMilestones = milestones.filter(m => m.goalId !== null);
+        } else {
+          // For regular goals, exclude milestones with this specific goalId
+          otherMilestones = milestones.filter(m => m.goalId !== goalId);
+        }
+        
         const reorderedAllMilestones = [...otherMilestones, ...reorderedMilestones];
         setProjects(reorderedAllMilestones);
       } catch (error) {
@@ -1659,22 +1884,22 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
   }, [setProjects, milestones]);
 
   const handleTaskReorder = React.useCallback((data, milestoneId) => {
-    console.log('Tasks reordered:', data.map(t => t.title));
+    console.log('🔄 Tasks reordered for milestone:', milestoneId);
     if (setTasks && typeof setTasks === 'function') {
       try {
-        // Add order property to reordered tasks
-        const reorderedTasks = data.map((task, index) => ({
-          ...task,
-          order: index,
-          updatedAt: new Date().toISOString()
-        }));
-        
         // Merge the reordered tasks with other tasks
         let otherTasks;
         if (milestoneId === 'standalone') {
-          // For standalone tasks, filter out all standalone tasks and add the reordered ones
+          // For completely standalone tasks, filter out all standalone tasks and add the reordered ones
           otherTasks = tasks.filter(task => 
             task.milestoneId || task.projectId || task.goalId  // Keep tasks that belong to something
+          );
+        } else if (milestoneId.includes('-standalone-tasks')) {
+          // For goal-level standalone tasks (virtual milestone), filter out tasks from this goal that have no milestone
+          const goalId = milestoneId.replace('-standalone-tasks', '');
+          otherTasks = tasks.filter(task => 
+            // Keep tasks that don't match this goal's standalone tasks pattern
+            !(task.goalId === goalId && !task.milestoneId && !task.projectId)
           );
         } else {
           // For regular milestones, filter out tasks from this specific milestone
@@ -1682,6 +1907,16 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
             task.milestoneId !== milestoneId && task.projectId !== milestoneId
           );
         }
+        
+        // Add order property to reordered tasks with globally unique values
+        // Calculate starting order based on other tasks to maintain global ordering
+        const baseOrder = otherTasks.length;
+        const reorderedTasks = data.map((task, index) => ({
+          ...task,
+          order: baseOrder + index,
+          updatedAt: new Date().toISOString()
+        }));
+        
         const reorderedAllTasks = [...otherTasks, ...reorderedTasks];
         setTasks(reorderedAllTasks);
       } catch (error) {
@@ -1812,9 +2047,20 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
       goalId === 'UNDEFINED' ||
       !goalId;
     
-    // Only include non-completed milestones
-    return hasNoGoal && !milestone.completed;
+    // Include all standalone milestones (both completed and non-completed)
+    return hasNoGoal;
   });
+  
+  // DEBUG: Log the standalone milestones count that the display is seeing
+  React.useEffect(() => {
+    console.log(`🔍 DISPLAY LOGIC - Standalone milestones count: ${standaloneMilestones.length}`);
+    console.log(`🔍 DISPLAY LOGIC - Total AppContext milestones: ${milestones.length}`);
+    if (standaloneMilestones.length > 0) {
+      console.log(`🔍 DISPLAY LOGIC - First few standalone milestones:`, 
+        standaloneMilestones.slice(0, 5).map(m => ({ title: m.title, id: m.id, goalId: m.goalId }))
+      );
+    }
+  }, [standaloneMilestones.length, milestones.length]);
   
   const standaloneTasks = tasks.filter(task => !task.projectId && !task.milestoneId && !task.goalId);
   
@@ -1980,23 +2226,77 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
   };
 
   const handleClearAllStandaloneMilestones = async () => {
+    console.log(`🚀 CLEAR ALL STANDALONE MILESTONES - Starting function`);
+    
     try {
-      // Get all completed standalone milestones
-      const completedStandaloneMilestones = standaloneMilestones.filter(milestone => milestone.completed);
+      // CRITICAL: Capture milestone data at the start before any state changes
+      // Clear ALL standalone milestones, not just completed ones, since the button only appears when all should be cleared
+      console.log(`🔍 Total standaloneMilestones array:`, standaloneMilestones);
       
-      if (completedStandaloneMilestones.length === 0) return;
+      const milestonesToDelete = standaloneMilestones.map(milestone => ({
+        id: milestone.id,
+        title: milestone.title,
+        completed: milestone.completed
+      }));
       
-      // Delete each completed standalone milestone
-      for (const milestone of completedStandaloneMilestones) {
-        if (deleteMilestone) {
-          await deleteMilestone(milestone.id);
-        }
+      console.log(`🔍 Clear All: Found ${milestonesToDelete.length} standalone milestones to delete:`, milestonesToDelete);
+      
+      if (milestonesToDelete.length === 0) {
+        console.log(`❌ No milestones to delete - exiting early`);
+        return;
       }
+      
+      // BULK DELETION APPROACH - Bypass individual deleteMilestone calls to avoid race conditions
+      console.log(`🔄 Starting bulk deletion of ${milestonesToDelete.length} milestones...`);
+      
+      const milestoneIdsToDelete = milestonesToDelete.map(m => m.id);
+      console.log(`🗑️ Milestone IDs to delete:`, milestoneIdsToDelete);
+      
+      // Update milestones array by filtering out all the milestones we want to delete
+      const updatedMilestones = milestones.filter(milestone => 
+        !milestoneIdsToDelete.includes(milestone.id)
+      );
+      
+      console.log(`📊 Milestones before: ${milestones.length}, after: ${updatedMilestones.length}`);
+      
+      // Update AsyncStorage
+      console.log(`💾 Saving updated milestones to AsyncStorage...`);
+      await AsyncStorage.setItem('projects', JSON.stringify(updatedMilestones));
+      
+      // Update the context state
+      console.log(`🔄 Updating context state...`);
+      if (setProjects) {
+        setProjects(updatedMilestones);
+      }
+      
+      // Also clean up associated tasks if any exist
+      const tasksToDelete = tasks.filter(task => 
+        milestoneIdsToDelete.includes(task.milestoneId) || 
+        milestoneIdsToDelete.includes(task.projectId)
+      );
+      
+      if (tasksToDelete.length > 0) {
+        console.log(`🧹 Found ${tasksToDelete.length} associated tasks to clean up`);
+        const updatedTasks = tasks.filter(task => 
+          !milestoneIdsToDelete.includes(task.milestoneId) && 
+          !milestoneIdsToDelete.includes(task.projectId)
+        );
+        
+        await AsyncStorage.setItem('tasks', JSON.stringify(updatedTasks));
+        if (setTasks) {
+          setTasks(updatedTasks);
+        }
+        console.log(`🧹 Cleaned up ${tasksToDelete.length} associated tasks`);
+      }
+      
+      const deletedCount = milestonesToDelete.length;
+      console.log(`✅ Bulk deletion complete: ${deletedCount} milestones deleted`);
       
       // Trigger fireworks animation
       const celebrationColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'];
       triggerFireworks(celebrationColors, 5000);
-      showSuccess(`Cleared ${completedStandaloneMilestones.length} completed milestones! 🎆`);
+      showSuccess(`Cleared ${deletedCount} standalone milestones! 🎆`);
+      
     } catch (error) {
       console.error('Error clearing standalone milestones:', error);
       showError('Failed to clear milestones');
@@ -2004,15 +2304,18 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
   };
 
   const handleTaskComplete = (taskId) => {
+    console.log(`🔥 HANDLER: handleTaskComplete called for ${taskId}`);
     
     // Find the task to get its projectId/milestoneId and current status
     const task = tasks.find(t => t.id === taskId);
     if (!task) {
+      console.log(`🔥 HANDLER: Task not found: ${taskId}`);
       return;
     }
     
     const isCurrentlyCompleted = task.completed || task.status === 'done';
     const newCompletedStatus = !isCurrentlyCompleted;
+    console.log(`🔥 HANDLER: "${task.title}" ${isCurrentlyCompleted ? 'UNCOMPLETING' : 'COMPLETING'}`);
     
     
     // Use projectId or milestoneId (they should be the same for milestones)
@@ -2047,6 +2350,103 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
       deleteTask(projectId, taskId);
       showSuccess('Task deleted');
     }
+  };
+
+  // Virtual milestone handlers - need to be defined early before use in JSX
+  const handleVirtualMilestoneDelete = (virtualMilestoneId) => {
+    // Extract the real goal ID from the virtual milestone ID
+    const realGoalId = virtualMilestoneId.replace('-standalone-tasks', '');
+    
+    // Find all standalone tasks for this goal
+    const standaloneTasksToDelete = tasks.filter(task => 
+      task.goalId === realGoalId && 
+      (!task.milestoneId || task.milestoneId === null) &&
+      (!task.projectId || task.projectId === null)
+    );
+    
+    if (standaloneTasksToDelete.length === 0) {
+      showError('No standalone tasks to delete');
+      return;
+    }
+    
+    Alert.alert(
+      'Delete Standalone Tasks',
+      `Are you sure you want to delete all ${standaloneTasksToDelete.length} standalone tasks in this goal?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // Delete each standalone task
+              for (const task of standaloneTasksToDelete) {
+                if (deleteTask) {
+                  await deleteTask(null, task.id); // null for milestoneId since these are standalone
+                }
+              }
+              showSuccess(`Deleted ${standaloneTasksToDelete.length} standalone tasks`);
+            } catch (error) {
+              console.error('Error deleting standalone tasks:', error);
+              showError('Failed to delete some standalone tasks');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleVirtualMilestoneComplete = (virtualMilestoneId) => {
+    // Extract the real goal ID from the virtual milestone ID
+    const realGoalId = virtualMilestoneId.replace('-standalone-tasks', '');
+    
+    // Find all standalone tasks for this goal
+    const standaloneTasks = tasks.filter(task => 
+      task.goalId === realGoalId && 
+      (!task.milestoneId || task.milestoneId === null) &&
+      (!task.projectId || task.projectId === null)
+    );
+    
+    if (standaloneTasks.length === 0) {
+      showError('No standalone tasks to complete');
+      return;
+    }
+    
+    const incompleteTasks = standaloneTasks.filter(task => !task.completed);
+    
+    if (incompleteTasks.length === 0) {
+      showSuccess('All standalone tasks are already completed!');
+      return;
+    }
+    
+    Alert.alert(
+      'Complete All Standalone Tasks',
+      `This will mark all ${incompleteTasks.length} remaining standalone tasks as complete. Continue?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Complete All', 
+          onPress: async () => {
+            try {
+              // Complete each incomplete standalone task
+              for (const task of incompleteTasks) {
+                if (updateTask) {
+                  await updateTask(null, task.id, { 
+                    completed: true, 
+                    status: 'done',
+                    updatedAt: new Date().toISOString()
+                  });
+                }
+              }
+              showSuccess(`Completed ${incompleteTasks.length} standalone tasks!`);
+            } catch (error) {
+              console.error('Error completing standalone tasks:', error);
+              showError('Failed to complete some standalone tasks');
+            }
+          }
+        }
+      ]
+    );
   };
 
   const handleMilestoneComplete = (milestoneId) => {
@@ -2102,6 +2502,7 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
       showSuccess('Milestone deleted');
     }
   };
+
 
   const handleGoalEdit = (goalId) => {
     const goal = goals.find(g => g.id === goalId);
@@ -2166,10 +2567,21 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
 
   const handleDeleteAll = async () => {
     try {
+      // CRITICAL FIX: Force AppContext to sync with AsyncStorage FIRST
+      console.log('🚨 FORCING AppContext sync with AsyncStorage before counting...');
+      if (appContext && appContext.refreshData) {
+        await appContext.refreshData();
+        console.log('✅ AppContext refreshed, new counts:', {
+          goals: appContext.goals?.length || 0,
+          milestones: appContext.projects?.length || 0,
+          tasks: appContext.tasks?.length || 0
+        });
+      }
+      
       // Get actual counts from AsyncStorage to show accurate numbers
       const [goalsStorage, milestonesStorage, tasksStorage] = await Promise.all([
         AsyncStorage.getItem('goals'),
-        AsyncStorage.getItem('milestones'), 
+        AsyncStorage.getItem('projects'), // Fixed: milestones are stored as 'projects'
         AsyncStorage.getItem('tasks')
       ]);
       
@@ -2177,19 +2589,42 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
       const actualMilestones = milestonesStorage ? JSON.parse(milestonesStorage) : [];
       const actualTasks = tasksStorage ? JSON.parse(tasksStorage) : [];
       
-      // Count completed vs active goals
-      const activeGoals = actualGoals.filter(goal => !goal.completed);
-      const completedGoals = actualGoals.filter(goal => goal.completed);
+      // CRITICAL FIX: Use AppContext data for counts (what the UI actually shows)
+      const activeGoals = goals.filter(goal => !goal.completed);
+      const completedGoals = goals.filter(goal => goal.completed);
       
-      setActualDeleteCounts({
-        goals: actualGoals.length,
-        activeGoals: activeGoals.length,
-        completedGoals: completedGoals.length,
-        milestones: actualMilestones.length, 
-        tasks: actualTasks.length
+      // Count standalone milestones from AppContext (what the UI shows)
+      const appContextStandaloneMilestones = milestones.filter(milestone => {
+        const goalId = milestone.goalId;
+        const hasNoGoal = 
+          goalId === null ||
+          goalId === undefined ||
+          goalId === '' ||
+          goalId === 'null' ||
+          goalId === 'undefined' ||
+          goalId === 'NULL' ||
+          goalId === 'UNDEFINED' ||
+          !goalId;
+        return hasNoGoal;
       });
       
-      console.log(`🔍 ACCURATE DELETE COUNTS: ${actualGoals.length} goals, ${actualMilestones.length} milestones, ${actualTasks.length} tasks`);
+      console.log(`🔍 DATA COMPARISON:`);
+      console.log(`  - AsyncStorage milestones: ${actualMilestones.length}`);
+      console.log(`  - AppContext milestones: ${milestones.length}`);
+      console.log(`  - AppContext standalone milestones: ${appContextStandaloneMilestones.length}`);
+      console.log(`  - AsyncStorage tasks: ${actualTasks.length}`);
+      console.log(`  - AppContext tasks: ${tasks.length}`);
+      
+      // Use AppContext counts for accurate user-facing numbers
+      setActualDeleteCounts({
+        goals: goals.length,
+        activeGoals: activeGoals.length,
+        completedGoals: completedGoals.length,
+        milestones: milestones.length,  // Use AppContext count (what UI shows)
+        tasks: tasks.length  // Use AppContext count (what UI shows)  
+      });
+      
+      console.log(`🔍 ACCURATE DELETE COUNTS: ${goals.length} goals, ${milestones.length} milestones, ${tasks.length} tasks`);
     } catch (error) {
       console.error('Error getting accurate counts:', error);
       // Fallback to AppContext counts
@@ -2222,65 +2657,35 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
     // Small delay for better UX before starting deletion
     setTimeout(async () => {
                     try {
-                      // USE THE EXACT SAME DELETION FUNCTIONS THAT WORK!
-                      // Delete each goal individually (this will cascade delete projects and tasks)
-                      const goalIds = [...goals.map(g => g.id)]; // Copy array to avoid mutation issues
-                      console.log(`Deleting ${goalIds.length} goals individually...`);
+                      // AGGRESSIVE NUCLEAR WIPE - Clear everything immediately and comprehensively
+                      console.log(`☢️ NUCLEAR WIPE: Starting aggressive complete data deletion...`);
                       
-                      for (const goalId of goalIds) {
-                        if (deleteGoal) {
-                          await deleteGoal(goalId);
-                        }
-                      }
+                      // STEP 1: Complete AsyncStorage wipe of ALL related data
+                      console.log(`🧹 STEP 1: Nuclear AsyncStorage wipe...`);
+                      const keysToWipe = [
+                        'goals', 'projects', 'tasks', 'milestones',
+                        'todos', 'tomorrowTodos', 'laterTodos',
+                        'completedGoals', 'activeGoals', 
+                        'onboardingCompleted', 'hasCreatedFirstGoal',
+                        'forceProfileClear'
+                      ];
                       
-                      // Delete any remaining standalone projects
-                      const remainingProjectIds = [...milestones.filter(p => !p.goalId).map(p => p.id)];
-                      console.log(`Deleting ${remainingProjectIds.length} remaining standalone projects...`);
+                      await Promise.all(keysToWipe.map(key => AsyncStorage.setItem(key, '[]')));
                       
-                      for (const projectId of remainingProjectIds) {
-                        if (deleteMilestone) {
-                          await deleteMilestone(projectId);
-                        }
-                      }
-                      
-                      // Delete ANY remaining tasks - checking ALL possible properties
-                      // This includes tasks with milestoneId, projectId, goalId, or completely standalone tasks
-                      const allRemainingTasks = [...tasks];
-                      console.log(`🗑️ COMPREHENSIVE TASK DELETION: Found ${allRemainingTasks.length} total tasks to delete...`);
-                      
-                      // Delete each task individually using the proper deleteTask function
-                      for (const task of allRemainingTasks) {
-                        try {
-                          if (deleteTask) {
-                            // Use the milestoneId if available, otherwise null for standalone
-                            const milestoneIdForDeletion = task.milestoneId || task.projectId || null;
-                            await deleteTask(milestoneIdForDeletion, task.id);
-                            console.log(`✅ Deleted task: ${task.title || task.name} (ID: ${task.id})`);
-                          }
-                        } catch (error) {
-                          console.error(`❌ Error deleting task ${task.id}:`, error);
-                          // Continue with other tasks even if one fails
-                        }
-                      }
-                      
-                      // Force clear the tasks array directly from AsyncStorage as backup
-                      await AsyncStorage.setItem('tasks', '[]');
-                      console.log('🧹 Force cleared tasks from AsyncStorage as backup');
-                      
-                      // Clear todos manually since they don't have individual delete functions in context
-                      setTodos([]);
-                      setTomorrowTodos([]);
-                      setLaterTodos([]);
+                      // Also set some flags to empty
                       await Promise.all([
-                        AsyncStorage.setItem('todos', '[]'),
-                        AsyncStorage.setItem('tomorrowTodos', '[]'),
-                        AsyncStorage.setItem('laterTodos', '[]')
+                        AsyncStorage.setItem('onboardingCompleted', 'false'),
+                        AsyncStorage.setItem('hasCreatedFirstGoal', 'false'),
+                        AsyncStorage.setItem('forceProfileClear', 'true')
                       ]);
                       
-                      // IMMEDIATE FORCE CLEAR - Execute right after deletions
-                      console.log('🚨 IMMEDIATE FORCE CLEAR - Clearing AppContext arrays directly');
+                      console.log(`✅ STEP 1: Nuclear AsyncStorage wipe complete`);
+                      
+                      // STEP 2: Aggressive AppContext clearing - multiple methods
+                      console.log(`🚨 STEP 2: Aggressive AppContext clearing...`);
+                      
                       if (appContext) {
-                        // Force clear all arrays immediately and synchronously
+                        // Clear all state arrays
                         if (appContext.setGoals) appContext.setGoals([]);
                         if (appContext.setProjects) appContext.setProjects([]);
                         if (appContext.setTasks) appContext.setTasks([]);
@@ -2288,51 +2693,47 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
                         if (appContext.setTomorrowTodos) appContext.setTomorrowTodos([]);
                         if (appContext.setLaterTodos) appContext.setLaterTodos([]);
                         
-                        console.log('💪 IMMEDIATE FORCE CLEAR COMPLETE - All arrays set to empty');
+                        // Force refresh from now-empty AsyncStorage
+                        if (appContext.refreshData) {
+                          await appContext.refreshData();
+                        }
+                        
+                        // Double-clear after refresh just to be sure
+                        if (appContext.setGoals) appContext.setGoals([]);
+                        if (appContext.setProjects) appContext.setProjects([]);
+                        if (appContext.setTasks) appContext.setTasks([]);
                       }
                       
-                      // Set nuclear signal immediately for ProfileScreen
-                      await AsyncStorage.setItem('forceProfileClear', 'true');
-                      console.log('☢️ NUCLEAR SIGNAL SET IMMEDIATELY');
+                      console.log(`✅ STEP 2: Aggressive AppContext clearing complete`);
                       
-                      // VERIFY AsyncStorage is actually empty
-                      console.log('🔍 VERIFYING ASYNCSTORAGE IS ACTUALLY EMPTY...');
-                      const [
-                        storedGoalsAfter,
-                        storedProjectsAfter,
-                        storedTasksAfter
-                      ] = await Promise.all([
+                      // STEP 3: Clear todo state in this component
+                      console.log(`🧹 STEP 3: Clearing component todo state...`);
+                      if (setTodos) setTodos([]);
+                      if (setTomorrowTodos) setTomorrowTodos([]);
+                      if (setLaterTodos) setLaterTodos([]);
+                      
+                      // STEP 4: Final verification and logging
+                      console.log(`🔍 STEP 4: Final verification...`);
+                      
+                      const [verifyGoals, verifyProjects, verifyTasks] = await Promise.all([
                         AsyncStorage.getItem('goals'),
-                        AsyncStorage.getItem('projects'),
+                        AsyncStorage.getItem('projects'), 
                         AsyncStorage.getItem('tasks')
                       ]);
                       
-                      console.log('📦 AsyncStorage AFTER delete:');
-                      console.log('  - goals:', storedGoalsAfter);
-                      console.log('  - projects:', storedProjectsAfter);
-                      console.log('  - tasks:', storedTasksAfter);
+                      console.log(`📦 FINAL VERIFICATION - AsyncStorage:`);
+                      console.log(`  - goals: ${verifyGoals}`);
+                      console.log(`  - projects: ${verifyProjects}`);
+                      console.log(`  - tasks: ${verifyTasks}`);
                       
-                      // CHECK AppContext state
-                      console.log('🎯 CURRENT AppContext state:');
-                      console.log('  - appContext.goals.length:', appContext?.goals?.length || 'undefined');
-                      console.log('  - appContext.projects.length:', appContext?.projects?.length || 'undefined');
-                      console.log('  - appContext.tasks.length:', appContext?.tasks?.length || 'undefined');
+                      console.log(`📊 FINAL VERIFICATION - AppContext:`);
+                      console.log(`  - goals: ${appContext?.goals?.length || 0}`);
+                      console.log(`  - projects: ${appContext?.projects?.length || 0}`);
+                      console.log(`  - tasks: ${appContext?.tasks?.length || 0}`);
                       
-                      // FORCE ProfileScreen to recalculate by triggering AppContext refresh
-                      if (appContext && appContext.refreshData) {
-                        console.log('🔄 Forcing AppContext refresh...');
-                        await appContext.refreshData();
-                        
-                        // Check again after refresh
-                        console.log('🎯 AppContext state AFTER refresh:');
-                        console.log('  - appContext.goals.length:', appContext?.goals?.length || 'undefined');
-                        console.log('  - appContext.projects.length:', appContext?.projects?.length || 'undefined');
-                        console.log('  - appContext.tasks.length:', appContext?.tasks?.length || 'undefined');
-                      }
+                      console.log(`☢️ NUCLEAR WIPE COMPLETE - Everything obliterated!`);
                       
-                      // Remove duplicate force clearing - already done above
-                      
-                      showSuccess('All data deleted successfully');
+                      showSuccess('All data completely deleted! 🧹');
                       
                     } catch (error) {
                       console.error('Error deleting all data:', error);
@@ -2368,6 +2769,9 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
         ) : editMode ? (
           <DraggableFlatList
             data={processedGoals}
+            scrollEnabled={true}
+            nestedScrollEnabled={true}
+            keyboardShouldPersistTaps="handled"
             renderItem={({ item: goal, drag, isActive }) => (
               <GoalCard
                 key={goal.id}
@@ -2402,6 +2806,8 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
                 onMilestoneDelete={handleMilestoneDelete}
                 onClearAllStandaloneTasks={handleClearAllStandaloneTasks}
                 onClearAllStandaloneMilestones={handleClearAllStandaloneMilestones}
+                onVirtualMilestoneComplete={handleVirtualMilestoneComplete}
+                onVirtualMilestoneDelete={handleVirtualMilestoneDelete}
                 onDrag={drag}
                 isActive={isActive}
                 isDraggable={true}
@@ -2589,6 +2995,8 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
                     onMilestoneDelete={handleMilestoneDelete}
                     onClearAllStandaloneTasks={handleClearAllStandaloneTasks}
                     onClearAllStandaloneMilestones={handleClearAllStandaloneMilestones}
+                    onVirtualMilestoneComplete={handleVirtualMilestoneComplete}
+                    onVirtualMilestoneDelete={handleVirtualMilestoneDelete}
                     navigation={navigation}
                     onMilestoneReorder={handleMilestoneReorder}
                     onTaskReorder={handleTaskReorder}
@@ -2695,7 +3103,7 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
             onMilestoneComplete={null} // Disable milestone completion during tour
             onMilestoneEdit={null} // Disable milestone editing during tour
             onMilestoneDelete={null} // Disable milestone deletion during tour
-            onTaskComplete={null} // Disable task completion during tour
+            onTaskComplete={handleTaskComplete} // Enable task completion during tour
             onTaskEdit={null} // Disable task editing during tour
             onTaskDelete={null} // Disable task deletion during tour
             onMilestoneReorder={null} // Disable reordering during tour
@@ -3189,6 +3597,43 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+  reorderableItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 4,
+  },
+  dragHandle: {
+    padding: 8,
+    marginRight: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sectionHeader: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  taskReorderItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 4,
+  },
+  taskReorderButtons: {
+    flexDirection: 'column',
+    marginRight: 8,
+  },
+  reorderButton: {
+    padding: 4,
+    borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    marginVertical: 1,
+  },
+  taskReorderContent: {
+    flex: 1,
   },
 });
 

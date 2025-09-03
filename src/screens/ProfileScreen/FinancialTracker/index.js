@@ -276,11 +276,24 @@ const FinancialTracker = ({
   // Load financial data from storage
   const loadFinancialData = async () => {
     try {
+      console.log('📂 Loading financial data...', {
+        widgetId,
+        hasWidgetId: !!widgetId,
+        hasLoadWidgetData: !!loadWidgetData
+      });
+      
       // Use widget instance storage if available, fall back to old storage for migration
       let dataJson = null;
       
       if (widgetId && loadWidgetData) {
         const widgetData = await loadWidgetData(widgetId);
+        console.log('📖 Widget data loaded:', {
+          widgetId,
+          hasData: !!widgetData,
+          dataType: typeof widgetData,
+          incomeSourcesCount: widgetData?.incomeSources?.length || 0,
+          expensesCount: widgetData?.expenses?.length || 0
+        });
         if (widgetData) {
           dataJson = JSON.stringify(widgetData);
         }
@@ -288,7 +301,7 @@ const FinancialTracker = ({
       
       // For new widget instances with widgetId, never load old data - start completely fresh
       if (!dataJson && widgetId) {
-        console.log('New financial tracker widget instance starting fresh - no data inheritance');
+        console.log('🆕 New financial tracker widget instance starting fresh - no data inheritance');
         return; // Exit early, don't load any old data
       }
       
@@ -353,12 +366,25 @@ const FinancialTracker = ({
     }
     
     try {
+      console.log('💾 Saving financial data...', {
+        widgetId,
+        hasWidgetId: !!widgetId,
+        hasSaveWidgetData: !!saveWidgetData,
+        dataSize: JSON.stringify(updatedData).length,
+        incomeSourcesCount: updatedData?.incomeSources?.length || 0,
+        expensesCount: updatedData?.expenses?.length || 0,
+        firstIncome: updatedData?.incomeSources?.[0]?.name || 'none',
+        firstExpense: updatedData?.expenses?.[0]?.name || 'none'
+      });
+      
       // Use widget instance storage if available
       if (widgetId && saveWidgetData) {
         await saveWidgetData(widgetId, updatedData);
+        console.log('✅ Widget data saved successfully to widgetId:', widgetId);
       } else {
         // Fall back to old storage
         await AsyncStorage.setItem('financialTrackerData', JSON.stringify(updatedData));
+        console.log('✅ Financial data saved to AsyncStorage (fallback)');
       }
       
       // Provide haptic feedback for data update
@@ -366,7 +392,7 @@ const FinancialTracker = ({
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
     } catch (error) {
-      console.error('Error saving financial data:', error);
+      console.error('❌ Error saving financial data:', error);
       Alert.alert('Error', 'Failed to save your financial data.');
     }
   };
@@ -406,7 +432,7 @@ const FinancialTracker = ({
   };
   
   // Handle add new income source
-  const handleAddIncome = () => {
+  const handleAddIncome = async () => {
     // If not premium, don't allow adding
     if (!isPremium) {
       navigation.navigate('PricingScreen');
@@ -431,7 +457,7 @@ const FinancialTracker = ({
     };
     
     setFinancialData(updatedData);
-    saveFinancialData(updatedData);
+    await saveFinancialData(updatedData);
     
     // Reset form
     setNewItemName('');
@@ -440,7 +466,9 @@ const FinancialTracker = ({
   };
 
   // Quick add income with direct parameters
-  const quickAddIncome = (name, amount, type = 'primary') => {
+  const quickAddIncome = async (name, amount, type = 'primary') => {
+    console.log('💰 Quick add income called:', { name, amount, type, isPremium });
+    
     if (!isPremium) {
       navigation.navigate('PricingScreen');
       return;
@@ -464,11 +492,13 @@ const FinancialTracker = ({
     };
     
     setFinancialData(updatedData);
-    saveFinancialData(updatedData);
+    await saveFinancialData(updatedData);
   };
 
   // Quick add expense with direct parameters
-  const quickAddExpense = (name, amount, category = 'general') => {
+  const quickAddExpense = async (name, amount, category = 'general') => {
+    console.log('💸 Quick add expense called:', { name, amount, category, isPremium });
+    
     if (!isPremium) {
       navigation.navigate('PricingScreen');
       return;
@@ -493,11 +523,11 @@ const FinancialTracker = ({
     };
     
     setFinancialData(updatedData);
-    saveFinancialData(updatedData);
+    await saveFinancialData(updatedData);
   };
 
   // Quick update income with direct parameters
-  const quickUpdateIncome = (id, name, amount, type = 'primary') => {
+  const quickUpdateIncome = async (id, name, amount, type = 'primary') => {
     if (!isPremium) {
       navigation.navigate('PricingScreen');
       return;
@@ -518,11 +548,11 @@ const FinancialTracker = ({
     };
     
     setFinancialData(updatedData);
-    saveFinancialData(updatedData);
+    await saveFinancialData(updatedData);
   };
 
   // Quick update expense with direct parameters
-  const quickUpdateExpense = (id, name, amount, category = 'general') => {
+  const quickUpdateExpense = async (id, name, amount, category = 'general') => {
     if (!isPremium) {
       navigation.navigate('PricingScreen');
       return;
@@ -543,7 +573,7 @@ const FinancialTracker = ({
     };
     
     setFinancialData(updatedData);
-    saveFinancialData(updatedData);
+    await saveFinancialData(updatedData);
   };
 
   // Save current month to history
@@ -603,7 +633,7 @@ const FinancialTracker = ({
   };
   
   // Handle add new expense
-  const handleAddExpense = () => {
+  const handleAddExpense = async () => {
     // If not premium, don't allow adding
     if (!isPremium) {
       navigation.navigate('PricingScreen');
@@ -629,7 +659,7 @@ const FinancialTracker = ({
     };
     
     setFinancialData(updatedData);
-    saveFinancialData(updatedData);
+    await saveFinancialData(updatedData);
     
     // Reset form
     setNewItemName('');
@@ -769,7 +799,7 @@ const FinancialTracker = ({
   };
   
   // Handle delete item
-  const handleDeleteItem = (type, id) => {
+  const handleDeleteItem = async (type, id) => {
     // If not premium, don't allow deleting
     if (!isPremium) {
       navigation.navigate('PricingScreen');
@@ -801,11 +831,11 @@ const FinancialTracker = ({
     }
     
     setFinancialData(updatedData);
-    saveFinancialData(updatedData);
+    await saveFinancialData(updatedData);
   };
   
   // Handle update item
-  const handleUpdateItem = (type, updatedItem) => {
+  const handleUpdateItem = async (type, updatedItem) => {
     // If not premium, don't allow updating
     if (!isPremium) {
       navigation.navigate('PricingScreen');
@@ -845,7 +875,7 @@ const FinancialTracker = ({
     }
     
     setFinancialData(updatedData);
-    saveFinancialData(updatedData);
+    await saveFinancialData(updatedData);
   };
   
   // Handle goal toggle

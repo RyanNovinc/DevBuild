@@ -26,9 +26,11 @@ export const GlobalAnimationProvider = ({ children }) => {
 
     // Auto-remove after duration
     const duration = options.duration || 4000;
+    // For confetti, account for stagger time (2000ms) + duration + buffer
+    const cleanupDelay = animationType === 'confetti' ? 2000 + duration + 1000 : duration + 1000;
     setTimeout(() => {
       setActiveAnimations(prev => prev.filter(anim => anim.id !== animationId));
-    }, duration + 1000); // Extra buffer to ensure cleanup
+    }, cleanupDelay);
 
     return animationId;
   };

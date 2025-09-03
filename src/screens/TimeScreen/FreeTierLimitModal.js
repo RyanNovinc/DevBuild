@@ -107,7 +107,7 @@ const FreeTierLimitModal = ({
         return {
           icon: 'repeat',
           title: 'Limited Repeating Options',
-          message: 'Free accounts are limited to weekly repeating only. Upgrade to Pro for all repeating patterns (daily, weekly, monthly).',
+          message: 'Free accounts are limited to weekly repeating only. Upgrade to Pro for all repeating patterns (daily, weekly, fortnightly, monthly).',
           upgradeText: 'Unlock All Repeating Options'
         };
         
@@ -359,7 +359,7 @@ const FreeTierLimitModal = ({
                   {limitType === 'repeating' && (
                     <View style={styles.comparisonItem}>
                       <Ionicons name="repeat-outline" size={18} color={theme.primary} />
-                      <Text style={[styles.comparisonText, { color: theme.text }]}>Daily, weekly, monthly</Text>
+                      <Text style={[styles.comparisonText, { color: theme.text }]}>Daily, weekly, fortnightly, monthly</Text>
                     </View>
                   )}
                   {limitType === 'goals' && (

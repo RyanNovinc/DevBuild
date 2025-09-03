@@ -365,6 +365,7 @@ const AISideMenu = ({
   const [showAccountSettings, setShowAccountSettings] = useState(false);
   const [showReferralPopup, setShowReferralPopup] = useState(false);
   const [referralStats, setReferralStats] = useState(null);
+  const [referralProgress, setReferralProgress] = useState({ remaining: 3, total: 3, used: 0 });
   const [streakData, setStreakData] = useState({ currentStreak: 0 });
   const [hasAppPurchase, setHasAppPurchase] = useState(false);
   
@@ -471,12 +472,17 @@ const AISideMenu = ({
           const stats = await ReferralService.getReferralStats();
           setReferralStats(stats);
           
+          // Load referral progress using proper calculation
+          const progress = await getReferralProgress();
+          setReferralProgress(progress);
+          
           const currentStreak = await FeatureExplorerTracker.getCurrentStreak();
           setStreakData({ currentStreak });
         } catch (error) {
           console.error('Error loading referral data:', error);
           // Set default values if loading fails
           setReferralStats({ sent: 0, clicked: 0, converted: 0, plansEarned: 0, plansGifted: 0 });
+          setReferralProgress({ remaining: 3, total: 3, used: 0 });
           setStreakData({ currentStreak: 0 });
         }
       }
@@ -933,24 +939,35 @@ const AISideMenu = ({
     return referralLimit;
   };
 
-  // Calculate referrals remaining vs total limit (0/X format)
-  const getReferralProgress = () => {
-    const total = getTotalReferralLimit();
-    const used = referralStats?.sent || 0; // Changed from converted to sent
-    const remaining = Math.max(0, total - used);
-    
-    console.log('getReferralProgress DEBUG:', {
-      total,
-      used,
-      remaining,
-      referralStats,
-      streakData
-    });
-    
-    return { 
-      remaining: remaining, 
-      total: total 
-    };
+  // Calculate referrals remaining vs total limit using proper service method
+  const getReferralProgress = async () => {
+    try {
+      const total = getTotalReferralLimit();
+      const remaining = await ReferralService.getReferralsRemaining();
+      const used = Math.max(0, total - remaining);
+      
+      console.log('getReferralProgress DEBUG:', {
+        total,
+        used,
+        remaining,
+        referralStats,
+        streakData
+      });
+      
+      return { 
+        remaining: remaining, 
+        total: total,
+        used: used
+      };
+    } catch (error) {
+      console.error('Error getting referral progress:', error);
+      const total = getTotalReferralLimit();
+      return { 
+        remaining: total, 
+        total: total,
+        used: 0
+      };
+    }
   };
 
   // FOR TESTING: Uncomment this to add test referral data
@@ -1279,7 +1296,7 @@ const AISideMenu = ({
                       >
                         <Ionicons name="people" size={20} color={theme.primary} />
                         <Text style={[styles.newReferralText, { color: theme.text }]}>
-                          Referrals (0/3)
+                          Referrals ({referralProgress.used}/{referralProgress.total})
                         </Text>
                         <Ionicons name="chevron-forward" size={16} color={theme.textSecondary} />
                       </TouchableOpacity>

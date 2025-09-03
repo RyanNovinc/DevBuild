@@ -44,15 +44,102 @@ const isMarkdownExampleRequest = (text) => {
 };
 
 /**
+ * Render text with action links processed as TouchableOpacity buttons
+ * This is the reliable solution that avoids text-splitting issues
+ */
+const renderTextWithActionLinks = (text, baseStyle, onActionLink, themeColor) => {
+  console.log('🔗 renderTextWithActionLinks processing:', text);
+  console.log('🎨 Theme color received:', themeColor);
+  
+  const parts = [];
+  let currentIndex = 0;
+  
+  // Regex to find action links: [text](action://type/data)
+  const actionLinkRegex = /\[([^\]]+)\]\(action:\/\/(\w+)\/(.*?)\)/g;
+  let match;
+  
+  while ((match = actionLinkRegex.exec(text)) !== null) {
+    // Add text before the action link (with markdown formatting)
+    if (match.index > currentIndex) {
+      const beforeText = text.substring(currentIndex, match.index);
+      if (beforeText.trim()) {
+        parts.push(
+          <Text key={`text-${currentIndex}`} style={baseStyle}>
+            {parseInlineMarkdown(beforeText, baseStyle)}
+          </Text>
+        );
+      }
+    }
+    
+    // Add the action link as TouchableOpacity
+    const [fullMatch, linkText, actionType, encodedData] = match;
+    console.log('🔗 Found action link:', { linkText, actionType, encodedData });
+    
+    parts.push(
+      <TouchableOpacity
+        key={`action-link-${match.index}`}
+        onPress={() => {
+          console.log('🔗 Action link pressed:', { actionType, encodedData });
+          onActionLink(actionType, encodedData);
+        }}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel={`${linkText} button`}
+        accessibilityHint={`Reopens the ${actionType} creation form`}
+        style={[styles.actionLinkButton, {
+          backgroundColor: `${themeColor}20`, // 20 = 0.125 opacity
+          borderColor: `${themeColor}50`, // 50 = 0.3 opacity
+        }]}
+      >
+        <Text style={[baseStyle, styles.actionLink, { color: themeColor }]}>
+          {linkText}
+        </Text>
+      </TouchableOpacity>
+    );
+    
+    currentIndex = match.index + fullMatch.length;
+  }
+  
+  // Add any remaining text (with markdown formatting)
+  if (currentIndex < text.length) {
+    const remainingText = text.substring(currentIndex);
+    if (remainingText.trim()) {
+      parts.push(
+        <Text key={`text-${currentIndex}`} style={baseStyle}>
+          {parseInlineMarkdown(remainingText, baseStyle)}
+        </Text>
+      );
+    }
+  }
+  
+  return <View style={styles.actionLinkContainer}>{parts}</View>;
+};
+
+/**
  * Parse text for comprehensive markdown-style formatting
  * Optimized with responsive text sizing and accessibility
  */
-const parseMarkdown = (text, baseStyle, isUserMessage = false) => {
+const parseMarkdown = (text, baseStyle, isUserMessage = false, onActionLink = null, themeColor = '#19C37D') => {
   if (!text) return null;
+  
+  console.log('📝 parseMarkdown called with text type:', typeof text, 'isArray:', Array.isArray(text));
+  if (typeof text === 'string' && text.includes('action://')) {
+    console.log('📝 parseMarkdown received action link text:', text);
+  }
+  
+  // Join the text if it's an array to handle split text issues
+  const fullText = Array.isArray(text) ? text.join('') : text;
+  
+  // CRITICAL FIX: If this text contains action links, handle them specially
+  // to avoid the text-splitting issue that breaks the regex matching
+  if (fullText.includes('action://') && onActionLink) {
+    console.log('🔗 Special processing for action links detected');
+    return renderTextWithActionLinks(fullText, baseStyle, onActionLink, themeColor);
+  }
   
   // If this looks like a markdown example demonstration, skip formatting
   // But only for AI messages, not user messages
-  if (!isUserMessage && text.includes('```markdown') && text.includes('```')) {
+  if (!isUserMessage && fullText.includes('```markdown') && fullText.includes('```')) {
     // This is a markdown demonstration, render it as is in a code block
     const codeContent = text.split('```markdown')[1].split('```')[0].trim();
     
@@ -91,7 +178,7 @@ const parseMarkdown = (text, baseStyle, isUserMessage = false) => {
   }
   
   // Split text into lines to handle block-level elements
-  const lines = text.split('\n');
+  const lines = fullText.split('\n');
   const elements = [];
   
   let inCodeBlock = false;
@@ -176,7 +263,7 @@ const parseMarkdown = (text, baseStyle, isUserMessage = false) => {
           accessible={true}
           accessibilityRole="header"
         >
-          {parseInlineMarkdown(line.substring(2), styles.h1)}
+          {parseInlineMarkdown(line.substring(2), styles.h1, onActionLink)}
         </Text>
       );
       continue;
@@ -189,7 +276,7 @@ const parseMarkdown = (text, baseStyle, isUserMessage = false) => {
           accessible={true}
           accessibilityRole="header"
         >
-          {parseInlineMarkdown(line.substring(3), styles.h2)}
+          {parseInlineMarkdown(line.substring(3), styles.h2, onActionLink)}
         </Text>
       );
       continue;
@@ -202,7 +289,7 @@ const parseMarkdown = (text, baseStyle, isUserMessage = false) => {
           accessible={true}
           accessibilityRole="header"
         >
-          {parseInlineMarkdown(line.substring(4), styles.h3)}
+          {parseInlineMarkdown(line.substring(4), styles.h3, onActionLink)}
         </Text>
       );
       continue;
@@ -222,7 +309,7 @@ const parseMarkdown = (text, baseStyle, isUserMessage = false) => {
             style={styles.blockquoteText}
             maxFontSizeMultiplier={1.8}
           >
-            {parseInlineMarkdown(line.substring(line.indexOf('>') + 1).trim(), styles.blockquoteText)}
+            {parseInlineMarkdown(line.substring(line.indexOf('>') + 1).trim(), styles.blockquoteText, onActionLink)}
           </Text>
         </View>
       );
@@ -249,7 +336,7 @@ const parseMarkdown = (text, baseStyle, isUserMessage = false) => {
             style={[baseStyle, styles.listItemText]}
             maxFontSizeMultiplier={1.8}
           >
-            {parseInlineMarkdown(content, baseStyle)}
+            {parseInlineMarkdown(content, baseStyle, onActionLink)}
           </Text>
         </View>
       );
@@ -277,7 +364,7 @@ const parseMarkdown = (text, baseStyle, isUserMessage = false) => {
             style={[baseStyle, styles.listItemText]}
             maxFontSizeMultiplier={1.8}
           >
-            {parseInlineMarkdown(content, baseStyle)}
+            {parseInlineMarkdown(content, baseStyle, onActionLink)}
           </Text>
         </View>
       );
@@ -296,7 +383,7 @@ const parseMarkdown = (text, baseStyle, isUserMessage = false) => {
           accessible={true}
           accessibilityRole="text"
         >
-          {parseInlineMarkdown(line, baseStyle)}
+          {parseInlineMarkdown(line, baseStyle, onActionLink)}
         </Text>
       );
     }
@@ -308,7 +395,7 @@ const parseMarkdown = (text, baseStyle, isUserMessage = false) => {
 /**
  * Parse inline markdown elements like bold, italic, inline code, and links
  */
-const parseInlineMarkdown = (text, baseStyle) => {
+const parseInlineMarkdown = (text, baseStyle, onActionLink = null) => {
   if (!text) return null;
   
   // First replace all instances of ** for bold
@@ -321,7 +408,7 @@ const parseInlineMarkdown = (text, baseStyle) => {
   processedText = replaceInlineCode(processedText);
   
   // Finally replace all instances of [text](url) for links
-  processedText = replaceLinks(processedText);
+  processedText = replaceLinks(processedText, onActionLink);
   
   return processedText;
 };
@@ -489,59 +576,110 @@ const replaceInlineCode = (textParts) => {
 };
 
 /**
- * Process links ([text](url))
+ * Process links ([text](url)) and special action links ([text](action://type/data))
  */
-const replaceLinks = (textParts) => {
+const replaceLinks = (textParts, onActionLink = null) => {
   // Process a string
   if (typeof textParts === 'string') {
     const parts = [];
     let currentIndex = 0;
     
+    const text = textParts;
+    console.log('🔗 Processing text for links:', text);
+    
+    // First try to fix broken action links by joining split parts
+    let processedText = text;
+    if (text.includes('action://') && text.includes('\n')) {
+      console.log('🔗 Attempting to fix broken action link');
+      // Try to rejoin broken action links
+      processedText = text.replace(/\[([^\]]+)\]\(action:\/\/([^)]*)\n([^)]*)\)/g, '[$1](action://$2$3)');
+      console.log('🔗 Fixed text:', processedText);
+    }
+    
     // Regex to find links: [text](url)
     const regex = /\[([^\]]+)\]\(([^)]+)\)/g;
     let match;
     
-    const text = textParts;
-    
-    while ((match = regex.exec(text)) !== null) {
+    while ((match = regex.exec(processedText)) !== null) {
       // Add text before the link
       if (match.index > currentIndex) {
-        parts.push(text.substring(currentIndex, match.index));
+        parts.push(processedText.substring(currentIndex, match.index));
       }
       
       // Add the link
       const linkText = match[1];
       const url = match[2];
-      parts.push(
-        <Text 
-          key={`link-${match.index}`} 
-          style={styles.link}
-          maxFontSizeMultiplier={1.8}
-          accessible={true}
-          accessibilityRole="link"
-          accessibilityHint={`Opens ${url}`}
-          onPress={() => Linking.openURL(url)}
-        >
-          {linkText}
-        </Text>
-      );
+      console.log('🔗 Found link:', { linkText, url });
+      
+      // Check if this is a special action link
+      if (url.startsWith('action://')) {
+        // Parse action link: action://type/base64data
+        const actionMatch = url.match(/^action:\/\/(\w+)\/(.*?)$/);
+        console.log('🔗 Parsing action link:', { url, actionMatch, hasCallback: !!onActionLink });
+        
+        if (actionMatch && onActionLink) {
+          const [, actionType, encodedData] = actionMatch;
+          console.log('🔗 Parsed action link:', { actionType, encodedData });
+          
+          parts.push(
+            <TouchableOpacity
+              key={`action-link-${match.index}`}
+              onPress={() => {
+                console.log('🔗 Action link pressed:', { actionType, encodedData });
+                onActionLink(actionType, encodedData);
+              }}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={`${linkText} button`}
+              accessibilityHint={`Reopens the ${actionType} creation form`}
+              style={styles.actionLinkButton}
+            >
+              <Text 
+                style={[styles.link, styles.actionLink]}
+                maxFontSizeMultiplier={1.8}
+              >
+                {linkText}
+              </Text>
+            </TouchableOpacity>
+          );
+        } else {
+          console.log('❌ Invalid action link or no callback:', { actionMatch, hasCallback: !!onActionLink });
+          // Invalid action link, render as regular text
+          parts.push(linkText);
+        }
+      } else {
+        // Regular link
+        parts.push(
+          <Text 
+            key={`link-${match.index}`} 
+            style={styles.link}
+            maxFontSizeMultiplier={1.8}
+            accessible={true}
+            accessibilityRole="link"
+            accessibilityHint={`Opens ${url}`}
+            onPress={() => Linking.openURL(url)}
+          >
+            {linkText}
+          </Text>
+        );
+      }
       
       currentIndex = match.index + match[0].length;
     }
     
     // Add any remaining text
-    if (currentIndex < text.length) {
-      parts.push(text.substring(currentIndex));
+    if (currentIndex < processedText.length) {
+      parts.push(processedText.substring(currentIndex));
     }
     
-    return parts.length > 0 ? parts : text;
+    return parts.length > 0 ? parts : processedText;
   }
   
   // Process an array
   if (Array.isArray(textParts)) {
     return textParts.flatMap((part, index) => {
       if (typeof part === 'string') {
-        return replaceLinks(part);
+        return replaceLinks(part, onActionLink);
       }
       return part;
     });
@@ -633,8 +771,11 @@ const AIMessageItem = ({
   onPress,
   style = 'default',
   isLastUserMessage = false,
-  hasUserMessages = false
+  hasUserMessages = false,
+  onActionLink = null,
+  themeColor = '#19C37D' // Default green color
 }) => {
+  console.log('🎨 AIMessageItem received themeColor:', themeColor);
   const { showToast } = useAIAssistant();
   const isLandscape = useIsLandscape();
   
@@ -714,7 +855,13 @@ const AIMessageItem = ({
   
   // Memoize sanitized text to prevent unnecessary re-rendering
   const sanitizedText = useMemo(() => {
-    return sanitizeMarkdown(message.text);
+    const cleaned = sanitizeMarkdown(message.text);
+    console.log('🔗 Raw message text:', message.text);
+    console.log('🔗 Sanitized text:', cleaned);
+    if (cleaned && cleaned.includes('action://')) {
+      console.log('🔗 Message contains action link!');
+    }
+    return cleaned;
   }, [message.text]);
   
   // Get device-specific widths for message bubbles - increased to fill more screen width
@@ -799,7 +946,9 @@ const AIMessageItem = ({
               { color: '#FFFFFF' },
               isCentered && styles.centeredText
             ],
-            isUserMessage
+            isUserMessage,
+            onActionLink,
+            themeColor
           )}
         </View>
       </TouchableOpacity>
@@ -1022,6 +1171,28 @@ const styles = StyleSheet.create({
   link: {
     color: '#4F97FF',
     textDecorationLine: 'underline',
+  },
+  // Action link style
+  actionLink: {
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+    // Color set dynamically in renderTextWithActionLinks
+  },
+  // Action link button wrapper
+  actionLinkButton: {
+    paddingHorizontal: scaleWidth(8),
+    paddingVertical: scaleWidth(4),
+    borderRadius: scaleWidth(6),
+    borderWidth: 1,
+    alignSelf: 'flex-start',
+    marginVertical: scaleWidth(2),
+    // backgroundColor and borderColor set dynamically in renderTextWithActionLinks
+  },
+  // Action link container
+  actionLinkContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
   },
   // Empty line
   emptyLine: {

@@ -11,10 +11,11 @@ import {
   Alert,
   Platform
 } from 'react-native';
-import { PanGestureHandler, State } from 'react-native-gesture-handler';
+import { PanGestureHandler, LongPressGestureHandler, State } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
 import { useAppContext } from '../../context/AppContext'; // Add this import
 import { useAchievements } from '../../context/AchievementContext';
 import { useNotification } from '../../context/NotificationContext';
@@ -31,7 +32,9 @@ import {
   useIsLandscape,
   ensureAccessibleTouchTarget,
   getContrastRatio,
-  meetsContrastRequirements
+  meetsContrastRequirements,
+  useSafeSpacing,
+  spacing
 } from '../../utils/responsive';
 
 // Import dashboard components
@@ -114,6 +117,7 @@ const CustomizableDashboard = ({ theme, navigation }) => {
   const insets = useSafeAreaInsets();
   const { width, height } = useScreenDimensions();
   const isLandscape = useIsLandscape();
+  const safeSpacing = useSafeSpacing();
   
   // Get subscription status from AppContext instead of managing it locally
   const { userSubscriptionStatus } = useAppContext();
@@ -725,54 +729,52 @@ const CustomizableDashboard = ({ theme, navigation }) => {
   };
 
   // Handle swipe gesture
-  const handleSwipeGesture = (event, widgetId, index) => {
-    const { translationX, state } = event.nativeEvent;
+  const handleGestureEvent = (event, widgetId, index) => {
+    const { translationX, state, velocityX } = event.nativeEvent;
     const swipeAnim = getSwipeAnimation(widgetId);
-    const SWIPE_THRESHOLD = -80; // Minimum swipe distance to trigger delete
-    const SWIPE_DELETE_THRESHOLD = -120; // Distance to auto-delete
-
-    if (state === State.ACTIVE) {
-      // Only allow left swipes (negative translationX)
-      if (translationX < 0) {
+    
+    if (state === State.BEGAN) {
+      // Reset all other widgets when starting any gesture
+      resetOtherWidgets(widgetId);
+    } else if (state === State.ACTIVE) {
+      // Handle real-time swiping - only allow meaningful left swipes
+      if (translationX < -5) { // Only activate after meaningful left movement
         setIsSwipeActive(prev => ({ ...prev, [widgetId]: true }));
-        swipeAnim.setValue(Math.max(translationX, SWIPE_DELETE_THRESHOLD));
+        
+        // Clamp left swipe to prevent over-swiping  
+        const clampedValue = Math.max(translationX, -150);
+        swipeAnim.setValue(clampedValue);
       }
-    } else if (state === State.END) {
-      const shouldDelete = translationX < SWIPE_DELETE_THRESHOLD;
+      
+    } else if (state === State.END || state === State.CANCELLED || state === State.FAILED) {
+      // Determine final action based on position and velocity
+      const SWIPE_THRESHOLD = -80;
+      const SWIPE_DELETE_THRESHOLD = -120;
+      const FAST_SWIPE_VELOCITY = -600; // Less sensitive velocity threshold
+
+      const shouldDelete = translationX < SWIPE_DELETE_THRESHOLD || velocityX < FAST_SWIPE_VELOCITY;
       const shouldShowDelete = translationX < SWIPE_THRESHOLD;
 
       if (shouldDelete) {
-        // Auto-delete if swiped far enough
-        Animated.timing(swipeAnim, {
-          toValue: -scaleWidth(400), // Animate off screen
-          duration: 300,
-          useNativeDriver: true,
-        }).start(() => {
-          removeComponent(index);
-          // Reset animation state
-          setIsSwipeActive(prev => {
-            const newState = { ...prev };
-            delete newState[widgetId];
-            return newState;
-          });
-          setSwipeAnimations(prev => {
-            const newState = { ...prev };
-            delete newState[widgetId];
-            return newState;
-          });
-        });
+        // Auto-delete if swiped far enough or fast enough
+        handleSwipeDelete(widgetId, index);
       } else if (shouldShowDelete) {
-        // Show delete button
+        // Show delete button - animate to delete position
         Animated.spring(swipeAnim, {
           toValue: SWIPE_THRESHOLD,
           useNativeDriver: true,
+          tension: 120,
+          friction: 8,
         }).start();
       } else {
-        // Snap back to original position
+        // Return to normal position
         Animated.spring(swipeAnim, {
           toValue: 0,
           useNativeDriver: true,
+          tension: 120,
+          friction: 8,
         }).start(() => {
+          // Clear active state after animation completes
           setIsSwipeActive(prev => ({ ...prev, [widgetId]: false }));
         });
       }
@@ -801,6 +803,84 @@ const CustomizableDashboard = ({ theme, navigation }) => {
         return newState;
       });
     });
+  };
+
+  // Reset all widgets back to normal state
+  const resetAllWidgets = () => {
+    // Animate all widgets back to position 0 first
+    Object.keys(swipeAnimations).forEach(widgetId => {
+      const anim = swipeAnimations[widgetId];
+      if (anim) {
+        Animated.spring(anim, {
+          toValue: 0,
+          useNativeDriver: true,
+          tension: 120,
+          friction: 8,
+        }).start();
+      }
+    });
+    
+    // Clear all active states after animations
+    setTimeout(() => {
+      setIsSwipeActive({});
+    }, 200);
+  };
+
+  // Reset all other widgets' swipe states except the specified one
+  const resetOtherWidgets = (activeWidgetId) => {
+    // Animate all other widgets back to position 0
+    Object.keys(swipeAnimations).forEach(widgetId => {
+      if (widgetId !== activeWidgetId) {
+        const anim = swipeAnimations[widgetId];
+        if (anim) {
+          Animated.spring(anim, {
+            toValue: 0,
+            useNativeDriver: true,
+            tension: 120,
+            friction: 8,
+          }).start();
+        }
+      }
+    });
+
+    // Update state to only keep the active widget
+    setIsSwipeActive(prev => {
+      const newState = {};
+      if (prev[activeWidgetId]) {
+        newState[activeWidgetId] = true;
+      }
+      return newState;
+    });
+  };
+
+  // Handle long press gesture to trigger swipe-to-delete
+  const handleLongPress = (event, widgetId) => {
+    const { state } = event.nativeEvent;
+    
+    if (state === State.ACTIVE) {
+      // Reset all other widgets first
+      resetOtherWidgets(widgetId);
+      
+      // Provide haptic feedback
+      try {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      } catch (error) {
+        // Haptics not available, continue without it
+        console.log('Haptics not available:', error);
+      }
+      
+      // Trigger smooth animation to delete position
+      const swipeAnim = getSwipeAnimation(widgetId);
+      setIsSwipeActive(prev => ({ ...prev, [widgetId]: true }));
+      
+      Animated.spring(swipeAnim, {
+        toValue: -80, // Same as SWIPE_THRESHOLD
+        useNativeDriver: true,
+        tension: 80, // Slower, more controlled
+        friction: 8,
+        restSpeedThreshold: 0.1,
+      }).start();
+    }
   };
 
   // Remove a component from the dashboard (permanently delete)
@@ -834,6 +914,60 @@ const CustomizableDashboard = ({ theme, navigation }) => {
     saveDashboardConfig(updatedItems);
   };
 
+  // Calculate delete background positioning based on widget type
+  const getDeleteBackgroundStyle = (widgetType) => {
+    const baseStyle = {
+      backgroundColor: '#FF3B30',
+      position: 'absolute',
+      right: safeSpacing.right,
+      left: safeSpacing.left,
+      justifyContent: 'center',
+      alignItems: 'flex-end',
+      paddingRight: scaleWidth(20),
+      borderRadius: scaleWidth(16), // Match widget border radius
+      zIndex: 1, // Behind widget content but above container
+    };
+
+    // Define spacing per widget type
+    switch (widgetType) {
+      case COMPONENT_TYPES.STREAK_COUNTER:
+        return {
+          ...baseStyle,
+          top: scaleHeight(16), // StreakCounter marginTop
+          bottom: isLandscape ? spacing.s : spacing.m, // StreakCounter marginBottom
+        };
+      
+      case COMPONENT_TYPES.RESEARCH_STATS:
+        return {
+          ...baseStyle,
+          top: scaleHeight(55), // Move down slightly more (now responsive)
+          bottom: scaleHeight(2), // Make bottom slightly longer (now responsive)
+        };
+      
+      case COMPONENT_TYPES.FOCUS_TIMER:
+        return {
+          ...baseStyle,
+          top: scaleHeight(16), // Keep top position (bang on)
+          bottom: scaleHeight(4), // Extend bottom lower
+        };
+      
+      case COMPONENT_TYPES.FINANCIAL_TRACKER:
+        return {
+          ...baseStyle,
+          top: scaleHeight(16), // Keep top position (perfect)
+          bottom: scaleHeight(4), // Extend bottom lower
+        };
+      
+      default:
+        // Fallback to StreakCounter values
+        return {
+          ...baseStyle,
+          top: scaleHeight(16),
+          bottom: isLandscape ? spacing.s : spacing.m,
+        };
+    }
+  };
+
   
   // Render a specific dashboard component
   const renderDashboardComponent = (widget, index) => {
@@ -853,11 +987,21 @@ const CustomizableDashboard = ({ theme, navigation }) => {
     return (
       <View key={widget.id} style={styles.componentContainer}>
         <PanGestureHandler
-          onGestureEvent={(event) => handleSwipeGesture(event, widget.id, index)}
-          onHandlerStateChange={(event) => handleSwipeGesture(event, widget.id, index)}
-          activeOffsetX={[-10, 10000]} // Only trigger on left swipes
-          failOffsetY={[-20, 20]} // Allow vertical scrolling
+          id={`pan-${widget.id}`}
+          onGestureEvent={(event) => handleGestureEvent(event, widget.id, index)}
+          onHandlerStateChange={(event) => handleGestureEvent(event, widget.id, index)}
+          activeOffsetX={[-20, 10000]} // More precise threshold for left swipes
+          failOffsetY={[-40, 40]} // Allow more vertical scrolling tolerance
+          shouldCancelWhenOutside={true} // Cancel if gesture goes outside widget
+          simultaneousHandlers={[`long-press-${widget.id}`]}
         >
+          <LongPressGestureHandler
+            id={`long-press-${widget.id}`}
+            onHandlerStateChange={(event) => handleLongPress(event, widget.id)}
+            minDurationMs={600} // Slightly longer press to avoid conflicts
+            maxDist={15} // Allow slightly more movement
+            simultaneousHandlers={[`pan-${widget.id}`]}
+          >
           <Animated.View
             style={[
               styles.swipeableWidget,
@@ -880,44 +1024,44 @@ const CustomizableDashboard = ({ theme, navigation }) => {
               </View>
             )}
             
-            <Component 
-              theme={theme} 
-              navigation={navigation} 
-              isPremium={isPremiumUser}
-              isUnlocked={hasLevelAccess}
-              widgetId={widget.id}
-              widgetData={widget.data}
-              widgetName={widget.name}
-              saveWidgetData={saveWidgetData}
-              loadWidgetData={loadWidgetData}
-              updateWidgetName={(newName) => updateWidgetName(widget.id, newName)}
-            />
+            <View style={{ flex: 1 }}>
+              <Component 
+                theme={theme} 
+                navigation={navigation} 
+                isPremium={isPremiumUser}
+                isUnlocked={hasLevelAccess}
+                widgetId={widget.id}
+                widgetData={widget.data}
+                widgetName={widget.name}
+                saveWidgetData={saveWidgetData}
+                loadWidgetData={loadWidgetData}
+                updateWidgetName={(newName) => updateWidgetName(widget.id, newName)}
+              />
+              
+              {/* Overlay disabled - using global overlay instead */}
+            </View>
           </Animated.View>
+          </LongPressGestureHandler>
         </PanGestureHandler>
         
         {/* Red delete background shown during swipe */}
         {isWidgetSwipeActive && (
           <View style={[
             styles.deleteBackground,
-            {
-              backgroundColor: '#FF3B30',
-              position: 'absolute',
-              top: 0,
-              bottom: 0,
-              right: 0,
-              left: 0,
-              justifyContent: 'center',
-              alignItems: 'flex-end',
-              paddingRight: scaleWidth(20),
-            }
+            getDeleteBackgroundStyle(widget.type)
           ]}>
             <TouchableOpacity
               style={[
                 styles.deleteButton,
                 {
-                  backgroundColor: 'transparent',
-                  padding: scaleWidth(10),
-                  borderRadius: scaleWidth(8),
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  padding: scaleWidth(12),
+                  borderRadius: scaleWidth(20),
+                  zIndex: 10, // Above global overlay
+                  minWidth: scaleWidth(44), // Ensure touch target
+                  minHeight: scaleWidth(44),
+                  justifyContent: 'center',
+                  alignItems: 'center',
                 }
               ]}
               onPress={() => handleSwipeDelete(widget.id, index)}
@@ -928,7 +1072,7 @@ const CustomizableDashboard = ({ theme, navigation }) => {
             >
               <Ionicons 
                 name="trash" 
-                size={scaleWidth(24)} 
+                size={scaleWidth(22)} 
                 color="#FFFFFF" 
               />
             </TouchableOpacity>
@@ -2228,6 +2372,24 @@ const CustomizableDashboard = ({ theme, navigation }) => {
       {renderResearchStatsCongratsModal()}
       {renderFocusTimerCongratsModal()}
       {renderFinancialTrackerCongratsModal()}
+      
+      {/* Global overlay to reset widgets when any is in delete mode */}
+      {Object.values(isSwipeActive).some(active => active) && (
+        <TouchableOpacity
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.1)', // Slightly visible overlay
+            zIndex: 3, // Above widgets but below delete buttons
+          }}
+          onPress={resetAllWidgets}
+          activeOpacity={1}
+          accessible={false}
+        />
+      )}
     </View>
   );
 };
@@ -2271,14 +2433,14 @@ const styles = StyleSheet.create({
   componentContainer: {
     position: 'relative',
     marginBottom: scaleHeight(4),
-    overflow: 'hidden', // Ensure swipe doesn't show outside bounds
+    // overflow: 'hidden', // Temporarily disabled to allow gesture detection
   },
   swipeableWidget: {
     position: 'relative',
     zIndex: 10,
   },
   deleteBackground: {
-    borderRadius: scaleWidth(12), // Match widget border radius
+    borderRadius: scaleWidth(16), // Match widget border radius
   },
   deleteButton: {
     justifyContent: 'center',

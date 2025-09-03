@@ -1454,7 +1454,7 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
     // Include LifeCompass timeblocks if mode is 'app' or 'both'
     if (calendarViewMode === 'app' || calendarViewMode === 'both') {
       finalTimeBlocks = [...timeBlocksForDate];
-      console.log(`📅 ${dateKey}: Including ${timeBlocksForDate.length} LifeCompass timeblocks (mode: ${calendarViewMode})`);
+      // console.log(`📅 ${dateKey}: Including ${timeBlocksForDate.length} LifeCompass timeblocks (mode: ${calendarViewMode})`);
     }
     
     // Add calendar events if enabled, available, and mode is 'phone' or 'both'
@@ -1463,7 +1463,7 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
         ? currentDateCalendarEvents 
         : [];
       
-      console.log(`📱 ${dateKey}: Found ${calendarEventsForDate.length} calendar events (mode: ${calendarViewMode})`);
+      // console.log(`📱 ${dateKey}: Found ${calendarEventsForDate.length} calendar events (mode: ${calendarViewMode})`);
       
       // Convert calendar events to time block format for display
       const calendarEventBlocks = calendarEventsForDate.map(event => {
@@ -1539,7 +1539,7 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
       }).filter(Boolean); // Remove null entries
       
       finalTimeBlocks = [...finalTimeBlocks, ...calendarEventBlocks];
-      console.log(`📅 ${dateKey}: Total blocks after calendar events: ${finalTimeBlocks.length}`);
+      // console.log(`📅 ${dateKey}: Total blocks after calendar events: ${finalTimeBlocks.length}`);
     } else if (calendarViewMode === 'phone') {
       // If in phone-only mode but no calendar events available, log this
       console.log(`📱 ${dateKey}: Phone calendar mode but no events available (settings: ${JSON.stringify(calendarSettings)})`);
@@ -1547,7 +1547,7 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
     
     // Log final result for debugging
     if (finalTimeBlocks.length === 0 && calendarViewMode !== 'app') {
-      console.log(`⚠️ ${dateKey}: No timeblocks to display in mode '${calendarViewMode}'`);
+      // console.log(`⚠️ ${dateKey}: No timeblocks to display in mode '${calendarViewMode}'`);
     }
     
     return finalTimeBlocks;
@@ -2111,7 +2111,7 @@ const handleCalendarViewToggle = () => {
         isTourActive={isTourActive}
       />
     ))
-  , [theme, styles, insets, scaleHeight, scaleWidth, isFullscreen, monthDates, selectedMonthDay, handleMonthDaySelect, selectedTab, getMonthName, currentDate, timeBlocks, getTimeBlocksForDate, handleTimeBlockPress, handleTimeBlockLongPress, handleAddTimeBlock, calculateTimeBlockStyle, calendarSettings, currentDateCalendarEvents, calendarViewMode]);
+  , [theme, styles, insets, scaleHeight, scaleWidth, isFullscreen, monthDates, handleMonthDaySelect, selectedTab, getMonthName, currentDate, timeBlocks, getTimeBlocksForDate, handleTimeBlockPress, handleTimeBlockLongPress, handleAddTimeBlock, calculateTimeBlockStyle, calendarSettings, currentDateCalendarEvents, calendarViewMode]);
 
   // DayTab Component
   const DayTab = ({ route }) => {

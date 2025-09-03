@@ -19,6 +19,7 @@ import {
   FlatList
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { useTheme } from '../context/ThemeContext';
 import { useAppContext } from '../context/AppContext';
@@ -649,6 +650,11 @@ const AddTodoModal = ({
                   paddingBottom: safeSpacing.bottom > spacing.m ? safeSpacing.bottom : spacing.xl,
                   borderTopLeftRadius: scaleWidth(16),
                   borderTopRightRadius: scaleWidth(16),
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: -4 },
+                  shadowOpacity: theme.background === '#000000' ? 0.3 : 0.15,
+                  shadowRadius: 12,
+                  elevation: 8,
                 }
               ]}>
               {/* Swipe indicator */}
@@ -660,20 +666,39 @@ const AddTodoModal = ({
               </View>
               
             <View style={styles.modalHeader}>
-              <Text style={[
-                styles.modalTitle, 
-                { 
-                  color: theme.text,
-                  fontSize: scaleFontSize(20),
-                  maxFontSizeMultiplier: 1.3,
-                }
-              ]}>
-                Create To-Dos
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons 
+                  name="list-circle-outline" 
+                  size={scaleWidth(28)} 
+                  color={theme.primary} 
+                  style={{ marginRight: spacing.xs }}
+                />
+                <Text style={[
+                  styles.modalTitle, 
+                  { 
+                    color: theme.text,
+                    fontSize: scaleFontSize(22),
+                    fontWeight: '700',
+                    maxFontSizeMultiplier: 1.3,
+                  }
+                ]}>
+                  Create To-Dos
+                </Text>
+              </View>
               <TouchableOpacity 
                 style={[
                   styles.closeButton,
-                  ensureAccessibleTouchTarget({ width: 30, height: 30 })
+                  {
+                    backgroundColor: theme.inputBackground,
+                    borderRadius: scaleWidth(8),
+                    padding: spacing.xs,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 4,
+                    elevation: 2,
+                  },
+                  ensureAccessibleTouchTarget({ width: 36, height: 36 })
                 ]} 
                 onPress={handleClose}
                 accessible={true}
@@ -681,7 +706,7 @@ const AddTodoModal = ({
                 accessibilityLabel="Close modal"
                 accessibilityHint="Closes the add to-do form"
               >
-                <Ionicons name="close" size={scaleWidth(24)} color={theme.textSecondary} />
+                <Ionicons name="close" size={scaleWidth(20)} color={theme.textSecondary} />
               </TouchableOpacity>
             </View>
             
@@ -691,23 +716,42 @@ const AddTodoModal = ({
               showsVerticalScrollIndicator={false}
             >
               {/* Main Tabs */}
-              <View style={[styles.mainTabs, { borderBottomColor: theme.border }]}>
+              <View style={[
+                styles.mainTabs, 
+                { 
+                  backgroundColor: theme.inputBackground,
+                  borderRadius: scaleWidth(12),
+                  padding: spacing.xs,
+                  marginBottom: spacing.m,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.05,
+                  shadowRadius: 4,
+                  elevation: 1,
+                }
+              ]}>
                 <TouchableOpacity
                   style={[
                     styles.mainTab,
-                    activeTab === 'add' && { borderBottomColor: theme.primary, borderBottomWidth: 2 }
+                    {
+                      backgroundColor: activeTab === 'add' ? theme.primary : 'transparent',
+                      borderRadius: scaleWidth(8),
+                      paddingVertical: spacing.s,
+                      paddingHorizontal: spacing.m,
+                    }
                   ]}
                   onPress={() => setActiveTab('add')}
                 >
                   <Ionicons 
                     name="add-circle-outline" 
                     size={scaleWidth(20)} 
-                    color={activeTab === 'add' ? theme.primary : theme.textSecondary} 
+                    color={activeTab === 'add' ? '#FFFFFF' : theme.textSecondary} 
                   />
                   <Text style={[
                     styles.mainTabText,
                     { 
-                      color: activeTab === 'add' ? theme.primary : theme.textSecondary,
+                      color: activeTab === 'add' ? '#FFFFFF' : theme.textSecondary,
+                      fontWeight: activeTab === 'add' ? '600' : '500',
                       marginLeft: spacing.xs
                     }
                   ]}>
@@ -718,19 +762,25 @@ const AddTodoModal = ({
                 <TouchableOpacity
                   style={[
                     styles.mainTab,
-                    activeTab === 'review' && { borderBottomColor: theme.primary, borderBottomWidth: 2 }
+                    {
+                      backgroundColor: activeTab === 'review' ? theme.primary : 'transparent',
+                      borderRadius: scaleWidth(8),
+                      paddingVertical: spacing.s,
+                      paddingHorizontal: spacing.m,
+                    }
                   ]}
                   onPress={() => setActiveTab('review')}
                 >
                   <Ionicons 
                     name="list-outline" 
                     size={scaleWidth(20)} 
-                    color={activeTab === 'review' ? theme.primary : theme.textSecondary} 
+                    color={activeTab === 'review' ? '#FFFFFF' : theme.textSecondary} 
                   />
                   <Text style={[
                     styles.mainTabText,
                     { 
-                      color: activeTab === 'review' ? theme.primary : theme.textSecondary,
+                      color: activeTab === 'review' ? '#FFFFFF' : theme.textSecondary,
+                      fontWeight: activeTab === 'review' ? '600' : '500',
                       marginLeft: spacing.xs
                     }
                   ]}>
@@ -742,78 +792,150 @@ const AddTodoModal = ({
               {/* Add Tab Content */}
               {activeTab === 'add' && (
                 <View style={{ marginTop: spacing.m }}>
-                  {/* Tab Selector for where to add */}
-                  <Text style={[styles.sectionTitle, { color: theme.textSecondary, fontSize: scaleFontSize(15) }]}>
-                    Add to:
-                  </Text>
-                  <View style={styles.tabSelector}>
-                    <TouchableOpacity
-                      style={[
-                        styles.tabOption,
-                        selectedTab === 'today' && styles.tabOptionSelected,
-                        { 
-                          backgroundColor: selectedTab === 'today' ? buttonColor : theme.cardElevated,
-                          borderColor: theme.border,
-                        }
-                      ]}
-                      onPress={() => setSelectedTab('today')}
-                    >
-                      <Ionicons name="today-outline" size={scaleWidth(18)} color={selectedTab === 'today' ? '#FFFFFF' : theme.textSecondary} />
-                      <Text style={[styles.tabOptionText, { color: selectedTab === 'today' ? '#FFFFFF' : theme.text, marginLeft: spacing.xs }]}>
-                        Today ({getTodoCount('today')})
-                      </Text>
-                    </TouchableOpacity>
-                    
-                    <TouchableOpacity
-                      style={[
-                        styles.tabOption,
-                        selectedTab === 'tomorrow' && styles.tabOptionSelected,
-                        { 
-                          backgroundColor: selectedTab === 'tomorrow' ? buttonColor : theme.cardElevated,
-                          borderColor: theme.border,
-                        }
-                      ]}
-                      onPress={() => setSelectedTab('tomorrow')}
-                    >
-                      <Ionicons name="calendar-outline" size={scaleWidth(18)} color={selectedTab === 'tomorrow' ? '#FFFFFF' : theme.textSecondary} />
-                      <Text style={[styles.tabOptionText, { color: selectedTab === 'tomorrow' ? '#FFFFFF' : theme.text, marginLeft: spacing.xs }]}>
-                        Tomorrow ({getTodoCount('tomorrow')})
-                      </Text>
-                    </TouchableOpacity>
-                    
-                    <TouchableOpacity
-                      style={[
-                        styles.tabOption,
-                        selectedTab === 'later' && styles.tabOptionSelected,
-                        { 
-                          backgroundColor: selectedTab === 'later' ? buttonColor : theme.cardElevated,
-                          borderColor: theme.border,
-                        }
-                      ]}
-                      onPress={() => setSelectedTab('later')}
-                    >
-                      <Ionicons name="time-outline" size={scaleWidth(18)} color={selectedTab === 'later' ? '#FFFFFF' : theme.textSecondary} />
-                      <Text style={[styles.tabOptionText, { color: selectedTab === 'later' ? '#FFFFFF' : theme.text, marginLeft: spacing.xs }]}>
-                        Later ({getTodoCount('later')})
-                      </Text>
-                    </TouchableOpacity>
+                  {/* Time Category Section */}
+                  <View style={[
+                    styles.sectionCard,
+                    {
+                      backgroundColor: theme.card,
+                      borderRadius: scaleWidth(12),
+                      padding: spacing.m,
+                      marginBottom: spacing.m,
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+                      shadowRadius: 6,
+                      elevation: 3,
+                    }
+                  ]}>
+                    <Text style={[styles.sectionTitle, { color: theme.textSecondary, fontSize: scaleFontSize(15), fontWeight: '600', marginBottom: spacing.s }]}>
+                      Add to:
+                    </Text>
+                    <View style={styles.tabSelector}>
+                      <TouchableOpacity
+                        style={[
+                          styles.tabOption,
+                          { 
+                            backgroundColor: selectedTab === 'today' ? '#22C55E' : theme.cardElevated,
+                            borderRadius: scaleWidth(10),
+                            shadowColor: selectedTab === 'today' ? '#22C55E' : '#000',
+                            shadowOffset: { width: 0, height: selectedTab === 'today' ? 4 : 2 },
+                            shadowOpacity: selectedTab === 'today' ? 0.25 : 0.05,
+                            shadowRadius: selectedTab === 'today' ? 6 : 3,
+                            elevation: selectedTab === 'today' ? 4 : 2,
+                          }
+                        ]}
+                        onPress={() => setSelectedTab('today')}
+                      >
+                        <View style={[
+                          styles.timeDot,
+                          { backgroundColor: '#22C55E', opacity: selectedTab === 'today' ? 0 : 1 }
+                        ]} />
+                        <Ionicons name="today-outline" size={scaleWidth(18)} color={selectedTab === 'today' ? '#FFFFFF' : '#22C55E'} />
+                        <Text style={[styles.tabOptionText, { color: selectedTab === 'today' ? '#FFFFFF' : theme.text, marginLeft: spacing.xs, fontWeight: selectedTab === 'today' ? '600' : '500' }]}>
+                          Today
+                        </Text>
+                        {getTodoCount('today') > 0 && (
+                          <View style={[styles.badge, { backgroundColor: selectedTab === 'today' ? 'rgba(255,255,255,0.3)' : '#22C55E20' }]}>
+                            <Text style={[styles.badgeText, { color: selectedTab === 'today' ? '#FFFFFF' : '#22C55E', fontWeight: '700' }]}>
+                              {getTodoCount('today')}
+                            </Text>
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                      
+                      <TouchableOpacity
+                        style={[
+                          styles.tabOption,
+                          { 
+                            backgroundColor: selectedTab === 'tomorrow' ? '#3B82F6' : theme.cardElevated,
+                            borderRadius: scaleWidth(10),
+                            shadowColor: selectedTab === 'tomorrow' ? '#3B82F6' : '#000',
+                            shadowOffset: { width: 0, height: selectedTab === 'tomorrow' ? 4 : 2 },
+                            shadowOpacity: selectedTab === 'tomorrow' ? 0.25 : 0.05,
+                            shadowRadius: selectedTab === 'tomorrow' ? 6 : 3,
+                            elevation: selectedTab === 'tomorrow' ? 4 : 2,
+                          }
+                        ]}
+                        onPress={() => setSelectedTab('tomorrow')}
+                      >
+                        <View style={[
+                          styles.timeDot,
+                          { backgroundColor: '#3B82F6', opacity: selectedTab === 'tomorrow' ? 0 : 1 }
+                        ]} />
+                        <Ionicons name="calendar-outline" size={scaleWidth(18)} color={selectedTab === 'tomorrow' ? '#FFFFFF' : '#3B82F6'} />
+                        <Text style={[styles.tabOptionText, { color: selectedTab === 'tomorrow' ? '#FFFFFF' : theme.text, marginLeft: spacing.xs, fontWeight: selectedTab === 'tomorrow' ? '600' : '500' }]}>
+                          Tomorrow
+                        </Text>
+                        {getTodoCount('tomorrow') > 0 && (
+                          <View style={[styles.badge, { backgroundColor: selectedTab === 'tomorrow' ? 'rgba(255,255,255,0.3)' : '#3B82F620' }]}>
+                            <Text style={[styles.badgeText, { color: selectedTab === 'tomorrow' ? '#FFFFFF' : '#3B82F6', fontWeight: '700' }]}>
+                              {getTodoCount('tomorrow')}
+                            </Text>
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                      
+                      <TouchableOpacity
+                        style={[
+                          styles.tabOption,
+                          { 
+                            backgroundColor: selectedTab === 'later' ? '#8B5CF6' : theme.cardElevated,
+                            borderRadius: scaleWidth(10),
+                            shadowColor: selectedTab === 'later' ? '#8B5CF6' : '#000',
+                            shadowOffset: { width: 0, height: selectedTab === 'later' ? 4 : 2 },
+                            shadowOpacity: selectedTab === 'later' ? 0.25 : 0.05,
+                            shadowRadius: selectedTab === 'later' ? 6 : 3,
+                            elevation: selectedTab === 'later' ? 4 : 2,
+                          }
+                        ]}
+                        onPress={() => setSelectedTab('later')}
+                      >
+                        <View style={[
+                          styles.timeDot,
+                          { backgroundColor: '#8B5CF6', opacity: selectedTab === 'later' ? 0 : 1 }
+                        ]} />
+                        <Ionicons name="time-outline" size={scaleWidth(18)} color={selectedTab === 'later' ? '#FFFFFF' : '#8B5CF6'} />
+                        <Text style={[styles.tabOptionText, { color: selectedTab === 'later' ? '#FFFFFF' : theme.text, marginLeft: spacing.xs, fontWeight: selectedTab === 'later' ? '600' : '500' }]}>
+                          Later
+                        </Text>
+                        {getTodoCount('later') > 0 && (
+                          <View style={[styles.badge, { backgroundColor: selectedTab === 'later' ? 'rgba(255,255,255,0.3)' : '#8B5CF620' }]}>
+                            <Text style={[styles.badgeText, { color: selectedTab === 'later' ? '#FFFFFF' : '#8B5CF6', fontWeight: '700' }]}>
+                              {getTodoCount('later')}
+                            </Text>
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                    </View>
                   </View>
                   
                   {/* Type Toggle */}
-                  <View style={styles.typeToggle}>
+                  <View style={[
+                    styles.typeToggle,
+                    {
+                      backgroundColor: theme.inputBackground,
+                      borderRadius: scaleWidth(12),
+                      padding: spacing.xs,
+                      marginBottom: spacing.m,
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.05,
+                      shadowRadius: 4,
+                      elevation: 1,
+                    }
+                  ]}>
                     <TouchableOpacity
                       style={[
                         styles.typeOption,
-                        !isCreatingGroup && styles.typeOptionSelected,
-                        { 
-                          backgroundColor: !isCreatingGroup ? buttonColor : theme.cardElevated,
-                          borderColor: theme.border,
+                        {
+                          backgroundColor: !isCreatingGroup ? theme.primary : 'transparent',
+                          borderRadius: scaleWidth(8),
                         }
                       ]}
                       onPress={() => setIsCreatingGroup(false)}
                     >
                       <Ionicons name="checkbox-outline" size={scaleWidth(18)} color={!isCreatingGroup ? '#FFFFFF' : theme.textSecondary} />
-                      <Text style={[styles.typeOptionText, { color: !isCreatingGroup ? '#FFFFFF' : theme.text, marginLeft: spacing.xs }]}>
+                      <Text style={[styles.typeOptionText, { color: !isCreatingGroup ? '#FFFFFF' : theme.text, marginLeft: spacing.xs, fontWeight: !isCreatingGroup ? '600' : '500' }]}>
                         Single To-Do
                       </Text>
                     </TouchableOpacity>
@@ -821,16 +943,15 @@ const AddTodoModal = ({
                     <TouchableOpacity
                       style={[
                         styles.typeOption,
-                        isCreatingGroup && styles.typeOptionSelected,
-                        { 
-                          backgroundColor: isCreatingGroup ? buttonColor : theme.cardElevated,
-                          borderColor: theme.border,
+                        {
+                          backgroundColor: isCreatingGroup ? theme.primary : 'transparent',
+                          borderRadius: scaleWidth(8),
                         }
                       ]}
                       onPress={() => setIsCreatingGroup(true)}
                     >
                       <Ionicons name="list" size={scaleWidth(18)} color={isCreatingGroup ? '#FFFFFF' : theme.textSecondary} />
-                      <Text style={[styles.typeOptionText, { color: isCreatingGroup ? '#FFFFFF' : theme.text, marginLeft: spacing.xs }]}>
+                      <Text style={[styles.typeOptionText, { color: isCreatingGroup ? '#FFFFFF' : theme.text, marginLeft: spacing.xs, fontWeight: isCreatingGroup ? '600' : '500' }]}>
                         Group
                       </Text>
                     </TouchableOpacity>
@@ -838,8 +959,20 @@ const AddTodoModal = ({
                   
                   {!isCreatingGroup ? (
                     // Single Todo Form
-                    <View>
-                      <Text style={[styles.label, { color: theme.textSecondary, fontSize: scaleFontSize(15), marginTop: spacing.m }]}>
+                    <View style={[
+                      styles.formCard,
+                      {
+                        backgroundColor: theme.card,
+                        borderRadius: scaleWidth(12),
+                        padding: spacing.m,
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+                        shadowRadius: 6,
+                        elevation: 3,
+                      }
+                    ]}>
+                      <Text style={[styles.label, { color: theme.textSecondary, fontSize: scaleFontSize(15), fontWeight: '600', marginBottom: spacing.s }]}>
                         To-Do Title *
                       </Text>
                       <TextInput
@@ -849,15 +982,21 @@ const AddTodoModal = ({
                             backgroundColor: theme.inputBackground,
                             color: theme.text,
                             borderColor: theme.border,
+                            borderRadius: scaleWidth(12),
                             fontSize: scaleFontSize(16),
                             paddingHorizontal: spacing.m,
                             paddingVertical: spacing.s,
+                            shadowColor: '#000',
+                            shadowOffset: { width: 0, height: 2 },
+                            shadowOpacity: 0.05,
+                            shadowRadius: 4,
+                            elevation: 1,
                           }
                         ]}
                         value={todoTitle}
                         onChangeText={setTodoTitle}
                         placeholder="Enter to-do title (e.g., 'Finish report')"
-                        placeholderTextColor={theme.textSecondary}
+                        placeholderTextColor={theme.textSecondary + '80'}
                         returnKeyType="done"
                         onSubmitEditing={addTodoToTab}
                       />
@@ -866,22 +1005,66 @@ const AddTodoModal = ({
                         style={[
                           styles.addButton,
                           { 
-                            backgroundColor: !todoTitle.trim() ? (buttonColor + '50') : buttonColor,
+                            backgroundColor: !todoTitle.trim() ? (theme.primary + '50') : 'transparent',
                             marginTop: spacing.m,
+                            borderRadius: scaleWidth(12),
+                            shadowColor: !todoTitle.trim() ? 'transparent' : theme.primary,
+                            shadowOffset: { width: 0, height: 4 },
+                            shadowOpacity: !todoTitle.trim() ? 0 : 0.25,
+                            shadowRadius: 8,
+                            elevation: !todoTitle.trim() ? 0 : 6,
+                            overflow: 'hidden'
                           }
                         ]}
                         onPress={addTodoToTab}
                         disabled={!todoTitle.trim()}
                       >
-                        <Text style={[styles.addButtonText, { color: !todoTitle.trim() ? 'rgba(255,255,255,0.7)' : '#FFFFFF' }]}>
-                          Add to {selectedTab.charAt(0).toUpperCase() + selectedTab.slice(1)}
-                        </Text>
+                        {todoTitle.trim() ? (
+                          <LinearGradient
+                            colors={[theme.primary, theme.primary + 'DD']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            style={styles.gradientButton}
+                          >
+                            <LinearGradient
+                              colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0)']}
+                              start={{ x: 0, y: 0 }}
+                              end={{ x: 0, y: 1 }}
+                              style={styles.buttonHighlight}
+                            />
+                            <Ionicons 
+                              name="add-circle" 
+                              size={scaleWidth(20)} 
+                              color="#FFFFFF" 
+                              style={{ marginRight: spacing.xs }}
+                            />
+                            <Text style={[styles.addButtonText, { color: '#FFFFFF', fontWeight: '700' }]}>
+                              Add to {selectedTab.charAt(0).toUpperCase() + selectedTab.slice(1)}
+                            </Text>
+                          </LinearGradient>
+                        ) : (
+                          <Text style={[styles.addButtonText, { color: 'rgba(255,255,255,0.7)', fontWeight: '600' }]}>
+                            Add to {selectedTab.charAt(0).toUpperCase() + selectedTab.slice(1)}
+                          </Text>
+                        )}
                       </TouchableOpacity>
                     </View>
                   ) : (
                     // Group Form
-                    <View>
-                      <Text style={[styles.label, { color: theme.textSecondary, fontSize: scaleFontSize(15), marginTop: spacing.m }]}>
+                    <View style={[
+                      styles.formCard,
+                      {
+                        backgroundColor: theme.card,
+                        borderRadius: scaleWidth(12),
+                        padding: spacing.m,
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+                        shadowRadius: 6,
+                        elevation: 3,
+                      }
+                    ]}>
+                      <Text style={[styles.label, { color: theme.textSecondary, fontSize: scaleFontSize(15), fontWeight: '600', marginBottom: spacing.s }]}>
                         Group Title *
                       </Text>
                       <TextInput
@@ -891,51 +1074,114 @@ const AddTodoModal = ({
                             backgroundColor: theme.inputBackground,
                             color: theme.text,
                             borderColor: theme.border,
+                            borderRadius: scaleWidth(12),
+                            paddingHorizontal: spacing.m,
+                            paddingVertical: spacing.s,
+                            shadowColor: '#000',
+                            shadowOffset: { width: 0, height: 2 },
+                            shadowOpacity: 0.05,
+                            shadowRadius: 4,
+                            elevation: 1,
                           }
                         ]}
                         value={groupTitle}
                         onChangeText={setGroupTitle}
                         placeholder="Enter group title (e.g., 'House Cleaning')"
-                        placeholderTextColor={theme.textSecondary}
+                        placeholderTextColor={theme.textSecondary + '80'}
                       />
                       
-                      <Text style={[styles.label, { color: theme.textSecondary, fontSize: scaleFontSize(15) }]}>
+                      <Text style={[styles.label, { color: theme.textSecondary, fontSize: scaleFontSize(15), fontWeight: '600', marginTop: spacing.m, marginBottom: spacing.s }]}>
                         Group Items ({groupItems.length})
                       </Text>
                       
                       {/* Group Items List */}
                       {groupItems.map((item, index) => (
-                        <View key={item.id} style={[styles.groupItemContainer, { backgroundColor: theme.cardElevated, borderColor: theme.border }]}>
+                        <View key={item.id} style={[
+                          styles.groupItemContainer, 
+                          { 
+                            backgroundColor: theme.cardElevated,
+                            borderRadius: scaleWidth(10),
+                            shadowColor: '#000',
+                            shadowOffset: { width: 0, height: 1 },
+                            shadowOpacity: 0.05,
+                            shadowRadius: 3,
+                            elevation: 2,
+                          }
+                        ]}>
+                          <View style={{
+                            width: scaleWidth(6),
+                            height: scaleWidth(6),
+                            borderRadius: scaleWidth(3),
+                            backgroundColor: theme.primary,
+                            marginRight: spacing.s,
+                            alignSelf: 'center'
+                          }} />
                           <TextInput
-                            style={[styles.groupItemInput, { color: theme.text, backgroundColor: 'transparent', flex: 1 }]}
+                            style={[styles.groupItemInput, { color: theme.text, backgroundColor: 'transparent', flex: 1, fontSize: scaleFontSize(16) }]}
                             value={item.title}
                             onChangeText={(text) => updateGroupItem(item.id, text)}
                             placeholder={`Item ${index + 1}`}
-                            placeholderTextColor={theme.textSecondary}
+                            placeholderTextColor={theme.textSecondary + '80'}
                           />
-                          <TouchableOpacity onPress={() => removeItemFromGroup(item.id)} style={styles.removeItemButton}>
-                            <Ionicons name="close-circle" size={scaleWidth(20)} color={theme.error || '#ff4444'} />
+                          <TouchableOpacity 
+                            onPress={() => removeItemFromGroup(item.id)} 
+                            style={[
+                              styles.removeItemButton,
+                              {
+                                backgroundColor: theme.errorLight || '#FFEBEE',
+                                borderRadius: scaleWidth(16),
+                                padding: spacing.xs
+                              }
+                            ]}
+                          >
+                            <Ionicons name="close" size={scaleWidth(16)} color={theme.error || '#E53E3E'} />
                           </TouchableOpacity>
                         </View>
                       ))}
                       
                       {/* Add New Item */}
-                      <View style={[styles.addItemContainer, { backgroundColor: theme.cardElevated, borderColor: theme.border }]}>
+                      <View style={[
+                        styles.addItemContainer, 
+                        { 
+                          backgroundColor: theme.cardElevated,
+                          borderRadius: scaleWidth(10),
+                          borderWidth: 2,
+                          borderColor: theme.primary + '30',
+                          borderStyle: 'dashed',
+                          shadowColor: '#000',
+                          shadowOffset: { width: 0, height: 1 },
+                          shadowOpacity: 0.05,
+                          shadowRadius: 3,
+                          elevation: 2,
+                        }
+                      ]}>
+                        <Ionicons name="add" size={scaleWidth(18)} color={theme.primary} style={{ marginRight: spacing.s }} />
                         <TextInput
-                          style={[styles.groupItemInput, { color: theme.text, backgroundColor: 'transparent', flex: 1 }]}
+                          style={[styles.groupItemInput, { color: theme.text, backgroundColor: 'transparent', flex: 1, fontSize: scaleFontSize(16) }]}
                           value={newGroupItemText}
                           onChangeText={setNewGroupItemText}
                           placeholder="Add new item"
-                          placeholderTextColor={theme.textSecondary}
+                          placeholderTextColor={theme.textSecondary + '80'}
                           returnKeyType="done"
                           onSubmitEditing={addItemToGroup}
                         />
                         <TouchableOpacity 
                           onPress={addItemToGroup}
-                          style={[styles.addItemButton, { backgroundColor: buttonColor }]}
+                          style={[
+                            styles.addItemButton, 
+                            { 
+                              backgroundColor: newGroupItemText.trim() ? theme.primary : theme.primary + '50',
+                              borderRadius: scaleWidth(8),
+                              shadowColor: newGroupItemText.trim() ? theme.primary : 'transparent',
+                              shadowOffset: { width: 0, height: 2 },
+                              shadowOpacity: newGroupItemText.trim() ? 0.25 : 0,
+                              shadowRadius: 4,
+                              elevation: newGroupItemText.trim() ? 3 : 0,
+                            }
+                          ]}
                           disabled={!newGroupItemText.trim()}
                         >
-                          <Text style={[styles.addItemButtonText, { color: '#FFFFFF' }]}>Add</Text>
+                          <Text style={[styles.addItemButtonText, { color: '#FFFFFF', fontWeight: '600' }]}>Add</Text>
                         </TouchableOpacity>
                       </View>
                       
@@ -943,16 +1189,48 @@ const AddTodoModal = ({
                         style={[
                           styles.addButton,
                           { 
-                            backgroundColor: (!groupTitle.trim() || groupItems.length === 0) ? (buttonColor + '50') : buttonColor,
+                            backgroundColor: (!groupTitle.trim() || groupItems.length === 0) ? (theme.primary + '50') : 'transparent',
                             marginTop: spacing.m,
+                            borderRadius: scaleWidth(12),
+                            shadowColor: (!groupTitle.trim() || groupItems.length === 0) ? 'transparent' : theme.primary,
+                            shadowOffset: { width: 0, height: 4 },
+                            shadowOpacity: (!groupTitle.trim() || groupItems.length === 0) ? 0 : 0.25,
+                            shadowRadius: 8,
+                            elevation: (!groupTitle.trim() || groupItems.length === 0) ? 0 : 6,
+                            overflow: 'hidden'
                           }
                         ]}
                         onPress={addGroupToTab}
                         disabled={!groupTitle.trim() || groupItems.length === 0}
                       >
-                        <Text style={[styles.addButtonText, { color: (!groupTitle.trim() || groupItems.length === 0) ? 'rgba(255,255,255,0.7)' : '#FFFFFF' }]}>
-                          Add Group to {selectedTab.charAt(0).toUpperCase() + selectedTab.slice(1)}
-                        </Text>
+                        {(groupTitle.trim() && groupItems.length > 0) ? (
+                          <LinearGradient
+                            colors={[theme.primary, theme.primary + 'DD']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            style={styles.gradientButton}
+                          >
+                            <LinearGradient
+                              colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0)']}
+                              start={{ x: 0, y: 0 }}
+                              end={{ x: 0, y: 1 }}
+                              style={styles.buttonHighlight}
+                            />
+                            <Ionicons 
+                              name="albums-outline" 
+                              size={scaleWidth(20)} 
+                              color="#FFFFFF" 
+                              style={{ marginRight: spacing.xs }}
+                            />
+                            <Text style={[styles.addButtonText, { color: '#FFFFFF', fontWeight: '700' }]}>
+                              Add Group to {selectedTab.charAt(0).toUpperCase() + selectedTab.slice(1)}
+                            </Text>
+                          </LinearGradient>
+                        ) : (
+                          <Text style={[styles.addButtonText, { color: 'rgba(255,255,255,0.7)', fontWeight: '600' }]}>
+                            Add Group to {selectedTab.charAt(0).toUpperCase() + selectedTab.slice(1)}
+                          </Text>
+                        )}
                       </TouchableOpacity>
                     </View>
                   )}
@@ -963,66 +1241,216 @@ const AddTodoModal = ({
               {activeTab === 'review' && (
                 <View style={{ marginTop: spacing.m }}>
                   {getTotalTodoCount() > 0 ? (
-                    <ScrollView style={{ maxHeight: scaleHeight(600) }}>
-                      {Object.entries(pendingTodos).map(([tabName, todos]) => (
-                        todos.length > 0 && (
-                          <View key={tabName} style={[styles.tabSection, { marginBottom: spacing.m }]}>
-                            <View style={[styles.tabHeader, { backgroundColor: theme.cardElevated }]}>
+                    <ScrollView style={{ maxHeight: scaleHeight(600) }} showsVerticalScrollIndicator={false}>
+                      {Object.entries(pendingTodos).map(([tabName, todos]) => {
+                        const tabColor = tabName === 'today' ? '#22C55E' : tabName === 'tomorrow' ? '#3B82F6' : '#8B5CF6';
+                        return todos.length > 0 && (
+                          <View key={tabName} style={[
+                            styles.tabSection, 
+                            {
+                              backgroundColor: theme.card,
+                              borderRadius: scaleWidth(12),
+                              padding: spacing.m,
+                              marginBottom: spacing.m,
+                              shadowColor: '#000',
+                              shadowOffset: { width: 0, height: 2 },
+                              shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+                              shadowRadius: 6,
+                              elevation: 3,
+                            }
+                          ]}>
+                            <View style={[
+                              styles.tabHeader, 
+                              { 
+                                backgroundColor: tabColor + '15',
+                                borderRadius: scaleWidth(8),
+                                borderLeftWidth: 4,
+                                borderLeftColor: tabColor,
+                              }
+                            ]}>
                               <Ionicons 
                                 name={tabName === 'today' ? 'today-outline' : tabName === 'tomorrow' ? 'calendar-outline' : 'time-outline'} 
                                 size={scaleWidth(20)} 
-                                color={theme.primary} 
+                                color={tabColor} 
                               />
-                              <Text style={[styles.tabHeaderText, { color: theme.text, marginLeft: spacing.xs }]}>
-                                {tabName.charAt(0).toUpperCase() + tabName.slice(1)} ({todos.length})
+                              <Text style={[styles.tabHeaderText, { color: theme.text, marginLeft: spacing.xs, fontWeight: '700' }]}>
+                                {tabName.charAt(0).toUpperCase() + tabName.slice(1)}
                               </Text>
-                            </View>
-                            {todos.map((item) => (
-                              <View key={item.id} style={[styles.todoItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
-                                <View style={{ flex: 1 }}>
-                                  <Text style={[styles.todoItemText, { color: theme.text }]}>
-                                    {item.title}
-                                  </Text>
-                                  {item.isGroup && (
-                                    <View style={{ marginTop: spacing.xs }}>
-                                      {item.items.map((groupItem, index) => (
-                                        <Text key={groupItem.id} style={[styles.groupItemPreview, { color: theme.textSecondary }]}>
-                                          • {groupItem.title}
-                                        </Text>
-                                      ))}
-                                    </View>
-                                  )}
-                                </View>
-                                <TouchableOpacity
-                                  onPress={() => removePendingItem(tabName, item.id)}
-                                  style={styles.removeTodoButton}
-                                >
-                                  <Ionicons name="close-circle" size={scaleWidth(20)} color={theme.error || '#ff4444'} />
-                                </TouchableOpacity>
+                              <View style={[
+                                styles.badge,
+                                {
+                                  backgroundColor: tabColor,
+                                  marginLeft: spacing.xs,
+                                  shadowColor: tabColor,
+                                  shadowOffset: { width: 0, height: 2 },
+                                  shadowOpacity: 0.3,
+                                  shadowRadius: 4,
+                                  elevation: 3,
+                                }
+                              ]}>
+                                <Text style={[styles.badgeText, { color: '#FFFFFF', fontWeight: '700' }]}>
+                                  {todos.length}
+                                </Text>
                               </View>
-                            ))}
+                            </View>
+                            <View style={{ marginTop: spacing.s }}>
+                              {todos.map((item) => (
+                                <View key={item.id} style={[
+                                  styles.todoItem, 
+                                  { 
+                                    backgroundColor: theme.cardElevated,
+                                    borderLeftWidth: 3,
+                                    borderLeftColor: tabColor,
+                                    borderRadius: scaleWidth(10),
+                                    shadowColor: '#000',
+                                    shadowOffset: { width: 0, height: 1 },
+                                    shadowOpacity: 0.05,
+                                    shadowRadius: 3,
+                                    elevation: 2,
+                                  }
+                                ]}>
+                                  <View style={{ flex: 1 }}>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: item.isGroup ? spacing.xs : 0 }}>
+                                      <Ionicons 
+                                        name={item.isGroup ? 'albums-outline' : 'checkbox-outline'} 
+                                        size={scaleWidth(18)} 
+                                        color={tabColor} 
+                                        style={{ marginRight: spacing.xs }}
+                                      />
+                                      <Text style={[styles.todoItemText, { color: theme.text, fontWeight: '600', flex: 1 }]}>
+                                        {item.title}
+                                      </Text>
+                                    </View>
+                                    {item.isGroup && (
+                                      <View style={{ marginLeft: spacing.l }}>
+                                        {item.items.map((groupItem, index) => (
+                                          <View key={groupItem.id} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.xxs }}>
+                                            <View style={{
+                                              width: scaleWidth(4),
+                                              height: scaleWidth(4),
+                                              borderRadius: scaleWidth(2),
+                                              backgroundColor: tabColor,
+                                              marginRight: spacing.s
+                                            }} />
+                                            <Text style={[styles.groupItemPreview, { color: theme.textSecondary, fontSize: scaleFontSize(14) }]}>
+                                              {groupItem.title}
+                                            </Text>
+                                          </View>
+                                        ))}
+                                      </View>
+                                    )}
+                                  </View>
+                                  <TouchableOpacity
+                                    onPress={() => removePendingItem(tabName, item.id)}
+                                    style={[
+                                      styles.removeTodoButton,
+                                      {
+                                        backgroundColor: theme.errorLight || '#FFEBEE',
+                                        borderRadius: scaleWidth(16),
+                                        padding: spacing.xs
+                                      }
+                                    ]}
+                                  >
+                                    <Ionicons name="close" size={scaleWidth(16)} color={theme.error || '#E53E3E'} />
+                                  </TouchableOpacity>
+                                </View>
+                              ))}
+                            </View>
                           </View>
-                        )
-                      ))}
+                        );
+                      })}
                       
                       {/* Save All Button */}
                       <TouchableOpacity
                         style={[
                           styles.saveAllButton,
-                          { backgroundColor: theme.success || buttonColor, marginTop: spacing.l }
+                          { 
+                            marginTop: spacing.l,
+                            borderRadius: scaleWidth(12),
+                            shadowColor: theme.success || theme.primary,
+                            shadowOffset: { width: 0, height: 4 },
+                            shadowOpacity: 0.25,
+                            shadowRadius: 8,
+                            elevation: 6,
+                            overflow: 'hidden'
+                          }
                         ]}
                         onPress={handleSaveAllTodos}
                       >
-                        <Text style={[styles.saveAllButtonText, { color: '#FFFFFF', fontWeight: '600' }]}>
-                          Save All ({getTotalTodoCount()})
-                        </Text>
+                        <LinearGradient
+                          colors={[
+                            theme.success || theme.primary,
+                            (theme.success || theme.primary) + 'DD'
+                          ]}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
+                          style={styles.gradientButton}
+                        >
+                          <LinearGradient
+                            colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0)']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 0, y: 1 }}
+                            style={styles.buttonHighlight}
+                          />
+                          <Ionicons 
+                            name="checkmark-done-circle" 
+                            size={scaleWidth(24)} 
+                            color="#FFFFFF" 
+                            style={{ marginRight: spacing.s }}
+                          />
+                          <Text style={[styles.saveAllButtonText, { color: '#FFFFFF', fontWeight: '700', fontSize: scaleFontSize(18) }]}>
+                            Save All ({getTotalTodoCount()}) To-Dos
+                          </Text>
+                        </LinearGradient>
                       </TouchableOpacity>
                     </ScrollView>
                   ) : (
-                    <View style={styles.emptyStateContainer}>
-                      <Ionicons name="list-outline" size={scaleWidth(48)} color={theme.textSecondary} />
-                      <Text style={[styles.emptyStateText, { color: theme.textSecondary, marginTop: spacing.m }]}>
-                        No todos added yet. Switch to "Add Items" to get started.
+                    <View style={[
+                      styles.emptyStateContainer,
+                      {
+                        backgroundColor: theme.card,
+                        borderRadius: scaleWidth(12),
+                        padding: spacing.xl,
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+                        shadowRadius: 6,
+                        elevation: 3,
+                      }
+                    ]}>
+                      <View style={[
+                        styles.emptyIconContainer,
+                        {
+                          backgroundColor: theme.primary + '20',
+                          borderRadius: scaleWidth(32),
+                          padding: spacing.m,
+                          marginBottom: spacing.m
+                        }
+                      ]}>
+                        <Ionicons name="list-outline" size={scaleWidth(48)} color={theme.primary} />
+                      </View>
+                      <Text style={[
+                        styles.emptyStateTitle,
+                        { 
+                          color: theme.text, 
+                          fontSize: scaleFontSize(18),
+                          fontWeight: '700',
+                          marginBottom: spacing.xs,
+                          textAlign: 'center'
+                        }
+                      ]}>
+                        Ready to Add To-Dos
+                      </Text>
+                      <Text style={[
+                        styles.emptyStateText, 
+                        { 
+                          color: theme.textSecondary, 
+                          fontSize: scaleFontSize(15),
+                          textAlign: 'center',
+                          lineHeight: 22
+                        }
+                      ]}>
+                        Switch to "Add Items" to create your to-do list. You can add individual items or create organized groups.
                       </Text>
                     </View>
                   )}
@@ -1132,11 +1560,14 @@ const styles = StyleSheet.create({
   typeOptionText: {
     fontWeight: '500',
   },
+  // Section card styles
+  sectionCard: {
+    // Styling applied inline
+  },
   // Tab selector styles
   tabSelector: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: spacing.m
   },
   tabOption: {
     flexDirection: 'row',
@@ -1144,16 +1575,29 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: spacing.s,
     paddingHorizontal: spacing.xs,
-    borderRadius: 8,
-    borderWidth: 1,
     flex: 1,
     marginHorizontal: spacing.xxs
   },
-  tabOptionSelected: {
-    borderWidth: 0
-  },
   tabOptionText: {
     fontWeight: '500',
+  },
+  timeDot: {
+    width: scaleWidth(6),
+    height: scaleWidth(6),
+    borderRadius: scaleWidth(3),
+    marginRight: spacing.xs,
+  },
+  badge: {
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 2,
+    borderRadius: scaleWidth(10),
+    minWidth: scaleWidth(20),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeText: {
+    fontSize: fontSizes.xs,
+    textAlign: 'center',
   },
   // Group items styles
   groupItemsSection: {
@@ -1216,7 +1660,6 @@ const styles = StyleSheet.create({
   // Main tab styles
   mainTabs: {
     flexDirection: 'row',
-    borderBottomWidth: 1,
     marginTop: spacing.m,
   },
   mainTab: {
@@ -1224,21 +1667,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.m,
-    paddingHorizontal: spacing.s,
   },
   mainTabText: {
     fontSize: fontSizes.m,
-    fontWeight: '500',
+  },
+  // Form card styles
+  formCard: {
+    // Styling applied inline
   },
   // Type toggle styles
   typeToggle: {
     flexDirection: 'row',
-    marginTop: spacing.m,
-    marginBottom: spacing.m,
-    borderRadius: scaleWidth(8),
-    backgroundColor: 'rgba(0,0,0,0.05)',
-    padding: spacing.xs,
   },
   typeOption: {
     flex: 1,
@@ -1247,15 +1686,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: spacing.s,
     paddingHorizontal: spacing.m,
-    borderRadius: scaleWidth(6),
-    borderWidth: 1,
-  },
-  typeOptionSelected: {
-    // backgroundColor set inline
   },
   typeOptionText: {
     fontSize: fontSizes.s,
-    fontWeight: '500',
   },
   // Group item styles
   groupItemContainer: {
@@ -1292,27 +1725,22 @@ const styles = StyleSheet.create({
   },
   // Review tab styles
   tabSection: {
-    marginBottom: spacing.m,
+    // Styling applied inline
   },
   tabHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing.m,
     paddingVertical: spacing.s,
-    borderRadius: scaleWidth(8),
-    marginBottom: spacing.xs,
   },
   tabHeaderText: {
     fontSize: fontSizes.m,
-    fontWeight: '600',
   },
   todoItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     paddingHorizontal: spacing.m,
     paddingVertical: spacing.s,
-    borderRadius: scaleWidth(8),
-    borderWidth: 1,
     marginBottom: spacing.xs,
   },
   todoItemText: {
@@ -1330,11 +1758,16 @@ const styles = StyleSheet.create({
   emptyStateContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.xl,
+  },
+  emptyIconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyStateTitle: {
+    // Styling applied inline
   },
   emptyStateText: {
     fontSize: fontSizes.m,
-    textAlign: 'center',
     fontStyle: 'italic',
   },
   addButton: {
@@ -1349,14 +1782,26 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   saveAllButton: {
-    borderRadius: scaleWidth(8),
-    paddingVertical: spacing.m,
-    alignItems: 'center',
-    justifyContent: 'center',
+    // Styling applied inline
   },
   saveAllButtonText: {
     fontSize: fontSizes.m,
-    fontWeight: '600',
+  },
+  // Gradient button styles
+  gradientButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.m,
+    paddingHorizontal: spacing.m,
+  },
+  buttonHighlight: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '50%',
   },
 });
 

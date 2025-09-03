@@ -206,21 +206,28 @@ export const useProfileScreenData = (navigation, route) => {
         subscriptionStatus,
         aiButtonValue,
         hasEnteredReferralCode,
-        referralCode,
-        referralsRemaining
+        referralCode
       ] = await Promise.all([
         AsyncStorage.getItem('subscriptionStatus').catch(() => 'free'),
         AsyncStorage.getItem('showAIButton').catch(() => null),
         AsyncStorage.getItem('hasEnteredReferralCode').then(value => value === 'true').catch(() => false),
-        AsyncStorage.getItem('referralCode').catch(() => ''),
-        AsyncStorage.getItem('referralsRemaining').catch(() => '3')
+        AsyncStorage.getItem('referralCode').catch(() => '')
       ]);
       
       if (signal?.aborted) throw new Error('Operation aborted');
       
       // Process referral data for pro users
       let finalReferralCode = referralCode;
-      let finalReferralsLeft = parseInt(referralsRemaining) || 3;
+      let finalReferralsLeft = 3; // Default base value
+      
+      // Calculate dynamic referrals remaining using the same logic as ReferralScreen
+      try {
+        const ReferralService = require('../screens/Referral/ReferralService').default;
+        finalReferralsLeft = await ReferralService.getReferralsRemaining();
+      } catch (error) {
+        console.error('Error getting dynamic referrals remaining:', error);
+        // Fallback to base value already set
+      }
       
       const isPro = subscriptionStatus === 'pro' || subscriptionStatus === 'unlimited';
       if (isPro && !finalReferralCode) {

@@ -928,29 +928,12 @@ const calculateNetWorth = (data) => {
     return netWorth;
   }
   
-  // Fallback to old calculation method if new system isn't available yet
-  const monthlyHistory = financialData?.monthlyHistory || [];
-  const currentIncome = (financialData?.incomeSources || []).reduce((total, income) => 
-    total + (income.amount || 0), 0);
-  const currentExpenses = (financialData?.expenses || []).reduce((total, expense) => 
-    total + (expense.amount || 0), 0);
-  
-  let lifetimeIncome = currentIncome;
-  let lifetimeExpenses = currentExpenses;
-  
-  monthlyHistory.forEach(month => {
-    lifetimeIncome += month.income || 0;
-    lifetimeExpenses += month.expenses || 0;
-  });
-  
-  const lifetimeNetIncome = lifetimeIncome - lifetimeExpenses;
-  
-  // Add assets and subtract liabilities
+  // Fallback calculation: Net Worth = Assets - Liabilities (no monthly income/expense included)
   const assets = totalAssets || financialData?.totalAssets || 0;
   const liabilities = financialData?.totalLiabilities || totalDebt || 0;
   
-  // Complete net worth formula
-  return lifetimeNetIncome + assets - liabilities;
+  // Net worth should ONLY be assets minus liabilities
+  return assets - liabilities;
 };
 
 const styles = StyleSheet.create({

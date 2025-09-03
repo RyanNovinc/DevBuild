@@ -15,17 +15,31 @@ import {
   Animated,
   Switch,
   Dimensions,
-  TouchableWithoutFeedback
+  TouchableWithoutFeedback,
+  Easing
 } from 'react-native';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../context/ThemeContext';
 import { useAppContext } from '../context/AppContext';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { NavigationContainer } from '@react-navigation/native';
-import { scaleWidth, scaleHeight, fontSizes, spacing, accessibility } from '../utils/responsive';
+import { 
+  scaleWidth, 
+  scaleHeight, 
+  scaleFontSize, 
+  fontSizes, 
+  spacing, 
+  accessibility,
+  meetsContrastRequirements 
+} from '../utils/responsive';
+
+// Import color utils for better color handling
+import { getTextColorForBackground } from '../screens/GoalDetailsScreen/utils/colorUtils';
+import { formatDate } from '../screens/GoalDetailsScreen/utils/helpers';
 
 const AddMilestoneModal = ({ 
   visible, 
@@ -63,11 +77,11 @@ const AddMilestoneModal = ({
   const [selectedGoalColor, setSelectedGoalColor] = useState(null);
   const [showGoalList, setShowGoalList] = useState(false);
   
-  // Animation values
+  // Animation values - Enhanced to match GoalModal
   const dropdownHeight = useRef(new Animated.Value(0)).current;
   const dropdownOpacity = useRef(new Animated.Value(0)).current;
   const backgroundOpacityAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(300)).current;
+  const slideAnim = useRef(new Animated.Value(Dimensions.get('window').height)).current;
   const translateY = useRef(new Animated.Value(0)).current;
   
   // Add validation state - goalRequired removed for flexible hierarchy
@@ -78,20 +92,24 @@ const AddMilestoneModal = ({
   // Direct access to goals from AppContext
   const goals = appContext?.goals || [];
   
-  // Handle modal close with proper cleanup
+  // Handle modal close with enhanced animation
   const handleClose = () => {
+    const screenHeight = Dimensions.get('window').height;
+    
     Animated.sequence([
       // First slide out the content
       Animated.timing(slideAnim, {
-        toValue: 300,
+        toValue: screenHeight,
         duration: 250,
         useNativeDriver: true,
+        easing: Easing.in(Easing.ease)
       }),
       // Then fade out the background
       Animated.timing(backgroundOpacityAnim, {
         toValue: 0,
         duration: 200,
         useNativeDriver: true,
+        easing: Easing.in(Easing.ease)
       })
     ]).start(() => {
       Keyboard.dismiss();
@@ -108,13 +126,39 @@ const AddMilestoneModal = ({
 
   const handleGestureEnd = (event) => {
     const { translationY, velocityY } = event.nativeEvent;
+    const screenHeight = Dimensions.get('window').height;
+    const dismissThreshold = screenHeight * 0.2;
+    const fastSwipeVelocity = 1200;
     
-    if (translationY > 100 || velocityY > 1000) {
-      handleClose();
+    const shouldDismiss = translationY > dismissThreshold || velocityY > fastSwipeVelocity;
+    
+    if (shouldDismiss) {
+      // Animate dismiss with reverse order
+      Animated.sequence([
+        // First slide out the content
+        Animated.timing(slideAnim, {
+          toValue: screenHeight,
+          duration: 250,
+          useNativeDriver: true,
+          easing: Easing.in(Easing.ease)
+        }),
+        // Then fade out the background
+        Animated.timing(backgroundOpacityAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+          easing: Easing.in(Easing.ease)
+        })
+      ]).start(() => {
+        onClose();
+      });
     } else {
+      // Bounce back with better spring animation
       Animated.spring(translateY, {
         toValue: 0,
         useNativeDriver: true,
+        tension: 100,
+        friction: 8
       }).start();
     }
   };
@@ -153,27 +197,29 @@ const AddMilestoneModal = ({
     }
   }, [showGoalList]);
   
-  // Modal animation on show/hide
+  // Modal animation on show/hide - Enhanced with better easing
   useEffect(() => {
     if (visible) {
       // Reset animation values
       backgroundOpacityAnim.setValue(0);
-      slideAnim.setValue(300);
+      slideAnim.setValue(Dimensions.get('window').height);
       translateY.setValue(0);
       
-      // Animate in with staggered timing
+      // Animate in with staggered timing for better effect
       Animated.sequence([
         // First darken the background gradually
         Animated.timing(backgroundOpacityAnim, {
           toValue: 1,
           duration: 250,
           useNativeDriver: true,
+          easing: Easing.out(Easing.ease)
         }),
         // Then slide in the content
         Animated.timing(slideAnim, {
           toValue: 0,
-          duration: 250,
+          duration: 300,
           useNativeDriver: true,
+          easing: Easing.out(Easing.ease)
         })
       ]).start();
     }
@@ -224,7 +270,7 @@ const AddMilestoneModal = ({
       
       // Reset animation values
       translateY.setValue(0);
-      slideAnim.setValue(300);
+      slideAnim.setValue(Dimensions.get('window').height);
       backgroundOpacityAnim.setValue(0);
     }
   }, [milestoneData, visible, goals]);
@@ -534,7 +580,7 @@ const AddMilestoneModal = ({
     );
   };
 
-  // Render Details Tab Content
+  // Render Details Tab Content - Enhanced with card-based design
   const renderDetailsTab = () => {
     return (
       <ScrollView 
@@ -547,80 +593,133 @@ const AddMilestoneModal = ({
         }}
         showsVerticalScrollIndicator={true}
         keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="interactive"
+        keyboardDismissMode="on-drag"
         scrollEnabled={true}
         bounces={true}
       >
-        {/* Milestone Title - Now first and primary */}
-        <Text 
-          style={[
-            styles.label, 
-            { 
-              color: theme.textSecondary,
-              fontSize: fontSizes.m,
-              marginBottom: spacing.xs,
-            }
-          ]}
-        >
-          Milestone Title *
-        </Text>
-        <TextInput
-          style={[
-            styles.input,
-            { 
-              backgroundColor: theme.inputBackground,
-              color: theme.text,
-              borderColor: theme.border,
-              borderWidth: 1,
-              borderRadius: 8,
-              paddingHorizontal: spacing.m,
-              paddingVertical: spacing.s,
-              fontSize: fontSizes.m,
-              marginBottom: spacing.m,
-            }
-          ]}
-          value={title}
-          onChangeText={setTitle}
-          placeholder="Enter milestone title"
-          placeholderTextColor={theme.textSecondary}
-          autoFocus={true}
-        />
+        {/* Milestone Title Card */}
+        <View style={[
+          styles.inputSection,
+          {
+            backgroundColor: theme.card,
+            padding: spacing.m,
+            borderRadius: scaleWidth(12),
+            marginBottom: spacing.m,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+            shadowRadius: 6,
+            elevation: 3,
+          }
+        ]}>
+          <Text 
+            style={[
+              styles.label, 
+              { 
+                color: theme.textSecondary,
+                fontSize: fontSizes.m,
+                fontWeight: '600',
+                marginBottom: spacing.xs
+              }
+            ]}
+            maxFontSizeMultiplier={1.5}
+          >
+            Milestone Title *
+          </Text>
+          <TextInput
+            style={[
+              styles.input,
+              { 
+                backgroundColor: theme.inputBackground,
+                color: theme.text,
+                borderColor: selectedGoalColor || theme.border,
+                borderWidth: 1,
+                fontSize: fontSizes.m,
+                paddingHorizontal: spacing.m,
+                paddingVertical: spacing.s,
+                borderRadius: scaleWidth(12),
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.05,
+                shadowRadius: 4,
+                elevation: 1,
+              }
+            ]}
+            value={title}
+            onChangeText={setTitle}
+            placeholder="Enter milestone title"
+            placeholderTextColor={theme.textSecondary}
+            autoFocus={false}
+            accessible={true}
+            accessibilityLabel="Milestone title"
+            accessibilityHint="Enter the title of your milestone"
+            maxFontSizeMultiplier={1.8}
+          />
+        </View>
 
-        {/* Goal Selection Section - Now optional */}
-        <Text 
-          style={[
-            styles.label, 
-            { 
-              color: theme.textSecondary,
-              fontSize: fontSizes.m,
-              marginBottom: spacing.xs,
-            }
-          ]}
-        >
-          Link to Goal (Optional)
-        </Text>
-        
-        {/* Goal Selector Button */}
-        <TouchableOpacity
-          style={[
-            styles.goalSelector,
-            { 
-              backgroundColor: theme.inputBackground,
-              borderColor: theme.border,
-              borderBottomLeftRadius: showGoalList ? 0 : 8,
-              borderBottomRightRadius: showGoalList ? 0 : 8,
-              borderWidth: 1,
-              padding: spacing.m,
-              minHeight: 48,
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }
-          ]}
-          onPress={() => {
-            setShowGoalList(!showGoalList);
-          }}
-        >
+        {/* Goal Selection Card - Enhanced design */}
+        <View style={[
+          styles.inputSection,
+          {
+            backgroundColor: theme.card,
+            padding: spacing.m,
+            borderRadius: scaleWidth(12),
+            marginBottom: spacing.m,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+            shadowRadius: 6,
+            elevation: 3,
+          }
+        ]}>
+          <Text 
+            style={[
+              styles.label, 
+              { 
+                color: theme.textSecondary,
+                fontSize: fontSizes.m,
+                fontWeight: '600',
+                marginBottom: spacing.xs
+              }
+            ]}
+            maxFontSizeMultiplier={1.5}
+          >
+            Link to Goal (Optional)
+          </Text>
+          
+          {/* Goal Selector Button */}
+          <TouchableOpacity
+            style={[
+              styles.goalSelector,
+              { 
+                backgroundColor: theme.inputBackground,
+                borderColor: selectedGoalColor || theme.border,
+                borderBottomLeftRadius: showGoalList ? 0 : scaleWidth(12),
+                borderBottomRightRadius: showGoalList ? 0 : scaleWidth(12),
+                borderTopLeftRadius: scaleWidth(12),
+                borderTopRightRadius: scaleWidth(12),
+                borderWidth: 1,
+                paddingHorizontal: spacing.m,
+                paddingVertical: spacing.s,
+                minHeight: 48,
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.05,
+                shadowRadius: 4,
+                elevation: 1,
+              }
+            ]}
+            onPress={() => {
+              setShowGoalList(!showGoalList);
+            }}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={selectedGoalId ? `Selected goal: ${selectedGoalTitle}` : "Select a goal"}
+            accessibilityHint="Opens goal selector"
+          >
           {selectedGoalId ? (
             <View style={{ flex: 1 }}>
               <Text 
@@ -657,139 +756,293 @@ const AddMilestoneModal = ({
             size={scaleWidth(20)} 
             color={theme.textSecondary} 
           />
-        </TouchableOpacity>
+          </TouchableOpacity>
+          
+          {/* Animated Goal List Dropdown */}
+          <Animated.View 
+            style={[
+              styles.inlineGoalList, 
+              { 
+                backgroundColor: theme.cardElevated,
+                borderColor: selectedGoalColor || theme.border,
+                maxHeight: dropdownHeight,
+                opacity: dropdownOpacity,
+                overflow: 'hidden',
+                borderWidth: 1,
+                borderTopWidth: 0,
+                borderBottomLeftRadius: scaleWidth(12),
+                borderBottomRightRadius: scaleWidth(12),
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.05,
+                shadowRadius: 4,
+                elevation: 1,
+              }
+            ]}
+          >
+            <View style={{ maxHeight: scaleHeight(180) }}>
+              {renderGoalsList()}
+            </View>
+          </Animated.View>
+        </View>
         
-        {/* Animated Goal List Dropdown */}
-        <Animated.View 
-          style={[
-            styles.inlineGoalList, 
-            { 
-              backgroundColor: theme.cardElevated,
-              borderColor: theme.border,
-              maxHeight: dropdownHeight,
-              opacity: dropdownOpacity,
-              overflow: 'hidden',
-              borderWidth: 1,
-              borderTopWidth: 0,
-              borderBottomLeftRadius: 8,
-              borderBottomRightRadius: 8,
-              marginBottom: spacing.m,
-            }
-          ]}
-        >
-          <View style={{ maxHeight: scaleHeight(180) }}>
-            {renderGoalsList()}
-          </View>
-        </Animated.View>
-        
-        <Text 
-          style={[
-            styles.label, 
-            { 
-              color: theme.textSecondary,
-              fontSize: fontSizes.m,
-              marginBottom: spacing.xs,
-            }
-          ]}
-        >
-          Description (Optional)
-        </Text>
-        <TextInput
-          style={[
-            styles.input,
-            styles.textArea,
-            { 
-              backgroundColor: theme.inputBackground,
-              color: theme.text,
-              borderColor: theme.border,
-              borderWidth: 1,
-              borderRadius: 8,
-              paddingHorizontal: spacing.m,
-              paddingVertical: spacing.s,
-              fontSize: fontSizes.m,
-              marginBottom: spacing.m,
-              minHeight: scaleHeight(100),
-              textAlignVertical: "top",
-            }
-          ]}
-          value={description}
-          onChangeText={setDescription}
-          placeholder="Enter project description"
-          placeholderTextColor={theme.textSecondary}
-          multiline
-          numberOfLines={4}
-          textAlignVertical="top"
-        />
-        
-        {/* Due Date Toggle */}
-        <View 
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
+        {/* Description Card */}
+        <View style={[
+          styles.inputSection,
+          {
+            backgroundColor: theme.card,
+            padding: spacing.m,
+            borderRadius: scaleWidth(12),
             marginBottom: spacing.m,
-            paddingVertical: spacing.s,
-          }}
-        >
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+            shadowRadius: 6,
+            elevation: 3,
+          }
+        ]}>
           <Text 
             style={[
               styles.label, 
               { 
                 color: theme.textSecondary,
                 fontSize: fontSizes.m,
-                marginBottom: 0,
+                fontWeight: '600',
+                marginBottom: spacing.xs
               }
             ]}
+            maxFontSizeMultiplier={1.5}
           >
-            Set Due Date
+            Description (Optional)
           </Text>
-          <Switch
-            value={hasDueDate}
-            onValueChange={setHasDueDate}
-            trackColor={{ false: theme.border, true: buttonColor + '80' }}
-            thumbColor={hasDueDate ? buttonColor : '#f4f3f4'}
+          <TextInput
+            style={[
+              styles.input,
+              styles.textArea,
+              { 
+                backgroundColor: theme.inputBackground,
+                color: theme.text,
+                borderColor: selectedGoalColor || theme.border,
+                borderWidth: 1,
+                fontSize: fontSizes.m,
+                paddingHorizontal: spacing.m,
+                paddingVertical: spacing.s,
+                borderRadius: scaleWidth(12),
+                minHeight: scaleHeight(100),
+                textAlignVertical: "top",
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.05,
+                shadowRadius: 4,
+                elevation: 1,
+              }
+            ]}
+            value={description}
+            onChangeText={setDescription}
+            placeholder="Enter milestone description"
+            placeholderTextColor={theme.textSecondary}
+            multiline
+            numberOfLines={4}
+            textAlignVertical="top"
+            accessible={true}
+            accessibilityLabel="Milestone description"
+            accessibilityHint="Enter a detailed description of your milestone"
+            maxFontSizeMultiplier={2.0}
           />
         </View>
         
-        {/* Date Picker Section */}
-        {hasDueDate && (
-          <View style={{ marginBottom: spacing.m }}>
-            <TouchableOpacity
-              style={{
-                backgroundColor: theme.inputBackground,
-                borderColor: theme.border,
-                borderWidth: 1,
-                borderRadius: 8,
-                paddingHorizontal: spacing.m,
-                paddingVertical: spacing.s,
-                minHeight: scaleHeight(40), // Minimum height for single line
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: spacing.s,
+        {/* Due Date Toggle Card */}
+        <View style={[
+          styles.inputSection,
+          {
+            backgroundColor: theme.card,
+            padding: spacing.m,
+            borderRadius: scaleWidth(12),
+            marginBottom: spacing.m,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+            shadowRadius: 6,
+            elevation: 3,
+          }
+        ]}>
+          <View 
+            style={[
+              styles.toggleRow,
+              {
+                paddingVertical: 0,
+                minHeight: minTouchSize
+              }
+            ]}
+          >
+            <Text 
+              style={[
+                styles.label, 
+                { 
+                  color: theme.textSecondary,
+                  fontSize: fontSizes.m,
+                  fontWeight: '600',
+                  marginBottom: 0
+                }
+              ]}
+              maxFontSizeMultiplier={1.5}
+            >
+              Set Due Date
+            </Text>
+            <Switch
+              value={hasDueDate}
+              onValueChange={(value) => {
+                setHasDueDate(value);
+                if (value) {
+                  setShowDatePicker(true);
+                } else {
+                  setShowDatePicker(false);
+                }
               }}
+              trackColor={{ 
+                false: theme.border, 
+                true: selectedGoalColor ? selectedGoalColor + '80' : buttonColor + '80' 
+              }}
+              thumbColor={hasDueDate ? 
+                (selectedGoalColor || buttonColor) : 
+                '#f4f3f4'
+              }
+              accessible={true}
+              accessibilityRole="switch"
+              accessibilityLabel="Set due date"
+              accessibilityState={{ checked: hasDueDate }}
+              accessibilityHint={hasDueDate ? "Toggle off to remove due date" : "Toggle on to set a due date"}
+            />
+          </View>
+        </View>
+        
+        {/* Date Picker Section - Enhanced */}
+        {hasDueDate && (
+          <View style={[
+            styles.dateSection,
+            styles.inputSection,
+            {
+              backgroundColor: theme.card,
+              padding: spacing.m,
+              borderRadius: scaleWidth(12),
+              marginBottom: spacing.m,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+              shadowRadius: 6,
+              elevation: 3,
+            }
+          ]}>
+            <Text 
+              style={[
+                styles.label, 
+                { 
+                  color: theme.textSecondary,
+                  fontSize: fontSizes.m,
+                  fontWeight: '600',
+                  marginBottom: spacing.s
+                }
+              ]}
+              maxFontSizeMultiplier={1.5}
+            >
+              Due Date
+            </Text>
+            <TouchableOpacity
+              style={[
+                styles.dateButton,
+                { 
+                  backgroundColor: theme.inputBackground,
+                  borderColor: selectedGoalColor || theme.border,
+                  borderWidth: 1,
+                  paddingHorizontal: spacing.m,
+                  paddingVertical: spacing.s,
+                  borderRadius: scaleWidth(12),
+                  minHeight: minTouchSize,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.05,
+                  shadowRadius: 4,
+                  elevation: 1,
+                }
+              ]}
               onPress={() => setShowDatePicker(true)}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={`Selected date: ${formatDate(dueDate)}`}
+              accessibilityHint="Opens date picker to select a due date"
             >
               <Ionicons name="calendar-outline" size={scaleWidth(20)} color={theme.textSecondary} />
               <Text 
-                style={{ 
-                  color: theme.text,
-                  fontSize: fontSizes.m,
-                  flex: 1,
-                }}
+                style={[
+                  styles.dateButtonText,
+                  { 
+                    color: theme.text,
+                    fontSize: fontSizes.m,
+                    marginLeft: spacing.s
+                  }
+                ]}
+                maxFontSizeMultiplier={1.5}
               >
-                {dueDate.toLocaleDateString()}
+                {formatDate(dueDate)}
               </Text>
             </TouchableOpacity>
             
+            {/* Date Picker */}
             {showDatePicker && (
-              <DateTimePicker
-                value={dueDate}
-                mode="date"
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                onChange={handleDateChange}
-                minimumDate={new Date()}
-                themeVariant={theme.background === '#000000' ? 'dark' : 'light'}
-              />
+              <View style={[
+                styles.datePickerContainer,
+                { 
+                  backgroundColor: theme.dark ? '#000000' : '#111111',
+                  borderColor: theme.border,
+                  borderWidth: 1,
+                  marginTop: spacing.s,
+                  borderRadius: scaleWidth(12),
+                  overflow: 'hidden',
+                  alignItems: 'center',
+                }
+              ]}>
+                <DateTimePicker
+                  value={dueDate}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={handleDateChange}
+                  minimumDate={new Date()}
+                  themeVariant="dark"
+                  accessibilityLabel="Date picker"
+                  style={{ height: 200 }}
+                  textColor="#FFFFFF"
+                />
+                
+                {/* Done button for iOS */}
+                {Platform.OS === 'ios' && (
+                  <TouchableOpacity 
+                    style={[
+                      styles.doneButton, 
+                      { 
+                        backgroundColor: selectedGoalColor || buttonColor,
+                        paddingVertical: spacing.m,
+                        width: '100%',
+                        alignItems: 'center',
+                      }
+                    ]}
+                    onPress={() => setShowDatePicker(false)}
+                  >
+                    <Text style={[
+                      styles.doneButtonText, 
+                      { 
+                        color: selectedGoalColor === '#FFFFFF' || buttonColor === '#FFFFFF' ? 
+                          '#000000' : getTextColorForBackground(selectedGoalColor || buttonColor),
+                        fontSize: fontSizes.m,
+                        fontWeight: '600',
+                      }
+                    ]}>
+                      Done
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
             )}
           </View>
         )}
@@ -797,7 +1050,7 @@ const AddMilestoneModal = ({
     );
   };
 
-  // Render Tasks Tab Content
+  // Render Tasks Tab Content - Enhanced with better styling
   const renderTasksTab = () => {
     return (
       <ScrollView 
@@ -810,7 +1063,7 @@ const AddMilestoneModal = ({
         }}
         showsVerticalScrollIndicator={true}
         keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="interactive"
+        keyboardDismissMode="on-drag"
         scrollEnabled={true}
         bounces={true}
       >
@@ -837,14 +1090,18 @@ const AddMilestoneModal = ({
           {tasks.length > 0 && (
             <TouchableOpacity
               style={{
-                backgroundColor: editMode ? theme.primary : theme.backgroundSecondary,
+                backgroundColor: editMode ? (selectedGoalColor || theme.primary) : theme.backgroundSecondary,
                 paddingHorizontal: spacing.m,
                 paddingVertical: spacing.s,
-                minHeight: scaleHeight(40), // Minimum height for single line
                 borderRadius: scaleWidth(20),
                 minHeight: 36,
                 alignItems: 'center',
                 justifyContent: 'center',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: editMode ? 0.2 : 0.1,
+                shadowRadius: 4,
+                elevation: editMode ? 4 : 2,
               }}
               onPress={() => {
                 setEditMode(!editMode);
@@ -868,9 +1125,14 @@ const AddMilestoneModal = ({
           <View style={{
             padding: spacing.l,
             alignItems: 'center',
-            backgroundColor: theme.backgroundSecondary,
-            borderRadius: scaleWidth(8),
+            backgroundColor: theme.card,
+            borderRadius: scaleWidth(12),
             marginBottom: spacing.m,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+            shadowRadius: 6,
+            elevation: 3,
           }}>
             <Ionicons 
               name="checkbox-outline" 
@@ -993,28 +1255,58 @@ const AddMilestoneModal = ({
                   padding: spacing.m,
                   paddingBottom: Math.max(insets.bottom, spacing.m),
                   height: scaleHeight(550), // Fixed height - simple approach
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: -8 },
+                  shadowOpacity: theme.background === '#000000' ? 0.4 : 0.15,
+                  shadowRadius: 16,
+                  elevation: 12
                 }
               ]}>
-                {/* Swipe indicator */}
+                {/* Enhanced swipe indicator with dynamic color */}
                 <View style={[
                   styles.swipeIndicator,
-                  { backgroundColor: theme.textSecondary + '40' }
+                  { 
+                    backgroundColor: selectedGoalColor ? 
+                      selectedGoalColor + '60' : 
+                      theme.textSecondary + '40',
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 2,
+                    elevation: 1,
+                  }
                 ]} />
           <View style={[styles.modalHeader, { marginBottom: spacing.xs }]}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Ionicons 
-                name="diamond" 
-                size={scaleWidth(24)} 
-                color={theme.primary} 
-                style={{ marginRight: spacing.xs }}
-              />
+              <View style={[
+                styles.headerIconContainer,
+                {
+                  backgroundColor: selectedGoalColor ? 
+                    selectedGoalColor + '20' : 
+                    theme.primary + '20',
+                  borderRadius: scaleWidth(12),
+                  padding: spacing.xs,
+                  marginRight: spacing.s,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 4,
+                  elevation: 2,
+                }
+              ]}>
+                <Ionicons 
+                  name="diamond" 
+                  size={scaleWidth(24)} 
+                  color={selectedGoalColor || theme.primary} 
+                />
+              </View>
               <Text 
                 style={[
                   styles.modalTitle, 
                   { 
                     color: theme.text,
                     fontSize: fontSizes.xl,
-                    fontWeight: 'bold',
+                    fontWeight: '700'
                   }
                 ]}
                 maxFontSizeMultiplier={1.5}
@@ -1028,18 +1320,24 @@ const AddMilestoneModal = ({
               style={[
                 styles.closeButton,
                 {
-                  padding: spacing.s,
                   minWidth: minTouchSize,
                   minHeight: minTouchSize,
                   alignItems: 'center',
                   justifyContent: 'center',
+                  backgroundColor: theme.inputBackground,
+                  borderRadius: scaleWidth(8),
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 4,
+                  elevation: 2,
                 }
               ]} 
               onPress={handleClose}
               accessible={true}
               accessibilityRole="button"
               accessibilityLabel="Close modal"
-              accessibilityHint="Discards project and closes this screen"
+              accessibilityHint="Discards milestone and closes this screen"
             >
               <Ionicons name="close" size={scaleWidth(24)} color={theme.textSecondary} />
             </TouchableOpacity>
@@ -1070,12 +1368,15 @@ const AddMilestoneModal = ({
                   tabBarInactiveTintColor: theme.textSecondary || '#888888',
                   tabBarStyle: { 
                     backgroundColor: theme.backgroundSecondary || theme.cardElevated || '#1F1F1F',
-                    borderRadius: scaleWidth(8),
+                    borderRadius: scaleWidth(12),
                     marginHorizontal: 0,
                     marginVertical: 0,
-                    height: scaleHeight(44),
-                    elevation: 0,
-                    shadowOpacity: 0,
+                    height: scaleHeight(48),
+                    elevation: 2,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+                    shadowRadius: 4,
                     borderBottomWidth: 0,
                   },
                   tabBarLabelStyle: {
@@ -1085,11 +1386,12 @@ const AddMilestoneModal = ({
                     marginTop: 0,
                   },
                   tabBarIndicatorStyle: { 
-                    backgroundColor: theme.primary || '#4CAF50',
-                    height: scaleHeight(36),
-                    borderRadius: scaleWidth(6),
-                    marginBottom: 4,
-                    marginTop: 4,
+                    backgroundColor: selectedGoalColor || theme.primary || '#4CAF50',
+                    height: scaleHeight(38),
+                    borderRadius: scaleWidth(8),
+                    marginBottom: 5,
+                    marginTop: 5,
+                    marginHorizontal: 4,
                     zIndex: 1,
                   },
                   tabBarItemStyle: {
@@ -1127,91 +1429,110 @@ const AddMilestoneModal = ({
             </NavigationContainer>
           </View>
           
-          {/* Create Milestone Button - Always visible outside tabs */}
+          {/* Enhanced Create Milestone Button with gradient */}
           <TouchableOpacity 
             style={[
               styles.addButton, 
               { 
-                backgroundColor: buttonColor,
-                opacity: 1,
                 borderRadius: scaleWidth(12),
-                paddingVertical: spacing.m,
-                alignItems: 'center',
                 marginTop: spacing.s,
                 marginBottom: spacing.xs,
                 minHeight: minTouchSize,
-                elevation: 3,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.2,
-                shadowRadius: 4,
+                overflow: 'hidden',
+                shadowColor: selectedGoalColor || '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 8,
+                elevation: 6,
               }
             ]}
             onPress={handleAddMilestone}
             disabled={false}
             accessible={true}
             accessibilityRole="button"
-            accessibilityLabel="Create project"
-            accessibilityHint="Creates the project with current information"
-            accessibilityState={{ disabled: goals.length === 0 }}
+            accessibilityLabel="Create milestone"
+            accessibilityHint="Creates the milestone with current information"
           >
-            <Text 
-              style={[
-                styles.addButtonText,
-                {
-                  color: '#fff',
-                  fontSize: fontSizes.m,
-                  fontWeight: '600',
-                }
-              ]}
-              maxFontSizeMultiplier={1.5}
-            >
-              Create Milestone
-            </Text>
-          </TouchableOpacity>
-
-          {goals.length === 0 && (
-            <TouchableOpacity 
-              style={[
-                styles.createGoalButton, 
-                { 
-                  backgroundColor: theme.primary,
-                  paddingVertical: spacing.m,
-                  borderRadius: scaleWidth(8),
-                  alignItems: 'center',
-                  marginBottom: spacing.m,
-                  minHeight: minTouchSize,
-                }
-              ]}
-              onPress={() => {
-                handleClose();
-                setTimeout(() => {
-                  Alert.alert(
-                    "Create a Goal", 
-                    "Please create a goal first from the Goals tab.",
-                    [{ text: "OK" }]
-                  );
-                }, 300);
+            <LinearGradient
+              colors={selectedGoalColor ? [
+                selectedGoalColor,
+                selectedGoalColor + 'DD'
+              ] : [buttonColor, buttonColor + 'DD']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={{
+                flex: 1,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                paddingVertical: spacing.m,
+                paddingHorizontal: spacing.l,
               }}
-              accessible={true}
-              accessibilityRole="button"
-              accessibilityLabel="Go to create goal"
-              accessibilityHint="Navigates to the goal creation screen"
             >
+              <LinearGradient
+                colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0)']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  top: 0,
+                  height: '50%',
+                }}
+              />
+              <Ionicons 
+                name="checkmark-circle" 
+                size={scaleWidth(24)} 
+                color="#FFFFFF" 
+                style={{ marginRight: spacing.s }}
+              />
               <Text 
                 style={[
-                  styles.createGoalButtonText,
+                  styles.addButtonText,
                   {
-                    color: '#fff',
                     fontSize: fontSizes.m,
                     fontWeight: '600',
+                    color: '#FFFFFF'
                   }
                 ]}
                 maxFontSizeMultiplier={1.5}
               >
-                Go to Create Goal
+                {milestoneData ? 'Update Milestone' : 'Create Milestone'}
               </Text>
-            </TouchableOpacity>
+            </LinearGradient>
+          </TouchableOpacity>
+
+          {/* Optional: Show helpful message if no goals exist */}
+          {goals.length === 0 && (
+            <View style={{
+              backgroundColor: theme.card,
+              padding: spacing.m,
+              borderRadius: scaleWidth(12),
+              marginTop: spacing.s,
+              marginBottom: spacing.m,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+              shadowRadius: 6,
+              elevation: 3,
+            }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons 
+                  name="information-circle" 
+                  size={scaleWidth(20)} 
+                  color={theme.primary} 
+                  style={{ marginRight: spacing.s }}
+                />
+                <Text style={{
+                  color: theme.textSecondary,
+                  fontSize: fontSizes.s,
+                  flex: 1,
+                }}>
+                  Tip: You can create standalone milestones or link them to goals for better organization.
+                </Text>
+              </View>
+            </View>
           )}
               </View>
             </KeyboardAvoidingView>
@@ -1255,22 +1576,62 @@ const styles = StyleSheet.create({
     marginBottom: spacing.m
   },
   modalTitle: {
-    fontWeight: 'bold'
+    fontWeight: '700'
+  },
+  headerIconContainer: {
+    // Styles applied inline
   },
   closeButton: {
     padding: spacing.xxs
   },
   
   // Form Elements
+  inputSection: {
+    // Enhanced styling applied inline
+  },
   label: {
     marginBottom: spacing.s
   },
   input: {
-    borderWidth: 1,
     marginBottom: spacing.m
   },
   textArea: {
     paddingTop: spacing.s
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.m,
+  },
+  dateSection: {
+    marginBottom: spacing.m
+  },
+  dateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  dateButtonText: {
+    flex: 1
+  },
+  datePickerContainer: {
+    marginTop: spacing.s,
+    borderRadius: scaleWidth(12),
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+    alignItems: 'center',
+  },
+  doneButton: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  doneButtonText: {
+    fontWeight: '600',
   },
   
   // Goal Selection

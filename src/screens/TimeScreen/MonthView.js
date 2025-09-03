@@ -4,9 +4,11 @@ import { View, Text, TouchableOpacity, ScrollView, Dimensions, Modal } from 'rea
 import { Ionicons } from '@expo/vector-icons';
 import TimeBlock from '../../components/TimeBlock';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import responsive from '../../utils/responsive';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import IconPicker from '../../components/IconPicker';
+import { calendarStorage } from '../../utils/storage';
 
 /**
  * Month view component that displays a calendar grid and selected day details
@@ -50,10 +52,25 @@ const MonthView = ({
   const [expandedTimeBlockId, setExpandedTimeBlockId] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   
-  // Toggle state for view mode: 'dots', 'addIcons'
+  // Toggle state for view mode: 'dots', 'addIcons' - back to simple approach
   const [viewMode, setViewMode] = useState('dots');
   
-  // Calendar icons state
+  // Debug viewMode changes
+  useEffect(() => {
+    // console.log('🔄 MonthView: viewMode changed to:', viewMode);
+  }, [viewMode]);
+  
+  // Debug calendarIcons changes
+  useEffect(() => {
+    // console.log('📋 MonthView: calendarIcons updated. Total dates with icons:', Object.keys(calendarIcons).length);
+    // Show a few examples
+    const sampleDates = Object.keys(calendarIcons).slice(0, 3);
+    sampleDates.forEach(dateKey => {
+      // console.log(`📋   ${dateKey}: ${calendarIcons[dateKey]}`);
+    });
+  }, [calendarIcons]);
+  
+  // Calendar icons state - back to simple approach
   const [calendarIcons, setCalendarIcons] = useState({});
   
   // Icon picker state
@@ -64,35 +81,19 @@ const MonthView = ({
   const [showInfoModal, setShowInfoModal] = useState(false);
   
   
-  // Load calendar icons and view mode on mount
+  // Load viewMode and calendarIcons on mount
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Load calendar icons
-        const storedIcons = await AsyncStorage.getItem('calendarIcons');
-        if (storedIcons) {
-          const parsedIcons = JSON.parse(storedIcons);
-          
-          // Normalize all icon data to arrays (fix mixed string/array format)
-          const normalizedIcons = {};
-          Object.keys(parsedIcons).forEach(dateKey => {
-            const iconData = parsedIcons[dateKey];
-            // Ensure all icon data is stored as arrays
-            normalizedIcons[dateKey] = Array.isArray(iconData) ? iconData : [iconData];
-          });
-          
-          console.log('📅 MonthView: Loaded and normalized icons:', normalizedIcons);
-          setCalendarIcons(normalizedIcons);
-          
-          // Save normalized data back to AsyncStorage to fix any corrupted data
-          await AsyncStorage.setItem('calendarIcons', JSON.stringify(normalizedIcons));
-        }
+        // Load view mode
+        const storedViewMode = await calendarStorage.getViewMode();
+        setViewMode(storedViewMode);
         
-        // Load saved view mode
-        const storedViewMode = await AsyncStorage.getItem('monthViewMode');
-        if (storedViewMode) {
-          setViewMode(storedViewMode);
-        }
+        // Load calendar icons
+        const storedIcons = await calendarStorage.getCalendarIcons();
+        setCalendarIcons(storedIcons);
+        
+        // console.log('📋 MonthView: Loaded viewMode:', storedViewMode, 'and', Object.keys(storedIcons).length, 'icon dates');
       } catch (error) {
         console.error('Error loading data:', error);
       }
@@ -100,6 +101,53 @@ const MonthView = ({
     
     loadData();
   }, []);
+
+  // Function to manually reload icons when needed
+  const reloadCalendarIcons = React.useCallback(async () => {
+    // console.log('📅 MonthView: Manually reloading icons');
+    const storedIcons = await calendarStorage.getCalendarIcons();
+    setCalendarIcons(storedIcons);
+  }, []);
+  
+  // Periodic check for icon updates (since focus events don't work in tab navigation)
+  React.useEffect(() => {
+    const checkForUpdatedIcons = async () => {
+      try {
+        // Only check if global flag is set (more efficient than constant polling)
+        if (global.shouldReloadMonthViewIcons) {
+          // console.log('📅 MonthView: Global reload flag detected, checking for updates');
+          
+          const currentStoredIcons = await calendarStorage.getCalendarIcons();
+          const currentStoredCount = Object.keys(currentStoredIcons).length;
+          const currentStateCount = Object.keys(calendarIcons).length;
+          
+          // console.log('📅 MonthView: Stored icons:', currentStoredCount, 'State icons:', currentStateCount);
+          
+          if (currentStoredCount !== currentStateCount) {
+            // console.log('📅 MonthView: Icon count changed, reloading from storage');
+            setCalendarIcons(currentStoredIcons);
+          } else {
+            // console.log('📅 MonthView: Icon count same, but reloading anyway (might be content change)');
+            setCalendarIcons(currentStoredIcons);
+          }
+          
+          global.shouldReloadMonthViewIcons = false;
+          // console.log('📅 MonthView: Reload completed, flag reset');
+        }
+      } catch (error) {
+        console.error('Error checking for updated icons:', error);
+      }
+    };
+    
+    // Check immediately and then set up polling
+    checkForUpdatedIcons();
+    
+    const interval = setInterval(() => {
+      checkForUpdatedIcons();
+    }, 1000); // Check every second
+    
+    return () => clearInterval(interval);
+  }, [calendarIcons]);
 
 
   // Get date key for storage
@@ -109,43 +157,39 @@ const MonthView = ({
 
   // Toggle view mode - now only cycles between dots and addIcons
   const handleToggleView = async () => {
-    console.log('🚨 handleToggleView called! Current mode:', viewMode);
+    // console.log('🚨 handleToggleView called! Current mode:', viewMode);
     const newMode = viewMode === 'dots' ? 'addIcons' : 'dots';
     
-    console.log('🔄 MonthView: Switching to mode:', newMode);
-    setViewMode(newMode);
+    // console.log('🔄 MonthView: Switching to mode:', newMode);
     
-    // Save to AsyncStorage for PDF generation
-    try {
-      await AsyncStorage.setItem('monthViewMode', newMode);
-    } catch (error) {
-      console.error('Failed to save view mode:', error);
-    }
+    // Update state and save with AsyncStorage
+    setViewMode(newMode);
+    await calendarStorage.setViewMode(newMode);
   };
 
 
-  // Handle icon selection - copied from FullscreenCalendarScreen
+  // Handle icon selection - back to AsyncStorage
   const handleIconSelect = async (icons) => {
     if (!selectedDateForIcon) return;
     
-    try {
-      const dateKey = getDateKey(selectedDateForIcon);
-      // Ensure icons is always an array
-      const iconsArray = Array.isArray(icons) ? icons : [icons];
-      
-      const newCalendarIcons = {
-        ...calendarIcons,
-        [dateKey]: iconsArray
-      };
-      
-      setCalendarIcons(newCalendarIcons);
-      await AsyncStorage.setItem('calendarIcons', JSON.stringify(newCalendarIcons));
-      
-      setShowIconPicker(false);
-      setSelectedDateForIcon(null);
-    } catch (error) {
-      console.error('Error saving calendar icons:', error);
-    }
+    const dateKey = getDateKey(selectedDateForIcon);
+    // Ensure icons is always an array
+    const iconsArray = Array.isArray(icons) ? icons : [icons];
+    
+    const newCalendarIcons = {
+      ...calendarIcons,
+      [dateKey]: iconsArray
+    };
+    
+    // Update state and save with AsyncStorage
+    setCalendarIcons(newCalendarIcons);
+    await calendarStorage.setCalendarIcons(newCalendarIcons);
+    
+    // console.log('📅 MonthView: Saved icons for date:', dateKey, 'Icons:', iconsArray);
+    // console.log('📅 MonthView: New total icons count:', Object.keys(newCalendarIcons).length);
+    
+    setShowIconPicker(false);
+    setSelectedDateForIcon(null);
   };
   
   // Create week arrays for the calendar grid - memoized for performance
@@ -266,17 +310,33 @@ const MonthView = ({
     
     // Note: Removed blockIcons since we're no longer using the 'icons' view mode
     
-    // Get calendar icons for this date (custom user-added icons)
+    // Get calendar icons for this date (custom user-added icons) - now synchronous!
     const dateKey = getDateKey(date);
     const rawIcons = calendarIcons[dateKey] || [];
     // Ensure calendarIconsForDate is always an array (handle legacy string data)
     const calendarIconsForDate = Array.isArray(rawIcons) ? rawIcons : [rawIcons].filter(Boolean);
     
-    // Determine what to display based on view mode
+    // Debug: Log for days that should have icons
+    if (hasEvents && calendarIcons[dateKey]) {
+      // console.log(`🔍 Day ${dayNumber} (${dateKey}): rawIcons:`, rawIcons, 'processed:', calendarIconsForDate);
+    }
+    
+    // Determine what to display based on view mode - simplified logic
     let displayItems = [];
+    let showingCustomIcons = false;
+    
     if (viewMode === 'addIcons') {
-      displayItems = calendarIconsForDate.slice(0, 6);
+      if (calendarIconsForDate.length > 0) {
+        // Has custom icons - show them
+        displayItems = calendarIconsForDate.slice(0, 6);
+        showingCustomIcons = true;
+        // console.log(`✅ Day ${dayNumber}: Showing ${displayItems.length} custom icons:`, displayItems);
+      } else if (hasEvents) {
+        // console.log(`❌ Day ${dayNumber}: Has events but no custom icons (will show nothing)`);
+      }
+      // In addIcons mode, if no custom icons, show nothing (not fallback dots)
     } else {
+      // In dots mode - always show domain dots if there are events
       displayItems = blockColors;
     }
     const topRowItems = displayItems.slice(0, 3);
@@ -349,7 +409,7 @@ const MonthView = ({
         </Text>
         
         {/* Show indicators (dots or icons) for each domain/timeblock - in two rows if needed */}
-        {hasEvents && (
+        {(hasEvents || showingCustomIcons) && (
           <View style={[
             styles.eventIndicatorsWrapper || { 
               marginTop: 2,
@@ -359,7 +419,7 @@ const MonthView = ({
             {/* First row of indicators (up to 3) */}
             <View style={styles.eventIndicatorsContainer}>
               {topRowItems.map((item, index) => {
-                if (viewMode === 'addIcons') {
+                if (showingCustomIcons) {
                   // Custom icons mode - item is always a string (icon name or emoji)
                   const iconToDisplay = item;
                   
@@ -422,7 +482,7 @@ const MonthView = ({
                 { marginTop: 1 } // Small space between rows
               ]}>
                 {bottomRowItems.map((item, index) => {
-                  if (viewMode === 'addIcons') {
+                  if (showingCustomIcons) {
                     // Custom icons mode - item is always a string (icon name or emoji)
                     const iconToDisplay = item;
                     
@@ -696,8 +756,11 @@ const MonthView = ({
                   viewMode,
                   onToggleView: (newViewMode) => {
                     setViewMode(newViewMode);
+                    calendarStorage.setViewMode(newViewMode);
                   },
-                  returnToMonthTab: true
+                  returnToMonthTab: true,
+                  // Pass current calendar icons to ensure consistency
+                  calendarIcons
                 });
               }}
               style={{

@@ -162,8 +162,6 @@ import { setupGlobalLogFilter } from './src/utils/LoggerUtility';
 // Import Custom Tab Bar for enhanced animations
 import CustomTabBar from './src/components/CustomTabBar';
 
-// Import Swipeable Tab Navigator for physical swiping between tabs
-import SwipeableTabNavigator from './src/components/SwipeableTabNavigator';
 
 // Import tour hook for navigation blocking
 import { useAppTour } from './src/hooks/useAppTour';
@@ -960,6 +958,48 @@ const TodoStack = ({ route, navigation }) => {
   );
 };
 
+// Enhanced tab bar icon component with dual state hint
+const ToggleableTabBarIcon = ({ primaryIcon, secondaryIcon, primaryLabel, secondaryLabel, focused, color }) => {
+  return (
+    <View style={{ width: scaleFontSize(26), height: scaleFontSize(22), alignItems: 'center', justifyContent: 'center' }}>
+      {/* Primary icon */}
+      <Ionicons 
+        name={focused ? primaryIcon : `${primaryIcon}-outline`}
+        size={scaleFontSize(22)} 
+        color={color}
+        style={{ position: 'absolute' }}
+      />
+      {/* Secondary icon hint - only show when focused to indicate toggle ability */}
+      {focused && (
+        <Ionicons 
+          name={`${secondaryIcon}-outline`}
+          size={scaleFontSize(16)} 
+          color={color}
+          style={{ 
+            position: 'absolute', 
+            top: -3, 
+            right: -5,
+            opacity: 0.7 
+          }}
+        />
+      )}
+      {/* Small toggle indicator */}
+      {focused && (
+        <View style={{
+          position: 'absolute',
+          bottom: -1,
+          right: -1,
+          width: 6,
+          height: 6,
+          borderRadius: 3,
+          backgroundColor: color,
+          opacity: 0.6
+        }} />
+      )}
+    </View>
+  );
+};
+
 // Function to create tab bar icon with accessibility
 const createTabBarIcon = (iconName, label, focused, color) => {
   const activeIconName = iconName;
@@ -1148,11 +1188,6 @@ function MainTabNavigator({ route }) {
   return (
     <View style={s.container}>
       <Animated.View style={[s.contentContainer, { opacity: contentOpacity }]}>
-        <SwipeableTabNavigator
-          swipeThreshold={50}
-          velocityThreshold={300}
-          disabled={isTourActive === true}
-        >
           <Tab.Navigator
           ref={tabNavigationRef}
           // Set initial route to ProfileTab when coming from onboarding
@@ -1243,8 +1278,32 @@ function MainTabNavigator({ route }) {
             component={GoalsStack} 
             options={({ navigation }) => ({
               tabBarLabel: 'Life Plan', // Start with default, will be updated dynamically
-              tabBarIcon: ({ focused, color }) => 
-                createTabBarIcon('compass', 'Life Plan', focused, color), // Start with default
+              tabBarIcon: ({ focused, color }) => {
+                const currentMode = global.goalsViewMode || 'overview';
+                if (currentMode === 'overview') {
+                  return (
+                    <ToggleableTabBarIcon 
+                      primaryIcon="compass"
+                      secondaryIcon="checkmark-done-circle"
+                      primaryLabel="Life Plan"
+                      secondaryLabel="Done"
+                      focused={focused}
+                      color={color}
+                    />
+                  );
+                } else {
+                  return (
+                    <ToggleableTabBarIcon 
+                      primaryIcon="checkmark-done-circle"
+                      secondaryIcon="compass"
+                      primaryLabel="Done"
+                      secondaryLabel="Life Plan"
+                      focused={focused}
+                      color={color}
+                    />
+                  );
+                }
+              },
               tabBarAccessibilityLabel: "Life Plan tab",
               unmountOnBlur: false
             })}
@@ -1273,9 +1332,29 @@ function MainTabNavigator({ route }) {
                               tabBarLabel: global.goalsViewMode === 'overview' ? 'Life Plan' : 'Done',
                               tabBarIcon: ({ focused, color }) => {
                                 const currentMode = global.goalsViewMode || 'overview';
-                                const iconName = currentMode === 'overview' ? 'compass' : 'checkmark-done-circle';
-                                const label = currentMode === 'overview' ? 'Life Plan' : 'Done';
-                                return createTabBarIcon(iconName, label, focused, color);
+                                if (currentMode === 'overview') {
+                                  return (
+                                    <ToggleableTabBarIcon 
+                                      primaryIcon="compass"
+                                      secondaryIcon="checkmark-done-circle"
+                                      primaryLabel="Life Plan"
+                                      secondaryLabel="Done"
+                                      focused={focused}
+                                      color={color}
+                                    />
+                                  );
+                                } else {
+                                  return (
+                                    <ToggleableTabBarIcon 
+                                      primaryIcon="checkmark-done-circle"
+                                      secondaryIcon="compass"
+                                      primaryLabel="Done"
+                                      secondaryLabel="Life Plan"
+                                      focused={focused}
+                                      color={color}
+                                    />
+                                  );
+                                }
                               },
                               tabBarAccessibilityLabel: global.goalsViewMode === 'overview' ? "Life Plan tab" : "Completed goals tab"
                             });
@@ -1362,23 +1441,30 @@ function MainTabNavigator({ route }) {
                   if (global.tourShouldFlashToDoTab) {
                     return <FlashingTabBarIcon iconName={iconName} label={label} focused={focused} color={color} />;
                   } else {
-                    // Handle special case for document-text icon which doesn't have a standard -outline version
-                    let finalIconName;
-                    if (iconName === 'document-text') {
-                      finalIconName = focused ? 'document-text' : 'document-outline';
+                    // Use the new toggleable icon component
+                    if (currentView === 'todo') {
+                      return (
+                        <ToggleableTabBarIcon 
+                          primaryIcon="checkbox"
+                          secondaryIcon="document-text"
+                          primaryLabel="To-Do"
+                          secondaryLabel="Notes"
+                          focused={focused}
+                          color={color}
+                        />
+                      );
                     } else {
-                      finalIconName = focused ? iconName : `${iconName}-outline`;
+                      return (
+                        <ToggleableTabBarIcon 
+                          primaryIcon="document-text"
+                          secondaryIcon="checkbox"
+                          primaryLabel="Notes"
+                          secondaryLabel="To-Do"
+                          focused={focused}
+                          color={color}
+                        />
+                      );
                     }
-                    
-                    return (
-                      <Ionicons 
-                        name={finalIconName} 
-                        size={scaleFontSize(22)} 
-                        color={color}
-                        accessible={true}
-                        accessibilityLabel={`${label} tab ${focused ? 'selected' : ''}`}
-                      />
-                    );
                   }
                 },
                 tabBarAccessibilityLabel: `${label} tab`
@@ -1420,7 +1506,6 @@ function MainTabNavigator({ route }) {
             })}
           />
           </Tab.Navigator>
-        </SwipeableTabNavigator>
       </Animated.View>
       
       {/* Add Floating AI Button to the main tab navigator with responsive props */}

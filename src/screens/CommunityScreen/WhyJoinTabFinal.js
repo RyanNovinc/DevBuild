@@ -79,9 +79,9 @@ const WhyJoinTabFinal = ({ theme }) => {
     {
       id: 0,
       emoji: '💼',
-      title: 'Career & Professional Growth',
-      color: '#2563EB',
-      gradient: ['#2563EB', '#1e40af'],
+      title: 'Career & Work',
+      color: '#3B82F6',
+      gradient: ['#3B82F6', '#2563EB'],
       description: 'Level up professionally',
       channels: [
         { name: 'skill-development-learning', desc: 'Master new skills and advance your career' },
@@ -91,23 +91,10 @@ const WhyJoinTabFinal = ({ theme }) => {
     },
     {
       id: 1,
-      emoji: '💰',
-      title: 'Financial Security & Wealth',
-      color: '#10B981',
-      gradient: ['#10B981', '#047857'],
-      description: 'Master your money',
-      channels: [
-        { name: 'budgeting-debt-management', desc: 'Take control of your finances' },
-        { name: 'investing-wealth-building', desc: 'Grow your wealth through smart investing' },
-        { name: 'financial-independence-fire', desc: 'Achieve financial independence' },
-      ],
-    },
-    {
-      id: 2,
-      emoji: '🍏',
-      title: 'Health & Energy',
-      color: '#EF4444',
-      gradient: ['#EF4444', '#dc2626'],
+      emoji: '🏃',
+      title: 'Health & Wellness',
+      color: '#22C55E',
+      gradient: ['#22C55E', '#16A34A'],
       description: 'Transform your wellbeing',
       channels: [
         { name: 'fitness-exercise', desc: 'Build strength and stay active' },
@@ -116,9 +103,9 @@ const WhyJoinTabFinal = ({ theme }) => {
       ],
     },
     {
-      id: 3,
+      id: 2,
       emoji: '👥',
-      title: 'Relationships & Connection',
+      title: 'Relationships',
       color: '#EC4899',
       gradient: ['#EC4899', '#db2777'],
       description: 'Build deeper connections',
@@ -129,11 +116,11 @@ const WhyJoinTabFinal = ({ theme }) => {
       ],
     },
     {
-      id: 4,
+      id: 3,
       emoji: '📚',
-      title: 'Learning & Growth',
-      color: '#8B5CF6',
-      gradient: ['#8B5CF6', '#7c3aed'],
+      title: 'Personal Growth',
+      color: '#F97316',
+      gradient: ['#F97316', '#EA580C'],
       description: 'Never stop growing',
       channels: [
         { name: 'academic-professional-education', desc: 'Advance your education' },
@@ -142,11 +129,37 @@ const WhyJoinTabFinal = ({ theme }) => {
       ],
     },
     {
+      id: 4,
+      emoji: '💰',
+      title: 'Financial Security',
+      color: '#EAB308',
+      gradient: ['#EAB308', '#CA8A04'],
+      description: 'Master your money',
+      channels: [
+        { name: 'budgeting-debt-management', desc: 'Take control of your finances' },
+        { name: 'investing-wealth-building', desc: 'Grow your wealth through smart investing' },
+        { name: 'financial-independence-fire', desc: 'Achieve financial independence' },
+      ],
+    },
+    {
       id: 5,
-      emoji: '🌎',
-      title: 'Purpose & Impact',
-      color: '#0D9488',
-      gradient: ['#0D9488', '#0f766e'],
+      emoji: '🚴',
+      title: 'Recreation & Leisure',
+      color: '#8B5CF6',
+      gradient: ['#8B5CF6', '#7C3AED'],
+      description: 'Enjoy life more',
+      channels: [
+        { name: 'travel-adventure', desc: 'Explore the world and have adventures' },
+        { name: 'hobbies-creative-pursuits', desc: 'Pursue hobbies and creative interests' },
+        { name: 'entertainment-social-activities', desc: 'Have fun and enjoy social activities' },
+      ],
+    },
+    {
+      id: 6,
+      emoji: '🧭',
+      title: 'Purpose & Meaning',
+      color: '#EF4444',
+      gradient: ['#EF4444', '#DC2626'],
       description: 'Make a difference',
       channels: [
         { name: 'volunteering-community-service', desc: 'Give back to your community' },
@@ -155,29 +168,16 @@ const WhyJoinTabFinal = ({ theme }) => {
       ],
     },
     {
-      id: 6,
-      emoji: '💻',
-      title: 'Digital Wellbeing & Innovation',
-      color: '#3B82F6',
-      gradient: ['#3B82F6', '#2563eb'],
-      description: 'Master technology & balance',
-      channels: [
-        { name: 'productivity-organization', desc: 'Get organized and boost productivity' },
-        { name: 'digital-detox-boundaries', desc: 'Create healthy digital boundaries' },
-        { name: 'tech-skills-ai-tools', desc: 'Master technology and AI tools' },
-      ],
-    },
-    {
       id: 7,
-      emoji: '🏝️',
-      title: 'Recreation & Renewal',
-      color: '#F59E0B',
-      gradient: ['#F59E0B', '#d97706'],
-      description: 'Enjoy life more',
+      emoji: '🏠',
+      title: 'Community & Environment',
+      color: '#06B6D4',
+      gradient: ['#06B6D4', '#0891B2'],
+      description: 'Build better spaces',
       channels: [
-        { name: 'travel-adventure', desc: 'Explore the world and have adventures' },
-        { name: 'hobbies-creative-pursuits', desc: 'Pursue hobbies and creative interests' },
-        { name: 'entertainment-social-activities', desc: 'Have fun and enjoy social activities' },
+        { name: 'community-building', desc: 'Connect with your local community' },
+        { name: 'home-organization', desc: 'Create organized and peaceful living spaces' },
+        { name: 'environmental-impact', desc: 'Make positive environmental changes' },
       ],
     }
   ];
@@ -355,87 +355,7 @@ const WhyJoinTabFinal = ({ theme }) => {
             {domains.map((domain, index) => renderDomainCard(domain, index))}
           </ScrollView>
 
-          {/* Selected Domain Details */}
-          <View style={[styles.selectedDomainSection, { backgroundColor: theme.card, borderColor: theme.border }]}>
-            <View style={styles.selectedDomainHeader}>
-              <Text style={styles.selectedDomainEmoji}>{currentDomain.emoji}</Text>
-              <View style={styles.selectedDomainInfo}>
-                <Text style={[styles.selectedDomainTitle, { color: theme.text }]}>
-                  {currentDomain.title}
-                </Text>
-                <View style={styles.selectedDomainStats}>
-                  <Text style={[styles.selectedDomainStat, { color: currentDomain.color }]}>
-                    {currentDomain.channels.length} specialized channels
-                  </Text>
-                </View>
-              </View>
-              <TouchableOpacity
-                style={[styles.viewAllButton, { backgroundColor: currentDomain.color }]}
-                onPress={openChannelModal}
-              >
-                <Text style={styles.viewAllButtonText}>View All</Text>
-                <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
-              </TouchableOpacity>
-            </View>
 
-            {/* Channel List */}
-            <View style={styles.channelListContainer}>
-              {currentDomain.channels.map((channel, idx) => (
-                <TouchableOpacity
-                  key={idx}
-                  style={[styles.channelRow, { borderColor: theme.border }]}
-                  activeOpacity={0.7}
-                >
-                  <View style={[styles.channelIcon, { backgroundColor: currentDomain.color + '15' }]}>
-                    <Text style={[styles.channelHash, { color: currentDomain.color }]}>#</Text>
-                  </View>
-                  <View style={styles.channelInfo}>
-                    <Text style={[styles.channelName, { color: theme.text }]}>
-                      {channel.name}
-                    </Text>
-                    <Text style={[styles.channelDesc, { color: theme.textSecondary }]}>
-                      {channel.desc}
-                    </Text>
-                  </View>
-                  <Ionicons 
-                    name="arrow-forward" 
-                    size={16} 
-                    color={currentDomain.color} 
-                    style={{ opacity: 0.6 }}
-                  />
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          {/* Domain Selector Pills */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.domainPillsContainer}
-          >
-            {domains.map((domain, index) => (
-              <TouchableOpacity
-                key={domain.id}
-                style={[
-                  styles.domainPill,
-                  {
-                    backgroundColor: selectedDomain === index ? domain.color : theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-                    borderColor: selectedDomain === index ? domain.color : theme.border,
-                  }
-                ]}
-                onPress={() => handleDomainSelect(index)}
-              >
-                <Text style={styles.domainPillEmoji}>{domain.emoji}</Text>
-                <Text style={[
-                  styles.domainPillText,
-                  { color: selectedDomain === index ? '#FFFFFF' : theme.text }
-                ]}>
-                  {domain.title.split(' ')[0]}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
         </Animated.View>
 
         {/* CTA Section */}
@@ -692,113 +612,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: 'rgba(255,255,255,0.95)',
     marginBottom: 3,
-  },
-  selectedDomainSection: {
-    marginHorizontal: 16,
-    marginTop: 20,
-    padding: 20,
-    borderRadius: 16,
-    borderWidth: 1,
-  },
-  selectedDomainHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  selectedDomainEmoji: {
-    fontSize: 36,
-    marginRight: 12,
-  },
-  selectedDomainInfo: {
-    flex: 1,
-  },
-  selectedDomainTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  selectedDomainStats: {
-    flexDirection: 'row',
-    marginTop: 4,
-  },
-  selectedDomainStat: {
-    fontSize: 13,
-  },
-  viewAllButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    gap: 4,
-  },
-  viewAllButtonText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  channelListContainer: {
-    gap: 12,
-  },
-  channelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingBottom: 12,
-    marginBottom: 12,
-    borderBottomWidth: 1,
-  },
-  channelIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  channelHash: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  channelInfo: {
-    flex: 1,
-  },
-  channelName: {
-    fontSize: 15,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  channelDesc: {
-    fontSize: 12,
-    opacity: 0.8,
-  },
-  channelMembers: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  channelMemberCount: {
-    fontSize: 12,
-  },
-  domainPillsContainer: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    gap: 8,
-  },
-  domainPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    marginRight: 8,
-    borderWidth: 1,
-  },
-  domainPillEmoji: {
-    fontSize: 18,
-    marginRight: 6,
-  },
-  domainPillText: {
-    fontSize: 14,
-    fontWeight: '600',
   },
   ctaSection: {
     paddingHorizontal: 16,

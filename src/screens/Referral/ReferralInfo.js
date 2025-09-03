@@ -30,7 +30,7 @@ const ReferralInfo = ({ theme, navigation }) => {
     {
       id: 3,
       question: "Where does my friend enter the referral code?",
-      answer: "Your friend must go to Profile → Settings → Enter Referral Code in the app and input your code BEFORE or during the sign-up process. This ensures you both get the free AI Light month!",
+      answer: "Your friend must go to Profile → Settings → Enter Referral Code in the app and input your code BEFORE the sign-up process. This ensures you both get the free AI Light month!",
       hasClickableText: true
     },
     {
@@ -76,7 +76,7 @@ const ReferralInfo = ({ theme, navigation }) => {
                 Friend Enters Code
               </Text>
               <Text style={styles.stepDescription}>
-                They add your referral code in the app before or during sign-up
+                They add your referral code in the app before sign-up
               </Text>
             </View>
           </View>

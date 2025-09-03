@@ -34,7 +34,8 @@ const Tab = createMaterialTopTabNavigator();
 // Add Task Tab Component
 const AddTaskTab = ({ 
   taskDetailsState,
-  handlers
+  handlers,
+  preselectedMilestoneId
 }) => {
   const { theme } = useTheme();
   const { goals = [], projects = [] } = useAppContext();
@@ -241,6 +242,60 @@ const AddTaskTab = ({
             </Text>
           </TouchableOpacity>
           
+          {/* Standalone Milestones option - show when preselected milestone has no goalId OR when standalone milestones exist */}
+          {((preselectedMilestoneId && projects.find(m => m.id === preselectedMilestoneId && !m.goalId)) || 
+            projects.some(m => !m.goalId)) && (
+            <TouchableOpacity
+              style={[
+                styles.optionButton,
+                {
+                  backgroundColor: selectedGoalId === 'standalone-milestones' ? '#9CA3AF' : theme.inputBackground,
+                  borderColor: selectedGoalId === 'standalone-milestones' ? '#9CA3AF' : theme.border,
+                  borderRadius: 12,
+                  shadowColor: selectedGoalId === 'standalone-milestones' ? '#9CA3AF' : '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: selectedGoalId === 'standalone-milestones' ? 0.3 : 0.05,
+                  shadowRadius: 4,
+                  elevation: selectedGoalId === 'standalone-milestones' ? 3 : 1,
+                  overflow: 'hidden'
+                }
+              ]}
+              onPress={() => {
+                setSelectedGoalId('standalone-milestones');
+                // Only reset milestone if there's no preselected milestone
+                if (!preselectedMilestoneId) {
+                  setSelectedMilestoneId('');
+                }
+              }}
+            >
+              {selectedGoalId === 'standalone-milestones' && (
+                <LinearGradient
+                  colors={['rgba(255,255,255,0.2)', 'rgba(255,255,255,0)']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 0, y: 1 }}
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    height: '50%',
+                    borderTopLeftRadius: 12,
+                    borderTopRightRadius: 12
+                  }}
+                />
+              )}
+              <Text style={[
+                styles.optionText,
+                { 
+                  color: selectedGoalId === 'standalone-milestones' ? '#FFFFFF' : theme.text,
+                  fontWeight: selectedGoalId === 'standalone-milestones' ? '600' : '500'
+                }
+              ]}>
+                Standalone Milestones
+              </Text>
+            </TouchableOpacity>
+          )}
+          
           {/* Show goals if available */}
           {goals.map((goal) => (
             <TouchableOpacity
@@ -336,53 +391,59 @@ const AddTaskTab = ({
           </Text>
           {(() => {
             // Get milestones (projects) that belong to the selected goal
-            const goalMilestones = projects.filter(project => project.goalId === selectedGoalId);
+            // Special case: if selectedGoalId is 'standalone-milestones', show all standalone milestones
+            const goalMilestones = selectedGoalId === 'standalone-milestones' 
+              ? projects.filter(project => !project.goalId) // Standalone milestones have no goalId
+              : projects.filter(project => project.goalId === selectedGoalId);
             
             return (
               <View style={styles.optionsList}>
-                <TouchableOpacity
-                  style={[
-                    styles.optionButton,
-                    {
-                      backgroundColor: !selectedMilestoneId ? domainColor : theme.inputBackground,
-                      borderColor: !selectedMilestoneId ? domainColor : theme.border,
-                      borderRadius: 12,
-                      shadowColor: !selectedMilestoneId ? domainColor : '#000',
-                      shadowOffset: { width: 0, height: 2 },
-                      shadowOpacity: !selectedMilestoneId ? 0.3 : 0.05,
-                      shadowRadius: 4,
-                      elevation: !selectedMilestoneId ? 3 : 1,
-                      overflow: 'hidden'
-                    }
-                  ]}
-                  onPress={() => setSelectedMilestoneId(null)}
-                >
-                  {!selectedMilestoneId && (
-                    <LinearGradient
-                      colors={['rgba(255,255,255,0.2)', 'rgba(255,255,255,0)']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 0, y: 1 }}
-                      style={{
-                        position: 'absolute',
-                        left: 0,
-                        right: 0,
-                        top: 0,
-                        height: '50%',
-                        borderTopLeftRadius: 12,
-                        borderTopRightRadius: 12
-                      }}
-                    />
-                  )}
-                  <Text style={[
-                    styles.optionText,
-                    { 
-                      color: !selectedMilestoneId ? '#FFFFFF' : theme.text,
-                      fontWeight: !selectedMilestoneId ? '600' : '500'
-                    }
-                  ]}>
-                    Standalone Task
-                  </Text>
-                </TouchableOpacity>
+                {/* Only show "Standalone Task" option if we're NOT in standalone milestones mode */}
+                {selectedGoalId !== 'standalone-milestones' && (
+                  <TouchableOpacity
+                    style={[
+                      styles.optionButton,
+                      {
+                        backgroundColor: !selectedMilestoneId ? domainColor : theme.inputBackground,
+                        borderColor: !selectedMilestoneId ? domainColor : theme.border,
+                        borderRadius: 12,
+                        shadowColor: !selectedMilestoneId ? domainColor : '#000',
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: !selectedMilestoneId ? 0.3 : 0.05,
+                        shadowRadius: 4,
+                        elevation: !selectedMilestoneId ? 3 : 1,
+                        overflow: 'hidden'
+                      }
+                    ]}
+                    onPress={() => setSelectedMilestoneId(null)}
+                  >
+                    {!selectedMilestoneId && (
+                      <LinearGradient
+                        colors={['rgba(255,255,255,0.2)', 'rgba(255,255,255,0)']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 0, y: 1 }}
+                        style={{
+                          position: 'absolute',
+                          left: 0,
+                          right: 0,
+                          top: 0,
+                          height: '50%',
+                          borderTopLeftRadius: 12,
+                          borderTopRightRadius: 12
+                        }}
+                      />
+                    )}
+                    <Text style={[
+                      styles.optionText,
+                      { 
+                        color: !selectedMilestoneId ? '#FFFFFF' : theme.text,
+                        fontWeight: !selectedMilestoneId ? '600' : '500'
+                      }
+                    ]}>
+                      Standalone Task
+                    </Text>
+                  </TouchableOpacity>
+                )}
                 
                 {goalMilestones.map((milestone) => (
                   <TouchableOpacity
@@ -574,6 +635,13 @@ const TaskDetailsScreen = ({ route, navigation }) => {
   const selectedGoal = goals.find(g => g.id === selectedGoalId);
   const domainColor = selectedGoal?.color || theme.primary;
   
+  // Set initial goalId for standalone milestones
+  useEffect(() => {
+    if (preselectedMilestoneId && projects.find(m => m.id === preselectedMilestoneId && !m.goalId)) {
+      setSelectedGoalId('standalone-milestones');
+    }
+  }, [preselectedMilestoneId, projects]);
+
   // Initialize form when editing (single task only)
   useEffect(() => {
     if (isEditing && task) {
@@ -591,13 +659,23 @@ const TaskDetailsScreen = ({ route, navigation }) => {
       return;
     }
     
+    // Handle virtual milestone IDs for standalone tasks
+    let finalGoalId = selectedGoalId;
+    let finalMilestoneId = selectedMilestoneId;
+    
+    if (selectedMilestoneId && selectedMilestoneId.includes('-standalone-tasks')) {
+      // Extract real goal ID from virtual milestone ID
+      finalGoalId = selectedMilestoneId.replace('-standalone-tasks', '');
+      finalMilestoneId = null; // No milestone for standalone tasks
+    }
+    
     const newTask = {
       id: Date.now().toString(),
       title: title.trim(),
       description: description.trim(),
-      goalId: selectedGoalId,
-      milestoneId: selectedMilestoneId,
-      projectId: selectedMilestoneId, // Keep for backward compatibility with AppContext
+      goalId: finalGoalId,
+      milestoneId: finalMilestoneId,
+      projectId: finalMilestoneId, // Keep for backward compatibility with AppContext
       status: 'todo',
       completed: false
     };
@@ -1131,8 +1209,9 @@ const TaskDetailsScreen = ({ route, navigation }) => {
     <AddTaskTab 
       taskDetailsState={taskDetailsState}
       handlers={handlers}
+      preselectedMilestoneId={preselectedMilestoneId}
     />
-  ), [taskDetailsState, handlers]);
+  ), [taskDetailsState, handlers, preselectedMilestoneId]);
 
   // Tab component for Task List - Memoized to prevent unnecessary re-renders
   const TaskListTabScreen = React.useCallback(() => (
