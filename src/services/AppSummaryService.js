@@ -64,8 +64,11 @@ class AppSummaryService {
     const profileSection = this.generateProfileSection(settings, userCountry);
     const hierarchySection = this.generateGoalsHierarchy(goals, milestones, tasks);
     
+    // Get user name from settings for the title
+    const userName = settings?.userProfile?.name || 'User';
+    
     // Combine all sections with a header
-    return `# USER APP CONTEXT SUMMARY
+    return `# ${userName}'s APP CONTEXT SUMMARY
 Last Updated: ${formatDate(new Date())}
 
 ${profileSection}
@@ -475,8 +478,8 @@ Today's Date: ${getTodaysDateWithTimezone(userCountry)}`;
       }
       
       // Include description if available
-      if (project.description) {
-        section += `\n  Description: ${project.description}`;
+      if (milestone.description) {
+        section += `\n  Description: ${milestone.description}`;
       }
     });
     
@@ -486,16 +489,16 @@ Today's Date: ${getTodaysDateWithTimezone(userCountry)}`;
   /**
    * Generate tasks section with active tasks only
    * @param {Array} tasks - Tasks array
-   * @param {Array} projects - Milestones array for reference
+   * @param {Array} milestones - Milestones array for reference
    * @param {Array} goals - Goals array for reference
    * @returns {string} - Formatted text section
    */
-  static generateTasksSection(tasks, projects = [], goals = []) {
+  static generateTasksSection(tasks, milestones = [], goals = []) {
     if (!Array.isArray(tasks) || tasks.length === 0) {
       return '## ACTIVE TASKS\nNo tasks created yet.';
     }
     
-    // Create sets of goal and project IDs matching ProfileScreen logic
+    // Create sets of goal and milestone IDs matching ProfileScreen logic
     const completedGoalIds = new Set();
     const validGoalIds = new Set();
     
@@ -511,34 +514,34 @@ Today's Date: ${getTodaysDateWithTimezone(userCountry)}`;
     }
     
     // Create a map of milestone IDs to titles and track excluded milestones
-    const projectMap = {};
-    const completedProjectsMap = {};
+    const milestoneMap = {};
+    const completedMilestonesMap = {};
     
-    if (Array.isArray(projects)) {
-      projects.forEach(project => {
-        if (project && project.id) {
+    if (Array.isArray(milestones)) {
+      milestones.forEach(milestone => {
+        if (milestone && milestone.id) {
           // Mark milestones as "completed" for filtering purposes following ProfileScreen logic
           
           // FIRST: Skip milestones that belong to deleted goals (goals that no longer exist)
-          if (project.goalId && !validGoalIds.has(project.goalId)) {
-            completedProjectsMap[project.id] = true;
+          if (milestone.goalId && !validGoalIds.has(milestone.goalId)) {
+            completedMilestonesMap[milestone.id] = true;
             return;
           }
           
           // SECOND: Skip milestones that belong to completed goals
-          if (project.goalId && completedGoalIds.has(project.goalId)) {
-            completedProjectsMap[project.id] = true;
+          if (milestone.goalId && completedGoalIds.has(milestone.goalId)) {
+            completedMilestonesMap[milestone.id] = true;
             return;
           }
           
           // THIRD: Skip milestones that are themselves completed or done
-          if (project.completed === true || project.status === 'done') {
-            completedProjectsMap[project.id] = true;
+          if (milestone.completed === true || milestone.status === 'done') {
+            completedMilestonesMap[milestone.id] = true;
             return;
           }
           
           // This is an active milestone - add to milestone map
-          projectMap[project.id] = project.title;
+          milestoneMap[milestone.id] = milestone.title;
         }
       });
     }
@@ -546,7 +549,7 @@ Today's Date: ${getTodaysDateWithTimezone(userCountry)}`;
     // Filter for active tasks using ProfileScreen's exact logic
     const activeTasks = tasks.filter(task => {
       // FIRST: Skip tasks that belong to completed milestones (which includes all excluded scenarios above)
-      if (task.projectId && completedProjectsMap[task.projectId]) {
+      if (task.milestoneId && completedMilestonesMap[task.milestoneId]) {
         return false;
       }
       
@@ -596,8 +599,8 @@ Today's Date: ${getTodaysDateWithTimezone(userCountry)}`;
       section += `\n- ${task.title}`;
       
       // Include milestone association if available (only for active milestones)
-      if (task.projectId && projectMap[task.projectId]) {
-        section += ` (Milestone: ${projectMap[task.projectId]})`;
+      if (task.milestoneId && milestoneMap[task.milestoneId]) {
+        section += ` (Milestone: ${milestoneMap[task.milestoneId]})`;
       }
       
       // Include due date if available

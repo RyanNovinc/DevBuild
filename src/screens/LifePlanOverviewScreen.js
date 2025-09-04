@@ -1817,6 +1817,7 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
     deleteGoal,
     deleteProject: deleteMilestone,
     deleteTask,
+    deleteTasksBulk,
     updateTask,
     updateProject: updateMilestone,
     updateGoal,
@@ -2203,22 +2204,24 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
   // Event Handlers
   const handleClearAllStandaloneTasks = async () => {
     try {
-      // Get all completed standalone tasks
-      const completedStandaloneTasks = standaloneTasks.filter(task => task.completed || task.status === 'done');
+      // Clear ALL standalone tasks (button only appears when all are completed)
+      // Since progressPercentage === 100 when this button appears, all tasks should be completed
+      if (standaloneTasks.length === 0) return;
       
-      if (completedStandaloneTasks.length === 0) return;
+      // Get task IDs for bulk deletion - DELETE ALL standalone tasks
+      const taskIdsToDelete = standaloneTasks.map(task => task.id);
       
-      // Delete each completed standalone task
-      for (const task of completedStandaloneTasks) {
-        if (deleteTask) {
-          await deleteTask(null, task.id); // null for milestoneId since these are standalone
-        }
+      // Use bulk delete to avoid race conditions
+      const deletedTasks = await deleteTasksBulk(taskIdsToDelete);
+      
+      if (deletedTasks && deletedTasks.length > 0) {
+        // Trigger fireworks animation with a nice color
+        const celebrationColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'];
+        triggerFireworks(celebrationColors, 5000);
+        showSuccess(`Cleared ${deletedTasks.length} tasks! 🎆`);
+      } else {
+        showError('Failed to clear tasks');
       }
-      
-      // Trigger fireworks animation with a nice color
-      const celebrationColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'];
-      triggerFireworks(celebrationColors, 5000);
-      showSuccess(`Cleared ${completedStandaloneTasks.length} completed tasks! 🎆`);
     } catch (error) {
       console.error('Error clearing standalone tasks:', error);
       showError('Failed to clear tasks');

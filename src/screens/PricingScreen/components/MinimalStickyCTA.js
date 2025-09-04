@@ -11,6 +11,7 @@ const MinimalStickyCTA = ({
   selectedSubscription,
   aiPlansBilling = 'monthly',
   handlePurchase,
+  handleSelectPlan,
   spotsRemaining = 1000,
   responsive = {}
 }) => {
@@ -22,7 +23,11 @@ const MinimalStickyCTA = ({
   // Calculate current price based on user number
   const getCurrentPrice = () => {
     const spotsExhausted = spotsRemaining <= 0;
-    if (spotsExhausted) return '$3.49/mo'; // Monthly subscription pricing when sold out
+    if (spotsExhausted) {
+      // When sold out, show billing-based pricing
+      if (selectedSubscription === 'lifetime') return '$99.99';
+      return selectedSubscription === 'annual' ? '$34.99/year' : '$3.49/mo';
+    }
     
     const userNumber = 1001 - spotsRemaining;
     if (userNumber <= 100) return '$0.99'; // Users 1-100
@@ -37,6 +42,11 @@ const MinimalStickyCTA = ({
   const isSubscriptionPlan = selectedPlan === 'basic' || selectedPlan === 'pro' || selectedPlan === 'premium';
   const noSelection = !selectedPlan;
   
+  // Hide CTA completely for AI plans on AI Add-ons tab
+  if (isAIPlan && activeTab === 'subscription') {
+    return null;
+  }
+  
   // Get price and text
   let priceText = '';
   let buttonText = '';
@@ -49,22 +59,21 @@ const MinimalStickyCTA = ({
   } else if (isFounderPlan) {
     priceText = getCurrentPrice();
     buttonText = 'Unlock Pro Access';
-    subText = spotsRemaining <= 0 ? 'Monthly subscription' : 'One-time payment';
+    subText = spotsRemaining <= 0 ? (selectedSubscription === 'lifetime' ? 'One-time payment' : selectedSubscription === 'annual' ? 'Annual subscription' : 'Monthly subscription') : 'One-time payment';
   } else if (isCredits) {
     priceText = '$0.99';
     buttonText = 'Get 150 Credits';
     subText = '';
   } else if (isAIPlan) {
-    // AI Plan pricing - use aiPlansBilling for AI plans
-    const currentBilling = activeTab === 'subscription' ? aiPlansBilling : selectedSubscription;
-    const prices = {
-      compass: currentBilling === 'annual' ? '$29.99/year' : '$2.99/month',
-      navigator: currentBilling === 'annual' ? '$49.99/year' : '$4.99/month',
-      guide: currentBilling === 'annual' ? '$99.99/year' : '$9.99/month'
+    // AI Plan names instead of prices - users see pricing in the modal
+    const planNames = {
+      compass: 'AI Light',
+      navigator: 'AI Plus',
+      guide: 'AI Max'
     };
-    priceText = prices[selectedPlan];
-    buttonText = 'Start AI Plan';
-    subText = currentBilling === 'annual' ? 'Billed yearly' : 'Billed monthly';
+    priceText = planNames[selectedPlan];
+    buttonText = `Continue with ${planNames[selectedPlan]}`;
+    subText = 'Select duration and see pricing';
   } else if (isSubscriptionPlan) {
     // Subscription Plan pricing - use selectedSubscription for billing
     const currentBilling = selectedSubscription;
@@ -149,7 +158,15 @@ const MinimalStickyCTA = ({
             shadowRadius: 8,
             elevation: 8,
           }}
-          onPress={() => handlePurchase(noSelection ? 'credits' : selectedPlan)}
+          onPress={() => {
+            const planToHandle = noSelection ? 'credits' : selectedPlan;
+            // Use handleSelectPlan for AI plans, handlePurchase for others
+            if (isAIPlan && handleSelectPlan) {
+              handleSelectPlan(planToHandle);
+            } else {
+              handlePurchase(planToHandle);
+            }
+          }}
           activeOpacity={0.8}
         >
           <Text style={{

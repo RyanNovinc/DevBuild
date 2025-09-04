@@ -601,7 +601,7 @@ const TaskListTab = React.memo(({
 
 const TaskDetailsScreen = ({ route, navigation }) => {
   const { theme } = useTheme();
-  const { addTask, updateTask, goals = [], projects = [] } = useAppContext();
+  const { addTask, addTasksBulk, updateTask, goals = [], projects = [] } = useAppContext();
   const { showSuccess, showError } = useNotification();
   
   // Get params
@@ -670,7 +670,7 @@ const TaskDetailsScreen = ({ route, navigation }) => {
     }
     
     const newTask = {
-      id: Date.now().toString(),
+      id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       title: title.trim(),
       description: description.trim(),
       goalId: finalGoalId,
@@ -734,26 +734,29 @@ const TaskDetailsScreen = ({ route, navigation }) => {
     }
     
     try {
-      // Save each task sequentially
-      for (const taskData of taskList) {
-        const completeTaskData = {
-          title: taskData.title,
-          name: taskData.title,
-          description: '', // No description in multi-add mode
-          status: 'todo',
-          completed: false,
-          goalId: taskData.goalId,
-          milestoneId: taskData.milestoneId,
-          projectId: taskData.projectId, // Keep for AppContext compatibility
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        };
-        
-        await addTask(completeTaskData);
-      }
+      // Prepare all tasks for bulk creation
+      const tasksToAdd = taskList.map(taskData => ({
+        title: taskData.title,
+        name: taskData.title,
+        description: taskData.description || '', // Use description if provided
+        status: 'todo',
+        completed: false,
+        goalId: taskData.goalId,
+        milestoneId: taskData.milestoneId,
+        projectId: taskData.projectId, // Keep for AppContext compatibility
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }));
       
-      showSuccess(`Successfully created ${taskList.length} tasks`);
-      navigation.goBack();
+      // Use bulk add function to avoid race conditions
+      const savedTasks = await addTasksBulk(tasksToAdd);
+      
+      if (savedTasks && savedTasks.length > 0) {
+        showSuccess(`Successfully created ${savedTasks.length} tasks`);
+        navigation.goBack();
+      } else {
+        showError('Failed to save tasks');
+      }
     } catch (error) {
       console.error('Error saving tasks:', error);
       showError('Failed to save some tasks');

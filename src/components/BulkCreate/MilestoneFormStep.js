@@ -6,9 +6,12 @@ import {
   StyleSheet, 
   TouchableOpacity,
   TextInput,
-  ScrollView
+  ScrollView,
+  Switch,
+  Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import {
   scaleWidth,
   scaleHeight,
@@ -28,6 +31,9 @@ const MilestoneFormStep = ({
   const [title, setTitle] = useState(initialData?.title || '');
   const [description, setDescription] = useState(initialData?.description || '');
   const [selectedGoal, setSelectedGoal] = useState(null);
+  const [hasDueDate, setHasDueDate] = useState(initialData?.dueDate ? true : false);
+  const [dueDate, setDueDate] = useState(initialData?.dueDate ? new Date(initialData.dueDate) : new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
   
   // Initialize goal selection
   useEffect(() => {
@@ -60,7 +66,8 @@ const MilestoneFormStep = ({
       goalTitle: selectedGoal?.title || null,
       domain: selectedGoal?.domain || 'Other',
       color: selectedGoal?.color || '#007AFF',
-      tasks: initialData?.tasks || []
+      tasks: initialData?.tasks || [],
+      dueDate: hasDueDate ? dueDate.toISOString() : null
     };
 
     onComplete(milestoneData);
@@ -228,6 +235,61 @@ const MilestoneFormStep = ({
             )}
           </View>
         )}
+
+        {/* Due Date Section */}
+        <View style={styles.inputSection}>
+          <View style={styles.switchContainer}>
+            <View style={styles.switchInfo}>
+              <Text style={[styles.label, { color: theme.textSecondary }]}>
+                Due Date
+              </Text>
+              <Text style={[styles.switchDescription, { color: theme.textSecondary }]}>
+                Set a deadline for this milestone
+              </Text>
+            </View>
+            <Switch
+              value={hasDueDate}
+              onValueChange={setHasDueDate}
+              trackColor={{ 
+                false: theme.border, 
+                true: (selectedGoal?.color || '#007AFF') + '40' 
+              }}
+              thumbColor={hasDueDate ? (selectedGoal?.color || '#007AFF') : theme.textSecondary}
+            />
+          </View>
+          
+          {hasDueDate && (
+            <TouchableOpacity
+              style={[
+                styles.dateButton,
+                { 
+                  backgroundColor: theme.inputBackground,
+                  borderColor: theme.border
+                }
+              ]}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Ionicons name="calendar-outline" size={20} color={selectedGoal?.color || '#007AFF'} />
+              <Text style={[styles.dateButtonText, { color: theme.text }]}>
+                {dueDate.toLocaleDateString()}
+              </Text>
+            </TouchableOpacity>
+          )}
+          
+          {showDatePicker && (
+            <DateTimePicker
+              value={dueDate}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={(event, selectedDate) => {
+                setShowDatePicker(false);
+                if (selectedDate) {
+                  setDueDate(selectedDate);
+                }
+              }}
+            />
+          )}
+        </View>
       </ScrollView>
 
       {/* Navigation Buttons */}
@@ -377,6 +439,35 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 10,
     fontWeight: '600',
+  },
+  switchContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.m,
+  },
+  switchInfo: {
+    flex: 1,
+    marginRight: spacing.m,
+  },
+  switchDescription: {
+    fontSize: fontSizes.s,
+    marginTop: spacing.xs,
+    lineHeight: fontSizes.s * 1.3,
+  },
+  dateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: scaleWidth(12),
+    paddingHorizontal: spacing.m,
+    paddingVertical: spacing.m,
+    minHeight: scaleHeight(48),
+  },
+  dateButtonText: {
+    fontSize: fontSizes.m,
+    fontWeight: '500',
+    marginLeft: spacing.s,
   },
   buttonContainer: {
     flexDirection: 'row',

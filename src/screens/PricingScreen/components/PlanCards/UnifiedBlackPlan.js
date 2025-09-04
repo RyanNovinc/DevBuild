@@ -4,6 +4,7 @@ import { View, Text, TouchableOpacity, Modal, Animated, Dimensions } from 'react
 import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useNavigation } from '@react-navigation/native';
+import AIUpsellModal from '../AIUpsellModal';
 
 const UnifiedBlackPlan = ({ 
   theme, 
@@ -43,6 +44,10 @@ const UnifiedBlackPlan = ({
   // Modal state for guarantee info
   const [showGuaranteeInfo, setShowGuaranteeInfo] = useState(false);
   const [guaranteeDetailsView, setGuaranteeDetailsView] = useState('main'); // 'main' or 'details'
+  
+  // AI Upsell Modal state
+  const [showAIUpsell, setShowAIUpsell] = useState(false);
+  const [purchasedPlan, setPurchasedPlan] = useState(null);
 
   // Timer logic
   useEffect(() => {
@@ -85,6 +90,7 @@ const UnifiedBlackPlan = ({
   const getCurrentPrice = () => {
     if (spotsExhausted) {
       // When sold out, show billing-based pricing
+      if (billing === 'lifetime') return '$99.99';
       return billing === 'annual' ? '$34.99' : '$3.49';
     }
     
@@ -228,7 +234,7 @@ const UnifiedBlackPlan = ({
           return null;
         })()}
 
-        {/* Billing Toggle - Only show when sold out */}
+        {/* Billing Toggle - Only show when sold out - Now with 3 options */}
         {spotsExhausted && setBilling && (
           <View style={{
             backgroundColor: '#000000',
@@ -238,7 +244,7 @@ const UnifiedBlackPlan = ({
             marginBottom: 20,
             marginTop: 12,
             alignSelf: 'center',
-            width: '85%',
+            width: '95%',
           }}>
             <TouchableOpacity
               style={{
@@ -251,7 +257,7 @@ const UnifiedBlackPlan = ({
             >
               <Text style={{
                 textAlign: 'center',
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: '600',
                 color: billing === 'monthly' ? '#FFFFFF' : 'rgba(255,255,255,0.5)',
               }}>
@@ -270,20 +276,51 @@ const UnifiedBlackPlan = ({
             >
               <View style={{ alignItems: 'center' }}>
                 <Text style={{
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: '600',
                   color: billing === 'annual' ? '#FFFFFF' : 'rgba(255,255,255,0.5)',
                 }}>
                   Annual
                 </Text>
                 <Text style={{
-                  fontSize: 11,
+                  fontSize: 10,
                   color: billing === 'annual' ? '#FFD700' : 'transparent',
                   marginTop: 2,
-                  height: 14, // Reserve consistent height
+                  height: 12, // Reserve consistent height
                   fontWeight: '600',
                 }}>
                   2 months free
+                </Text>
+              </View>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={{
+                flex: 1,
+                paddingVertical: 12,
+                borderRadius: 10,
+                backgroundColor: billing === 'lifetime' ? 'rgba(255,215,0,0.15)' : 'transparent',
+                borderWidth: billing === 'lifetime' ? 1 : 0,
+                borderColor: billing === 'lifetime' ? '#FFD700' : 'transparent',
+              }}
+              onPress={() => setBilling('lifetime')}
+            >
+              <View style={{ alignItems: 'center' }}>
+                <Text style={{
+                  fontSize: 13,
+                  fontWeight: '600',
+                  color: billing === 'lifetime' ? '#FFD700' : 'rgba(255,255,255,0.5)',
+                }}>
+                  Lifetime
+                </Text>
+                <Text style={{
+                  fontSize: 10,
+                  color: billing === 'lifetime' ? '#FFD700' : 'transparent',
+                  marginTop: 2,
+                  height: 12, // Reserve consistent height
+                  fontWeight: '600',
+                }}>
+                  Best Value
                 </Text>
               </View>
             </TouchableOpacity>
@@ -488,7 +525,7 @@ const UnifiedBlackPlan = ({
                   color: '#FFFFFF',
                   letterSpacing: 0.5,
                 }}>
-                  {spotsExhausted ? 'LIFECOMPASS PRO' : 'LIFETIME PRO ACCESS'}
+                  {spotsExhausted ? (billing === 'lifetime' ? 'LIFETIME PRO ACCESS' : 'LIFECOMPASS PRO') : 'LIFETIME PRO ACCESS'}
                 </Text>
                 <Ionicons 
                   name="compass" 
@@ -515,7 +552,7 @@ const UnifiedBlackPlan = ({
               ? `Founder #${founderNumber || '???'} • Lifetime Pro Access`
               : isMonthlySubscriber
                 ? '' // Empty string for cleaner look
-                : (spotsExhausted ? 'Plan your life like a CEO' : 'Plan your life like a CEO • One-time payment')
+                : (spotsExhausted ? (billing === 'lifetime' ? 'Plan your life like a CEO • One-time payment' : 'Plan your life like a CEO') : 'Plan your life like a CEO • One-time payment')
             }
           </Text>
 
@@ -585,7 +622,7 @@ const UnifiedBlackPlan = ({
                   marginLeft: 6,
                   fontWeight: '400',
                 }}>
-                  {spotsExhausted ? (billing === 'annual' ? '/year' : '/mo') : 'once'}
+                  {spotsExhausted ? (billing === 'lifetime' ? 'once' : billing === 'annual' ? '/year' : '/mo') : 'once'}
                 </Text>
               </>
             )}

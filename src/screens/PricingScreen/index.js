@@ -75,6 +75,7 @@ import MinimalFeatureTable from './components/FeatureComparisons/MinimalFeatureT
 import StickyCTA from './components/StickyCTA';
 import MinimalStickyCTA from './components/MinimalStickyCTA';
 import PricingFootnote from './components/PricingFootnote';
+import AIUpsellModal from './components/AIUpsellModal';
 
 // Scarcity component imports
 import FounderSpotsBanner from './components/FounderSpotsBanner';
@@ -108,7 +109,7 @@ const PricingScreen = ({ navigation, route }) => {
   const getNavigationRoutes = () => {
     const isFounderSoldOut = founderSpotsRemaining <= 0;
     return [
-      { key: 'lifetime', title: isFounderSoldOut ? 'LifeCompass Plans' : 'Founder Access' },
+      { key: 'lifetime', title: isFounderSoldOut ? 'Pro Access' : 'Founder Access' },
       { key: 'subscription', title: 'AI Add-ons' }
     ];
   };
@@ -130,11 +131,12 @@ const PricingScreen = ({ navigation, route }) => {
   useEffect(() => {
     const newRoutes = getNavigationRoutes();
     
-    setNavigationState(prev => ({
-      ...prev,
+    // Force complete re-render of navigation state to ensure TabView updates
+    setNavigationState({
+      index: navigationState.index,
       routes: newRoutes
-    }));
-  }, [founderSpotsRemaining]);
+    });
+  }, [founderSpotsRemaining, navigationState.index]);
   const [selectedPlan, setSelectedPlan] = useState('');
   const [selectedSubscription, setSelectedSubscription] = useState('monthly');
   const [localSubscription, setLocalSubscription] = useState('monthly');
@@ -146,6 +148,10 @@ const PricingScreen = ({ navigation, route }) => {
   const [referralCode, setReferralCode] = useState('');
   const [referralsLeft, setReferralsLeft] = useState(3);
   const [isFromReferral, setIsFromReferral] = useState(false);
+  
+  // AI modal states for standalone purchases
+  const [aiModalVisible, setAIModalVisible] = useState(false);
+  const [selectedAIPlan, setSelectedAIPlan] = useState('');
   const [referrerName, setReferrerName] = useState('');
   const [founderSpotsRemaining, setFounderSpotsRemaining] = useState(1000);
   const [founderEndDate, setFounderEndDate] = useState("2025-08-15T23:59:59");
@@ -158,6 +164,13 @@ const PricingScreen = ({ navigation, route }) => {
   const [isTestMode, setIsTestMode] = useState(false);
   const [realFounderSpots, setRealFounderSpots] = useState(1000);
   const [userFounderNumber, setUserFounderNumber] = useState(null);
+  
+  // AI Upsell Modal state
+  const [showAIUpsell, setShowAIUpsell] = useState(false);
+  const [purchasedBasePlan, setPurchasedBasePlan] = useState(null);
+  
+  // Derived values
+  const spotsExhausted = founderSpotsRemaining <= 0;
   
   
   // Removed countdown state - now handled by isolated component
@@ -440,7 +453,16 @@ const PricingScreen = ({ navigation, route }) => {
 
   // Handle plan selection - preserve scroll position
   const handleSelectPlan = (plan) => {
-    // Get the correct ref and position based on active tab
+    // Check if this is an AI plan selection from the subscription tab
+    if (activeTab === 'subscription' && ['compass', 'navigator', 'guide'].includes(plan)) {
+      // Set selection state first, then open modal
+      setSelectedPlan(plan);
+      setSelectedAIPlan(plan);
+      setAIModalVisible(true);
+      return;
+    }
+    
+    // Regular plan selection for other tabs
     const currentScrollRef = activeTab === 'lifetime' ? lifetimeScrollRef : subscriptionScrollRef;
     const currentScrollPosition = activeTab === 'lifetime' ? lifetimeScrollPosition : subscriptionScrollPosition;
     
@@ -467,6 +489,20 @@ const PricingScreen = ({ navigation, route }) => {
     }, 0);
   };
   
+  // Handle AI modal close
+  const handleAIModalClose = () => {
+    setAIModalVisible(false);
+    setSelectedAIPlan('');
+  };
+
+  // Handle standalone AI purchase
+  const handleStandaloneAIPurchase = (aiDetails) => {
+    console.log('Standalone AI Purchase:', aiDetails);
+    // Handle the AI purchase logic here
+    // For now, just close the modal
+    handleAIModalClose();
+  };
+
   // Handle sharing referral code
   const shareReferralCode = async () => {
     if (referralsLeft <= 0) {
@@ -520,8 +556,54 @@ const PricingScreen = ({ navigation, route }) => {
   // Handle purchase with achievement recognition for founders
   const handlePurchase = async (plan) => {
     // TODO: Integrate with App Store payment processing
-    // For now, do nothing when purchase buttons are clicked
     console.log(`Purchase attempt for plan: ${plan}`);
+    
+    // Check if this is a post-founder purchase that should trigger AI upsell
+    const isFounderPlan = plan === 'founding';
+    
+    if (spotsExhausted && isFounderPlan) {
+      // Determine the base plan type from billing selection
+      let basePlanType = 'monthly';
+      if (selectedSubscription === 'annual') basePlanType = 'annual';
+      if (selectedSubscription === 'lifetime') basePlanType = 'lifetime';
+      
+      // Store the purchased plan and show AI upsell
+      setPurchasedBasePlan(basePlanType);
+      setShowAIUpsell(true);
+      
+      console.log(`Purchased ${basePlanType} plan, showing AI upsell`);
+      return;
+    }
+    
+    // Handle founder purchases (first 1000 users with available spots)
+    if (!spotsExhausted && isFounderPlan) {
+      // Determine the base plan type from billing selection
+      let basePlanType = 'monthly';
+      if (selectedSubscription === 'annual') basePlanType = 'annual';
+      if (selectedSubscription === 'lifetime') basePlanType = 'lifetime';
+      
+      // Store the purchased plan and show founder AI upsell (with free month credit)
+      setPurchasedBasePlan(basePlanType);
+      setShowAIUpsell(true);
+      
+      console.log(`Purchased founder ${basePlanType} plan, showing founder AI upsell with credit`);
+      return;
+    }
+    
+    // Handle regular subscription plan purchases (basic, pro, premium)
+    if (['basic', 'pro', 'premium'].includes(plan)) {
+      // Determine the base plan type from billing selection
+      let basePlanType = 'monthly';
+      if (selectedSubscription === 'annual') basePlanType = 'annual';
+      if (selectedSubscription === 'lifetime') basePlanType = 'lifetime';
+      
+      // Store the purchased plan and show AI upsell
+      setPurchasedBasePlan(basePlanType);
+      setShowAIUpsell(true);
+      
+      console.log(`Purchased ${plan} (${basePlanType}), showing AI upsell`);
+      return;
+    }
     
     // PRODUCTION TODO: After successful purchase, the backend should:
     // 1. Verify payment with App Store/Google Play
@@ -530,6 +612,21 @@ const PricingScreen = ({ navigation, route }) => {
     // 4. Store founder number locally: await AsyncStorage.setItem('founderNumber', backendResponse.founderNumber.toString());
     // 5. Set subscription status: await AsyncStorage.setItem('subscriptionStatus', 'founding');
     // 6. Update UI state to show founder card
+  };
+
+  // Handle AI purchase from upsell modal
+  const handleAIPurchase = async (aiPurchaseData) => {
+    console.log(`AI Purchase:`, aiPurchaseData);
+    
+    // TODO: Process AI purchase
+    // aiPurchaseData contains: { duration, price, savings, basePlan }
+    
+    // Close the modal
+    setShowAIUpsell(false);
+    setPurchasedBasePlan(null);
+    
+    // Show success message or navigate somewhere
+    showSuccess(`AI Light added for ${aiPurchaseData.duration.replace('months', ' months')}!`);
   };
 
 
@@ -879,6 +976,7 @@ const PricingScreen = ({ navigation, route }) => {
         selectedSubscription={selectedSubscription}
         aiPlansBilling={aiPlansBilling}
         handlePurchase={handlePurchase}
+        handleSelectPlan={handleSelectPlan}
         spotsRemaining={founderSpotsRemaining}
         responsive={{
           fontSize: fontSizes,
@@ -925,6 +1023,20 @@ const PricingScreen = ({ navigation, route }) => {
         }}
       />
       
+      {/* AI Upsell Modal */}
+      <AIUpsellModal
+        visible={showAIUpsell}
+        onClose={() => {
+          setShowAIUpsell(false);
+          setPurchasedBasePlan(null);
+        }}
+        onPurchaseAI={handleAIPurchase}
+        basePlan={purchasedBasePlan}
+        founderUpsell={!spotsExhausted && purchasedBasePlan !== null}
+        spotsRemaining={founderSpotsRemaining}
+        theme={theme}
+      />
+
       {/* Tiny Developer Toggle - Only in dev mode - moved to bottom right */}
       {__DEV__ && (
         <View style={{
@@ -952,212 +1064,17 @@ const PricingScreen = ({ navigation, route }) => {
         </View>
       )}
       
-      {/* Developer Testing Buttons - At bottom of scrollable content */}
-      {__DEV__ && showDevButtons && (
-        <View style={{
-          backgroundColor: 'rgba(0,0,0,0.95)',
-          padding: 20,
-          marginTop: 100,
-          position: 'relative',
-        }}>
-          {/* Close Button */}
-          <TouchableOpacity
-            style={{
-              position: 'absolute',
-              top: 10,
-              right: 10,
-              width: 30,
-              height: 30,
-              backgroundColor: 'rgba(255,255,255,0.1)',
-              borderRadius: 15,
-              justifyContent: 'center',
-              alignItems: 'center',
-              borderWidth: 1,
-              borderColor: 'rgba(255,255,255,0.2)',
-              zIndex: 1,
-            }}
-            onPress={() => setShowDevButtons(false)}
-          >
-            <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>×</Text>
-          </TouchableOpacity>
 
-          <Text style={{ color: '#fff', fontSize: 14, fontWeight: 'bold', marginBottom: 15, textAlign: 'center' }}>
-            🧪 TIER TESTING
-          </Text>
-          
-          {/* Early Bird Section - Users 1-100 ($0.99) */}
-          <View style={{ marginBottom: 20 }}>
-            <Text style={{ color: '#4CAF50', fontSize: 12, fontWeight: 'bold', marginBottom: 8 }}>
-              🕊️ Early Bird ($0.99) - Users 1-100 + AI Light
-            </Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-              <TouchableOpacity
-                style={{ backgroundColor: '#4CAF50', padding: 10, margin: 4, borderRadius: 8, minWidth: 90 }}
-                onPress={() => {
-                  setIsTestMode(true);
-                  setFounderSpotsRemaining(950);
-                }} // User 51
-              >
-                <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>User 51</Text>
-                <Text style={{ color: '#fff', fontSize: 8, textAlign: 'center' }}>$0.99 tier</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={{ backgroundColor: '#4CAF50', padding: 10, margin: 4, borderRadius: 8, minWidth: 90 }}
-                onPress={() => {
-                  setIsTestMode(true);
-                  setFounderSpotsRemaining(920);
-                }} // User 81
-              >
-                <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>User 81</Text>
-                <Text style={{ color: '#fff', fontSize: 8, textAlign: 'center' }}>$0.99 tier</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={{ backgroundColor: '#4CAF50', padding: 10, margin: 4, borderRadius: 8, minWidth: 90 }}
-                onPress={() => {
-                  setIsTestMode(true);
-                  setFounderSpotsRemaining(901);
-                }} // User 100
-              >
-                <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>User 100</Text>
-                <Text style={{ color: '#fff', fontSize: 8, textAlign: 'center' }}>Last $0.99</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Mid Tier Section - Users 101-500 ($2.99) */}
-          <View style={{ marginBottom: 20 }}>
-            <Text style={{ color: '#FF8C42', fontSize: 12, fontWeight: 'bold', marginBottom: 8 }}>
-              🚀 Mid Tier ($2.99) - Users 101-500 + AI Light
-            </Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-              <TouchableOpacity
-                style={{ backgroundColor: '#FF8C42', padding: 10, margin: 4, borderRadius: 8, minWidth: 90 }}
-                onPress={() => {
-                  setIsTestMode(true);
-                  setFounderSpotsRemaining(750);
-                }} // User 251
-              >
-                <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>User 251</Text>
-                <Text style={{ color: '#fff', fontSize: 8, textAlign: 'center' }}>$2.99 tier</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={{ backgroundColor: '#FF8C42', padding: 10, margin: 4, borderRadius: 8, minWidth: 90 }}
-                onPress={() => {
-                  setIsTestMode(true);
-                  setFounderSpotsRemaining(600);
-                }} // User 401
-              >
-                <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>User 401</Text>
-                <Text style={{ color: '#fff', fontSize: 8, textAlign: 'center' }}>$2.99 tier</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={{ backgroundColor: '#FF8C42', padding: 10, margin: 4, borderRadius: 8, minWidth: 90 }}
-                onPress={() => {
-                  setIsTestMode(true);
-                  setFounderSpotsRemaining(501);
-                }} // User 500
-              >
-                <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>User 500</Text>
-                <Text style={{ color: '#fff', fontSize: 8, textAlign: 'center' }}>Last $2.99</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Final Tier Section - Users 501-1000 ($4.99) */}
-          <View style={{ marginBottom: 20 }}>
-            <Text style={{ color: '#FF6B6B', fontSize: 12, fontWeight: 'bold', marginBottom: 8 }}>
-              ⚡ Final Tier ($4.99) - Users 501-1000 + AI Light
-            </Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-              <TouchableOpacity
-                style={{ backgroundColor: '#FF6B6B', padding: 10, margin: 4, borderRadius: 8, minWidth: 90 }}
-                onPress={() => {
-                  setIsTestMode(true);
-                  setFounderSpotsRemaining(250);
-                }} // User 751
-              >
-                <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>User 751</Text>
-                <Text style={{ color: '#fff', fontSize: 8, textAlign: 'center' }}>$4.99 tier</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={{ backgroundColor: '#FF6B6B', padding: 10, margin: 4, borderRadius: 8, minWidth: 90 }}
-                onPress={() => {
-                  setIsTestMode(true);
-                  setFounderSpotsRemaining(100);
-                }} // User 901
-              >
-                <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>User 901</Text>
-                <Text style={{ color: '#fff', fontSize: 8, textAlign: 'center' }}>$4.99 tier</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={{ backgroundColor: '#FF6B6B', padding: 10, margin: 4, borderRadius: 8, minWidth: 90 }}
-                onPress={() => {
-                  setIsTestMode(true);
-                  setFounderSpotsRemaining(1);
-                }} // User 1000
-              >
-                <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>User 1000</Text>
-                <Text style={{ color: '#fff', fontSize: 8, textAlign: 'center' }}>Last founder</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Special Cases */}
-          <View>
-            <Text style={{ color: '#888', fontSize: 12, fontWeight: 'bold', marginBottom: 8 }}>
-              🔧 Special Cases
-            </Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-              <TouchableOpacity
-                style={{ backgroundColor: '#333', padding: 10, margin: 4, borderRadius: 8, minWidth: 90 }}
-                onPress={() => {
-                  setIsTestMode(true);
-                  setFounderSpotsRemaining(0);
-                }}
-              >
-                <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>SOLD OUT</Text>
-                <Text style={{ color: '#fff', fontSize: 8, textAlign: 'center' }}>Monthly Plans</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={{ backgroundColor: '#666', padding: 10, margin: 4, borderRadius: 8, minWidth: 90 }}
-                onPress={() => {
-                  setIsTestMode(true);
-                  setFounderSpotsRemaining(1000);
-                }}
-              >
-                <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>RESET</Text>
-                <Text style={{ color: '#fff', fontSize: 8, textAlign: 'center' }}>Back to 1000</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={{ 
-                  backgroundColor: '#22C55E', 
-                  padding: 10, 
-                  margin: 4, 
-                  borderRadius: 8, 
-                  minWidth: 90,
-                  borderWidth: isTestMode ? 0 : 2,
-                  borderColor: '#22C55E'
-                }}
-                onPress={() => {
-                  setIsTestMode(false);
-                  setFounderSpotsRemaining(realFounderSpots);
-                }}
-              >
-                <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>REAL MODE</Text>
-                <Text style={{ color: '#fff', fontSize: 8, textAlign: 'center' }}>API: {realFounderSpots}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      )}
+      {/* Standalone AI Purchase Modal */}
+      <AIUpsellModal
+        visible={aiModalVisible}
+        onClose={handleAIModalClose}
+        onPurchaseAI={handleStandaloneAIPurchase}
+        basePlan={null} // No base plan for standalone
+        theme={theme}
+        standalone={true}
+        initialAITier={selectedAIPlan}
+      />
     </View>
   );
 };

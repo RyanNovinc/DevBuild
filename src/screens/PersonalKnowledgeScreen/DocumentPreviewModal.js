@@ -62,7 +62,7 @@ const DocumentPreviewModal = ({ visible, theme, document, onClose, onDelete }) =
         
         const appData = {
           goals: appContext.goals || [],
-          projects: appContext.projects || [],
+          milestones: appContext.milestones || [],
           tasks: appContext.tasks || [],
           settings: appContext.settings || {},
           userCountry: appContext.userCountry

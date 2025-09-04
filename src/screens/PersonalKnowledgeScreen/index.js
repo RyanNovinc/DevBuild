@@ -101,12 +101,12 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
   
   // Track when app context is ready
   useEffect(() => {
-    if (!appContext.isLoading && appContext.goals !== undefined && appContext.projects !== undefined && appContext.tasks !== undefined) {
+    if (!appContext.isLoading && appContext.goals !== undefined && appContext.milestones !== undefined && appContext.tasks !== undefined) {
       setIsAppContextReady(true);
     } else {
       setIsAppContextReady(false);
     }
-  }, [appContext.isLoading, appContext.goals, appContext.projects, appContext.tasks]);
+  }, [appContext.isLoading, appContext.goals, appContext.milestones, appContext.tasks]);
   
   // Handle smooth fade transition when loading completes
   useEffect(() => {
@@ -151,14 +151,14 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
   useEffect(() => {
     const updateAppSummaryIfNeeded = async () => {
       // Only update if app context is loaded and not currently loading
-      if (!appContext.isLoading && appContext.goals && appContext.projects && appContext.tasks) {
+      if (!appContext.isLoading && appContext.goals && appContext.milestones && appContext.tasks) {
         try {
           console.log('🔄 [APP CONTEXT DEBUG] App context data changed, auto-updating app summary');
-          console.log('🔄 [APP CONTEXT DEBUG] Goals:', appData.goals.length, 'Projects:', appData.projects.length, 'Tasks:', appData.tasks.length);
+          console.log('🔄 [APP CONTEXT DEBUG] Goals:', appContext.goals.length, 'Milestones:', appContext.milestones.length, 'Tasks:', appContext.tasks.length);
           
           const appData = {
             goals: appContext.goals || [],
-            projects: appContext.projects || [],
+            milestones: appContext.milestones || [],
             tasks: appContext.tasks || [],
             settings: appContext.settings || {},
             userCountry: appContext.userCountry
@@ -186,7 +186,7 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
     const timeoutId = setTimeout(updateAppSummaryIfNeeded, 1000);
     
     return () => clearTimeout(timeoutId);
-  }, [appContext.goals, appContext.projects, appContext.tasks, appContext.settings, appContext.isLoading]);
+  }, [appContext.goals, appContext.milestones, appContext.tasks, appContext.settings, appContext.isLoading]);
   
   // Calculate storage based on documents
   useEffect(() => {
@@ -235,7 +235,7 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
         
         const appData = {
           goals: appContext.goals || [],
-          projects: appContext.projects || [],
+          milestones: appContext.milestones || [],
           tasks: appContext.tasks || [],
           settings: appContext.settings || {},
           userCountry: appContext.userCountry
@@ -287,7 +287,7 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
             
             const appData = {
               goals: appContext.goals || [],
-              projects: appContext.projects || [],
+              milestones: appContext.milestones || [],
               tasks: appContext.tasks || [],
               settings: appContext.settings || {},
               userCountry: appContext.userCountry
@@ -318,7 +318,7 @@ const PersonalKnowledgeScreen = ({ navigation }) => {
             
             const appData = {
               goals: appContext.goals || [],
-              projects: appContext.projects || [],
+              milestones: appContext.milestones || [],
               tasks: appContext.tasks || [],
               settings: appContext.settings || {},
               userCountry: appContext.userCountry

@@ -335,7 +335,7 @@ const StickyCTA = ({
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 8, // Shifted down by reducing this value
+    bottom: 8,
     left: 20,
     right: 20,
     zIndex: 1000,

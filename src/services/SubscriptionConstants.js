@@ -25,6 +25,7 @@ export const FREE_PLAN_LIMITS = {
   MAX_TOTAL_TASKS: 8,
   MAX_PROJECTS: 5,
   MAX_TASKS_PER_PROJECT: 5, // Legacy - use MAX_TOTAL_TASKS instead
+  MAX_TASKS_PER_MILESTONE: 5, // Tasks allowed per milestone
   MAX_TIME_BLOCKS: 10,
   MAX_AI_USAGES_PER_DAY: 2,
   MAX_DOMAINS: 3,

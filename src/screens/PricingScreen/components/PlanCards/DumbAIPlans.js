@@ -192,6 +192,7 @@ const DumbAIPlans = ({ selectedPlan, handleSelectPlan, billing, setBilling, high
             handleSelectPlan(id);
           }}
           activeOpacity={0.7}
+          pointerEvents="auto"
       >
         {popular && (
           <View style={{
@@ -248,40 +249,31 @@ const DumbAIPlans = ({ selectedPlan, handleSelectPlan, billing, setBilling, high
           {description}
         </Text>
 
+        {/* Usage Level Indicator */}
         <View style={{
-          flexDirection: 'row',
-          alignItems: 'baseline',
+          backgroundColor: 'rgba(255,255,255,0.05)',
+          borderRadius: 12,
+          padding: 12,
           marginBottom: 20,
+          borderWidth: 1,
+          borderColor: 'rgba(255,255,255,0.08)',
         }}>
-          {id === highlightPlan && pulseCredits ? (
-            <Animated.Text style={{
-              fontSize: 28,
-              fontWeight: '300',
-              color: pulseAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: ['rgba(255,255,255,0.6)', 'rgba(255,255,255,1)']
-              })
-            }}>
-              {price}
-            </Animated.Text>
-          ) : (
-            <Text style={{
-              fontSize: 28,
-              fontWeight: '300',
-              color: '#FFFFFF',
-            }}>
-              {price}
-            </Text>
-          )}
-          {period !== 'one-time' && (
-            <Text style={{
-              fontSize: 14,
-              color: 'rgba(255,255,255,0.4)',
-              marginLeft: 4,
-            }}>
-              {period}
-            </Text>
-          )}
+          <Text style={{
+            fontSize: 11,
+            color: 'rgba(255,255,255,0.4)',
+            textTransform: 'uppercase',
+            letterSpacing: 0.5,
+            marginBottom: 4,
+          }}>
+            Usage Level
+          </Text>
+          <Text style={{
+            fontSize: 14,
+            fontWeight: '600',
+            color: '#FFFFFF',
+          }}>
+            {id === 'compass' ? 'Light Usage' : id === 'navigator' ? 'Daily Usage' : 'Power Usage'}
+          </Text>
         </View>
 
         <View style={{ marginBottom: 40 }}>
@@ -323,6 +315,7 @@ const DumbAIPlans = ({ selectedPlan, handleSelectPlan, billing, setBilling, high
             Haptics.impactAsync(getHapticFeedback());
             handleSelectPlan(id);
           }}
+          pointerEvents="auto"
         >
           <Text style={{
             fontSize: 13,
@@ -338,12 +331,12 @@ const DumbAIPlans = ({ selectedPlan, handleSelectPlan, billing, setBilling, high
   };
 
   return (
-    <View style={{ paddingHorizontal: 0, paddingVertical: 0, marginTop: 24, width: '100%' }}>
+    <View style={{ paddingHorizontal: 0, paddingVertical: 0, marginTop: 24, width: '100%', flex: 1 }}>
       
       {/* Header section to match Pro Access countdown timer height */}
       <View style={{
         paddingTop: 12,
-        paddingBottom: 16,
+        paddingBottom: 24,
         paddingHorizontal: 24,
         marginTop: -48,
         height: 82,
@@ -361,71 +354,15 @@ const DumbAIPlans = ({ selectedPlan, handleSelectPlan, billing, setBilling, high
         </Text>
       </View>
       
-      {/* Billing Toggle */}
-      <View style={{
-        backgroundColor: '#000000',
-        borderRadius: 12,
-        padding: 4,
-        flexDirection: 'row',
-        marginBottom: 20,
-        alignSelf: 'center',
-        width: '85%',
-      }}>
-        <TouchableOpacity
-          style={{
-            flex: 1,
-            paddingVertical: 12,
-            borderRadius: 10,
-            backgroundColor: subscription === 'monthly' ? 'rgba(255,255,255,0.1)' : 'transparent',
-          }}
-          onPress={() => setSubscription('monthly')}
-        >
-          <Text style={{
-            textAlign: 'center',
-            fontSize: 14,
-            fontWeight: '600',
-            color: subscription === 'monthly' ? '#FFFFFF' : 'rgba(255,255,255,0.5)',
-          }}>
-            Monthly
-          </Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={{
-            flex: 1,
-            paddingVertical: 12,
-            borderRadius: 10,
-            backgroundColor: subscription === 'annual' ? 'rgba(255,255,255,0.1)' : 'transparent',
-          }}
-          onPress={() => setSubscription('annual')}
-        >
-          <View style={{ alignItems: 'center' }}>
-            <Text style={{
-              fontSize: 14,
-              fontWeight: '600',
-              color: subscription === 'annual' ? '#FFFFFF' : 'rgba(255,255,255,0.5)',
-            }}>
-              Annual
-            </Text>
-            <Text style={{
-              fontSize: 11,
-              color: subscription === 'annual' ? '#FFD700' : 'transparent',
-              marginTop: 2,
-              height: 14, // Reserve consistent height
-              fontWeight: '600',
-            }}>
-              2 months free
-            </Text>
-          </View>
-        </TouchableOpacity>
-      </View>
+      {/* Spacer to push cards down a bit */}
+      <View style={{ height: 20 }} />
 
       {/* 4 SEPARATE CARDS - BASIC SCROLLVIEW */}
       <ScrollView 
         ref={scrollViewRef}
         horizontal 
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingRight: 16 }}
+        contentContainerStyle={{ paddingRight: 16, paddingBottom: 40 }}
         style={{ marginHorizontal: -16, marginTop: 8 }}
       >
         
@@ -437,7 +374,7 @@ const DumbAIPlans = ({ selectedPlan, handleSelectPlan, billing, setBilling, high
           icon="compass-outline"
           description="Perfect for casual planning"
           features={[
-            'Standard user context*',
+            'Personal knowledge uploads*',
             'For occasional users'
           ]}
           popular={false}
@@ -453,7 +390,7 @@ const DumbAIPlans = ({ selectedPlan, handleSelectPlan, billing, setBilling, high
           icon="navigate-circle-outline"
           description="Built for everyday productivity"
           features={[
-            'Additional user context*',
+            'Personal knowledge uploads*',
             'More daily usage (3x AI Light)',
             'For daily users'
           ]}
@@ -470,7 +407,7 @@ const DumbAIPlans = ({ selectedPlan, handleSelectPlan, billing, setBilling, high
           icon="shield-checkmark-outline"
           description="Get the most out of LifeCompass AI"
           features={[
-            'Maximum user context*',
+            'Personal knowledge uploads*',
             'Heavy usage capacity (10x AI Light)',
             'For power users'
           ]}
@@ -483,12 +420,14 @@ const DumbAIPlans = ({ selectedPlan, handleSelectPlan, billing, setBilling, high
         </View>
       </ScrollView>
 
+      {/* Bottom spacing and info section */}
       <View style={{
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        marginTop: 20,
+        marginTop: 40,
         paddingHorizontal: 20,
+        paddingBottom: 60,
       }}>
         <View style={{
           flexDirection: 'row',
@@ -525,59 +464,10 @@ const DumbAIPlans = ({ selectedPlan, handleSelectPlan, billing, setBilling, high
           fontStyle: 'italic',
           lineHeight: 14,
         }}>
-          *Context refers to how much AI knows about your goals, milestones, tasks and any documents you upload (resumes, personality tests) to help with your planning.
+          *Personal knowledge uploads include documents like resumes, personality tests, and other files that help AI provide more personalized planning assistance.
         </Text>
       </View>
 
-      {/* Try with credits hint - only show when no AI plan selected OR credits selected */}
-      {(!selectedPlan || selectedPlan === 'credits') && (
-        <TouchableOpacity
-          style={{
-            marginTop: 20,
-            marginHorizontal: 20,
-            paddingVertical: 12,
-            paddingHorizontal: 16,
-            backgroundColor: selectedPlan === 'credits' ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.03)',
-            borderRadius: 12,
-            borderWidth: 2,
-            borderColor: selectedPlan === 'credits' ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.08)',
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            // Toggle the credits option
-            if (selectedPlan === 'credits') {
-              handleSelectPlan(''); // Deselect if already selected
-            } else {
-              handleSelectPlan('credits'); // Select credits
-            }
-          }}
-          activeOpacity={0.7}
-        >
-          <Ionicons 
-            name="sparkles-outline" 
-            size={14} 
-            color={selectedPlan === 'credits' ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.5)'}
-            style={{ marginRight: 6 }}
-          />
-          <Text style={{
-            fontSize: 12,
-            color: 'rgba(255,255,255,0.5)',
-            fontWeight: '500',
-          }}>
-            Or try AI with 150 credits for $0.99
-          </Text>
-          <Text style={{
-            fontSize: 10,
-            color: 'rgba(255,255,255,0.3)',
-            marginLeft: 6,
-          }}>
-            • No subscription
-          </Text>
-        </TouchableOpacity>
-      )}
 
       {/* Modal removed - no longer needed */}
     </View>

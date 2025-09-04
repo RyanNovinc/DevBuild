@@ -575,7 +575,7 @@ const StreakCounter = ({
         }
       ]}
     >
-      <TouchableOpacity 
+      <View 
         style={[
           styles.streakCard,
           { 
@@ -589,8 +589,6 @@ const StreakCounter = ({
             marginBottom: isLandscape ? spacing.s : spacing.m,
           }
         ]}
-        onPress={navigateToFullScreen}
-        activeOpacity={0.7}
         accessible={true}
         accessibilityRole="button"
         accessibilityLabel={`${streakData.streakName}: ${streakData.currentStreak} day streak. Tap to view details.`}
@@ -727,7 +725,15 @@ const StreakCounter = ({
             {streakData.currentStreak}/{streakData.nextMilestone} days to milestone
           </Text>
         </View>
-      </TouchableOpacity>
+        
+        {/* Navigation overlay - only captures taps, allows gestures to pass through */}
+        <TouchableOpacity
+          style={styles.navigationOverlay}
+          onPress={navigateToFullScreen}
+          activeOpacity={1}
+          accessible={false}
+        />
+      </View>
       
       {/* Save Data Modal - Clean modal system */}
       {showSaveDataModal && (
@@ -893,6 +899,15 @@ const styles = StyleSheet.create({
     elevation: 4,
     position: 'relative',
   },
+  navigationOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'transparent',
+    zIndex: 1,
+  },
   streakContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -980,10 +995,12 @@ const styles = StyleSheet.create({
     padding: spacing.xs,
     borderRadius: 16,
     marginRight: spacing.s,
+    zIndex: 2,
   },
   checkInButton: {
     padding: spacing.xs,
     borderRadius: 20,
+    zIndex: 2,
   },
   progressContainer: {
     width: '100%',

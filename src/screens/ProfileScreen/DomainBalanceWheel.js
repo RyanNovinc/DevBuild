@@ -668,11 +668,6 @@ const DomainBalanceWheel = ({ theme, navigation, isTourActive = false, currentSt
         It provides a comprehensive view of life satisfaction across multiple domains.
       </Text>
       
-      <Text style={[styles.infoModalText, { color: theme.textSecondary }]}>
-        Research shows that balance across life domains correlates with overall well-being and life satisfaction, 
-        making it an effective framework for personal development and goal setting.
-      </Text>
-      
       <TouchableOpacity 
         style={[styles.researchLink, { borderColor: theme.primary }]}
         onPress={handleResearchLinkPress}

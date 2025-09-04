@@ -21,6 +21,7 @@ import { ThemeProvider, useTheme } from '../context/ThemeContext';
 import { useAppContext } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { AIAssistantProvider, useAIAssistant } from '../context/AIAssistantContext/index';
+import { LAST_CHAT_KEY } from '../context/AIAssistantContext/constants';
 import * as AIService from '../services/AIService';
 import assistantService from '../services/AssistantService';
 import DocumentService from '../services/DocumentService'; // Import DocumentService directly
@@ -398,6 +399,7 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
   
   // Get conversation ID from route params or use last saved conversation
   const routeConversationId = route?.params?.conversationId;
+  const clearAllRequested = route?.params?.clearAll;
   
   // Check if user can add more goals based on limits
   const canAddMoreGoals = () => {
@@ -881,6 +883,27 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
     
     initializeConversation();
   }, [routeConversationId]);
+  
+  // Handle clear all conversations - reset to fresh state
+  useEffect(() => {
+    if (clearAllRequested) {
+      console.log('Clear all conversations requested - resetting to fresh state');
+      
+      // Reset all conversation state
+      dispatch({ type: 'RESET_STATE' });
+      
+      // Clear any stored conversation ID
+      AsyncStorage.removeItem(LAST_CHAT_KEY).catch(error => {
+        console.error('Error clearing last chat key:', error);
+      });
+      
+      // Create a fresh new conversation
+      createNewConversation();
+      
+      // Clear the clearAll param from navigation to prevent re-triggering
+      navigation.setParams({ clearAll: undefined });
+    }
+  }, [clearAllRequested]);
   
   // Create a new conversation
   const createNewConversation = async () => {

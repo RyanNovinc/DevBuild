@@ -17,6 +17,7 @@ import SubscriptionService, {
   PREMIUM_FEATURES,
   useFeatureLimit
 } from '../services/SubscriptionService';
+import stateTransactionService from '../services/StateTransactionService';
 
 // Import calendar service
 import CalendarService from '../services/CalendarService';
@@ -1866,14 +1867,18 @@ export const AppProvider = ({ children }) => {
         return null;
       }
       
-      // Check subscription limits (only for milestone-based tasks)
-      if (!isStandaloneTask && !canAddMoreTasksToMilestone(milestoneId)) {
-        showError(`Free version limited to ${FREE_PLAN_LIMITS.MAX_TASKS_PER_MILESTONE} tasks per milestone. Complete a task or upgrade to Pro.`);
-        return null;
-      }
-      
       // Create a copy of tasks to avoid null or undefined issues
       const currentTasks = Array.isArray(tasks) ? [...tasks] : [];
+      
+      // Check subscription limits (only for milestone-based tasks)
+      // Use currentTasks instead of state to get accurate count for bulk operations
+      if (!isStandaloneTask) {
+        const currentMilestoneTasks = currentTasks.filter(task => task.milestoneId === milestoneId);
+        if (userSubscriptionStatus !== 'pro' && userSubscriptionStatus !== 'unlimited' && currentMilestoneTasks.length >= FREE_PLAN_LIMITS.MAX_TASKS_PER_MILESTONE) {
+          showError(`Free version limited to ${FREE_PLAN_LIMITS.MAX_TASKS_PER_MILESTONE} tasks per milestone. Complete a task or upgrade to Pro.`);
+          return null;
+        }
+      }
       
       // Add the task
       const taskWithId = { 
@@ -1955,6 +1960,96 @@ export const AppProvider = ({ children }) => {
       return null;
     }
   };
+
+  // Production-level bulk task addition with atomic operations and comprehensive error handling
+  const addTasksBulk = async (tasksToAdd) => {
+    try {
+      if (!Array.isArray(tasksToAdd) || tasksToAdd.length === 0) {
+        showError('No tasks to add');
+        return [];
+      }
+
+
+      console.log(`🔄 Starting production-level bulk task addition: ${tasksToAdd.length} tasks`);
+
+      // Process and validate each task
+      const processedTasks = [];
+      const milestoneTaskCounts = {}; // Track tasks per milestone for subscription limits
+
+      for (const taskData of tasksToAdd) {
+        // Handle task data format
+        const milestoneId = taskData.milestoneId;
+        const isStandaloneTask = !milestoneId || milestoneId === null || milestoneId === undefined;
+
+        // Check if milestone exists (only for non-standalone tasks)
+        if (!isStandaloneTask && !isMilestoneActive(milestoneId)) {
+          console.warn(`Milestone with ID ${milestoneId} not found, cannot add task`);
+          showError('One or more milestones not found');
+          return [];
+        }
+
+        // Track milestone task counts for subscription limit checking
+        if (!isStandaloneTask) {
+          milestoneTaskCounts[milestoneId] = (milestoneTaskCounts[milestoneId] || 0) + 1;
+        }
+
+        // Create processed task with comprehensive data structure
+        const taskWithId = {
+          ...taskData,
+          id: taskData.id || `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          milestoneId: taskData.milestoneId || (isStandaloneTask ? null : milestoneId),
+          projectId: taskData.projectId || taskData.milestoneId || (isStandaloneTask ? null : milestoneId),
+          goalId: taskData.goalId || null,
+          completed: taskData.completed || false,
+          status: taskData.status || 'todo',
+          priority: taskData.priority || 'medium',
+          createdAt: taskData.createdAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+
+        processedTasks.push(taskWithId);
+      }
+
+      // Check subscription limits for all affected milestones
+      if (userSubscriptionStatus !== 'pro' && userSubscriptionStatus !== 'unlimited') {
+        const currentTasks = Array.isArray(tasks) ? [...tasks] : [];
+        
+        for (const [milestoneId, newTaskCount] of Object.entries(milestoneTaskCounts)) {
+          const currentMilestoneTasks = currentTasks.filter(task => task.milestoneId === milestoneId);
+          const totalTasksAfterAdd = currentMilestoneTasks.length + newTaskCount;
+          
+          if (totalTasksAfterAdd > FREE_PLAN_LIMITS.MAX_TASKS_PER_MILESTONE) {
+            showError(`Free version limited to ${FREE_PLAN_LIMITS.MAX_TASKS_PER_MILESTONE} tasks per milestone. Complete some tasks or upgrade to Pro.`);
+            return [];
+          }
+        }
+      }
+
+      // Execute production-level bulk task addition transaction
+      const result = await stateTransactionService.executeBulkTaskAddition({
+        tasksToAdd: processedTasks,
+        currentTasks: Array.isArray(tasks) ? [...tasks] : [],
+        currentMilestones: Array.isArray(milestones) ? [...milestones] : [],
+        currentGoals: Array.isArray(goals) ? [...goals] : [],
+        setTasks,
+        setMilestones
+      });
+
+      if (result.success) {
+        console.log(`✅ Production-level bulk task addition completed: ${result.addedTasks.length} tasks added`);
+        return result.addedTasks;
+      } else {
+        showError('Failed to add tasks');
+        return [];
+      }
+
+    } catch (error) {
+      console.error('🔴 Production-level bulk task addition failed:', error);
+      showError(`Failed to add tasks: ${error.message}`);
+      return [];
+    }
+  };
+
   
   // Update a task - COMPLETELY REWRITTEN TO NEVER CHANGE MILESTONE STATUS
   const updateTask = async (milestoneId, taskId, updatedTask) => {
@@ -2191,6 +2286,41 @@ export const AppProvider = ({ children }) => {
       console.error('Error deleting task:', error);
       showError('Failed to delete task');
       return false;
+    }
+  };
+
+  // Production-level bulk task deletion with atomic operations and comprehensive error handling
+  const deleteTasksBulk = async (taskIdsToDelete) => {
+    try {
+      if (!Array.isArray(taskIdsToDelete) || taskIdsToDelete.length === 0) {
+        showError('No tasks to delete');
+        return [];
+      }
+
+      console.log(`🔄 Starting production-level bulk task deletion: ${taskIdsToDelete.length} tasks`);
+
+      // Execute production-level bulk task deletion transaction
+      const result = await stateTransactionService.executeBulkTaskDeletion({
+        taskIdsToDelete,
+        currentTasks: Array.isArray(tasks) ? [...tasks] : [],
+        currentMilestones: Array.isArray(milestones) ? [...milestones] : [],
+        currentGoals: Array.isArray(goals) ? [...goals] : [],
+        setTasks,
+        setMilestones
+      });
+
+      if (result.success) {
+        console.log(`✅ Production-level bulk task deletion completed: ${result.deletedTasks.length} tasks deleted`);
+        return result.deletedTasks;
+      } else {
+        showError('Failed to delete tasks');
+        return [];
+      }
+
+    } catch (error) {
+      console.error('🔴 Production-level bulk task deletion failed:', error);
+      showError(`Failed to delete tasks: ${error.message}`);
+      return [];
     }
   };
 
@@ -3931,8 +4061,10 @@ export const AppProvider = ({ children }) => {
     
     // Task functions
     addTask,
+    addTasksBulk,
     updateTask,
     deleteTask,
+    deleteTasksBulk,
     
     // Note functions
     updateNotes,
@@ -4035,8 +4167,10 @@ export const useAppContext = () => {
     updateMilestone: () => null,
     deleteMilestone: () => null,
     addTask: () => null,
+    addTasksBulk: () => null,
     updateTask: () => null,
     deleteTask: () => null,
+    deleteTasksBulk: () => null,
     setNotes: () => null
   };
 };

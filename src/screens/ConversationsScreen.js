@@ -9,7 +9,10 @@ import {
   Alert,
   SafeAreaView,
   ActivityIndicator,
-  Share
+  Share,
+  Modal,
+  Animated,
+  Easing
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
@@ -112,6 +115,55 @@ const ConversationsScreen = () => {
   const [loading, setLoading] = useState(true);
   const [confirmDeleteCountdown, setConfirmDeleteCountdown] = useState(0);
   const countdownTimerRef = useRef(null);
+  
+  // Modal states for custom popups
+  const [showClearConfirmModal, setShowClearConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showInfoModal, setShowInfoModal] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.9)).current;
+
+  // Modal animation functions
+  const showModal = (setModalVisible) => {
+    setModalVisible(true);
+    fadeAnim.setValue(0);
+    scaleAnim.setValue(0.9);
+    
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.ease)
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.ease)
+      })
+    ]).start();
+  };
+
+  const hideModal = (setModalVisible, callback) => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.ease)
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 0.9,
+        duration: 250,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.ease)
+      })
+    ]).start(() => {
+      setModalVisible(false);
+      if (callback) callback();
+    });
+  };
 
   // Cleanup timer on unmount
   useEffect(() => {
@@ -209,62 +261,66 @@ const ConversationsScreen = () => {
   const handleClearAllConversations = () => {
     // Don't show confirmation if there are no conversations
     if (conversations.length === 0) {
-      Alert.alert('No Conversations', 'There are no conversations to clear.');
       return;
     }
 
-    // Show alert with countdown
-    Alert.alert(
-      'Clear All Conversations',
-      'Are you sure you want to delete all conversations? This action cannot be undone.',
-      [
-        { 
-          text: 'Cancel', 
-          style: 'cancel',
-          onPress: () => {
-            if (countdownTimerRef.current) {
-              clearInterval(countdownTimerRef.current);
-              setConfirmDeleteCountdown(0);
-            }
-          }
-        },
-        { 
-          text: confirmDeleteCountdown > 0 ? `Clear All (${confirmDeleteCountdown}s)` : 'Clear All', 
-          style: 'destructive',
-          disabled: confirmDeleteCountdown > 0,
-          onPress: async () => {
-            // If countdown is still active, do nothing
-            if (confirmDeleteCountdown > 0) {
-              startClearAllCountdown(); // Re-start the countdown if it's not yet zero
-              return;
-            }
-            
-            try {
-              // Clear all conversations
-              await AIService.clearAllConversations();
-              
-              // Also clear the last conversation reference
-              await AsyncStorage.removeItem(LAST_CHAT_KEY);
-              
-              // Update state
-              setConversations([]);
-              setSections([]);
-              Alert.alert('Success', 'All conversations have been deleted.');
-            } catch (error) {
-              console.error('Error clearing all conversations:', error);
-              Alert.alert(
-                'Error',
-                'There was a problem clearing conversations. Please try again.'
-              );
-            }
-          }
-        }
-      ],
-      { cancelable: true }
-    );
-    
-    // Start the countdown
+    // Show custom confirmation modal
+    showModal(setShowClearConfirmModal);
     startClearAllCountdown();
+  };
+
+  // Handle confirm clear all
+  const handleConfirmClearAll = async () => {
+    // If countdown is still active, do nothing
+    if (confirmDeleteCountdown > 0) {
+      return;
+    }
+    
+    try {
+      // Hide confirm modal first
+      hideModal(setShowClearConfirmModal);
+      
+      // Clear all conversations
+      await AIService.clearAllConversations();
+      
+      // Also clear the last conversation reference
+      await AsyncStorage.removeItem(LAST_CHAT_KEY);
+      
+      // Update state
+      setConversations([]);
+      setSections([]);
+      
+      // Show success modal
+      setTimeout(() => {
+        showModal(setShowSuccessModal);
+        
+        // After showing success modal, wait a bit then navigate back with clear signal
+        setTimeout(() => {
+          hideModal(setShowSuccessModal, () => {
+            // Navigate back to AIAssistant with clearAll flag
+            navigation.navigate('AIAssistant', { 
+              conversationId: null, 
+              clearAll: true 
+            });
+          });
+        }, 1500);
+      }, 300);
+    } catch (error) {
+      console.error('Error clearing all conversations:', error);
+      Alert.alert(
+        'Error',
+        'There was a problem clearing conversations. Please try again.'
+      );
+    }
+  };
+
+  // Handle cancel clear all
+  const handleCancelClearAll = () => {
+    if (countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current);
+      setConfirmDeleteCountdown(0);
+    }
+    hideModal(setShowClearConfirmModal);
   };
 
   // Format date
@@ -447,49 +503,57 @@ const ConversationsScreen = () => {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      <View style={[styles.header, { backgroundColor: theme.card, borderBottomColor: theme.border }]}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={24} color={theme.text} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: theme.text }]}>Conversations</Text>
-        <View style={styles.headerButtons}>
+    <>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+        <View style={[styles.header, { backgroundColor: theme.card, borderBottomColor: theme.border }]}>
           <TouchableOpacity
-            style={[
-              styles.clearAllButton,
-              {
-                backgroundColor: theme.error + '15',
-                borderColor: conversations.length === 0 ? theme.textSecondary + '50' : theme.error
-              }
-            ]}
-            onPress={handleClearAllConversations}
-            disabled={conversations.length === 0}
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
           >
-            <Ionicons 
-              name="trash-outline" 
-              size={18} 
-              color={conversations.length === 0 ? theme.textSecondary + '50' : theme.error || '#ff3b30'} 
-            />
-            <Text 
-              style={[
-                styles.clearAllText, 
-                { color: conversations.length === 0 ? theme.textSecondary + '50' : theme.error || '#ff3b30' }
-              ]}
-            >
-              Clear All
-            </Text>
+            <Ionicons name="arrow-back" size={24} color={theme.text} />
           </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: theme.text }]}>Conversations</Text>
+          <View style={styles.headerButtons}>
+            <TouchableOpacity
+              style={[
+                styles.clearAllButton,
+                {
+                  backgroundColor: theme.error + '15',
+                  borderColor: conversations.length === 0 ? theme.textSecondary + '50' : theme.error
+                }
+              ]}
+              onPress={handleClearAllConversations}
+              disabled={conversations.length === 0}
+            >
+              <Ionicons 
+                name="trash-outline" 
+                size={18} 
+                color={conversations.length === 0 ? theme.textSecondary + '50' : theme.error || '#ff3b30'} 
+              />
+              <Text 
+                style={[
+                  styles.clearAllText, 
+                  { color: conversations.length === 0 ? theme.textSecondary + '50' : theme.error || '#ff3b30' }
+                ]}
+              >
+                Clear All
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
 
       {/* Conversation count indicator */}
       <View style={[styles.countContainer, { backgroundColor: theme.card }]}>
         <Text style={[styles.countText, { color: theme.textSecondary }]}>
           {conversations.length}/{MAX_CONVERSATIONS} Conversations
         </Text>
+        <TouchableOpacity
+          style={styles.infoButton}
+          onPress={() => showModal(setShowInfoModal)}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="information-circle-outline" size={16} color={theme.textSecondary} />
+        </TouchableOpacity>
       </View>
 
       {loading ? (
@@ -514,6 +578,189 @@ const ConversationsScreen = () => {
         />
       )}
     </SafeAreaView>
+
+    {/* Custom Clear Confirmation Modal */}
+    <Modal
+      transparent={true}
+      visible={showClearConfirmModal}
+      animationType="none"
+      onRequestClose={handleCancelClearAll}
+    >
+      <Animated.View
+        style={[
+          styles.modalOverlay,
+          {
+            opacity: fadeAnim
+          }
+        ]}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlayTouchable}
+          activeOpacity={1}
+          onPress={handleCancelClearAll}
+        />
+        <Animated.View
+          style={[
+            styles.modalContainer,
+            {
+              backgroundColor: theme.surface || theme.card,
+              transform: [{ scale: scaleAnim }]
+            }
+          ]}
+        >
+          <View style={styles.modalIcon}>
+            <Ionicons name="trash-outline" size={28} color="#FF3B30" />
+          </View>
+          
+          <Text style={[styles.modalTitle, { color: theme.text }]}>
+            Clear All Conversations
+          </Text>
+          
+          <Text style={[styles.modalMessage, { color: theme.textSecondary }]}>
+            Are you sure you want to delete all conversations? This action cannot be undone.
+          </Text>
+          
+          <View style={styles.modalButtons}>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.modalCancelButton, { backgroundColor: theme.background, borderColor: theme.border }]}
+              onPress={handleCancelClearAll}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.modalButtonText, { color: theme.text }]}>
+                Cancel
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[
+                styles.modalButton, 
+                styles.modalDeleteButton,
+                { 
+                  backgroundColor: confirmDeleteCountdown > 0 ? theme.textSecondary + '20' : '#FF3B30',
+                  opacity: confirmDeleteCountdown > 0 ? 0.6 : 1
+                }
+              ]}
+              onPress={handleConfirmClearAll}
+              activeOpacity={0.7}
+              disabled={confirmDeleteCountdown > 0}
+            >
+              <Text style={[styles.modalButtonText, styles.modalDeleteButtonText]}>
+                {confirmDeleteCountdown > 0 ? `Clear All (${confirmDeleteCountdown}s)` : 'Clear All'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
+      </Animated.View>
+    </Modal>
+
+    {/* Custom Success Modal */}
+    <Modal
+      transparent={true}
+      visible={showSuccessModal}
+      animationType="none"
+      onRequestClose={() => hideModal(setShowSuccessModal)}
+    >
+      <Animated.View
+        style={[
+          styles.modalOverlay,
+          {
+            opacity: fadeAnim
+          }
+        ]}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlayTouchable}
+          activeOpacity={1}
+          onPress={() => hideModal(setShowSuccessModal)}
+        />
+        <Animated.View
+          style={[
+            styles.modalContainer,
+            {
+              backgroundColor: theme.surface || theme.card,
+              transform: [{ scale: scaleAnim }]
+            }
+          ]}
+        >
+          <View style={styles.modalIcon}>
+            <Ionicons name="checkmark-circle" size={28} color="#4CAF50" />
+          </View>
+          
+          <Text style={[styles.modalTitle, { color: theme.text }]}>
+            Success
+          </Text>
+          
+          <Text style={[styles.modalMessage, { color: theme.textSecondary }]}>
+            All conversations have been deleted successfully.
+          </Text>
+          
+          <TouchableOpacity
+            style={[styles.modalButton, styles.modalSuccessButton]}
+            onPress={() => hideModal(setShowSuccessModal)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.modalButtonText, styles.modalSuccessButtonText]}>
+              OK
+            </Text>
+          </TouchableOpacity>
+        </Animated.View>
+      </Animated.View>
+    </Modal>
+
+    {/* Info Modal */}
+    <Modal
+      transparent={true}
+      visible={showInfoModal}
+      animationType="none"
+      onRequestClose={() => hideModal(setShowInfoModal)}
+    >
+      <Animated.View
+        style={[
+          styles.modalOverlay,
+          {
+            opacity: fadeAnim
+          }
+        ]}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlayTouchable}
+          activeOpacity={1}
+          onPress={() => hideModal(setShowInfoModal)}
+        />
+        <Animated.View
+          style={[
+            styles.modalContainer,
+            {
+              backgroundColor: theme.surface || theme.card,
+              transform: [{ scale: scaleAnim }]
+            }
+          ]}
+        >
+          <View style={styles.modalIcon}>
+            <Ionicons name="information-circle" size={28} color={theme.primary} />
+          </View>
+          
+          <Text style={[styles.modalTitle, { color: theme.text }]}>
+            Conversation Storage
+          </Text>
+          
+          <Text style={[styles.modalMessage, { color: theme.textSecondary }]}>
+            Your conversations are saved locally on this device. When you reach 100 conversations, your oldest conversation will be automatically deleted to make room for new ones.
+          </Text>
+          
+          <TouchableOpacity
+            style={[styles.modalButton, styles.modalInfoButton, { backgroundColor: theme.primary }]}
+            onPress={() => hideModal(setShowInfoModal)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.modalButtonText, styles.modalInfoButtonText]}>
+              Got it
+            </Text>
+          </TouchableOpacity>
+        </Animated.View>
+      </Animated.View>
+    </Modal>
+  </>
   );
 };
 
@@ -555,14 +802,20 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   countContainer: {
+    flexDirection: 'row',
     padding: 8,
     alignItems: 'center',
+    justifyContent: 'center',
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.1)',
   },
   countText: {
     fontSize: 12,
     fontWeight: '500',
+  },
+  infoButton: {
+    marginLeft: 8,
+    padding: 4,
   },
   listContent: {
     paddingHorizontal: 16,
@@ -660,6 +913,102 @@ const styles = StyleSheet.create({
   actionButton: {
     padding: 4,
     marginLeft: 8,
+  },
+  // Custom Modal Styles - Clean, Minimalistic, Professional
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalOverlayTouchable: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  modalContainer: {
+    width: '85%',
+    maxWidth: 340,
+    borderRadius: 20,
+    paddingVertical: 32,
+    paddingHorizontal: 28,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 12,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 28,
+    elevation: 12,
+  },
+  modalIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 12,
+    letterSpacing: 0.3,
+  },
+  modalMessage: {
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 28,
+    opacity: 0.85,
+    paddingHorizontal: 4,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    width: '100%',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 52,
+  },
+  modalCancelButton: {
+    borderWidth: 1.5,
+  },
+  modalDeleteButton: {
+    backgroundColor: '#FF3B30',
+  },
+  modalSuccessButton: {
+    backgroundColor: '#4CAF50',
+    width: '60%',
+    alignSelf: 'center',
+  },
+  modalButtonText: {
+    fontSize: 17,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+  },
+  modalDeleteButtonText: {
+    color: '#FFFFFF',
+  },
+  modalSuccessButtonText: {
+    color: '#FFFFFF',
+  },
+  modalInfoButton: {
+    width: '60%',
+    alignSelf: 'center',
+  },
+  modalInfoButtonText: {
+    color: '#FFFFFF',
   },
 });
 
