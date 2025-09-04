@@ -100,7 +100,6 @@ const GoalFormStep = ({
             placeholder="Enter goal title..."
             placeholderTextColor={theme.textSecondary}
             maxLength={100}
-            autoFocus={true}
           />
         </View>
 

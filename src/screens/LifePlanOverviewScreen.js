@@ -9,7 +9,8 @@ import {
   StatusBar,
   ScrollView,
   TouchableOpacity,
-  Animated
+  Animated,
+  Alert
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -480,38 +481,61 @@ const MilestoneCard = ({ milestone, goalColor, tasks, onExpandToggle, onComplete
           </View>
         )}
 
-        {/* Floating Completion Button - Bottom Right */}
-        <TouchableOpacity 
-          style={{
-            position: 'absolute',
-            bottom: 12,
-            right: 12,
-            width: 32,
-            height: 32,
-            borderRadius: 8, // Square with rounded corners
-            backgroundColor: milestone.completed ? "#4CAF50" : 
-              (!milestone.goalId ? "#000000" : cardColor),
-            justifyContent: 'center',
-            alignItems: 'center',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 4,
-            elevation: 3,
-          }}
-          onPress={onComplete}
-          activeOpacity={0.8}
-        >
-          {milestone.completed ? (
-            <Ionicons name="checkmark" size={18} color="#FFFFFF" />
-          ) : (
-            <Ionicons 
-              name="checkmark-outline" 
-              size={18} 
-              color="#FFFFFF"
-            />
-          )}
-        </TouchableOpacity>
+        {/* Floating Completion Button - Bottom Right - Only show if there are incomplete tasks OR if not virtual */}
+        {(!milestone.isVirtual || (milestone.isVirtual && milestoneTasks.some(task => !task.completed && task.status !== 'done')) || progressPercentage === 100) && (
+          <TouchableOpacity 
+            style={{
+              position: 'absolute',
+              bottom: 12,
+              right: 12,
+              width: 32,
+              height: 32,
+              borderRadius: 8, // Square with rounded corners
+              backgroundColor: progressPercentage === 100 ? "#4CAF50" : 
+                (!milestone.goalId ? "#000000" : cardColor),
+              justifyContent: 'center',
+              alignItems: 'center',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.1,
+              shadowRadius: 4,
+              elevation: 3,
+              zIndex: 1000 // Ensure button is above other elements
+            }}
+            onPress={() => {
+              console.log('🔥 TOUCHABLEOPACITY PRESSED:', { 
+                milestoneId: milestone.id, 
+                isVirtual: milestone.isVirtual,
+                onCompleteExists: !!onComplete,
+                progressPercentage: progressPercentage,
+                allTasksCompleted: progressPercentage === 100
+              });
+              if (progressPercentage === 100) {
+                console.log('🔥 ALL TASKS COMPLETED - Button shows completed state');
+                // For completed virtual milestones, trigger a custom completion handler
+                if (milestone.isVirtual && onComplete) {
+                  console.log('🔥 CALLING COMPLETION HANDLER FOR COMPLETED VIRTUAL MILESTONE');
+                  onComplete();
+                }
+              } else if (onComplete) {
+                onComplete();
+              } else {
+                console.error('🔥 NO onComplete HANDLER');
+              }
+            }}
+            activeOpacity={0.8}
+          >
+            {progressPercentage === 100 ? (
+              <Ionicons name="checkmark" size={18} color="#FFFFFF" />
+            ) : (
+              <Ionicons 
+                name="checkmark-outline" 
+                size={18} 
+                color="#FFFFFF"
+              />
+            )}
+          </TouchableOpacity>
+        )}
       </TouchableOpacity>
       
       {expanded && (
@@ -749,12 +773,13 @@ const GoalCard = ({ goal, milestones, tasks, onExpandToggle, onEdit, onDelete, o
   });
   
   // Create a virtual milestone for standalone tasks if they exist (but NOT for the standalone-tasks section itself)
+  const isAllStandaloneTasksCompleted = goalStandaloneTasks.length > 0 && goalStandaloneTasks.every(task => task.completed || task.status === 'done');
   const standaloneTasksMilestone = (goal.id !== 'standalone-tasks' && goalStandaloneTasks.length > 0) ? {
     id: `${goal.id}-standalone-tasks`,
     title: 'Standalone Tasks',
     goalId: goal.id,
     isVirtual: true,
-    completed: false
+    completed: false // Keep as false to maintain theme color instead of green
   } : null;
   
   // Combine real milestones with virtual standalone tasks milestone
@@ -1514,7 +1539,21 @@ const GoalCard = ({ goal, milestones, tasks, onExpandToggle, onEdit, onDelete, o
                   tasks={milestone.isVirtual ? goalStandaloneTasks : tasks}
                   expanded={expandedMilestones[milestone.id]}
                   onExpandToggle={() => toggleMilestone(milestone.id)}
-                  onComplete={() => milestone.isVirtual ? onVirtualMilestoneComplete(milestone.id) : onMilestoneComplete(milestone.id)}
+                  onComplete={function() {
+                    console.log(`🔥 MILESTONE COMPLETE CLICK: ${milestone.id} (isVirtual: ${milestone.isVirtual})`);
+                    console.log('🔥 MILESTONE HANDLERS:', { onVirtualMilestoneComplete: !!onVirtualMilestoneComplete, onMilestoneComplete: !!onMilestoneComplete });
+                    try {
+                      if (milestone.isVirtual) {
+                        console.log('🔥 CALLING VIRTUAL HANDLER');
+                        onVirtualMilestoneComplete(milestone.id);
+                      } else {
+                        console.log('🔥 CALLING REGULAR HANDLER');
+                        onMilestoneComplete(milestone.id);
+                      }
+                    } catch (error) {
+                      console.error('🔥 ERROR in milestone complete:', error);
+                    }
+                  }}
                   onEdit={() => milestone.isVirtual ? null : onMilestoneEdit(milestone.id)}
                   onDelete={() => milestone.isVirtual ? onVirtualMilestoneDelete(milestone.id) : onMilestoneDelete(milestone.id)}
                   isEditMode={false} // Force virtual milestones to not be in edit mode
@@ -1540,7 +1579,21 @@ const GoalCard = ({ goal, milestones, tasks, onExpandToggle, onEdit, onDelete, o
                   tasks={milestone.isVirtual ? goalStandaloneTasks : tasks}
                   expanded={expandedMilestones[milestone.id]}
                   onExpandToggle={() => toggleMilestone(milestone.id)}
-                  onComplete={() => milestone.isVirtual ? onVirtualMilestoneComplete(milestone.id) : onMilestoneComplete(milestone.id)}
+                  onComplete={function() {
+                    console.log(`🔥 MILESTONE COMPLETE CLICK: ${milestone.id} (isVirtual: ${milestone.isVirtual})`);
+                    console.log('🔥 MILESTONE HANDLERS:', { onVirtualMilestoneComplete: !!onVirtualMilestoneComplete, onMilestoneComplete: !!onMilestoneComplete });
+                    try {
+                      if (milestone.isVirtual) {
+                        console.log('🔥 CALLING VIRTUAL HANDLER');
+                        onVirtualMilestoneComplete(milestone.id);
+                      } else {
+                        console.log('🔥 CALLING REGULAR HANDLER');
+                        onMilestoneComplete(milestone.id);
+                      }
+                    } catch (error) {
+                      console.error('🔥 ERROR in milestone complete:', error);
+                    }
+                  }}
                   onEdit={() => milestone.isVirtual ? null : onMilestoneEdit(milestone.id)}
                   onDelete={() => milestone.isVirtual ? onVirtualMilestoneDelete(milestone.id) : onMilestoneDelete(milestone.id)}
                   isEditMode={isEditMode}
@@ -2399,9 +2452,18 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
     );
   };
 
-  const handleVirtualMilestoneComplete = (virtualMilestoneId) => {
+  const handleVirtualMilestoneComplete = async (virtualMilestoneId) => {
+    console.log(`🔥 VIRTUAL MILESTONE COMPLETE: Handler called for ${virtualMilestoneId}`);
+    
+    if (!virtualMilestoneId || !virtualMilestoneId.includes('-standalone-tasks')) {
+      console.error('🔥 VIRTUAL MILESTONE COMPLETE: Invalid milestone ID');
+      showError('Invalid milestone');
+      return;
+    }
+    
     // Extract the real goal ID from the virtual milestone ID
     const realGoalId = virtualMilestoneId.replace('-standalone-tasks', '');
+    console.log(`🔥 VIRTUAL MILESTONE COMPLETE: Real goal ID = ${realGoalId}`);
     
     // Find all standalone tasks for this goal
     const standaloneTasks = tasks.filter(task => 
@@ -2410,46 +2472,59 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
       (!task.projectId || task.projectId === null)
     );
     
+    console.log(`🔥 VIRTUAL MILESTONE COMPLETE: Found ${standaloneTasks.length} standalone tasks`);
+    standaloneTasks.forEach((task, i) => {
+      console.log(`🔥 VIRTUAL MILESTONE COMPLETE: Task ${i + 1}: "${task.title}" (completed: ${task.completed})`);
+    });
+    
     if (standaloneTasks.length === 0) {
       showError('No standalone tasks to complete');
       return;
     }
     
-    const incompleteTasks = standaloneTasks.filter(task => !task.completed);
+    const incompleteTasks = standaloneTasks.filter(task => !task.completed && task.status !== 'done');
     
     if (incompleteTasks.length === 0) {
-      showSuccess('All standalone tasks are already completed!');
+      console.log('🔥 VIRTUAL MILESTONE: All tasks already completed, deleting them');
+      
+      try {
+        // Delete all completed standalone tasks (clear them out)
+        const taskIdsToDelete = standaloneTasks.map(task => task.id);
+        console.log(`🔥 VIRTUAL MILESTONE: Deleting ${taskIdsToDelete.length} completed tasks`);
+        
+        // Use bulk delete to remove all completed standalone tasks
+        const deletedTasks = await deleteTasksBulk(taskIdsToDelete);
+        
+        if (deletedTasks && deletedTasks.length > 0) {
+          showSuccess(`Cleared ${deletedTasks.length} completed tasks! 🎉`);
+          // Trigger celebration animation
+          triggerFireworks(['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'], 3000);
+        } else {
+          showError('Failed to clear completed tasks');
+        }
+      } catch (error) {
+        console.error('🔥 VIRTUAL MILESTONE: Error deleting completed tasks:', error);
+        showError('Failed to clear completed tasks');
+      }
       return;
     }
     
-    Alert.alert(
-      'Complete All Standalone Tasks',
-      `This will mark all ${incompleteTasks.length} remaining standalone tasks as complete. Continue?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Complete All', 
-          onPress: async () => {
-            try {
-              // Complete each incomplete standalone task
-              for (const task of incompleteTasks) {
-                if (updateTask) {
-                  await updateTask(null, task.id, { 
-                    completed: true, 
-                    status: 'done',
-                    updatedAt: new Date().toISOString()
-                  });
-                }
-              }
-              showSuccess(`Completed ${incompleteTasks.length} standalone tasks!`);
-            } catch (error) {
-              console.error('Error completing standalone tasks:', error);
-              showError('Failed to complete some standalone tasks');
-            }
-          }
+    try {
+      // Complete each incomplete standalone task directly
+      for (const task of incompleteTasks) {
+        if (updateTask) {
+          await updateTask(null, task.id, { 
+            completed: true, 
+            status: 'done',
+            updatedAt: new Date().toISOString()
+          });
         }
-      ]
-    );
+      }
+      showSuccess(`Completed ${incompleteTasks.length} standalone tasks!`);
+    } catch (error) {
+      console.error('Error completing standalone tasks:', error);
+      showError('Failed to complete some standalone tasks');
+    }
   };
 
   const handleMilestoneComplete = (milestoneId) => {

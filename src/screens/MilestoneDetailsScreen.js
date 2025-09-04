@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   TextInput,
   ScrollView,
-  Alert,
   ActivityIndicator,
   StatusBar,
   Platform,
@@ -32,6 +31,7 @@ import {
   fontSizes,
   accessibility
 } from '../utils/responsive';
+import UnsavedChangesModal from '../components/UnsavedChangesModal';
 
 const MilestoneDetailsScreen = ({ route, navigation }) => {
   const { theme } = useTheme();
@@ -77,6 +77,7 @@ const MilestoneDetailsScreen = ({ route, navigation }) => {
   
   // Goal picker state
   const [showGoalPicker, setShowGoalPicker] = useState(false);
+  const [showUnsavedChangesModal, setShowUnsavedChangesModal] = useState(false);
 
   // Animation values
   const saveButtonScale = useRef(new Animated.Value(1)).current;
@@ -126,17 +127,19 @@ const MilestoneDetailsScreen = ({ route, navigation }) => {
   // Handle back press with unsaved changes
   const handleBackPress = () => {
     if (uiState.hasUnsavedChanges) {
-      Alert.alert(
-        'Unsaved Changes',
-        'You have unsaved changes. Are you sure you want to go back?',
-        [
-          { text: 'Keep Editing', style: 'cancel' },
-          { text: 'Discard', onPress: () => navigation.goBack() }
-        ]
-      );
+      setShowUnsavedChangesModal(true);
     } else {
       navigation.goBack();
     }
+  };
+
+  const handleKeepEditing = () => {
+    setShowUnsavedChangesModal(false);
+  };
+
+  const handleDiscard = () => {
+    setShowUnsavedChangesModal(false);
+    navigation.goBack();
   };
 
   // Handle save milestone
@@ -520,6 +523,13 @@ const MilestoneDetailsScreen = ({ route, navigation }) => {
           </Text>
         </TouchableOpacity>
       )}
+      
+      {/* Unsaved Changes Modal */}
+      <UnsavedChangesModal
+        visible={showUnsavedChangesModal}
+        onKeepEditing={handleKeepEditing}
+        onDiscard={handleDiscard}
+      />
     </SafeAreaView>
   );
 };

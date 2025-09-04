@@ -34,7 +34,7 @@ import GoalPreview from './components/GoalPreview';
 import SectionHeader from './components/SectionHeader';
 import GeneralSection from './components/GeneralSection';
 import AdvancedSection from './components/AdvancedSection';
-import UnsavedChangesModal from './components/UnsavedChangesModal';
+import UnsavedChangesModal from '../../components/UnsavedChangesModal';
 
 // Import utilities
 import { formatDate, getIconDomain, generateShareableContent } from './utils/helpers';
@@ -348,7 +348,19 @@ const GoalDetailsScreen = ({ route, navigation }) => {
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
-        if (uiState.hasUnsavedChanges) {
+        // Force check for unsaved changes regardless of typing state
+        const hasChanges = Object.keys(initialValues).length > 0 && (
+          goalState.title !== initialValues.title ||
+          goalState.description !== initialValues.description ||
+          goalState.selectedIcon !== initialValues.selectedIcon ||
+          goalState.selectedColor !== initialValues.selectedColor ||
+          goalState.hasTargetDate !== initialValues.hasTargetDate ||
+          (goalState.hasTargetDate && goalState.targetDate?.getTime() !== initialValues.targetDate?.getTime()) ||
+          Object.keys(goalState.notifPrefs).some(key => goalState.notifPrefs[key] !== initialValues.notifPrefs[key]) ||
+          Object.keys(goalState.milestonesToShare).some(key => goalState.milestonesToShare[key] !== initialValues.milestonesToShare[key])
+        );
+
+        if (hasChanges) {
           setUiState(prev => ({
             ...prev,
             showUnsavedChangesModal: true
@@ -390,7 +402,19 @@ const GoalDetailsScreen = ({ route, navigation }) => {
   
   // Custom back button handler
   const handleBackPress = () => {
-    if (uiState.hasUnsavedChanges) {
+    // Force check for unsaved changes regardless of typing state
+    const hasChanges = Object.keys(initialValues).length > 0 && (
+      goalState.title !== initialValues.title ||
+      goalState.description !== initialValues.description ||
+      goalState.selectedIcon !== initialValues.selectedIcon ||
+      goalState.selectedColor !== initialValues.selectedColor ||
+      goalState.hasTargetDate !== initialValues.hasTargetDate ||
+      (goalState.hasTargetDate && goalState.targetDate?.getTime() !== initialValues.targetDate?.getTime()) ||
+      Object.keys(goalState.notifPrefs).some(key => goalState.notifPrefs[key] !== initialValues.notifPrefs[key]) ||
+      Object.keys(goalState.milestonesToShare).some(key => goalState.milestonesToShare[key] !== initialValues.milestonesToShare[key])
+    );
+
+    if (hasChanges) {
       setUiState(prev => ({
         ...prev,
         showUnsavedChangesModal: true
@@ -586,7 +610,7 @@ const toggleTargetDate = () => {
     clearTimeout(isTypingRef.timeout);
     isTypingRef.timeout = setTimeout(() => {
       isTypingRef.current = false;
-    }, 200);
+    }, 500); // Increased delay to be more reliable
   }, []);
   
   const handleDescriptionChange = useCallback((text) => {
@@ -599,7 +623,7 @@ const toggleTargetDate = () => {
     clearTimeout(isTypingRef.timeout);
     isTypingRef.timeout = setTimeout(() => {
       isTypingRef.current = false;
-    }, 200);
+    }, 500); // Increased delay to be more reliable
   }, []);
   
   const handleIconChange = useCallback((icon) => {
@@ -1277,14 +1301,14 @@ const toggleTargetDate = () => {
       {/* Unsaved Changes Modal */}
       <UnsavedChangesModal
         visible={uiState.showUnsavedChangesModal}
-        theme={theme}
-        selectedColor={goalState.selectedColor}
-        onCancel={() => setUiState(prev => ({ ...prev, showUnsavedChangesModal: false }))}
+        onKeepEditing={() => setUiState(prev => ({ ...prev, showUnsavedChangesModal: false }))}
         onDiscard={discardChangesAndGoBack}
         onSave={() => {
           setUiState(prev => ({ ...prev, showUnsavedChangesModal: false }));
           handleSave();
         }}
+        showSaveOption={true}
+        selectedColor={goalState.selectedColor}
       />
       
       {/* Delete Confirmation Modal */}

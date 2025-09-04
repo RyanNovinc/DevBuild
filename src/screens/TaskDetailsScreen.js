@@ -9,7 +9,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
   FlatList,
   Animated
 } from 'react-native';
@@ -28,6 +27,7 @@ import {
   spacing,
   fontSizes
 } from '../utils/responsive';
+import UnsavedChangesModal from '../components/UnsavedChangesModal';
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -623,6 +623,7 @@ const TaskDetailsScreen = ({ route, navigation }) => {
   const [selectedMilestoneId, setSelectedMilestoneId] = useState(preselectedMilestoneId);
   const [expandedGoalId, setExpandedGoalId] = useState(null); // Track which goal is expanded, start with none expanded
   const [expandedMilestones, setExpandedMilestones] = useState({}); // Track which milestones are expanded
+  const [showUnsavedChangesModal, setShowUnsavedChangesModal] = useState(false);
   
   // Animation for tab count update
   const tabCountAnim = useRef(new Animated.Value(1)).current;
@@ -809,17 +810,19 @@ const TaskDetailsScreen = ({ route, navigation }) => {
     const hasChanges = title.trim() || description.trim() || taskList.length > 0;
       
     if (hasChanges) {
-      Alert.alert(
-        'Discard Changes?',
-        'You have unsaved changes. Are you sure you want to go back?',
-        [
-          { text: 'Keep Editing', style: 'cancel' },
-          { text: 'Discard', onPress: () => navigation.goBack() }
-        ]
-      );
+      setShowUnsavedChangesModal(true);
     } else {
       navigation.goBack();
     }
+  };
+
+  const handleKeepEditing = () => {
+    setShowUnsavedChangesModal(false);
+  };
+
+  const handleDiscard = () => {
+    setShowUnsavedChangesModal(false);
+    navigation.goBack();
   };
   
   // Group tasks by goal and milestone
@@ -1329,6 +1332,13 @@ const TaskDetailsScreen = ({ route, navigation }) => {
         >
           <AddTaskTabScreen />
         </KeyboardAvoidingView>
+        
+        {/* Unsaved Changes Modal */}
+        <UnsavedChangesModal
+          visible={showUnsavedChangesModal}
+          onKeepEditing={handleKeepEditing}
+          onDiscard={handleDiscard}
+        />
       </SafeAreaView>
     );
   }
@@ -1585,6 +1595,13 @@ const TaskDetailsScreen = ({ route, navigation }) => {
           </Tab.Navigator>
         </NavigationContainer>
       </KeyboardAvoidingView>
+      
+      {/* Unsaved Changes Modal */}
+      <UnsavedChangesModal
+        visible={showUnsavedChangesModal}
+        onKeepEditing={handleKeepEditing}
+        onDiscard={handleDiscard}
+      />
     </SafeAreaView>
   );
 };

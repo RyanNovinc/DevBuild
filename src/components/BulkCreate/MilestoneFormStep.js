@@ -113,7 +113,6 @@ const MilestoneFormStep = ({
             placeholder="Enter milestone title..."
             placeholderTextColor={theme.textSecondary}
             maxLength={100}
-            autoFocus={true}
           />
         </View>
 

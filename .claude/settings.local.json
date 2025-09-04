@@ -152,7 +152,19 @@
       "Read(/D:\\Apps Productions Builds\\LCiOS-2\\DevBuild\\src\\screens\\PricingScreen/**)",
       "Read(/D:\\Apps Productions Builds\\LCiOS-2\\DevBuild\\src\\screens\\PricingScreen/**)",
       "Read(/D:\\Apps Productions Builds\\LCiOS-2\\DevBuild\\src\\screens\\PricingScreen/**)",
-      "Read(/D:\\Apps Productions Builds\\LCiOS-2\\DevBuild\\src\\screens\\PricingScreen\\components\\PlanCards/**)"
+      "Read(/D:\\Apps Productions Builds\\LCiOS-2\\DevBuild\\src\\screens\\PricingScreen\\components\\PlanCards/**)",
+      "Read(/D:\\Apps Productions Builds\\LCiOS-2\\DevBuild\\src\\screens/**)",
+      "Read(/D:\\Apps Productions Builds\\LCiOS-2\\DevBuild\\src\\screens/**)",
+      "Read(/D:\\Apps Productions Builds\\LCiOS-2\\DevBuild\\src\\screens/**)",
+      "Read(/D:\\Apps Productions Builds\\LCiOS-2\\DevBuild\\src\\screens/**)",
+      "Read(/D:\\Apps Productions Builds\\LCiOS-2\\DevBuild\\src\\components/**)",
+      "Read(/D:\\Apps Productions Builds\\LCiOS-2\\DevBuild\\src\\screens/**)",
+      "Read(/D:\\Apps Productions Builds\\LCiOS-2\\DevBuild\\src\\screens/**)",
+      "Read(/D:\\Apps Productions Builds\\LCiOS-2\\DevBuild\\src\\screens\\TimeBlockScreen/**)",
+      "Read(/D:\\Apps Productions Builds\\LCiOS-2\\DevBuild\\src\\screens/**)",
+      "Read(/D:\\Apps Productions Builds\\LCiOS-2\\DevBuild\\src\\screens/**)",
+      "Read(/D:\\Apps Productions Builds\\LCiOS-2\\DevBuild\\src\\screens/**)",
+      "Read(/D:\\Apps Productions Builds\\LCiOS-2\\DevBuild\\src\\screens/**)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

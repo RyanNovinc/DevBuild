@@ -150,7 +150,6 @@ const TaskFormStep = ({
             placeholder="Enter task title..."
             placeholderTextColor={theme.textSecondary}
             maxLength={100}
-            autoFocus={true}
           />
         </View>
 
