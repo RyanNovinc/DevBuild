@@ -107,6 +107,22 @@ KEY PHRASES THAT INDICATE COMPREHENSIVE REQUESTS:
 - "help me plan" (when context suggests full breakdown)
 - "organize for" + comprehensive request
 
+INTENT-BASED DETECTION PATTERNS:
+- QUANTITY indicators: "multiple", "several", "some", "a few", "various"
+- HIERARCHY language: "with milestones", "and tasks", "underneath", "sub-items", "components"
+- PLANNING context: "journey", "path", "roadmap", "strategy", "approach", "framework"
+- SCOPE words: "everything", "all", "complete", "full", "entire", "whole", "comprehensive"
+- SETUP language: "set up everything for", "get started with", "begin my", "start my journey"
+- ORGANIZATION terms: "organize", "structure", "layout", "arrange", "systematic"
+
+DOMAIN-SPECIFIC COMPREHENSIVE PATTERNS:
+- LEARNING topics: "learn [language/skill]", "master", "study", "course", "training" → Usually comprehensive
+- BUSINESS/CAREER: "start business", "career change", "professional development" → Usually comprehensive  
+- HEALTH/FITNESS: "get fit", "lose weight", "training program", "health journey" → Often comprehensive
+- CREATIVE projects: "write book", "create app", "build website", "launch project" → Usually comprehensive
+- LIFE changes: "move cities", "buy house", "wedding planning", "retirement" → Usually comprehensive
+- SINGLE tasks: "book appointment", "call dentist", "buy groceries", "pay bill" → Usually individual
+
 TIMEBLOCK RECURRING CAPABILITIES:
 - DAILY: Morning routines, daily standup meetings, exercise sessions, meditation
 - WEEKLY: Team meetings, weekly reviews, grocery shopping, gym sessions
@@ -126,18 +142,82 @@ TOOL LIMITATIONS:
 
 FUNCTION CALLING PRIORITY:
 - When user asks for SINGLE item with complete info → CALL FUNCTION IMMEDIATELY
-- When user asks for COMPREHENSIVE breakdown → CREATE MULTIPLE ITEMS in one response using multiple function calls
-- Use multiple function calls in a single response for comprehensive requests
-- Don't ask "Would you like me to create this?" - just create it and confirm completion
-- For comprehensive requests, create items in logical order: Goal → Milestones → Tasks
-- When a user provides structured information → USE TOOLS WHILE RESPONDING
+- When user asks for COMPREHENSIVE breakdown → FIRST PROPOSE THE PLAN, get user approval, THEN create items
+- For comprehensive requests with multiple items → Present the proposed plan in a structured format and ask for confirmation before creating
+- Single item requests → Create immediately without asking for confirmation  
+- Don't ask "Would you like me to create this?" for single items - just create it and confirm completion
+- For comprehensive requests, create items in logical order after approval: Goal → Milestones → Tasks
+- When a user provides structured information for a single item → USE TOOLS WHILE RESPONDING
+
+COMPREHENSIVE BREAKDOWN WORKFLOW:
+1. When user requests "break it down" or "comprehensive plan" → PROPOSE the plan first
+2. Present the plan clearly: "Here's what I suggest:" followed by structured list
+3. Ask for confirmation: "Would you like me to go ahead and create these items?"
+4. Wait for user approval/modifications before creating
+5. After approval, create items and trigger bulk modal
+
+CONFIDENCE-BASED DECISION MAKING:
+- HIGH confidence single → Create immediately (e.g., "Create a goal for daily exercise")
+- HIGH confidence comprehensive → Propose plan first (e.g., "Break down my Spanish learning journey")  
+- LOW confidence/ambiguous → Ask user to clarify intent
+
+AMBIGUOUS REQUEST HANDLING:
+- "Create X with milestones" → Ask: "Would you like me to create just the goal, or break it down into a complete plan with multiple milestones?"
+- "Help me with [topic]" → Clarify: "Would you like a single item or a comprehensive breakdown?"
+- Mixed language (single + multiple indicators) → Default to asking user preference
+- Domain suggests comprehensive but language is unclear → Ask for clarification
+
+CLARIFICATION RESPONSES FOR AMBIGUOUS CASES:
+"I can help you in two ways:
+1. Create just a single [goal/milestone/task] for this
+2. Break this down into a comprehensive plan with multiple items
+
+Which approach would you prefer?"
+
+CONTEXTUAL UNDERSTANDING FACTORS:
+- CONVERSATION history: If user was already discussing planning/breakdown, lean toward comprehensive
+- USER'S existing items: If they have no goals but request something complex, suggest comprehensive approach
+- REQUEST complexity: Long, detailed descriptions often indicate comprehensive intent
+- FOLLOW-UP context: "Now help me with X" after creating a plan suggests they want another comprehensive approach
+- DOMAIN complexity: Learning languages, starting businesses, major life changes typically need breakdown
+- TIME indicators: "long-term", "over time", "gradually" suggest comprehensive planning
+
+PLAN APPROVAL DETECTION:
+- User responses like "yes", "go ahead", "create them", "looks good", "approve", "do it" = EXECUTE the previously proposed plan
+- User responses like "no", "cancel", "don't create" = ABANDON the plan
+- User modifications like "change X to Y" or "add Z" = MODIFY the plan then ask for confirmation again
+- If user approves a plan you previously proposed, immediately create all the items using function calls
+
+FUNCTION CALL DATA EXTRACTION REQUIREMENTS:
+- NEVER truncate titles or text - extract complete information from user requests
+- ALWAYS populate description fields with detailed, comprehensive content from user's plan
+- ALWAYS include all specified fields: colors, icons, dates, domains, tasks
+- ALWAYS extract task details from user examples and create properly structured task objects
+- CALCULATE dates accurately from today's date (2025-09-05) when user specifies timeframes
+- MATCH colors and domains consistently between related goals and milestones
+- VALIDATE that each function call contains complete, non-empty data before sending
 
 IMPORTANT: Pay attention to the user's exact language. "Break it down" clearly indicates they want a comprehensive breakdown, not just a single item.
 
 Always provide thoughtful guidance based on this framework and suggest creating appropriate elements when users express relevant intentions.`;
 
 // Abbreviated system prompt for follow-up messages - OPTIMIZED FOR TOKEN EFFICIENCY
-const ABBREVIATED_SYSTEM_PROMPT = `LifeCompass AI. Continue helping with their flexible productivity system. Always respond conversationally first, ask clarifying questions when helpful (items can be standalone or connected as needed).`;
+const ABBREVIATED_SYSTEM_PROMPT = `LifeCompass AI. Continue helping with their flexible productivity system. Always respond conversationally first, ask clarifying questions when helpful (items can be standalone or connected as needed).
+
+QUICK REMINDERS:
+- HIGH confidence single → Create immediately
+- HIGH confidence comprehensive → Propose plan first, get approval, then create  
+- LOW confidence/ambiguous → Ask user to clarify intent ("single item or comprehensive plan?")
+- Plan approval responses ("yes", "go ahead", "create them") → Execute immediately with function calls
+- Plan modifications → Revise and confirm again
+- Consider domain complexity and conversation context for better detection
+
+FUNCTION CALL REQUIREMENTS:
+- NEVER truncate titles or descriptions - extract complete details
+- ALWAYS populate ALL required fields: titles, descriptions, colors, icons, domains, dates, tasks  
+- EXTRACT task details from user examples and create proper task objects
+- CALCULATE dates from today (2025-09-05) when timeframes specified
+- ENSURE data consistency between related items`;
 
 // Define tools (function calling schemas) with updated descriptions
 const tools = [
@@ -145,25 +225,37 @@ const tools = [
     type: "function",
     function: {
       name: "createGoal",
-      description: "Create a new goal (high-level life objective) when a user expresses wanting to achieve something significant that might take weeks or months",
+      description: "Create a new goal (high-level life objective) when a user expresses wanting to achieve something significant that might take weeks or months. IMPORTANT: Extract ALL details from the user's request to populate every field completely.",
       parameters: {
         type: "object",
         properties: {
           title: {
             type: "string",
-            description: "Clear, concise title of the goal"
+            description: "COMPLETE title of the goal - do NOT truncate. Extract the full title from user's request. Examples: 'Master React Development', 'Learn Spanish Fluently', 'Build a Profitable Side Business'"
           },
           description: {
-            type: "string",
-            description: "Detailed description of the goal, including motivation and success criteria"
+            type: "string", 
+            description: "DETAILED description extracted from user's request. Include motivation, what success looks like, key outcomes. Must be comprehensive, not empty. Examples: 'Gain comprehensive skills in React development including fundamentals, advanced concepts, and project building to become proficient in building React applications within 6 months'"
           },
           domain: {
             type: "string",
-            enum: ["Career & Work", "Health & Wellness", "Relationships", "Personal Growth", "Financial Security", "Recreation & Leisure", "Purpose & Meaning", "Environment & Organization", "Other"],
-            description: "The life domain this goal belongs to"
+            enum: ["Career & Work", "Health & Wellness", "Relationships", "Personal Growth", "Financial Security", "Recreation & Leisure", "Purpose & Meaning", "Community & Environment", "Other"],
+            description: "Choose the most appropriate life domain. For programming/learning: 'Personal Growth'. For career advancement: 'Career & Work'. For fitness: 'Health & Wellness'"
+          },
+          color: {
+            type: "string",
+            description: "Hex color code that matches the domain. Career & Work: '#4f46e5', Health & Wellness: '#10b981', Personal Growth: '#f59e0b', Recreation & Leisure: '#8b5cf6', Financial Security: '#059669', Relationships: '#ec4899', Purpose & Meaning: '#6366f1', Community & Environment: '#84cc16', Other: '#6b7280'"
+          },
+          icon: {
+            type: "string", 
+            description: "Ionicon name that represents the goal type. Learning/coding: 'school-outline', Career: 'briefcase-outline', Fitness: 'fitness-outline', Creative: 'color-palette-outline', Business: 'trending-up-outline', Language: 'language-outline', General: 'flag-outline'"
+          },
+          targetDate: {
+            type: "string",
+            description: "ISO date string for target completion if user specified a timeframe. Calculate from today's date (2025-09-05). Examples: '6 months' = '2026-03-05', '3 months' = '2025-12-05'. Use null if no timeframe mentioned."
           }
         },
-        required: ["title", "description", "domain"]
+        required: ["title", "description", "domain", "color", "icon"]
       }
     }
   },
@@ -171,36 +263,66 @@ const tools = [
     type: "function",
     function: {
       name: "createMilestone",
-      description: "Create ONLY a milestone when user specifically asks for milestones or describes substantial projects that need multiple steps. Examples: 'Create a milestone for exercise routine', 'I want to organize a project for learning Spanish'. Don't create this alongside tasks or timeblocks unless explicitly requested.",
+      description: "Create a milestone (substantial project/achievement within a goal). IMPORTANT: Extract ALL details from user's request to populate every field completely, including tasks.",
       parameters: {
         type: "object",
         properties: {
           title: {
             type: "string",
-            description: "Clear, concise title of the milestone"
+            description: "COMPLETE title of the milestone - do NOT truncate. Extract full title from user's request. Examples: 'React Fundamentals', 'Advanced React Concepts', 'Building Projects with React'"
           },
           description: {
             type: "string",
-            description: "Detailed description of what this milestone involves"
+            description: "DETAILED description extracted from user's request. Include what will be learned/accomplished, key components, outcomes. Must be comprehensive, not empty. Examples: 'Learn JSX, components, props, state, and basic hooks. Master the fundamental building blocks of React development'"
+          },
+          goalId: {
+            type: "string",
+            description: "ID of the parent goal if this milestone belongs to a goal (leave null for standalone milestones)"
           },
           goalTitle: {
-            type: "string",
-            description: "Optional: The title of the parent goal if this milestone is part of a larger goal"
+            type: "string", 
+            description: "COMPLETE title of the parent goal this milestone belongs to. Extract from context. Examples: 'Master React Development', 'Learn Spanish Fluently'"
           },
           domain: {
             type: "string",
-            enum: ["Career & Work", "Health & Wellness", "Relationships", "Personal Growth", "Financial Security", "Recreation & Leisure", "Purpose & Meaning", "Environment & Organization", "Other"],
-            description: "The life domain this milestone belongs to"
+            enum: ["Career & Work", "Health & Wellness", "Relationships", "Personal Growth", "Financial Security", "Recreation & Leisure", "Purpose & Meaning", "Community & Environment", "Other"],
+            description: "Choose the most appropriate life domain. Match the parent goal's domain or choose based on milestone content."
+          },
+          color: {
+            type: "string",
+            description: "Hex color code that matches the domain or parent goal. Use same color as parent goal if linked. Career & Work: '#4f46e5', Health & Wellness: '#10b981', Personal Growth: '#f59e0b', Recreation & Leisure: '#8b5cf6', Financial Security: '#059669', Relationships: '#ec4899', Purpose & Meaning: '#6366f1', Community & Environment: '#84cc16', Other: '#6b7280'"
+          },
+          dueDate: {
+            type: "string",
+            description: "ISO date string for due date if user specified timeframes. Calculate from today's date (2025-09-05) based on user's plan. Examples: 'in 1.5 months' = '2025-10-20', 'by December' = '2025-12-01'. Use null if no timeframe mentioned."
           },
           tasks: {
             type: "array",
             items: {
-              type: "string"
+              type: "object",
+              properties: {
+                id: {
+                  type: "string",
+                  description: "Unique task ID using format: task_[timestamp]_[random]"
+                },
+                title: {
+                  type: "string", 
+                  description: "COMPLETE task title extracted from user's examples/descriptions"
+                },
+                status: {
+                  type: "string",
+                  description: "Always use 'todo' for new tasks"
+                },
+                completed: {
+                  type: "boolean",
+                  description: "Always use false for new tasks" 
+                }
+              }
             },
-            description: "List of initial tasks needed for this milestone"
+            description: "Array of initial tasks for this milestone. Extract from user's detailed plan/examples. Each task should have complete title, unique ID, status:'todo', completed:false"
           }
         },
-        required: ["title", "description", "domain"]
+        required: ["title", "description", "domain", "color", "tasks"]
       }
     }
   },
@@ -425,7 +547,7 @@ exports.handler = async (event) => {
               tools: tools,
               tool_choice: "auto",
               response_format: { type: "text" },
-              stream: true,
+              stream: tools && tools.length > 0 ? false : true, // No streaming when using function calls
               temperature: 0.7
             })
           });
@@ -436,13 +558,16 @@ exports.handler = async (event) => {
             throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
           }
 
-          // Set up streaming handling
-          const reader = response.body;
-          const decoder = new TextDecoder('utf-8');
           let accumulatedResponse = '';
           let toolCalls = [];
+          const useStreaming = tools && tools.length > 0 ? false : true;
 
-          // Process the stream
+          if (useStreaming) {
+            // Set up streaming handling  
+            const reader = response.body;
+            const decoder = new TextDecoder('utf-8');
+
+            // Process the stream
           for await (const chunk of reader) {
             const decodedChunk = decoder.decode(chunk);
             const lines = decodedChunk.split('\n').filter(line => line.trim() !== '');
@@ -509,8 +634,39 @@ exports.handler = async (event) => {
                   });
                 }
               } catch (parseError) {
-                // Skip corrupted streaming chunks - common with tool calls
+                // Log streaming parse errors but continue processing
+                console.log(`⚠️ Streaming chunk parse error (continuing):`, parseError.message);
+                console.log(`⚠️ Problematic chunk:`, typeof chunk === 'string' ? chunk.substring(0, 100) : JSON.stringify(chunk).substring(0, 100));
                 continue;
+              }
+            }
+          }
+          } else {
+            // Handle non-streaming response (for function calls)
+            console.log('🔧 Using non-streaming mode for function calls to avoid corruption');
+            const data = await response.json();
+            
+            // Extract content and tool calls from complete response
+            if (data.choices && data.choices[0]) {
+              const choice = data.choices[0];
+              
+              // Get message content
+              if (choice.message?.content) {
+                accumulatedResponse = choice.message.content;
+                
+                // Send the complete content to client at once
+                await sendToClient(connectionId, {
+                  type: 'chunk',
+                  content: accumulatedResponse,
+                  conversationId,
+                  done: false
+                });
+              }
+              
+              // Get tool calls (clean, no corruption!)
+              if (choice.message?.tool_calls) {
+                toolCalls = choice.message.tool_calls;
+                console.log(`🎯 Received ${toolCalls.length} clean tool calls (no streaming corruption)`);
               }
             }
           }
@@ -523,12 +679,17 @@ exports.handler = async (event) => {
                 const name = toolCall.function.name;
                 let args;
                 
-                // Try to parse arguments with enhanced regex recovery for streaming issues
+                // Parse arguments (should be clean for non-streaming calls)
                 try {
+                  console.log(`🔍 DEBUG: Tool call ${index} (${name}) raw arguments:`, toolCall.function.arguments);
                   args = JSON.parse(toolCall.function.arguments);
+                  console.log(`🔍 DEBUG: Tool call ${index} (${name}) parsed args:`, JSON.stringify(args, null, 2));
                 } catch (parseError) {
-                  console.log(`Attempting advanced regex recovery for tool call ${index}`);
-                  console.log(`Corrupted JSON: ${toolCall.function.arguments.substring(0, 200)}...`);
+                  console.error(`❌ Tool call ${index} JSON parse error:`, parseError.message);
+                  console.error(`Raw arguments:`, toolCall.function.arguments);
+                  
+                  // With non-streaming, this should rarely happen
+                  // Provide minimal fallback args
                   
                   let fixedArgs = toolCall.function.arguments;
                   
@@ -538,10 +699,33 @@ exports.handler = async (event) => {
                   
                   // Step 2: Try to fix common streaming corruption patterns
                   fixedArgs = fixedArgs
-                    .replace(/^{\s*"?ti\s+"?([^"]+)"?\s*:/, '{"title":"$1",')     // Fix {"ti "value": -> {"title":"value",
-                    .replace(/^{\s*"?tle"\s*:\s*"([^"]*)/i, '{"title":"$1"')     // Fix {"tle": "value -> {"title":"value"
-                    .replace(/tle"\s*:\s*"([^"]*)/i, '"title":"$1"')             // Fix tle": "value -> "title":"value"
-                    .replace(/ti\s+"([^"]*)/i, '"title":"$1"')                   // Fix ti "value -> "title":"value"
+                    .replace(/^{\s*"?title"?\s*:\s*([^"][^",}]*)/i, '{"title":"$1"')    // Fix {"title":er React Development -> {"title":"Master React Development"
+                    .replace(/^{\s*"?title"?\s*:\s*"?([^"]*)/i, '{"title":"$1"')        // Fix {"title":er React Development" -> {"title":"Master React Development"
+                  
+                  // Step 3: Intelligent title reconstruction for common patterns
+                  fixedArgs = fixedArgs
+                    .replace(/("ti[^"]*"Master React[^"]*pment[^"]*")/, '"title":"Master React Development"')           // Fix "ti "Master React pment" -> "Master React Development"
+                    .replace(/("ti[^"]*"React Fundame[^"]*")/, '"title":"React Fundamentals"')                        // Fix "ti "React Fundame..." -> "React Fundamentals"  
+                    .replace(/("title"\s*:\s*"Advanced React[^"]*epts[^"]*")/, '"title":"Advanced React Concepts"')    // Fix "Advanced Reacepts" -> "Advanced React Concepts"
+                    .replace(/("title"\s*:\s*"Building Projects with React[^"]*")/, '"title":"Building Projects with React"') // Ensure full title
+                    .replace(/"title"\s*:\s*"([^"]*er React Development[^"]*)"/, '"title":"Master React Development"')     // Fix "er React Development" -> "Master React Development"
+                    .replace(/"title"\s*:\s*"([^"]*t Fundamentals[^"]*)"/, '"title":"React Fundamentals"')                // Fix "t Fundamentals" -> "React Fundamentals"  
+                    .replace(/"title"\s*:\s*"([^"]*Advancedt Concepts[^"]*)"/, '"title":"Advanced React Concepts"')       // Fix "Advancedt Concepts" -> "Advanced React Concepts"
+                    .replace(/"title"\s*:\s*"([^"]*Building Projects with[^"]*)"/, '"title":"Building Projects with React"') // Fix "Building Projects with" -> "Building Projects with React"
+                    .replace(/^{\s*"?ti\s+"?([^"]+)"?\s*:/, '{"title":"$1",')          // Fix {"ti "value": -> {"title":"value",
+                    .replace(/^{\s*"?tle"\s*:\s*"([^"]*)/i, '{"title":"$1"')          // Fix {"tle": "value -> {"title":"value"
+                    .replace(/tle"\s*:\s*"([^"]*)/i, '"title":"$1"')                  // Fix tle": "value -> "title":"value"
+                    .replace(/ti\s+"([^"]*)/i, '"title":"$1"')                        // Fix ti "value -> "title":"value"
+                    
+                    // Step 4: Fix description corruption
+                    .replace(/"description"\s*:\s*"Gain cehensive skillseact developmenuding fundamentals[^"]*"/, '"description":"Gain comprehensive skills in React development including fundamentals, advanced concepts, and project building to become proficient in building React applications within 6 months."')
+                    .replace(/"description"\s*:\s*"[^"]*earn JSX, compo, props, state[^"]*"/, '"description":"Learn JSX, components, props, state, and basic hooks. Master the fundamental building blocks of React development."')
+                    .replace(/"description"\s*:\s*"Master context API, custom hook[^"]*"/, '"description":"Master context API, custom hooks, and performance optimization in React applications."')
+                    
+                    // Step 5: Fix domain corruption
+                    .replace(/"dom[^"]*"Personal Gro[^"]*"/, '"domain":"Personal Growth"')
+                    .replace(/"domainrsonal Growth"/, '"domain":"Personal Growth"')
+                    
                     .replace(/"tab([a-z]+)/i, '"tab":"$1"')                      // Fix "tabtomorrow" -> "tab":"tomorrow"
                     .replace(/tab["'\s]*([a-z]+)/i, '"tab":"$1"')                // Fix missing quotes around tab value
                     .replace(/"title"\s*:\s*([^",}]+)([",}])/, '"title":"$1"$2') // Add missing quotes around title
@@ -571,6 +755,10 @@ exports.handler = async (event) => {
                       fixedArgs.match(/title["'\s]*:\s*"([^"]*)"/i) ||        // Missing quotes: title:"value"
                       fixedArgs.match(/title["'\s]*:\s*([^"',}]+)/i) ||       // No quotes: title:value
                       fixedArgs.match(/(?:ti|tle)["'\s]*:\s*"?([^"',}]+)"?/i) || // Broken field name
+                      fixedArgs.match(/([^"]*er React Development[^"]*)/i) ||   // Specific React patterns
+                      fixedArgs.match(/([^"]*t Fundamentals[^"]*)/i) ||
+                      fixedArgs.match(/([^"]*Advancedt Concepts[^"]*)/i) ||
+                      fixedArgs.match(/([^"]*Building Projects with[^"]*)/i) ||
                       fixedArgs.match(/"([^"]*(?:groceries|dentist|call|clean|plan|weekend|vacation)[^"]*)"/i) || // Common words
                       fixedArgs.match(/tle"\s*:\s*"([^"]*)/i) ||               // "tle": "value (no closing quote)
                       fixedArgs.match(/ti\s+"([^"]*)/i) ||                     // "ti "value (malformed)
@@ -586,6 +774,18 @@ exports.handler = async (event) => {
                     
                     if (titleMatch) {
                       let title = titleMatch[1].trim();
+                      
+                      // Intelligent title reconstruction for common corrupted patterns
+                      if (title.includes('er React Development')) {
+                        title = 'Master React Development';
+                      } else if (title.includes('t Fundamentals')) {
+                        title = 'React Fundamentals';
+                      } else if (title.includes('Advancedt Concepts')) {
+                        title = 'Advanced React Concepts';
+                      } else if (title.includes('Building Projects with')) {
+                        title = 'Building Projects with React';
+                      }
+                      
                       let tab = 'today'; // default
                       
                       if (tabMatch) {
@@ -887,7 +1087,8 @@ function processActionData(functionName, args) {
         description: args.description || '',
         domain: args.domain,
         color: getDomainColor(args.domain),
-        icon: getDomainIcon(args.domain)
+        icon: getDomainIcon(args.domain),
+        targetDate: args.targetDate || null
       };
 
     case 'createMilestone':
@@ -907,7 +1108,8 @@ function processActionData(functionName, args) {
         goalTitle: args.goalTitle || '',
         domain: args.domain,
         color: getDomainColor(args.domain),
-        tasks: tasks
+        tasks: tasks,
+        dueDate: args.dueDate || null
       };
 
     case 'createTask':

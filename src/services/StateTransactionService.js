@@ -128,6 +128,14 @@ class StateTransactionService {
   validateStateConsistency(tasks, milestones, goals) {
     const errors = [];
 
+    console.log('🔍 StateTransactionService validateStateConsistency:', {
+      taskCount: tasks.length,
+      milestoneCount: milestones.length,
+      goalCount: goals.length,
+      milestoneIds: milestones.map(m => m.id),
+      taskMilestoneIds: tasks.map(t => t.milestoneId).filter(Boolean)
+    });
+
     // Check for duplicate IDs
     const taskIds = tasks.map(t => t.id);
     const duplicateTaskIds = taskIds.filter((id, index) => taskIds.indexOf(id) !== index);
@@ -150,6 +158,7 @@ class StateTransactionService {
       t.milestoneId && !milestoneIdSet.has(t.milestoneId)
     );
     if (orphanedTasks.length > 0) {
+      console.log('🔴 Found orphaned tasks:', orphanedTasks.map(t => ({ id: t.id, milestoneId: t.milestoneId })));
       errors.push(`Tasks reference non-existent milestones: ${orphanedTasks.map(t => t.id).join(', ')}`);
     }
 

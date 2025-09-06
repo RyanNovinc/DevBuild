@@ -28,21 +28,29 @@ const TIMEOUTS = {
 // Helper function to check for pending onboarding achievement
 const checkPendingOnboardingAchievement = async () => {
   try {
+    console.log('🏆 ProfileScreen: Checking for pending onboarding achievement...');
     const pendingAchievement = await AsyncStorage.getItem('pendingOnboardingAchievement');
+    console.log('🏆 ProfileScreen: Pending achievement flag value:', pendingAchievement);
+    
     if (pendingAchievement === 'true') {
+      console.log('🏆 ProfileScreen: Pending onboarding achievement detected! Removing flag and triggering achievement');
       await AsyncStorage.removeItem('pendingOnboardingAchievement');
       
       setTimeout(async () => {
         try {
+          console.log('🏆 ProfileScreen: About to call trackOnboardingCompletion from ProfileScreen');
           await FeatureExplorerTracker.trackOnboardingCompletion();
           profileLog('🏆 Onboarding completion achievement triggered after profile load');
+          console.log('🏆 ProfileScreen: Foundation Builder achievement should now be unlocked');
         } catch (error) {
-          console.error('Error triggering onboarding completion achievement:', error);
+          console.error('🏆 ProfileScreen: Error triggering onboarding completion achievement:', error);
         }
       }, 1000);
+    } else {
+      console.log('🏆 ProfileScreen: No pending onboarding achievement found');
     }
   } catch (error) {
-    console.error('Error checking pending onboarding achievement:', error);
+    console.error('🏆 ProfileScreen: Error checking pending onboarding achievement:', error);
   }
 };
 

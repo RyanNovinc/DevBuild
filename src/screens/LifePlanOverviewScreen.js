@@ -1786,13 +1786,8 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
     });
   }
 
-  // TEMPORARY FIX: Force clear tour state to enable task completion
-  React.useEffect(() => {
-    if (currentStep === 'GOAL_ACHIEVEMENT_VALIDATION' && skipTour) {
-      console.log('🟢 TASK COMPLETION: Force clearing tour state to enable task interactions');
-      skipTour();
-    }
-  }, [currentStep, skipTour]);
+  // Note: Removed temporary fix that was auto-skipping tour at GOAL_ACHIEVEMENT_VALIDATION
+  // The GOAL_ACHIEVEMENT_VALIDATION step should run on ProfileScreen, not here
   
   // Handle screen focus for tour overlay timing
   useFocusEffect(

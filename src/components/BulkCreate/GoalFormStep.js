@@ -11,63 +11,283 @@ import {
   Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {
   scaleWidth,
   scaleHeight,
-  scaleFontSize,
   spacing,
   fontSizes,
   accessibility
 } from '../../utils/responsive';
 
-// Import domain constants
-import { STANDARD_DOMAINS, getDomainByName } from '../../constants/domains';
+// Import centralized domain constants
+import { STANDARD_DOMAINS, getDomainByName, getDomainByIcon, getUniqueDomainNames } from '../../constants/domains';
+
+// Import domain utilities
 import { normalizeDomain } from '../../utils/domainUtils';
 
+// Import color utils for domain icons
+import { getTextColorForBackground } from '../../screens/GoalDetailsScreen/utils/colorUtils';
+import { formatDate } from '../../screens/GoalDetailsScreen/utils/helpers';
+
 const GoalFormStep = ({ 
-  initialData, 
+  initialData = {}, 
   onComplete, 
   onBack, 
-  theme, 
-  appContext 
+  theme 
 }) => {
-  // Form state
-  const [title, setTitle] = useState(initialData?.title || '');
-  const [description, setDescription] = useState(initialData?.description || '');
-  const [selectedDomain, setSelectedDomain] = useState(
-    initialData?.domain ? getDomainByName(initialData.domain) || STANDARD_DOMAINS[0] : STANDARD_DOMAINS[0]
+  // Goal state
+  const [title, setTitle] = useState(initialData.title || '');
+  const [description, setDescription] = useState(initialData.description || '');
+  const [selectedIcon, setSelectedIcon] = useState(initialData.icon || 'star');
+  const [selectedColor, setSelectedColor] = useState(initialData.color || '#14b8a6');
+  const [domain, setDomain] = useState(initialData.domain || 'Other');
+  const [hasTargetDate, setHasTargetDate] = useState(Boolean(initialData.targetDate));
+  const [targetDate, setTargetDate] = useState(
+    initialData.targetDate ? new Date(initialData.targetDate) : (() => {
+      const defaultDate = new Date();
+      defaultDate.setMonth(defaultDate.getMonth() + 3);
+      return defaultDate;
+    })()
   );
-  const [hasTargetDate, setHasTargetDate] = useState(initialData?.targetDate ? true : false);
-  const [targetDate, setTargetDate] = useState(initialData?.targetDate ? new Date(initialData.targetDate) : new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  // Handle domain selection
-  const handleDomainSelect = (domain) => {
-    setSelectedDomain(domain);
+  // Debug and sync state when initialData changes
+  useEffect(() => {
+    console.log('🔍 GoalFormStep initialData changed:', {
+      newTitle: initialData?.title,
+      newTargetDate: initialData?.targetDate,
+      currentHasTargetDate: hasTargetDate,
+      currentTargetDate: targetDate
+    });
+    
+    // Update state when initialData changes
+    if (initialData?.title && initialData.title !== title) {
+      setTitle(initialData.title);
+    }
+    if (initialData?.description && initialData.description !== description) {
+      setDescription(initialData.description);
+    }
+    
+    // Update target date state
+    if (initialData?.targetDate) {
+      const newDate = new Date(initialData.targetDate);
+      if (!hasTargetDate || targetDate.getTime() !== newDate.getTime()) {
+        console.log('🔍 Updating goal targetDate from', targetDate, 'to', newDate);
+        setHasTargetDate(true);
+        setTargetDate(newDate);
+      }
+    }
+  }, [initialData]);
+  const [datePickerMode, setDatePickerMode] = useState(Platform.OS === 'ios' ? 'spinner' : 'default');
+
+  // Get unique domain names for display
+  const uniqueDomains = getUniqueDomainNames();
+
+  // Function to find the best matching domain from STANDARD_DOMAINS
+  const findMatchingDomain = (domainString, goalTitle = '', goalDescription = '') => {
+    // Common keywords for each domain
+    const domainKeywords = {
+      'Career & Work': ['work', 'career', 'job', 'business', 'professional', 'office', 'project', 'presentation', 
+              'meeting', 'interview', 'resume', 'promotion', 'skill', 'productivity', 'leadership', 
+              'management', 'workplace', 'colleague', 'networking', 'client', 'mentor'],
+      'Health & Wellness': ['health', 'fitness', 'exercise', 'workout', 'run', 'marathon', 'gym', 'weight', 'diet', 
+                'nutrition', 'sleep', 'wellness', 'meditation', 'yoga', 'training', 'strength', 'cardio',
+                'walking', 'cycling', 'swimming', 'jogging', 'sports', 'active', 'athletic', 'energy'],
+      'Relationships': ['relationship', 'family', 'friend', 'partner', 'spouse', 'dating', 'marriage', 
+                      'parent', 'child', 'sibling', 'relative', 'social', 'connect', 'community', 
+                      'communication', 'love', 'trust', 'support', 'bond'],
+      'Personal Growth': ['education', 'learn', 'study', 'course', 'class', 'degree', 'school', 'college', 
+                  'university', 'knowledge', 'academic', 'student', 'teacher', 'professor', 'lecture', 
+                  'book', 'reading', 'certification', 'training', 'skill', 'language', 'personal', 'growth'],
+      'Financial Security': ['finance', 'money', 'budget', 'saving', 'invest', 'expense', 'income', 'debt', 'loan', 
+                  'mortgage', 'financial', 'bank', 'credit', 'retirement', 'tax', 'fund', 'stock', 'bond', 
+                  'payment', 'salary', 'wealth', 'earn'],
+      'Recreation & Leisure': ['hobby', 'recreation', 'leisure', 'creative', 'creativity', 'art', 'music', 
+                  'instrument', 'paint', 'draw', 'photography', 'craft', 'writing', 'journal', 'travel',
+                  'adventure', 'fun', 'entertainment', 'play', 'vacation', 'relax', 'leisure'],
+      'Purpose & Meaning': ['purpose', 'meaning', 'spiritual', 'spirituality', 'volunteer', 'cause', 'mission',
+                      'values', 'belief', 'faith', 'contribution', 'impact', 'legacy', 'mindfulness',
+                      'passion', 'philosophy', 'religion', 'charity', 'community', 'service'],
+      'Community & Environment': ['environment', 'organization', 'home', 'clean', 'declutter', 'organize', 'community',
+                         'system', 'structure', 'routine', 'space', 'living', 'decor', 'furniture',
+                         'renovation', 'maintenance', 'efficiency', 'productivity'],
+      'Other': ['general', 'misc', 'other', 'goal', 'plan', 'project', 'task', 'life', 'direction', 
+                'vision', 'objective', 'priority', 'progress', 'custom', 'miscellaneous']
+    };
+    
+    // Try enhanced domain matching logic
+    if (domainString) {
+      const exactMatch = getDomainByName(domainString);
+      if (exactMatch) {
+        return exactMatch;
+      }
+      
+      const normalizedInput = domainString.trim().toLowerCase();
+      
+      // Try partial match with standard domains
+      for (const domain of STANDARD_DOMAINS) {
+        if (domain.name.toLowerCase().includes(normalizedInput) || 
+            normalizedInput.includes(domain.name.toLowerCase())) {
+          return domain;
+        }
+      }
+    }
+    
+    // Try keyword matching with goal title and description
+    if (goalTitle || goalDescription) {
+      const combinedText = `${goalTitle} ${goalDescription}`.toLowerCase();
+      
+      let bestDomain = null;
+      let bestMatchCount = 0;
+      
+      for (const domainName in domainKeywords) {
+        const keywords = domainKeywords[domainName];
+        let matchCount = 0;
+        
+        for (const keyword of keywords) {
+          if (combinedText.includes(keyword.toLowerCase())) {
+            matchCount++;
+          }
+        }
+        
+        if (matchCount > bestMatchCount) {
+          bestMatchCount = matchCount;
+          bestDomain = getDomainByName(domainName);
+        }
+      }
+      
+      if (bestDomain && bestMatchCount > 0) {
+        return bestDomain;
+      }
+    }
+    
+    // Fall back to "Other" domain
+    const otherDomain = STANDARD_DOMAINS.find(d => d.name === "Other");
+    if (otherDomain) {
+      return otherDomain;
+    }
+    
+    // Last resort: return first domain as fallback
+    return STANDARD_DOMAINS[0];
+  };
+
+  // Initialize form with initial data
+  useEffect(() => {
+    if (initialData && Object.keys(initialData).length > 0) {
+      setTitle(initialData.title || '');
+      setDescription(initialData.description || '');
+      
+      // Enhanced domain matching logic using both domain string and title/description
+      const matchedDomain = findMatchingDomain(
+        initialData.domain, 
+        initialData.title, 
+        initialData.description
+      );
+      
+      if (matchedDomain) {
+        setDomain(matchedDomain.name);
+        setSelectedIcon(matchedDomain.icon);
+        setSelectedColor(matchedDomain.color);
+      } else {
+        setDomain(initialData.domain || 'Other');
+        setSelectedIcon(initialData.icon || 'star');
+        setSelectedColor(initialData.color || '#14b8a6');
+      }
+      
+      setHasTargetDate(initialData.targetDate ? true : false);
+      
+      if (initialData.targetDate) {
+        setTargetDate(new Date(initialData.targetDate));
+      }
+    }
+  }, [initialData]);
+
+  // Get the current selected domain based on icon
+  const getSelectedDomain = () => {
+    if (!selectedIcon) {
+      return null;
+    }
+    return getDomainByIcon(selectedIcon);
+  };
+
+  const selectedDomain = getSelectedDomain();
+
+  // Handle domain selection - set both icon and color
+  const handleDomainSelect = (domainName) => {
+    const domainData = getDomainByName(domainName);
+    
+    if (domainData) {
+      setSelectedIcon(domainData.icon);
+      setSelectedColor(domainData.color);
+      setDomain(domainName);
+    }
+  };
+
+  // Get domain data for display
+  const getDomainDisplayData = () => {
+    return STANDARD_DOMAINS.map(domain => ({
+      name: domain.name,
+      originalName: domain.name,
+      icon: domain.icon,
+      color: domain.color,
+      description: domain.description || ''
+    }));
+  };
+
+  const domainDisplayData = getDomainDisplayData();
+
+  // Handle date change
+  const handleDateChange = (event, selectedDate) => {
+    setShowDatePicker(Platform.OS === 'ios');
+    if (selectedDate) {
+      setTargetDate(selectedDate);
+    }
+  };
+
+  // Toggle date picker mode between spinner and calendar
+  const toggleDatePickerMode = () => {
+    if (Platform.OS === 'ios') {
+      setDatePickerMode(datePickerMode === 'spinner' ? 'inline' : 'spinner');
+    } else {
+      setDatePickerMode(datePickerMode === 'default' ? 'calendar' : 'default');
+    }
   };
 
   // Handle form completion
   const handleComplete = () => {
     if (!title.trim()) {
-      // Could show validation error
       return;
     }
-
+    
+    // Get domain name from icon if no domain is explicitly set
+    let domainValue = domain;
+    if (!domainValue) {
+      domainValue = getDomainByIcon(selectedIcon);
+    }
+    
     const goalData = {
       title: title.trim(),
       description: description.trim(),
-      domain: selectedDomain.name,
-      color: selectedDomain.color,
-      icon: selectedDomain.icon,
-      targetDate: hasTargetDate ? targetDate.toISOString() : null
+      domain: domainValue,
+      domainName: domainValue,
+      icon: selectedIcon,
+      color: selectedColor,
+      targetDate: hasTargetDate ? targetDate.toISOString() : null,
     };
-
-    onComplete(goalData);
+    
+    // Normalize the domain information before sending
+    const normalizedGoal = normalizeDomain(goalData);
+    
+    onComplete(normalizedGoal);
   };
 
-  // Check if form is valid
-  const isValid = title.trim().length > 0;
+  // Calculate minimum touch target size
+  const minTouchSize = Math.max(scaleWidth(44), accessibility.minTouchTarget);
+  
+  // Get theme-aware button color
+  const buttonColor = selectedColor || theme.primary;
 
   return (
     <View style={styles.container}>
@@ -80,197 +300,657 @@ const GoalFormStep = ({
         </Text>
       </View>
 
-      <ScrollView style={styles.form} showsVerticalScrollIndicator={false}>
-        {/* Title Input */}
-        <View style={styles.inputSection}>
-          <Text style={[styles.label, { color: theme.textSecondary }]}>
+      <ScrollView 
+        style={styles.formContainer}
+        contentContainerStyle={{ paddingBottom: spacing.l }}
+        showsVerticalScrollIndicator={true}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        scrollEnabled={true}
+        bounces={true}
+        nestedScrollEnabled={true}
+      >
+        {/* Goal Title */}
+        <View style={[
+          styles.inputSection,
+          {
+            backgroundColor: theme.card,
+            padding: spacing.m,
+            borderRadius: scaleWidth(12),
+            marginBottom: spacing.m,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+            shadowRadius: 6,
+            elevation: 3,
+          }
+        ]}>
+          <Text 
+            style={[
+              styles.label, 
+              { 
+                color: theme.textSecondary,
+                fontSize: fontSizes.m,
+                fontWeight: '600',
+                marginBottom: spacing.xs
+              }
+            ]}
+            maxFontSizeMultiplier={1.5}
+          >
             Goal Title *
           </Text>
           <TextInput
             style={[
-              styles.textInput,
+              styles.input,
               { 
                 backgroundColor: theme.inputBackground,
                 color: theme.text,
-                borderColor: theme.border
+                borderColor: selectedDomain ? 
+                  (STANDARD_DOMAINS.find(d => d.name === selectedDomain)?.color || theme.border) : 
+                  theme.border,
+                borderWidth: 1,
+                fontSize: fontSizes.m,
+                paddingHorizontal: spacing.m,
+                paddingVertical: spacing.s,
+                borderRadius: scaleWidth(12),
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.05,
+                shadowRadius: 4,
+                elevation: 1,
               }
             ]}
             value={title}
             onChangeText={setTitle}
-            placeholder="Enter goal title..."
+            placeholder="Enter goal title"
             placeholderTextColor={theme.textSecondary}
-            maxLength={100}
+            autoFocus={false}
+            accessible={true}
+            accessibilityLabel="Goal title"
+            accessibilityHint="Enter the title of your goal"
+            maxFontSizeMultiplier={1.8}
           />
         </View>
-
-        {/* Description Input */}
-        <View style={styles.inputSection}>
-          <Text style={[styles.label, { color: theme.textSecondary }]}>
+        
+        {/* Description */}
+        <View style={[
+          styles.inputSection,
+          {
+            backgroundColor: theme.card,
+            padding: spacing.m,
+            borderRadius: scaleWidth(12),
+            marginBottom: spacing.m,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+            shadowRadius: 6,
+            elevation: 3,
+          }
+        ]}>
+          <Text 
+            style={[
+              styles.label, 
+              { 
+                color: theme.textSecondary,
+                fontSize: fontSizes.m,
+                fontWeight: '600',
+                marginBottom: spacing.xs
+              }
+            ]}
+            maxFontSizeMultiplier={1.5}
+          >
             Description (Optional)
           </Text>
           <TextInput
             style={[
-              styles.textInput,
-              styles.multilineInput,
+              styles.input,
+              styles.textArea,
               { 
                 backgroundColor: theme.inputBackground,
                 color: theme.text,
-                borderColor: theme.border
+                borderColor: selectedDomain ? 
+                  (STANDARD_DOMAINS.find(d => d.name === selectedDomain)?.color || theme.border) : 
+                  theme.border,
+                borderWidth: 1,
+                fontSize: fontSizes.m,
+                paddingHorizontal: spacing.m,
+                paddingVertical: spacing.s,
+                borderRadius: scaleWidth(12),
+                minHeight: scaleHeight(100),
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.05,
+                shadowRadius: 4,
+                elevation: 1,
               }
             ]}
             value={description}
             onChangeText={setDescription}
-            placeholder="Describe your goal..."
+            placeholder="Enter goal description"
             placeholderTextColor={theme.textSecondary}
             multiline
-            numberOfLines={3}
-            maxLength={500}
+            numberOfLines={4}
+            textAlignVertical="top"
+            accessible={true}
+            accessibilityLabel="Goal description"
+            accessibilityHint="Enter a detailed description of your goal"
+            maxFontSizeMultiplier={2.0}
           />
         </View>
-
-        {/* Domain Selection */}
-        <View style={styles.inputSection}>
-          <Text style={[styles.label, { color: theme.textSecondary }]}>
-            Life Domain
-          </Text>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            style={styles.domainScroll}
-            contentContainerStyle={styles.domainContainer}
+        
+        {/* Domain Selection - Horizontal Cards */}
+        <View style={[
+          styles.inputSection,
+          {
+            backgroundColor: theme.card,
+            padding: spacing.m,
+            borderRadius: scaleWidth(12),
+            marginBottom: spacing.m,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+            shadowRadius: 6,
+            elevation: 3,
+          }
+        ]}>
+          <Text 
+            style={[
+              styles.label, 
+              { 
+                color: theme.textSecondary,
+                fontSize: fontSizes.m,
+                fontWeight: '600',
+                marginBottom: spacing.s
+              }
+            ]}
+            maxFontSizeMultiplier={1.5}
           >
-            {STANDARD_DOMAINS.map((domain) => (
-              <TouchableOpacity
-                key={domain.name}
-                style={[
-                  styles.domainOption,
-                  { 
-                    backgroundColor: selectedDomain.name === domain.name 
-                      ? domain.color + '20' 
-                      : theme.card,
-                    borderColor: selectedDomain.name === domain.name 
-                      ? domain.color 
-                      : theme.border
-                  }
-                ]}
-                onPress={() => handleDomainSelect(domain)}
-                accessible={true}
-                accessibilityLabel={`Select ${domain.name} domain`}
-                accessibilityRole="button"
-              >
-                <Ionicons 
-                  name={domain.icon} 
-                  size={20} 
-                  color={selectedDomain.name === domain.name ? domain.color : theme.textSecondary} 
-                />
-                <Text 
+            Choose a Domain
+          </Text>
+        
+          {/* Horizontal Scrolling Domain Layout */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{ 
+              height: scaleHeight(140),
+            }}
+            contentContainerStyle={{ 
+              paddingRight: spacing.xl,
+              alignItems: 'center',
+              paddingVertical: spacing.s
+            }}
+            accessible={true}
+            accessibilityLabel="Domain selection"
+            accessibilityHint="Scroll horizontally to select a domain"
+            accessibilityRole="scrollbar"
+            nestedScrollEnabled={true}
+          >
+            {domainDisplayData.map((domain) => {
+              const isSelected = selectedDomain === domain.originalName;
+              
+              return (
+                <TouchableOpacity 
+                  key={domain.originalName} 
                   style={[
-                    styles.domainText,
-                    { 
-                      color: selectedDomain.name === domain.name 
-                        ? domain.color 
-                        : theme.textSecondary 
+                    styles.domainCard,
+                    {
+                      width: scaleWidth(180),
+                      height: scaleWidth(120),
+                      marginRight: spacing.m, 
+                      borderRadius: scaleWidth(12),
+                      padding: spacing.s,
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: isSelected ? 0.2 : (theme.background === '#000000' ? 0.15 : 0.08),
+                      shadowRadius: isSelected ? 8 : 6,
+                      elevation: isSelected ? 6 : 3,
+                      borderWidth: isSelected ? 2 : 0,
+                      borderColor: isSelected ? domain.color : 'transparent',
+                      overflow: 'hidden'
                     }
                   ]}
+                  onPress={() => {
+                    handleDomainSelect(domain.originalName);
+                  }}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${domain.name} domain${isSelected ? ', selected' : ''}`}
+                  accessibilityState={{ selected: isSelected }}
                 >
-                  {domain.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  {isSelected && (
+                    <LinearGradient
+                      colors={[domain.color + '20', domain.color + '10', domain.color + '05']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={{
+                        position: 'absolute',
+                        left: 0,
+                        right: 0,
+                        top: 0,
+                        bottom: 0,
+                      }}
+                    />
+                  )}
+                  <LinearGradient
+                    colors={isSelected ? 
+                      ['rgba(255,255,255,0.1)', 'rgba(255,255,255,0)'] : 
+                      [theme.backgroundSecondary, theme.backgroundSecondary]
+                    }
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 0, y: 1 }}
+                    style={{
+                      position: 'absolute',
+                      left: 0,
+                      right: 0,
+                      top: 0,
+                      bottom: 0,
+                    }}
+                  />
+                  
+                  {/* Domain icon */}
+                  <View style={[
+                    styles.domainIcon,
+                    { 
+                      backgroundColor: domain.color,
+                      width: scaleWidth(50),
+                      height: scaleWidth(50),
+                      borderRadius: scaleWidth(25),
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: spacing.s,
+                      shadowColor: domain.color,
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: isSelected ? 0.3 : 0.2,
+                      shadowRadius: 4,
+                      elevation: 2,
+                    }
+                  ]}>
+                    <Ionicons 
+                      name={domain.icon} 
+                      size={scaleWidth(26)} 
+                      color={domain.color === '#FFFFFF' ? '#000000' : getTextColorForBackground(domain.color)} 
+                    />
+                  </View>
+                  
+                  {/* Domain name */}
+                  <Text 
+                    style={[
+                      styles.domainName,
+                      { 
+                        color: isSelected ? domain.color : theme.text,
+                        fontSize: fontSizes.s,
+                        fontWeight: isSelected ? '600' : '500',
+                        textAlign: 'center',
+                        height: scaleHeight(44),
+                        paddingHorizontal: spacing.s
+                      }
+                    ]}
+                    numberOfLines={2}
+                    maxFontSizeMultiplier={1.3}
+                  >
+                    {domain.name}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </ScrollView>
         </View>
-
-        {/* Target Date Section */}
-        <View style={styles.inputSection}>
-          <View style={styles.switchContainer}>
-            <View style={styles.switchInfo}>
-              <Text style={[styles.label, { color: theme.textSecondary }]}>
-                Target Date
-              </Text>
-              <Text style={[styles.switchDescription, { color: theme.textSecondary }]}>
-                Set a target completion date for this goal
-              </Text>
-            </View>
+        
+        {/* Target Date Toggle */}
+        <View style={[
+          styles.inputSection,
+          {
+            backgroundColor: theme.card,
+            padding: spacing.m,
+            borderRadius: scaleWidth(12),
+            marginBottom: spacing.m,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+            shadowRadius: 6,
+            elevation: 3,
+          }
+        ]}>
+          <View style={[
+            styles.toggleRow,
+            {
+              paddingVertical: 0,
+              minHeight: minTouchSize
+            }
+          ]}>
+            <Text 
+              style={[
+                styles.label, 
+                { 
+                  color: theme.textSecondary, 
+                  marginBottom: 0,
+                  fontSize: fontSizes.m,
+                  fontWeight: '600'
+                }
+              ]}
+              maxFontSizeMultiplier={1.5}
+            >
+              Set Target Date
+            </Text>
             <Switch
               value={hasTargetDate}
-              onValueChange={setHasTargetDate}
+              onValueChange={(value) => {
+                setHasTargetDate(value);
+                if (value) {
+                  setShowDatePicker(true);
+                } else {
+                  setShowDatePicker(false);
+                }
+              }}
               trackColor={{ 
                 false: theme.border, 
-                true: selectedDomain.color + '40' 
+                true: selectedDomain ? 
+                  (STANDARD_DOMAINS.find(d => d.name === selectedDomain)?.color + '80' || buttonColor + '80') : 
+                  buttonColor + '80'
               }}
-              thumbColor={hasTargetDate ? selectedDomain.color : theme.textSecondary}
+              thumbColor={hasTargetDate ? 
+                (selectedDomain ? 
+                  (STANDARD_DOMAINS.find(d => d.name === selectedDomain)?.color || buttonColor) : 
+                  buttonColor
+                ) : 
+                '#f4f3f4'
+              }
+              accessible={true}
+              accessibilityRole="switch"
+              accessibilityLabel="Set target date"
+              accessibilityState={{ checked: hasTargetDate }}
+              accessibilityHint={hasTargetDate ? "Toggle off to remove target date" : "Toggle on to set a target date"}
             />
           </View>
-          
-          {hasTargetDate && (
+        </View>
+        
+        {/* Date Picker Section */}
+        {hasTargetDate && (
+          <View style={[
+            styles.dateSection,
+            styles.inputSection,
+            {
+              backgroundColor: theme.card,
+              padding: spacing.m,
+              borderRadius: scaleWidth(12),
+              marginBottom: spacing.m,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+              shadowRadius: 6,
+              elevation: 3,
+            }
+          ]}>
+            <Text 
+              style={[
+                styles.label, 
+                { 
+                  color: theme.textSecondary,
+                  fontSize: fontSizes.m,
+                  fontWeight: '600',
+                  marginBottom: spacing.s
+                }
+              ]}
+              maxFontSizeMultiplier={1.5}
+            >
+              Target Date
+            </Text>
             <TouchableOpacity
               style={[
                 styles.dateButton,
                 { 
                   backgroundColor: theme.inputBackground,
-                  borderColor: theme.border
+                  borderColor: selectedDomain ? 
+                    (STANDARD_DOMAINS.find(d => d.name === selectedDomain)?.color || theme.border) : 
+                    theme.border,
+                  borderWidth: 1,
+                  paddingHorizontal: spacing.m,
+                  paddingVertical: spacing.s,
+                  borderRadius: scaleWidth(12),
+                  minHeight: minTouchSize,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.05,
+                  shadowRadius: 4,
+                  elevation: 1,
                 }
               ]}
               onPress={() => setShowDatePicker(true)}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={`Selected date: ${formatDate(targetDate)}`}
+              accessibilityHint="Opens date picker to select a target date"
             >
-              <Ionicons name="calendar-outline" size={20} color={selectedDomain.color} />
-              <Text style={[styles.dateButtonText, { color: theme.text }]}>
-                {targetDate.toLocaleDateString()}
+              <Ionicons name="calendar-outline" size={scaleWidth(20)} color={theme.textSecondary} />
+              <Text 
+                style={[
+                  styles.dateButtonText, 
+                  { 
+                    color: theme.text,
+                    fontSize: fontSizes.m,
+                    marginLeft: spacing.s
+                  }
+                ]}
+                maxFontSizeMultiplier={1.5}
+              >
+                {formatDate(targetDate)}
               </Text>
             </TouchableOpacity>
-          )}
-          
-          {showDatePicker && (
-            <DateTimePicker
-              value={targetDate}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={(event, selectedDate) => {
-                setShowDatePicker(false);
-                if (selectedDate) {
-                  setTargetDate(selectedDate);
+            
+            {/* Date Picker Mode Selector */}
+            {showDatePicker && (
+              <View style={styles.datePickerModeContainer}>
+                <TouchableOpacity 
+                  style={[
+                    styles.datePickerModeButton,
+                    datePickerMode === (Platform.OS === 'ios' ? 'spinner' : 'default') && {
+                      backgroundColor: buttonColor + '20',
+                      borderColor: buttonColor
+                    }
+                  ]}
+                  onPress={() => toggleDatePickerMode()}
+                >
+                  <Ionicons 
+                    name="options-outline" 
+                    size={scaleWidth(16)} 
+                    color={datePickerMode === (Platform.OS === 'ios' ? 'spinner' : 'default') ? buttonColor : theme.textSecondary} 
+                  />
+                  <Text style={[
+                    styles.datePickerModeText,
+                    { 
+                      color: datePickerMode === (Platform.OS === 'ios' ? 'spinner' : 'default') ? buttonColor : theme.textSecondary
+                    }
+                  ]}>
+                    Wheel
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[
+                    styles.datePickerModeButton,
+                    datePickerMode === (Platform.OS === 'ios' ? 'inline' : 'calendar') && {
+                      backgroundColor: buttonColor + '20',
+                      borderColor: buttonColor
+                    }
+                  ]}
+                  onPress={() => toggleDatePickerMode()}
+                >
+                  <Ionicons 
+                    name="calendar-outline" 
+                    size={scaleWidth(16)} 
+                    color={datePickerMode === (Platform.OS === 'ios' ? 'inline' : 'calendar') ? buttonColor : theme.textSecondary} 
+                  />
+                  <Text style={[
+                    styles.datePickerModeText,
+                    { 
+                      color: datePickerMode === (Platform.OS === 'ios' ? 'inline' : 'calendar') ? buttonColor : theme.textSecondary
+                    }
+                  ]}>
+                    Calendar
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+            
+            {/* Date Picker */}
+            {showDatePicker && (
+              <View style={[
+                styles.datePickerContainer,
+                { 
+                  backgroundColor: theme.dark ? '#000000' : '#111111',
+                  borderColor: theme.border,
+                  borderWidth: 1
                 }
-              }}
-            />
-          )}
-        </View>
+              ]}>
+                <DateTimePicker
+                  value={targetDate}
+                  mode="date"
+                  display={datePickerMode}
+                  onChange={handleDateChange}
+                  minimumDate={new Date()}
+                  themeVariant="dark"
+                  accessibilityLabel="Date picker"
+                  style={{ height: datePickerMode === 'inline' ? 300 : 200 }}
+                  textColor="#FFFFFF"
+                />
+                
+                {/* Done button for iOS */}
+                {Platform.OS === 'ios' && (
+                  <TouchableOpacity 
+                    style={[
+                      styles.doneButton, 
+                      { 
+                        backgroundColor: buttonColor,
+                        paddingVertical: spacing.m
+                      }
+                    ]}
+                    onPress={() => setShowDatePicker(false)}
+                  >
+                    <Text style={[
+                      styles.doneButtonText, 
+                      { 
+                        color: buttonColor === '#FFFFFF' ? '#000000' : getTextColorForBackground(buttonColor),
+                        fontSize: fontSizes.m
+                      }
+                    ]}>
+                      Done
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
+          </View>
+        )}
       </ScrollView>
-
-      {/* Navigation Buttons */}
+      
+      {/* Action buttons */}
       <View style={styles.buttonContainer}>
         {onBack && (
           <TouchableOpacity
-            style={[styles.backButton, { backgroundColor: theme.card }]}
+            style={[
+              styles.backButton,
+              {
+                backgroundColor: theme.backgroundSecondary,
+                borderRadius: scaleWidth(12),
+                paddingVertical: spacing.m,
+                paddingHorizontal: spacing.l,
+                marginRight: spacing.m,
+                flex: 1,
+                minHeight: minTouchSize,
+              }
+            ]}
             onPress={onBack}
             accessible={true}
-            accessibilityLabel="Go back"
             accessibilityRole="button"
+            accessibilityLabel="Go back"
           >
-            <Ionicons name="chevron-back" size={20} color={theme.text} />
-            <Text style={[styles.backButtonText, { color: theme.text }]}>
+            <Text style={[
+              styles.backButtonText,
+              {
+                color: theme.text,
+                fontSize: fontSizes.m,
+                fontWeight: '600',
+                textAlign: 'center'
+              }
+            ]}>
               Back
             </Text>
           </TouchableOpacity>
         )}
-
+        
         <TouchableOpacity
           style={[
             styles.nextButton,
-            { 
-              backgroundColor: isValid ? (theme.primary || '#007AFF') : theme.border,
-              opacity: isValid ? 1 : 0.6
+            {
+              borderRadius: scaleWidth(12),
+              minHeight: minTouchSize,
+              overflow: 'hidden',
+              shadowColor: selectedDomain ? 
+                (STANDARD_DOMAINS.find(d => d.name === selectedDomain)?.color || '#000') : 
+                '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.3,
+              shadowRadius: 8,
+              elevation: 6,
+              flex: onBack ? 2 : 1,
             }
           ]}
           onPress={handleComplete}
-          disabled={!isValid}
           accessible={true}
-          accessibilityLabel={isValid ? "Continue to next step" : "Complete the required fields"}
           accessibilityRole="button"
+          accessibilityLabel="Complete goal creation"
         >
-          <Text style={[styles.nextButtonText, { color: '#FFFFFF' }]}>
-            Continue
-          </Text>
-          <Ionicons name="chevron-forward" size={20} color="#FFFFFF" />
+          <LinearGradient
+            colors={selectedDomain ? [
+              STANDARD_DOMAINS.find(d => d.name === selectedDomain)?.color || buttonColor,
+              (STANDARD_DOMAINS.find(d => d.name === selectedDomain)?.color || buttonColor) + 'DD'
+            ] : [buttonColor, buttonColor + 'DD']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{
+              flex: 1,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingVertical: spacing.m,
+              paddingHorizontal: spacing.l,
+            }}
+          >
+            <LinearGradient
+              colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+              style={{
+                position: 'absolute',
+                left: 0,
+                right: 0,
+                top: 0,
+                height: '50%',
+              }}
+            />
+            <Ionicons 
+              name="checkmark-circle" 
+              size={scaleWidth(24)} 
+              color="#FFFFFF" 
+              style={{ marginRight: spacing.s }}
+            />
+            <Text 
+              style={[
+                styles.nextButtonText,
+                {
+                  fontSize: fontSizes.m,
+                  fontWeight: '600',
+                  color: '#FFFFFF'
+                }
+              ]}
+              maxFontSizeMultiplier={1.5}
+            >
+              Continue
+            </Text>
+          </LinearGradient>
         </TouchableOpacity>
       </View>
     </View>
@@ -280,8 +960,6 @@ const GoalFormStep = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: spacing.m,
-    paddingBottom: spacing.xl,
   },
   stepHeader: {
     paddingBottom: spacing.l,
@@ -295,116 +973,115 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.m,
     lineHeight: fontSizes.m * 1.4,
   },
-  form: {
+  formContainer: {
     flex: 1,
   },
   inputSection: {
-    marginBottom: spacing.l,
+    // Enhanced styling applied inline
   },
   label: {
-    fontSize: fontSizes.m,
-    fontWeight: '600',
-    marginBottom: spacing.s,
+    marginBottom: spacing.s
   },
-  textInput: {
-    borderWidth: 1,
-    borderRadius: scaleWidth(12),
-    paddingHorizontal: spacing.m,
-    paddingVertical: spacing.m,
-    fontSize: fontSizes.m,
-    minHeight: scaleHeight(48),
+  input: {
+    marginBottom: spacing.m
   },
-  multilineInput: {
-    minHeight: scaleHeight(80),
-    textAlignVertical: 'top',
+  textArea: {
+    paddingTop: spacing.s
   },
-  domainScroll: {
-    marginTop: spacing.xs,
-  },
-  domainContainer: {
-    paddingRight: spacing.m,
-  },
-  domainOption: {
-    flexDirection: 'row',
+  
+  // Domain Selection
+  domainCard: {
+    flexDirection: 'column',
     alignItems: 'center',
-    paddingHorizontal: spacing.m,
-    paddingVertical: spacing.s,
-    borderRadius: scaleWidth(20),
-    borderWidth: 1,
-    marginRight: spacing.s,
-    minHeight: scaleHeight(40),
+    justifyContent: 'space-between',
   },
-  domainText: {
-    fontSize: fontSizes.s,
-    fontWeight: '500',
-    marginLeft: spacing.xs,
+  domainIcon: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  switchContainer: {
+  domainName: {
+    width: '100%',
+    textAlign: 'center',
+  },
+  
+  // Date Section
+  toggleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: spacing.m,
   },
-  switchInfo: {
-    flex: 1,
-    marginRight: spacing.m,
-  },
-  switchDescription: {
-    fontSize: fontSizes.s,
-    marginTop: spacing.xs,
-    lineHeight: fontSizes.s * 1.3,
+  dateSection: {
+    marginBottom: spacing.m
   },
   dateButton: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderRadius: scaleWidth(12),
-    paddingHorizontal: spacing.m,
-    paddingVertical: spacing.m,
-    minHeight: scaleHeight(48),
   },
   dateButtonText: {
-    fontSize: fontSizes.m,
-    fontWeight: '500',
-    marginLeft: spacing.s,
+    flex: 1
   },
+  datePickerModeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: spacing.s,
+    marginBottom: spacing.s,
+  },
+  datePickerModeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.m,
+    paddingVertical: spacing.s,
+    borderRadius: scaleWidth(20),
+    marginHorizontal: spacing.xs,
+    borderWidth: 1,
+    borderColor: '#dddddd',
+  },
+  datePickerModeText: {
+    fontSize: fontSizes.s,
+    fontWeight: '500',
+    marginLeft: spacing.xs,
+  },
+  datePickerContainer: {
+    marginTop: spacing.s,
+    borderRadius: scaleWidth(12),
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+    alignItems: 'center',
+  },
+  doneButton: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  doneButtonText: {
+    fontWeight: '600',
+  },
+  
+  // Buttons
   buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: spacing.l,
-    gap: spacing.m,
+    paddingHorizontal: spacing.l,
+    paddingTop: spacing.m,
+    paddingBottom: spacing.l,
   },
   backButton: {
-    flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.l,
-    paddingVertical: spacing.m,
-    borderRadius: scaleWidth(12),
-    minHeight: scaleHeight(48),
-    flex: 1,
     justifyContent: 'center',
   },
   backButtonText: {
-    fontSize: fontSizes.m,
-    fontWeight: '600',
-    marginLeft: spacing.xs,
+    fontWeight: '600'
   },
   nextButton: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing.l,
-    paddingVertical: spacing.m,
-    borderRadius: scaleWidth(12),
-    minHeight: scaleHeight(48),
-    flex: 2,
   },
   nextButtonText: {
-    fontSize: fontSizes.m,
-    fontWeight: '600',
-    marginRight: spacing.xs,
-  },
+    fontWeight: '600'
+  }
 });
 
 export default GoalFormStep;

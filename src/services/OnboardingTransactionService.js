@@ -298,14 +298,28 @@ export class OnboardingTransactionService {
       // Set the hasCompletedOnboarding flag for app tour triggering
       await AsyncStorage.setItem('hasCompletedOnboarding', 'true');
       console.log('🎯 Set hasCompletedOnboarding flag for app tour system');
+      
+      // DEBUG: Check if achievement tracking key was already set before we track
+      try {
+        const achievementTrackingKey = 'achievement_tracker_onboarding_completed';
+        const existingTrackingValue = await AsyncStorage.getItem(achievementTrackingKey);
+        console.log('🏆 DEBUG: Before tracking - achievement_tracker_onboarding_completed value:', existingTrackingValue);
+      } catch (debugError) {
+        console.error('🏆 DEBUG: Error checking achievement tracking key:', debugError);
+      }
 
       // Reset tour flags to ensure tour starts after fresh onboarding
       await AsyncStorage.removeItem('hasSeenAppTour');
       await AsyncStorage.removeItem('appTourSkipped');
       console.log('🎯 Reset tour flags to ensure tour starts after onboarding');
 
-      // Give the system time to process all the changes
-      await new Promise(resolve => setTimeout(resolve, 200));
+      // Give the system time to process all the changes first
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Note: Onboarding achievement tracking is handled by the pending flag system
+      // OnboardingService sets 'pendingOnboardingAchievement' flag, 
+      // and ProfileScreen will trigger the achievement when it loads
+      console.log('🏆 Onboarding completion will be tracked by ProfileScreen via pending flag system');
 
       console.log('✅ Onboarding finalized successfully');
     } catch (error) {

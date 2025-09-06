@@ -105,7 +105,7 @@ const AppTourOverlay = ({
       requiresAction: true // This step shows a time picker popup
     },
     SYSTEM_CONFIDENCE: {
-      message: "Excellent! You now have an elite planning system - goal, focus, time blocked.",
+      message: "Excellent! Your planning system is ready - a clear goal, focused direction, and scheduled time.",
       spotlight: { x: 0, y: 150, width: SCREEN_WIDTH, height: SCREEN_HEIGHT - 250 },
       nextButton: "What about daily stuff?",
       position: 'center'
@@ -387,42 +387,55 @@ const AppTourOverlay = ({
   }, [messageComplete, showTyping, currentStep]);
   
   const handleNext = () => {
-    // Special handling for finale step
+    // Special handling for finale step - create smooth transition to achievement
     if (stepConfig.isFinale) {
-      console.log('🎭 Finale step detected - completing tour');
-      // Fade out overlay completely and end tour
-      Animated.parallel([
+      console.log('🎭 Finale step - creating cinematic transition to achievement');
+      
+      // Phase 1: Fade out message and AI icon but KEEP overlay dark
+      Animated.sequence([
+        // First fade out the content
+        Animated.parallel([
+          Animated.timing(messageOpacity, {
+            toValue: 0,
+            duration: 400,
+            easing: Easing.out(Easing.ease),
+            useNativeDriver: true
+          }),
+          Animated.timing(aiIconScale, {
+            toValue: 0,
+            duration: 400,
+            easing: Easing.out(Easing.ease),
+            useNativeDriver: true
+          })
+        ]),
+        // Brief pause in darkness for anticipation
+        Animated.delay(200),
+        // Then fade overlay SLIGHTLY to create depth but stay mostly dark
         Animated.timing(overlayOpacity, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true
-        }),
-        Animated.timing(messageOpacity, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true
-        }),
-        Animated.timing(aiIconScale, {
-          toValue: 0,
+          toValue: 0.85, // Stay mostly dark! 
           duration: 300,
           useNativeDriver: true
         })
       ]).start(() => {
+        // Set flag to keep ProfileScreen dark during transition
+        global.tourTransitionInProgress = true;
+        
         onComplete();
         
-        // Navigate back to profile screen and trigger achievement modal
-        // Add a small delay to let the tour completion process finish
-        setTimeout(() => {
-          if (navigation) {
-            console.log('🧭 Tour completed - navigating to Profile screen');
-            navigation.navigate('Profile');
-            
-            // Set a global flag to show achievement modal on Profile screen
+        // Navigate and trigger achievement with perfect timing
+        if (navigation) {
+          console.log('🧭 Tour completed - smooth transition to achievement');
+          navigation.navigate('Profile');
+          
+          // Trigger achievement after brief pause for smooth entrance
+          setTimeout(() => {
+            global.showTourCompletionAchievement = true;
+            // Clear transition flag after achievement shows
             setTimeout(() => {
-              global.showTourCompletionAchievement = true;
-            }, 2300); // 800ms + 1500ms = 2.3 seconds total
-          }
-        }, 500);
+              global.tourTransitionInProgress = false;
+            }, 500);
+          }, 300); // Short pause for seamless transition
+        }
       });
       return;
     }

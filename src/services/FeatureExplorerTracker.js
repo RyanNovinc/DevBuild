@@ -131,24 +131,46 @@ export const trackThemeColorChange = async (color, showSuccess = null) => {
  */
 export const trackOnboardingCompletion = async (showSuccess = null) => {
   try {
+    console.log('🏆 trackOnboardingCompletion: Starting onboarding completion tracking');
     logDebug('Tracking onboarding completion');
     
     // Check if we've already tracked this achievement
     const hasTrackedOnboarding = await AsyncStorage.getItem(TRACKING_KEYS.ONBOARDING_COMPLETED);
+    console.log('🏆 trackOnboardingCompletion: Previous tracking status:', hasTrackedOnboarding);
     
     if (hasTrackedOnboarding !== 'true') {
       // This is the first time completing onboarding
-      logDebug('First onboarding completion, setting tracking flag');
+      console.log('🏆 trackOnboardingCompletion: First onboarding completion detected, setting tracking flag and unlocking achievement');
+      logDebug('First onboarding completion, setting tracking flag and unlocking achievement');
       
       // Set tracking flag
       await AsyncStorage.setItem(TRACKING_KEYS.ONBOARDING_COMPLETED, 'true');
+      console.log('🏆 trackOnboardingCompletion: Tracking flag set, now unlocking achievement');
       
-      // NOTE: Achievement unlock moved to tour Foundation Builder intro step
-      // The tour will handle showing the achievement intro and unlocking it
-      console.log('🏆 Onboarding completion tracked - Foundation Builder achievement will be unlocked in tour');
+      // Unlock the Foundation Builder achievement immediately
+      // Note: We pass skipGlobalNotification=true because we show our own Foundation Builder intro modal
+      const unlockResult = await AchievementService.unlockAchievement('foundation-builder', showSuccess, true);
+      console.log('🏆 trackOnboardingCompletion: Achievement unlock result:', unlockResult);
+      console.log('🏆 Foundation Builder achievement unlocked for onboarding completion');
+      
+      // Debug: Verify the achievement is actually stored
+      try {
+        const storedAchievements = await AsyncStorage.getItem('unlockedAchievements');
+        const parsedAchievements = storedAchievements ? JSON.parse(storedAchievements) : {};
+        console.log('🏆 DEBUG: All stored achievements:', Object.keys(parsedAchievements));
+        console.log('🏆 DEBUG: Foundation Builder stored?', !!parsedAchievements['foundation-builder']);
+        if (parsedAchievements['foundation-builder']) {
+          console.log('🏆 DEBUG: Foundation Builder data:', parsedAchievements['foundation-builder']);
+        }
+      } catch (debugError) {
+        console.error('🏆 DEBUG: Error checking stored achievements:', debugError);
+      }
+    } else {
+      console.log('🏆 trackOnboardingCompletion: Onboarding already tracked previously, skipping achievement unlock');
     }
   } catch (error) {
-    console.error('Error tracking onboarding completion:', error);
+    console.error('🏆 trackOnboardingCompletion: Error tracking onboarding completion:', error);
+    console.error('🏆 trackOnboardingCompletion: Full error details:', error.message, error.stack);
   }
 };
 
@@ -1500,3 +1522,22 @@ export default {
   trackTourGraduate,
   TRACKING_KEYS
 };
+
+/**
+ * Debug function to reset onboarding completion tracking (for testing)
+ */
+export const resetOnboardingTracking = async () => {
+  try {
+    console.log('🏆 DEBUG: Resetting onboarding completion tracking');
+    await AsyncStorage.removeItem(TRACKING_KEYS.ONBOARDING_COMPLETED);
+    console.log('🏆 DEBUG: Onboarding tracking reset - next completion will unlock achievement');
+  } catch (error) {
+    console.error('🏆 DEBUG: Error resetting onboarding tracking:', error);
+  }
+};
+
+// Make reset function available globally for testing
+if (typeof global !== 'undefined') {
+  global.resetOnboardingTracking = resetOnboardingTracking;
+  console.log('🏆 DEBUG: resetOnboardingTracking available globally - use global.resetOnboardingTracking() to test');
+}

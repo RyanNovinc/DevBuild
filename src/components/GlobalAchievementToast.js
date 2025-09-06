@@ -367,8 +367,8 @@ const GlobalAchievementToast = () => {
               <Text style={[styles.title, { color: theme.text }]} numberOfLines={1} ellipsizeMode="tail">
                 {currentAchievement.title || 'Achievement Unlocked'}
               </Text>
-              <Text style={[styles.subtitle, { color: theme.textSecondary }]} numberOfLines={1} ellipsizeMode="tail">
-                Achievement Unlocked
+              <Text style={[styles.subtitle, { color: theme.textSecondary }]} numberOfLines={2} ellipsizeMode="tail">
+                {currentAchievement.description || 'Achievement Unlocked'}
               </Text>
             </View>
           </View>
@@ -394,8 +394,8 @@ const GlobalAchievementToast = () => {
               <Text style={[styles.title, { color: theme.text }]} numberOfLines={1} ellipsizeMode="tail">
                 {currentAchievement.title || 'Achievement Unlocked'}
               </Text>
-              <Text style={[styles.subtitle, { color: theme.textSecondary }]} numberOfLines={1} ellipsizeMode="tail">
-                Achievement Unlocked
+              <Text style={[styles.subtitle, { color: theme.textSecondary }]} numberOfLines={2} ellipsizeMode="tail">
+                {currentAchievement.description || 'Achievement Unlocked'}
               </Text>
             </View>
           </TouchableOpacity>

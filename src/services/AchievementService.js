@@ -134,13 +134,14 @@ export const clearNewAchievementsQueue = () => {
 export const unlockAchievement = async (achievementId, showSuccess = null, skipGlobalNotification = false) => {
   // Validate the achievement exists
   if (!ACHIEVEMENTS[achievementId]) {
-    console.error(`Achievement ${achievementId} does not exist`);
+    console.error(`[AchievementService] Achievement ${achievementId} does not exist`);
+    console.error(`[AchievementService] Available achievements:`, Object.keys(ACHIEVEMENTS));
     return false;
   }
   
   try {
     logDebug(`Attempting to unlock achievement: ${achievementId}`);
-    console.log(`[AchievementService] Attempting to unlock achievement: ${achievementId}`);
+    console.log(`[AchievementService] 🏆 Attempting to unlock achievement: ${achievementId}`);
     
     // Check if this achievement has already been shown to the user
     const alreadyShown = await hasAchievementBeenShown(achievementId);

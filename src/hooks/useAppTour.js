@@ -200,14 +200,22 @@ export const useAppTour = (navigation = null) => {
   }, []);
   
   const nextStep = () => {
+    console.log('🚀 useAppTour: nextStep() called');
+    console.log('🚀 useAppTour: Current global tour state:', {
+      isTourActive: globalTourState.isTourActive,
+      currentStep: globalTourState.currentStep,
+      localCurrentStep: currentStep
+    });
+    
     const currentIndex = TOUR_SEQUENCE.indexOf(currentStep);
+    console.log('🚀 useAppTour: Current step index:', currentIndex, 'of', TOUR_SEQUENCE.length - 1);
     
     if (currentIndex < TOUR_SEQUENCE.length - 1) {
       const nextStepName = TOUR_SEQUENCE[currentIndex + 1];
       const nextScreen = STEP_SCREENS[nextStepName];
       const currentScreen = STEP_SCREENS[currentStep];
       
-      console.log('🚀 Tour Debug:', { 
+      console.log('🚀 useAppTour: Tour progression details:', { 
         currentStep, 
         nextStepName, 
         currentScreen, 
@@ -246,14 +254,21 @@ export const useAppTour = (navigation = null) => {
           updateGlobalTourState({ currentStep: nextStepName });
         }
       } else {
-        console.log('📍 Setting step to:', nextStepName, '(no navigation needed)');
+        console.log('📍 useAppTour: Setting step to:', nextStepName, '(no navigation needed)');
         
         // Special debug for AI_FAREWELL
         if (nextStepName === 'AI_FAREWELL') {
           console.log('🎭 Now updating to AI_FAREWELL step');
         }
         
+        // Special debug for GOAL_ACHIEVEMENT_VALIDATION
+        if (nextStepName === 'GOAL_ACHIEVEMENT_VALIDATION') {
+          console.log('🏆 useAppTour: About to transition to GOAL_ACHIEVEMENT_VALIDATION - this should show the AppTourOverlay');
+        }
+        
+        console.log('📍 useAppTour: Before updateGlobalTourState, current state:', globalTourState);
         updateGlobalTourState({ currentStep: nextStepName });
+        console.log('📍 useAppTour: After updateGlobalTourState, new state:', globalTourState);
       }
     } else {
       // Tour complete

@@ -39,6 +39,7 @@ const AIInputBar = ({
   onSend,
   onNewConversation,
   disabled = false,
+  isLoading = false,
   isStreaming = false,
   placeholder = 'Ask anything...',
   onFocus,
@@ -346,7 +347,7 @@ const AIInputBar = ({
               }
             ]}
             onPress={onNewConversation}
-            disabled={disabled || isStreaming}
+            disabled={disabled || isLoading || isStreaming}
             accessible={true}
             accessibilityRole="button"
             accessibilityLabel="Start new conversation"
@@ -379,8 +380,8 @@ const AIInputBar = ({
               lineHeight: LINE_HEIGHT,
             }
           ]}
-          placeholder={isStreaming ? "AI is generating..." : placeholder}
-          placeholderTextColor={isStreaming ? "#888888" : "#999999"}
+          placeholder={(isLoading || isStreaming) ? "AI Generating..." : placeholder}
+          placeholderTextColor={(isLoading || isStreaming) ? "#888888" : "#999999"}
           value={internalValue}
           onChangeText={handleTextChange}
           onContentSizeChange={handleContentSizeChange}
@@ -388,14 +389,14 @@ const AIInputBar = ({
           scrollEnabled={inputHeight >= MAX_HEIGHT}
           returnKeyType="default"
           blurOnSubmit={false}
-          editable={!disabled && !isStreaming}
+          editable={!disabled && !isLoading && !isStreaming}
           onFocus={onFocus}
           onBlur={onBlur}
           textAlignVertical="center"
           accessible={true}
           accessibilityRole="text"
           accessibilityLabel="Message input"
-          accessibilityHint={isStreaming ? 
+          accessibilityHint={(isLoading || isStreaming) ? 
             "AI is currently generating a response" : 
             "Type your message to the AI assistant"
           }
@@ -425,23 +426,23 @@ const AIInputBar = ({
                   { backgroundColor: theme.primary } : 
                   styles.sendButtonWarning) : 
                 styles.sendButtonInactive,
-              (disabled || isStreaming) && { opacity: 0.5 }
+              (disabled || isLoading || isStreaming) && { opacity: 0.5 }
             ]}
             onPress={handleSendPress}
-            disabled={!internalValue.trim() || disabled || isStreaming}
+            disabled={!internalValue.trim() || disabled || isLoading || isStreaming}
             accessible={true}
             accessibilityRole="button"
             accessibilityLabel={
               !internalValue.trim() ? "Send button disabled" :
               conversationSize + internalValue.length > maxThreshold ? "Start new conversation" :
-              isStreaming ? "AI is responding" :
+              (isLoading || isStreaming) ? "AI is responding" :
               "Send message"
             }
             accessibilityHint={
               !internalValue.trim() ? "Type a message to enable sending" :
               conversationSize + internalValue.length > maxThreshold ? 
                 "Message would exceed limit, tap to start new conversation" :
-              isStreaming ? "Please wait for AI response to complete" :
+              (isLoading || isStreaming) ? "Please wait for AI response to complete" :
               "Sends your message to the AI assistant"
             }
           >

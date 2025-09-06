@@ -29,10 +29,9 @@ import {
   accessibility
 } from '../utils/responsive';
 
-// Import individual form components (we'll extract forms from existing modals)
+// Import individual form components 
 import GoalFormStep from './BulkCreate/GoalFormStep';
 import MilestoneFormStep from './BulkCreate/MilestoneFormStep';
-import TaskFormStep from './BulkCreate/TaskFormStep';
 import CompletionStep from './BulkCreate/CompletionStep';
 
 const AIBulkCreateModal = ({ 
@@ -55,8 +54,7 @@ const AIBulkCreateModal = ({
   const [completedData, setCompletedData] = useState({});
   const [createdItems, setCreatedItems] = useState({
     goals: [],
-    milestones: [],
-    tasks: []
+    milestones: []
   });
   
   // Calculate total steps based on actions
@@ -71,7 +69,7 @@ const AIBulkCreateModal = ({
       // Reset to first step when modal opens
       setCurrentStep(0);
       setCompletedData({});
-      setCreatedItems({ goals: [], milestones: [], tasks: [] });
+      setCreatedItems({ goals: [], milestones: [] });
       
       // Start animation
       backgroundOpacityAnim.setValue(0);
@@ -144,14 +142,6 @@ const AIBulkCreateModal = ({
               milestones: [...prev.milestones, createdItem]
             }));
             break;
-            
-          case 'createTask':
-            createdItem = await createTask(stepData);
-            setCreatedItems(prev => ({
-              ...prev,
-              tasks: [...prev.tasks, createdItem]
-            }));
-            break;
         }
         
         console.log(`Created ${currentAction.type}:`, createdItem);
@@ -195,7 +185,12 @@ const AIBulkCreateModal = ({
   };
   
   const createMilestone = async (milestoneData) => {
-    const { addProject } = appContext;
+    const { addProject, addTasksBulk } = appContext;
+    
+    // Extract tasks to create separately
+    const tasksToCreate = milestoneData.tasks || [];
+    
+    // Create milestone first (with tasks still in data structure)
     const newMilestone = {
       ...milestoneData,
       id: Date.now().toString(),
@@ -205,26 +200,32 @@ const AIBulkCreateModal = ({
     
     if (typeof addProject === 'function') {
       await addProject(newMilestone);
+      
+      // Now create separate task entities if we have tasks and addTasksBulk is available
+      if (tasksToCreate.length > 0 && typeof addTasksBulk === 'function') {
+        const tasksForAppContext = tasksToCreate.map(task => ({
+          id: task.id,
+          title: task.title,
+          status: task.status || 'todo',
+          completed: task.completed || false,
+          milestoneId: newMilestone.id,
+          projectId: newMilestone.id,  // For backward compatibility
+          createdAt: task.createdAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }));
+        
+        console.log('🔍 Creating separate task entities for milestone:', tasksForAppContext.length);
+        console.log('🔍 Tasks to create:', tasksForAppContext);
+        console.log('🔍 Milestone being passed as known:', { id: newMilestone.id, title: newMilestone.title });
+        // Pass the newly created milestone as a known milestone to bypass state validation
+        await addTasksBulk(tasksForAppContext, [newMilestone]);
+      }
+      
       return newMilestone;
     }
     throw new Error('addProject function not available');
   };
   
-  const createTask = async (taskData) => {
-    const { addTask } = appContext;
-    const newTask = {
-      ...taskData,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    
-    if (typeof addTask === 'function') {
-      await addTask(newTask);
-      return newTask;
-    }
-    throw new Error('addTask function not available');
-  };
   
   // Handle completion of entire workflow
   const handleComplete = () => {
@@ -283,19 +284,6 @@ const AIBulkCreateModal = ({
           />
         );
         
-      case 'createTask':
-        return (
-          <TaskFormStep
-            initialData={existingData}
-            onComplete={handleStepComplete}
-            onBack={handleStepBack}
-            theme={theme}
-            appContext={appContext}
-            createdGoals={createdItems.goals}
-            createdMilestones={createdItems.milestones}
-          />
-        );
-        
       default:
         return (
           <View style={styles.errorContainer}>
@@ -323,71 +311,70 @@ const AIBulkCreateModal = ({
           { opacity: backgroundOpacityAnim }
         ]}
       >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <KeyboardAvoidingView 
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={styles.modalContainer}
-          >
-            <Animated.View 
-              style={[
-                styles.modalContent,
-                { 
-                  backgroundColor: theme.background,
-                  transform: [{ translateY: slideAnim }],
-                  paddingTop: spacing.xl
-                }
-              ]}
-            >
-              {/* Header with progress */}
-              <View style={styles.header}>
-                <TouchableOpacity 
-                  onPress={handleClose}
-                  style={styles.closeButton}
-                  accessible={true}
-                  accessibilityLabel="Close bulk creation"
-                  accessibilityRole="button"
-                >
-                  <Ionicons name="close" size={24} color={theme.text} />
-                </TouchableOpacity>
-                
-                <View style={styles.headerContent}>
-                  <Text style={[styles.title, { color: theme.text }]}>
-                    Create Items
-                  </Text>
-                  <Text style={[styles.progressText, { color: theme.textSecondary }]}>
-                    Step {currentStep + 1} of {totalSteps}
-                  </Text>
-                </View>
-                
-                <View style={styles.closeButtonPlaceholder} />
-              </View>
-              
-              {/* Progress indicator */}
-              <View style={styles.progressContainer}>
-                <View style={[styles.progressTrack, { backgroundColor: theme.border }]}>
-                  <View 
-                    style={[
-                      styles.progressBar,
-                      { 
-                        backgroundColor: color || theme.primary,
-                        width: `${((currentStep + 1) / totalSteps) * 100}%`
-                      }
-                    ]}
-                  />
-                </View>
-              </View>
-              
-              {/* Current step content */}
-              <ScrollView 
-                style={styles.content}
-                keyboardShouldPersistTaps="handled"
-                showsVerticalScrollIndicator={false}
-              >
-                {renderCurrentStep()}
-              </ScrollView>
-            </Animated.View>
-          </KeyboardAvoidingView>
+        {/* Backdrop areas that close modal */}
+        <TouchableWithoutFeedback onPress={handleClose}>
+          <View style={styles.backdropTop} />
         </TouchableWithoutFeedback>
+        
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalContainer}
+        >
+          <Animated.View 
+            style={[
+              styles.modalContent,
+              { 
+                backgroundColor: theme.background,
+                transform: [{ translateY: slideAnim }],
+                paddingTop: spacing.xl
+              }
+            ]}
+          >
+            {/* Header with progress */}
+            <View style={styles.header}>
+              <TouchableOpacity 
+                onPress={handleClose}
+                style={styles.closeButton}
+                accessible={true}
+                accessibilityLabel="Close bulk creation"
+                accessibilityRole="button"
+              >
+                <Ionicons name="close" size={24} color={theme.text} />
+              </TouchableOpacity>
+              
+              <View style={styles.headerContent}>
+                <Text style={[styles.title, { color: theme.text }]}>
+                  Create Items
+                </Text>
+                <Text style={[styles.progressText, { color: theme.textSecondary }]}>
+                  Step {currentStep + 1} of {totalSteps}
+                </Text>
+              </View>
+              
+              <View style={styles.closeButtonPlaceholder} />
+            </View>
+            
+            {/* Progress indicator */}
+            <View style={styles.progressContainer}>
+              <View style={[styles.progressTrack, { backgroundColor: theme.border }]}>
+                <View 
+                  style={[
+                    styles.progressBar,
+                    { 
+                      backgroundColor: color || theme.primary,
+                      width: `${((currentStep + 1) / totalSteps) * 100}%`
+                    }
+                  ]}
+                />
+              </View>
+            </View>
+            
+            {/* Current step content - Remove ScrollView wrapper */}
+            <View style={styles.content}>
+              {renderCurrentStep()}
+            </View>
+          </Animated.View>
+        </KeyboardAvoidingView>
       </Animated.View>
     </Modal>
   );
@@ -397,6 +384,9 @@ const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  backdropTop: {
+    flex: 1,
   },
   modalContainer: {
     flex: 1,

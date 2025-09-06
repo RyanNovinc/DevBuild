@@ -1070,17 +1070,33 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
     setConversationLimitModalVisible(false);
   };
   
-  // Process actions - use bulk modal for multiple actions
+  // Process actions - use bulk modal for multiple goals/milestones only
   const processActions = (actions) => {
     if (!actions || !Array.isArray(actions) || actions.length === 0) return;
     
     console.log(`Processing ${actions.length} actions`);
     console.log('Actions to process:', JSON.stringify(actions, null, 2));
     
-    // If multiple actions, use bulk modal
+    // If multiple actions, check if they are only goals and milestones
     if (actions.length > 1) {
-      setBulkCreateActions(actions);
-      setBulkCreateModalVisible(true);
+      const supportedBulkTypes = ['createGoal', 'createMilestone', 'createProject'];
+      const allSupportedForBulk = actions.every(action => 
+        supportedBulkTypes.includes(action.type)
+      );
+      
+      if (allSupportedForBulk) {
+        // Use bulk modal for goals and milestones only
+        console.log('Using bulk modal for goals/milestones');
+        setBulkCreateActions(actions);
+        setBulkCreateModalVisible(true);
+      } else {
+        // Process individually if any tasks or timeblocks are included
+        console.log('Processing individually - contains tasks/timeblocks');
+        setPendingActions(actions);
+        setTotalActions(actions.length);
+        setActionProgress(0);
+        processNextAction(actions, 0);
+      }
     } else {
       // Single action - process individually as before
       setPendingActions(actions);

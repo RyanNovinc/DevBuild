@@ -35,7 +35,10 @@ const AIUpsellModal = ({
   spotsRemaining = 1000, // new prop to calculate founder pricing
   initialAITier = 'navigator' // allow setting initial tier for standalone
 }) => {
-  const [selectedAITier, setSelectedAITier] = useState(initialAITier); // Use initialAITier prop
+  // Ensure we have a valid AI tier, fallback to 'navigator' if initialAITier is invalid
+  const validTiers = ['compass', 'navigator', 'guide'];
+  const safeInitialTier = validTiers.includes(initialAITier) ? initialAITier : 'navigator';
+  const [selectedAITier, setSelectedAITier] = useState(safeInitialTier);
   const [selectedDuration, setSelectedDuration] = useState(''); // No default selection - user must choose or default to 1month
   const [currentStep, setCurrentStep] = useState(1); // 1 = AI tier selection, 2 = duration selection, 3 = order summary
   const [currentScrollIndex, setCurrentScrollIndex] = useState(1); // Track which card is centered
@@ -57,6 +60,21 @@ const AIUpsellModal = ({
     if (userNumber <= 500) return { amount: 2.99, display: '$2.99' }; // Users 101-500
     return { amount: 4.99, display: '$4.99' }; // Users 501-1000
   };
+
+  // Helper function to safely get the current AI tier
+  const getCurrentAITier = () => {
+    const tier = aiTiers[selectedAITier] || aiTiers.navigator;
+    // Debug logging
+    if (__DEV__) {
+      console.log('AIUpsellModal - getCurrentAITier:', { 
+        selectedAITier, 
+        tierFound: !!aiTiers[selectedAITier],
+        tierName: tier.name,
+        tierPrice: tier.monthlyPrice 
+      });
+    }
+    return tier;
+  };
   
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -68,10 +86,22 @@ const AIUpsellModal = ({
 
   useEffect(() => {
     if (visible) {
+      // Debug logging
+      if (__DEV__) {
+        console.log('AIUpsellModal opened with props:', {
+          standalone,
+          founderUpsell,
+          spotsRemaining,
+          initialAITier,
+          safeInitialTier,
+          basePlan
+        });
+      }
+      
       // Reset modal state to fresh start every time it opens
       // For standalone AI purchases, start at step 1 (duration selection), otherwise start at step 1 (tier selection)
       setCurrentStep(1);
-      setSelectedAITier(initialAITier);
+      setSelectedAITier(safeInitialTier);
       setSelectedDuration('');
       setAiSkipped(false);
       setCurrentScrollIndex(1);
@@ -170,7 +200,7 @@ const AIUpsellModal = ({
 
   // Calculate AI pricing based on base plan and selected AI tier
   const getAIPricing = () => {
-    const selectedTier = aiTiers[selectedAITier];
+    const selectedTier = getCurrentAITier();
     const baseTierPrice = selectedTier.monthlyPrice;
     
     const baseRates = {
@@ -289,8 +319,8 @@ const AIUpsellModal = ({
     if (!isLastStep()) {
       const currentStepType = getCurrentStepType();
       
-      // For founders (spotsRemaining > 0) on duration step with no selection, give them free AI Light
-      if (currentStepType === 'duration' && !selectedDuration && spotsRemaining > 0) {
+      // For founders (spotsRemaining > 0 AND founderUpsell) on duration step with no selection, give them free AI Light
+      if (currentStepType === 'duration' && !selectedDuration && spotsRemaining > 0 && founderUpsell) {
         // Set them up with AI Light for free and go to summary - EXACTLY like "Just Give Me 1 Month AI Light" button
         setSelectedAITier('compass'); // AI Light
         setSelectedDuration('1month');
@@ -425,7 +455,11 @@ const AIUpsellModal = ({
 
   const getPlanName = () => {
     if (standalone) {
-      return aiTiers[selectedAITier].name + ' Assistant';
+      return getCurrentAITier().name + ' Assistant';
+    }
+    // Founder deals are always lifetime access, regardless of basePlan
+    if (founderUpsell) {
+      return 'Lifetime Pro Access';
     }
     switch (basePlan) {
       case 'monthly': return 'LifeCompass Pro Monthly';
@@ -558,7 +592,7 @@ const AIUpsellModal = ({
                 marginBottom: 16,
               }}>
                 <Ionicons 
-                  name={currentStep === 1 ? benefits.icon : currentStep === 2 ? aiTiers[selectedAITier].icon : 'receipt-outline'} 
+                  name={currentStep === 1 ? benefits.icon : currentStep === 2 ? getCurrentAITier().icon : 'receipt-outline'} 
                   size={26} 
                   color={currentStep === 1 ? benefits.color : currentStep === 2 ? '#FFD700' : '#10B981'} 
                 />
@@ -580,7 +614,7 @@ const AIUpsellModal = ({
                 textAlign: 'center',
                 paddingHorizontal: 40,
               }}>
-                {getCurrentStepType() === 'tier' ? benefits.subtitle : getCurrentStepType() === 'duration' ? `Add ${aiTiers[selectedAITier].name} to your ${standalone ? 'collection' : 'plan'}` : 'Review your selection before purchasing'}
+                {getCurrentStepType() === 'tier' ? benefits.subtitle : getCurrentStepType() === 'duration' ? `Add ${getCurrentAITier().name} to your ${standalone ? 'collection' : 'plan'}` : 'Review your selection before purchasing'}
               </Text>
             </View>
           </View>
@@ -850,7 +884,7 @@ const AIUpsellModal = ({
                       marginRight: 16,
                     }}>
                       <Ionicons 
-                        name={aiTiers[selectedAITier].icon} 
+                        name={getCurrentAITier().icon} 
                         size={22} 
                         color="#FFD700" 
                       />
@@ -862,13 +896,13 @@ const AIUpsellModal = ({
                         color: '#FFFFFF',
                         marginBottom: 2,
                       }}>
-                        {aiTiers[selectedAITier].name}
+                        {getCurrentAITier().name}
                       </Text>
                       <Text style={{
                         fontSize: 13,
                         color: 'rgba(255,255,255,0.6)',
                       }}>
-                        {aiTiers[selectedAITier].description}
+                        {getCurrentAITier().description}
                       </Text>
                     </View>
                   </View>
@@ -1073,7 +1107,7 @@ const AIUpsellModal = ({
                               fontSize: 12,
                               color: 'rgba(255,255,255,0.4)',
                             }}>
-                              {basePlan === 'lifetime' ? 'One-time purchase' : basePlan === 'annual' ? 'Billed annually' : 'Billed monthly'}
+                              {founderUpsell || basePlan === 'lifetime' ? 'One-time purchase' : basePlan === 'annual' ? 'Billed annually' : 'Billed monthly'}
                             </Text>
                           </View>
                           <Text style={{
@@ -1119,8 +1153,8 @@ const AIUpsellModal = ({
                           }}>
                             {aiSkipped ? (standalone ? 'No AI Selected' : 'No AI Assistant') : 
                               founderUpsell ? 
-                                `${selectedDuration === '1month' ? '1' : selectedDuration === '3months' ? '3' : selectedDuration === '6months' ? '6' : '12'} months of ${aiTiers[selectedAITier].name}` :
-                                (standalone ? getPlanName() : aiTiers[selectedAITier].name)
+                                `${selectedDuration === '1month' ? '1' : selectedDuration === '3months' ? '3' : selectedDuration === '6months' ? '6' : '12'} months of ${getCurrentAITier().name}` :
+                                (standalone ? getPlanName() : getCurrentAITier().name)
                             }
                           </Text>
                           <Text style={{
@@ -1129,7 +1163,7 @@ const AIUpsellModal = ({
                           }}>
                             {aiSkipped ? 'Can be added anytime' : 
                               founderUpsell ?
-                                `Full value: ${formatPrice(aiTiers[selectedAITier].monthlyPrice * (selectedDuration === '1month' ? 1 : selectedDuration === '3months' ? 3 : selectedDuration === '6months' ? 6 : 12))}` :
+                                `Full value: ${formatPrice(getCurrentAITier().monthlyPrice * (selectedDuration === '1month' ? 1 : selectedDuration === '3months' ? 3 : selectedDuration === '6months' ? 6 : 12))}` :
                                 pricing[selectedDuration].subtitle
                             }
                           </Text>
@@ -1159,8 +1193,8 @@ const AIUpsellModal = ({
                           textDecorationLine: aiSkipped ? 'line-through' : 'none',
                         }}>
                           {aiSkipped ? 
-                            (founderUpsell ? formatPrice(aiTiers.compass.monthlyPrice) : '$0.00') : 
-                            formatPrice(aiTiers[selectedAITier].monthlyPrice * (selectedDuration === '1month' ? 1 : selectedDuration === '3months' ? 3 : selectedDuration === '6months' ? 6 : 12))
+                            (founderUpsell ? formatPrice(getCurrentAITier().monthlyPrice) : '$0.00') : 
+                            formatPrice(getCurrentAITier().monthlyPrice * (selectedDuration === '1month' ? 1 : selectedDuration === '3months' ? 3 : selectedDuration === '6months' ? 6 : 12))
                           }
                         </Text>
                       </View>
@@ -1222,8 +1256,67 @@ const AIUpsellModal = ({
                               selectedDuration === '1month' && selectedAITier === 'compass' ? 
                                 2.99 : 
                                 // For other durations, calculate normally
-                                (aiTiers[selectedAITier].monthlyPrice * (selectedDuration === '1month' ? 1 : selectedDuration === '3months' ? 3 : selectedDuration === '6months' ? 6 : 12)) - 
+                                (getCurrentAITier().monthlyPrice * (selectedDuration === '1month' ? 1 : selectedDuration === '3months' ? 3 : selectedDuration === '6months' ? 6 : 12)) - 
                                 pricing[selectedDuration].total
+                            )}
+                          </Text>
+                        </View>
+                      </View>
+                    )}
+
+                    {/* Standalone AI Launch Bonus - only show for standalone AI purchases */}
+                    {standalone && !aiSkipped && (
+                      <View style={{
+                        marginBottom: 20,
+                      }}>
+                        <View style={{
+                          flexDirection: 'row',
+                          alignItems: 'flex-start',
+                        }}>
+                          <View style={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: 12,
+                            backgroundColor: 'rgba(34,197,94,0.15)',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            marginRight: 12,
+                          }}>
+                            <Ionicons 
+                              name="gift" 
+                              size={18} 
+                              color="#22C55E"
+                            />
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text style={{
+                              fontSize: 15,
+                              fontWeight: '600',
+                              color: '#22C55E',
+                              marginBottom: 2,
+                            }}>
+                              Discount Applied
+                            </Text>
+                            <Text style={{
+                              fontSize: 12,
+                              color: 'rgba(34,197,94,0.7)',
+                            }}>
+                              {selectedDuration === '1month' ? 'No additional discount' : 
+                               selectedDuration === '3months' ? '10% off 3-month purchase' :
+                               selectedDuration === '6months' ? 'Pay for 5, get 6 months' : 
+                               'Pay for 9, get 12 months'}
+                            </Text>
+                          </View>
+                          <Text style={{
+                            fontSize: 16,
+                            fontWeight: '600',
+                            color: '#22C55E',
+                          }}>
+                            {selectedDuration === '1month' ? '$0.00' : 
+                             '-' + formatPrice(
+                              // Use the actual savings from the pricing structure
+                              (getCurrentAITier().monthlyPrice * (selectedDuration === '1month' ? 1 : selectedDuration === '3months' ? 3 : selectedDuration === '6months' ? 6 : 12)) - 
+                              pricing[selectedDuration].total
                             )}
                           </Text>
                         </View>
@@ -1321,7 +1414,7 @@ const AIUpsellModal = ({
                         marginBottom: 12,
                         paddingLeft: 38,
                       }}>
-                        Get {aiTiers[selectedAITier].name} AI assistant for just ${aiTiers[selectedAITier].monthlyPrice.toFixed(2)}/month. Cancel anytime.
+                        Get {getCurrentAITier().name} AI assistant for just ${getCurrentAITier().monthlyPrice.toFixed(2)}/month. Cancel anytime.
                       </Text>
 
                       <TouchableOpacity
@@ -1346,7 +1439,7 @@ const AIUpsellModal = ({
                           fontWeight: '600',
                           color: '#FFD700',
                         }}>
-                          Add 1 Month AI - ${aiTiers[selectedAITier].monthlyPrice.toFixed(2)}
+                          Add 1 Month {getCurrentAITier().name} - ${getCurrentAITier().monthlyPrice.toFixed(2)}
                         </Text>
                       </TouchableOpacity>
                     </View>
@@ -1385,6 +1478,29 @@ const AIUpsellModal = ({
             paddingTop: 20,
             pointerEvents: 'box-none', // Allow touches to pass through empty areas
           }}>
+            
+            {/* Founder Exclusivity Message - Only show for founder deals on order summary */}
+            {founderUpsell && currentStep === 3 && (
+              <View style={{
+                backgroundColor: 'rgba(255,215,0,0.08)',
+                borderRadius: 12,
+                padding: 16,
+                marginBottom: 16,
+                borderWidth: 1,
+                borderColor: 'rgba(255,215,0,0.2)',
+              }}>
+                <Text style={{
+                  fontSize: 13,
+                  color: '#FFD700',
+                  textAlign: 'center',
+                  fontWeight: '600',
+                  lineHeight: 18,
+                }}>
+                  This is our 'thank you' to the first 1,000 customers. Once these spots are gone, we'll never offer lifetime access or AI plans this cheap again. Period.
+                </Text>
+              </View>
+            )}
+            
             <TouchableOpacity
               style={{
                 overflow: 'hidden',
@@ -1415,7 +1531,7 @@ const AIUpsellModal = ({
                       color: '#000000',
                       marginBottom: 2,
                     }}>
-                      Continue with {aiTiers[selectedAITier].shortName}
+                      Continue with {getCurrentAITier().shortName}
                     </Text>
                     <Text style={{
                       fontSize: 13,
@@ -1451,13 +1567,13 @@ const AIUpsellModal = ({
                           color: '#000000',
                           marginBottom: 2,
                         }}>
-                          Get 1 Month AI
+                          Get 1 Month {getCurrentAITier().name}
                         </Text>
                         <Text style={{
                           fontSize: 13,
                           color: 'rgba(0,0,0,0.6)',
                         }}>
-                          {spotsRemaining > 0 ? 'FREE • Start with monthly →' : `${formatPrice(pricing['1month'].total)} • Start with monthly →`}
+                          {(founderUpsell && spotsRemaining > 0) ? 'FREE • Start with monthly →' : `${formatPrice(pricing['1month'].total)} • Start with monthly →`}
                         </Text>
                       </>
                     )}
@@ -1471,8 +1587,12 @@ const AIUpsellModal = ({
                       marginBottom: 2,
                     }}>
                       Complete Purchase - {formatPrice(
-                        (standalone ? 0 : (basePlan === 'lifetime' ? 99.99 : basePlan === 'annual' ? 34.99 : 3.49)) + 
-                        (aiSkipped ? 0 : pricing[selectedDuration].total)
+                        (standalone ? 0 : getCurrentPrice().amount) + 
+                        (aiSkipped ? 0 : 
+                          // For "Just Give Me 1 Month AI Light" - total should be $0.00
+                          (selectedDuration === '1month' && selectedAITier === 'compass' && founderUpsell) ? 0 : 
+                          pricing[selectedDuration].total
+                        )
                       )}
                     </Text>
                     <Text style={{
@@ -1534,7 +1654,7 @@ const AIUpsellModal = ({
                   color: '#FFFFFF',
                   marginBottom: 2,
                 }}>
-                  Just Give Me 1 Month AI Light
+                  Just Give Me 1 Month {getCurrentAITier().name}
                 </Text>
                 <Text style={{
                   fontSize: 12,

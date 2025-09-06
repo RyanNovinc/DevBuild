@@ -1962,15 +1962,15 @@ export const AppProvider = ({ children }) => {
   };
 
   // Production-level bulk task addition with atomic operations and comprehensive error handling
-  const addTasksBulk = async (tasksToAdd) => {
+  const addTasksBulk = async (tasksToAdd, knownMilestones = []) => {
     try {
       if (!Array.isArray(tasksToAdd) || tasksToAdd.length === 0) {
         showError('No tasks to add');
         return [];
       }
 
-
       console.log(`🔄 Starting production-level bulk task addition: ${tasksToAdd.length} tasks`);
+      console.log(`🔍 addTasksBulk received knownMilestones:`, knownMilestones.length, knownMilestones.map(m => ({ id: m.id, title: m.title })));
 
       // Process and validate each task
       const processedTasks = [];
@@ -1982,10 +1982,24 @@ export const AppProvider = ({ children }) => {
         const isStandaloneTask = !milestoneId || milestoneId === null || milestoneId === undefined;
 
         // Check if milestone exists (only for non-standalone tasks)
-        if (!isStandaloneTask && !isMilestoneActive(milestoneId)) {
-          console.warn(`Milestone with ID ${milestoneId} not found, cannot add task`);
-          showError('One or more milestones not found');
-          return [];
+        if (!isStandaloneTask) {
+          const stateHasMilestone = isMilestoneActive(milestoneId);
+          const knownHasMilestone = knownMilestones.some(milestone => milestone.id === milestoneId);
+          const milestoneExists = stateHasMilestone || knownHasMilestone;
+          
+          console.log(`🔍 Milestone validation for ${milestoneId}:`, {
+            stateHasMilestone,
+            knownHasMilestone,
+            milestoneExists,
+            currentMilestoneCount: milestones.length,
+            knownMilestoneCount: knownMilestones.length
+          });
+          
+          if (!milestoneExists) {
+            console.warn(`Milestone with ID ${milestoneId} not found, cannot add task`);
+            showError('One or more milestones not found');
+            return [];
+          }
         }
 
         // Track milestone task counts for subscription limit checking
@@ -2026,10 +2040,24 @@ export const AppProvider = ({ children }) => {
       }
 
       // Execute production-level bulk task addition transaction
+      // Include known milestones in the current milestones to prevent referential integrity errors
+      const currentMilestonesWithKnown = Array.isArray(milestones) ? [...milestones] : [];
+      knownMilestones.forEach(knownMilestone => {
+        if (!currentMilestonesWithKnown.some(m => m.id === knownMilestone.id)) {
+          currentMilestonesWithKnown.push(knownMilestone);
+        }
+      });
+      
+      console.log('🔍 Calling StateTransactionService with milestones:', {
+        originalCount: Array.isArray(milestones) ? milestones.length : 0,
+        knownCount: knownMilestones.length,
+        finalCount: currentMilestonesWithKnown.length
+      });
+      
       const result = await stateTransactionService.executeBulkTaskAddition({
         tasksToAdd: processedTasks,
         currentTasks: Array.isArray(tasks) ? [...tasks] : [],
-        currentMilestones: Array.isArray(milestones) ? [...milestones] : [],
+        currentMilestones: currentMilestonesWithKnown,
         currentGoals: Array.isArray(goals) ? [...goals] : [],
         setTasks,
         setMilestones

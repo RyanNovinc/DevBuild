@@ -562,6 +562,7 @@ const AIChat = ({
         onSend={handleSend}
         onNewConversation={onNewConversation}
         disabled={isLoading}
+        isLoading={isLoading}
         onFocus={handleInputFocus}
         onBlur={handleInputBlur}
         conversationId={conversationId}

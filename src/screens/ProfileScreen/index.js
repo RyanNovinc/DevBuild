@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   Dimensions,
   Animated,
+  Easing,
   Modal
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,6 +21,7 @@ import { useAppContext } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const { width, height } = Dimensions.get('window');
 
@@ -104,10 +106,11 @@ const ProfileScreen = ({ navigation, route }) => {
   
   // Handle tour step transitions
   useEffect(() => {
-    console.log('🏆 ProfileScreen tour state:', {
+    console.log('🏆 ProfileScreen tour state changed:', {
       isTourActive,
       currentStep,
-      shouldShowFoundationBuilder: isTourActive && currentStep === 'FOUNDATION_BUILDER_INTRO'
+      shouldShowFoundationBuilder: isTourActive && currentStep === 'FOUNDATION_BUILDER_INTRO',
+      shouldShowAppTourOverlay: isTourActive && currentStep === 'GOAL_ACHIEVEMENT_VALIDATION'
     });
     
     if (isTourActive) {
@@ -127,31 +130,30 @@ const ProfileScreen = ({ navigation, route }) => {
   
   // Handle Foundation Builder intro completion
   const handleFoundationBuilderIntroContinue = useCallback(async () => {
-    console.log('🏆 Foundation Builder intro dismissed, proceeding to next tour step');
+    console.log('🏆 ProfileScreen: Foundation Builder intro dismissed, proceeding to next tour step');
+    console.log('🏆 ProfileScreen: Current tour state before nextStep:', {
+      isTourActive, 
+      currentStep,
+      nextStepFunction: typeof nextStep
+    });
     
-    // Immediately proceed to next step for responsive UI
+    // Proceed to next step
     nextStep();
     
-    // Unlock the Foundation Builder achievement with non-clickable popup after a brief delay
-    // This prevents modal dismiss/popup show conflicts
-    setTimeout(async () => {
-      try {
-        const { unlockAchievement } = await import('../../services/AchievementService');
-        await unlockAchievement('foundation-builder', null, false); // Show popup but make it non-clickable
-        console.log('🏆 Foundation Builder achievement unlocked');
-      } catch (error) {
-        console.error('🏆 Error unlocking Foundation Builder achievement:', error);
-      }
-    }, 500); // 500ms delay to allow modal dismiss animation to complete
-  }, [nextStep]);
+    console.log('🏆 ProfileScreen: nextStep() called - tour should now be advancing');
+  }, [nextStep, isTourActive, currentStep]);
   
   // Celebration animations state
   const [fallingTrophies, setFallingTrophies] = useState([]);
   const [fireworks, setFireworks] = useState([]);
   
-  // Modal animation values
-  const modalScale = useRef(new Animated.Value(0.8)).current;
+  // Modal animation values - Enhanced for sequential reveal
+  const modalScale = useRef(new Animated.Value(0)).current;
   const modalOpacity = useRef(new Animated.Value(0)).current;
+  const badgeScale = useRef(new Animated.Value(0)).current;
+  const titleOpacity = useRef(new Animated.Value(0)).current;
+  const detailsOpacity = useRef(new Animated.Value(0)).current;
+  const buttonsScale = useRef(new Animated.Value(0)).current;
   
   // Create celebration effects
   const createCelebrationEffects = () => {
@@ -232,25 +234,64 @@ const ProfileScreen = ({ navigation, route }) => {
   useEffect(() => {
     const checkForAchievementTrigger = () => {
       if (global.showTourCompletionAchievement) {
-        console.log('🏆 ProfileScreen: Showing tour completion achievement');
-        setUiState(prev => ({ ...prev, showTourAchievement: true }));
+        console.log('🏆 ProfileScreen: Showing tour completion achievement with smooth entrance');
         global.showTourCompletionAchievement = false; // Clear flag
         
-        // Animate modal entrance with faster timing
-        Animated.parallel([
-          Animated.spring(modalScale, {
+        // Reset ALL animation values immediately for smooth entrance (like Foundation Builder)
+        modalScale.setValue(0);
+        modalOpacity.setValue(0);
+        badgeScale.setValue(0);
+        titleOpacity.setValue(0);
+        detailsOpacity.setValue(0);
+        buttonsScale.setValue(0);
+        
+        // Show modal immediately but with animations starting from 0
+        setUiState(prev => ({ ...prev, showTourAchievement: true }));
+        
+        // Match Foundation Builder's exact animation timing and style
+        Animated.sequence([
+          // Step 1: Modal entrance - EXACTLY like Foundation Builder
+          Animated.parallel([
+            Animated.spring(modalScale, {
+              toValue: 1,
+              tension: 60,
+              friction: 8,
+              useNativeDriver: true
+            }),
+            Animated.timing(modalOpacity, {
+              toValue: 1,
+              duration: 400,
+              useNativeDriver: true
+            })
+          ]),
+          // Step 2: Badge scales in - matching Foundation Builder
+          Animated.spring(badgeScale, {
             toValue: 1,
-            tension: 80,
-            friction: 6,
+            tension: 100,
+            friction: 7,
             useNativeDriver: true
           }),
-          Animated.timing(modalOpacity, {
+          // Step 3: Title fades in - matching Foundation Builder
+          Animated.timing(titleOpacity, {
             toValue: 1,
-            duration: 200, // Faster than default
+            duration: 500,
+            useNativeDriver: true
+          }),
+          // Step 4: Details fade in (Tour Graduate specific)
+          Animated.timing(detailsOpacity, {
+            toValue: 1,
+            duration: 400,
+            useNativeDriver: true
+          }),
+          // Step 5: Buttons appear - matching Foundation Builder style
+          Animated.spring(buttonsScale, {
+            toValue: 1,
+            tension: 60,
+            friction: 5,
             useNativeDriver: true
           })
         ]).start(() => {
-          // Start celebration effects after modal is visible
+          // Start celebration effects after full sequence
           createCelebrationEffects();
         });
       }
@@ -651,13 +692,18 @@ const ProfileScreen = ({ navigation, route }) => {
   // Main render
   const isDarkMode = theme.dark;
   
+  // Override background to dark during achievement flow and tour transition for better UX
+  const isAchievementFlow = isTourActive && currentStep === 'FOUNDATION_BUILDER_INTRO';
+  const isTourTransition = global.tourTransitionInProgress === true;
+  const backgroundOverride = (isAchievementFlow || isTourTransition) ? '#000000' : theme.background;
+  
   return (
-    <View style={[styles.safeArea, { backgroundColor: theme.background }]}>
+    <View style={[styles.safeArea, { backgroundColor: backgroundOverride }]}>
       <StatusBar backgroundColor={theme.primary} barStyle={isDarkMode ? 'light-content' : 'dark-content'} translucent={true} />
       
       <ScrollView
         ref={scrollViewRef}
-        style={[styles.scrollView, { backgroundColor: theme.background }]}
+        style={[styles.scrollView, { backgroundColor: backgroundOverride }]}
         contentContainerStyle={[
           styles.scrollContent,
           { paddingBottom: insets.bottom + 20 }
@@ -754,147 +800,290 @@ const ProfileScreen = ({ navigation, route }) => {
         navigation={navigation}
       />
       
-      {/* Tour Achievement Modal */}
+      {/* Tour Achievement Modal - Premium Dark Design */}
       <Modal
         visible={uiState.showTourAchievement}
         transparent={true}
         animationType="none"
         onRequestClose={() => setUiState(prev => ({ ...prev, showTourAchievement: false }))}
       >
-        <View style={achievementStyles.modalOverlay}>
-          {/* Falling Trophy Effects */}
+        <View style={[achievementStyles.modalOverlay, { backgroundColor: 'rgba(0, 0, 0, 0.95)' }]}>
+          {/* Animated Background Particles */}
           {fallingTrophies.map(trophy => (
             <Animated.View
               key={trophy.id}
               style={[
-                achievementStyles.fallingTrophy,
+                achievementStyles.floatingParticle,
                 {
                   left: trophy.x,
-                  top: 0, // Position at very top of screen
                   transform: [
                     { translateY: trophy.animValue },
                     { 
                       rotate: trophy.rotation.interpolate({
                         inputRange: [0, 1],
-                        outputRange: ['0deg', '360deg']
+                        outputRange: ['0deg', '720deg']
+                      })
+                    },
+                    { 
+                      scale: trophy.rotation.interpolate({
+                        inputRange: [0, 0.5, 1],
+                        outputRange: [0.8, 1.2, 0.8]
+                      })
+                    }
+                  ],
+                  opacity: trophy.rotation.interpolate({
+                    inputRange: [0, 0.1, 0.9, 1],
+                    outputRange: [0, 1, 1, 0]
+                  })
+                }
+              ]}
+            >
+              <View style={[
+                achievementStyles.particleDot,
+                { backgroundColor: '#FFD700' }
+              ]} />
+            </Animated.View>
+          ))}
+          
+          {/* Radial Burst Effects */}
+          {fireworks.map(firework => (
+            <Animated.View
+              key={firework.id}
+              style={[
+                achievementStyles.burstEffect,
+                {
+                  left: firework.x,
+                  top: firework.y,
+                  opacity: firework.opacityAnim,
+                  transform: [
+                    { scale: firework.scaleAnim },
+                    {
+                      rotate: firework.scaleAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ['0deg', '45deg']
                       })
                     }
                   ]
                 }
               ]}
             >
-              <Ionicons name="trophy" size={32} color="#FFD700" />
-            </Animated.View>
-          ))}
-          
-          {/* Golden Fireworks Effects */}
-          {fireworks.map(firework => (
-            <Animated.View
-              key={firework.id}
-              style={[
-                achievementStyles.firework,
-                {
-                  left: firework.x,
-                  top: firework.y,
-                  opacity: firework.opacityAnim,
-                  transform: [
-                    { scale: firework.scaleAnim }
-                  ]
-                }
-              ]}
-            >
-              <Text style={achievementStyles.fireworkText}>✨</Text>
+              <LinearGradient
+                colors={['#FFD700', '#FFA500', 'transparent']}
+                style={achievementStyles.burstGradient}
+                start={{ x: 0.5, y: 0.5 }}
+                end={{ x: 1, y: 1 }}
+              />
             </Animated.View>
           ))}
           
           <Animated.View style={[
-            achievementStyles.modalContainer,
+            achievementStyles.modernModalContainer,
             {
-              backgroundColor: theme.background,
-              borderColor: theme.primary,
-              transform: [{ scale: modalScale }],
+              transform: [
+                { scale: modalScale },
+                {
+                  rotateX: modalScale.interpolate({
+                    inputRange: [0.8, 1],
+                    outputRange: ['-15deg', '0deg']
+                  })
+                }
+              ],
               opacity: modalOpacity
             }
           ]}>
-            {/* Achievement Icon */}
-            <View style={[
-              achievementStyles.iconContainer,
-              { backgroundColor: theme.cardBackground }
-            ]}>
-              <Ionicons name="trophy" size={48} color="#FFD700" />
-            </View>
-            
-            {/* Header */}
-            <View style={achievementStyles.modalHeader}>
-              <Text style={[
-                achievementStyles.modalTitle,
-                { color: theme.text }
-              ]}>Achievement Unlocked!</Text>
-              <Text style={[
-                achievementStyles.achievementName,
-                { color: '#FFD700' }
-              ]}>Quick Learner</Text>
-            </View>
-            
-            {/* Theme Color Unlock */}
-            <View style={achievementStyles.themeUnlock}>
-              <Text style={[
-                achievementStyles.themeUnlockTitle,
-                { color: theme.textSecondary }
-              ]}>You unlocked a new theme color!</Text>
+            <LinearGradient
+              colors={['#1a1a2e', '#0f0f1e', '#16213e']}
+              style={achievementStyles.gradientContainer}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              {/* Animated Trophy Badge - With dedicated animation */}
+              <Animated.View style={[
+                achievementStyles.trophyBadgeContainer,
+                {
+                  transform: [
+                    { scale: badgeScale },
+                    {
+                      rotate: badgeScale.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ['-180deg', '0deg']
+                      })
+                    }
+                  ],
+                  opacity: badgeScale
+                }
+              ]}>
+                <LinearGradient
+                  colors={['#FFD700', '#FFC700', '#FFB300']}
+                  style={achievementStyles.trophyBadge}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <Ionicons name="school" size={56} color="#FFFFFF" />
+                  <View style={achievementStyles.badgeShine} />
+                </LinearGradient>
+                <View style={achievementStyles.badgeGlow} />
+                <View style={achievementStyles.badgeRing} />
+              </Animated.View>
               
-              <View style={achievementStyles.colorPreview}>
-                <View style={[
-                  achievementStyles.colorCircle,
-                  { backgroundColor: theme.cardElevated }
-                ]}>
-                  <View style={[achievementStyles.colorSwatch, { backgroundColor: '#3B82F6' }]} />
+              {/* Achievement Label - With title animation */}
+              <Animated.View 
+                style={[
+                  achievementStyles.labelContainer,
+                  {
+                    opacity: titleOpacity,
+                    transform: [
+                      {
+                        translateY: titleOpacity.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [20, 0]
+                        })
+                      }
+                    ]
+                  }
+                ]}
+              >
+                <Text style={achievementStyles.achievementLabel}>ACHIEVEMENT UNLOCKED</Text>
+              </Animated.View>
+              
+              {/* Title with Gradient - With title animation */}
+              <Animated.View 
+                style={[
+                  achievementStyles.titleContainer,
+                  {
+                    opacity: titleOpacity,
+                    transform: [
+                      {
+                        translateY: titleOpacity.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [30, 0]
+                        })
+                      }
+                    ]
+                  }
+                ]}
+              >
+                <Text style={achievementStyles.achievementTitle}>Tour Graduate</Text>
+                <View style={achievementStyles.titleUnderline} />
+              </Animated.View>
+              
+              {/* Accomplishment Details - With dedicated animation */}
+              <Animated.View 
+                style={[
+                  achievementStyles.detailsContainer,
+                  {
+                    opacity: detailsOpacity,
+                    transform: [
+                      {
+                        translateY: detailsOpacity.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [20, 0]
+                        })
+                      }
+                    ]
+                  }
+                ]}
+              >
+                <Text style={achievementStyles.accomplishmentText}>
+                  You've successfully completed the guided tour and mastered
+                </Text>
+                <Text style={achievementStyles.accomplishmentText}>
+                  all the essential features of LifeCompass!
+                </Text>
+                
+                {/* Stats Row */}
+                <View style={achievementStyles.statsRow}>
+                  <View style={achievementStyles.statItem}>
+                    <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
+                    <Text style={achievementStyles.statText}>Tour Complete</Text>
+                  </View>
+                  <View style={achievementStyles.statDivider} />
+                  <View style={achievementStyles.statItem}>
+                    <Ionicons name="star" size={24} color="#FFD700" />
+                    <Text style={achievementStyles.statText}>+10 Points</Text>
+                  </View>
                 </View>
-                <Text style={[
-                  achievementStyles.colorName,
-                  { color: theme.textSecondary }
-                ]}>Slate Blue</Text>
-              </View>
-            </View>
+              </Animated.View>
             
-            {/* Buttons */}
-            <View style={achievementStyles.buttons}>
-              <TouchableOpacity 
+              {/* Action Buttons with Animations - With dedicated animation */}
+              <Animated.View 
                 style={[
-                  achievementStyles.secondaryButton,
-                  { borderColor: theme.border }
+                  achievementStyles.modernButtons,
+                  {
+                    opacity: buttonsScale,
+                    transform: [
+                      { scale: buttonsScale },
+                      {
+                        translateY: buttonsScale.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [40, 0]
+                        })
+                      }
+                    ]
+                  }
                 ]}
-                onPress={() => {
-                  // Reset animation values
-                  modalScale.setValue(0.8);
-                  modalOpacity.setValue(0);
-                  setUiState(prev => ({ ...prev, showTourAchievement: false }));
-                  navigation.navigate('AchievementsScreen');
-                }}
-                activeOpacity={0.8}
               >
-                <Text style={[
-                  achievementStyles.secondaryText,
-                  { color: theme.textSecondary }
-                ]}>View All Achievements</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[
-                  achievementStyles.continueButton,
-                  { backgroundColor: '#FFD700' }
-                ]}
-                onPress={() => {
-                  // Reset animation values
-                  modalScale.setValue(0.8);
-                  modalOpacity.setValue(0);
-                  setUiState(prev => ({ ...prev, showTourAchievement: false }));
-                }}
-                activeOpacity={0.8}
-              >
-                <Text style={achievementStyles.continueText}>Continue</Text>
-              </TouchableOpacity>
-            </View>
+                <TouchableOpacity 
+                  style={achievementStyles.viewAchievementsButton}
+                  onPress={() => {
+                    // Reset all animations
+                    modalScale.setValue(0);
+                    modalOpacity.setValue(0);
+                    badgeScale.setValue(0);
+                    titleOpacity.setValue(0);
+                    detailsOpacity.setValue(0);
+                    buttonsScale.setValue(0);
+                    setUiState(prev => ({ ...prev, showTourAchievement: false }));
+                    navigation.navigate('AchievementsScreen');
+                  }}
+                  activeOpacity={0.9}
+                >
+                  <View style={achievementStyles.viewButtonContent}>
+                    <Ionicons name="trophy" size={20} color="#9CA3AF" />
+                    <Text style={achievementStyles.viewButtonText}>View All Achievements</Text>
+                  </View>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={achievementStyles.celebrateButton}
+                  onPress={() => {
+                    // Add a celebration animation before closing
+                    Animated.sequence([
+                      Animated.timing(modalScale, {
+                        toValue: 1.05,
+                        duration: 100,
+                        useNativeDriver: true,
+                      }),
+                      Animated.timing(modalScale, {
+                        toValue: 0,
+                        duration: 300,
+                        useNativeDriver: true,
+                      }),
+                    ]).start(() => {
+                      // Reset all animations
+                      modalScale.setValue(0);
+                      modalOpacity.setValue(0);
+                      badgeScale.setValue(0);
+                      titleOpacity.setValue(0);
+                      detailsOpacity.setValue(0);
+                      buttonsScale.setValue(0);
+                      setUiState(prev => ({ ...prev, showTourAchievement: false }));
+                    });
+                  }}
+                  activeOpacity={0.9}
+                >
+                  <LinearGradient
+                    colors={['#FFD700', '#FFC700']}
+                    style={achievementStyles.celebrateGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                  >
+                    <Text style={achievementStyles.celebrateText}>Continue to LifeCompass</Text>
+                    <Ionicons name="arrow-forward" size={20} color="#FFFFFF" style={{ marginLeft: 8 }} />
+                  </LinearGradient>
+                </TouchableOpacity>
+              </Animated.View>
+            </LinearGradient>
           </Animated.View>
         </View>
       </Modal>
@@ -1069,6 +1258,36 @@ const achievementStyles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 24,
   },
+  // Particle effects
+  floatingParticle: {
+    position: 'absolute',
+    zIndex: 5,
+    pointerEvents: 'none',
+  },
+  particleDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+  },
+  burstEffect: {
+    position: 'absolute',
+    width: 100,
+    height: 100,
+    zIndex: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    pointerEvents: 'none',
+  },
+  burstGradient: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 50,
+  },
+  // Legacy styles for fallback
   fallingTrophy: {
     position: 'absolute',
     zIndex: 5,
@@ -1102,6 +1321,181 @@ const achievementStyles = StyleSheet.create({
     elevation: 12,
     alignItems: 'center',
     borderWidth: 2,
+  },
+  // Modern premium modal styles
+  modernModalContainer: {
+    borderRadius: 24,
+    width: '100%',
+    maxWidth: 380,
+    overflow: 'hidden',
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.3,
+    shadowRadius: 30,
+    elevation: 20,
+  },
+  gradientContainer: {
+    paddingTop: 40,
+    paddingBottom: 32,
+    paddingHorizontal: 32,
+    alignItems: 'center',
+  },
+  // Trophy badge styles
+  trophyBadgeContainer: {
+    position: 'relative',
+    marginBottom: 24,
+    alignItems: 'center',
+  },
+  trophyBadge: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  badgeShine: {
+    position: 'absolute',
+    top: 15,
+    right: 20,
+    width: 25,
+    height: 25,
+    borderRadius: 12.5,
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+  },
+  badgeGlow: {
+    position: 'absolute',
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: '#FFD700',
+    opacity: 0.15,
+    top: -20,
+    left: -20,
+  },
+  badgeRing: {
+    position: 'absolute',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 2,
+    borderColor: '#FFD700',
+    opacity: 0.3,
+    top: -10,
+    left: -10,
+  },
+  // Text styles
+  labelContainer: {
+    marginBottom: 12,
+  },
+  achievementLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 2,
+    color: '#9CA3AF',
+    textAlign: 'center',
+  },
+  titleContainer: {
+    marginBottom: 24,
+    alignItems: 'center',
+  },
+  achievementTitle: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    letterSpacing: -0.5,
+    textAlign: 'center',
+  },
+  titleUnderline: {
+    width: 60,
+    height: 3,
+    backgroundColor: '#FFD700',
+    marginTop: 12,
+    borderRadius: 1.5,
+  },
+  detailsContainer: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  accomplishmentText: {
+    fontSize: 15,
+    color: '#9CA3AF',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 4,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 24,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(156, 163, 175, 0.2)',
+  },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  statText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    marginLeft: 8,
+    fontWeight: '600',
+  },
+  statDivider: {
+    width: 1,
+    height: 20,
+    backgroundColor: 'rgba(156, 163, 175, 0.3)',
+  },
+  // Button styles
+  modernButtons: {
+    width: '100%',
+    gap: 12,
+  },
+  viewAchievementsButton: {
+    width: '100%',
+    height: 48,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(156, 163, 175, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  viewButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  viewButtonText: {
+    fontSize: 16,
+    color: '#9CA3AF',
+    marginLeft: 8,
+    fontWeight: '600',
+  },
+  celebrateButton: {
+    width: '100%',
+    height: 56,
+    borderRadius: 12,
+    overflow: 'hidden',
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  celebrateGradient: {
+    width: '100%',
+    height: '100%',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  celebrateText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
   },
   iconContainer: {
     width: 80,

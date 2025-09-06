@@ -27,9 +27,53 @@ const MilestoneFormStep = ({
   appContext,
   createdGoals = []
 }) => {
-  // Form state
+  // Debug: Track what data we're working with
+  console.log('🔍 MilestoneFormStep render with initialData:', {
+    title: initialData?.title,
+    description: initialData?.description,
+    tasksLength: initialData?.tasks?.length,
+    modalDataId: initialData?.modalDataId
+  });
+  
+  // Form state  
   const [title, setTitle] = useState(initialData?.title || '');
   const [description, setDescription] = useState(initialData?.description || '');
+  const [tasks, setTasks] = useState(() => {
+    // Debug: Log what we're receiving
+    console.log('🔍 MilestoneFormStep initialData:', JSON.stringify(initialData, null, 2));
+    console.log('🔍 MilestoneFormStep milestone title:', initialData?.title);
+    console.log('🔍 MilestoneFormStep tasks:', JSON.stringify(initialData?.tasks, null, 2));
+    
+    // Ensure tasks have proper structure and unique IDs
+    if (!initialData?.tasks || !Array.isArray(initialData.tasks)) return [];
+    
+    return initialData.tasks.map((task, index) => {
+      // Handle different task formats
+      let taskTitle = '';
+      if (typeof task === 'string') {
+        taskTitle = task;
+      } else if (typeof task?.title === 'string') {
+        taskTitle = task.title;
+      } else if (typeof task?.title === 'object' && typeof task.title.title === 'string') {
+        // Handle nested structure: task.title.title
+        taskTitle = task.title.title;
+      } else if (task && typeof task === 'object') {
+        // Try to extract title from object, even if structure is different
+        taskTitle = task.name || task.description || `Task ${index + 1}`;
+      } else {
+        taskTitle = `Task ${index + 1}`;
+      }
+
+      return {
+        id: task?.id || `task_${Date.now()}_${index}`,
+        title: taskTitle,
+        status: task?.status || 'todo',
+        completed: task?.completed || false,
+        createdAt: task?.createdAt || new Date().toISOString()
+      };
+    });
+  });
+  const [newTaskTitle, setNewTaskTitle] = useState('');
   const [selectedGoal, setSelectedGoal] = useState(null);
   const [hasDueDate, setHasDueDate] = useState(initialData?.dueDate ? true : false);
   const [dueDate, setDueDate] = useState(initialData?.dueDate ? new Date(initialData.dueDate) : new Date());
@@ -48,9 +92,97 @@ const MilestoneFormStep = ({
     }
   }, [createdGoals, initialData, appContext?.goals]);
 
+  // Debug: Track when initialData changes and update tasks state
+  useEffect(() => {
+    console.log('🔍 MilestoneFormStep initialData changed:', {
+      newTitle: initialData?.title,
+      newDescription: initialData?.description,
+      newTasksCount: initialData?.tasks?.length,
+      currentTasksCount: tasks.length,
+      shouldUpdateState: initialData?.title !== title || initialData?.description !== description
+    });
+    
+    // Update state when initialData changes
+    if (initialData?.title && initialData.title !== title) {
+      console.log('🔍 Updating title from', title, 'to', initialData.title);
+      setTitle(initialData.title);
+    }
+    if (initialData?.description && initialData.description !== description) {
+      console.log('🔍 Updating description from', description, 'to', initialData.description);
+      setDescription(initialData.description);
+    }
+    
+    // Update due date state
+    if (initialData?.dueDate) {
+      const newDate = new Date(initialData.dueDate);
+      if (!hasDueDate || dueDate.getTime() !== newDate.getTime()) {
+        console.log('🔍 Updating milestone dueDate from', dueDate, 'to', newDate);
+        setHasDueDate(true);
+        setDueDate(newDate);
+      }
+    }
+    
+    // CRITICAL: Update tasks when initialData.tasks changes
+    if (initialData?.tasks && Array.isArray(initialData.tasks)) {
+      const newTasks = initialData.tasks.map((task, index) => {
+        let taskTitle = '';
+        if (typeof task === 'string') {
+          taskTitle = task;
+        } else if (typeof task?.title === 'string') {
+          taskTitle = task.title;
+        } else if (typeof task?.title === 'object' && typeof task.title.title === 'string') {
+          taskTitle = task.title.title;
+        } else {
+          taskTitle = `Task ${index + 1}`;
+        }
+
+        return {
+          id: task.id || `task_${Date.now()}_${index}`,
+          title: taskTitle,
+          status: task?.status || 'todo',
+          completed: task?.completed || false,
+          createdAt: task?.createdAt || new Date().toISOString()
+        };
+      });
+      
+      // Only update if tasks actually changed
+      const taskTitlesChanged = newTasks.length !== tasks.length || 
+        newTasks.some((newTask, index) => tasks[index]?.title !== newTask.title);
+        
+      if (taskTitlesChanged) {
+        console.log('🔍 Updating tasks:', {
+          oldTasks: tasks.map(t => t.title),
+          newTasks: newTasks.map(t => t.title)
+        });
+        setTasks(newTasks);
+      }
+    }
+  }, [initialData]);
+
   // Handle goal selection
   const handleGoalSelect = (goal) => {
     setSelectedGoal(goal);
+  };
+
+  // Add a new task
+  const handleAddTask = () => {
+    if (!newTaskTitle.trim()) return;
+    
+    const newTask = {
+      id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      title: newTaskTitle.trim(),
+      status: 'todo',
+      completed: false,
+      createdAt: new Date().toISOString()
+    };
+    
+    setTasks([...tasks, newTask]);
+    setNewTaskTitle('');
+  };
+
+  // Remove a task
+  const handleRemoveTask = (id) => {
+    setTasks(tasks.filter(task => task.id !== id));
   };
 
   // Handle form completion
@@ -66,7 +198,7 @@ const MilestoneFormStep = ({
       goalTitle: selectedGoal?.title || null,
       domain: selectedGoal?.domain || 'Other',
       color: selectedGoal?.color || '#007AFF',
-      tasks: initialData?.tasks || [],
+      tasks: tasks,
       dueDate: hasDueDate ? dueDate.toISOString() : null
     };
 
@@ -93,7 +225,16 @@ const MilestoneFormStep = ({
         </Text>
       </View>
 
-      <ScrollView style={styles.form} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.form} 
+        contentContainerStyle={{ paddingBottom: spacing.l }}
+        showsVerticalScrollIndicator={true}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        scrollEnabled={true}
+        bounces={true}
+        nestedScrollEnabled={true}
+      >
         {/* Title Input */}
         <View style={styles.inputSection}>
           <Text style={[styles.label, { color: theme.textSecondary }]}>
@@ -288,6 +429,91 @@ const MilestoneFormStep = ({
               }}
             />
           )}
+        </View>
+
+        {/* Tasks Section */}
+        <View style={styles.inputSection}>
+          <Text style={[styles.label, { color: theme.textSecondary }]}>
+            Tasks ({tasks.length})
+          </Text>
+          
+          {/* Task list */}
+          <View style={styles.taskList}>
+            {tasks.map((item, index) => (
+              <View
+                key={`task-${item.id || index}`}
+                style={[
+                  styles.taskItem,
+                  {
+                    backgroundColor: theme.card,
+                    borderColor: theme.border
+                  }
+                ]}
+              >
+                <View style={styles.taskCheckbox}>
+                  <Ionicons 
+                    name="ellipse-outline" 
+                    size={scaleWidth(20)} 
+                    color={selectedGoal?.color || '#007AFF'}
+                  />
+                </View>
+                <Text 
+                  style={[
+                    styles.taskText,
+                    { color: theme.text }
+                  ]}
+                  numberOfLines={2}
+                >
+                  {typeof item.title === 'string' ? item.title : 'Untitled Task'}
+                </Text>
+                <TouchableOpacity
+                  onPress={() => handleRemoveTask(item.id)}
+                  style={styles.removeTaskButton}
+                >
+                  <Ionicons name="close-circle" size={scaleWidth(20)} color={theme.textSecondary} />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+          
+          {/* Add new task input */}
+          <View 
+            style={[
+              styles.addTaskContainer,
+              {
+                marginTop: spacing.m,
+                marginBottom: spacing.m,
+              }
+            ]}
+          >
+            <View style={styles.taskCheckbox}>
+              <Ionicons 
+                name="add-circle-outline" 
+                size={scaleWidth(22)} 
+                color={selectedGoal?.color || '#007AFF'}
+              />
+            </View>
+            <TextInput
+              style={[
+                styles.taskInput, 
+                { 
+                  backgroundColor: theme.inputBackground,
+                  color: theme.text,
+                  borderColor: theme.border,
+                  borderRadius: scaleWidth(8),
+                  flex: 1,
+                  borderWidth: 1,
+                }
+              ]}
+              value={newTaskTitle}
+              onChangeText={setNewTaskTitle}
+              placeholder="Add a new task"
+              placeholderTextColor={theme.textSecondary}
+              onSubmitEditing={handleAddTask}
+              returnKeyType="done"
+              autoFocus={false}
+            />
+          </View>
         </View>
       </ScrollView>
 
@@ -504,6 +730,43 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.m,
     fontWeight: '600',
     marginRight: spacing.xs,
+  },
+  // Task styles
+  taskList: {
+    marginTop: spacing.s,
+  },
+  taskItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.m,
+    paddingVertical: spacing.s,
+    borderRadius: scaleWidth(8),
+    marginBottom: spacing.s,
+    borderWidth: 1,
+  },
+  taskCheckbox: {
+    marginRight: spacing.s,
+    width: scaleWidth(24),
+    alignItems: 'center',
+  },
+  taskText: {
+    flex: 1,
+    fontSize: fontSizes.m,
+    fontWeight: '500',
+  },
+  removeTaskButton: {
+    padding: spacing.xs,
+    marginLeft: spacing.s,
+  },
+  addTaskContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  taskInput: {
+    paddingHorizontal: spacing.m,
+    paddingVertical: spacing.s,
+    fontSize: fontSizes.m,
+    minHeight: scaleHeight(40),
   },
 });
 

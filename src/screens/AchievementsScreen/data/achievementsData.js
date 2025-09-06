@@ -46,7 +46,7 @@ export const ACHIEVEMENTS = {
   'foundation-builder': {
     id: 'foundation-builder',
     title: 'Foundation Builder',
-    description: 'Complete the full onboarding journey',
+    description: 'Complete the full onboarding journey\n🎁 Special reward unlocked!',
     icon: 'construct',
     category: 'strategic',
     criteria: 'Complete the entire onboarding process by selecting a domain, goal, and setting up your personalized life compass.',
@@ -55,7 +55,7 @@ export const ACHIEVEMENTS = {
   'tour-graduate': {
     id: 'tour-graduate',
     title: 'Tour Graduate',
-    description: 'Complete the guided app tour',
+    description: 'Complete the guided app tour and master the basics',
     icon: 'school',
     category: 'strategic',
     criteria: 'Successfully complete the guided app tour to learn all the key features.',
