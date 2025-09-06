@@ -187,8 +187,8 @@ const TaskCard = ({ task, onComplete, onDelete, isEditMode, onDrag, isActive, is
             {task.title}
           </Text>
           
-          {/* Task Priority or Due Date (if available) */}
-          {task.priority && (
+          {/* Task Priority or Due Date (if available) - Skip showing 'medium' priority */}
+          {task.priority && task.priority !== 'medium' && (
             <View style={[styles.taskPriority, {
               backgroundColor: task.priority === 'high' ? '#FF525220' : 
                               task.priority === 'medium' ? '#FF980020' : '#4CAF5020',

@@ -201,6 +201,9 @@ const AIBulkCreateModal = ({
     if (typeof addProject === 'function') {
       await addProject(newMilestone);
       
+      // Add a small delay to allow state to propagate
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       // Now create separate task entities if we have tasks and addTasksBulk is available
       if (tasksToCreate.length > 0 && typeof addTasksBulk === 'function') {
         const tasksForAppContext = tasksToCreate.map(task => ({
@@ -217,8 +220,26 @@ const AIBulkCreateModal = ({
         console.log('🔍 Creating separate task entities for milestone:', tasksForAppContext.length);
         console.log('🔍 Tasks to create:', tasksForAppContext);
         console.log('🔍 Milestone being passed as known:', { id: newMilestone.id, title: newMilestone.title });
+        
+        // Log current context state before creating tasks
+        console.log('🔍 AppContext state before task creation:', {
+          milestonesCount: appContext.projects?.length || 0,
+          tasksCount: appContext.tasks?.length || 0,
+          milestoneExists: appContext.projects?.some(m => m.id === newMilestone.id)
+        });
+        
         // Pass the newly created milestone as a known milestone to bypass state validation
-        await addTasksBulk(tasksForAppContext, [newMilestone]);
+        const taskResult = await addTasksBulk(tasksForAppContext, [newMilestone]);
+        
+        console.log('🔍 Task creation result:', taskResult?.length || 0, 'tasks created');
+        console.log('🔍 AppContext state after task creation:', {
+          milestonesCount: appContext.projects?.length || 0,
+          tasksCount: appContext.tasks?.length || 0,
+          milestoneExists: appContext.projects?.some(m => m.id === newMilestone.id)
+        });
+        
+        // Add another small delay to allow task state to propagate
+        await new Promise(resolve => setTimeout(resolve, 50));
       }
       
       return newMilestone;
@@ -450,7 +471,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: spacing.l,
-    paddingBottom: spacing.l,
+    paddingBottom: spacing.xl,
   },
   errorContainer: {
     padding: spacing.xl,

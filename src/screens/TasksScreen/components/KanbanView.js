@@ -256,11 +256,11 @@ const KanbanView = ({ taskScreenProps }) => {
               // No goals available
               Alert.alert(
                 "No Goals Available",
-                "You need to create a goal before adding projects.",
+                "You need to create a goal before adding projects. Projects help organize tasks within your goals.",
                 [
                   { text: "Cancel", style: "cancel" },
                   { 
-                    text: "Create Goal", 
+                    text: "Create Goal First", 
                     onPress: () => navigation.navigate('GoalsTab')
                   }
                 ]

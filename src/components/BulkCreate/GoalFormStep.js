@@ -291,18 +291,9 @@ const GoalFormStep = ({
 
   return (
     <View style={styles.container}>
-      <View style={styles.stepHeader}>
-        <Text style={[styles.stepTitle, { color: theme.text }]}>
-          Create Goal
-        </Text>
-        <Text style={[styles.stepDescription, { color: theme.textSecondary }]}>
-          Set up your high-level objective
-        </Text>
-      </View>
-
       <ScrollView 
         style={styles.formContainer}
-        contentContainerStyle={{ paddingBottom: spacing.l }}
+        contentContainerStyle={{ paddingBottom: spacing.xxl * 2 }}
         showsVerticalScrollIndicator={true}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
@@ -310,6 +301,15 @@ const GoalFormStep = ({
         bounces={true}
         nestedScrollEnabled={true}
       >
+        {/* Header moved inside ScrollView */}
+        <View style={styles.stepHeader}>
+          <Text style={[styles.stepTitle, { color: theme.text }]}>
+            Create Goal
+          </Text>
+          <Text style={[styles.stepDescription, { color: theme.textSecondary }]}>
+            Set up your high-level objective
+          </Text>
+        </View>
         {/* Goal Title */}
         <View style={[
           styles.inputSection,
@@ -846,111 +846,82 @@ const GoalFormStep = ({
         )}
       </ScrollView>
       
-      {/* Action buttons */}
-      <View style={styles.buttonContainer}>
+      {/* Floating Action Buttons */}
+      <View style={styles.floatingButtonContainer}>
         {onBack && (
           <TouchableOpacity
-            style={[
-              styles.backButton,
-              {
-                backgroundColor: theme.backgroundSecondary,
-                borderRadius: scaleWidth(12),
-                paddingVertical: spacing.m,
-                paddingHorizontal: spacing.l,
-                marginRight: spacing.m,
-                flex: 1,
-                minHeight: minTouchSize,
-              }
-            ]}
+            style={{
+              backgroundColor: theme.card || '#FFFFFF',
+              borderRadius: scaleWidth(12),
+              paddingVertical: spacing.m,
+              paddingHorizontal: spacing.l,
+              flex: 1,
+              minHeight: minTouchSize,
+              alignItems: 'center',
+              justifyContent: 'center',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.15,
+              shadowRadius: 12,
+              elevation: 6,
+              marginRight: spacing.m,
+              borderWidth: 1,
+              borderColor: theme.border,
+            }}
             onPress={onBack}
             accessible={true}
             accessibilityRole="button"
             accessibilityLabel="Go back"
           >
-            <Text style={[
-              styles.backButtonText,
-              {
-                color: theme.text,
-                fontSize: fontSizes.m,
-                fontWeight: '600',
-                textAlign: 'center'
-              }
-            ]}>
+            <Text style={{
+              color: theme.text,
+              fontSize: fontSizes.m,
+              fontWeight: '600',
+            }}>
               Back
             </Text>
           </TouchableOpacity>
         )}
         
         <TouchableOpacity
-          style={[
-            styles.nextButton,
-            {
-              borderRadius: scaleWidth(12),
-              minHeight: minTouchSize,
-              overflow: 'hidden',
-              shadowColor: selectedDomain ? 
-                (STANDARD_DOMAINS.find(d => d.name === selectedDomain)?.color || '#000') : 
-                '#000',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.3,
-              shadowRadius: 8,
-              elevation: 6,
-              flex: onBack ? 2 : 1,
-            }
-          ]}
+          style={{
+            backgroundColor: selectedDomain ? 
+              (STANDARD_DOMAINS.find(d => d.name === selectedDomain)?.color || buttonColor) : 
+              buttonColor,
+            paddingVertical: spacing.m,
+            paddingHorizontal: spacing.l,
+            borderRadius: scaleWidth(12),
+            flex: onBack ? 2 : 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: minTouchSize,
+            flexDirection: 'row',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.2,
+            shadowRadius: 8,
+            elevation: 4,
+          }}
           onPress={handleComplete}
           accessible={true}
           accessibilityRole="button"
           accessibilityLabel="Complete goal creation"
         >
-          <LinearGradient
-            colors={selectedDomain ? [
-              STANDARD_DOMAINS.find(d => d.name === selectedDomain)?.color || buttonColor,
-              (STANDARD_DOMAINS.find(d => d.name === selectedDomain)?.color || buttonColor) + 'DD'
-            ] : [buttonColor, buttonColor + 'DD']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
+          <Ionicons 
+            name="checkmark-circle" 
+            size={scaleWidth(20)} 
+            color="#FFFFFF" 
+            style={{ marginRight: spacing.s }}
+          />
+          <Text 
             style={{
-              flex: 1,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              paddingVertical: spacing.m,
-              paddingHorizontal: spacing.l,
+              fontSize: fontSizes.m,
+              fontWeight: '600',
+              color: '#FFFFFF',
             }}
           >
-            <LinearGradient
-              colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0)']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 0, y: 1 }}
-              style={{
-                position: 'absolute',
-                left: 0,
-                right: 0,
-                top: 0,
-                height: '50%',
-              }}
-            />
-            <Ionicons 
-              name="checkmark-circle" 
-              size={scaleWidth(24)} 
-              color="#FFFFFF" 
-              style={{ marginRight: spacing.s }}
-            />
-            <Text 
-              style={[
-                styles.nextButtonText,
-                {
-                  fontSize: fontSizes.m,
-                  fontWeight: '600',
-                  color: '#FFFFFF'
-                }
-              ]}
-              maxFontSizeMultiplier={1.5}
-            >
-              Continue
-            </Text>
-          </LinearGradient>
+            Continue
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -975,6 +946,7 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     flex: 1,
+    flexGrow: 1,
   },
   inputSection: {
     // Enhanced styling applied inline
@@ -1062,12 +1034,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   
-  // Buttons
-  buttonContainer: {
+  // Floating Buttons
+  floatingButtonContainer: {
+    position: 'absolute',
+    bottom: spacing.l,
+    left: spacing.l,
+    right: spacing.l,
     flexDirection: 'row',
-    paddingHorizontal: spacing.l,
-    paddingTop: spacing.m,
-    paddingBottom: spacing.l,
   },
   backButton: {
     alignItems: 'center',

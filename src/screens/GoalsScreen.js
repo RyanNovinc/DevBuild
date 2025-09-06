@@ -10,7 +10,8 @@ import {
   StatusBar,
   Easing,
   Modal,
-  ActivityIndicator
+  ActivityIndicator,
+  Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
@@ -766,7 +767,22 @@ const GoalsScreen = ({ navigation, route, tabMode }) => {
   const handleAddMilestone = () => {
     // Navigate to project creation
     if (goals.length === 0) {
-      showUpgradePrompt('Please create a goal first before adding milestones.');
+      // Show options for creating standalone projects or creating a goal first
+      Alert.alert(
+        'No Goals Yet',
+        'You can create a standalone project or create a goal first to organize your projects better.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Create Goal First', 
+            onPress: handleAddGoal 
+          },
+          { 
+            text: 'Create Standalone Project', 
+            onPress: () => navigation.navigate('ProjectDetails', { mode: 'create', standalone: true })
+          }
+        ]
+      );
       return;
     }
     navigation.navigate('ProjectDetails', { mode: 'create' });
@@ -776,7 +792,22 @@ const GoalsScreen = ({ navigation, route, tabMode }) => {
   const handleAddTask = () => {
     // Navigate to task creation
     if (goals.length === 0) {
-      showUpgradePrompt('Please create a goal first before adding tasks.');
+      // Show options for creating standalone tasks or creating a goal first
+      Alert.alert(
+        'No Goals Yet',
+        'You can create a standalone task or create a goal first to organize your tasks better.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Create Goal First', 
+            onPress: handleAddGoal 
+          },
+          { 
+            text: 'Create Standalone Task', 
+            onPress: () => navigation.navigate('TaskDetails', { mode: 'create', standalone: true })
+          }
+        ]
+      );
       return;
     }
     navigation.navigate('TaskDetails', { mode: 'create' });

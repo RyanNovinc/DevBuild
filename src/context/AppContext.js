@@ -2016,7 +2016,7 @@ export const AppProvider = ({ children }) => {
           goalId: taskData.goalId || null,
           completed: taskData.completed || false,
           status: taskData.status || 'todo',
-          priority: taskData.priority || (isStandaloneTask ? null : 'medium'),
+          priority: taskData.priority || null,
           createdAt: taskData.createdAt || new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };

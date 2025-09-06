@@ -88,7 +88,7 @@ const CELEBRATION_TYPES = ['confetti', 'fireworks', 'sparkles', 'starburst'];
 // AI Introduction Messages
 const AI_INTRODUCTION_MESSAGES = [
   "Welcome to LifeCompass! I'm your AI guide.",
-  "I'll show you how to apply Fortune 500 project management techniques to your personal goals - the same methods companies use to hit their biggest targets.",
+  "I'll show you how to apply project management techniques to your personal goals - the same methods companies use to hit their biggest targets.",
   "Structured goal systems compound success at every level - from planning to execution to tracking. Let's turn your dreams into organised action plans."
 ];
 

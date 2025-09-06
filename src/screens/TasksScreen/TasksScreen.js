@@ -1382,11 +1382,11 @@ const TasksScreen = ({ route, navigation }) => {
         // No goals available
         Alert.alert(
           "No Goals Available",
-          "You need to create a goal before adding milestones.",
+          "You need to create a goal before adding projects. Projects help organize tasks within your goals.",
           [
             { text: "Cancel", style: "cancel" },
             { 
-              text: "Create Goal", 
+              text: "Create Goal First", 
               onPress: () => navigation.navigate('GoalsTab')
             }
           ]

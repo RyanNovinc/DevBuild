@@ -825,9 +825,9 @@ const AddMilestoneModalRevamped = ({
                     </View>
                     
                     {/* Task List */}
-                    {tasks.map((task) => (
+                    {tasks.map((task, index) => (
                       <View 
-                        key={task.id} 
+                        key={typeof task === 'string' ? index : (task.id || index)} 
                         style={{
                           flexDirection: 'row',
                           alignItems: 'center',
@@ -844,9 +844,9 @@ const AddMilestoneModalRevamped = ({
                           style={{ marginRight: spacing.s }}
                         />
                         <Text style={{ flex: 1, color: theme.text, fontSize: fontSizes.m }}>
-                          {task.title}
+                          {typeof task === 'string' ? task : (task.title || 'Untitled Task')}
                         </Text>
-                        <TouchableOpacity onPress={() => handleRemoveTask(task.id)}>
+                        <TouchableOpacity onPress={() => handleRemoveTask(typeof task === 'string' ? task : (task.id || task))}>
                           <Ionicons name="close-circle" size={scaleWidth(20)} color={theme.error || 'red'} />
                         </TouchableOpacity>
                       </View>

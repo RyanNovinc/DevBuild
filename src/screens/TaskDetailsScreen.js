@@ -610,7 +610,8 @@ const TaskDetailsScreen = ({ route, navigation }) => {
     task = null, 
     previousScreen = 'LifePlanOverview',
     preselectedGoalId = null,
-    preselectedMilestoneId = null
+    preselectedMilestoneId = null,
+    standalone = false
   } = route.params || {};
   const isEditing = mode === 'edit' && task;
   
@@ -619,8 +620,12 @@ const TaskDetailsScreen = ({ route, navigation }) => {
   const [taskList, setTaskList] = useState([]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [selectedGoalId, setSelectedGoalId] = useState(preselectedGoalId);
-  const [selectedMilestoneId, setSelectedMilestoneId] = useState(preselectedMilestoneId);
+  const [selectedGoalId, setSelectedGoalId] = useState(
+    standalone ? 'standalone' : preselectedGoalId
+  );
+  const [selectedMilestoneId, setSelectedMilestoneId] = useState(
+    standalone ? null : preselectedMilestoneId
+  );
   const [expandedGoalId, setExpandedGoalId] = useState(null); // Track which goal is expanded, start with none expanded
   const [expandedMilestones, setExpandedMilestones] = useState({}); // Track which milestones are expanded
   const [showUnsavedChangesModal, setShowUnsavedChangesModal] = useState(false);

@@ -201,7 +201,12 @@
       "Read(/D:\\Apps Productions Builds\\LCiOS-2\\DevBuild\\src\\components/**)",
       "Read(/D:\\Apps Productions Builds\\LCiOS-2\\DevBuild\\src\\components\\BulkCreate/**)",
       "Read(/D:\\Apps Productions Builds\\LCiOS-2\\DevBuild\\src\\components\\BulkCreate/**)",
-      "Read(/D:\\Apps Productions Builds\\LCiOS-2\\DevBuild/**)"
+      "Read(/D:\\Apps Productions Builds\\LCiOS-2\\DevBuild/**)",
+      "Bash(\"C:\\Program Files\\Amazon\\AWSCLIV2\\aws.exe\" sts get-caller-identity --region ap-southeast-2)",
+      "Bash(\"C:\\Program Files\\Amazon\\AWSCLIV2\\aws.exe\" lambda update-function-code --function-name LifeCompass-WebSocketHandler --zip-file fileb://websocket-handler-final.js --region ap-southeast-2)",
+      "Bash(if exist lambda-deployment-no-streaming.zip del lambda-deployment-no-streaming.zip)",
+      "Bash(\"C:\\Program Files\\Amazon\\AWSCLIV2\\aws.exe\" lambda update-function-code --function-name LifeCompass-WebSocketHandler --zip-file fileb://temp-deploy.zip --region ap-southeast-2)",
+      "Bash(del temp-deploy.zip)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

@@ -1131,12 +1131,24 @@ export const generateAIResponse = async (
         reject(new Error(errorMessage));
       };
       
+      // Handler for processing status updates (Smart Buffering UX feedback)
+      const processingStatusHandler = (data) => {
+        if (data.conversationId === conversationId) {
+          console.log('🎯 Processing status received:', data);
+          // Show the processing message instead of streaming chunks
+          if (callbacks.onChunk) {
+            callbacks.onChunk(data.message || 'Processing...');
+          }
+        }
+      };
+      
       // Add handlers and store the remove functions
       const removeChunkHandler = WebSocketService.addMessageHandler('chunk', chunkHandler);
       const removeCompleteHandler = WebSocketService.addMessageHandler('complete', completeHandler);
       const removeErrorHandler = WebSocketService.addMessageHandler('error', errorHandler);
+      const removeProcessingStatusHandler = WebSocketService.addMessageHandler('processing_status', processingStatusHandler);
       
-      removedHandlers.push(removeChunkHandler, removeCompleteHandler, removeErrorHandler);
+      removedHandlers.push(removeChunkHandler, removeCompleteHandler, removeErrorHandler, removeProcessingStatusHandler);
       
       // Format previous messages
       const formattedMessages = [];

@@ -12,7 +12,8 @@ import {
   scaleWidth,
   scaleHeight,
   spacing,
-  fontSizes
+  fontSizes,
+  accessibility
 } from '../../utils/responsive';
 
 const CompletionStep = ({ 
@@ -38,25 +39,26 @@ const CompletionStep = ({
     return `${parts.slice(0, -1).join(', ')}, and ${parts[parts.length - 1]}`;
   };
 
+  const minTouchSize = accessibility.minTouchTarget;
+
   return (
     <View style={styles.container}>
-      {/* Success Header */}
-      <View style={styles.successHeader}>
-        <View style={[styles.successIcon, { backgroundColor: theme.success + '20' }]}>
-          <Ionicons name="checkmark-circle" size={48} color={theme.success || '#22C55E'} />
-        </View>
-        
-        <Text style={[styles.successTitle, { color: theme.text }]}>
-          All Done! 🎉
-        </Text>
-        
-        <Text style={[styles.successSubtitle, { color: theme.textSecondary }]}>
-          Successfully created {getSummaryText()}
-        </Text>
-      </View>
-
-      {/* Created Items Summary */}
+      {/* Created Items Summary - ScrollView with header inside */}
       <ScrollView style={styles.summaryContainer} showsVerticalScrollIndicator={false}>
+        {/* Success Header - Now inside ScrollView */}
+        <View style={styles.successHeader}>
+          <View style={[styles.successIcon, { backgroundColor: theme.success + '20' }]}>
+            <Ionicons name="checkmark-circle" size={48} color={theme.success || '#22C55E'} />
+          </View>
+          
+          <Text style={[styles.successTitle, { color: theme.text }]}>
+            All Done! 🎉
+          </Text>
+          
+          <Text style={[styles.successSubtitle, { color: theme.textSecondary }]}>
+            Successfully created {getSummaryText()}
+          </Text>
+        </View>
         {/* Goals Section */}
         {totalGoals > 0 && (
           <View style={styles.itemSection}>
@@ -176,14 +178,21 @@ const CompletionStep = ({
             </Text>
           </View>
         </View>
+        
+        {/* Add bottom padding to prevent overlap with floating button */}
+        <View style={{ paddingBottom: 100 }} />
       </ScrollView>
 
-      {/* Complete Button */}
-      <View style={styles.buttonContainer}>
+      {/* Floating Complete Button */}
+      <View style={styles.floatingButtonContainer}>
         <TouchableOpacity
           style={[
             styles.completeButton,
-            { backgroundColor: theme.primary || '#007AFF' }
+            { 
+              backgroundColor: theme.primary || '#007AFF',
+              minHeight: minTouchSize,
+              minWidth: minTouchSize
+            }
           ]}
           onPress={onComplete}
           accessible={true}
@@ -203,12 +212,11 @@ const CompletionStep = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: spacing.m,
-    paddingBottom: spacing.xl,
   },
   successHeader: {
     alignItems: 'center',
     paddingVertical: spacing.xl,
+    paddingTop: spacing.m,
   },
   successIcon: {
     width: scaleWidth(80),
@@ -231,7 +239,6 @@ const styles = StyleSheet.create({
   },
   summaryContainer: {
     flex: 1,
-    marginTop: spacing.l,
   },
   itemSection: {
     marginBottom: spacing.xl,
@@ -301,8 +308,12 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.m,
     lineHeight: fontSizes.m * 1.4,
   },
-  buttonContainer: {
-    marginTop: spacing.xl,
+  floatingButtonContainer: {
+    position: 'absolute',
+    bottom: spacing.l,
+    left: spacing.l,
+    right: spacing.l,
+    zIndex: 10,
   },
   completeButton: {
     flexDirection: 'row',
@@ -312,6 +323,11 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.l,
     borderRadius: scaleWidth(16),
     minHeight: scaleHeight(56),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 8,
   },
   completeButtonText: {
     color: '#FFFFFF',

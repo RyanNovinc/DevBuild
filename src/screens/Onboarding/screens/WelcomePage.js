@@ -7,13 +7,17 @@ import {
   Animated,
   SafeAreaView,
   Platform,
-  Text
+  Text,
+  Modal,
+  Dimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import ResponsiveText from '../components/ResponsiveText';
 import TypingAnimation from '../components/TypingAnimation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const WelcomePage = ({ onContinue, onSkipOnboarding }) => {
   // State
@@ -23,6 +27,7 @@ const WelcomePage = ({ onContinue, onSkipOnboarding }) => {
   const [initialAnimationComplete, setInitialAnimationComplete] = useState(false);
   const [showTypingAnimation, setShowTypingAnimation] = useState(false);
   const [appLanguage, setAppLanguage] = useState('en'); // Default to English
+  const [showSkipConfirmModal, setShowSkipConfirmModal] = useState(false);
   
   // Animation values
   const logoScale = useRef(new Animated.Value(0.6)).current;
@@ -36,6 +41,10 @@ const WelcomePage = ({ onContinue, onSkipOnboarding }) => {
   const promptY = useRef(new Animated.Value(0)).current;
   const skipButtonOpacity = useRef(new Animated.Value(0)).current;
   const businessIconsOpacity = useRef(new Animated.Value(0)).current;
+  
+  // Modal animation values
+  const modalOverlayOpacity = useRef(new Animated.Value(0)).current;
+  const modalScale = useRef(new Animated.Value(0.9)).current;
   
   // Animation for the sparkle icon (pulse always)
   const iconPulse = useRef(new Animated.Value(1)).current;
@@ -138,7 +147,18 @@ const WelcomePage = ({ onContinue, onSkipOnboarding }) => {
     }
   };
   
-  // Handle skip onboarding
+  // Handle skip button press - show confirmation modal
+  const handleSkipButtonPress = () => {
+    try {
+      // Provide haptic feedback
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (error) {
+      console.log('Haptics not available:', error);
+    }
+    setShowSkipConfirmModal(true);
+  };
+
+  // Handle confirmed skip onboarding
   const handleSkipOnboarding = () => {
     try {
       // Provide haptic feedback
@@ -147,6 +167,8 @@ const WelcomePage = ({ onContinue, onSkipOnboarding }) => {
       console.log('Haptics not available:', error);
     }
     
+    setShowSkipConfirmModal(false);
+    
     if (onSkipOnboarding) {
       onSkipOnboarding();
     } else {
@@ -154,6 +176,55 @@ const WelcomePage = ({ onContinue, onSkipOnboarding }) => {
       onContinue();
     }
   };
+
+  // Handle modal show animation
+  const showModalAnimation = () => {
+    Animated.parallel([
+      Animated.timing(modalOverlayOpacity, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.spring(modalScale, {
+        toValue: 1,
+        tension: 100,
+        friction: 8,
+        useNativeDriver: true,
+      })
+    ]).start();
+  };
+
+  // Handle modal hide animation
+  const hideModalAnimation = (callback) => {
+    Animated.parallel([
+      Animated.timing(modalOverlayOpacity, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(modalScale, {
+        toValue: 0.9,
+        duration: 200,
+        useNativeDriver: true,
+      })
+    ]).start(() => {
+      if (callback) callback();
+    });
+  };
+
+  // Handle modal close
+  const handleCloseModal = () => {
+    hideModalAnimation(() => {
+      setShowSkipConfirmModal(false);
+    });
+  };
+
+  // Effect to trigger modal animation when it shows
+  useEffect(() => {
+    if (showSkipConfirmModal) {
+      showModalAnimation();
+    }
+  }, [showSkipConfirmModal]);
   
   // Initial animations
   useEffect(() => {
@@ -345,7 +416,7 @@ const WelcomePage = ({ onContinue, onSkipOnboarding }) => {
       <Animated.View style={[styles.skipButtonContainer, { opacity: skipButtonOpacity }]}>
         <TouchableOpacity
           style={styles.skipButton}
-          onPress={handleSkipOnboarding}
+          onPress={handleSkipButtonPress}
           activeOpacity={0.7}
         >
           <ResponsiveText style={styles.skipButtonText}>
@@ -479,6 +550,68 @@ const WelcomePage = ({ onContinue, onSkipOnboarding }) => {
           )}
         </View>
       </TouchableOpacity>
+
+      {/* Skip Confirmation Modal */}
+      <Modal
+        visible={showSkipConfirmModal}
+        transparent={true}
+        animationType="none"
+        onRequestClose={handleCloseModal}
+      >
+        <Animated.View 
+          style={[
+            styles.modalOverlay,
+            { opacity: modalOverlayOpacity }
+          ]}
+        >
+          <TouchableOpacity 
+            style={styles.modalBackground}
+            activeOpacity={1}
+            onPress={handleCloseModal}
+          >
+            <Animated.View 
+              style={[
+                styles.modalContainer,
+                { transform: [{ scale: modalScale }] }
+              ]}
+            >
+              <TouchableOpacity activeOpacity={1}>
+                {/* Header */}
+                <View style={styles.modalHeader}>
+                  <Ionicons name="help-circle-outline" size={24} color="#F59E0B" />
+                  <Text style={styles.modalTitle}>Skip Setup?</Text>
+                </View>
+                
+                {/* Content */}
+                <View style={styles.modalContent}>
+                  <Text style={styles.modalMessage}>
+                    The 2-minute onboarding helps create your personalized goal system.
+                  </Text>
+                </View>
+                
+                {/* Buttons */}
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity 
+                    style={styles.modalContinueButton}
+                    onPress={handleCloseModal}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.modalContinueText}>Continue Setup</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={styles.modalSkipButton}
+                    onPress={handleSkipOnboarding}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.modalSkipText}>Skip for Now</Text>
+                  </TouchableOpacity>
+                </View>
+              </TouchableOpacity>
+            </Animated.View>
+          </TouchableOpacity>
+        </Animated.View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -659,7 +792,95 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.8)',
     fontWeight: '600',
     letterSpacing: 0.5,
-  }
+  },
+  
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  modalBackground: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+  },
+  modalContainer: {
+    backgroundColor: '#1F2937',
+    borderRadius: 20,
+    width: '100%',
+    maxWidth: 340,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 10,
+    borderWidth: 1,
+    borderColor: '#374151',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 28,
+    paddingHorizontal: 24,
+    paddingBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginLeft: 8,
+    letterSpacing: -0.5,
+  },
+  modalContent: {
+    paddingHorizontal: 24,
+    paddingBottom: 24,
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: '#D1D5DB',
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  modalButtons: {
+    paddingHorizontal: 24,
+    paddingBottom: 24,
+    gap: 12,
+  },
+  modalContinueButton: {
+    backgroundColor: '#3B82F6',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  modalContinueText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: -0.3,
+  },
+  modalSkipButton: {
+    backgroundColor: 'transparent',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#4B5563',
+  },
+  modalSkipText: {
+    color: '#9CA3AF',
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: -0.3,
+  },
 });
 
 export default WelcomePage;

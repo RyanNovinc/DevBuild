@@ -16,7 +16,8 @@ import {
   scaleWidth,
   scaleHeight,
   spacing,
-  fontSizes
+  fontSizes,
+  accessibility
 } from '../../utils/responsive';
 
 const MilestoneFormStep = ({ 
@@ -208,6 +209,9 @@ const MilestoneFormStep = ({
   // Check if form is valid
   const isValid = title.trim().length > 0;
 
+  // Calculate minimum touch target size
+  const minTouchSize = Math.max(scaleWidth(44), accessibility.minTouchTarget);
+
   // Combine created goals with existing goals for selection
   const availableGoals = [
     ...createdGoals,
@@ -216,18 +220,9 @@ const MilestoneFormStep = ({
 
   return (
     <View style={styles.container}>
-      <View style={styles.stepHeader}>
-        <Text style={[styles.stepTitle, { color: theme.text }]}>
-          Create Milestone
-        </Text>
-        <Text style={[styles.stepDescription, { color: theme.textSecondary }]}>
-          Define a significant project or achievement
-        </Text>
-      </View>
-
       <ScrollView 
         style={styles.form} 
-        contentContainerStyle={{ paddingBottom: spacing.l }}
+        contentContainerStyle={{ paddingBottom: spacing.xxl * 2 }}
         showsVerticalScrollIndicator={true}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
@@ -235,6 +230,16 @@ const MilestoneFormStep = ({
         bounces={true}
         nestedScrollEnabled={true}
       >
+        {/* Header moved inside ScrollView */}
+        <View style={styles.stepHeader}>
+          <Text style={[styles.stepTitle, { color: theme.text }]}>
+            Create Milestone
+          </Text>
+          <Text style={[styles.stepDescription, { color: theme.textSecondary }]}>
+            Define a significant moment or achievement
+          </Text>
+        </View>
+
         {/* Title Input */}
         <View style={styles.inputSection}>
           <Text style={[styles.label, { color: theme.textSecondary }]}>
@@ -517,41 +522,80 @@ const MilestoneFormStep = ({
         </View>
       </ScrollView>
 
-      {/* Navigation Buttons */}
-      <View style={styles.buttonContainer}>
+      {/* Floating Action Buttons */}
+      <View style={styles.floatingButtonContainer}>
         {onBack && (
           <TouchableOpacity
-            style={[styles.backButton, { backgroundColor: theme.card }]}
+            style={{
+              backgroundColor: theme.card || '#FFFFFF',
+              borderRadius: scaleWidth(12),
+              paddingVertical: spacing.m,
+              paddingHorizontal: spacing.l,
+              flex: 1,
+              minHeight: minTouchSize,
+              alignItems: 'center',
+              justifyContent: 'center',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.15,
+              shadowRadius: 12,
+              elevation: 6,
+              marginRight: spacing.m,
+              borderWidth: 1,
+              borderColor: theme.border,
+            }}
             onPress={onBack}
             accessible={true}
             accessibilityLabel="Go back"
             accessibilityRole="button"
           >
-            <Ionicons name="chevron-back" size={20} color={theme.text} />
-            <Text style={[styles.backButtonText, { color: theme.text }]}>
+            <Text style={{
+              color: theme.text,
+              fontSize: fontSizes.m,
+              fontWeight: '600',
+            }}>
               Back
             </Text>
           </TouchableOpacity>
         )}
 
         <TouchableOpacity
-          style={[
-            styles.nextButton,
-            { 
-              backgroundColor: isValid ? (theme.primary || '#007AFF') : theme.border,
-              opacity: isValid ? 1 : 0.6
-            }
-          ]}
+          style={{
+            backgroundColor: isValid ? (theme.primary || '#007AFF') : theme.border,
+            paddingVertical: spacing.m,
+            paddingHorizontal: spacing.l,
+            borderRadius: scaleWidth(12),
+            flex: onBack ? 2 : 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: minTouchSize,
+            flexDirection: 'row',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.2,
+            shadowRadius: 8,
+            elevation: 4,
+            opacity: isValid ? 1 : 0.6,
+          }}
           onPress={handleComplete}
           disabled={!isValid}
           accessible={true}
           accessibilityLabel={isValid ? "Continue to next step" : "Complete the required fields"}
           accessibilityRole="button"
         >
-          <Text style={[styles.nextButtonText, { color: '#FFFFFF' }]}>
+          <Ionicons 
+            name="checkmark-circle" 
+            size={scaleWidth(20)} 
+            color="#FFFFFF" 
+            style={{ marginRight: spacing.s }}
+          />
+          <Text style={{
+            fontSize: fontSizes.m,
+            fontWeight: '600',
+            color: '#FFFFFF',
+          }}>
             Continue
           </Text>
-          <Ionicons name="chevron-forward" size={20} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
     </View>
@@ -561,8 +605,6 @@ const MilestoneFormStep = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: spacing.m,
-    paddingBottom: spacing.xl,
   },
   stepHeader: {
     paddingBottom: spacing.l,
@@ -694,12 +736,13 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginLeft: spacing.s,
   },
-  buttonContainer: {
+  // Floating Buttons
+  floatingButtonContainer: {
+    position: 'absolute',
+    bottom: spacing.l,
+    left: spacing.l,
+    right: spacing.l,
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: spacing.l,
-    gap: spacing.m,
   },
   backButton: {
     flexDirection: 'row',

@@ -48,8 +48,12 @@ const TaskInputModal = ({
   const inputFocusAnim = useRef(new Animated.Value(0)).current;
 
   // Get domain colors for visual indicators
-  const selectedGoal = goals?.find(g => g.id === taskData.selectedGoalId);
-  const selectedProject = projects?.find(p => p.id === taskData.selectedProjectId);
+  const selectedGoal = taskData.selectedGoalId === 'standalone' 
+    ? { id: 'standalone', title: 'Standalone Task', color: null }
+    : goals?.find(g => g.id === taskData.selectedGoalId);
+  const selectedProject = taskData.selectedProjectId === 'standalone'
+    ? { id: 'standalone', title: 'No Milestone', color: null }
+    : projects?.find(p => p.id === taskData.selectedProjectId);
 
   useEffect(() => {
     if (visible) {
@@ -198,8 +202,8 @@ const TaskInputModal = ({
 
         <KeyboardAvoidingView 
           style={styles.container}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+          behavior={Platform.OS === 'ios' ? 'position' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? -50 : 20}
         >
           <Animated.View 
             style={[
@@ -259,8 +263,8 @@ const TaskInputModal = ({
               </TouchableOpacity>
             </View>
 
-            {/* Domain Color Indicators */}
-            {(selectedGoal || selectedProject) && (
+            {/* Domain Color Indicators - Always show when goal is selected */}
+            {selectedGoal && (
               <View style={styles.contextContainer}>
                 <View style={styles.contextIndicators}>
                   {selectedGoal && (
@@ -268,8 +272,8 @@ const TaskInputModal = ({
                       <View style={[
                         styles.goalDot, 
                         { 
-                          backgroundColor: selectedGoal.color,
-                          shadowColor: selectedGoal.color,
+                          backgroundColor: selectedGoal.color || theme.textSecondary,
+                          shadowColor: selectedGoal.color || theme.textSecondary,
                           shadowOffset: { width: 0, height: 2 },
                           shadowOpacity: 0.3,
                           shadowRadius: 4,
@@ -281,7 +285,8 @@ const TaskInputModal = ({
                         { 
                           color: theme.text,
                           fontSize: fontSizes.s,
-                          fontWeight: '600'
+                          fontWeight: '600',
+                          fontStyle: selectedGoal.id === 'standalone' ? 'italic' : 'normal'
                         }
                       ]}>
                         {selectedGoal.title}
@@ -306,7 +311,8 @@ const TaskInputModal = ({
                         { 
                           color: theme.textSecondary,
                           fontSize: fontSizes.xs,
-                          fontWeight: '500'
+                          fontWeight: '500',
+                          fontStyle: selectedProject.id === 'standalone' ? 'italic' : 'normal'
                         }
                       ]}>
                         {selectedProject.title}
@@ -464,7 +470,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
+    paddingHorizontal: spacing.m,
   },
   overlay: {
     position: 'absolute',
@@ -477,12 +483,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   modalContent: {
-    width: '92%',
-    maxWidth: scaleWidth(420),
+    width: '100%',
+    minWidth: '100%',
     borderRadius: scaleWidth(16),
     padding: spacing.xl,
     paddingTop: spacing.l,
-    marginHorizontal: spacing.m,
   },
   header: {
     flexDirection: 'row',
@@ -511,6 +516,7 @@ const styles = StyleSheet.create({
   },
   contextContainer: {
     marginBottom: spacing.m,
+    minHeight: scaleHeight(40),
   },
   contextIndicators: {
     flexDirection: 'row',

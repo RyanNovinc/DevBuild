@@ -316,32 +316,7 @@ const parseMarkdown = (text, baseStyle, isUserMessage = false, onActionLink = nu
       continue;
     }
     
-    // Handle unordered lists (- item or * item)
-    if (line.trim().startsWith('- ') || line.trim().startsWith('* ')) {
-      const content = line.substring(line.indexOf(' ') + 1);
-      elements.push(
-        <View 
-          key={`list-${i}`} 
-          style={styles.listItem}
-          accessible={true}
-          accessibilityRole="text"
-        >
-          <Text 
-            style={[baseStyle, styles.listBullet]}
-            maxFontSizeMultiplier={1.8}
-          >
-            {'\u2022'}
-          </Text>
-          <Text 
-            style={[baseStyle, styles.listItemText]}
-            maxFontSizeMultiplier={1.8}
-          >
-            {parseInlineMarkdown(content, baseStyle, onActionLink)}
-          </Text>
-        </View>
-      );
-      continue;
-    }
+    // Let bullet points from AI display as-is (no special processing needed)
     
     // Handle numbered lists (1. item, 2. item)
     const numberedListMatch = line.trim().match(/^(\d+)\.\s+(.+)$/);

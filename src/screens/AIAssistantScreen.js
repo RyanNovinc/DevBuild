@@ -508,6 +508,13 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
                 setTaskModalVisible(true);
                 break;
                 
+              case 'taskbatch':
+                console.log('🔗 Opening batch task modal with fresh data:', data);
+                console.log('📋 Batch contains', data.tasks?.length || 0, 'tasks');
+                setCurrentTaskData({ batch: true, tasks: data.tasks || [] });
+                setTaskModalVisible(true);
+                break;
+                
               case 'timeblock':
                 console.log('🔗 Opening timeblock modal with fresh data:', data);
                 console.log('🔗 Fresh data includes isCreated?', data.isCreated);
@@ -593,6 +600,13 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
           
         case 'task':
           setCurrentTaskData(data);
+          setTaskModalVisible(true);
+          break;
+          
+        case 'taskbatch':
+          console.log('🔗 Opening batch task modal with fallback data:', data);
+          console.log('📋 Batch contains', data.tasks?.length || 0, 'tasks');
+          setCurrentTaskData({ batch: true, tasks: data.tasks || [] });
           setTaskModalVisible(true);
           break;
           
@@ -1249,6 +1263,18 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
           clearTimeoutAndContinue();
           break;
           
+        case 'createTaskBatch':
+          console.log('Creating batch task modal with data:', JSON.stringify(action.data));
+          console.log('📋 Batch contains', action.data.tasks?.length || 0, 'tasks');
+          // Set the batch of tasks for the modal
+          setCurrentTaskData({ batch: true, tasks: action.data.tasks || [] });
+          setTimeout(() => {
+            console.log('📱 Delayed batch task modal visibility set');
+            setTaskModalVisible(true);
+          }, 100);
+          clearTimeoutAndContinue();
+          break;
+          
         case 'createTimeBlock':
           console.log('🔥 FRONTEND_TIMEBLOCK_DEBUG: Creating time block modal');
           console.log('🔥 FRONTEND_TIMEBLOCK_DEBUG: Raw action.data received from Lambda:', JSON.stringify(action.data, null, 2));
@@ -1272,7 +1298,7 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
           
         default:
           console.log(`Unknown action type: ${action.type}`);
-          console.log('Available action types are: createGoal, createMilestone, createTask, createTimeBlock, createTodo');
+          console.log('Available action types are: createGoal, createMilestone, createTask, createTaskBatch, createTimeBlock, createTodo');
           clearTimeout(actionTimeout);
           continueToNext(); // Continue to next action even for unknown types
       }
@@ -1812,7 +1838,7 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
     }
   };
   
-  // Handle Project creation
+  // Handle Milestone creation
   const handleProjectConfirm = async (projectData) => {
     setProjectModalVisible(false);
     
@@ -1831,29 +1857,80 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
     };
     
     try {
-      const { addProject } = appContext; // Get from app context
+      const { addProject, addTasksBulk } = appContext; // Use same functions as bulk creation
       
       if (typeof addProject === 'function') {
-        const newProject = {
+        const newMilestone = {
           ...projectData,
           id: Date.now().toString(),
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
         
-        await addProject(newProject);
+        // Create milestone using addProject (same as bulk creation)
+        await addProject(newMilestone);
         
-        // Track AI-generated project achievement (don't let this block processing)
+        // Add a small delay to allow state to propagate (same as bulk creation)
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // If the milestone has tasks, create them using addTasksBulk
+        if (newMilestone.tasks && Array.isArray(newMilestone.tasks) && newMilestone.tasks.length > 0) {
+          console.log(`🎯 Milestone has ${newMilestone.tasks.length} tasks to create:`, newMilestone.tasks);
+          
+          // Use addTasksBulk with exact same pattern as bulk creation
+          if (typeof addTasksBulk === 'function') {
+            const tasksForAppContext = newMilestone.tasks.map(task => ({
+              id: task.id,
+              title: task.title,
+              status: task.status || 'todo',
+              completed: task.completed || false,
+              milestoneId: newMilestone.id,
+              projectId: newMilestone.id,  // For backward compatibility
+              createdAt: task.createdAt || new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            }));
+            
+            console.log('🔍 Creating separate task entities for milestone:', tasksForAppContext.length);
+            console.log('🔍 Tasks to create:', tasksForAppContext);
+            console.log('🔍 Milestone being passed as known:', { id: newMilestone.id, title: newMilestone.title });
+            
+            // Log current context state before creating tasks
+            console.log('🔍 AppContext state before task creation:', {
+              milestonesCount: appContext.projects?.length || 0,
+              tasksCount: appContext.tasks?.length || 0,
+              milestoneExists: appContext.projects?.some(m => m.id === newMilestone.id)
+            });
+            
+            // Pass the newly created milestone as a known milestone to bypass state validation (same as bulk)
+            const taskResult = await addTasksBulk(tasksForAppContext, [newMilestone]);
+            
+            console.log('🔍 Task creation result:', taskResult?.length || 0, 'tasks created');
+            console.log('🔍 AppContext state after task creation:', {
+              milestonesCount: appContext.projects?.length || 0,
+              tasksCount: appContext.tasks?.length || 0,
+              milestoneExists: appContext.projects?.some(m => m.id === newMilestone.id)
+            });
+            
+            // Add another small delay to allow task state to propagate (same as bulk)
+            await new Promise(resolve => setTimeout(resolve, 50));
+          } else {
+            console.error('❌ addTasksBulk function not available');
+          }
+        } else {
+          console.log('ℹ️ Milestone has no tasks to create');
+        }
+        
+        // Track AI-generated milestone achievement (don't let this block processing)
         try {
-          await FeatureExplorerTracker.trackAIGenerated(newProject, 'project', showSuccess);
+          await FeatureExplorerTracker.trackAIGenerated(newMilestone, 'milestone', showSuccess);
         } catch (error) {
-          console.error('Error tracking AI-generated project achievement:', error);
+          console.error('Error tracking AI-generated milestone achievement:', error);
         }
           
-        console.log(`Created project: "${newProject.title}"`);
+        console.log(`Created milestone: "${newMilestone.title}"`);
         
         // Create success message
-        const successText = `Project "${newProject.title}" created successfully!`;
+        const successText = `Milestone "${newMilestone.title}" created successfully!`;
         
         const successMessage = {
           id: (Date.now() + 1).toString(),
@@ -1867,13 +1944,13 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
         throw new Error('addProject function not available');
       }
     } catch (error) {
-      console.error('Error creating project:', error);
+      console.error('Error creating milestone:', error);
       
       // Enhanced error message with progress info
       const progressInfo = pendingActions.length > 1 ? ` (Action ${actionProgress + 1} of ${pendingActions.length})` : '';
       const errorMessage = {
         id: (Date.now() + 1).toString(),
-        text: `I'm sorry, I couldn't create the project: ${error.message}${progressInfo}. Continuing to next item...`,
+        text: `I'm sorry, I couldn't create the milestone: ${error.message}${progressInfo}. Continuing to next item...`,
         type: 'ai',
         timestamp: new Date().toISOString()
       };
@@ -1904,73 +1981,68 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
     };
     
     try {
-      const { addTask, milestones } = appContext;
+      const { addTask, addTasksBulk, milestones } = appContext;
       
       // Process the task data from our modal (could be single task or array)
       const taskList = Array.isArray(taskData) ? taskData : [taskData];
+      console.log(`🔍 Processing ${taskList.length} tasks for creation`);
       
-      for (const task of taskList) {
-        // Check if we have a milestone to add the task to
-        if (task.projectId || task.projectTitle) {
-          // Find the milestone (using project fields for backward compatibility)
-          const milestone = milestones.find(m => 
-            m.id === task.projectId || 
-            m.title === task.projectTitle
-          );
+      if (taskList.length > 1 && typeof addTasksBulk === 'function') {
+        // Use bulk creation for multiple tasks (more efficient)
+        console.log('🔍 Using bulk task creation method');
+        
+        // Filter tasks that need real milestones and collect them
+        const tasksWithRealMilestones = taskList.filter(task => 
+          task.milestoneId && task.milestoneId !== null
+        );
+        
+        // Get unique milestone IDs needed
+        const neededMilestoneIds = [...new Set(tasksWithRealMilestones.map(task => task.milestoneId))];
+        const knownMilestones = milestones.filter(m => neededMilestoneIds.includes(m.id));
+        
+        console.log('🔍 Tasks with real milestones:', tasksWithRealMilestones.length);
+        console.log('🔍 Known milestones for tasks:', knownMilestones.length);
+        
+        // Use addTasksBulk - it handles both milestone and standalone tasks
+        await addTasksBulk(taskList, knownMilestones);
+        
+        // Create success message
+        const successText = `Successfully created ${taskList.length} tasks!`;
+        console.log(successText);
+        
+        const successMessage = {
+          id: (Date.now() + 1).toString(),
+          text: successText,
+          type: 'ai',
+          timestamp: new Date().toISOString()
+        };
+        
+        dispatch({ type: 'ADD_MESSAGE', payload: successMessage });
+        
+      } else {
+        // Single task or fallback to individual creation
+        console.log('🔍 Using individual task creation method');
+        
+        for (const task of taskList) {
+          console.log(`🔍 Creating task: "${task.title}" with milestoneId: ${task.milestoneId}`);
           
-          if (milestone && typeof addTask === 'function') {
-            // Create the new task with proper structure for milestone
-            const newTaskData = {
-              title: task.title,
-              description: task.description || '',
-              status: task.status || 'todo',
-              completed: task.completed || false,
-              goalId: task.goalId || milestone.goalId || null,
-              goalTitle: task.goalTitle || milestone.goalTitle || null,
-              milestoneId: milestone.id,
-              milestoneTitle: milestone.title,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            };
-            
-            await addTask(newTaskData);
-            
-            // Create success message
-            const successText = `Task "${task.title}" added to milestone "${milestone.title}" successfully!`;
-            
-            const successMessage = {
-              id: (Date.now() + 1).toString(),
-              text: successText,
-              type: 'ai',
-              timestamp: new Date().toISOString()
-            };
-            
-            dispatch({ type: 'ADD_MESSAGE', payload: successMessage });
-          } else if (!milestone) {
-            throw new Error(`Milestone "${task.projectTitle || task.projectId}" not found`);
-          } else {
-            throw new Error('addTask function not available');
-          }
-        } else {
-          // Standalone task - no milestone required
           if (typeof addTask === 'function') {
-            const newTaskData = {
-              title: task.title,
-              description: task.description || '',
-              status: task.status || 'todo',
-              completed: task.completed || false,
-              goalId: task.goalId || null,
-              goalTitle: task.goalTitle || null,
-              milestoneId: null,
-              milestoneTitle: null,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            };
+            await addTask(task);
             
-            await addTask(newTaskData);
+            // Create success message based on task type
+            let successText;
+            if (task.milestoneId) {
+              const milestone = milestones.find(m => m.id === task.milestoneId);
+              successText = milestone 
+                ? `Task "${task.title}" added to milestone "${milestone.title}" successfully!`
+                : `Task "${task.title}" created successfully!`;
+            } else if (task.goalId) {
+              successText = `Task "${task.title}" added to goal "${task.goalTitle}" successfully!`;
+            } else {
+              successText = `Standalone task "${task.title}" created successfully!`;
+            }
             
-            // Create success message
-            const successText = `Standalone task "${task.title}" created successfully!`;
+            console.log(successText);
             
             const successMessage = {
               id: (Date.now() + 1).toString(),
@@ -2536,7 +2608,8 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
         visible={taskModalVisible}
         onClose={handleTaskModalCancel}
         onAdd={handleTaskConfirm}
-        task={currentTaskData}
+        task={currentTaskData?.batch ? null : currentTaskData}
+        initialTasks={currentTaskData?.batch ? currentTaskData.tasks : []}
         color={theme.primary}
       />
       
