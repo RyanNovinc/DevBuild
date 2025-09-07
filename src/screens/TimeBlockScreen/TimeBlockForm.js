@@ -135,10 +135,32 @@ const GoalSelector = ({
   goals,
   customColor,
   theme,
-  isDarkMode
+  isDarkMode,
+  milestones,
+  tasks
 }) => {
   // Ensure goals is never undefined
   const safeGoals = goals || [];
+  const safeMilestones = milestones || [];
+  const safeTasks = tasks || [];
+  
+  // Check for standalone tasks (tasks with no projectId, milestoneId, or goalId)
+  const standaloneTasks = safeTasks.filter(task => !task.projectId && !task.milestoneId && !task.goalId);
+  const hasStandaloneTasks = standaloneTasks.length > 0;
+  
+  // Check for standalone milestones - match LifePlanOverviewScreen logic exactly
+  const standaloneMilestones = safeMilestones.filter(milestone => {
+    // Check for any falsy goalId value
+    const goalId = milestone.goalId;
+    const hasNoGoal = 
+      goalId === null ||
+      goalId === undefined ||
+      goalId === '' ||
+      goalId === 'undefined' ||
+      goalId === 'null';
+    return hasNoGoal;
+  });
+  const hasStandaloneMilestones = standaloneMilestones.length > 0;
   
   return (
     <Modal
@@ -207,6 +229,86 @@ const GoalSelector = ({
                 No Specific Goal
               </Text>
             </TouchableOpacity>
+            
+            {/* Standalone Tasks Option - Only show if there are standalone tasks */}
+            {hasStandaloneTasks && (
+              <TouchableOpacity 
+                style={[
+                  styles.modalItem,
+                  { 
+                    backgroundColor: selectedGoal?.id === 'standalone-tasks' 
+                      ? `${theme.textSecondary}15` 
+                      : theme.card,
+                    borderWidth: 1,
+                    borderColor: selectedGoal?.id === 'standalone-tasks'
+                      ? theme.textSecondary
+                      : theme.border
+                  }
+                ]}
+                onPress={() => {
+                  onSelectGoal({ id: 'standalone-tasks', title: 'Standalone Tasks', color: theme.textSecondary });
+                  onClose();
+                }}
+              >
+                <Ionicons 
+                  name="checkbox-outline" 
+                  size={20} 
+                  color={selectedGoal?.id === 'standalone-tasks' ? theme.textSecondary : theme.textSecondary} 
+                />
+                <Text style={[
+                  styles.modalItemText, 
+                  { 
+                    color: selectedGoal?.id === 'standalone-tasks' 
+                      ? theme.textSecondary 
+                      : theme.text,
+                    fontWeight: selectedGoal?.id === 'standalone-tasks' ? 'bold' : 'normal',
+                    fontStyle: 'italic'
+                  }
+                ]}>
+                  Standalone Tasks ({standaloneTasks.length})
+                </Text>
+              </TouchableOpacity>
+            )}
+            
+            {/* Standalone Milestones Option - Only show if there are standalone milestones */}
+            {hasStandaloneMilestones && (
+              <TouchableOpacity 
+                style={[
+                  styles.modalItem,
+                  { 
+                    backgroundColor: selectedGoal?.id === 'standalone-milestones' 
+                      ? `${theme.textSecondary}15` 
+                      : theme.card,
+                    borderWidth: 1,
+                    borderColor: selectedGoal?.id === 'standalone-milestones'
+                      ? theme.textSecondary
+                      : theme.border
+                  }
+                ]}
+                onPress={() => {
+                  onSelectGoal({ id: 'standalone-milestones', title: 'Standalone Milestones', color: theme.textSecondary });
+                  onClose();
+                }}
+              >
+                <Ionicons 
+                  name="albums-outline" 
+                  size={20} 
+                  color={selectedGoal?.id === 'standalone-milestones' ? theme.textSecondary : theme.textSecondary} 
+                />
+                <Text style={[
+                  styles.modalItemText, 
+                  { 
+                    color: selectedGoal?.id === 'standalone-milestones' 
+                      ? theme.textSecondary 
+                      : theme.text,
+                    fontWeight: selectedGoal?.id === 'standalone-milestones' ? 'bold' : 'normal',
+                    fontStyle: 'italic'
+                  }
+                ]}>
+                  Standalone Milestones ({standaloneMilestones.length})
+                </Text>
+              </TouchableOpacity>
+            )}
             
             {safeGoals.length > 0 ? (
               safeGoals.map(goal => (
@@ -338,6 +440,8 @@ const TimeBlockForm = ({
   availableGoals,
   goalMilestones,
   milestoneItems,
+  allMilestones,
+  allTasks,
   handleDelete,
   isCreating,
   isEditingSeries = true, // Default to series editing for backward compatibility
@@ -427,6 +531,11 @@ const TimeBlockForm = ({
       // Keep on goal tab but clear domain for "No Specific Goal"
       setDomain('');
       setDomainColor(domainColor); // Keep existing color instead of switching to custom
+    } else if (goal.id === 'standalone-tasks' || goal.id === 'standalone-milestones') {
+      // Handle standalone options
+      setActiveTab('goal');
+      setDomain(goal.title);
+      setDomainColor(goal.color);
     } else {
       // Switch to goal tab when a specific goal is selected
       setActiveTab('goal');
@@ -1311,6 +1420,8 @@ const TimeBlockForm = ({
           customColor={customColor}
           theme={theme}
           isDarkMode={isDarkMode}
+          milestones={allMilestones}
+          tasks={allTasks}
         />
       )}
 

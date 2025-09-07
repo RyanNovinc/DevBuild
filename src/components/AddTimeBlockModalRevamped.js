@@ -136,19 +136,37 @@ const AddTimeBlockModalRevamped = ({
   const allTasks = appContext?.tasks || [];
   
   // Get filtered projects based on selected goal
-  const filteredProjects = selectedGoalId 
-    ? projects.filter(project => project.goalId === selectedGoalId)
-    : [];
+  let filteredProjects = [];
+  if (selectedGoalId === 'standalone-milestones') {
+    // For standalone milestones, get milestones/projects with no goalId or null goalId
+    filteredProjects = projects.filter(project => !project.goalId || project.goalId === null);
+  } else if (selectedGoalId === 'standalone-tasks') {
+    // For standalone tasks, no projects/milestones are available
+    filteredProjects = [];
+  } else if (selectedGoalId) {
+    // For regular goals, filter projects by goalId
+    filteredProjects = projects.filter(project => project.goalId === selectedGoalId);
+  }
   
-  // Get filtered tasks based on selected project
+  // Get filtered tasks based on selected project or goal
   let filteredTasks = [];
-  if (selectedProjectId) {
+  if (selectedGoalId === 'standalone-tasks') {
+    // For standalone tasks, get tasks with no milestoneId, projectId, or goalId
+    filteredTasks = allTasks.filter(task => !task.milestoneId && !task.projectId && !task.goalId);
+  } else if (selectedProjectId) {
     const selectedProject = projects.find(p => p.id === selectedProjectId);
     if (selectedProject && Array.isArray(selectedProject.tasks)) {
       filteredTasks = selectedProject.tasks;
     } else {
       filteredTasks = allTasks.filter(task => task.projectId === selectedProjectId);
     }
+  } else if (selectedGoalId === 'standalone-milestones') {
+    // For standalone milestones, get tasks that belong to standalone milestones
+    const standaloneMilestoneIds = projects.filter(project => !project.goalId || project.goalId === null).map(p => p.id);
+    filteredTasks = allTasks.filter(task => 
+      (task.milestoneId && standaloneMilestoneIds.includes(task.milestoneId)) ||
+      (task.projectId && standaloneMilestoneIds.includes(task.projectId))
+    );
   }
   
   // Get default start time (next hour)
@@ -853,6 +871,78 @@ const AddTimeBlockModalRevamped = ({
                 </Text>
               </TouchableOpacity>
               
+              {/* Standalone Tasks Option */}
+              <TouchableOpacity
+                key="standalone-tasks"
+                style={[
+                  styles.selectionItem,
+                  selectedGoalId === 'standalone-tasks' && styles.selectionItemSelected,
+                  { 
+                    backgroundColor: selectedGoalId === 'standalone-tasks' ? theme.textSecondary + '20' : theme.inputBackground,
+                    borderColor: selectedGoalId === 'standalone-tasks' ? theme.textSecondary : theme.border,
+                    borderLeftColor: theme.textSecondary,
+                    borderLeftWidth: 3,
+                    minHeight: 36,
+                    minWidth: 44
+                  }
+                ]}
+                onPress={() => handleGoalSelection({ id: 'standalone-tasks', title: 'Standalone Tasks', color: theme.textSecondary })}
+              >
+                <Ionicons 
+                  name="checkbox-outline" 
+                  size={16} 
+                  color={selectedGoalId === 'standalone-tasks' ? theme.textSecondary : theme.textSecondary} 
+                />
+                <Text 
+                  style={[
+                    styles.selectionItemText, 
+                    { 
+                      color: selectedGoalId === 'standalone-tasks' ? theme.textSecondary : theme.text,
+                      fontStyle: 'italic'
+                    }
+                  ]}
+                  numberOfLines={1}
+                >
+                  Standalone Tasks
+                </Text>
+              </TouchableOpacity>
+
+              {/* Standalone Milestones Option */}
+              <TouchableOpacity
+                key="standalone-milestones"
+                style={[
+                  styles.selectionItem,
+                  selectedGoalId === 'standalone-milestones' && styles.selectionItemSelected,
+                  { 
+                    backgroundColor: selectedGoalId === 'standalone-milestones' ? theme.textSecondary + '20' : theme.inputBackground,
+                    borderColor: selectedGoalId === 'standalone-milestones' ? theme.textSecondary : theme.border,
+                    borderLeftColor: theme.textSecondary,
+                    borderLeftWidth: 3,
+                    minHeight: 36,
+                    minWidth: 44
+                  }
+                ]}
+                onPress={() => handleGoalSelection({ id: 'standalone-milestones', title: 'Standalone Milestones', color: theme.textSecondary })}
+              >
+                <Ionicons 
+                  name="albums-outline" 
+                  size={16} 
+                  color={selectedGoalId === 'standalone-milestones' ? theme.textSecondary : theme.textSecondary} 
+                />
+                <Text 
+                  style={[
+                    styles.selectionItemText, 
+                    { 
+                      color: selectedGoalId === 'standalone-milestones' ? theme.textSecondary : theme.text,
+                      fontStyle: 'italic'
+                    }
+                  ]}
+                  numberOfLines={1}
+                >
+                  Standalone Milestones
+                </Text>
+              </TouchableOpacity>
+              
               {/* Goal options */}
               {goals.map((goal) => (
                 <TouchableOpacity
@@ -910,7 +1000,7 @@ const AddTimeBlockModalRevamped = ({
           </View>
           
           {/* Project Selection (conditional) */}
-          {selectedGoalId && filteredProjects.length > 0 && (
+          {selectedGoalId && selectedGoalId !== 'standalone-tasks' && filteredProjects.length > 0 && (
             <View style={styles.selectionSection}>
               <Text style={[styles.sectionTitle, { color: theme.textSecondary, fontSize: fontSizes.s }]}>
                 Select Project (Optional)
@@ -987,7 +1077,7 @@ const AddTimeBlockModalRevamped = ({
           )}
           
           {/* Task Selection (conditional) */}
-          {selectedProjectId && filteredTasks.length > 0 && (
+          {((selectedProjectId && filteredTasks.length > 0) || (selectedGoalId === 'standalone-tasks' && filteredTasks.length > 0) || (selectedGoalId === 'standalone-milestones' && !selectedProjectId && filteredTasks.length > 0)) && (
             <View style={styles.selectionSection}>
               <Text style={[styles.sectionTitle, { color: theme.textSecondary, fontSize: fontSizes.s }]}>
                 Select Task (Optional)

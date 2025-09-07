@@ -20,6 +20,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { useTheme } from '../context/ThemeContext';
 import { useAppContext } from '../context/AppContext';
+import { FREE_PLAN_LIMITS } from '../services/SubscriptionConstants';
 import { useNotification } from '../context/NotificationContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -70,7 +71,8 @@ const TimeBlockExactModal = ({
   onClose,
   onSave,
   timeBlockData = null,
-  initialDate = new Date()
+  initialDate = new Date(),
+  showUpgradePrompt // Function to show upgrade modal
 }) => {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
@@ -597,6 +599,19 @@ const TimeBlockExactModal = ({
       // Validate input
       if (!title.trim()) {
         notification.showError('Please enter a title');
+        setIsSaving(false);
+        return;
+      }
+      
+      // Check subscription limits before creating time block
+      const { canAddMoreTimeBlocks, userSubscriptionStatus } = useAppContext();
+      
+      if (canAddMoreTimeBlocks && !canAddMoreTimeBlocks()) {
+        if (showUpgradePrompt) {
+          showUpgradePrompt(
+            `You've reached the limit of ${FREE_PLAN_LIMITS.MAX_TIME_BLOCKS} time blocks per week in the free version. Upgrade to Pro for unlimited time blocks.`
+          );
+        }
         setIsSaving(false);
         return;
       }

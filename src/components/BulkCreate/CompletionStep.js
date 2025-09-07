@@ -168,7 +168,7 @@ const CompletionStep = ({
           </Text>
           <View style={styles.nextStepsList}>
             <Text style={[styles.nextStepItem, { color: theme.textSecondary }]}>
-              • View your items in the Goals and Projects tabs
+              • View your items in the Goals and Milestones tabs
             </Text>
             <Text style={[styles.nextStepItem, { color: theme.textSecondary }]}>
               • Start working on your tasks in the Tasks tab

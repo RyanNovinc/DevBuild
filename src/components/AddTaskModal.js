@@ -23,7 +23,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../context/ThemeContext';
 import { useAppContext } from '../context/AppContext';
+import { FREE_PLAN_LIMITS } from '../services/SubscriptionConstants';
 import TaskInputModal from './TaskInputModal';
+import TextInputModal from './TextInputModal';
 
 // Import responsive utilities
 import {
@@ -46,7 +48,8 @@ const AddTaskModal = ({
   color, 
   task,
   isEditing,
-  initialTasks = [] // New prop for batch task creation from AI
+  initialTasks = [], // New prop for batch task creation from AI
+  showUpgradePrompt // Function to show upgrade modal
 }) => {
   const { theme } = useTheme();
   const appContext = useAppContext();
@@ -59,6 +62,12 @@ const AddTaskModal = ({
   // Task state
   const [title, setTitle] = useState('');
   const [showTaskInputModal, setShowTaskInputModal] = useState(false);
+  
+  // Task edit modal state
+  const [showEditTaskModal, setShowEditTaskModal] = useState(false);
+  const [editingTaskId, setEditingTaskId] = useState(null);
+  const [editingTaskTitle, setEditingTaskTitle] = useState('');
+  
   
   // Goal and project selection state
   const [selectedGoalId, setSelectedGoalId] = useState(null);
@@ -174,26 +183,6 @@ const AddTaskModal = ({
     }
   }, [visible, isEditing, selectedGoalId, initialTasks]);
   
-  // Pre-populate data from task prop if provided
-  useEffect(() => {
-    if (visible && task && !isEditing) {
-      setTitle(task.title || '');
-      if (task.projectTitle) {
-        const project = allProjects.find(p => p.title === task.projectTitle);
-        if (project) {
-          setSelectedProjectId(project.id);
-          setSelectedProjectTitle(project.title);
-          if (project.goalId) {
-            const goal = goals.find(g => g.id === project.goalId);
-            if (goal) {
-              setSelectedGoalId(goal.id);
-              setSelectedGoalTitle(goal.title);
-            }
-          }
-        }
-      }
-    }
-  }, [visible, task, isEditing]);
   
   // Animate goal dropdown
   useEffect(() => {
@@ -328,6 +317,27 @@ const AddTaskModal = ({
     setTaskList(taskList.filter(t => t.id !== taskId));
   };
   
+  // Handle task title editing
+  const handleEditTask = (task) => {
+    setEditingTaskId(task.id);
+    setEditingTaskTitle(task.title);
+    setShowEditTaskModal(true);
+  };
+  
+  // Save edited task title
+  const handleSaveEditedTask = (newTitle) => {
+    if (newTitle.trim() && editingTaskId) {
+      setTaskList(taskList.map(task => 
+        task.id === editingTaskId 
+          ? { ...task, title: newTitle.trim() }
+          : task
+      ));
+    }
+    setShowEditTaskModal(false);
+    setEditingTaskId(null);
+    setEditingTaskTitle('');
+  };
+  
   // Update tasks in a group (same goal/milestone combination)
   const handleGroupAssignment = (oldGoalId, oldProjectId, newGoalId, newGoalTitle, newProjectId, newProjectTitle) => {
     setTaskList(taskList.map(task => {
@@ -424,6 +434,53 @@ const AddTaskModal = ({
     if (taskList.length === 0) {
       Alert.alert('No Tasks', 'Please add at least one task before saving');
       return;
+    }
+    
+    // Check subscription limits before creating tasks
+    const { 
+      canAddMoreTasksToMilestone,
+      userSubscriptionStatus,
+      tasks 
+    } = appContext;
+    
+    // Group tasks by their milestone/project for limit checking
+    const tasksByMilestone = {};
+    for (const task of taskList) {
+      const milestoneId = task.projectId || task.milestoneId || 'standalone';
+      if (!tasksByMilestone[milestoneId]) {
+        tasksByMilestone[milestoneId] = [];
+      }
+      tasksByMilestone[milestoneId].push(task);
+    }
+    
+    // Check limits for each milestone/project
+    for (const [milestoneId, tasksForMilestone] of Object.entries(tasksByMilestone)) {
+      if (milestoneId === 'standalone') {
+        // Check standalone task limits
+        const standaloneTasks = (tasks || []).filter(t => !t.milestoneId && !t.goalId);
+        if (userSubscriptionStatus === 'free' && (standaloneTasks.length + tasksForMilestone.length) > FREE_PLAN_LIMITS.MAX_STANDALONE_TASKS) {
+          if (showUpgradePrompt) {
+            showUpgradePrompt(
+              `You've reached the limit of ${FREE_PLAN_LIMITS.MAX_STANDALONE_TASKS} standalone tasks in the free version. Upgrade to Pro for unlimited tasks.`
+            );
+          }
+          return;
+        }
+      } else {
+        // Check milestone-specific task limits
+        if (canAddMoreTasksToMilestone && !canAddMoreTasksToMilestone(milestoneId)) {
+          // Check current count and see if adding these tasks would exceed limit
+          const currentMilestoneTasks = (tasks || []).filter(t => t.milestoneId === milestoneId || t.projectId === milestoneId);
+          if (userSubscriptionStatus === 'free' && (currentMilestoneTasks.length + tasksForMilestone.length) > FREE_PLAN_LIMITS.MAX_TASKS_PER_MILESTONE) {
+            if (showUpgradePrompt) {
+              showUpgradePrompt(
+                `You've reached the limit of ${FREE_PLAN_LIMITS.MAX_TASKS_PER_MILESTONE} tasks per milestone in the free version. Upgrade to Pro for unlimited tasks.`
+              );
+            }
+            return;
+          }
+        }
+      }
     }
     
     // Process and create tasks properly
@@ -603,6 +660,8 @@ const AddTaskModal = ({
             shadowOpacity: 0.05,
             shadowRadius: 2,
             elevation: 1,
+            position: 'relative',
+            zIndex: 1,
           }
         ]}
         onPress={() => openGroupReassignModal(group)}
@@ -685,7 +744,14 @@ const AddTaskModal = ({
           }
         ]}
       >
-        <View style={styles.taskItemContent}>
+        <TouchableOpacity 
+          style={styles.taskItemContent}
+          onPress={() => handleEditTask(task)}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={`Edit task: ${task.title}`}
+          accessibilityHint="Tap to edit task title"
+        >
           <Text style={[
             styles.taskItemTitle, 
             { 
@@ -696,7 +762,7 @@ const AddTaskModal = ({
           ]}>
             {task.title}
           </Text>
-        </View>
+        </TouchableOpacity>
         <TouchableOpacity 
           onPress={() => handleRemoveTask(task.id)} 
           style={[
@@ -830,80 +896,80 @@ const AddTaskModal = ({
                     </View>
                   </TouchableWithoutFeedback>
                   
-                  {/* Tabs */}
-                  <TouchableWithoutFeedback onPress={dismissKeyboard}>
-                    <View style={[
-                      styles.tabs, 
-                      { 
-                        backgroundColor: theme.inputBackground,
-                        borderRadius: scaleWidth(12),
-                        padding: spacing.xs,
-                        marginBottom: spacing.m,
-                        shadowColor: '#000',
-                        shadowOffset: { width: 0, height: 2 },
-                        shadowOpacity: 0.05,
-                        shadowRadius: 4,
-                        elevation: 1,
-                      }
-                    ]}>
-                      <TouchableOpacity
-                        style={[
-                          styles.tab,
-                          {
-                            backgroundColor: activeTab === 'add' ? theme.primary : 'transparent',
-                            borderRadius: scaleWidth(8),
-                            paddingVertical: spacing.s,
-                            paddingHorizontal: spacing.m,
-                          }
-                        ]}
-                        onPress={() => {
-                          setActiveTab('add');
-                          dismissKeyboard();
-                        }}
-                      >
-                        <Text style={[
-                          styles.tabText,
-                          { 
-                            color: activeTab === 'add' ? '#FFFFFF' : theme.textSecondary,
-                            fontWeight: activeTab === 'add' ? '600' : '500'
-                          }
-                        ]}>
-                          Add Task
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[
-                          styles.tab,
-                          {
-                            backgroundColor: activeTab === 'list' ? theme.primary : 'transparent',
-                            borderRadius: scaleWidth(8),
-                            paddingVertical: spacing.s,
-                            paddingHorizontal: spacing.m,
-                          }
-                        ]}
-                        onPress={() => {
-                          setActiveTab('list');
-                          dismissKeyboard();
-                        }}
-                      >
-                        <Text style={[
-                          styles.tabText,
-                          { 
-                            color: activeTab === 'list' ? '#FFFFFF' : theme.textSecondary,
-                            fontWeight: activeTab === 'list' ? '600' : '500'
-                          }
-                        ]}>
-                          Task List ({taskList.length})
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  </TouchableWithoutFeedback>
-                  
                   {activeTab === 'add' ? (
                     <ScrollView 
                       style={styles.scrollContent}
                       showsVerticalScrollIndicator={false}
                     >
+                      {/* Tabs */}
+                      <TouchableWithoutFeedback onPress={dismissKeyboard}>
+                        <View style={[
+                          styles.tabs, 
+                          { 
+                            backgroundColor: theme.inputBackground,
+                            borderRadius: scaleWidth(12),
+                            padding: spacing.xs,
+                            marginBottom: spacing.m,
+                            shadowColor: '#000',
+                            shadowOffset: { width: 0, height: 2 },
+                            shadowOpacity: 0.05,
+                            shadowRadius: 4,
+                            elevation: 1,
+                          }
+                        ]}>
+                          <TouchableOpacity
+                            style={[
+                              styles.tab,
+                              {
+                                backgroundColor: activeTab === 'add' ? theme.primary : 'transparent',
+                                borderRadius: scaleWidth(8),
+                                paddingVertical: spacing.s,
+                                paddingHorizontal: spacing.m,
+                              }
+                            ]}
+                            onPress={() => {
+                              setActiveTab('add');
+                              dismissKeyboard();
+                            }}
+                          >
+                            <Text style={[
+                              styles.tabText,
+                              { 
+                                color: activeTab === 'add' ? '#FFFFFF' : theme.textSecondary,
+                                fontWeight: activeTab === 'add' ? '600' : '500'
+                              }
+                            ]}>
+                              Add Task
+                            </Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={[
+                              styles.tab,
+                              {
+                                backgroundColor: activeTab === 'list' ? theme.primary : 'transparent',
+                                borderRadius: scaleWidth(8),
+                                paddingVertical: spacing.s,
+                                paddingHorizontal: spacing.m,
+                              }
+                            ]}
+                            onPress={() => {
+                              setActiveTab('list');
+                              dismissKeyboard();
+                            }}
+                          >
+                            <Text style={[
+                              styles.tabText,
+                              { 
+                                color: activeTab === 'list' ? '#FFFFFF' : theme.textSecondary,
+                                fontWeight: activeTab === 'list' ? '600' : '500'
+                              }
+                            ]}>
+                              Task List ({taskList.length})
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      </TouchableWithoutFeedback>
+                      
                       {/* Task Title - Now first and primary */}
                       <View style={[
                         styles.inputSection, 
@@ -1379,13 +1445,84 @@ const AddTaskModal = ({
                       
                     </ScrollView>
                   ) : (
-                    <View style={styles.listContainer}>
+                    <ScrollView 
+                      style={styles.listContainer}
+                      contentContainerStyle={styles.groupedListContent}
+                      showsVerticalScrollIndicator={false}
+                      bounces={true}
+                      alwaysBounceVertical={false}
+                    >
+                      {/* Tabs */}
+                      <TouchableWithoutFeedback onPress={dismissKeyboard}>
+                        <View style={[
+                          styles.tabs, 
+                          { 
+                            backgroundColor: theme.inputBackground,
+                            borderRadius: scaleWidth(12),
+                            padding: spacing.xs,
+                            marginBottom: spacing.m,
+                            shadowColor: '#000',
+                            shadowOffset: { width: 0, height: 2 },
+                            shadowOpacity: 0.05,
+                            shadowRadius: 4,
+                            elevation: 1,
+                          }
+                        ]}>
+                          <TouchableOpacity
+                            style={[
+                              styles.tab,
+                              {
+                                backgroundColor: activeTab === 'add' ? theme.primary : 'transparent',
+                                borderRadius: scaleWidth(8),
+                                paddingVertical: spacing.s,
+                                paddingHorizontal: spacing.m,
+                              }
+                            ]}
+                            onPress={() => {
+                              setActiveTab('add');
+                              dismissKeyboard();
+                            }}
+                          >
+                            <Text style={[
+                              styles.tabText,
+                              { 
+                                color: activeTab === 'add' ? '#FFFFFF' : theme.textSecondary,
+                                fontWeight: activeTab === 'add' ? '600' : '500'
+                              }
+                            ]}>
+                              Add Task
+                            </Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={[
+                              styles.tab,
+                              {
+                                backgroundColor: activeTab === 'list' ? theme.primary : 'transparent',
+                                borderRadius: scaleWidth(8),
+                                paddingVertical: spacing.s,
+                                paddingHorizontal: spacing.m,
+                              }
+                            ]}
+                            onPress={() => {
+                              setActiveTab('list');
+                              dismissKeyboard();
+                            }}
+                          >
+                            <Text style={[
+                              styles.tabText,
+                              { 
+                                color: activeTab === 'list' ? '#FFFFFF' : theme.textSecondary,
+                                fontWeight: activeTab === 'list' ? '600' : '500'
+                              }
+                            ]}>
+                              Task List ({taskList.length})
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      </TouchableWithoutFeedback>
+                      
                       {taskList.length > 0 ? (
-                        <ScrollView 
-                          style={styles.groupedList}
-                          contentContainerStyle={styles.groupedListContent}
-                          showsVerticalScrollIndicator={false}
-                        >
+                        <>
                           {Object.entries(groupedTasks).map(([groupKey, group]) => (
                             <View key={groupKey} style={styles.groupContainer}>
                               {renderGroupHeader(group, groupKey)}
@@ -1394,7 +1531,7 @@ const AddTaskModal = ({
                               )}
                             </View>
                           ))}
-                        </ScrollView>
+                        </>
                       ) : (
                         <View style={styles.emptyList}>
                           <Ionicons name="list-outline" size={48} color={theme.textSecondary} />
@@ -1416,7 +1553,7 @@ const AddTaskModal = ({
                       {taskList.length > 0 && (
                         <TouchableOpacity
                           style={[
-                            styles.saveAllButton,
+                            styles.saveAllButtonScrollable,
                             {
                               borderRadius: scaleWidth(12),
                               overflow: 'hidden',
@@ -1425,6 +1562,8 @@ const AddTaskModal = ({
                               shadowOpacity: 0.2,
                               shadowRadius: 8,
                               elevation: 5,
+                              marginTop: spacing.m,
+                              marginBottom: spacing.xl,
                             }
                           ]}
                           onPress={handleSaveAll}
@@ -1472,12 +1611,12 @@ const AddTaskModal = ({
                                 color: '#FFFFFF'
                               }
                             ]}>
-                              Save All Tasks ({taskList.length})
+                              {taskList.length === 1 ? 'Save Task' : `Save All Tasks (${taskList.length})`}
                             </Text>
                           </LinearGradient>
                         </TouchableOpacity>
                       )}
-                    </View>
+                    </ScrollView>
                   )}
                 </View>
             </KeyboardAvoidingView>
@@ -1501,6 +1640,21 @@ const AddTaskModal = ({
           selectedProjectTitle
         }}
         initialValue={title}
+      />
+      
+      {/* Task Edit Modal */}
+      <TextInputModal
+        visible={showEditTaskModal}
+        onClose={() => {
+          setShowEditTaskModal(false);
+          setEditingTaskId(null);
+          setEditingTaskTitle('');
+        }}
+        onSave={handleSaveEditedTask}
+        title="Edit Task Title"
+        placeholder="Enter task title"
+        value={editingTaskTitle}
+        maxLength={100}
       />
       
       {/* Group Reassignment Modal */}
@@ -2132,6 +2286,7 @@ const styles = StyleSheet.create({
   },
   groupedListContent: {
     paddingBottom: spacing.xxl * 2, // Extra space for save button
+    flexGrow: 1,
   },
   groupContainer: {
     marginBottom: spacing.m,
@@ -2194,6 +2349,9 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
+  },
+  saveAllButtonScrollable: {
+    // No positioning, flows with content
   },
   saveAllButtonText: {
     color: '#FFFFFF',

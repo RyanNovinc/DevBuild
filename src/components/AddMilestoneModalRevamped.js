@@ -22,6 +22,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../context/ThemeContext';
 import { useAppContext } from '../context/AppContext';
+import { FREE_PLAN_LIMITS } from '../services/SubscriptionConstants';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -38,6 +39,7 @@ import {
 // Import color utils
 import { getTextColorForBackground } from '../screens/GoalDetailsScreen/utils/colorUtils';
 import { formatDate } from '../utils/helpers';
+import TextInputModal from './TextInputModal';
 
 const AddMilestoneModalRevamped = ({ 
   visible, 
@@ -45,7 +47,8 @@ const AddMilestoneModalRevamped = ({
   onAdd, 
   milestoneData,
   projectData, // Support both naming conventions
-  color
+  color,
+  showUpgradePrompt // Function to show upgrade modal
 }) => {
   const { theme } = useTheme();
   const appContext = useAppContext();
@@ -67,16 +70,24 @@ const AddMilestoneModalRevamped = ({
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [datePickerMode, setDatePickerMode] = useState(Platform.OS === 'ios' ? 'spinner' : 'default');
   
-  // Goal selection state
+  // Goal selection state - Default to standalone
   const [selectedGoalId, setSelectedGoalId] = useState(null);
-  const [selectedGoalTitle, setSelectedGoalTitle] = useState('');
-  const [selectedGoalColor, setSelectedGoalColor] = useState(null);
+  const [selectedGoalTitle, setSelectedGoalTitle] = useState('Standalone Milestone');
+  const [selectedGoalColor, setSelectedGoalColor] = useState('#9CA3AF');
   const [showGoalList, setShowGoalList] = useState(false);
   
   // Tasks state
   const [tasks, setTasks] = useState([]);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [showTaskInput, setShowTaskInput] = useState(false);
+  
+  // Popup modal state
+  const [showTitleModal, setShowTitleModal] = useState(false);
+  const [showDescriptionModal, setShowDescriptionModal] = useState(false);
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  const [showEditTaskModal, setShowEditTaskModal] = useState(false);
+  const [editingTaskTitle, setEditingTaskTitle] = useState('');
+  const [currentEditingTask, setCurrentEditingTask] = useState(null);
   
   // Animation values for dropdown
   const dropdownHeight = useRef(new Animated.Value(0)).current;
@@ -183,9 +194,10 @@ const AddMilestoneModalRevamped = ({
       const defaultDate = new Date();
       defaultDate.setMonth(defaultDate.getMonth() + 1);
       setDueDate(defaultDate);
+      // Reset to standalone default
       setSelectedGoalId(null);
-      setSelectedGoalTitle('');
-      setSelectedGoalColor(null);
+      setSelectedGoalTitle('Standalone Milestone');
+      setSelectedGoalColor('#9CA3AF');
     }
   }, [initialData, visible]);
 
@@ -205,6 +217,36 @@ const AddMilestoneModalRevamped = ({
       return; // Don't add empty milestones
     }
     
+    // Check subscription limits before creating
+    const { 
+      canAddMoreMilestonesToGoal,
+      userSubscriptionStatus,
+      milestones 
+    } = appContext;
+    
+    // If milestone has a goalId, check goal-specific limits
+    if (selectedGoalId && canAddMoreMilestonesToGoal && !canAddMoreMilestonesToGoal(selectedGoalId)) {
+      if (showUpgradePrompt) {
+        showUpgradePrompt(
+          `You've reached the limit of ${FREE_PLAN_LIMITS.MAX_MILESTONES_PER_GOAL} milestones per goal in the free version. Upgrade to Pro for unlimited milestones.`
+        );
+      }
+      return;
+    }
+    
+    // If standalone milestone, check standalone limits
+    if (!selectedGoalId) {
+      const standaloneMilestones = (milestones || []).filter(m => !m.goalId);
+      if (userSubscriptionStatus === 'free' && standaloneMilestones.length >= FREE_PLAN_LIMITS.MAX_STANDALONE_MILESTONES) {
+        if (showUpgradePrompt) {
+          showUpgradePrompt(
+            `You've reached the limit of ${FREE_PLAN_LIMITS.MAX_STANDALONE_MILESTONES} standalone milestones in the free version. Upgrade to Pro for unlimited milestones.`
+          );
+        }
+        return;
+      }
+    }
+    
     const milestoneToAdd = {
       ...initialData,
       id: Date.now().toString(),
@@ -213,8 +255,8 @@ const AddMilestoneModalRevamped = ({
       color: selectedGoalColor || color || '#4CAF50',
       dueDate: hasDueDate ? dueDate.toISOString() : null,
       progress: 0,
-      goalId: selectedGoalId,
-      goalTitle: selectedGoalTitle,
+      goalId: selectedGoalId, // This will be null for standalone milestones
+      goalTitle: selectedGoalId ? selectedGoalTitle : null, // Only set goalTitle if there's a goalId
       icon: 'diamond',
       isMilestone: true,
       tasks: tasks,
@@ -325,24 +367,50 @@ const AddMilestoneModalRevamped = ({
   
   // Render goal dropdown list
   const renderGoalsList = () => {
-    if (goals.length === 0) {
-      return (
-        <View style={{ padding: spacing.l }}>
+    return (
+      <ScrollView style={{ maxHeight: scaleHeight(180) }}>
+        {/* Standalone Option */}
+        <TouchableOpacity 
+          style={{
+            backgroundColor: selectedGoalId === null ? theme.primary + '20' : 'transparent',
+            borderLeftColor: '#9CA3AF',
+            borderLeftWidth: 4,
+            padding: spacing.m,
+            marginVertical: spacing.xxs,
+          }}
+          onPress={() => handleSelectGoal({ id: null, title: 'Standalone Milestone', color: '#9CA3AF' })}
+        >
+          <Text 
+            style={{ 
+              color: selectedGoalId === null ? theme.primary : theme.text,
+              fontWeight: selectedGoalId === null ? '600' : 'normal',
+              fontSize: fontSizes.m,
+            }}
+          >
+            Standalone Milestone
+          </Text>
           <Text 
             style={{ 
               color: theme.textSecondary,
-              fontSize: fontSizes.m,
-              textAlign: 'center',
+              fontSize: fontSizes.s,
+              marginTop: spacing.xxs,
             }}
           >
-            No goals available. Milestones can be standalone.
+            Not linked to any goal
           </Text>
-        </View>
-      );
-    }
-    
-    return (
-      <ScrollView style={{ maxHeight: scaleHeight(180) }}>
+        </TouchableOpacity>
+        
+        {/* Divider */}
+        {goals.length > 0 && (
+          <View style={{
+            height: 1,
+            backgroundColor: theme.border,
+            marginVertical: spacing.xs,
+            marginHorizontal: spacing.m,
+          }} />
+        )}
+        
+        {/* Goals List */}
         {goals.map((item, index) => {
           if (!item || !item.id) return null;
           
@@ -381,6 +449,22 @@ const AddMilestoneModalRevamped = ({
             </TouchableOpacity>
           );
         })}
+        
+        {/* Empty state message if no goals */}
+        {goals.length === 0 && (
+          <View style={{ padding: spacing.m }}>
+            <Text 
+              style={{ 
+                color: theme.textSecondary,
+                fontSize: fontSizes.s,
+                textAlign: 'center',
+                fontStyle: 'italic'
+              }}
+            >
+              No goals created yet
+            </Text>
+          </View>
+        )}
       </ScrollView>
     );
   };
@@ -560,15 +644,13 @@ const AddMilestoneModalRevamped = ({
                     >
                       Milestone Title *
                     </Text>
-                    <TextInput
+                    <TouchableOpacity
                       style={[
                         styles.input,
                         { 
                           backgroundColor: theme.inputBackground,
-                          color: theme.text,
                           borderColor: selectedGoalColor || theme.border,
                           borderWidth: 1,
-                          fontSize: fontSizes.m,
                           paddingHorizontal: spacing.m,
                           paddingVertical: spacing.s,
                           borderRadius: scaleWidth(12),
@@ -577,18 +659,31 @@ const AddMilestoneModalRevamped = ({
                           shadowOpacity: 0.05,
                           shadowRadius: 4,
                           elevation: 1,
+                          justifyContent: 'center',
+                          minHeight: scaleHeight(44),
                         }
                       ]}
-                      value={title}
-                      onChangeText={setTitle}
-                      placeholder="Enter milestone title"
-                      placeholderTextColor={theme.textSecondary}
-                      autoFocus={false}
+                      onPress={() => {
+                        console.log('🔍 Title field pressed in revamped modal');
+                        setShowTitleModal(true);
+                      }}
                       accessible={true}
-                      accessibilityLabel="Milestone title"
-                      accessibilityHint="Enter the title of your milestone"
-                      maxFontSizeMultiplier={1.8}
-                    />
+                      accessibilityLabel="Milestone title input"
+                      accessibilityHint="Tap to enter the title of your milestone"
+                      accessibilityRole="button"
+                    >
+                      <Text
+                        style={[
+                          {
+                            fontSize: fontSizes.m,
+                            color: title ? theme.text : theme.textSecondary,
+                          }
+                        ]}
+                        maxFontSizeMultiplier={1.8}
+                      >
+                        {title || "Enter milestone title"}
+                      </Text>
+                    </TouchableOpacity>
                   </View>
                   
                   {/* Description Card */}
@@ -620,16 +715,14 @@ const AddMilestoneModalRevamped = ({
                     >
                       Description (Optional)
                     </Text>
-                    <TextInput
+                    <TouchableOpacity
                       style={[
                         styles.input,
                         styles.textArea,
                         { 
                           backgroundColor: theme.inputBackground,
-                          color: theme.text,
                           borderColor: selectedGoalColor || theme.border,
                           borderWidth: 1,
-                          fontSize: fontSizes.m,
                           paddingHorizontal: spacing.m,
                           paddingVertical: spacing.s,
                           borderRadius: scaleWidth(12),
@@ -639,20 +732,30 @@ const AddMilestoneModalRevamped = ({
                           shadowOpacity: 0.05,
                           shadowRadius: 4,
                           elevation: 1,
+                          justifyContent: 'flex-start',
                         }
                       ]}
-                      value={description}
-                      onChangeText={setDescription}
-                      placeholder="Enter milestone description"
-                      placeholderTextColor={theme.textSecondary}
-                      multiline
-                      numberOfLines={4}
-                      textAlignVertical="top"
+                      onPress={() => {
+                        console.log('🔍 Description field pressed in revamped modal');
+                        setShowDescriptionModal(true);
+                      }}
                       accessible={true}
-                      accessibilityLabel="Milestone description"
-                      accessibilityHint="Enter a detailed description of your milestone"
-                      maxFontSizeMultiplier={2.0}
-                    />
+                      accessibilityLabel="Milestone description input"
+                      accessibilityHint="Tap to enter a detailed description of your milestone"
+                      accessibilityRole="button"
+                    >
+                      <Text
+                        style={[
+                          {
+                            fontSize: fontSizes.m,
+                            color: description ? theme.text : theme.textSecondary,
+                          }
+                        ]}
+                        maxFontSizeMultiplier={2.0}
+                      >
+                        {description || "Enter milestone description"}
+                      </Text>
+                    </TouchableOpacity>
                   </View>
                   
                   {/* Goal Selection Card */}
@@ -726,21 +829,38 @@ const AddMilestoneModalRevamped = ({
                             {selectedGoalTitle}
                           </Text>
                         </View>
-                      ) : (
+                      ) : selectedGoalId === null && selectedGoalTitle ? (
                         <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
                           <Ionicons 
-                            name="flag-outline" 
+                            name="diamond-outline" 
                             size={scaleWidth(20)} 
-                            color={theme.textSecondary} 
+                            color="#9CA3AF" 
                             style={{ marginRight: spacing.xs }}
                           />
                           <Text 
                             style={{ 
-                              color: theme.textSecondary,
+                              color: theme.text,
                               fontSize: fontSizes.m,
                             }}
                           >
-                            Select a goal (optional)
+                            {selectedGoalTitle}
+                          </Text>
+                        </View>
+                      ) : (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                          <Ionicons 
+                            name="diamond-outline" 
+                            size={scaleWidth(20)} 
+                            color="#9CA3AF" 
+                            style={{ marginRight: spacing.xs }}
+                          />
+                          <Text 
+                            style={{ 
+                              color: theme.text,
+                              fontSize: fontSizes.m,
+                            }}
+                          >
+                            Standalone Milestone
                           </Text>
                         </View>
                       )}
@@ -855,30 +975,42 @@ const AddMilestoneModalRevamped = ({
                     {/* Add Task Input */}
                     {showTaskInput && (
                       <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing.s }}>
-                        <TextInput
+                        <TouchableOpacity
                           style={[
                             styles.input,
                             { 
                               flex: 1,
                               backgroundColor: theme.inputBackground,
-                              color: theme.text,
                               borderColor: theme.border,
                               borderWidth: 1,
-                              fontSize: fontSizes.m,
                               paddingHorizontal: spacing.m,
                               paddingVertical: spacing.s,
                               borderRadius: scaleWidth(8),
                               marginRight: spacing.s,
+                              justifyContent: 'center',
+                              minHeight: scaleHeight(44),
                             }
                           ]}
-                          value={newTaskTitle}
-                          onChangeText={setNewTaskTitle}
-                          placeholder="Task title"
-                          placeholderTextColor={theme.textSecondary}
-                          autoFocus={true}
-                          onSubmitEditing={handleAddTask}
-                          returnKeyType="done"
-                        />
+                          onPress={() => {
+                            console.log('🔍 Task field pressed in revamped modal');
+                            setShowTaskModal(true);
+                          }}
+                          accessible={true}
+                          accessibilityLabel="Task title input"
+                          accessibilityHint="Tap to enter a task title"
+                          accessibilityRole="button"
+                        >
+                          <Text
+                            style={[
+                              {
+                                fontSize: fontSizes.m,
+                                color: newTaskTitle ? theme.text : theme.textSecondary,
+                              }
+                            ]}
+                          >
+                            {newTaskTitle || "Task title"}
+                          </Text>
+                        </TouchableOpacity>
                         <TouchableOpacity 
                           onPress={handleAddTask}
                           style={{
@@ -1223,6 +1355,50 @@ const AddMilestoneModalRevamped = ({
           </Animated.View>
         </PanGestureHandler>
       </Animated.View>
+      
+      {/* Popup Input Modals */}
+      <TextInputModal
+        visible={showTitleModal}
+        onClose={() => setShowTitleModal(false)}
+        onSave={(value) => {
+          setTitle(value);
+          setShowTitleModal(false);
+        }}
+        title="Milestone Title"
+        placeholder="Enter milestone title"
+        value={title}
+        maxLength={100}
+      />
+      
+      <TextInputModal
+        visible={showDescriptionModal}
+        onClose={() => setShowDescriptionModal(false)}
+        onSave={(value) => {
+          setDescription(value);
+          setShowDescriptionModal(false);
+        }}
+        title="Milestone Description"
+        placeholder="Enter milestone description"
+        value={description}
+        multiline={true}
+        maxLength={500}
+      />
+      
+      <TextInputModal
+        visible={showTaskModal}
+        onClose={() => setShowTaskModal(false)}
+        onSave={(value) => {
+          setNewTaskTitle(value);
+          setShowTaskModal(false);
+          if (value.trim()) {
+            handleAddTask();
+          }
+        }}
+        title="Add Task"
+        placeholder="Task title"
+        value={newTaskTitle}
+        maxLength={100}
+      />
     </Modal>
   );
 };

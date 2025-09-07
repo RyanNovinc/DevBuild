@@ -1738,6 +1738,8 @@ const TimeBlockScreen = ({ route, navigation }) => {
             availableGoals={availableGoals}
             goalMilestones={goalMilestones}
             milestoneItems={milestoneTasks}
+            allMilestones={milestones}
+            allTasks={tasks}
             handleDelete={handleDelete}
             isCreating={isCreating}
             isEditingSeries={isEditingSeries}

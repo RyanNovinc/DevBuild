@@ -64,7 +64,7 @@ const ProfileScreen = ({ navigation, route }) => {
   
   // Get app context for domain updates
   const appContext = useAppContext();
-  const { updateDomain, updateAppSetting } = appContext || {};
+  const { updateDomain, updateAppSetting, updatePurchaseStatus } = appContext || {};
   
   // Use the new loading orchestrator
   const {
@@ -614,8 +614,8 @@ const ProfileScreen = ({ navigation, route }) => {
       }
       
       // Update AppContext if available
-      if (updateAppSetting) {
-        await updateAppSetting('userSubscriptionStatus', newStatus);
+      if (updatePurchaseStatus) {
+        await updatePurchaseStatus(newStatus);
       }
       
       showSuccess(`Subscription status changed to ${newStatus}`);
@@ -660,8 +660,8 @@ const ProfileScreen = ({ navigation, route }) => {
       }
       
       // Update AppContext if available
-      if (updateAppSetting) {
-        await updateAppSetting('userSubscriptionStatus', newStatus);
+      if (updatePurchaseStatus) {
+        await updatePurchaseStatus(newStatus);
       }
       
       showSuccess(`Subscription status changed to ${newStatus}`);

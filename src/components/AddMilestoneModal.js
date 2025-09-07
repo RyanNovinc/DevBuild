@@ -40,6 +40,7 @@ import {
 // Import color utils for better color handling
 import { getTextColorForBackground } from '../screens/GoalDetailsScreen/utils/colorUtils';
 import { formatDate } from '../screens/GoalDetailsScreen/utils/helpers';
+import TextInputModal from './TextInputModal';
 
 const AddMilestoneModal = ({ 
   visible, 
@@ -70,6 +71,14 @@ const AddMilestoneModal = ({
   // Edit mode state
   const [editMode, setEditMode] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState(null);
+  
+  // Popup modal state
+  const [showTitleModal, setShowTitleModal] = useState(false);
+  const [showDescriptionModal, setShowDescriptionModal] = useState(false);
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  const [showEditTaskModal, setShowEditTaskModal] = useState(false);
+  const [editingTaskTitle, setEditingTaskTitle] = useState('');
+  const [currentEditingTask, setCurrentEditingTask] = useState(null);
   
   // Selected goal and UI state
   const [selectedGoalId, setSelectedGoalId] = useState(null);
@@ -395,34 +404,38 @@ const AddMilestoneModal = ({
         </View>
         
         {isEditing ? (
-          <TextInput
+          <TouchableOpacity
             style={[
               styles.taskInput, 
               { 
                 backgroundColor: theme.inputBackground,
-                color: theme.text,
                 borderColor: theme.border,
                 fontSize: fontSizes.m,
                 padding: spacing.s,
                 borderRadius: 8,
                 flex: 1,
                 borderWidth: 1,
+                justifyContent: 'center',
+                minHeight: scaleHeight(36),
               }
             ]}
-            value={item.title}
-            onChangeText={(text) => handleUpdateTask(item.id, text)}
-            placeholder="Task title"
-            placeholderTextColor={theme.textSecondary}
-            autoFocus={true}
-            onBlur={() => {
-              setEditingTaskId(null);
-              // Don't exit edit mode automatically - only when Done is pressed
+            onPress={() => {
+              setCurrentEditingTask(item);
+              setEditingTaskTitle(item.title);
+              setShowEditTaskModal(true);
             }}
-            onSubmitEditing={() => {
-              setEditingTaskId(null);
-              // Don't exit edit mode automatically - only when Done is pressed
-            }}
-          />
+          >
+            <Text
+              style={[
+                {
+                  fontSize: fontSizes.m,
+                  color: theme.text,
+                }
+              ]}
+            >
+              {item.title}
+            </Text>
+          </TouchableOpacity>
         ) : editMode ? (
           <TouchableOpacity 
             style={[
@@ -624,17 +637,22 @@ const AddMilestoneModal = ({
             ]}
             maxFontSizeMultiplier={1.5}
           >
-            Milestone Title *
+            Milestone Title * (Tap below to test)
+            {/* Test Button */}
+            <TouchableOpacity 
+              onPress={() => console.log('🔥 TEST BUTTON WORKS!')}
+              style={{backgroundColor: 'red', padding: 10, marginVertical: 5}}
+            >
+              <Text style={{color: 'white'}}>TEST TOUCH</Text>
+            </TouchableOpacity>
           </Text>
-          <TextInput
+          <View
             style={[
               styles.input,
               { 
                 backgroundColor: theme.inputBackground,
-                color: theme.text,
                 borderColor: selectedGoalColor || theme.border,
                 borderWidth: 1,
-                fontSize: fontSizes.m,
                 paddingHorizontal: spacing.m,
                 paddingVertical: spacing.s,
                 borderRadius: scaleWidth(12),
@@ -643,18 +661,38 @@ const AddMilestoneModal = ({
                 shadowOpacity: 0.05,
                 shadowRadius: 4,
                 elevation: 1,
+                justifyContent: 'center',
+                minHeight: scaleHeight(44),
               }
             ]}
-            value={title}
-            onChangeText={setTitle}
-            placeholder="Enter milestone title"
-            placeholderTextColor={theme.textSecondary}
-            autoFocus={false}
-            accessible={true}
-            accessibilityLabel="Milestone title"
-            accessibilityHint="Enter the title of your milestone"
-            maxFontSizeMultiplier={1.8}
-          />
+          >
+            <TouchableWithoutFeedback
+              onPress={() => {
+                console.log('🔍 Title field pressed, opening modal');
+                setShowTitleModal(true);
+              }}
+              onPressIn={() => console.log('🔍 Title field touch started')}
+              onPressOut={() => console.log('🔍 Title field touch ended')}
+              accessible={true}
+              accessibilityLabel="Milestone title input"
+              accessibilityHint="Tap to enter the title of your milestone"
+              accessibilityRole="button"
+            >
+              <View style={{ width: '100%', height: '100%', justifyContent: 'center' }}>
+                <Text
+                  style={[
+                    {
+                      fontSize: fontSizes.m,
+                      color: title ? theme.text : theme.textSecondary,
+                    }
+                  ]}
+                  maxFontSizeMultiplier={1.8}
+                >
+                  {title || "Enter milestone title"}
+                </Text>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
         </View>
 
         {/* Goal Selection Card - Enhanced design */}
@@ -815,40 +853,49 @@ const AddMilestoneModal = ({
           >
             Description (Optional)
           </Text>
-          <TextInput
+          <TouchableOpacity
             style={[
               styles.input,
               styles.textArea,
               { 
                 backgroundColor: theme.inputBackground,
-                color: theme.text,
                 borderColor: selectedGoalColor || theme.border,
                 borderWidth: 1,
-                fontSize: fontSizes.m,
                 paddingHorizontal: spacing.m,
                 paddingVertical: spacing.s,
                 borderRadius: scaleWidth(12),
                 minHeight: scaleHeight(100),
-                textAlignVertical: "top",
                 shadowColor: '#000',
                 shadowOffset: { width: 0, height: 2 },
                 shadowOpacity: 0.05,
                 shadowRadius: 4,
                 elevation: 1,
+                justifyContent: 'flex-start',
+                alignItems: 'flex-start',
               }
             ]}
-            value={description}
-            onChangeText={setDescription}
-            placeholder="Enter milestone description"
-            placeholderTextColor={theme.textSecondary}
-            multiline
-            numberOfLines={4}
-            textAlignVertical="top"
+            onPress={() => {
+              console.log('🔍 Description field pressed, opening modal');
+              setShowDescriptionModal(true);
+            }}
             accessible={true}
-            accessibilityLabel="Milestone description"
-            accessibilityHint="Enter a detailed description of your milestone"
-            maxFontSizeMultiplier={2.0}
-          />
+            accessibilityLabel="Milestone description input"
+            accessibilityHint="Tap to enter a detailed description of your milestone"
+          >
+            <Text
+              style={[
+                {
+                  fontSize: fontSizes.m,
+                  color: description ? theme.text : theme.textSecondary,
+                  lineHeight: 20,
+                }
+              ]}
+              maxFontSizeMultiplier={2.0}
+              numberOfLines={4}
+            >
+              {description || "Enter milestone description"}
+            </Text>
+          </TouchableOpacity>
         </View>
         
         {/* Due Date Toggle Card */}
@@ -1171,37 +1218,44 @@ const AddMilestoneModal = ({
               color={buttonColor} 
             />
           </View>
-          <TextInput
+          <TouchableOpacity
             style={[
               styles.taskInput, 
               { 
                 backgroundColor: theme.inputBackground,
-                color: theme.text,
                 borderColor: theme.border,
                 fontSize: fontSizes.m,
                 padding: spacing.s,
                 borderRadius: scaleWidth(8),
                 flex: 1,
                 borderWidth: 1,
+                justifyContent: 'center',
+                minHeight: scaleHeight(44),
               }
             ]}
-            value={newTaskTitle}
-            onChangeText={setNewTaskTitle}
-            placeholder="Add a new task"
-            placeholderTextColor={theme.textSecondary}
-            onSubmitEditing={handleAddTask}
-            returnKeyType="done"
-            autoFocus={false}
-            onFocus={() => {
-              // Prevent auto-focus during tab switches
+            onPress={() => {
+              console.log('🔍 Task field pressed, opening modal');
+              setShowTaskModal(true);
             }}
-          />
+          >
+            <Text
+              style={[
+                {
+                  fontSize: fontSizes.m,
+                  color: newTaskTitle ? theme.text : theme.textSecondary,
+                }
+              ]}
+            >
+              {newTaskTitle || "Add a new task"}
+            </Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     );
   };
   
   return (
+    <>
     <Modal
       visible={visible}
       transparent={true}
@@ -1230,6 +1284,9 @@ const AddMilestoneModal = ({
               handleGestureEnd(event);
             }
           }}
+          shouldCancelWhenOutside={true}
+          activeOffsetY={[-10, 10]}
+          failOffsetX={[-5, 5]}
         >
           <Animated.View
             style={[
@@ -1540,6 +1597,79 @@ const AddMilestoneModal = ({
         </PanGestureHandler>
       </Animated.View>
     </Modal>
+
+    {/* Text Input Modals - Rendered outside main modal for proper layering */}
+    <TextInputModal
+      visible={showTitleModal}
+      onClose={() => setShowTitleModal(false)}
+      onSave={setTitle}
+      title="Milestone Title"
+      placeholder="Enter milestone title"
+      value={title}
+      maxLength={100}
+      autoCapitalize="words"
+    />
+
+    <TextInputModal
+      visible={showDescriptionModal}
+      onClose={() => setShowDescriptionModal(false)}
+      onSave={setDescription}
+      title="Milestone Description"
+      placeholder="Enter milestone description"
+      value={description}
+      multiline={true}
+      maxLength={500}
+      autoCapitalize="sentences"
+    />
+
+    <TextInputModal
+      visible={showTaskModal}
+      onClose={() => setShowTaskModal(false)}
+      onSave={(value) => {
+        setNewTaskTitle(value);
+        if (value.trim()) {
+          // Auto-add the task when user saves with content
+          const newTask = {
+            id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            title: value.trim(),
+            status: 'todo',
+            completed: false,
+            createdAt: new Date().toISOString()
+          };
+          setTasks(prevTasks => [...prevTasks, newTask]);
+          setNewTaskTitle(''); // Clear after adding
+        }
+      }}
+      title="Add Task"
+      placeholder="Enter task description"
+      value={newTaskTitle}
+      maxLength={200}
+      autoCapitalize="sentences"
+    />
+
+    <TextInputModal
+      visible={showEditTaskModal}
+      onClose={() => {
+        setShowEditTaskModal(false);
+        setCurrentEditingTask(null);
+        setEditingTaskTitle('');
+      }}
+      onSave={(value) => {
+        if (currentEditingTask && value.trim()) {
+          handleUpdateTask(currentEditingTask.id, value.trim());
+          setEditingTaskId(null);
+        }
+        setShowEditTaskModal(false);
+        setCurrentEditingTask(null);
+        setEditingTaskTitle('');
+      }}
+      title="Edit Task"
+      placeholder="Enter task description"
+      value={editingTaskTitle}
+      maxLength={200}
+      autoCapitalize="sentences"
+    />
+  </>
   );
 };
 

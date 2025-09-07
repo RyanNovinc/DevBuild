@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../context/ThemeContext';
 import { useAppContext } from '../context/AppContext';
+import { FREE_PLAN_LIMITS } from '../services/SubscriptionConstants';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   scaleWidth,
@@ -39,7 +40,8 @@ const AIBulkCreateModal = ({
   onClose, 
   onComplete,
   actions, // Array of actions from AI: [goal, milestone, task, ...]
-  color
+  color,
+  showUpgradePrompt // Function to show upgrade modal
 }) => {
   const { theme } = useTheme();
   const appContext = useAppContext();
@@ -63,9 +65,93 @@ const AIBulkCreateModal = ({
   // Get current action being processed
   const currentAction = actions && actions[currentStep] ? actions[currentStep] : null;
   
+  // Validate subscription limits before starting bulk creation
+  const validateSubscriptionLimits = () => {
+    const { 
+      canAddMoreGoals,
+      canAddMoreMilestonesToGoal, 
+      userSubscriptionStatus,
+      goals = [],
+      milestones = [],
+      tasks = []
+    } = appContext;
+    
+    if (userSubscriptionStatus !== 'free') {
+      return { isValid: true }; // Pro users have no limits
+    }
+    
+    const validationErrors = [];
+    
+    // Count items to be created
+    const goalsToCreate = actions.filter(action => action.type === 'createGoal');
+    const milestonesToCreate = actions.filter(action => action.type === 'createMilestone' || action.type === 'createProject');
+    const tasksToCreate = actions.filter(action => action.type === 'createTask');
+    
+    // Check goals limit
+    if (goalsToCreate.length > 0) {
+      const activeGoals = goals.filter(g => !g.completed);
+      const totalGoalsAfter = activeGoals.length + goalsToCreate.length;
+      
+      if (totalGoalsAfter > FREE_PLAN_LIMITS.MAX_GOALS) {
+        validationErrors.push(`Goals: Would exceed limit of ${FREE_PLAN_LIMITS.MAX_GOALS} active goals`);
+      }
+    }
+    
+    // Check milestones limit
+    if (milestonesToCreate.length > 0) {
+      // Group milestones by goalId to check per-goal limits
+      const milestonesByGoal = milestonesToCreate.reduce((acc, action) => {
+        const goalId = action.data?.goalId || 'standalone';
+        acc[goalId] = (acc[goalId] || 0) + 1;
+        return acc;
+      }, {});
+      
+      for (const [goalId, count] of Object.entries(milestonesByGoal)) {
+        if (goalId === 'standalone') {
+          const standaloneMilestones = milestones.filter(m => !m.goalId);
+          const totalAfter = standaloneMilestones.length + count;
+          
+          if (totalAfter > FREE_PLAN_LIMITS.MAX_STANDALONE_MILESTONES) {
+            validationErrors.push(`Milestones: Would exceed limit of ${FREE_PLAN_LIMITS.MAX_STANDALONE_MILESTONES} standalone milestones`);
+          }
+        } else {
+          const goalMilestones = milestones.filter(m => m.goalId === goalId);
+          const totalAfter = goalMilestones.length + count;
+          
+          if (totalAfter > FREE_PLAN_LIMITS.MAX_MILESTONES_PER_GOAL) {
+            validationErrors.push(`Milestones: Would exceed limit of ${FREE_PLAN_LIMITS.MAX_MILESTONES_PER_GOAL} milestones for goal`);
+          }
+        }
+      }
+    }
+    
+    // Check tasks limit (this is complex for bulk operations, simplified for now)
+    if (tasksToCreate.length > 0) {
+      // For simplicity, check if creating any tasks would exceed standalone task limits
+      const standaloneTasks = tasks.filter(t => !t.milestoneId && !t.goalId);
+      if ((standaloneTasks.length + tasksToCreate.length) > FREE_PLAN_LIMITS.MAX_STANDALONE_TASKS) {
+        validationErrors.push(`Tasks: Would exceed standalone task limits`);
+      }
+    }
+    
+    return {
+      isValid: validationErrors.length === 0,
+      errors: validationErrors
+    };
+  };
+  
   // Handle modal animation
   useEffect(() => {
     if (visible) {
+      // Validate subscription limits before starting
+      const validation = validateSubscriptionLimits();
+      if (!validation.isValid && showUpgradePrompt) {
+        const errorMessage = `Cannot create all items due to free plan limits:\n\n${validation.errors.join('\n')}\n\nUpgrade to Pro for unlimited items.`;
+        showUpgradePrompt(errorMessage);
+        onClose(); // Close modal immediately
+        return;
+      }
+      
       // Reset to first step when modal opens
       setCurrentStep(0);
       setCompletedData({});
@@ -193,13 +279,13 @@ const AIBulkCreateModal = ({
     // Create milestone first (with tasks still in data structure)
     const newMilestone = {
       ...milestoneData,
-      id: Date.now().toString(),
+      // Remove pre-generated ID - let AppContext generate it with proper format
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
     
     if (typeof addProject === 'function') {
-      await addProject(newMilestone);
+      const milestoneResult = await addProject(newMilestone);
       
       // Add a small delay to allow state to propagate
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -211,38 +297,38 @@ const AIBulkCreateModal = ({
           title: task.title,
           status: task.status || 'todo',
           completed: task.completed || false,
-          milestoneId: newMilestone.id,
-          projectId: newMilestone.id,  // For backward compatibility
+          milestoneId: milestoneResult.id,  // Use the actual ID generated by AppContext
+          projectId: milestoneResult.id,   // For backward compatibility
           createdAt: task.createdAt || new Date().toISOString(),
           updatedAt: new Date().toISOString()
         }));
         
         console.log('🔍 Creating separate task entities for milestone:', tasksForAppContext.length);
         console.log('🔍 Tasks to create:', tasksForAppContext);
-        console.log('🔍 Milestone being passed as known:', { id: newMilestone.id, title: newMilestone.title });
+        console.log('🔍 Milestone being passed as known:', { id: milestoneResult.id, title: milestoneResult.title });
         
         // Log current context state before creating tasks
         console.log('🔍 AppContext state before task creation:', {
           milestonesCount: appContext.projects?.length || 0,
           tasksCount: appContext.tasks?.length || 0,
-          milestoneExists: appContext.projects?.some(m => m.id === newMilestone.id)
+          milestoneExists: appContext.projects?.some(m => m.id === milestoneResult.id)
         });
         
         // Pass the newly created milestone as a known milestone to bypass state validation
-        const taskResult = await addTasksBulk(tasksForAppContext, [newMilestone]);
+        const taskResult = await addTasksBulk(tasksForAppContext, [milestoneResult]);
         
         console.log('🔍 Task creation result:', taskResult?.length || 0, 'tasks created');
         console.log('🔍 AppContext state after task creation:', {
           milestonesCount: appContext.projects?.length || 0,
           tasksCount: appContext.tasks?.length || 0,
-          milestoneExists: appContext.projects?.some(m => m.id === newMilestone.id)
+          milestoneExists: appContext.projects?.some(m => m.id === milestoneResult.id)
         });
         
         // Add another small delay to allow task state to propagate
         await new Promise(resolve => setTimeout(resolve, 50));
       }
       
-      return newMilestone;
+      return milestoneResult;
     }
     throw new Error('addProject function not available');
   };
