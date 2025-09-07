@@ -23,6 +23,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../context/ThemeContext';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import TextInputModal from './TextInputModal';
 import {
   scaleWidth,
   scaleHeight,
@@ -69,6 +70,10 @@ const AddGoalModal = ({
   const [targetDate, setTargetDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [datePickerMode, setDatePickerMode] = useState(Platform.OS === 'ios' ? 'spinner' : 'default');
+  
+  // Modal states for tappable editing
+  const [showTitleModal, setShowTitleModal] = useState(false);
+  const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   
   // Get unique domain names for display
   const uniqueDomains = getUniqueDomainNames();
@@ -637,12 +642,11 @@ const AddGoalModal = ({
                 >
                   Goal Title *
                 </Text>
-                <TextInput
+                <TouchableOpacity
                   style={[
                     styles.input,
                     { 
                       backgroundColor: theme.inputBackground,
-                      color: theme.text,
                       borderColor: selectedDomain ? 
                         (STANDARD_DOMAINS.find(d => d.name === selectedDomain)?.color || theme.border) : 
                         theme.border,
@@ -656,18 +660,26 @@ const AddGoalModal = ({
                       shadowOpacity: 0.05,
                       shadowRadius: 4,
                       elevation: 1,
+                      alignItems: 'center',
+                      minHeight: scaleHeight(48)
                     }
                   ]}
-                  value={title}
-                  onChangeText={setTitle}
-                  placeholder="Enter goal title"
-                  placeholderTextColor={theme.textSecondary}
-                  autoFocus={false}
+                  onPress={() => setShowTitleModal(true)}
                   accessible={true}
                   accessibilityLabel="Goal title"
-                  accessibilityHint="Enter the title of your goal"
-                  maxFontSizeMultiplier={1.8}
-                />
+                  accessibilityHint="Tap to edit the goal title"
+                  activeOpacity={0.7}
+                >
+                  <Text style={[
+                    { 
+                      color: title ? theme.text : theme.textSecondary,
+                      fontSize: fontSizes.m,
+                      flex: 1
+                    }
+                  ]}>
+                    {title || 'Enter goal title'}
+                  </Text>
+                </TouchableOpacity>
               </View>
               
               {/* Description */}
@@ -699,13 +711,12 @@ const AddGoalModal = ({
                 >
                   Description (Optional)
                 </Text>
-                <TextInput
+                <TouchableOpacity
                   style={[
                     styles.input,
                     styles.textArea,
                     { 
                       backgroundColor: theme.inputBackground,
-                      color: theme.text,
                       borderColor: selectedDomain ? 
                         (STANDARD_DOMAINS.find(d => d.name === selectedDomain)?.color || theme.border) : 
                         theme.border,
@@ -720,20 +731,26 @@ const AddGoalModal = ({
                       shadowOpacity: 0.05,
                       shadowRadius: 4,
                       elevation: 1,
+                      alignItems: 'flex-start'
                     }
                   ]}
-                  value={description}
-                  onChangeText={setDescription}
-                  placeholder="Enter goal description"
-                  placeholderTextColor={theme.textSecondary}
-                  multiline
-                  numberOfLines={4}
-                  textAlignVertical="top"
+                  onPress={() => setShowDescriptionModal(true)}
                   accessible={true}
                   accessibilityLabel="Goal description"
-                  accessibilityHint="Enter a detailed description of your goal"
-                  maxFontSizeMultiplier={2.0}
-                />
+                  accessibilityHint="Tap to edit the goal description"
+                  activeOpacity={0.7}
+                >
+                  <Text style={[
+                    { 
+                      color: description ? theme.text : theme.textSecondary,
+                      fontSize: fontSizes.m,
+                      flex: 1,
+                      paddingTop: spacing.xs
+                    }
+                  ]} numberOfLines={4}>
+                    {description || 'Enter goal description'}
+                  </Text>
+                </TouchableOpacity>
               </View>
               
               {/* Domain Selection - Horizontal Cards */}
@@ -1224,6 +1241,37 @@ const AddGoalModal = ({
           </Animated.View>
         </PanGestureHandler>
       </Animated.View>
+      
+      {/* Title Edit Modal */}
+      <TextInputModal
+        visible={showTitleModal}
+        onClose={() => setShowTitleModal(false)}
+        onSave={(newTitle) => {
+          setTitle(newTitle);
+          setShowTitleModal(false);
+        }}
+        title="Edit Goal Title"
+        placeholder="Enter goal title..."
+        value={title}
+        maxLength={100}
+        primaryColor={selectedDomain ? (STANDARD_DOMAINS.find(d => d.name === selectedDomain)?.color || theme.primary) : theme.primary}
+      />
+      
+      {/* Description Edit Modal */}
+      <TextInputModal
+        visible={showDescriptionModal}
+        onClose={() => setShowDescriptionModal(false)}
+        onSave={(newDescription) => {
+          setDescription(newDescription);
+          setShowDescriptionModal(false);
+        }}
+        title="Edit Goal Description"
+        placeholder="Describe your goal in detail..."
+        value={description}
+        multiline={true}
+        maxLength={500}
+        primaryColor={selectedDomain ? (STANDARD_DOMAINS.find(d => d.name === selectedDomain)?.color || theme.primary) : theme.primary}
+      />
     </Modal>
   );
 };

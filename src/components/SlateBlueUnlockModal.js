@@ -14,6 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { useTheme } from '../context/ThemeContext';
 import { scaleWidth, scaleHeight, scaleFontSize } from '../utils/responsive';
+import FeatureExplorerTracker from '../services/FeatureExplorerTracker';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -183,6 +184,15 @@ const SlateBlueUnlockModal = ({
       await updateTheme({ primary: '#3B82F6' });
       console.log('🎨 Slate Blue theme applied successfully');
       
+      // Unlock Foundation Builder achievement - simple approach like theme picker
+      try {
+        console.log('🏆 SlateBlueUnlockModal: Unlocking Foundation Builder achievement after applying Slate Blue');
+        await FeatureExplorerTracker.unlockFoundationBuilderAchievement();
+        console.log('🏆 SlateBlueUnlockModal: Foundation Builder achievement unlock completed');
+      } catch (achievementError) {
+        console.error('🏆 SlateBlueUnlockModal: Error unlocking Foundation Builder achievement:', achievementError);
+      }
+      
       // Short delay to show the change, then continue
       setTimeout(() => {
         setIsApplying(false);
@@ -191,7 +201,20 @@ const SlateBlueUnlockModal = ({
       }, 500);
     } catch (error) {
       console.error('🎨 Error applying theme:', error);
+      
+      // Still unlock achievement even if theme fails
+      try {
+        console.log('🏆 SlateBlueUnlockModal: Unlocking Foundation Builder achievement (theme error fallback)');
+        await FeatureExplorerTracker.unlockFoundationBuilderAchievement();
+        console.log('🏆 SlateBlueUnlockModal: Foundation Builder achievement unlock completed (fallback)');
+      } catch (achievementError) {
+        console.error('🏆 SlateBlueUnlockModal: Error unlocking Foundation Builder achievement (fallback):', achievementError);
+      }
+      
+      // Continue anyway
       setIsApplying(false);
+      console.log('🎨 SlateBlueUnlockModal: Theme error, but continuing');
+      onContinue();
     }
   };
 
@@ -231,7 +254,16 @@ const SlateBlueUnlockModal = ({
           console.error('🎨 SlateBlueUnlockModal: Error applying Navy Blue theme:', themeError);
         }
         
-        console.log('🎨 SlateBlueUnlockModal: About to call onContinue() - this should trigger tour progression');
+        // Unlock Foundation Builder achievement - simple approach like theme picker
+        try {
+          console.log('🏆 SlateBlueUnlockModal: Unlocking Foundation Builder achievement after continuing with Navy Blue');
+          await FeatureExplorerTracker.unlockFoundationBuilderAchievement();
+          console.log('🏆 SlateBlueUnlockModal: Foundation Builder achievement unlock completed');
+        } catch (achievementError) {
+          console.error('🏆 SlateBlueUnlockModal: Error unlocking Foundation Builder achievement:', achievementError);
+        }
+        
+        console.log('🎨 SlateBlueUnlockModal: About to call onContinue()');
         await onContinue();
         console.log('🎨 SlateBlueUnlockModal: onContinue() completed successfully');
       } catch (error) {

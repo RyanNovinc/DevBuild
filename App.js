@@ -1573,20 +1573,60 @@ function AppContent({ navigationRef }) {
               if (hasSeenAppTour !== 'true') {
                 console.log('🎯 Starting app tour after onboarding completion - first time user');
                 
-                // Retry mechanism to wait for global.startTourDirectly to become available
-                const attemptTourStart = (attempt = 1, maxAttempts = 10) => {
-                  if (global.startTourDirectly && typeof global.startTourDirectly === 'function') {
-                    console.log(`🎯 Tour function available on attempt ${attempt}, starting tour`);
-                    global.startTourDirectly();
-                  } else if (attempt < maxAttempts) {
-                    console.log(`🎯 Attempt ${attempt}: startTourDirectly not available yet, retrying in 500ms`);
-                    setTimeout(() => attemptTourStart(attempt + 1, maxAttempts), 500);
-                  } else {
-                    console.error('🎯 Failed to start tour after 10 attempts - startTourDirectly never became available');
+                // Wait for pending achievement to be processed by ProfileScreen before starting tour
+                const waitForAchievementProcessing = async (attempt = 1, maxAttempts = 20) => {
+                  try {
+                    const pendingAchievement = await AsyncStorage.getItem('pendingOnboardingAchievement');
+                    console.log(`🏆 TRACE: App.js attempt ${attempt} - pendingOnboardingAchievement flag:`, pendingAchievement);
+                    
+                    if (pendingAchievement === 'true') {
+                      // Achievement hasn't been processed yet, wait longer
+                      if (attempt < maxAttempts) {
+                        console.log(`🏆 TRACE: Attempt ${attempt}/${maxAttempts}: Still waiting for ProfileScreen to process Foundation Builder achievement...`);
+                        setTimeout(() => waitForAchievementProcessing(attempt + 1, maxAttempts), 500);
+                        return;
+                      } else {
+                        console.log('🏆 TRACE: Max attempts reached waiting for achievement processing, starting tour anyway');
+                      }
+                    } else {
+                      console.log('🏆 TRACE: Achievement processing complete (or no pending achievement), proceeding with tour start');
+                    }
+                    
+                    // Additional check - see what achievements are actually unlocked right now
+                    try {
+                      const achievementsData = await AsyncStorage.getItem('unlockedAchievements');
+                      const achievements = achievementsData ? JSON.parse(achievementsData) : {};
+                      console.log('🏆 TRACE: App.js - Foundation Builder status in AsyncStorage:', !!achievements['foundation-builder']);
+                      console.log('🏆 TRACE: App.js - All unlocked achievements:', Object.keys(achievements));
+                    } catch (achievementCheckError) {
+                      console.error('🏆 TRACE: Error checking achievement status:', achievementCheckError);
+                    }
+                    
+                    // Now start the tour
+                    const attemptTourStart = (tourAttempt = 1, tourMaxAttempts = 10) => {
+                      if (global.startTourDirectly && typeof global.startTourDirectly === 'function') {
+                        console.log(`🎯 TRACE: App.js - Tour function available on attempt ${tourAttempt}, starting tour`);
+                        global.startTourDirectly();
+                      } else if (tourAttempt < tourMaxAttempts) {
+                        console.log(`🎯 TRACE: App.js - Attempt ${tourAttempt}: startTourDirectly not available yet, retrying in 500ms`);
+                        setTimeout(() => attemptTourStart(tourAttempt + 1, tourMaxAttempts), 500);
+                      } else {
+                        console.error('🎯 TRACE: App.js - Failed to start tour after 10 attempts - startTourDirectly never became available');
+                      }
+                    };
+                    
+                    attemptTourStart();
+                    
+                  } catch (error) {
+                    console.error('🏆 Error checking pending achievement:', error);
+                    // Fallback to original tour start logic
+                    if (global.startTourDirectly && typeof global.startTourDirectly === 'function') {
+                      global.startTourDirectly();
+                    }
                   }
                 };
                 
-                attemptTourStart();
+                waitForAchievementProcessing();
               } else {
                 console.log('🎯 User has already seen app tour, skipping');
               }

@@ -145,32 +145,60 @@ export const trackOnboardingCompletion = async (showSuccess = null) => {
       
       // Set tracking flag
       await AsyncStorage.setItem(TRACKING_KEYS.ONBOARDING_COMPLETED, 'true');
-      console.log('🏆 trackOnboardingCompletion: Tracking flag set, now unlocking achievement');
+      console.log('🏆 trackOnboardingCompletion: Tracking flag set');
       
-      // Unlock the Foundation Builder achievement immediately
-      // Note: We pass skipGlobalNotification=true because we show our own Foundation Builder intro modal
-      const unlockResult = await AchievementService.unlockAchievement('foundation-builder', showSuccess, true);
-      console.log('🏆 trackOnboardingCompletion: Achievement unlock result:', unlockResult);
-      console.log('🏆 Foundation Builder achievement unlocked for onboarding completion');
-      
-      // Debug: Verify the achievement is actually stored
-      try {
-        const storedAchievements = await AsyncStorage.getItem('unlockedAchievements');
-        const parsedAchievements = storedAchievements ? JSON.parse(storedAchievements) : {};
-        console.log('🏆 DEBUG: All stored achievements:', Object.keys(parsedAchievements));
-        console.log('🏆 DEBUG: Foundation Builder stored?', !!parsedAchievements['foundation-builder']);
-        if (parsedAchievements['foundation-builder']) {
-          console.log('🏆 DEBUG: Foundation Builder data:', parsedAchievements['foundation-builder']);
-        }
-      } catch (debugError) {
-        console.error('🏆 DEBUG: Error checking stored achievements:', debugError);
-      }
+      // Note: Foundation Builder achievement unlock moved to SlateBlueUnlockModal
+      // It will be unlocked after user chooses to apply new color or continue with navy blue
+      console.log('🏆 trackOnboardingCompletion: Foundation Builder achievement will be unlocked after color choice');
     } else {
       console.log('🏆 trackOnboardingCompletion: Onboarding already tracked previously, skipping achievement unlock');
     }
   } catch (error) {
     console.error('🏆 trackOnboardingCompletion: Error tracking onboarding completion:', error);
     console.error('🏆 trackOnboardingCompletion: Full error details:', error.message, error.stack);
+  }
+};
+
+/**
+ * Unlock Foundation Builder achievement after onboarding completion and color choice
+ * This is called from SlateBlueUnlockModal after user makes their color choice
+ * @param {Function} showSuccess - Optional success notification function
+ */
+export const unlockFoundationBuilderAchievement = async (showSuccess = null) => {
+  try {
+    console.log('🏆 unlockFoundationBuilderAchievement: Starting Foundation Builder achievement unlock');
+    console.log('🏆 unlockFoundationBuilderAchievement: showSuccess function provided:', typeof showSuccess);
+    
+    // Check if achievement is already unlocked
+    const achievementsData = await AsyncStorage.getItem('unlockedAchievements');
+    const achievements = achievementsData ? JSON.parse(achievementsData) : {};
+    console.log('🏆 unlockFoundationBuilderAchievement: Current achievements in storage:', Object.keys(achievements));
+    console.log('🏆 unlockFoundationBuilderAchievement: Foundation Builder current status:', achievements['foundation-builder']);
+    
+    if (achievements['foundation-builder']?.unlocked === true) {
+      console.log('🏆 unlockFoundationBuilderAchievement: Achievement already unlocked, skipping');
+      return true;
+    }
+    
+    console.log('🏆 unlockFoundationBuilderAchievement: Achievement not found or not unlocked, proceeding with unlock');
+    console.log('🏆 unlockFoundationBuilderAchievement: About to call AchievementService.unlockAchievement');
+    
+    // Unlock the Foundation Builder achievement
+    // Note: We pass skipGlobalNotification=true because we show our own Foundation Builder intro modal
+    const unlockResult = await AchievementService.unlockAchievement('foundation-builder', showSuccess, true);
+    console.log('🏆 unlockFoundationBuilderAchievement: AchievementService.unlockAchievement returned:', unlockResult);
+    console.log('🏆 Foundation Builder achievement unlock process completed');
+    
+    // Verify the achievement was actually stored
+    const verifyData = await AsyncStorage.getItem('unlockedAchievements');
+    const verifyAchievements = verifyData ? JSON.parse(verifyData) : {};
+    console.log('🏆 unlockFoundationBuilderAchievement: Post-unlock verification - Foundation Builder status:', verifyAchievements['foundation-builder']);
+    
+    return unlockResult;
+  } catch (error) {
+    console.error('🏆 unlockFoundationBuilderAchievement: Error unlocking Foundation Builder achievement:', error);
+    console.error('🏆 unlockFoundationBuilderAchievement: Error stack:', error.stack);
+    return false;
   }
 };
 
@@ -1459,16 +1487,60 @@ export const trackTourGraduate = async (showSuccess = null) => {
     const hasTrackedTourGraduate = await AsyncStorage.getItem(TRACKING_KEYS.TOUR_GRADUATE);
     
     if (hasTrackedTourGraduate !== 'true') {
-      logDebug('First time completing app tour, unlocking achievement');
+      logDebug('First time completing app tour, setting tracking flag');
       
       // Set tracking flag
       await AsyncStorage.setItem(TRACKING_KEYS.TOUR_GRADUATE, 'true');
       
-      // Unlock the achievement (show popup but make it non-clickable)
-      await AchievementService.unlockAchievement('tour-graduate', showSuccess, false);
+      // Note: Achievement unlock moved to Tour Graduate modal button handlers
+      // It will be unlocked after user clicks a button in the celebration modal
+      console.log('🏆 trackTourGraduate: Tour Graduate achievement will be unlocked after user celebrates');
+    } else {
+      console.log('🏆 trackTourGraduate: Tour already completed previously, skipping');
     }
   } catch (error) {
     console.error('Error tracking Tour Graduate achievement:', error);
+  }
+};
+
+/**
+ * Unlock Tour Graduate achievement after tour completion and user celebration
+ * This is called from Tour Graduate modal button handlers
+ * @param {Function} showSuccess - Optional success notification function
+ */
+export const unlockTourGraduateAchievement = async (showSuccess = null) => {
+  try {
+    console.log('🏆 unlockTourGraduateAchievement: Starting Tour Graduate achievement unlock');
+    
+    // Check if achievement is already unlocked
+    const achievementsData = await AsyncStorage.getItem('unlockedAchievements');
+    const achievements = achievementsData ? JSON.parse(achievementsData) : {};
+    console.log('🏆 unlockTourGraduateAchievement: Current achievements in storage:', Object.keys(achievements));
+    console.log('🏆 unlockTourGraduateAchievement: Tour Graduate current status:', achievements['tour-graduate']);
+    
+    if (achievements['tour-graduate']?.unlocked === true) {
+      console.log('🏆 unlockTourGraduateAchievement: Achievement already unlocked, skipping');
+      return true;
+    }
+    
+    console.log('🏆 unlockTourGraduateAchievement: Achievement not found or not unlocked, proceeding with unlock');
+    console.log('🏆 unlockTourGraduateAchievement: About to call AchievementService.unlockAchievement');
+    
+    // Unlock the Tour Graduate achievement
+    const unlockResult = await AchievementService.unlockAchievement('tour-graduate', showSuccess, false);
+    console.log('🏆 unlockTourGraduateAchievement: AchievementService.unlockAchievement returned:', unlockResult);
+    console.log('🏆 Tour Graduate achievement unlock process completed');
+    
+    // Verify the achievement was actually stored
+    const verifyData = await AsyncStorage.getItem('unlockedAchievements');
+    const verifyAchievements = verifyData ? JSON.parse(verifyData) : {};
+    console.log('🏆 unlockTourGraduateAchievement: Post-unlock verification - Tour Graduate status:', verifyAchievements['tour-graduate']);
+    
+    return unlockResult;
+  } catch (error) {
+    console.error('🏆 unlockTourGraduateAchievement: Error unlocking Tour Graduate achievement:', error);
+    console.error('🏆 unlockTourGraduateAchievement: Error stack:', error.stack);
+    return false;
   }
 };
 
@@ -1476,6 +1548,8 @@ export default {
   trackProfilePictureUpdate,
   trackThemeColorChange,
   trackOnboardingCompletion,
+  unlockFoundationBuilderAchievement,
+  unlockTourGraduateAchievement,
   trackDashboardHolisticView,
   trackDomainFocusView,
   trackNoteCreation,

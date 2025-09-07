@@ -1608,6 +1608,7 @@ const AddMilestoneModal = ({
       value={title}
       maxLength={100}
       autoCapitalize="words"
+      primaryColor={buttonColor}
     />
 
     <TextInputModal
@@ -1620,6 +1621,7 @@ const AddMilestoneModal = ({
       multiline={true}
       maxLength={500}
       autoCapitalize="sentences"
+      primaryColor={buttonColor}
     />
 
     <TextInputModal
@@ -1645,6 +1647,7 @@ const AddMilestoneModal = ({
       value={newTaskTitle}
       maxLength={200}
       autoCapitalize="sentences"
+      primaryColor={buttonColor}
     />
 
     <TextInputModal
@@ -1668,6 +1671,7 @@ const AddMilestoneModal = ({
       value={editingTaskTitle}
       maxLength={200}
       autoCapitalize="sentences"
+      primaryColor={buttonColor}
     />
   </>
   );

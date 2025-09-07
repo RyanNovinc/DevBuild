@@ -1655,6 +1655,11 @@ const AddTaskModal = ({
         placeholder="Enter task title"
         value={editingTaskTitle}
         maxLength={100}
+        primaryColor={
+          selectedGoalId === 'standalone' 
+            ? theme.primary
+            : goals.find(g => g.id === selectedGoalId)?.color || theme.primary
+        }
       />
       
       {/* Group Reassignment Modal */}

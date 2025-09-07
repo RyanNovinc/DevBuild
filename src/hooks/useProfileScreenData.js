@@ -28,20 +28,37 @@ const TIMEOUTS = {
 // Helper function to check for pending onboarding achievement
 const checkPendingOnboardingAchievement = async () => {
   try {
-    console.log('🏆 ProfileScreen: Checking for pending onboarding achievement...');
+    console.log('🏆 TRACE: ProfileScreen starting pending achievement check...');
     const pendingAchievement = await AsyncStorage.getItem('pendingOnboardingAchievement');
-    console.log('🏆 ProfileScreen: Pending achievement flag value:', pendingAchievement);
+    console.log('🏆 TRACE: Pending achievement flag value:', pendingAchievement);
     
     if (pendingAchievement === 'true') {
-      console.log('🏆 ProfileScreen: Pending onboarding achievement detected! Removing flag and triggering achievement');
+      console.log('🏆 TRACE: Pending onboarding achievement detected! Removing flag and triggering achievement');
       await AsyncStorage.removeItem('pendingOnboardingAchievement');
+      console.log('🏆 TRACE: pendingOnboardingAchievement flag removed from AsyncStorage');
       
       setTimeout(async () => {
         try {
-          console.log('🏆 ProfileScreen: About to call trackOnboardingCompletion from ProfileScreen');
+          console.log('🏆 TRACE: About to call trackOnboardingCompletion from ProfileScreen');
           await FeatureExplorerTracker.trackOnboardingCompletion();
-          profileLog('🏆 Onboarding completion achievement triggered after profile load');
-          console.log('🏆 ProfileScreen: Foundation Builder achievement should now be unlocked');
+          profileLog('🏆 TRACE: Onboarding completion achievement triggered after profile load');
+          console.log('🏆 TRACE: Foundation Builder achievement should now be unlocked');
+          
+          // Check if achievement was actually unlocked
+          const achievementsData = await AsyncStorage.getItem('unlockedAchievements');
+          const achievements = achievementsData ? JSON.parse(achievementsData) : {};
+          console.log('🏆 TRACE: Foundation Builder unlock status after tracking:', !!achievements['foundation-builder']);
+          
+          // Force ProfileScreen to re-evaluate the tour state by triggering a state update
+          // This ensures the useAchievements hook picks up the newly unlocked achievement
+          setTimeout(() => {
+            console.log('🏆 TRACE: Forcing ProfileScreen tour state re-evaluation after achievement unlock');
+            // Force a re-render by updating a dummy state to trigger useEffect dependencies
+            if (global.forceProfileScreenUpdate) {
+              console.log('🏆 TRACE: Calling global update function to refresh ProfileScreen');
+              global.forceProfileScreenUpdate();
+            }
+          }, 100);
         } catch (error) {
           console.error('🏆 ProfileScreen: Error triggering onboarding completion achievement:', error);
         }

@@ -31,6 +31,7 @@ const TextInputModal = ({
   maxLength,
   keyboardType = 'default',
   autoCapitalize = 'sentences',
+  primaryColor,
 }) => {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
@@ -218,7 +219,7 @@ const TextInputModal = ({
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.saveButton, { backgroundColor: theme.primary }]}
+              style={[styles.saveButton, { backgroundColor: primaryColor || theme.primary }]}
               onPress={handleSave}
             >
               <Text style={styles.saveButtonText}>

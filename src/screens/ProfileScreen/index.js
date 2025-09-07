@@ -17,9 +17,11 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../../context/ThemeContext';
+import FeatureExplorerTracker, { unlockTourGraduateAchievement } from '../../services/FeatureExplorerTracker';
 import { useAppContext } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useAchievements } from '../../context/AchievementContext';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -66,6 +68,16 @@ const ProfileScreen = ({ navigation, route }) => {
   const appContext = useAppContext();
   const { updateDomain, updateAppSetting, updatePurchaseStatus } = appContext || {};
   
+  // Get achievement context to check unlocked achievements
+  const { isAchievementUnlocked } = useAchievements();
+  
+  // Force update mechanism for achievement changes
+  const [achievementUpdateTrigger, setAchievementUpdateTrigger] = useState(0);
+  const forceAchievementUpdate = useCallback(() => {
+    console.log('🏆 TRACE: Forcing ProfileScreen achievement update');
+    setAchievementUpdateTrigger(prev => prev + 1);
+  }, []);
+  
   // Use the new loading orchestrator
   const {
     isLoading,
@@ -104,18 +116,33 @@ const ProfileScreen = ({ navigation, route }) => {
   const tourStatsOpacity = useRef(new Animated.Value(1)).current;
   const tourDomainWheelOpacity = useRef(new Animated.Value(0)).current;
   
-  // Handle tour step transitions
+  // Make force update available globally
   useEffect(() => {
-    console.log('🏆 ProfileScreen tour state changed:', {
+    global.forceProfileScreenUpdate = forceAchievementUpdate;
+    return () => {
+      delete global.forceProfileScreenUpdate;
+    };
+  }, [forceAchievementUpdate]);
+  
+  // Handle tour step transitions - include achievement status as dependency
+  const foundationBuilderUnlocked = isAchievementUnlocked('foundation-builder');
+  const tourGraduateUnlocked = isAchievementUnlocked('tour-graduate');
+  useEffect(() => {
+    console.log('🎯 TRACE: ProfileScreen tour state changed:', {
       isTourActive,
       currentStep,
-      shouldShowFoundationBuilder: isTourActive && currentStep === 'FOUNDATION_BUILDER_INTRO',
+      foundationBuilderUnlocked,
+      shouldShowFoundationBuilder: isTourActive && currentStep === 'FOUNDATION_BUILDER_INTRO' && !foundationBuilderUnlocked,
       shouldShowAppTourOverlay: isTourActive && currentStep === 'GOAL_ACHIEVEMENT_VALIDATION'
     });
     
     if (isTourActive) {
       if (currentStep === 'FOUNDATION_BUILDER_INTRO') {
-        console.log('🏆 Foundation Builder intro step detected - modal should show');
+        const isUnlocked = isAchievementUnlocked('foundation-builder');
+        const shouldShowModal = !isUnlocked;
+        console.log('🏆 TRACE: ProfileScreen - Foundation Builder intro step detected');
+        console.log('🏆 TRACE: ProfileScreen - Achievement unlocked status:', isUnlocked);
+        console.log('🏆 TRACE: ProfileScreen - Modal should show:', shouldShowModal);
       } else if (currentStep === 'GOAL_ACHIEVEMENT_VALIDATION') {
         // Show stats for the new tour's first step
         tourStatsOpacity.setValue(1);
@@ -126,7 +153,7 @@ const ProfileScreen = ({ navigation, route }) => {
       tourStatsOpacity.setValue(1);
       tourDomainWheelOpacity.setValue(0);
     }
-  }, [isTourActive, currentStep]);
+  }, [isTourActive, currentStep, foundationBuilderUnlocked, achievementUpdateTrigger]);
   
   // Handle Foundation Builder intro completion
   const handleFoundationBuilderIntroContinue = useCallback(async () => {
@@ -802,7 +829,7 @@ const ProfileScreen = ({ navigation, route }) => {
       
       {/* Tour Achievement Modal - Premium Dark Design */}
       <Modal
-        visible={uiState.showTourAchievement}
+        visible={uiState.showTourAchievement && !tourGraduateUnlocked}
         transparent={true}
         animationType="none"
         onRequestClose={() => setUiState(prev => ({ ...prev, showTourAchievement: false }))}
@@ -1025,7 +1052,16 @@ const ProfileScreen = ({ navigation, route }) => {
               >
                 <TouchableOpacity 
                   style={achievementStyles.viewAchievementsButton}
-                  onPress={() => {
+                  onPress={async () => {
+                    // Unlock Tour Graduate achievement - simple approach like theme picker
+                    try {
+                      console.log('🏆 ProfileScreen: Unlocking Tour Graduate achievement after View All Achievements button');
+                      await unlockTourGraduateAchievement();
+                      console.log('🏆 ProfileScreen: Tour Graduate achievement unlock completed');
+                    } catch (achievementError) {
+                      console.error('🏆 ProfileScreen: Error unlocking Tour Graduate achievement:', achievementError);
+                    }
+                    
                     // Reset all animations
                     modalScale.setValue(0);
                     modalOpacity.setValue(0);
@@ -1046,7 +1082,16 @@ const ProfileScreen = ({ navigation, route }) => {
                 
                 <TouchableOpacity 
                   style={achievementStyles.celebrateButton}
-                  onPress={() => {
+                  onPress={async () => {
+                    // Unlock Tour Graduate achievement - simple approach like theme picker
+                    try {
+                      console.log('🏆 ProfileScreen: Unlocking Tour Graduate achievement after Continue to LifeCompass button');
+                      await unlockTourGraduateAchievement();
+                      console.log('🏆 ProfileScreen: Tour Graduate achievement unlock completed');
+                    } catch (achievementError) {
+                      console.error('🏆 ProfileScreen: Error unlocking Tour Graduate achievement:', achievementError);
+                    }
+                    
                     // Add a celebration animation before closing
                     Animated.sequence([
                       Animated.timing(modalScale, {
@@ -1119,7 +1164,7 @@ const ProfileScreen = ({ navigation, route }) => {
       
       {/* Foundation Builder Intro Modal */}
       <FoundationBuilderIntro 
-        visible={isTourActive && currentStep === 'FOUNDATION_BUILDER_INTRO'}
+        visible={isTourActive && currentStep === 'FOUNDATION_BUILDER_INTRO' && !foundationBuilderUnlocked}
         onContinue={handleFoundationBuilderIntroContinue}
       />
       

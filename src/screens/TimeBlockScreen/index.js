@@ -73,6 +73,12 @@ const TimeBlockScreen = ({ route, navigation }) => {
   }, []);
   const { theme } = useTheme();
   const { mainGoals, milestones, tasks, addTimeBlock, addTimeBlockSkipConflicts, updateTimeBlock, updateTimeBlockSeries, createNewTimeBlockSeries, checkTimeBlockConflicts, checkRecurringTimeBlockConflicts, deleteTimeBlock, timeBlocks } = useAppContext();
+  
+  // Debug: Log data from AppContext to ensure it's reaching TimeBlockScreen
+  console.log('🔍 TIMEBLOCK SCREEN DEBUG:');
+  console.log('  - mainGoals:', mainGoals?.length || 0);
+  console.log('  - milestones:', milestones?.length || 0); 
+  console.log('  - tasks:', tasks?.length || 0);
   const notification = useNotification ? useNotification() : { 
     showSuccess: (msg) => console.log(msg),
     showError: (msg) => console.error(msg)
@@ -252,6 +258,25 @@ const TimeBlockScreen = ({ route, navigation }) => {
     ? milestones.filter(milestone => {
         // If there's no selected domain, show all milestones
         if (!domain) return true;
+        
+        // Handle special case: Standalone Milestones
+        if (domain === 'Standalone Milestones') {
+          // Check for any falsy goalId value - same logic as LifePlanOverviewScreen
+          const goalId = milestone.goalId;
+          const hasNoGoal = 
+            goalId === null ||
+            goalId === undefined ||
+            goalId === '' ||
+            goalId === 'undefined' ||
+            goalId === 'null';
+          return hasNoGoal;
+        }
+        
+        // Handle special case: Standalone Tasks (no milestones available)
+        if (domain === 'Standalone Tasks') {
+          return false; // No milestones for standalone tasks
+        }
+        
         // Otherwise, filter milestones by the selected goal
         const matchingGoal = Array.isArray(mainGoals) ? mainGoals.find(goal => goal.title === domain) : null;
         return matchingGoal ? milestone.goalId === matchingGoal.id : false;

@@ -1788,8 +1788,19 @@ export const AppProvider = ({ children }) => {
       
       const goalId = milestone.goalId; // Store goal ID for later progress update
       
+      console.log(`🗑️ DELETING MILESTONE: ${milestone?.title || milestoneId} (goalId: ${goalId})`);
+      console.log(`🗑️ MILESTONE BEFORE DELETE - Current milestones length: ${milestones.length}`);
+      
       // 1. First remove from AsyncStorage to ensure persistence
       const updatedMilestones = milestones.filter(milestone => milestone.id !== milestoneId);
+      
+      console.log(`🗑️ MILESTONE AFTER FILTER - Updated milestones length: ${updatedMilestones.length} (removed: ${milestones.length - updatedMilestones.length})`);
+      
+      if (updatedMilestones.length === milestones.length) {
+        console.error(`🗑️ ERROR: No milestone was actually removed! Milestone ${milestoneId} not found in filtering.`);
+        console.log(`🗑️ DEBUG: Target milestone details:`, milestone);
+        return false;
+      }
       try {
         await AsyncStorage.setItem(STORAGE_KEYS.MILESTONES, JSON.stringify(updatedMilestones));
         console.log(`✅ Milestone deletion persisted to storage, ${updatedMilestones.length} milestones remaining`);
@@ -1802,9 +1813,11 @@ export const AppProvider = ({ children }) => {
       // 2. Then update state (AFTER storage is updated)
       setMilestones(updatedMilestones);
       
-      // 3. Clean up associated tasks if they exist
+      // 3. Clean up associated tasks if they exist (handle both milestoneId and projectId for backward compatibility)
       if (Array.isArray(tasks) && tasks.length > 0) {
-        const updatedTasks = tasks.filter(task => task.milestoneId !== milestoneId);
+        const updatedTasks = tasks.filter(task => 
+          task.milestoneId !== milestoneId && task.projectId !== milestoneId
+        );
         try {
           await AsyncStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(updatedTasks));
           console.log(`✅ Associated tasks cleanup persisted to storage, ${updatedTasks.length} tasks remaining`);
@@ -2224,10 +2237,44 @@ export const AppProvider = ({ children }) => {
         throw new Error('Tasks array not available');
       }
       
-      // Check if task exists (handle both standalone and milestone tasks)
-      const taskExists = isStandaloneTask 
-        ? tasks.some(task => task.id === taskId && (task.milestoneId === null || task.milestoneId === undefined))
-        : tasks.some(task => task.id === taskId && task.milestoneId === milestoneId);
+      // Check if task exists (handle both standalone and milestone tasks with robust filtering)
+      let taskExists = false;
+      let targetTask = null;
+      
+      if (isStandaloneTask) {
+        // For standalone tasks, find tasks with matching ID that have no milestone/project assignment
+        // Handle both new (milestoneId) and legacy (projectId) properties
+        targetTask = tasks.find(task => 
+          task.id === taskId && 
+          (task.milestoneId === null || task.milestoneId === undefined) &&
+          (task.projectId === null || task.projectId === undefined)
+        );
+        
+        // If not found with strict criteria, fall back to finding by ID only for standalone tasks
+        if (!targetTask) {
+          targetTask = tasks.find(task => 
+            task.id === taskId && 
+            (task.milestoneId === null || task.milestoneId === undefined)
+          );
+        }
+        
+        // Last fallback: find by ID with no milestone but might have projectId
+        if (!targetTask) {
+          targetTask = tasks.find(task => 
+            task.id === taskId && 
+            (task.projectId === null || task.projectId === undefined)
+          );
+        }
+        
+        taskExists = !!targetTask;
+      } else {
+        // For milestone tasks, check both milestoneId and projectId for backward compatibility
+        targetTask = tasks.find(task => 
+          task.id === taskId && 
+          (task.milestoneId === milestoneId || task.projectId === milestoneId)
+        );
+        taskExists = !!targetTask;
+      }
       
       if (!taskExists) {
         console.warn(`Task with ID ${taskId} not found${isStandaloneTask ? ' in standalone tasks' : ` in milestone ${milestoneId}`}`);
@@ -2235,10 +2282,21 @@ export const AppProvider = ({ children }) => {
         return false;
       }
       
-      // Remove the task (handle both standalone and milestone tasks)
+      console.log(`🗑️ DELETING TASK: ${targetTask?.title || taskId} (standalone: ${isStandaloneTask})`);
+      console.log(`🗑️ TASK BEFORE DELETE - Current tasks length: ${tasks.length}`);
+      
+      // Remove the task (handle both standalone and milestone tasks with robust filtering)
       const updatedTasks = isStandaloneTask
-        ? tasks.filter(task => !(task.id === taskId && (task.milestoneId === null || task.milestoneId === undefined)))
-        : tasks.filter(task => !(task.id === taskId && task.milestoneId === milestoneId));
+        ? tasks.filter(task => task.id !== taskId) // Simple ID-based removal for standalone tasks
+        : tasks.filter(task => !(task.id === taskId && (task.milestoneId === milestoneId || task.projectId === milestoneId)));
+      
+      console.log(`🗑️ TASK AFTER FILTER - Updated tasks length: ${updatedTasks.length} (removed: ${tasks.length - updatedTasks.length})`);
+      
+      if (updatedTasks.length === tasks.length) {
+        console.error(`🗑️ ERROR: No task was actually removed! Task ${taskId} not found in filtering.`);
+        console.log(`🗑️ DEBUG: Target task details:`, targetTask);
+        return false;
+      }
       
       // Update state
       setTasks(updatedTasks);

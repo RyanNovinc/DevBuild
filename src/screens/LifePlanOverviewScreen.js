@@ -126,16 +126,24 @@ const TaskCard = ({ task, onComplete, onDelete, isEditMode, onDrag, isActive, is
   }
   
   const handleLongPress = () => {
+    console.log(`🔍 TaskCard handleLongPress - task: ${task.title}, isEditMode: ${isEditMode}`);
     if (isEditMode && onDrag && isDraggable) {
       onDrag();
     } else {
+      console.log(`🔍 TaskCard showing delete confirm for: ${task.title}`);
       setShowDeleteConfirm(true);
     }
   };
 
   const handleDeleteConfirm = () => {
+    console.log(`🔍 TaskCard handleDeleteConfirm - task: ${task.title}, onDelete available: ${!!onDelete}`);
     setShowDeleteConfirm(false);
-    onDelete();
+    if (onDelete) {
+      console.log(`🔍 TaskCard calling onDelete() for: ${task.title}`);
+      onDelete();
+    } else {
+      console.error(`🔍 TaskCard ERROR: onDelete is not available for task: ${task.title}!`);
+    }
   };
   
   const CardContent = (
@@ -311,13 +319,20 @@ const MilestoneCard = ({ milestone, goalColor, tasks, onExpandToggle, onComplete
   };
 
   const handleDeletePress = () => {
+    console.log(`🔍 MilestoneCard handleDeletePress - milestone: ${milestone.title}`);
     setShowContextMenu(false);
     setShowDeleteConfirm(true);
   };
 
   const handleDeleteConfirm = () => {
+    console.log(`🔍 MilestoneCard handleDeleteConfirm - milestone: ${milestone.title}, onDelete available: ${!!onDelete}`);
     setShowDeleteConfirm(false);
-    onDelete();
+    if (onDelete) {
+      console.log(`🔍 MilestoneCard calling onDelete() for: ${milestone.title}`);
+      onDelete();
+    } else {
+      console.error(`🔍 MilestoneCard ERROR: onDelete is not available for milestone: ${milestone.title}!`);
+    }
   };
 
   const handleEditPress = () => {
@@ -2026,6 +2041,10 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
   // Modern delete confirmation dialog states
   const [showFirstDeleteConfirm, setShowFirstDeleteConfirm] = useState(false);
   const [showFinalDeleteConfirm, setShowFinalDeleteConfirm] = useState(false);
+  
+  // Bulk delete confirmation modals for standalone sections
+  const [showBulkDeleteTasksConfirm, setShowBulkDeleteTasksConfirm] = useState(false);
+  const [showBulkDeleteMilestonesConfirm, setShowBulkDeleteMilestonesConfirm] = useState(false);
   const [actualDeleteCounts, setActualDeleteCounts] = useState({ goals: 0, activeGoals: 0, completedGoals: 0, milestones: 0, tasks: 0 });
 
   // Use internal edit mode if onEditModeToggle is not provided
@@ -2112,6 +2131,10 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
   }, [standaloneMilestones.length, milestones.length]);
   
   const standaloneTasks = tasks.filter(task => !task.projectId && !task.milestoneId && !task.goalId);
+  
+  // Debug: Log standalone data availability (can be removed in production)
+  // console.log(`🔍 STANDALONE DEBUG: standaloneMilestones.length = ${standaloneMilestones.length}`);
+  // console.log(`🔍 STANDALONE DEBUG: standaloneTasks.length = ${standaloneTasks.length}`);
   
   // Debug: Check for duplicate task IDs
   const taskIds = tasks.map(t => t.id);
@@ -2394,12 +2417,22 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
   };
 
   const handleTaskDelete = (taskId) => {
+    console.log(`🔍 handleTaskDelete called with taskId: ${taskId}`);
+    console.log(`🔍 deleteTask function available: ${!!deleteTask}`);
+    
     if (deleteTask) {
       // Find the task to get its projectId
       const task = tasks.find(t => t.id === taskId);
+      console.log(`🔍 Found task:`, task);
+      
       const projectId = task?.projectId || task?.milestoneId;
+      console.log(`🔍 Using projectId: ${projectId} (task.projectId: ${task?.projectId}, task.milestoneId: ${task?.milestoneId})`);
+      
+      console.log(`🔍 About to call deleteTask(${projectId}, ${taskId})`);
       deleteTask(projectId, taskId);
       showSuccess('Task deleted');
+    } else {
+      console.error(`🔍 ERROR: deleteTask function not available!`);
     }
   };
 
@@ -2570,9 +2603,18 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
   };
 
   const handleMilestoneDelete = (milestoneId) => {
+    console.log(`🔍 handleMilestoneDelete called with milestoneId: ${milestoneId}`);
+    console.log(`🔍 deleteMilestone function available: ${!!deleteMilestone}`);
+    
     if (deleteMilestone) {
+      const milestone = milestones.find(m => m.id === milestoneId);
+      console.log(`🔍 Found milestone:`, milestone);
+      
+      console.log(`🔍 About to call deleteMilestone(${milestoneId})`);
       deleteMilestone(milestoneId);
       showSuccess('Milestone deleted');
+    } else {
+      console.error(`🔍 ERROR: deleteMilestone function not available!`);
     }
   };
 
@@ -2631,10 +2673,92 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
     }
   };
 
-  const handleGoalDelete = (goalId) => {
+  const handleGoalDelete = async (goalId) => {
+    // Handle virtual standalone goals specially - delete all items in the container
+    if (goalId === 'standalone-tasks') {
+      if (standaloneTasks.length === 0) {
+        showError('No standalone tasks to delete');
+        return;
+      }
+      
+      // Show confirmation modal
+      setShowBulkDeleteTasksConfirm(true);
+      return;
+    }
+    
+    if (goalId === 'standalone-milestones') {
+      if (standaloneMilestones.length === 0) {
+        showError('No standalone milestones to delete');
+        return;
+      }
+      
+      // Show confirmation modal
+      setShowBulkDeleteMilestonesConfirm(true);
+      return;
+    }
+    
+    // Handle regular goals normally
     if (deleteGoal) {
       deleteGoal(goalId);
       showSuccess('Goal deleted');
+    }
+  };
+
+  // Bulk delete handlers for the MinimalistConfirmDialog modals
+  const handleBulkDeleteTasksConfirm = async () => {
+    setShowBulkDeleteTasksConfirm(false);
+    try {
+      // Delete all standalone tasks using bulk delete for efficiency
+      const taskIdsToDelete = standaloneTasks.map(task => task.id);
+      const deletedTasks = await deleteTasksBulk(taskIdsToDelete);
+      
+      if (deletedTasks && deletedTasks.length > 0) {
+        showSuccess(`Deleted ${deletedTasks.length} standalone tasks! 🗑️`);
+      } else {
+        showError('Failed to delete tasks');
+      }
+    } catch (error) {
+      console.error('Error deleting all standalone tasks:', error);
+      showError('Failed to delete some tasks');
+    }
+  };
+
+  const handleBulkDeleteMilestonesConfirm = async () => {
+    setShowBulkDeleteMilestonesConfirm(false);
+    try {
+      // Create a snapshot of milestones to delete before starting (avoid array modification during iteration)
+      const milestonesToDelete = [...standaloneMilestones]; // Create a copy
+      const totalMilestones = milestonesToDelete.length;
+      
+      console.log(`🗑️ Starting bulk milestone deletion: ${totalMilestones} milestones`);
+      console.log(`🗑️ Milestone details:`, milestonesToDelete.map(m => ({ id: m.id, title: m.title })));
+      
+      // Use the existing clear all logic which handles bulk deletion properly
+      // This mirrors the handleClearAllStandaloneMilestones function that already works
+      const milestoneIdsToDelete = milestonesToDelete.map(m => m.id);
+      console.log(`🗑️ Milestone IDs to delete:`, milestoneIdsToDelete);
+      
+      // Update milestones array by filtering out all the milestones we want to delete
+      const updatedMilestones = milestones.filter(milestone => 
+        !milestoneIdsToDelete.includes(milestone.id)
+      );
+      
+      const deletedCount = milestones.length - updatedMilestones.length;
+      console.log(`🗑️ Filtered: ${milestones.length} -> ${updatedMilestones.length} (removed: ${deletedCount})`);
+      
+      if (deletedCount > 0) {
+        // Update milestones state directly (milestones are stored as 'projects' in AppContext)
+        setProjects(updatedMilestones);
+        
+        console.log(`✅ Bulk milestone deletion complete: ${deletedCount} milestones deleted`);
+        showSuccess(`Deleted ${deletedCount} standalone milestones! 🗑️`);
+      } else {
+        console.error(`🗑️ No milestones were deleted`);
+        showError('Failed to delete milestones');
+      }
+    } catch (error) {
+      console.error('Error deleting all standalone milestones:', error);
+      showError('Failed to delete milestones');
     }
   };
 
@@ -3133,6 +3257,32 @@ const LifePlanOverviewScreen = ({ navigation, route, hideBackButton = false, onF
         onConfirm={handleFinalDeleteConfirm}
         destructive={true}
         icon="warning"
+      />
+      
+      {/* Bulk Delete Standalone Tasks Confirmation */}
+      <MinimalistConfirmDialog
+        visible={showBulkDeleteTasksConfirm}
+        onClose={() => setShowBulkDeleteTasksConfirm(false)}
+        title="Delete All Standalone Tasks"
+        message={`Are you sure you want to delete all ${standaloneTasks.length} standalone tasks?`}
+        confirmText="Delete All"
+        cancelText="Cancel"
+        onConfirm={handleBulkDeleteTasksConfirm}
+        destructive={true}
+        icon="trash-outline"
+      />
+
+      {/* Bulk Delete Standalone Milestones Confirmation */}
+      <MinimalistConfirmDialog
+        visible={showBulkDeleteMilestonesConfirm}
+        onClose={() => setShowBulkDeleteMilestonesConfirm(false)}
+        title="Delete All Standalone Milestones"
+        message={`Are you sure you want to delete all ${standaloneMilestones.length} standalone milestones? This will also delete any tasks within them.`}
+        confirmText="Delete All"
+        cancelText="Cancel"
+        onConfirm={handleBulkDeleteMilestonesConfirm}
+        destructive={true}
+        icon="warning-outline"
       />
       
       {/* App Tour Overlay */}

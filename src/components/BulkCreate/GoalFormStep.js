@@ -11,6 +11,7 @@ import {
   Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import TextInputModal from '../TextInputModal';
 import { LinearGradient } from 'expo-linear-gradient';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {
@@ -52,6 +53,10 @@ const GoalFormStep = ({
     })()
   );
   const [showDatePicker, setShowDatePicker] = useState(false);
+  
+  // Modal states for tappable editing
+  const [showTitleModal, setShowTitleModal] = useState(false);
+  const [showDescriptionModal, setShowDescriptionModal] = useState(false);
 
   // Debug and sync state when initialData changes
   useEffect(() => {
@@ -339,12 +344,11 @@ const GoalFormStep = ({
           >
             Goal Title *
           </Text>
-          <TextInput
+          <TouchableOpacity
             style={[
               styles.input,
               { 
                 backgroundColor: theme.inputBackground,
-                color: theme.text,
                 borderColor: selectedDomain ? 
                   (STANDARD_DOMAINS.find(d => d.name === selectedDomain)?.color || theme.border) : 
                   theme.border,
@@ -358,18 +362,29 @@ const GoalFormStep = ({
                 shadowOpacity: 0.05,
                 shadowRadius: 4,
                 elevation: 1,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                minHeight: scaleHeight(48)
               }
             ]}
-            value={title}
-            onChangeText={setTitle}
-            placeholder="Enter goal title"
-            placeholderTextColor={theme.textSecondary}
-            autoFocus={false}
+            onPress={() => setShowTitleModal(true)}
             accessible={true}
             accessibilityLabel="Goal title"
-            accessibilityHint="Enter the title of your goal"
-            maxFontSizeMultiplier={1.8}
-          />
+            accessibilityHint="Tap to edit the goal title"
+            activeOpacity={0.7}
+          >
+            <Text style={[
+              { 
+                color: title ? theme.text : theme.textSecondary,
+                fontSize: fontSizes.m,
+                flex: 1
+              }
+            ]}>
+              {title || 'Enter goal title'}
+            </Text>
+            <Ionicons name="pencil" size={16} color={theme.textSecondary} />
+          </TouchableOpacity>
         </View>
         
         {/* Description */}
@@ -401,13 +416,12 @@ const GoalFormStep = ({
           >
             Description (Optional)
           </Text>
-          <TextInput
+          <TouchableOpacity
             style={[
               styles.input,
               styles.textArea,
               { 
                 backgroundColor: theme.inputBackground,
-                color: theme.text,
                 borderColor: selectedDomain ? 
                   (STANDARD_DOMAINS.find(d => d.name === selectedDomain)?.color || theme.border) : 
                   theme.border,
@@ -422,20 +436,29 @@ const GoalFormStep = ({
                 shadowOpacity: 0.05,
                 shadowRadius: 4,
                 elevation: 1,
+                flexDirection: 'row',
+                alignItems: 'flex-start',
+                justifyContent: 'space-between'
               }
             ]}
-            value={description}
-            onChangeText={setDescription}
-            placeholder="Enter goal description"
-            placeholderTextColor={theme.textSecondary}
-            multiline
-            numberOfLines={4}
-            textAlignVertical="top"
+            onPress={() => setShowDescriptionModal(true)}
             accessible={true}
             accessibilityLabel="Goal description"
-            accessibilityHint="Enter a detailed description of your goal"
-            maxFontSizeMultiplier={2.0}
-          />
+            accessibilityHint="Tap to edit the goal description"
+            activeOpacity={0.7}
+          >
+            <Text style={[
+              { 
+                color: description ? theme.text : theme.textSecondary,
+                fontSize: fontSizes.m,
+                flex: 1,
+                paddingTop: spacing.xs
+              }
+            ]} numberOfLines={4}>
+              {description || 'Enter goal description'}
+            </Text>
+            <Ionicons name="pencil" size={16} color={theme.textSecondary} style={{ marginTop: spacing.xs }} />
+          </TouchableOpacity>
         </View>
         
         {/* Domain Selection - Horizontal Cards */}
@@ -924,6 +947,37 @@ const GoalFormStep = ({
           </Text>
         </TouchableOpacity>
       </View>
+      
+      {/* Title Edit Modal */}
+      <TextInputModal
+        visible={showTitleModal}
+        onClose={() => setShowTitleModal(false)}
+        onSave={(newTitle) => {
+          setTitle(newTitle);
+          setShowTitleModal(false);
+        }}
+        title="Edit Goal Title"
+        placeholder="Enter goal title..."
+        value={title}
+        maxLength={100}
+        primaryColor={selectedColor}
+      />
+      
+      {/* Description Edit Modal */}
+      <TextInputModal
+        visible={showDescriptionModal}
+        onClose={() => setShowDescriptionModal(false)}
+        onSave={(newDescription) => {
+          setDescription(newDescription);
+          setShowDescriptionModal(false);
+        }}
+        title="Edit Goal Description"
+        placeholder="Describe your goal in detail..."
+        value={description}
+        multiline={true}
+        maxLength={500}
+        primaryColor={selectedColor}
+      />
     </View>
   );
 };

@@ -404,7 +404,7 @@ exports.handler = async (event) => {
           
           if (actions && actions.length > 0) {
             processedActions = actions.map((action, index) => {
-              const modalDataId = `${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}`;
+              const modalDataId = `${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}_${Math.random().toString(36).substr(2, 5)}`;
               return {
                 ...action,
                 modalDataId,
@@ -531,8 +531,8 @@ function processActionData(functionName, args) {
 
     case 'createMilestone':
       const tasks = Array.isArray(args.tasks)
-        ? args.tasks.map(task => ({
-            id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        ? args.tasks.map((task, taskIndex) => ({
+            id: `task_${Date.now()}_${taskIndex}_${Math.random().toString(36).substr(2, 9)}`,
             title: typeof task === 'object' ? task.title : task,
             status: 'todo',
             completed: false
@@ -560,8 +560,8 @@ function processActionData(functionName, args) {
 
     case 'createTaskBatch':
       return {
-        tasks: (args.tasks || []).map(task => ({
-          id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        tasks: (args.tasks || []).map((task, taskIndex) => ({
+          id: `task_${Date.now()}_${taskIndex}_${Math.random().toString(36).substr(2, 9)}`,
           title: task.title,
           description: task.description || '',
           milestoneTitle: task.milestoneTitle || '',

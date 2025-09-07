@@ -65,6 +65,7 @@ import MilestoneSelector from '../screens/TimeBlockScreen/MilestoneSelector';
 import TaskSelector from '../screens/TimeBlockScreen/TaskSelector';
 import UnsavedChangesModal from '../screens/TimeBlockScreen/UnsavedChangesModal';
 import GoalRequiredModal from '../screens/TimeBlockScreen/GoalRequiredModal';
+import TextInputModal from './TextInputModal';
 
 const TimeBlockExactModal = ({
   visible,
@@ -200,7 +201,33 @@ const TimeBlockExactModal = ({
   const getMilestonesForGoal = () => {
     if (!domain) return [];
     
-    // Find the selected goal by title
+    const allMilestones = milestones || projects || [];
+    
+    // Handle special case: Standalone Milestones
+    if (domain === 'Standalone Milestones') {
+      const standaloneMilestones = allMilestones.filter(milestone => {
+        // Check for any falsy goalId value - same logic as LifePlanOverviewScreen
+        const goalId = milestone.goalId;
+        const hasNoGoal = 
+          goalId === null ||
+          goalId === undefined ||
+          goalId === '' ||
+          goalId === 'undefined' ||
+          goalId === 'null';
+        return hasNoGoal;
+      });
+      
+      console.log(`Found ${standaloneMilestones.length} standalone milestones:`, standaloneMilestones);
+      return standaloneMilestones;
+    }
+    
+    // Handle special case: Standalone Tasks (no milestones available)
+    if (domain === 'Standalone Tasks') {
+      console.log('Standalone Tasks selected - no milestones available');
+      return [];
+    }
+    
+    // Find the selected goal by title (for regular goals)
     const allGoals = mainGoals || goals || [];
     const selectedGoal = allGoals.find(goal => goal.title === domain);
     
@@ -210,7 +237,6 @@ const TimeBlockExactModal = ({
     }
     
     // Return milestones for this goal using goalId
-    const allMilestones = milestones || projects || [];
     const goalMilestones = allMilestones.filter(milestone => 
       milestone.goalId === selectedGoal.id
     );
@@ -845,6 +871,8 @@ const TimeBlockExactModal = ({
                 availableGoals={mainGoals || goals || []}
                 goalMilestones={getMilestonesForGoal()}
                 milestoneItems={getMilestonesTasks()}
+                allMilestones={milestones}
+                allTasks={tasks}
                 mainGoals={mainGoals}
                 goals={goals}
                 milestones={milestones}
@@ -966,94 +994,26 @@ const TimeBlockExactModal = ({
               theme={theme}
             />
 
-            {/* Title Edit Modal */}
-            <Modal
+            {/* Title Edit Modal - Revamped with better keyboard positioning */}
+            <TextInputModal
               visible={showTitleEditModal}
-              transparent={true}
-              animationType="fade"
-              onRequestClose={() => setShowTitleEditModal(false)}
-            >
-              <View style={[
-                styles.overlay,
-                { backgroundColor: 'rgba(0,0,0,0.5)' }
-              ]}>
-                <View style={[
-                  styles.titleEditModal,
-                  { 
-                    backgroundColor: theme.background,
-                    borderWidth: 1,
-                    borderColor: theme.border
-                  }
-                ]}>
-                  <View style={styles.titleEditHeader}>
-                    <Text style={[styles.titleEditTitle, { color: theme.text }]}>
-                      Edit Title
-                    </Text>
-                    <TouchableOpacity 
-                      style={styles.closeButton}
-                      onPress={() => {
-                        setShowTitleEditModal(false);
-                        setTempTitle('');
-                      }}
-                    >
-                      <Ionicons name="close" size={24} color={theme.textSecondary} />
-                    </TouchableOpacity>
-                  </View>
-                  
-                  <View style={styles.titleEditContent}>
-                    <TextInput
-                      style={[
-                        styles.titleEditInput,
-                        {
-                          color: theme.text,
-                          backgroundColor: theme.card,
-                          borderColor: theme.border
-                        }
-                      ]}
-                      value={tempTitle}
-                      onChangeText={setTempTitle}
-                      placeholder="What would you like to focus on?"
-                      placeholderTextColor={theme.textSecondary}
-                      autoCapitalize="sentences"
-                      autoFocus={true}
-                      returnKeyType="done"
-                      onSubmitEditing={() => {
-                        setTitle(tempTitle);
-                        setShowTitleEditModal(false);
-                        setTempTitle('');
-                      }}
-                    />
-                    
-                    <View style={styles.titleEditButtons}>
-                      <TouchableOpacity
-                        style={[styles.titleEditButton, styles.titleEditCancelButton, { borderColor: theme.border }]}
-                        onPress={() => {
-                          setShowTitleEditModal(false);
-                          setTempTitle('');
-                        }}
-                      >
-                        <Text style={[styles.titleEditButtonText, { color: theme.textSecondary }]}>
-                          Cancel
-                        </Text>
-                      </TouchableOpacity>
-                      
-                      <TouchableOpacity
-                        style={[styles.titleEditButton, styles.titleEditSaveButton, { backgroundColor: theme.primary }]}
-                        onPress={() => {
-                          setTitle(tempTitle);
-                          setShowTitleEditModal(false);
-                          setTempTitle('');
-                        }}
-                      >
-                        <Text style={[styles.titleEditButtonText, { color: '#FFFFFF' }]}>
-                          Save
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </View>
-              </View>
-            </Modal>
+              onClose={() => {
+                setShowTitleEditModal(false);
+                setTempTitle('');
+              }}
+              onSave={(newTitle) => {
+                setTitle(newTitle);
+                setShowTitleEditModal(false);
+                setTempTitle('');
+              }}
+              title="Edit Title"
+              placeholder="What would you like to focus on?"
+              value={tempTitle}
+              maxLength={100}
+              keyboardType="default"
+              autoCapitalize="sentences"
+              primaryColor={activeTab === 'goal' ? domainColor : customColor}
+            />
               </Animated.View>
             </KeyboardAvoidingView>
           </Animated.View>
@@ -1137,68 +1097,6 @@ const styles = StyleSheet.create({
   },
   saveButtonBottomText: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  titleEditModal: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    marginHorizontal: 20,
-    maxWidth: 400,
-    alignSelf: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  titleEditHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  titleEditTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  titleEditContent: {
-    padding: 20,
-  },
-  titleEditInput: {
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    marginBottom: 20,
-    backgroundColor: '#FAFAFA',
-  },
-  titleEditButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  titleEditButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  titleEditCancelButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  titleEditSaveButton: {
-    backgroundColor: '#007AFF',
-  },
-  titleEditButtonText: {
     fontSize: 16,
     fontWeight: '600',
   },

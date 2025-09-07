@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 import IconPicker from '../../components/IconPicker';
+import TextInputModal from '../../components/TextInputModal';
 
 // Enable LayoutAnimation for Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -161,6 +162,21 @@ const GoalSelector = ({
     return hasNoGoal;
   });
   const hasStandaloneMilestones = standaloneMilestones.length > 0;
+  
+  // Debug logging
+  console.log('🔍 TIMEBLOCK MODAL DEBUG:');
+  console.log('  - Total milestones:', safeMilestones.length);
+  console.log('  - Total tasks:', safeTasks.length);
+  console.log('  - Standalone milestones found:', standaloneMilestones.length);
+  console.log('  - Standalone tasks found:', standaloneTasks.length);
+  console.log('  - Will show standalone milestones option:', hasStandaloneMilestones);
+  console.log('  - Will show standalone tasks option:', hasStandaloneTasks);
+  if (safeMilestones.length > 0) {
+    console.log('  - First few milestones goalIds:', safeMilestones.slice(0, 3).map(m => ({ title: m.title, goalId: m.goalId })));
+  }
+  if (safeTasks.length > 0) {
+    console.log('  - First few tasks:', safeTasks.slice(0, 3).map(t => ({ title: t.title, goalId: t.goalId, milestoneId: t.milestoneId, projectId: t.projectId })));
+  }
   
   return (
     <Modal
@@ -458,12 +474,26 @@ const TimeBlockForm = ({
   const safeGoalMilestones = goalMilestones || [];
   const safeMilestoneItems = milestoneItems || [];
   const safeAvailableGoals = availableGoals || [];
+  const safeAllMilestones = allMilestones || [];
+  const safeAllTasks = allTasks || [];
+  
+  // Debug: Check if we're receiving the full arrays
+  console.log('🔍 TIMEBLOCK FORM DEBUG:');
+  console.log('  - Available goals:', safeAvailableGoals.length);
+  console.log('  - Goal milestones (filtered):', safeGoalMilestones.length);
+  console.log('  - Milestone items (filtered):', safeMilestoneItems.length);
+  console.log('  - All milestones (full array):', safeAllMilestones.length);
+  console.log('  - All tasks (full array):', safeAllTasks.length);
   
   // State for showing goal selector modal
   const [showGoalModal, setShowGoalModal] = useState(false);
   
   // State for showing custom time modal
   const [showCustomTimeModal, setShowCustomTimeModal] = useState(false);
+  
+  // State for showing location and notes modals
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [showNotesModal, setShowNotesModal] = useState(false);
   
   // Duration state for displaying time block length
   const [duration, setDuration] = useState('');
@@ -1272,18 +1302,23 @@ const TimeBlockForm = ({
               <Text style={[styles.inputLabel, { color: theme.text }]}>Location</Text>
               <Text style={[styles.optionalTag, { color: theme.textSecondary }]}>Optional</Text>
             </View>
-            <View style={[styles.modernInputContainer, { 
-              backgroundColor: theme.card,
-              borderColor: theme.border
-            }]}>
-              <TextInput
-                style={[styles.modernTextInput, { color: theme.text }]}
-                value={location}
-                onChangeText={setLocation}
-                placeholder="Where will this take place?"
-                placeholderTextColor={theme.textSecondary}
-              />
-            </View>
+            <TouchableOpacity 
+              style={[styles.modernInputContainer, { 
+                backgroundColor: theme.card,
+                borderColor: theme.border
+              }]}
+              onPress={() => setShowLocationModal(true)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.selectedContent}>
+                <Text style={[
+                  styles.selectedText, 
+                  { color: location ? theme.text : theme.textSecondary }
+                ]}>
+                  {location || 'Where will this take place?'}
+                </Text>
+              </View>
+            </TouchableOpacity>
           </View>
           
           <View style={styles.inputGroup}>
@@ -1292,22 +1327,30 @@ const TimeBlockForm = ({
               <Text style={[styles.inputLabel, { color: theme.text }]}>Notes</Text>
               <Text style={[styles.optionalTag, { color: theme.textSecondary }]}>Optional</Text>
             </View>
-            <View style={[styles.modernInputContainer, { 
-              backgroundColor: theme.card,
-              borderColor: theme.border,
-              minHeight: 80
-            }]}>
-              <TextInput
-                style={[styles.modernTextArea, { color: theme.text }]}
-                value={notes}
-                onChangeText={setNotes}
-                placeholder="Add any details or notes about this time block"
-                placeholderTextColor={theme.textSecondary}
-                multiline
-                numberOfLines={3}
-                textAlignVertical="top"
-              />
-            </View>
+            <TouchableOpacity 
+              style={[styles.modernInputContainer, { 
+                backgroundColor: theme.card,
+                borderColor: theme.border,
+                minHeight: 80,
+                alignItems: 'flex-start',
+                paddingVertical: 12
+              }]}
+              onPress={() => setShowNotesModal(true)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.selectedContent}>
+                <Text style={[
+                  styles.selectedText, 
+                  { 
+                    color: notes ? theme.text : theme.textSecondary,
+                    textAlignVertical: 'top',
+                    minHeight: 50
+                  }
+                ]}>
+                  {notes || 'Add any details or notes about this time block'}
+                </Text>
+              </View>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -1420,8 +1463,8 @@ const TimeBlockForm = ({
           customColor={customColor}
           theme={theme}
           isDarkMode={isDarkMode}
-          milestones={allMilestones}
-          tasks={allTasks}
+          milestones={safeAllMilestones}
+          tasks={safeAllTasks}
         />
       )}
 
@@ -1442,6 +1485,41 @@ const TimeBlockForm = ({
         initialValue={customMinutes}
         theme={theme}
         customColor={customColor}
+      />
+
+      {/* Location Input Modal */}
+      <TextInputModal
+        visible={showLocationModal}
+        onClose={() => setShowLocationModal(false)}
+        onSave={(newLocation) => {
+          setLocation(newLocation);
+          setShowLocationModal(false);
+        }}
+        title="Location"
+        placeholder="Where will this take place?"
+        value={location}
+        maxLength={100}
+        keyboardType="default"
+        autoCapitalize="words"
+        primaryColor={domain ? domainColor : customColor}
+      />
+
+      {/* Notes Input Modal */}
+      <TextInputModal
+        visible={showNotesModal}
+        onClose={() => setShowNotesModal(false)}
+        onSave={(newNotes) => {
+          setNotes(newNotes);
+          setShowNotesModal(false);
+        }}
+        title="Notes"
+        placeholder="Add any details or notes about this time block"
+        value={notes}
+        maxLength={500}
+        multiline={true}
+        keyboardType="default"
+        autoCapitalize="sentences"
+        primaryColor={domain ? domainColor : customColor}
       />
     </View>
   );

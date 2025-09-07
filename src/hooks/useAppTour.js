@@ -4,6 +4,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { InteractionManager } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { trackTourGraduate } from '../services/FeatureExplorerTracker';
+import { useAchievements } from '../context/AchievementContext';
 
 // Global tour state that persists across screens
 const globalTourState = {
@@ -29,6 +30,9 @@ export const useAppTour = (navigation = null) => {
   const [hasCompletedTour, setHasCompletedTour] = useState(false);
   const [spotlightTarget, setSpotlightTarget] = useState(null);
   const measureRefs = useRef({});
+  
+  // Get achievement context to check if Foundation Builder is already unlocked
+  const { isAchievementUnlocked } = useAchievements();
   
   // Sync with global tour state
   useEffect(() => {
@@ -79,20 +83,34 @@ export const useAppTour = (navigation = null) => {
   // Note: checkTourStatus function removed - no longer needed with direct tour triggering
   
   const startTour = (startStep = 'FOUNDATION_BUILDER_INTRO') => {
-    console.log('🏆🎯 startTour called with step:', startStep);
-    console.log('🏆🎯 Before update - globalTourState:', globalTourState);
-    console.log('🏆🎯 TOUR_SEQUENCE[0]:', TOUR_SEQUENCE[0]);
+    console.log('🎯 TRACE: startTour called with step:', startStep);
+    console.log('🎯 TRACE: Before update - globalTourState:', globalTourState);
+    console.log('🎯 TRACE: TOUR_SEQUENCE[0]:', TOUR_SEQUENCE[0]);
+    
+    // Check if Foundation Builder achievement is already unlocked
+    let actualStartStep = startStep;
+    if (startStep === 'FOUNDATION_BUILDER_INTRO') {
+      const isUnlocked = isAchievementUnlocked('foundation-builder');
+      console.log('🏆 TRACE: Double-checking Foundation Builder status in startTour:', isUnlocked);
+      if (isUnlocked) {
+        console.log('🏆 TRACE: Foundation Builder achievement already unlocked, skipping to GOAL_ACHIEVEMENT_VALIDATION');
+        actualStartStep = 'GOAL_ACHIEVEMENT_VALIDATION';
+      } else {
+        console.log('🏆 TRACE: Foundation Builder not unlocked, will show achievement intro');
+      }
+    }
     
     updateGlobalTourState({
       isTourActive: true,
-      currentStep: startStep
+      currentStep: actualStartStep
     });
     
-    console.log('🏆🎯 After update - globalTourState:', globalTourState);
+    console.log('🎯 TRACE: After update - globalTourState:', globalTourState);
+    console.log('🎯 TRACE: Final start step:', actualStartStep);
     
     // Set global flag to hide floating AI button
     global.isAppTourActive = true;
-    console.log('🎯 Set global.isAppTourActive = true');
+    console.log('🎯 TRACE: Set global.isAppTourActive = true');
   };
   
   // Function to start tour from notes screen for testing
@@ -129,9 +147,29 @@ export const useAppTour = (navigation = null) => {
     // Note: manualTourCheck removed as we no longer use periodic checking
     
     // Add direct tour starter for App.js to use after onboarding
-    global.startTourDirectly = () => {
-      console.log('🎯 Tour triggered directly from App.js after onboarding completion');
-      startTour('FOUNDATION_BUILDER_INTRO');
+    global.startTourDirectly = async () => {
+      console.log('🎯 TRACE: Tour triggered directly from App.js after onboarding completion');
+      
+      // Check achievement status directly from AsyncStorage to avoid context timing issues
+      let isFoundationBuilderUnlocked = false;
+      try {
+        const achievementsData = await AsyncStorage.getItem('unlockedAchievements');
+        if (achievementsData) {
+          const achievements = JSON.parse(achievementsData);
+          isFoundationBuilderUnlocked = achievements['foundation-builder']?.unlocked === true;
+        }
+        console.log('🏆 TRACE: Foundation Builder achievement status from AsyncStorage:', isFoundationBuilderUnlocked);
+      } catch (error) {
+        console.error('🏆 TRACE: Error reading achievement from AsyncStorage:', error);
+        // Fallback to context
+        isFoundationBuilderUnlocked = isAchievementUnlocked('foundation-builder');
+        console.log('🏆 TRACE: Fallback to context result:', isFoundationBuilderUnlocked);
+      }
+      
+      const startStep = isFoundationBuilderUnlocked ? 'GOAL_ACHIEVEMENT_VALIDATION' : 'FOUNDATION_BUILDER_INTRO';
+      console.log('🎯 TRACE: Selected start step:', startStep, '(Foundation Builder unlocked:', isFoundationBuilderUnlocked, ')');
+      
+      startTour(startStep);
     };
     
     // DEV: Easy way to jump to any tour step

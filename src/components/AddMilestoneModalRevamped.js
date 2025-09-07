@@ -1368,6 +1368,7 @@ const AddMilestoneModalRevamped = ({
         placeholder="Enter milestone title"
         value={title}
         maxLength={100}
+        primaryColor={buttonColor}
       />
       
       <TextInputModal
@@ -1382,6 +1383,7 @@ const AddMilestoneModalRevamped = ({
         value={description}
         multiline={true}
         maxLength={500}
+        primaryColor={buttonColor}
       />
       
       <TextInputModal
@@ -1398,6 +1400,7 @@ const AddMilestoneModalRevamped = ({
         placeholder="Task title"
         value={newTaskTitle}
         maxLength={100}
+        primaryColor={buttonColor}
       />
     </Modal>
   );

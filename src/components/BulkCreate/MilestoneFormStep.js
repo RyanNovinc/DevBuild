@@ -11,6 +11,7 @@ import {
   Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import TextInputModal from '../TextInputModal';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {
   scaleWidth,
@@ -19,6 +20,9 @@ import {
   fontSizes,
   accessibility
 } from '../../utils/responsive';
+
+// Import date formatting helper
+import { formatDate } from '../../screens/GoalDetailsScreen/utils/helpers';
 
 const MilestoneFormStep = ({ 
   initialData, 
@@ -66,7 +70,7 @@ const MilestoneFormStep = ({
       }
 
       return {
-        id: task?.id || `task_${Date.now()}_${index}`,
+        id: task?.id || `task_${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}`,
         title: taskTitle,
         status: task?.status || 'todo',
         completed: task?.completed || false,
@@ -79,6 +83,13 @@ const MilestoneFormStep = ({
   const [hasDueDate, setHasDueDate] = useState(initialData?.dueDate ? true : false);
   const [dueDate, setDueDate] = useState(initialData?.dueDate ? new Date(initialData.dueDate) : new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [datePickerMode, setDatePickerMode] = useState(Platform.OS === 'ios' ? 'spinner' : 'default');
+  
+  // Modal states for tappable editing
+  const [showTitleModal, setShowTitleModal] = useState(false);
+  const [showDescriptionModal, setShowDescriptionModal] = useState(false);
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  const [editingTaskIndex, setEditingTaskIndex] = useState(-1);
   
   // Initialize goal selection
   useEffect(() => {
@@ -138,7 +149,7 @@ const MilestoneFormStep = ({
         }
 
         return {
-          id: task.id || `task_${Date.now()}_${index}`,
+          id: task.id || `task_${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}`,
           title: taskTitle,
           status: task?.status || 'todo',
           completed: task?.completed || false,
@@ -170,7 +181,7 @@ const MilestoneFormStep = ({
     if (!newTaskTitle.trim()) return;
     
     const newTask = {
-      id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `task_${Date.now()}_${tasks.length}_${Math.random().toString(36).substr(2, 9)}`,
       title: newTaskTitle.trim(),
       status: 'todo',
       completed: false,
@@ -206,8 +217,28 @@ const MilestoneFormStep = ({
     onComplete(milestoneData);
   };
 
+  // Toggle date picker mode between spinner and calendar
+  const toggleDatePickerMode = () => {
+    if (Platform.OS === 'ios') {
+      setDatePickerMode(datePickerMode === 'spinner' ? 'inline' : 'spinner');
+    } else {
+      setDatePickerMode(datePickerMode === 'default' ? 'calendar' : 'default');
+    }
+  };
+
+  // Handle date change
+  const handleDateChange = (event, selectedDate) => {
+    setShowDatePicker(Platform.OS === 'ios');
+    if (selectedDate) {
+      setDueDate(selectedDate);
+    }
+  };
+
   // Check if form is valid
   const isValid = title.trim().length > 0;
+
+  // Get theme-aware button color
+  const buttonColor = selectedGoal?.color || '#007AFF';
 
   // Calculate minimum touch target size
   const minTouchSize = Math.max(scaleWidth(44), accessibility.minTouchTarget);
@@ -245,21 +276,31 @@ const MilestoneFormStep = ({
           <Text style={[styles.label, { color: theme.textSecondary }]}>
             Milestone Title *
           </Text>
-          <TextInput
+          <TouchableOpacity
             style={[
               styles.textInput,
               { 
                 backgroundColor: theme.inputBackground,
-                color: theme.text,
-                borderColor: theme.border
+                borderColor: theme.border,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between'
               }
             ]}
-            value={title}
-            onChangeText={setTitle}
-            placeholder="Enter milestone title..."
-            placeholderTextColor={theme.textSecondary}
-            maxLength={100}
-          />
+            onPress={() => setShowTitleModal(true)}
+            activeOpacity={0.7}
+          >
+            <Text style={[
+              { 
+                color: title ? theme.text : theme.textSecondary,
+                fontSize: fontSizes.m,
+                flex: 1
+              }
+            ]}>
+              {title || 'Enter milestone title...'}
+            </Text>
+            <Ionicons name="pencil" size={16} color={theme.textSecondary} />
+          </TouchableOpacity>
         </View>
 
         {/* Description Input */}
@@ -267,24 +308,33 @@ const MilestoneFormStep = ({
           <Text style={[styles.label, { color: theme.textSecondary }]}>
             Description (Optional)
           </Text>
-          <TextInput
+          <TouchableOpacity
             style={[
               styles.textInput,
               styles.multilineInput,
               { 
                 backgroundColor: theme.inputBackground,
-                color: theme.text,
-                borderColor: theme.border
+                borderColor: theme.border,
+                flexDirection: 'row',
+                alignItems: 'flex-start',
+                justifyContent: 'space-between'
               }
             ]}
-            value={description}
-            onChangeText={setDescription}
-            placeholder="Describe this milestone..."
-            placeholderTextColor={theme.textSecondary}
-            multiline
-            numberOfLines={3}
-            maxLength={500}
-          />
+            onPress={() => setShowDescriptionModal(true)}
+            activeOpacity={0.7}
+          >
+            <Text style={[
+              { 
+                color: description ? theme.text : theme.textSecondary,
+                fontSize: fontSizes.m,
+                flex: 1,
+                paddingTop: spacing.xs
+              }
+            ]} numberOfLines={3}>
+              {description || 'Describe this milestone...'}
+            </Text>
+            <Ionicons name="pencil" size={16} color={theme.textSecondary} style={{ marginTop: spacing.xs }} />
+          </TouchableOpacity>
         </View>
 
         {/* Goal Selection */}
@@ -346,9 +396,9 @@ const MilestoneFormStep = ({
                 style={styles.goalScroll}
                 contentContainerStyle={styles.goalContainer}
               >
-                {availableGoals.map((goal) => (
+                {availableGoals.map((goal, index) => (
                   <TouchableOpacity
-                    key={goal.id}
+                    key={`goal-${goal.id}-${index}`}
                     style={[
                       styles.goalOption,
                       { 
@@ -381,12 +431,39 @@ const MilestoneFormStep = ({
           </View>
         )}
 
-        {/* Due Date Section */}
-        <View style={styles.inputSection}>
-          <View style={styles.switchContainer}>
+        {/* Due Date Toggle */}
+        <View style={[
+          styles.inputSection,
+          {
+            backgroundColor: theme.card,
+            padding: spacing.m,
+            borderRadius: scaleWidth(12),
+            marginBottom: spacing.m,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+            shadowRadius: 6,
+            elevation: 3,
+          }
+        ]}>
+          <View style={[
+            styles.switchContainer,
+            {
+              paddingVertical: 0,
+              minHeight: scaleWidth(44)
+            }
+          ]}>
             <View style={styles.switchInfo}>
-              <Text style={[styles.label, { color: theme.textSecondary }]}>
-                Due Date
+              <Text style={[
+                styles.label, 
+                { 
+                  color: theme.textSecondary,
+                  marginBottom: 0,
+                  fontSize: fontSizes.m,
+                  fontWeight: '600'
+                }
+              ]}>
+                Set Due Date
               </Text>
               <Text style={[styles.switchDescription, { color: theme.textSecondary }]}>
                 Set a deadline for this milestone
@@ -394,47 +471,202 @@ const MilestoneFormStep = ({
             </View>
             <Switch
               value={hasDueDate}
-              onValueChange={setHasDueDate}
+              onValueChange={(value) => {
+                setHasDueDate(value);
+                if (value) {
+                  setShowDatePicker(true);
+                } else {
+                  setShowDatePicker(false);
+                }
+              }}
               trackColor={{ 
                 false: theme.border, 
-                true: (selectedGoal?.color || '#007AFF') + '40' 
+                true: (selectedGoal?.color || buttonColor) + '80'
               }}
-              thumbColor={hasDueDate ? (selectedGoal?.color || '#007AFF') : theme.textSecondary}
+              thumbColor={hasDueDate ? (selectedGoal?.color || buttonColor) : '#f4f3f4'}
+              accessible={true}
+              accessibilityRole="switch"
+              accessibilityLabel="Set due date"
+              accessibilityState={{ checked: hasDueDate }}
+              accessibilityHint={hasDueDate ? "Toggle off to remove due date" : "Toggle on to set a due date"}
             />
           </View>
-          
-          {hasDueDate && (
+        </View>
+        
+        {/* Date Picker Section - Only show when hasDueDate is true */}
+        {hasDueDate && (
+          <View style={[
+            styles.inputSection,
+            {
+              backgroundColor: theme.card,
+              padding: spacing.m,
+              borderRadius: scaleWidth(12),
+              marginBottom: spacing.m,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+              shadowRadius: 6,
+              elevation: 3,
+            }
+          ]}>
+            <Text 
+              style={[
+                styles.label, 
+                { 
+                  color: theme.textSecondary,
+                  fontSize: fontSizes.m,
+                  fontWeight: '600',
+                  marginBottom: spacing.s
+                }
+              ]}
+            >
+              Due Date
+            </Text>
             <TouchableOpacity
               style={[
                 styles.dateButton,
                 { 
                   backgroundColor: theme.inputBackground,
-                  borderColor: theme.border
+                  borderColor: selectedGoal?.color || theme.border,
+                  borderWidth: 1,
+                  paddingHorizontal: spacing.m,
+                  paddingVertical: spacing.s,
+                  borderRadius: scaleWidth(12),
+                  minHeight: scaleWidth(44),
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.05,
+                  shadowRadius: 4,
+                  elevation: 1,
                 }
               ]}
               onPress={() => setShowDatePicker(true)}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={`Selected date: ${formatDate(dueDate)}`}
+              accessibilityHint="Opens date picker to select a due date"
             >
-              <Ionicons name="calendar-outline" size={20} color={selectedGoal?.color || '#007AFF'} />
-              <Text style={[styles.dateButtonText, { color: theme.text }]}>
-                {dueDate.toLocaleDateString()}
+              <Ionicons name="calendar-outline" size={scaleWidth(20)} color={theme.textSecondary} />
+              <Text style={[
+                styles.dateButtonText, 
+                { 
+                  color: theme.text,
+                  fontSize: fontSizes.m,
+                  marginLeft: spacing.s
+                }
+              ]}>
+                {formatDate(dueDate)}
               </Text>
             </TouchableOpacity>
-          )}
-          
-          {showDatePicker && (
-            <DateTimePicker
-              value={dueDate}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={(event, selectedDate) => {
-                setShowDatePicker(false);
-                if (selectedDate) {
-                  setDueDate(selectedDate);
-                }
-              }}
-            />
-          )}
-        </View>
+            
+            {/* Date Picker Mode Selector and Picker - Only show when showDatePicker is true */}
+            {showDatePicker && (
+            <View style={[
+              styles.datePickerContainer,
+              { 
+                backgroundColor: theme.dark ? '#000000' : '#111111',
+                borderColor: theme.border,
+                borderWidth: 1
+              }
+            ]}>
+              {/* Date Picker Mode Selector */}
+              <View style={styles.datePickerModeContainer}>
+                <TouchableOpacity 
+                  style={[
+                    styles.datePickerModeButton,
+                    {
+                      borderColor: theme.border,
+                      backgroundColor: datePickerMode === (Platform.OS === 'ios' ? 'spinner' : 'default') ? buttonColor + '20' : 'transparent'
+                    },
+                    datePickerMode === (Platform.OS === 'ios' ? 'spinner' : 'default') && {
+                      borderColor: buttonColor
+                    }
+                  ]}
+                  onPress={() => toggleDatePickerMode()}
+                >
+                  <Ionicons 
+                    name="options-outline" 
+                    size={scaleWidth(16)} 
+                    color={datePickerMode === (Platform.OS === 'ios' ? 'spinner' : 'default') ? buttonColor : theme.textSecondary} 
+                  />
+                  <Text style={[
+                    styles.datePickerModeText,
+                    { 
+                      color: datePickerMode === (Platform.OS === 'ios' ? 'spinner' : 'default') ? buttonColor : theme.textSecondary
+                    }
+                  ]}>
+                    Wheel
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[
+                    styles.datePickerModeButton,
+                    {
+                      borderColor: theme.border,
+                      backgroundColor: datePickerMode === (Platform.OS === 'ios' ? 'inline' : 'calendar') ? buttonColor + '20' : 'transparent'
+                    },
+                    datePickerMode === (Platform.OS === 'ios' ? 'inline' : 'calendar') && {
+                      borderColor: buttonColor
+                    }
+                  ]}
+                  onPress={() => toggleDatePickerMode()}
+                >
+                  <Ionicons 
+                    name="calendar-outline" 
+                    size={scaleWidth(16)} 
+                    color={datePickerMode === (Platform.OS === 'ios' ? 'inline' : 'calendar') ? buttonColor : theme.textSecondary} 
+                  />
+                  <Text style={[
+                    styles.datePickerModeText,
+                    { 
+                      color: datePickerMode === (Platform.OS === 'ios' ? 'inline' : 'calendar') ? buttonColor : theme.textSecondary
+                    }
+                  ]}>
+                    Calendar
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              
+              <DateTimePicker
+                value={dueDate}
+                mode="date"
+                display={datePickerMode}
+                onChange={handleDateChange}
+                minimumDate={new Date()}
+                themeVariant="dark"
+                accessibilityLabel="Date picker"
+                style={{ height: datePickerMode === 'inline' ? 300 : 200 }}
+                textColor="#FFFFFF"
+              />
+              
+              {/* Done button for iOS */}
+              {Platform.OS === 'ios' && (
+                <TouchableOpacity 
+                  style={[
+                    styles.doneButton, 
+                    { 
+                      backgroundColor: buttonColor,
+                      paddingVertical: spacing.m
+                    }
+                  ]}
+                  onPress={() => setShowDatePicker(false)}
+                >
+                  <Text style={[
+                    styles.doneButtonText, 
+                    { 
+                      color: '#FFFFFF',
+                      fontSize: fontSizes.m
+                    }
+                  ]}>
+                    Done
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+            )}
+          </View>
+        )}
 
         {/* Tasks Section */}
         <View style={styles.inputSection}>
@@ -446,7 +678,7 @@ const MilestoneFormStep = ({
           <View style={styles.taskList}>
             {tasks.map((item, index) => (
               <View
-                key={`task-${item.id || index}`}
+                key={`task-${item.id}-${index}`}
                 style={[
                   styles.taskItem,
                   {
@@ -462,15 +694,25 @@ const MilestoneFormStep = ({
                     color={selectedGoal?.color || '#007AFF'}
                   />
                 </View>
-                <Text 
-                  style={[
-                    styles.taskText,
-                    { color: theme.text }
-                  ]}
-                  numberOfLines={2}
+                <TouchableOpacity 
+                  style={styles.taskTextContainer}
+                  onPress={() => {
+                    setEditingTaskIndex(index);
+                    setShowTaskModal(true);
+                  }}
+                  activeOpacity={0.7}
                 >
-                  {typeof item.title === 'string' ? item.title : 'Untitled Task'}
-                </Text>
+                  <Text 
+                    style={[
+                      styles.taskText,
+                      { color: theme.text }
+                    ]}
+                    numberOfLines={2}
+                  >
+                    {typeof item.title === 'string' ? item.title : 'Untitled Task'}
+                  </Text>
+                  <Ionicons name="pencil" size={14} color={theme.textSecondary} style={{ marginLeft: spacing.xs }} />
+                </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => handleRemoveTask(item.id)}
                   style={styles.removeTaskButton}
@@ -598,6 +840,63 @@ const MilestoneFormStep = ({
           </Text>
         </TouchableOpacity>
       </View>
+      
+      {/* Title Edit Modal */}
+      <TextInputModal
+        visible={showTitleModal}
+        onClose={() => setShowTitleModal(false)}
+        onSave={(newTitle) => {
+          setTitle(newTitle);
+          setShowTitleModal(false);
+        }}
+        title="Edit Milestone Title"
+        placeholder="Enter milestone title..."
+        value={title}
+        maxLength={100}
+        primaryColor={buttonColor}
+      />
+      
+      {/* Description Edit Modal */}
+      <TextInputModal
+        visible={showDescriptionModal}
+        onClose={() => setShowDescriptionModal(false)}
+        onSave={(newDescription) => {
+          setDescription(newDescription);
+          setShowDescriptionModal(false);
+        }}
+        title="Edit Milestone Description"
+        placeholder="Describe this milestone..."
+        value={description}
+        multiline={true}
+        maxLength={500}
+        primaryColor={buttonColor}
+      />
+      
+      {/* Task Edit Modal */}
+      <TextInputModal
+        visible={showTaskModal}
+        onClose={() => {
+          setShowTaskModal(false);
+          setEditingTaskIndex(-1);
+        }}
+        onSave={(newTaskTitle) => {
+          if (editingTaskIndex >= 0 && editingTaskIndex < tasks.length) {
+            const updatedTasks = [...tasks];
+            updatedTasks[editingTaskIndex] = {
+              ...updatedTasks[editingTaskIndex],
+              title: newTaskTitle
+            };
+            setTasks(updatedTasks);
+          }
+          setShowTaskModal(false);
+          setEditingTaskIndex(-1);
+        }}
+        title="Edit Task"
+        placeholder="Enter task title..."
+        value={editingTaskIndex >= 0 ? tasks[editingTaskIndex]?.title || '' : ''}
+        maxLength={200}
+        primaryColor={buttonColor}
+      />
     </View>
   );
 };
@@ -725,16 +1024,11 @@ const styles = StyleSheet.create({
   dateButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: scaleWidth(12),
-    paddingHorizontal: spacing.m,
-    paddingVertical: spacing.m,
-    minHeight: scaleHeight(48),
   },
   dateButtonText: {
+    flex: 1,
     fontSize: fontSizes.m,
     fontWeight: '500',
-    marginLeft: spacing.s,
   },
   // Floating Buttons
   floatingButtonContainer: {
@@ -792,6 +1086,11 @@ const styles = StyleSheet.create({
     width: scaleWidth(24),
     alignItems: 'center',
   },
+  taskTextContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   taskText: {
     flex: 1,
     fontSize: fontSizes.m,
@@ -810,6 +1109,46 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.s,
     fontSize: fontSizes.m,
     minHeight: scaleHeight(40),
+  },
+  
+  // Date Picker Styles
+  datePickerContainer: {
+    marginTop: spacing.s,
+    borderRadius: scaleWidth(12),
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+    alignItems: 'center',
+  },
+  datePickerModeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: spacing.s,
+    marginBottom: spacing.s,
+  },
+  datePickerModeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.m,
+    paddingVertical: spacing.s,
+    borderRadius: scaleWidth(20),
+    marginHorizontal: spacing.xs,
+    borderWidth: 1,
+  },
+  datePickerModeText: {
+    fontSize: fontSizes.s,
+    fontWeight: '500',
+    marginLeft: spacing.xs,
+  },
+  doneButton: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  doneButtonText: {
+    fontWeight: '600',
   },
 });
 
