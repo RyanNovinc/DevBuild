@@ -85,9 +85,25 @@ jobs:
             export NODE_ENV=development
           fi
           
+          # Backup Fastlane files before prebuild
+          if [ -d "ios/fastlane" ]; then
+            cp -r ios/fastlane ./fastlane-backup
+          fi
+          if [ -f "ios/Gemfile" ]; then
+            cp ios/Gemfile ./Gemfile-backup
+          fi
+          
           # Clean and prebuild iOS
           rm -rf ios
           npx expo prebuild --platform ios
+          
+          # Restore Fastlane files after prebuild
+          if [ -d "fastlane-backup" ]; then
+            cp -r fastlane-backup ios/fastlane
+          fi
+          if [ -f "Gemfile-backup" ]; then
+            cp Gemfile-backup ios/Gemfile
+          fi
 
       - name: 📱 Install iOS dependencies
         working-directory: ios
