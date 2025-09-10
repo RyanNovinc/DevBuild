@@ -93,9 +93,9 @@ jobs:
             cp ios/Gemfile ./Gemfile-backup
           fi
           
-          # Clean and prebuild iOS
+          # Clean prebuild with Expo's privacy manifest handling
           rm -rf ios
-          npx expo prebuild --platform ios
+          npx expo prebuild --clean --platform ios
           
           # Restore Fastlane files after prebuild
           if [ -d "fastlane-backup" ]; then
@@ -105,10 +105,7 @@ jobs:
             cp Gemfile-backup ios/Gemfile
           fi
           
-          # Fix PrivacyInfo.xcprivacy duplicate file issue
-          echo "🔧 Fixing PrivacyInfo.xcprivacy duplicates..."
-          find ios -name "PrivacyInfo.xcprivacy" -type f | head -n -1 | xargs rm -f
-          echo "✅ Removed duplicate PrivacyInfo.xcprivacy files"
+          echo "✅ Expo prebuild completed with consolidated privacy manifests"
 
       - name: 📱 Install iOS dependencies
         working-directory: ios
