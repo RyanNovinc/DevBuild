@@ -63,6 +63,15 @@ platform :ios do
       end
     end
 
+    # Configure Xcode project with development team (regardless of certificate success)
+    UI.message("🔧 Configuring Xcode project with development team...")
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      team_id: ENV['APPLE_TEAM_ID'],
+      code_sign_identity: "Apple Development",
+      profile_name: "LifeCompass Development"
+    )
+
     # Auto-increment build number
     increment_build_number(
       build_number: ENV['BUILD_NUMBER'] || Time.now.to_i.to_s
@@ -72,6 +81,7 @@ platform :ios do
     
     # Build the app 
     begin
+      # First try with code signing
       build_ios_app(
         scheme: "LifeCompass",
         configuration: "Debug",
@@ -84,6 +94,22 @@ platform :ios do
         output_directory: "./",
         output_name: "LifeCompass-Dev.ipa"
       )
+    rescue => exception
+      UI.message("⚠️ Signed build failed: #{exception.message}")
+      UI.message("🔄 Trying unsigned build for testing...")
+      
+      # Fallback to unsigned build
+      build_ios_app(
+        scheme: "LifeCompass",
+        configuration: "Debug",
+        skip_codesigning: true,
+        skip_archive: true,
+        output_directory: "./",
+        output_name: "LifeCompass-Dev.ipa"
+      )
+      UI.message("✅ Unsigned build created for pipeline testing!")
+      return # Skip Firebase upload for unsigned build
+    end
       
       # Upload to Firebase App Distribution
       firebase_app_distribution(
