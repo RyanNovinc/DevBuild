@@ -27,7 +27,7 @@ platform :ios do
       # Import development certificate
       import_certificate(
         certificate_path: certificate_path,
-        certificate_password: "",
+        certificate_password: "fastlane",
         keychain_name: "fastlane_tmp_keychain",
         keychain_password: ""
       )
