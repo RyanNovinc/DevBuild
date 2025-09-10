@@ -1,3 +1,5 @@
+require 'base64'
+
 default_platform(:ios)
 
 platform :ios do
@@ -14,16 +16,24 @@ platform :ios do
     if ENV['IOS_DEVELOPMENT_CERTIFICATE_BASE64'] && ENV['IOS_DEVELOPMENT_PROVISIONING_PROFILE_BASE64']
       UI.message("📜 Installing development certificate and provisioning profile from secrets...")
       
+      # Decode base64 certificate and write to file
+      certificate_path = "/tmp/development_certificate.p12"
+      File.write(certificate_path, Base64.decode64(ENV['IOS_DEVELOPMENT_CERTIFICATE_BASE64']))
+      
+      # Decode base64 provisioning profile and write to file  
+      profile_path = "/tmp/development_profile.mobileprovision"
+      File.write(profile_path, Base64.decode64(ENV['IOS_DEVELOPMENT_PROVISIONING_PROFILE_BASE64']))
+      
       # Import development certificate
       import_certificate(
-        certificate_path: ENV['IOS_DEVELOPMENT_CERTIFICATE_BASE64'],
+        certificate_path: certificate_path,
         certificate_password: ENV['IOS_DEVELOPMENT_CERTIFICATE_PASSWORD'] || "",
         keychain_name: "fastlane_tmp_keychain",
         keychain_password: ""
       )
       
       # Install provisioning profile
-      install_provisioning_profile(path: ENV['IOS_DEVELOPMENT_PROVISIONING_PROFILE_BASE64'])
+      install_provisioning_profile(path: profile_path)
     else
       UI.message("⚠️ No development certificates found in environment - building unsigned for testing...")
     end
