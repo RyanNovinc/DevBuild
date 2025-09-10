@@ -112,7 +112,7 @@ jobs:
           pod install --repo-update
 
       - name: 🚀 Build Development (Firebase Distribution)
-        if: github.ref == 'refs/heads/develop' || github.event.inputs.build_type == 'development'
+        if: github.event.inputs.build_type == 'development' || (github.ref == 'refs/heads/develop' && github.event.inputs.build_type != 'production')
         working-directory: ios
         env:
           MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
@@ -128,7 +128,7 @@ jobs:
           bundle exec fastlane ios development
 
       - name: 🚀 Build Production (TestFlight)
-        if: github.ref == 'refs/heads/main' || github.event.inputs.build_type == 'production'
+        if: github.event.inputs.build_type == 'production' || (github.ref == 'refs/heads/main' && github.event.inputs.build_type != 'development')
         working-directory: ios
         env:
           MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
