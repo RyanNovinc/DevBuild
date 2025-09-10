@@ -206,7 +206,20 @@
       "Bash(\"C:\\Program Files\\Amazon\\AWSCLIV2\\aws.exe\" lambda update-function-code --function-name LifeCompass-WebSocketHandler --zip-file fileb://websocket-handler-final.js --region ap-southeast-2)",
       "Bash(if exist lambda-deployment-no-streaming.zip del lambda-deployment-no-streaming.zip)",
       "Bash(\"C:\\Program Files\\Amazon\\AWSCLIV2\\aws.exe\" lambda update-function-code --function-name LifeCompass-WebSocketHandler --zip-file fileb://temp-deploy.zip --region ap-southeast-2)",
-      "Bash(del temp-deploy.zip)"
+      "Bash(del temp-deploy.zip)",
+      "Bash(\"C:\\Program Files\\Amazon\\AWSCLIV2\\aws.exe\" lambda update-function-code --function-name LifeCompass-WebSocketHandler --zip-file fileb://Lambda_Function_Updated.js --region ap-southeast-2)",
+      "Bash(NODE_ENV=production npx expo export --platform all)",
+      "Bash(NODE_ENV=production npx metro build --entry-file index.js --bundle-output test-bundle.js --platform android --dev false --minify false --verbose)",
+      "Bash(NODE_ENV=production npx metro build index.js --out test-bundle.js --platform android --dev false --minify false)",
+      "Read(//d/Apps Productions Builds/LCiOS-2/DevBuild/**)",
+      "Read(//c/Users/ryann/Downloads/**)",
+      "Read(//d/Apps Productions Builds/**)",
+      "Bash(npm cache clean:*)",
+      "Bash(git reset:*)",
+      "Bash(git clean:*)",
+      "WebFetch(domain:expo.dev)",
+      "Bash(set EAS_NO_VCS=1)",
+      "Bash(git config:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { scaleWidth, scaleHeight, scaleFontSize, spacing, fontSizes } from '../../utils/responsive';
 
 const AIUsageWarning = ({ 
-  type = 'none', // 'none', 'approaching', 'limited', 'conversation'
+  type = 'none', // 'none', 'approaching', 'limited', 'conversation', 'conversation_early', 'conversation_final'
   timeUntilReset = '',
   onDismiss = null,
   onStartNewConversation = null
@@ -47,6 +47,30 @@ const AIUsageWarning = ({
           borderColor: '#2196F3',
           title: 'Long conversation detected',
           message: 'Consider starting a new conversation for best performance',
+          showDismiss: true,
+          showNewConversation: true
+        };
+
+      case 'conversation_early':
+        return {
+          icon: 'chatbubbles-outline',
+          iconColor: '#FF9800',
+          backgroundColor: 'rgba(255, 152, 0, 0.1)',
+          borderColor: '#FF9800',
+          title: 'Conversation getting long',
+          message: 'Your conversation is getting long. Consider starting fresh soon for better performance.',
+          showDismiss: true,
+          showNewConversation: true
+        };
+
+      case 'conversation_final':
+        return {
+          icon: 'chatbubbles-outline',
+          iconColor: '#F44336',
+          backgroundColor: 'rgba(244, 67, 54, 0.1)',
+          borderColor: '#F44336',
+          title: 'Conversation nearly full',
+          message: 'Your next message may be the last one in this chat. Consider starting a new conversation.',
           showDismiss: true,
           showNewConversation: true
         };

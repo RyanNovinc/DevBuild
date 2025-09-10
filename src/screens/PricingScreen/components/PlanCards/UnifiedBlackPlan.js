@@ -367,6 +367,15 @@ const UnifiedBlackPlan = ({
             }}>
               Launch Offer Ends In
             </Text>
+            <Ionicons 
+              name="information-circle-outline" 
+              size={14} 
+              color="#FFD700"
+              style={{ 
+                marginLeft: 6,
+                opacity: 0.8
+              }}
+            />
           </View>
           
           <View style={{
@@ -1125,8 +1134,8 @@ const UnifiedBlackPlan = ({
                       name: 'Regular Pricing',
                       icon: 'calendar',
                       users: 'Users 1000+',
-                      price: '$42',
-                      priceType: '/year',
+                      price: '$3.49',
+                      priceType: '/month',
                       aiBenefit: '',
                       aiColor: '#4CAF50',
                       value: '',
@@ -1188,7 +1197,7 @@ const UnifiedBlackPlan = ({
                             fontWeight: '600',
                             color: tier.isWarning ? '#FF6B6B' : '#FFFFFF',
                           }}>
-                            {tier.price}<Text style={{ fontSize: tier.isWarning ? 11 : 9 }}>{tier.isMonthly ? '/year' : '/OTP*'}</Text>
+                            {tier.price}<Text style={{ fontSize: tier.isWarning ? 11 : 9 }}>{tier.isMonthly ? '/month' : '/OTP*'}</Text>
                           </Text>
                         </View>
                       </View>

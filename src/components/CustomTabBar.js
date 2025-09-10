@@ -152,7 +152,11 @@ const CustomTabBar = ({ state, descriptors, navigation, theme }) => {
         }
 
         const onPress = () => {
-          // Normal tab behavior during tour
+          // Check if tour is active and disable tab switching
+          if (global.isAppTourActive) {
+            console.log('🎯 CustomTabBar: Tab press disabled during tour');
+            return;
+          }
           
           const event = navigation.emit({
             type: 'tabPress',

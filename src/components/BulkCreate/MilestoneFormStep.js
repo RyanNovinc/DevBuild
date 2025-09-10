@@ -764,50 +764,15 @@ const MilestoneFormStep = ({
         </View>
       </ScrollView>
 
-      {/* Floating Action Buttons */}
+      {/* Floating Action Button */}
       <View style={styles.floatingButtonContainer}>
-        {onBack && (
-          <TouchableOpacity
-            style={{
-              backgroundColor: theme.card || '#FFFFFF',
-              borderRadius: scaleWidth(12),
-              paddingVertical: spacing.m,
-              paddingHorizontal: spacing.l,
-              flex: 1,
-              minHeight: minTouchSize,
-              alignItems: 'center',
-              justifyContent: 'center',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.15,
-              shadowRadius: 12,
-              elevation: 6,
-              marginRight: spacing.m,
-              borderWidth: 1,
-              borderColor: theme.border,
-            }}
-            onPress={onBack}
-            accessible={true}
-            accessibilityLabel="Go back"
-            accessibilityRole="button"
-          >
-            <Text style={{
-              color: theme.text,
-              fontSize: fontSizes.m,
-              fontWeight: '600',
-            }}>
-              Back
-            </Text>
-          </TouchableOpacity>
-        )}
-
         <TouchableOpacity
           style={{
             backgroundColor: isValid ? (theme.primary || '#007AFF') : theme.border,
             paddingVertical: spacing.m,
             paddingHorizontal: spacing.l,
             borderRadius: scaleWidth(12),
-            flex: onBack ? 2 : 1,
+            flex: 1,
             alignItems: 'center',
             justifyContent: 'center',
             minHeight: minTouchSize,
@@ -836,7 +801,7 @@ const MilestoneFormStep = ({
             fontWeight: '600',
             color: '#FFFFFF',
           }}>
-            Continue
+            Create Milestone
           </Text>
         </TouchableOpacity>
       </View>

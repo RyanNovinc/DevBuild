@@ -91,7 +91,83 @@ export const styles = StyleSheet.create({
     width: '100%',
   },
   
-  // Test Mode Toggle
+  // Test Mode Panel - Comprehensive developer tools
+  testModePanel: {
+    borderRadius: 12,
+    borderWidth: 2,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  testModeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  testModeTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginLeft: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  testModeOption: {
+    marginBottom: 16,
+  },
+  testModeLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  testModeSegment: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  testModeSegmentButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    minWidth: 70,
+    alignItems: 'center',
+  },
+  testModeSegmentText: {
+    fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  testModeButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  testModeButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  testModeNote: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    lineHeight: 16,
+  },
+  
+  // Legacy Test Mode Toggle (kept for compatibility)
   testModeContainer: {
     padding: 10,
     marginBottom: 10,

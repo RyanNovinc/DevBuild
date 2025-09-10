@@ -336,9 +336,35 @@ class AITokenManager {
     return CONVERSATION_LIMITS[this.currentTier] || CONVERSATION_LIMITS.light;
   }
 
-  // Get warning threshold (80% of limit)
+  // Get warning threshold (80% of limit) - kept for compatibility
   getConversationWarningThreshold() {
     return Math.floor(this.getConversationLimit() * 0.8);
+  }
+
+  // Get progressive warning thresholds
+  getConversationWarningThresholds() {
+    const limit = this.getConversationLimit();
+    return {
+      earlyWarning: Math.floor(limit * 0.85),  // 85k tokens
+      finalWarning: Math.floor(limit * 0.95),  // 95k tokens
+      hardLimit: limit                         // 100k tokens
+    };
+  }
+
+  // Check conversation warning level
+  getConversationWarningLevel(conversationId, newMessageTokens = 0) {
+    const currentTokens = this.getConversationTokens(conversationId);
+    const totalTokens = currentTokens + newMessageTokens;
+    const thresholds = this.getConversationWarningThresholds();
+
+    if (totalTokens >= thresholds.hardLimit) {
+      return 'over_limit';
+    } else if (totalTokens >= thresholds.finalWarning) {
+      return 'final_warning';
+    } else if (totalTokens >= thresholds.earlyWarning) {
+      return 'early_warning';
+    }
+    return 'normal';
   }
 
   // Estimate tokens from text (rough approximation)
@@ -349,9 +375,15 @@ class AITokenManager {
   }
 
   // Calculate total tokens for a conversation
-  calculateConversationTokens(messages) {
+  calculateConversationTokens(messages, personalContext = null) {
     let totalTokens = 0;
     
+    // Add personal knowledge context (sent with first message)
+    if (personalContext) {
+      totalTokens += this.estimateTokens(personalContext);
+    }
+    
+    // Add all messages
     for (const message of messages) {
       if (message.text) {
         totalTokens += this.estimateTokens(message.text);
@@ -435,6 +467,24 @@ class AITokenManager {
 
   // Check if conversation needs truncation based on length
   shouldTruncateConversation(conversationId, newMessageTokens = 0) {
+    const currentTokens = this.getConversationTokens(conversationId);
+    const totalTokens = currentTokens + newMessageTokens;
+    const limit = this.getConversationLimit();
+    
+    return totalTokens >= limit;
+  }
+
+  // Check if conversation should block new messages (ALREADY over limit)
+  shouldBlockNewMessage(conversationId) {
+    const currentTokens = this.getConversationTokens(conversationId);
+    const limit = this.getConversationLimit();
+    
+    // Block only if ALREADY over the limit (allows "one over" behavior)
+    return currentTokens >= limit;
+  }
+
+  // Check if message would put conversation over limit (for warnings)
+  wouldExceedLimit(conversationId, newMessageTokens = 0) {
     const currentTokens = this.getConversationTokens(conversationId);
     const totalTokens = currentTokens + newMessageTokens;
     const limit = this.getConversationLimit();

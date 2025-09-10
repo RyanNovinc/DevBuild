@@ -21,6 +21,7 @@ import {
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 import { useTheme } from '../context/ThemeContext';
 import { useAppContext } from '../context/AppContext';
 import { FREE_PLAN_LIMITS } from '../services/SubscriptionConstants';
@@ -55,9 +56,15 @@ const AddTaskModal = ({
   const appContext = useAppContext();
   const safeSpacing = useSafeSpacing();
   
-  // State for tabs
-  const [activeTab, setActiveTab] = useState('add'); // 'add' or 'list'
+  // State for tabs - simplified like TimeBlock modal
   const [taskList, setTaskList] = useState([]);
+  
+  // Tab view state
+  const [index, setIndex] = useState(0);
+  const [routes] = useState([
+    { key: 'add', title: 'Add Task' },
+    { key: 'list', title: 'Task List' }
+  ]);
   
   // Task state
   const [title, setTitle] = useState('');
@@ -164,10 +171,10 @@ const AddTaskModal = ({
           status: task.status || 'todo'
         }));
         setTaskList(tasksWithDefaults);
-        setActiveTab('list'); // Switch to list tab to show batch
+        setIndex(1); // Switch to list tab to show batch
       } else {
         setTaskList([]);
-        setActiveTab('add');
+        setIndex(0);
       }
       
       // Set default to standalone task
@@ -281,6 +288,7 @@ const AddTaskModal = ({
   const reassignAvailableProjects = reassignSelectedGoalId 
     ? allProjects.filter(project => project.goalId === reassignSelectedGoalId) 
     : [];
+  
     
   useEffect(() => {
     if (reassignShowProjectList) {
@@ -596,7 +604,7 @@ const AddTaskModal = ({
     ]).start(() => {
       setTitle('');
       setTaskList([]);
-      setActiveTab('add');
+      setIndex(0);
       setSelectedGoalId(null);
       setSelectedGoalTitle('');
       setSelectedProjectId(null);
@@ -630,6 +638,597 @@ const AddTaskModal = ({
   const onGestureEvent = Animated.event(
     [{ nativeEvent: { translationY: translateY } }],
     { useNativeDriver: true }
+  );
+  
+  // Get screen dimensions for TabView
+  const { width } = Dimensions.get('window');
+  
+  // Render Add Task Tab Content
+  const renderAddTaskTab = () => (
+    <ScrollView 
+      style={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* Task Title - Now first and primary */}
+      <View style={[
+        styles.inputSection, 
+        { 
+          zIndex: 4,
+          backgroundColor: theme.card,
+          padding: spacing.m,
+          borderRadius: scaleWidth(12),
+          marginBottom: spacing.m,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+          shadowRadius: 6,
+          elevation: 3,
+        }
+      ]}>
+        <Text style={[
+          styles.inputLabel, 
+          { 
+            color: theme.textSecondary,
+            fontSize: fontSizes.m,
+            fontWeight: '600',
+            marginBottom: spacing.xs,
+          }
+        ]}>
+          Task Name *
+        </Text>
+        <TouchableOpacity
+          style={[
+            styles.input,
+            { 
+              backgroundColor: theme.inputBackground,
+              borderColor: theme.border,
+              borderRadius: scaleWidth(12),
+              justifyContent: 'center',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.05,
+              shadowRadius: 4,
+              elevation: 1,
+            }
+          ]}
+          onPress={() => setShowTaskInputModal(true)}
+          accessible={true}
+          accessibilityLabel="Task name input"
+          accessibilityHint="Tap to enter the name for your task"
+        >
+          <Text style={[
+            styles.inputText,
+            { 
+              color: title ? theme.text : theme.textSecondary,
+              fontSize: fontSizes.m,
+              fontWeight: title ? '500' : '400'
+            }
+          ]}>
+            {title || "Enter task name"}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Goal Selection - Now optional */}
+      <View style={[
+        styles.inputSection, 
+        { 
+          zIndex: 3,
+          backgroundColor: theme.card,
+          padding: spacing.m,
+          borderRadius: scaleWidth(12),
+          marginBottom: spacing.m,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+          shadowRadius: 6,
+          elevation: 3,
+        }
+      ]}>
+        <Text style={[
+          styles.inputLabel, 
+          { 
+            color: theme.textSecondary,
+            fontSize: fontSizes.m,
+            fontWeight: '600',
+            marginBottom: spacing.xs,
+          }
+        ]}>
+          Link to Goal (Optional)
+        </Text>
+        <TouchableOpacity
+          style={[
+            styles.dropdown,
+            { 
+              backgroundColor: theme.inputBackground,
+              borderColor: selectedGoalId ? 
+                (goals.find(g => g.id === selectedGoalId)?.color || theme.border) : 
+                theme.border,
+              borderRadius: scaleWidth(12),
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.05,
+              shadowRadius: 4,
+              elevation: 1,
+            }
+          ]}
+          onPress={() => {
+            setShowGoalList(!showGoalList);
+            setShowProjectList(false);
+          }}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={selectedGoalTitle || "Select a goal"}
+          accessibilityHint="Tap to show goal options"
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+            {selectedGoalId && (
+              <View style={[
+                styles.goalDot, 
+                { 
+                  backgroundColor: selectedGoalId === 'standalone' 
+                    ? theme.textSecondary 
+                    : goals.find(g => g.id === selectedGoalId)?.color || theme.primary,
+                  marginRight: spacing.s
+                }
+              ]} />
+            )}
+            <Text style={[
+              styles.dropdownText,
+              { 
+                color: selectedGoalTitle ? theme.text : theme.textSecondary,
+                fontSize: fontSizes.m,
+                fontWeight: selectedGoalTitle ? '500' : '400',
+                fontStyle: selectedGoalId === 'standalone' ? 'italic' : 'normal'
+              }
+            ]}>
+              {selectedGoalTitle || "Select a goal to link (optional)"}
+            </Text>
+          </View>
+          <Ionicons 
+            name={showGoalList ? "chevron-up" : "chevron-down"} 
+            size={scaleWidth(20)} 
+            color={theme.textSecondary} 
+          />
+        </TouchableOpacity>
+        
+        <Animated.View style={[
+          styles.dropdownList,
+          {
+            height: goalDropdownHeight,
+            opacity: goalDropdownOpacity,
+            backgroundColor: theme.card,
+            borderColor: theme.border,
+            borderRadius: scaleWidth(12),
+            marginTop: spacing.xs,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: theme.background === '#000000' ? 0.2 : 0.1,
+            shadowRadius: 8,
+            elevation: 5,
+          }
+        ]}>
+          <ScrollView nestedScrollEnabled={true}>
+            {/* Standalone Task Option */}
+            <TouchableOpacity
+              style={[
+                styles.dropdownItem, 
+                { 
+                  borderBottomColor: theme.border,
+                  paddingHorizontal: spacing.m,
+                  paddingVertical: spacing.m,
+                  backgroundColor: selectedGoalId === 'standalone' ? 
+                    (theme.primary + '20') : 'transparent',
+                }
+              ]}
+              onPress={() => {
+                setSelectedGoalId('standalone');
+                setSelectedGoalTitle('Standalone Task');
+                setShowGoalList(false);
+                // Clear project selection when choosing standalone
+                setSelectedProjectId(null);
+                setSelectedProjectTitle('');
+              }}
+            >
+              <View style={[
+                styles.goalDot, 
+                { 
+                  backgroundColor: theme.textSecondary,
+                  width: scaleWidth(14),
+                  height: scaleWidth(14),
+                  borderRadius: scaleWidth(7),
+                }
+              ]} />
+              <Text style={[
+                styles.dropdownItemText, 
+                { 
+                  color: theme.text,
+                  fontSize: fontSizes.m,
+                  fontWeight: selectedGoalId === 'standalone' ? '600' : '500',
+                  fontStyle: 'italic'
+                }
+              ]}>
+                Standalone Task
+              </Text>
+            </TouchableOpacity>
+            
+            {goals.length === 0 ? (
+              <View style={[
+                styles.emptyStateContainer, 
+                { 
+                  borderBottomColor: theme.border,
+                  padding: spacing.m
+                }
+              ]}>
+                <Ionicons name="information-circle" size={20} color={theme.textSecondary} />
+                <Text style={[
+                  styles.emptyStateText, 
+                  { 
+                    color: theme.textSecondary,
+                    fontSize: fontSizes.m
+                  }
+                ]}>
+                  No goals available. Create a goal first to organize your tasks.
+                </Text>
+              </View>
+            ) : (
+              goals.map((goal) => (
+                <TouchableOpacity
+                  key={goal.id}
+                  style={[
+                    styles.dropdownItem, 
+                    { 
+                      borderBottomColor: theme.border,
+                      paddingHorizontal: spacing.m,
+                      paddingVertical: spacing.m,
+                      backgroundColor: selectedGoalId === goal.id ? 
+                        (goal.color + '20') : 'transparent',
+                    }
+                  ]}
+                  onPress={() => selectGoal(goal)}
+                >
+                  <View style={[
+                    styles.goalDot, 
+                    { 
+                      backgroundColor: goal.color,
+                      width: scaleWidth(14),
+                      height: scaleWidth(14),
+                      borderRadius: scaleWidth(7),
+                    }
+                  ]} />
+                  <Text style={[
+                    styles.dropdownItemText, 
+                    { 
+                      color: theme.text,
+                      fontSize: fontSizes.m,
+                      fontWeight: selectedGoalId === goal.id ? '600' : '500'
+                    }
+                  ]}>
+                    {goal.title}
+                  </Text>
+                </TouchableOpacity>
+              ))
+            )}
+          </ScrollView>
+        </Animated.View>
+      </View>
+      
+      {/* Milestone Selection - Only show when goal is selected and not standalone */}
+      {selectedGoalId && selectedGoalId !== 'standalone' && (
+        <View style={[
+          styles.inputSection, 
+          { 
+            zIndex: 2,
+            backgroundColor: theme.card,
+            padding: spacing.m,
+            borderRadius: scaleWidth(12),
+            marginBottom: spacing.m,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
+            shadowRadius: 6,
+            elevation: 3,
+          }
+        ]}>
+          <Text style={[
+            styles.inputLabel, 
+            { 
+              color: theme.textSecondary,
+              fontSize: fontSizes.m,
+              fontWeight: '600',
+              marginBottom: spacing.xs,
+            }
+          ]}>
+            Link to Milestone (Optional)
+          </Text>
+        <TouchableOpacity
+          style={[
+            styles.dropdown,
+            { 
+              backgroundColor: theme.inputBackground,
+              borderColor: selectedProjectId ? 
+                (allProjects.find(p => p.id === selectedProjectId)?.color || theme.border) : 
+                theme.border,
+              borderRadius: scaleWidth(12),
+              opacity: selectedGoalId ? 1 : 0.5,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.05,
+              shadowRadius: 4,
+              elevation: 1,
+            }
+          ]}
+          onPress={() => {
+            if (selectedGoalId) {
+              setShowProjectList(!showProjectList);
+              setShowGoalList(false);
+            } else {
+              Alert.alert('Select Goal First', 'Please select a goal before choosing a project');
+            }
+          }}
+          disabled={!selectedGoalId}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={selectedProjectTitle || "Select a milestone"}
+          accessibilityHint="Tap to show milestone options"
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+            {selectedProjectId && (
+              <View style={[
+                styles.projectDot, 
+                { 
+                  backgroundColor: selectedProjectId === 'standalone' || selectedProjectId?.includes('-standalone-tasks')
+                    ? goals.find(g => g.id === selectedGoalId)?.color || theme.primary
+                    : allProjects.find(p => p.id === selectedProjectId)?.color || theme.primary,
+                  width: scaleWidth(10),
+                  height: scaleWidth(10),
+                  borderRadius: scaleWidth(5),
+                  marginRight: spacing.s
+                }
+              ]} />
+            )}
+            <Text style={[
+              styles.dropdownText,
+              { 
+                color: selectedProjectTitle ? theme.text : theme.textSecondary,
+                fontSize: fontSizes.m,
+                fontWeight: selectedProjectTitle ? '500' : '400',
+                fontStyle: selectedProjectId === 'standalone' ? 'italic' : 'normal'
+              }
+            ]}>
+              {selectedProjectTitle || "Select a milestone (optional)"}
+            </Text>
+          </View>
+          <Ionicons 
+            name={showProjectList ? "chevron-up" : "chevron-down"} 
+            size={scaleWidth(20)} 
+            color={theme.textSecondary} 
+          />
+        </TouchableOpacity>
+        
+        <Animated.View style={[
+          styles.dropdownList,
+          {
+            height: projectDropdownHeight,
+            opacity: projectDropdownOpacity,
+            backgroundColor: theme.card,
+            borderColor: theme.border,
+            borderRadius: scaleWidth(12),
+            marginTop: spacing.xs,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: theme.background === '#000000' ? 0.2 : 0.1,
+            shadowRadius: 8,
+            elevation: 5,
+          }
+        ]}>
+          <ScrollView nestedScrollEnabled={true}>
+            {/* Standalone Tasks Option - Virtual milestone for goal-level tasks */}
+            <TouchableOpacity
+              style={[
+                styles.dropdownItem, 
+                { 
+                  borderBottomColor: theme.border,
+                  paddingHorizontal: spacing.m,
+                  paddingVertical: spacing.m,
+                  backgroundColor: selectedProjectId === `${selectedGoalId}-standalone-tasks` ? 
+                    (theme.primary + '20') : 'transparent',
+                }
+              ]}
+              onPress={() => {
+                setSelectedProjectId(`${selectedGoalId}-standalone-tasks`);
+                setSelectedProjectTitle('Standalone Tasks');
+                setShowProjectList(false);
+              }}
+            >
+              <View style={[
+                styles.projectDot, 
+                { 
+                  backgroundColor: goals.find(g => g.id === selectedGoalId)?.color || theme.primary,
+                  width: scaleWidth(10),
+                  height: scaleWidth(10),
+                  borderRadius: scaleWidth(5),
+                }
+              ]} />
+              <Text style={[
+                styles.dropdownItemText, 
+                { 
+                  color: theme.text,
+                  fontSize: fontSizes.m,
+                  fontWeight: selectedProjectId === `${selectedGoalId}-standalone-tasks` ? '600' : '500'
+                }
+              ]}>
+                Standalone Tasks
+              </Text>
+            </TouchableOpacity>
+            
+            {availableProjects.length > 0 ? (
+              availableProjects.map((project) => (
+                <TouchableOpacity
+                  key={project.id}
+                  style={[
+                    styles.dropdownItem, 
+                    { 
+                      borderBottomColor: theme.border,
+                      paddingHorizontal: spacing.m,
+                      paddingVertical: spacing.m,
+                      backgroundColor: selectedProjectId === project.id ? 
+                        (project.color ? project.color + '20' : theme.primary + '20') : 'transparent',
+                    }
+                  ]}
+                  onPress={() => selectProject(project)}
+                >
+                  <View style={[
+                    styles.projectDot, 
+                    { 
+                      backgroundColor: project.color || theme.primary,
+                      width: scaleWidth(10),
+                      height: scaleWidth(10),
+                      borderRadius: scaleWidth(5),
+                    }
+                  ]} />
+                  <Text style={[
+                    styles.dropdownItemText, 
+                    { 
+                      color: theme.text,
+                      fontSize: fontSizes.m,
+                      fontWeight: selectedProjectId === project.id ? '600' : '500'
+                    }
+                  ]}>
+                    {project.title}
+                  </Text>
+                </TouchableOpacity>
+              ))
+            ) : (
+              <View style={[
+                styles.emptyDropdown,
+                {
+                  padding: spacing.m
+                }
+              ]}>
+                <Text style={[
+                  styles.emptyText, 
+                  { 
+                    color: theme.textSecondary,
+                    fontSize: fontSizes.m
+                  }
+                ]}>
+                  No milestones for this goal
+                </Text>
+              </View>
+            )}
+          </ScrollView>
+        </Animated.View>
+        </View>
+      )}
+    </ScrollView>
+  );
+  
+  // Render Task List Tab Content
+  const renderTaskListTab = () => (
+    <ScrollView 
+      style={styles.listContainer}
+      contentContainerStyle={styles.groupedListContent}
+      showsVerticalScrollIndicator={false}
+      bounces={true}
+      alwaysBounceVertical={false}
+    >
+      {taskList.length > 0 ? (
+        <>
+          {Object.entries(groupedTasks).map(([groupKey, group]) => (
+            <View key={groupKey} style={styles.groupContainer}>
+              {renderGroupHeader(group, groupKey)}
+              {group.tasks.map((task, index) => 
+                renderTaskItem(task, index === group.tasks.length - 1)
+              )}
+            </View>
+          ))}
+        </>
+      ) : (
+        <View style={styles.emptyList}>
+          <Ionicons name="list-outline" size={48} color={theme.textSecondary} />
+          <Text style={[styles.emptyListText, { color: theme.textSecondary }]}>
+            No tasks added yet
+          </Text>
+          <TouchableOpacity
+            style={styles.switchTabButton}
+            onPress={() => setIndex(0)} // Switch to Add Task tab
+          >
+            <Text style={[styles.switchTabText, { color: theme.primary }]}>
+              Add a task
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      
+      {/* Save All Button */}
+      {taskList.length > 0 && (
+        <TouchableOpacity
+          style={[
+            styles.saveAllButtonScrollable,
+            {
+              borderRadius: scaleWidth(12),
+              overflow: 'hidden',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.2,
+              shadowRadius: 8,
+              elevation: 5,
+              marginTop: spacing.m,
+              marginBottom: spacing.xl,
+            }
+          ]}
+          onPress={handleSaveAll}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel="Save all tasks"
+          accessibilityHint="Saves all tasks in the list"
+        >
+          <LinearGradient
+            colors={[theme.primary, theme.primary + 'DD']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{
+              flex: 1,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingVertical: spacing.m,
+              paddingHorizontal: spacing.l,
+            }}
+          >
+            <LinearGradient
+              colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+              style={{
+                position: 'absolute',
+                left: 0,
+                right: 0,
+                top: 0,
+                height: '50%',
+              }}
+            />
+            <Ionicons 
+              name="checkmark-circle" 
+              size={scaleWidth(24)} 
+              color="#FFFFFF" 
+              style={{ marginRight: spacing.s }}
+            />
+            <Text style={[
+              styles.saveAllButtonText,
+              {
+                fontSize: fontSizes.m,
+                fontWeight: '600',
+                color: '#FFFFFF'
+              }
+            ]}>
+              {taskList.length === 1 ? 'Save Task' : `Save All Tasks (${taskList.length})`}
+            </Text>
+          </LinearGradient>
+        </TouchableOpacity>
+      )}
+    </ScrollView>
   );
   
   // Render group header
@@ -896,728 +1495,77 @@ const AddTaskModal = ({
                     </View>
                   </TouchableWithoutFeedback>
                   
-                  {activeTab === 'add' ? (
-                    <ScrollView 
-                      style={styles.scrollContent}
-                      showsVerticalScrollIndicator={false}
-                    >
-                      {/* Tabs */}
-                      <TouchableWithoutFeedback onPress={dismissKeyboard}>
-                        <View style={[
-                          styles.tabs, 
-                          { 
-                            backgroundColor: theme.inputBackground,
-                            borderRadius: scaleWidth(12),
-                            padding: spacing.xs,
-                            marginBottom: spacing.m,
-                            shadowColor: '#000',
-                            shadowOffset: { width: 0, height: 2 },
-                            shadowOpacity: 0.05,
-                            shadowRadius: 4,
-                            elevation: 1,
-                          }
-                        ]}>
-                          <TouchableOpacity
-                            style={[
-                              styles.tab,
-                              {
-                                backgroundColor: activeTab === 'add' ? theme.primary : 'transparent',
-                                borderRadius: scaleWidth(8),
-                                paddingVertical: spacing.s,
-                                paddingHorizontal: spacing.m,
-                              }
-                            ]}
-                            onPress={() => {
-                              setActiveTab('add');
-                              dismissKeyboard();
-                            }}
-                          >
-                            <Text style={[
-                              styles.tabText,
-                              { 
-                                color: activeTab === 'add' ? '#FFFFFF' : theme.textSecondary,
-                                fontWeight: activeTab === 'add' ? '600' : '500'
-                              }
-                            ]}>
-                              Add Task
-                            </Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            style={[
-                              styles.tab,
-                              {
-                                backgroundColor: activeTab === 'list' ? theme.primary : 'transparent',
-                                borderRadius: scaleWidth(8),
-                                paddingVertical: spacing.s,
-                                paddingHorizontal: spacing.m,
-                              }
-                            ]}
-                            onPress={() => {
-                              setActiveTab('list');
-                              dismissKeyboard();
-                            }}
-                          >
-                            <Text style={[
-                              styles.tabText,
-                              { 
-                                color: activeTab === 'list' ? '#FFFFFF' : theme.textSecondary,
-                                fontWeight: activeTab === 'list' ? '600' : '500'
-                              }
-                            ]}>
-                              Task List ({taskList.length})
-                            </Text>
-                          </TouchableOpacity>
-                        </View>
-                      </TouchableWithoutFeedback>
-                      
-                      {/* Task Title - Now first and primary */}
-                      <View style={[
-                        styles.inputSection, 
-                        { 
-                          zIndex: 4,
-                          backgroundColor: theme.card,
-                          padding: spacing.m,
-                          borderRadius: scaleWidth(12),
+                  <TabView
+                    navigationState={{ index, routes }}
+                    renderScene={SceneMap({
+                      add: renderAddTaskTab,
+                      list: renderTaskListTab
+                    })}
+                    onIndexChange={setIndex}
+                    initialLayout={{ width }}
+                    renderTabBar={(props) => (
+                      <TabBar
+                        {...props}
+                        indicatorStyle={{ backgroundColor: theme.primary, height: 3 }}
+                        style={{
+                          backgroundColor: theme.inputBackground,
+                          shadowColor: 'transparent',
+                          elevation: 0,
+                          marginHorizontal: spacing.m,
                           marginBottom: spacing.m,
-                          shadowColor: '#000',
-                          shadowOffset: { width: 0, height: 2 },
-                          shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
-                          shadowRadius: 6,
-                          elevation: 3,
-                        }
-                      ]}>
-                        <Text style={[
-                          styles.inputLabel, 
-                          { 
-                            color: theme.textSecondary,
-                            fontSize: fontSizes.m,
-                            fontWeight: '600',
-                            marginBottom: spacing.xs,
-                          }
-                        ]}>
-                          Task Name *
-                        </Text>
-                        <TouchableOpacity
-                          style={[
-                            styles.input,
-                            { 
-                              backgroundColor: theme.inputBackground,
-                              borderColor: theme.border,
-                              borderRadius: scaleWidth(12),
-                              justifyContent: 'center',
-                              shadowColor: '#000',
-                              shadowOffset: { width: 0, height: 2 },
-                              shadowOpacity: 0.05,
-                              shadowRadius: 4,
-                              elevation: 1,
-                            }
-                          ]}
-                          onPress={() => setShowTaskInputModal(true)}
-                          accessible={true}
-                          accessibilityLabel="Task name input"
-                          accessibilityHint="Tap to enter the name for your task"
-                        >
-                          <Text style={[
-                            styles.inputText,
-                            { 
-                              color: title ? theme.text : theme.textSecondary,
-                              fontSize: fontSizes.m,
-                              fontWeight: title ? '500' : '400'
-                            }
-                          ]}>
-                            {title || "Enter task name"}
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-
-                      {/* Goal Selection - Now optional */}
-                      <View style={[
-                        styles.inputSection, 
-                        { 
-                          zIndex: 3,
-                          backgroundColor: theme.card,
-                          padding: spacing.m,
                           borderRadius: scaleWidth(12),
-                          marginBottom: spacing.m,
-                          shadowColor: '#000',
-                          shadowOffset: { width: 0, height: 2 },
-                          shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
-                          shadowRadius: 6,
-                          elevation: 3,
-                        }
-                      ]}>
-                        <Text style={[
-                          styles.inputLabel, 
-                          { 
-                            color: theme.textSecondary,
-                            fontSize: fontSizes.m,
-                            fontWeight: '600',
-                            marginBottom: spacing.xs,
-                          }
-                        ]}>
-                          Link to Goal (Optional)
-                        </Text>
-                        <TouchableOpacity
-                          style={[
-                            styles.dropdown,
-                            { 
-                              backgroundColor: theme.inputBackground,
-                              borderColor: selectedGoalId ? 
-                                (goals.find(g => g.id === selectedGoalId)?.color || theme.border) : 
-                                theme.border,
-                              borderRadius: scaleWidth(12),
-                              shadowColor: '#000',
-                              shadowOffset: { width: 0, height: 2 },
-                              shadowOpacity: 0.05,
-                              shadowRadius: 4,
-                              elevation: 1,
-                            }
-                          ]}
-                          onPress={() => {
-                            setShowGoalList(!showGoalList);
-                            setShowProjectList(false);
-                          }}
-                          accessible={true}
-                          accessibilityRole="button"
-                          accessibilityLabel={selectedGoalTitle || "Select a goal"}
-                          accessibilityHint="Tap to show goal options"
-                        >
-                          <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                            {selectedGoalId && (
-                              <View style={[
-                                styles.goalDot, 
-                                { 
-                                  backgroundColor: selectedGoalId === 'standalone' 
-                                    ? theme.textSecondary 
-                                    : goals.find(g => g.id === selectedGoalId)?.color || theme.primary,
-                                  marginRight: spacing.s
-                                }
-                              ]} />
-                            )}
-                            <Text style={[
-                              styles.dropdownText,
-                              { 
-                                color: selectedGoalTitle ? theme.text : theme.textSecondary,
-                                fontSize: fontSizes.m,
-                                fontWeight: selectedGoalTitle ? '500' : '400',
-                                fontStyle: selectedGoalId === 'standalone' ? 'italic' : 'normal'
-                              }
-                            ]}>
-                              {selectedGoalTitle || "Select a goal to link (optional)"}
-                            </Text>
-                          </View>
-                          <Ionicons 
-                            name={showGoalList ? "chevron-up" : "chevron-down"} 
-                            size={scaleWidth(20)} 
-                            color={theme.textSecondary} 
+                          overflow: 'hidden'
+                        }}
+                        contentContainerStyle={{
+                          backgroundColor: 'transparent'
+                        }}
+                        tabStyle={{
+                          backgroundColor: 'transparent',
+                          flexDirection: 'row',
+                          alignItems: 'center'
+                        }}
+                        labelStyle={{
+                          color: theme.text,
+                          fontSize: fontSizes.m,
+                          fontWeight: '600',
+                          textTransform: 'none'
+                        }}
+                        activeColor={theme.primary}
+                        inactiveColor={theme.textSecondary}
+                        renderIcon={({ route, focused, color }) => (
+                          <Ionicons
+                            name={route.key === 'add' ? 'add-circle-outline' : 'list-outline'}
+                            size={18}
+                            color={color}
+                            style={{ marginRight: 8 }}
                           />
-                        </TouchableOpacity>
-                        
-                        <Animated.View style={[
-                          styles.dropdownList,
-                          {
-                            height: goalDropdownHeight,
-                            opacity: goalDropdownOpacity,
-                            backgroundColor: theme.card,
-                            borderColor: theme.border,
-                            borderRadius: scaleWidth(12),
-                            marginTop: spacing.xs,
-                            shadowColor: '#000',
-                            shadowOffset: { width: 0, height: 4 },
-                            shadowOpacity: theme.background === '#000000' ? 0.2 : 0.1,
-                            shadowRadius: 8,
-                            elevation: 5,
-                          }
-                        ]}>
-                          <ScrollView nestedScrollEnabled={true}>
-                            {/* Standalone Task Option */}
-                            <TouchableOpacity
-                              style={[
-                                styles.dropdownItem, 
-                                { 
-                                  borderBottomColor: theme.border,
-                                  paddingHorizontal: spacing.m,
-                                  paddingVertical: spacing.m,
-                                  backgroundColor: selectedGoalId === 'standalone' ? 
-                                    (theme.primary + '20') : 'transparent',
-                                }
-                              ]}
-                              onPress={() => {
-                                setSelectedGoalId('standalone');
-                                setSelectedGoalTitle('Standalone Task');
-                                setShowGoalList(false);
-                                // Clear project selection when choosing standalone
-                                setSelectedProjectId(null);
-                                setSelectedProjectTitle('');
-                              }}
-                            >
-                              <View style={[
-                                styles.goalDot, 
-                                { 
-                                  backgroundColor: theme.textSecondary,
-                                  width: scaleWidth(14),
-                                  height: scaleWidth(14),
-                                  borderRadius: scaleWidth(7),
-                                }
-                              ]} />
-                              <Text style={[
-                                styles.dropdownItemText, 
-                                { 
-                                  color: theme.text,
-                                  fontSize: fontSizes.m,
-                                  fontWeight: selectedGoalId === 'standalone' ? '600' : '500',
-                                  fontStyle: 'italic'
-                                }
-                              ]}>
-                                Standalone Task
-                              </Text>
-                            </TouchableOpacity>
-                            
-                            {goals.length === 0 ? (
-                              <View style={[
-                                styles.emptyStateContainer, 
-                                { 
-                                  borderBottomColor: theme.border,
-                                  padding: spacing.m
-                                }
-                              ]}>
-                                <Ionicons name="information-circle" size={20} color={theme.textSecondary} />
-                                <Text style={[
-                                  styles.emptyStateText, 
-                                  { 
-                                    color: theme.textSecondary,
-                                    fontSize: fontSizes.m
-                                  }
-                                ]}>
-                                  No goals available. Create a goal first to organize your tasks.
-                                </Text>
-                              </View>
-                            ) : (
-                              goals.map((goal) => (
-                                <TouchableOpacity
-                                  key={goal.id}
-                                  style={[
-                                    styles.dropdownItem, 
-                                    { 
-                                      borderBottomColor: theme.border,
-                                      paddingHorizontal: spacing.m,
-                                      paddingVertical: spacing.m,
-                                      backgroundColor: selectedGoalId === goal.id ? 
-                                        (goal.color + '20') : 'transparent',
-                                    }
-                                  ]}
-                                  onPress={() => selectGoal(goal)}
-                                >
-                                  <View style={[
-                                    styles.goalDot, 
-                                    { 
-                                      backgroundColor: goal.color,
-                                      width: scaleWidth(14),
-                                      height: scaleWidth(14),
-                                      borderRadius: scaleWidth(7),
-                                    }
-                                  ]} />
-                                  <Text style={[
-                                    styles.dropdownItemText, 
-                                    { 
-                                      color: theme.text,
-                                      fontSize: fontSizes.m,
-                                      fontWeight: selectedGoalId === goal.id ? '600' : '500'
-                                    }
-                                  ]}>
-                                    {goal.title}
-                                  </Text>
-                                </TouchableOpacity>
-                              ))
-                            )}
-                          </ScrollView>
-                        </Animated.View>
-                      </View>
-                      
-                      {/* Milestone Selection - Only show when goal is selected and not standalone */}
-                      {selectedGoalId && selectedGoalId !== 'standalone' && (
-                        <View style={[
-                          styles.inputSection, 
-                          { 
-                            zIndex: 2,
-                            backgroundColor: theme.card,
-                            padding: spacing.m,
-                            borderRadius: scaleWidth(12),
-                            marginBottom: spacing.m,
-                            shadowColor: '#000',
-                            shadowOffset: { width: 0, height: 2 },
-                            shadowOpacity: theme.background === '#000000' ? 0.15 : 0.08,
-                            shadowRadius: 6,
-                            elevation: 3,
-                          }
-                        ]}>
-                          <Text style={[
-                            styles.inputLabel, 
-                            { 
-                              color: theme.textSecondary,
+                        )}
+                        renderLabel={({ route, focused, color }) => {
+                          const taskCount = route.key === 'list' ? ` (${taskList.length})` : '';
+                          return (
+                            <Text style={{
+                              color: color,
                               fontSize: fontSizes.m,
                               fontWeight: '600',
-                              marginBottom: spacing.xs,
-                            }
-                          ]}>
-                            Link to Milestone (Optional)
-                          </Text>
-                        <TouchableOpacity
-                          style={[
-                            styles.dropdown,
-                            { 
-                              backgroundColor: theme.inputBackground,
-                              borderColor: selectedProjectId ? 
-                                (allProjects.find(p => p.id === selectedProjectId)?.color || theme.border) : 
-                                theme.border,
-                              borderRadius: scaleWidth(12),
-                              opacity: selectedGoalId ? 1 : 0.5,
-                              shadowColor: '#000',
-                              shadowOffset: { width: 0, height: 2 },
-                              shadowOpacity: 0.05,
-                              shadowRadius: 4,
-                              elevation: 1,
-                            }
-                          ]}
-                          onPress={() => {
-                            if (selectedGoalId) {
-                              setShowProjectList(!showProjectList);
-                              setShowGoalList(false);
-                            } else {
-                              Alert.alert('Select Goal First', 'Please select a goal before choosing a project');
-                            }
-                          }}
-                          disabled={!selectedGoalId}
-                          accessible={true}
-                          accessibilityRole="button"
-                          accessibilityLabel={selectedProjectTitle || "Select a milestone"}
-                          accessibilityHint="Tap to show milestone options"
-                        >
-                          <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                            {selectedProjectId && (
-                              <View style={[
-                                styles.projectDot, 
-                                { 
-                                  backgroundColor: selectedProjectId === 'standalone' || selectedProjectId?.includes('-standalone-tasks')
-                                    ? goals.find(g => g.id === selectedGoalId)?.color || theme.primary
-                                    : allProjects.find(p => p.id === selectedProjectId)?.color || theme.primary,
-                                  width: scaleWidth(10),
-                                  height: scaleWidth(10),
-                                  borderRadius: scaleWidth(5),
-                                  marginRight: spacing.s
-                                }
-                              ]} />
-                            )}
-                            <Text style={[
-                              styles.dropdownText,
-                              { 
-                                color: selectedProjectTitle ? theme.text : theme.textSecondary,
-                                fontSize: fontSizes.m,
-                                fontWeight: selectedProjectTitle ? '500' : '400',
-                                fontStyle: selectedProjectId === 'standalone' ? 'italic' : 'normal'
-                              }
-                            ]}>
-                              {selectedProjectTitle || "Select a milestone (optional)"}
+                              textTransform: 'none'
+                            }}>
+                              {route.title}{taskCount}
                             </Text>
-                          </View>
-                          <Ionicons 
-                            name={showProjectList ? "chevron-up" : "chevron-down"} 
-                            size={scaleWidth(20)} 
-                            color={theme.textSecondary} 
-                          />
-                        </TouchableOpacity>
-                        
-                        <Animated.View style={[
-                          styles.dropdownList,
-                          {
-                            height: projectDropdownHeight,
-                            opacity: projectDropdownOpacity,
-                            backgroundColor: theme.card,
-                            borderColor: theme.border,
-                            borderRadius: scaleWidth(12),
-                            marginTop: spacing.xs,
-                            shadowColor: '#000',
-                            shadowOffset: { width: 0, height: 4 },
-                            shadowOpacity: theme.background === '#000000' ? 0.2 : 0.1,
-                            shadowRadius: 8,
-                            elevation: 5,
-                          }
-                        ]}>
-                          <ScrollView nestedScrollEnabled={true}>
-                            {/* Standalone Tasks Option - Virtual milestone for goal-level tasks */}
-                            <TouchableOpacity
-                              style={[
-                                styles.dropdownItem, 
-                                { 
-                                  borderBottomColor: theme.border,
-                                  paddingHorizontal: spacing.m,
-                                  paddingVertical: spacing.m,
-                                  backgroundColor: selectedProjectId === `${selectedGoalId}-standalone-tasks` ? 
-                                    (theme.primary + '20') : 'transparent',
-                                }
-                              ]}
-                              onPress={() => {
-                                setSelectedProjectId(`${selectedGoalId}-standalone-tasks`);
-                                setSelectedProjectTitle('Standalone Tasks');
-                                setShowProjectList(false);
-                              }}
-                            >
-                              <View style={[
-                                styles.projectDot, 
-                                { 
-                                  backgroundColor: goals.find(g => g.id === selectedGoalId)?.color || theme.primary,
-                                  width: scaleWidth(10),
-                                  height: scaleWidth(10),
-                                  borderRadius: scaleWidth(5),
-                                }
-                              ]} />
-                              <Text style={[
-                                styles.dropdownItemText, 
-                                { 
-                                  color: theme.text,
-                                  fontSize: fontSizes.m,
-                                  fontWeight: selectedProjectId === `${selectedGoalId}-standalone-tasks` ? '600' : '500'
-                                }
-                              ]}>
-                                Standalone Tasks
-                              </Text>
-                            </TouchableOpacity>
-                            
-                            {availableProjects.length > 0 ? (
-                              availableProjects.map((project) => (
-                                <TouchableOpacity
-                                  key={project.id}
-                                  style={[
-                                    styles.dropdownItem, 
-                                    { 
-                                      borderBottomColor: theme.border,
-                                      paddingHorizontal: spacing.m,
-                                      paddingVertical: spacing.m,
-                                      backgroundColor: selectedProjectId === project.id ? 
-                                        (project.color ? project.color + '20' : theme.primary + '20') : 'transparent',
-                                    }
-                                  ]}
-                                  onPress={() => selectProject(project)}
-                                >
-                                  <View style={[
-                                    styles.projectDot, 
-                                    { 
-                                      backgroundColor: project.color || theme.primary,
-                                      width: scaleWidth(10),
-                                      height: scaleWidth(10),
-                                      borderRadius: scaleWidth(5),
-                                    }
-                                  ]} />
-                                  <Text style={[
-                                    styles.dropdownItemText, 
-                                    { 
-                                      color: theme.text,
-                                      fontSize: fontSizes.m,
-                                      fontWeight: selectedProjectId === project.id ? '600' : '500'
-                                    }
-                                  ]}>
-                                    {project.title}
-                                  </Text>
-                                </TouchableOpacity>
-                              ))
-                            ) : (
-                              <View style={[
-                                styles.emptyDropdown,
-                                {
-                                  padding: spacing.m
-                                }
-                              ]}>
-                                <Text style={[
-                                  styles.emptyText, 
-                                  { 
-                                    color: theme.textSecondary,
-                                    fontSize: fontSizes.m
-                                  }
-                                ]}>
-                                  No milestones for this goal
-                                </Text>
-                              </View>
-                            )}
-                          </ScrollView>
-                        </Animated.View>
-                        </View>
-                      )}
-                      
-                    </ScrollView>
-                  ) : (
-                    <ScrollView 
-                      style={styles.listContainer}
-                      contentContainerStyle={styles.groupedListContent}
-                      showsVerticalScrollIndicator={false}
-                      bounces={true}
-                      alwaysBounceVertical={false}
-                    >
-                      {/* Tabs */}
-                      <TouchableWithoutFeedback onPress={dismissKeyboard}>
-                        <View style={[
-                          styles.tabs, 
-                          { 
-                            backgroundColor: theme.inputBackground,
-                            borderRadius: scaleWidth(12),
-                            padding: spacing.xs,
-                            marginBottom: spacing.m,
-                            shadowColor: '#000',
-                            shadowOffset: { width: 0, height: 2 },
-                            shadowOpacity: 0.05,
-                            shadowRadius: 4,
-                            elevation: 1,
-                          }
-                        ]}>
-                          <TouchableOpacity
-                            style={[
-                              styles.tab,
-                              {
-                                backgroundColor: activeTab === 'add' ? theme.primary : 'transparent',
-                                borderRadius: scaleWidth(8),
-                                paddingVertical: spacing.s,
-                                paddingHorizontal: spacing.m,
-                              }
-                            ]}
-                            onPress={() => {
-                              setActiveTab('add');
-                              dismissKeyboard();
-                            }}
-                          >
-                            <Text style={[
-                              styles.tabText,
-                              { 
-                                color: activeTab === 'add' ? '#FFFFFF' : theme.textSecondary,
-                                fontWeight: activeTab === 'add' ? '600' : '500'
-                              }
-                            ]}>
-                              Add Task
-                            </Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            style={[
-                              styles.tab,
-                              {
-                                backgroundColor: activeTab === 'list' ? theme.primary : 'transparent',
-                                borderRadius: scaleWidth(8),
-                                paddingVertical: spacing.s,
-                                paddingHorizontal: spacing.m,
-                              }
-                            ]}
-                            onPress={() => {
-                              setActiveTab('list');
-                              dismissKeyboard();
-                            }}
-                          >
-                            <Text style={[
-                              styles.tabText,
-                              { 
-                                color: activeTab === 'list' ? '#FFFFFF' : theme.textSecondary,
-                                fontWeight: activeTab === 'list' ? '600' : '500'
-                              }
-                            ]}>
-                              Task List ({taskList.length})
-                            </Text>
-                          </TouchableOpacity>
-                        </View>
-                      </TouchableWithoutFeedback>
-                      
-                      {taskList.length > 0 ? (
-                        <>
-                          {Object.entries(groupedTasks).map(([groupKey, group]) => (
-                            <View key={groupKey} style={styles.groupContainer}>
-                              {renderGroupHeader(group, groupKey)}
-                              {group.tasks.map((task, index) => 
-                                renderTaskItem(task, index === group.tasks.length - 1)
-                              )}
-                            </View>
-                          ))}
-                        </>
-                      ) : (
-                        <View style={styles.emptyList}>
-                          <Ionicons name="list-outline" size={48} color={theme.textSecondary} />
-                          <Text style={[styles.emptyListText, { color: theme.textSecondary }]}>
-                            No tasks added yet
-                          </Text>
-                          <TouchableOpacity
-                            style={styles.switchTabButton}
-                            onPress={() => setActiveTab('add')}
-                          >
-                            <Text style={[styles.switchTabText, { color: theme.primary }]}>
-                              Add a task
-                            </Text>
-                          </TouchableOpacity>
-                        </View>
-                      )}
-                      
-                      {/* Save All Button */}
-                      {taskList.length > 0 && (
-                        <TouchableOpacity
-                          style={[
-                            styles.saveAllButtonScrollable,
-                            {
-                              borderRadius: scaleWidth(12),
-                              overflow: 'hidden',
-                              shadowColor: '#000',
-                              shadowOffset: { width: 0, height: 4 },
-                              shadowOpacity: 0.2,
-                              shadowRadius: 8,
-                              elevation: 5,
-                              marginTop: spacing.m,
-                              marginBottom: spacing.xl,
-                            }
-                          ]}
-                          onPress={handleSaveAll}
-                          accessible={true}
-                          accessibilityRole="button"
-                          accessibilityLabel="Save all tasks"
-                          accessibilityHint="Saves all tasks in the list"
-                        >
-                          <LinearGradient
-                            colors={[theme.primary, theme.primary + 'DD']}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                            style={{
-                              flex: 1,
-                              flexDirection: 'row',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              paddingVertical: spacing.m,
-                              paddingHorizontal: spacing.l,
-                            }}
-                          >
-                            <LinearGradient
-                              colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0)']}
-                              start={{ x: 0, y: 0 }}
-                              end={{ x: 0, y: 1 }}
-                              style={{
-                                position: 'absolute',
-                                left: 0,
-                                right: 0,
-                                top: 0,
-                                height: '50%',
-                              }}
-                            />
-                            <Ionicons 
-                              name="checkmark-circle" 
-                              size={scaleWidth(24)} 
-                              color="#FFFFFF" 
-                              style={{ marginRight: spacing.s }}
-                            />
-                            <Text style={[
-                              styles.saveAllButtonText,
-                              {
-                                fontSize: fontSizes.m,
-                                fontWeight: '600',
-                                color: '#FFFFFF'
-                              }
-                            ]}>
-                              {taskList.length === 1 ? 'Save Task' : `Save All Tasks (${taskList.length})`}
-                            </Text>
-                          </LinearGradient>
-                        </TouchableOpacity>
-                      )}
-                    </ScrollView>
-                  )}
+                          );
+                        }}
+                      />
+                    )}
+                    swipeEnabled={true}
+                    lazy={false}
+                    removeClippedSubviews={false}
+                    style={{
+                      flex: 1,
+                      backgroundColor: 'transparent'
+                    }}
+                    sceneContainerStyle={{
+                      backgroundColor: 'transparent'
+                    }}
+                  />
                 </View>
             </KeyboardAvoidingView>
           </Animated.View>
@@ -1630,7 +1578,7 @@ const AddTaskModal = ({
         onAddToList={(newTask) => {
           setTaskList([...taskList, newTask]);
           setTitle(''); // Reset title
-          setActiveTab('list'); // Switch to list tab
+          setIndex(1); // Switch to list tab
           setShowTaskInputModal(false);
         }}
         taskData={{

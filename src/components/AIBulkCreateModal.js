@@ -253,6 +253,15 @@ const AIBulkCreateModal = ({
     }
   };
   
+  // Handle navigation without creating (preview only)
+  const handleStepPreview = (direction) => {
+    if (direction === 'next' && currentStep < totalSteps - 1) {
+      setCurrentStep(currentStep + 1);
+    } else if (direction === 'prev' && currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+  
   // Create individual items using AppContext
   const createGoal = async (goalData) => {
     const { addGoal } = appContext;
@@ -450,9 +459,48 @@ const AIBulkCreateModal = ({
               </TouchableOpacity>
               
               <View style={styles.headerContent}>
-                <Text style={[styles.title, { color: theme.text }]}>
-                  Create Items
-                </Text>
+                <View style={styles.titleRow}>
+                  <TouchableOpacity
+                    onPress={() => handleStepPreview('prev')}
+                    style={[
+                      styles.navArrow,
+                      currentStep === 0 && styles.navArrowDisabled
+                    ]}
+                    disabled={currentStep === 0}
+                    accessible={true}
+                    accessibilityLabel="Preview previous step"
+                    accessibilityRole="button"
+                  >
+                    <Ionicons 
+                      name="chevron-back" 
+                      size={20} 
+                      color={currentStep === 0 ? theme.textSecondary : theme.text} 
+                    />
+                  </TouchableOpacity>
+                  
+                  <Text style={[styles.title, { color: theme.text }]}>
+                    Create Items
+                  </Text>
+                  
+                  <TouchableOpacity
+                    onPress={() => handleStepPreview('next')}
+                    style={[
+                      styles.navArrow,
+                      currentStep >= totalSteps - 1 && styles.navArrowDisabled
+                    ]}
+                    disabled={currentStep >= totalSteps - 1}
+                    accessible={true}
+                    accessibilityLabel="Preview next step"
+                    accessibilityRole="button"
+                  >
+                    <Ionicons 
+                      name="chevron-forward" 
+                      size={20} 
+                      color={currentStep >= totalSteps - 1 ? theme.textSecondary : theme.text} 
+                    />
+                  </TouchableOpacity>
+                </View>
+                
                 <Text style={[styles.progressText, { color: theme.textSecondary }]}>
                   Step {currentStep + 1} of {totalSteps}
                 </Text>
@@ -531,6 +579,23 @@ const styles = StyleSheet.create({
   headerContent: {
     flex: 1,
     alignItems: 'center',
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.m,
+  },
+  navArrow: {
+    padding: spacing.xs,
+    borderRadius: scaleWidth(16),
+    minWidth: accessibility.minTouchTarget / 2,
+    minHeight: accessibility.minTouchTarget / 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  navArrowDisabled: {
+    opacity: 0.3,
   },
   title: {
     fontSize: fontSizes.xl,

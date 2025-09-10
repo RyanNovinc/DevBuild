@@ -128,7 +128,14 @@ const DayView = ({
             ensureAccessibleTouchTarget(scaleWidth(180), scaleHeight(50)),
             { backgroundColor: theme.primary }
           ]}
-          onPress={handleAddTimeBlock}
+          onPress={() => {
+            // Disable during tour
+            if (isTourActive) {
+              console.log('🎯 DayView: Add TimeBlock button disabled during tour');
+              return;
+            }
+            handleAddTimeBlock();
+          }}
           accessible={true}
           accessibilityRole="button"
           accessibilityLabel="Add time block"
@@ -331,7 +338,14 @@ const DayView = ({
             opacity: 0.95
           }
         ]}
-        onPress={() => onTimeBlockPress(block)}
+        onPress={() => {
+          // Disable during tour to avoid overwhelming users
+          if (isTourActive) {
+            console.log('🎯 DayView: Timeblock press disabled during tour');
+            return;
+          }
+          onTimeBlockPress(block);
+        }}
         onLongPress={(event) => handleLocalTimeBlockLongPress && handleLocalTimeBlockLongPress(block, event)}
         activeOpacity={0.7}
         accessible={true}
@@ -796,6 +810,12 @@ const DayView = ({
             style={styles.timeGridContainer}
             activeOpacity={1}
             onPress={(event) => {
+              // Disable timeblock creation during tour
+              if (isTourActive) {
+                console.log('🎯 DayView: Timeblock creation disabled during tour');
+                return;
+              }
+              
               // Collapse expanded time block and confirmation when tapping away
               if ((expandedTimeBlockId || confirmDeleteId) && handleCollapseTimeBlock) {
                 handleCollapseTimeBlock();

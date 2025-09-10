@@ -164,6 +164,7 @@ const PricingScreen = ({ navigation, route }) => {
   const [isTestMode, setIsTestMode] = useState(false);
   const [realFounderSpots, setRealFounderSpots] = useState(1000);
   const [userFounderNumber, setUserFounderNumber] = useState(null);
+  const [devModeActive, setDevModeActive] = useState(false);
   
   // AI Upsell Modal state
   const [showAIUpsell, setShowAIUpsell] = useState(false);
@@ -288,7 +289,7 @@ const PricingScreen = ({ navigation, route }) => {
       if (data && data.success && typeof data.availableSpots === 'number') {
         console.log(`Fetched founder spots: ${data.availableSpots}`);
         setRealFounderSpots(data.availableSpots); // Store the real value
-        if (!isTestMode) {
+        if (!isTestMode && !devModeActive) {
           setFounderSpotsRemaining(data.availableSpots);
         }
         
@@ -367,7 +368,7 @@ const PricingScreen = ({ navigation, route }) => {
         if (remainingSpots) {
           const spots = parseInt(remainingSpots);
           setRealFounderSpots(spots);
-          if (!isTestMode) {
+          if (!isTestMode && !devModeActive) {
             setFounderSpotsRemaining(spots);
           }
         }
@@ -1036,6 +1037,238 @@ const PricingScreen = ({ navigation, route }) => {
         spotsRemaining={founderSpotsRemaining}
         theme={theme}
       />
+
+      {/* Developer Panel - Only in dev mode */}
+      {__DEV__ && showDevButtons && (
+        <ScrollView style={[styles.testModePanel, { 
+          position: 'absolute',
+          bottom: 70,
+          right: 10,
+          left: 10,
+          maxHeight: height * 0.6,
+          backgroundColor: 'rgba(255, 0, 0, 0.05)',
+          borderColor: 'rgba(255, 0, 0, 0.3)',
+        }]}>
+          <View style={styles.testModeHeader}>
+            <Ionicons name="construct" size={20} color="#FF3B30" />
+            <Text style={[styles.testModeTitle, { color: theme.text }]}>
+              PRICING DEVELOPER PANEL {devModeActive ? '🔴 ACTIVE' : '⚪ STANDBY'}
+            </Text>
+          </View>
+          
+          {/* Founder Spots Management */}
+          <View style={styles.testModeOption}>
+            <Text style={[styles.testModeLabel, { color: theme.text }]}>
+              Founder Spots: {founderSpotsRemaining} / 1000
+            </Text>
+            <View style={styles.testModeSegment}>
+              <TouchableOpacity
+                style={[styles.testModeSegmentButton, { backgroundColor: '#FF6B6B', borderColor: theme.border }]}
+                onPress={() => {
+                  setDevModeActive(true);
+                  setFounderSpotsRemaining(0);
+                }}
+              >
+                <Text style={[styles.testModeSegmentText, { color: '#FFFFFF' }]}>Empty</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.testModeSegmentButton, { backgroundColor: '#FF9800', borderColor: theme.border }]}
+                onPress={() => {
+                  setDevModeActive(true);
+                  setFounderSpotsRemaining(50);
+                }}
+              >
+                <Text style={[styles.testModeSegmentText, { color: '#FFFFFF' }]}>Low</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.testModeSegmentButton, { backgroundColor: '#4CAF50', borderColor: theme.border }]}
+                onPress={() => {
+                  setDevModeActive(true);
+                  setFounderSpotsRemaining(500);
+                }}
+              >
+                <Text style={[styles.testModeSegmentText, { color: '#FFFFFF' }]}>Mid</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.testModeSegmentButton, { backgroundColor: '#2196F3', borderColor: theme.border }]}
+                onPress={() => {
+                  setDevModeActive(true);
+                  setFounderSpotsRemaining(1000);
+                }}
+              >
+                <Text style={[styles.testModeSegmentText, { color: '#FFFFFF' }]}>Full</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* User Tier Simulation */}
+          <View style={styles.testModeOption}>
+            <Text style={[styles.testModeLabel, { color: theme.text }]}>User Tier (affects pricing):</Text>
+            <View style={styles.testModeSegment}>
+              <TouchableOpacity
+                style={[styles.testModeSegmentButton, { 
+                  backgroundColor: founderSpotsRemaining > 900 ? theme.primary : 'transparent',
+                  borderColor: theme.border 
+                }]}
+                onPress={() => {
+                  setDevModeActive(true);
+                  setFounderSpotsRemaining(950);
+                }}
+              >
+                <Text style={[styles.testModeSegmentText, { 
+                  color: founderSpotsRemaining > 900 ? '#FFFFFF' : theme.textSecondary 
+                }]}>Early (1-100)</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.testModeSegmentButton, { 
+                  backgroundColor: founderSpotsRemaining <= 900 && founderSpotsRemaining > 500 ? theme.primary : 'transparent',
+                  borderColor: theme.border 
+                }]}
+                onPress={() => {
+                  setDevModeActive(true);
+                  setFounderSpotsRemaining(700);
+                }}
+              >
+                <Text style={[styles.testModeSegmentText, { 
+                  color: founderSpotsRemaining <= 900 && founderSpotsRemaining > 500 ? '#FFFFFF' : theme.textSecondary 
+                }]}>Mid (101-500)</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.testModeSegmentButton, { 
+                  backgroundColor: founderSpotsRemaining <= 500 && founderSpotsRemaining > 0 ? theme.primary : 'transparent',
+                  borderColor: theme.border 
+                }]}
+                onPress={() => {
+                  setDevModeActive(true);
+                  setFounderSpotsRemaining(200);
+                }}
+              >
+                <Text style={[styles.testModeSegmentText, { 
+                  color: founderSpotsRemaining <= 500 && founderSpotsRemaining > 0 ? '#FFFFFF' : theme.textSecondary 
+                }]}>Final (501-1000)</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Test Mode Toggle */}
+          <View style={styles.testModeOption}>
+            <Text style={[styles.testModeLabel, { color: theme.text }]}>Test Mode:</Text>
+            <TouchableOpacity
+              style={[styles.testModeButton, { 
+                backgroundColor: isTestMode ? '#4CAF50' : '#666'
+              }]}
+              onPress={() => setIsTestMode(!isTestMode)}
+            >
+              <Text style={styles.testModeButtonText}>
+                {isTestMode ? 'ENABLED' : 'DISABLED'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Active Tab Navigation */}
+          <View style={styles.testModeOption}>
+            <Text style={[styles.testModeLabel, { color: theme.text }]}>Active Tab:</Text>
+            <View style={styles.testModeSegment}>
+              <TouchableOpacity
+                style={[styles.testModeSegmentButton, { 
+                  backgroundColor: activeTab === 'lifetime' ? theme.primary : 'transparent',
+                  borderColor: theme.border 
+                }]}
+                onPress={() => setActiveTab('lifetime')}
+              >
+                <Text style={[styles.testModeSegmentText, { 
+                  color: activeTab === 'lifetime' ? '#FFFFFF' : theme.textSecondary 
+                }]}>Pro Access</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.testModeSegmentButton, { 
+                  backgroundColor: activeTab === 'subscription' ? theme.primary : 'transparent',
+                  borderColor: theme.border 
+                }]}
+                onPress={() => setActiveTab('subscription')}
+              >
+                <Text style={[styles.testModeSegmentText, { 
+                  color: activeTab === 'subscription' ? '#FFFFFF' : theme.textSecondary 
+                }]}>AI Plans</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Purchase Flow Testing */}
+          <View style={styles.testModeOption}>
+            <Text style={[styles.testModeLabel, { color: theme.text }]}>Test Purchases:</Text>
+            <View style={styles.testModeSegment}>
+              <TouchableOpacity
+                style={[styles.testModeSegmentButton, { backgroundColor: '#9C27B0', borderColor: theme.border }]}
+                onPress={() => {
+                  setSelectedPlan('founder');
+                  setAiModalVisible(true);
+                  setPurchasedBasePlan({ id: 'founder', name: 'Founder Access' });
+                }}
+              >
+                <Text style={[styles.testModeSegmentText, { color: '#FFFFFF' }]}>Founder Flow</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.testModeSegmentButton, { backgroundColor: '#2196F3', borderColor: theme.border }]}
+                onPress={() => {
+                  setAiModalVisible(true);
+                  setPurchasedBasePlan(null);
+                }}
+              >
+                <Text style={[styles.testModeSegmentText, { color: '#FFFFFF' }]}>Standalone AI</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* State Management */}
+          <View style={styles.testModeOption}>
+            <Text style={[styles.testModeLabel, { color: theme.text }]}>State Controls:</Text>
+            <TouchableOpacity
+              style={[styles.testModeButton, { backgroundColor: '#FF9800' }]}
+              onPress={() => {
+                setSelectedPlan('');
+                setAiModalVisible(false);
+                setPurchasedBasePlan(null);
+                setHighlightPlan(null);
+                setPulseCredits(false);
+                setDevModeActive(false);
+                setFounderSpotsRemaining(realFounderSpots); // Restore real data
+              }}
+            >
+              <Text style={styles.testModeButtonText}>Reset All States</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* App Navigation */}
+          <View style={styles.testModeOption}>
+            <Text style={[styles.testModeLabel, { color: theme.text }]}>Quick Navigation:</Text>
+            <View style={styles.testModeSegment}>
+              <TouchableOpacity
+                style={[styles.testModeSegmentButton, { backgroundColor: '#795548', borderColor: theme.border }]}
+                onPress={() => navigation.navigate('ProfileScreen')}
+              >
+                <Text style={[styles.testModeSegmentText, { color: '#FFFFFF' }]}>Profile</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.testModeSegmentButton, { backgroundColor: '#607D8B', borderColor: theme.border }]}
+                onPress={() => navigation.navigate('CommunityScreen')}
+              >
+                <Text style={[styles.testModeSegmentText, { color: '#FFFFFF' }]}>Community</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.testModeSegmentButton, { backgroundColor: '#E91E63', borderColor: theme.border }]}
+                onPress={() => navigation.navigate('AIAssistantScreen')}
+              >
+                <Text style={[styles.testModeSegmentText, { color: '#FFFFFF' }]}>AI Assistant</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <Text style={[styles.testModeNote, { color: theme.textSecondary }]}>
+            This comprehensive developer panel allows testing all pricing scenarios, user tiers, and purchase flows. Use the controls above to simulate different founder situations and test the complete pricing experience.
+          </Text>
+        </ScrollView>
+      )}
 
       {/* Tiny Developer Toggle - Only in dev mode - moved to bottom right */}
       {__DEV__ && (

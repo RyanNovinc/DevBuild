@@ -96,6 +96,7 @@ const AIUpsellModal = ({
           safeInitialTier,
           basePlan
         });
+        console.log('Pricing logic check - standalone:', standalone, 'founderUpsell:', founderUpsell);
       }
       
       // Reset modal state to fresh start every time it opens
@@ -162,7 +163,7 @@ const AIUpsellModal = ({
       icon: 'compass-outline',
       gradient: ['#6B46C1', '#9333EA'],
       features: [
-        'Standard user context',
+        'Standard personal knowledge',
         'For occasional users',
         'Basic AI assistance'
       ]
@@ -177,7 +178,7 @@ const AIUpsellModal = ({
       gradient: ['#DC2626', '#F97316'],
       popular: true,
       features: [
-        'Enhanced user context',
+        'More personal knowledge',
         '3x more daily usage',
         'For daily users'
       ]
@@ -186,15 +187,30 @@ const AIUpsellModal = ({
       name: 'AI Max',
       shortName: 'Max',
       description: 'Maximum AI capabilities',
-      monthlyPrice: 9.99,
-      annualPrice: 99.99,
+      monthlyPrice: 19.99,
+      annualPrice: 199.99,
       icon: 'shield-checkmark-outline',
       gradient: ['#0891B2', '#0D9488'],
       features: [
-        'Complete user context',
+        'Maximum personal knowledge',
         '10x more daily usage',
         'For power users'
       ]
+    }
+  };
+
+  // Psychological pricing helper - round to nearest .09 (so prices end in 9)
+  const psychologicalPrice = (price) => {
+    const wholePart = Math.floor(price);
+    const decimalPart = price - wholePart;
+    
+    // Round to nearest .09, .49, .99
+    if (decimalPart <= 0.24) {
+      return wholePart + 0.09;
+    } else if (decimalPart <= 0.74) {
+      return wholePart + 0.49;
+    } else {
+      return wholePart + 0.99;
     }
   };
 
@@ -202,6 +218,10 @@ const AIUpsellModal = ({
   const getAIPricing = () => {
     const selectedTier = getCurrentAITier();
     const baseTierPrice = selectedTier.monthlyPrice;
+    
+    // Check if founders is sold out - if so, treat as standalone purchase
+    const spotsExhausted = spotsRemaining <= 0;
+    const shouldUseStandalonePricing = standalone || spotsExhausted;
     
     const baseRates = {
       monthly: { discount: 0 },
@@ -246,50 +266,57 @@ const AIUpsellModal = ({
         savings: 0,
         savingsMonths: 0,
         period: '1 Month',
-        subtitle: founderUpsell ? 'FREE with founder package' : 'Try it out'
+        subtitle: (founderUpsell && !spotsExhausted) ? 'FREE with founder package' : 'Try it out'
       },
       '3months': {
-        price: baseMonthly * 0.90, // 10% discount = 90% of original price
-        total: founderUpsell ?
-          // Pay for 3 months with 10% discount (then founder credit removes 1 more = pay for 2) - psychological pricing
-          (baseMonthly === 2.99 ? 8.09 : baseMonthly === 4.99 ? 13.49 : 26.99) :
-          // Regular pricing - 10% discount
-          (baseMonthly === 2.99 ? 8.09 : baseMonthly === 4.99 ? 13.49 : 26.99),
-        savings: baseMonthly === 2.99 ? 0.90 : baseMonthly === 4.99 ? 1.50 : 3.00, // 10% savings
-        savingsMonths: 0, // Keep as 0 to show percentage savings instead
+        price: shouldUseStandalonePricing ? 
+          psychologicalPrice(baseMonthly * 3 * 0.90) / 3 : // Direct purchase: 10% off for 3 months
+          psychologicalPrice(baseMonthly * 2 * 0.95) / 3, // Founder: Pay for 2, get 3 + 5% off
+        total: shouldUseStandalonePricing ? 
+          psychologicalPrice(baseMonthly * 3 * 0.90) : // Direct purchase: 10% off
+          psychologicalPrice(baseMonthly * 2 * 0.95), // Founder: Pay for 2 months with 5% discount
+        savings: shouldUseStandalonePricing ?
+          baseMonthly * 3 - (baseMonthly * 3 * 0.90) : // Direct: savings from 10% off
+          baseMonthly * 3 - (baseMonthly * 2 * 0.95), // Founder: savings vs full price
+        savingsMonths: shouldUseStandalonePricing ? 0 : 1, // Direct: no free months, Founder: 1 month free
         period: '3 Months',
-        subtitle: founderUpsell ? 'Pay for 2, get 3 + 10% off' : 'Save 10%'
+        subtitle: shouldUseStandalonePricing ? '10% off' : founderUpsell ? 'Pay for 2, get 3 months + 5% off' : 'Pay for 2, get 3 months + 5% off'
       },
       '6months': {
-        price: baseMonthly === 2.99 ? 2.50 : baseMonthly === 4.99 ? 4.17 : 8.33, // Back-calculated from total
-        total: founderUpsell ? 
-          // Pay for 4 months (5 months - 1 founder credit) - psychological pricing
-          (baseMonthly === 2.99 ? 11.99 : baseMonthly === 4.99 ? 19.99 : 39.99) :
-          // Regular pricing - save 1 month 
-          (baseMonthly === 2.99 ? 14.99 : baseMonthly === 4.99 ? 24.99 : 49.99),
-        savings: baseMonthly === 2.99 ? 2.95 : baseMonthly === 4.99 ? 4.95 : 9.95,
-        savingsMonths: 1,
+        price: shouldUseStandalonePricing ? 
+          psychologicalPrice(baseMonthly * 5) / 6 : // Direct purchase: Pay for 5, get 6
+          psychologicalPrice(baseMonthly * 4 * 0.90) / 6, // Founder: Pay for 4, get 6 + 10% off
+        total: shouldUseStandalonePricing ? 
+          psychologicalPrice(baseMonthly * 5) : // Direct purchase: Pay for 5 months
+          psychologicalPrice(baseMonthly * 4 * 0.90), // Founder: Pay for 4 months with 10% discount
+        savings: shouldUseStandalonePricing ?
+          baseMonthly * 6 - (baseMonthly * 5) : // Direct: 1 month free
+          baseMonthly * 6 - (baseMonthly * 4 * 0.90), // Founder: savings vs full price
+        savingsMonths: shouldUseStandalonePricing ? 1 : 2, // Direct: 1 month free, Founder: 2 months free
         period: '6 Months',
-        subtitle: founderUpsell ? 'Pay for 4, get 6' : 'Most popular',
-        badge: founderUpsell ? 'FOUNDER SPECIAL' : 'RECOMMENDED'
+        subtitle: shouldUseStandalonePricing ? 'Pay for 5, get 6 months' : founderUpsell ? 'Pay for 4, get 6 months + 10% off' : 'Pay for 4, get 6 months + 10% off',
+        badge: (founderUpsell && !spotsExhausted) ? 'FOUNDER SPECIAL' : 'RECOMMENDED'
       },
       '12months': {
-        price: baseMonthly === 2.99 ? 2.25 : baseMonthly === 4.99 ? 3.75 : 7.50, // Back-calculated from total
-        total: founderUpsell ?
-          // Pay for 7 months (8 months - 1 founder credit) - psychological pricing  
-          (baseMonthly === 2.99 ? 20.99 : baseMonthly === 4.99 ? 34.99 : 69.99) :
-          // Regular pricing - save 3 months
-          (baseMonthly === 2.99 ? 26.99 : baseMonthly === 4.99 ? 44.99 : 89.99),
-        savings: baseMonthly === 2.99 ? 8.89 : baseMonthly === 4.99 ? 14.89 : 29.89,
-        savingsMonths: 3,
+        price: shouldUseStandalonePricing ? 
+          psychologicalPrice(baseMonthly * 9) / 12 : // Direct purchase: Pay for 9, get 12
+          psychologicalPrice(baseMonthly * 7 * 0.85) / 12, // Founder: Pay for 7, get 12 + 15% off
+        total: shouldUseStandalonePricing ? 
+          psychologicalPrice(baseMonthly * 9) : // Direct purchase: Pay for 9 months
+          psychologicalPrice(baseMonthly * 7 * 0.85), // Founder: Pay for 7 months with 15% discount
+        savings: shouldUseStandalonePricing ?
+          baseMonthly * 12 - (baseMonthly * 9) : // Direct: 3 months free
+          baseMonthly * 12 - (baseMonthly * 7 * 0.85), // Founder: savings vs full price
+        savingsMonths: shouldUseStandalonePricing ? 3 : 5, // Direct: 3 months free, Founder: 5 months free
         period: '12 Months',
-        subtitle: founderUpsell ? 'Pay for 7, get 12' : 'Best value',
-        badge: founderUpsell ? 'MAXIMUM SAVINGS' : '3 MONTHS FREE'
+        subtitle: shouldUseStandalonePricing ? 'Pay for 9, get 12 months' : founderUpsell ? 'Pay for 7, get 12 months + 15% off' : 'Pay for 7, get 12 months + 15% off',
+        badge: (founderUpsell && !spotsExhausted) ? 'MAXIMUM SAVINGS' : 'BEST VALUE'
       }
     };
     
     // Recalculate per-month prices for founder upsells (totals already include founder credit)
-    if (founderUpsell) {
+    // Only apply this if founders is still available (not sold out)
+    if (founderUpsell && !spotsExhausted) {
       Object.keys(basePricing).forEach(duration => {
         const monthCount = duration === '1month' ? 1 : duration === '3months' ? 3 : duration === '6months' ? 6 : 12;
         basePricing[duration].price = basePricing[duration].total / monthCount;
@@ -718,6 +745,34 @@ const AIUpsellModal = ({
                                   letterSpacing: 0.5,
                                 }}>
                                   POPULAR
+                                </Text>
+                              </View>
+                            )}
+                            
+                            {/* FREE Badge for AI Light when founder upsell */}
+                            {tierId === 'compass' && founderUpsell && spotsRemaining > 0 && (
+                              <View style={{
+                                position: 'absolute',
+                                top: 16,
+                                right: 16,
+                                backgroundColor: '#22C55E',
+                                paddingHorizontal: 12,
+                                paddingVertical: 6,
+                                borderRadius: 12,
+                                shadowColor: '#22C55E',
+                                shadowOffset: { width: 0, height: 2 },
+                                shadowOpacity: 0.3,
+                                shadowRadius: 4,
+                                elevation: 8,
+                                zIndex: 2,
+                              }}>
+                                <Text style={{
+                                  fontSize: 9,
+                                  fontWeight: '700',
+                                  color: '#FFFFFF',
+                                  letterSpacing: 0.5,
+                                }}>
+                                  FREE
                                 </Text>
                               </View>
                             )}
@@ -1194,7 +1249,7 @@ const AIUpsellModal = ({
                         }}>
                           {aiSkipped ? 
                             (founderUpsell ? formatPrice(getCurrentAITier().monthlyPrice) : '$0.00') : 
-                            formatPrice(getCurrentAITier().monthlyPrice * (selectedDuration === '1month' ? 1 : selectedDuration === '3months' ? 3 : selectedDuration === '6months' ? 6 : 12))
+                            formatPrice(pricing[selectedDuration].total)
                           }
                         </Text>
                       </View>
@@ -1240,9 +1295,9 @@ const AIUpsellModal = ({
                               {aiSkipped ? 
                                 '1 month AI Light free with founder access' :
                                 `${selectedDuration === '1month' ? '1 month' : 
-                                  selectedDuration === '3months' ? '1 month + 10% off' :
-                                  selectedDuration === '6months' ? '2 months' : 
-                                  '5 months'} free with founder access`
+                                  selectedDuration === '3months' ? '1 month free + 5% off' :
+                                  selectedDuration === '6months' ? '2 months free + 10% off' : 
+                                  '5 months free + 15% off'} with founder access`
                               }
                             </Text>
                           </View>
@@ -1255,9 +1310,8 @@ const AIUpsellModal = ({
                               // For "Just Give Me 1 Month AI Light" - hardcode $2.99 savings
                               selectedDuration === '1month' && selectedAITier === 'compass' ? 
                                 2.99 : 
-                                // For other durations, calculate normally
-                                (getCurrentAITier().monthlyPrice * (selectedDuration === '1month' ? 1 : selectedDuration === '3months' ? 3 : selectedDuration === '6months' ? 6 : 12)) - 
-                                pricing[selectedDuration].total
+                                // Use the pre-calculated savings from pricing structure
+                                pricing[selectedDuration].savings
                             )}
                           </Text>
                         </View>
@@ -1313,11 +1367,8 @@ const AIUpsellModal = ({
                             color: '#22C55E',
                           }}>
                             {selectedDuration === '1month' ? '$0.00' : 
-                             '-' + formatPrice(
-                              // Use the actual savings from the pricing structure
-                              (getCurrentAITier().monthlyPrice * (selectedDuration === '1month' ? 1 : selectedDuration === '3months' ? 3 : selectedDuration === '6months' ? 6 : 12)) - 
-                              pricing[selectedDuration].total
-                            )}
+                             '-' + formatPrice(pricing[selectedDuration].savings)
+                            }
                           </Text>
                         </View>
                       </View>
@@ -1414,7 +1465,7 @@ const AIUpsellModal = ({
                         marginBottom: 12,
                         paddingLeft: 38,
                       }}>
-                        Get {getCurrentAITier().name} AI assistant for just ${getCurrentAITier().monthlyPrice.toFixed(2)}/month. Cancel anytime.
+                        Get {getCurrentAITier().name} AI assistant for just ${formatPrice(pricing['1month'].price)}/month. Cancel anytime.
                       </Text>
 
                       <TouchableOpacity
@@ -1439,7 +1490,7 @@ const AIUpsellModal = ({
                           fontWeight: '600',
                           color: '#FFD700',
                         }}>
-                          Add 1 Month {getCurrentAITier().name} - ${getCurrentAITier().monthlyPrice.toFixed(2)}
+                          Add 1 Month {getCurrentAITier().name} - ${formatPrice(pricing['1month'].price)}
                         </Text>
                       </TouchableOpacity>
                     </View>
@@ -1556,7 +1607,7 @@ const AIUpsellModal = ({
                           fontSize: 13,
                           color: 'rgba(0,0,0,0.6)',
                         }}>
-                          {`${pricing[selectedDuration].period} for ${formatPrice(pricing[selectedDuration].total)} →`}
+                          {`${pricing[selectedDuration].period} for ${(founderUpsell && spotsRemaining > 0 && selectedAITier === 'compass' && selectedDuration === '1month') ? 'FREE' : formatPrice(pricing[selectedDuration].total)} →`}
                         </Text>
                       </>
                     ) : (
@@ -1573,7 +1624,7 @@ const AIUpsellModal = ({
                           fontSize: 13,
                           color: 'rgba(0,0,0,0.6)',
                         }}>
-                          {(founderUpsell && spotsRemaining > 0) ? 'FREE • Start with monthly →' : `${formatPrice(pricing['1month'].total)} • Start with monthly →`}
+                          {(founderUpsell && spotsRemaining > 0 && selectedAITier === 'compass') ? 'FREE • Start with monthly →' : `${formatPrice(pricing['1month'].total)} • Start with monthly →`}
                         </Text>
                       </>
                     )}
@@ -1654,13 +1705,13 @@ const AIUpsellModal = ({
                   color: '#FFFFFF',
                   marginBottom: 2,
                 }}>
-                  Just Give Me 1 Month {getCurrentAITier().name}
+                  Just Give Me 1 Month AI Plus
                 </Text>
                 <Text style={{
                   fontSize: 12,
                   color: 'rgba(255,255,255,0.6)',
                 }}>
-                  Free with your founder membership
+                  Included in your founder purchase
                 </Text>
               </TouchableOpacity>
             ) : (

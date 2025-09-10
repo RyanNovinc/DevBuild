@@ -680,6 +680,24 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
   const lastScale = useRef(1);
   const scrollViewRef = useRef(null);
   
+  // Set zoom to 150% during tour for better visibility
+  useEffect(() => {
+    // Use requestAnimationFrame to avoid useInsertionEffect conflicts
+    const updateZoom = () => {
+      if (isTourActive) {
+        console.log('🎯 TimeScreen: Setting zoom to 150% for tour');
+        setScale(1.5);
+        lastScale.current = 1.5;
+      } else {
+        console.log('🎯 TimeScreen: Resetting zoom to 100% after tour');
+        setScale(1);
+        lastScale.current = 1;
+      }
+    };
+    
+    requestAnimationFrame(updateZoom);
+  }, [isTourActive]);
+  
   // For tracking focal point and scroll position
   const startScrollY = useRef(0);
   const focalPoint = useRef({ x: 0, y: 0 });
@@ -711,6 +729,12 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
 
   // Simple +/- buttons zoom controls
   const handleZoomIn = () => {
+    // Disable zoom during tour to avoid overwhelming users
+    if (isTourActive) {
+      console.log('🎯 TimeScreen: Zoom in disabled during tour');
+      return;
+    }
+    
     animateButtonPress();
     
     const newScale = Math.min(scale + 0.1, 2);
@@ -743,6 +767,12 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
   };
   
   const handleZoomOut = () => {
+    // Disable zoom during tour to avoid overwhelming users
+    if (isTourActive) {
+      console.log('🎯 TimeScreen: Zoom out disabled during tour');
+      return;
+    }
+    
     animateButtonPress();
     
     const newScale = Math.max(scale - 0.1, 0.4);
@@ -921,6 +951,12 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
   
   // Navigate to previous day/week/month
   const handlePrevious = (tabName) => {
+    // Disable date navigation during tour
+    if (isTourActive) {
+      console.log('🎯 TimeScreen: Previous navigation disabled during tour');
+      return;
+    }
+    
     animateButtonPress();
     
     const newDate = new Date(currentDate);
@@ -945,6 +981,12 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
   
   // Navigate to next day/week/month
   const handleNext = (tabName) => {
+    // Disable date navigation during tour
+    if (isTourActive) {
+      console.log('🎯 TimeScreen: Next navigation disabled during tour');
+      return;
+    }
+    
     animateButtonPress();
     
     console.log('🎯 TimeScreen: handleNext called for tab:', tabName);
@@ -980,6 +1022,12 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
   
   // Go to today
   const handleToday = () => {
+    // Disable today navigation during tour
+    if (isTourActive) {
+      console.log('🎯 TimeScreen: Today navigation disabled during tour');
+      return;
+    }
+    
     animateButtonPress();
     setCurrentDate(new Date());
   };
@@ -1343,6 +1391,36 @@ const TimeScreen = ({ navigation, isFullscreen: externalIsFullscreen, onFullScre
             }
           }
         }
+      }
+      
+      // Ultimate fallback: create mock data for tour if no task data is available
+      if (!taskInfo) {
+        console.warn('🎯 Tour: Creating mock task data for tour timeblock since no real task data found');
+        taskInfo = {
+          task: {
+            id: 'tour-mock-task',
+            title: 'Complete onboarding task',
+            status: 'in-progress',
+            milestoneId: 'tour-mock-milestone'
+          },
+          milestone: {
+            id: 'tour-mock-milestone',
+            title: 'Getting Started',
+            goalId: 'tour-mock-goal'
+          },
+          goal: {
+            id: 'tour-mock-goal',
+            title: 'Personal Development',
+            color: '#4CAF50'
+          }
+        };
+        
+        // Store mock data globally
+        global.tourSelectedTask = taskInfo.task;
+        global.tourSelectedMilestone = taskInfo.milestone;
+        global.tourSelectedGoal = taskInfo.goal;
+        
+        console.log('🎯 Tour: Mock task data created for tour');
       }
       
       // Create the actual time block data with proper structure
@@ -2972,12 +3050,30 @@ const handleCalendarViewToggle = () => {
             options={{
               tabBarAccessibilityLabel: "Week view",
             }}
+            listeners={{
+              tabPress: (e) => {
+                // Prevent navigation to Week tab during tour
+                if (isTourActive) {
+                  console.log('🎯 TimeScreen: Week tab press disabled during tour');
+                  e.preventDefault();
+                }
+              },
+            }}
           />
           <Tab.Screen 
             name="Month" 
             component={MemoizedMonthTab}
             options={{
               tabBarAccessibilityLabel: "Month view",
+            }}
+            listeners={{
+              tabPress: (e) => {
+                // Prevent navigation to Month tab during tour
+                if (isTourActive) {
+                  console.log('🎯 TimeScreen: Month tab press disabled during tour');
+                  e.preventDefault();
+                }
+              },
             }}
           />
           </Tab.Navigator>

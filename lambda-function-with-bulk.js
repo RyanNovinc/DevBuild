@@ -54,7 +54,7 @@ SINGLE REQUESTS → Create immediately:
 COMPREHENSIVE REQUESTS → Propose plan first, get approval:
 - "Break it down", "comprehensive plan", "with milestones and tasks"
 - "Help me plan X", "create everything for Y"
-- After approval → Create all items
+- After approval → Use createBulkPlan for complete plans with goal + milestones
 
 KEY PHRASES for comprehensive: "break down", "plan", "comprehensive", "with milestones", "step by step"
 
@@ -68,6 +68,8 @@ TOOLS:
 - Calculate dates from today when user specifies timeframes
 - For timeblocks: support daily/weekly/fortnightly/monthly recurring
 - For multiple tasks: Use createTaskBatch for better UX (single modal instead of multiple)
+- For comprehensive plans: Use createBulkPlan to create goal + milestones + tasks in one modal
+- All tasks are created as "to do" - users organize them in Kanban board afterward
 
 DECISION LOGIC:
 - High confidence single → Create now
@@ -78,7 +80,7 @@ DECISION LOGIC:
 Always provide helpful responses while using appropriate tools.`;
 
 // Abbreviated prompt for follow-ups
-const ABBREVIATED_SYSTEM_PROMPT = `LifeCompass AI. ${getCurrentDateContext()} Single item → create now. Comprehensive → propose first. Plan approval → execute. Multiple tasks → use createTaskBatch. Extract complete data, never truncate.`;
+const ABBREVIATED_SYSTEM_PROMPT = `LifeCompass AI. ${getCurrentDateContext()} Single item → create now. Comprehensive → propose first. Plan approval → use createBulkPlan. Multiple tasks → use createTaskBatch. Extract complete data, never truncate. All tasks default to "to do".`;
 
 // Function definitions
 const tools = [
@@ -153,14 +155,9 @@ const tools = [
           title: { type: "string", description: "Task title" },
           description: { type: "string", description: "How to complete task" },
           milestoneTitle: { type: "string", description: "Parent milestone (optional)" },
-          goalTitle: { type: "string", description: "Parent goal (optional)" },
-          status: {
-            type: "string",
-            enum: ["todo", "in-progress", "completed"],
-            description: "Task status"
-          }
+          goalTitle: { type: "string", description: "Parent goal (optional)" }
         },
-        required: ["title", "status"]
+        required: ["title"]
       }
     }
   },
@@ -180,19 +177,61 @@ const tools = [
                 title: { type: "string", description: "Task title" },
                 description: { type: "string", description: "How to complete task" },
                 milestoneTitle: { type: "string", description: "Parent milestone (optional)" },
-                goalTitle: { type: "string", description: "Parent goal (optional)" },
-                status: {
-                  type: "string",
-                  enum: ["todo", "in-progress", "completed"],
-                  description: "Task status"
-                }
+                goalTitle: { type: "string", description: "Parent goal (optional)" }
               },
-              required: ["title", "status"]
+              required: ["title"]
             },
             description: "Array of tasks to create"
           }
         },
         required: ["tasks"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "createBulkPlan",
+      description: "Create a comprehensive plan with multiple items (goal, milestones, tasks) in one bulk modal.",
+      parameters: {
+        type: "object",
+        properties: {
+          planTitle: { type: "string", description: "Overall plan title" },
+          planDescription: { type: "string", description: "Brief description of the comprehensive plan" },
+          goal: {
+            type: "object",
+            properties: {
+              title: { type: "string", description: "Goal title" },
+              description: { type: "string", description: "Goal description" },
+              domain: { type: "string", description: "Life domain" },
+              targetDate: { type: "string", description: "ISO date string if specified" }
+            },
+            description: "Main goal for the plan"
+          },
+          milestones: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                title: { type: "string", description: "Milestone title" },
+                description: { type: "string", description: "What will be accomplished" },
+                dueDate: { type: "string", description: "ISO date string if specified" },
+                tasks: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      title: { type: "string", description: "Task title" },
+                      description: { type: "string", description: "Task description" }
+                    }
+                  }
+                }
+              }
+            },
+            description: "Milestones that support the goal"
+          }
+        },
+        required: ["planTitle", "goal", "milestones"]
       }
     }
   },
@@ -377,6 +416,7 @@ exports.handler = async (event) => {
                   'createMilestone': 'createMilestone',
                   'createTask': 'createTask',
                   'createTaskBatch': 'createTaskBatch',
+                  'createBulkPlan': 'createBulkPlan',
                   'createTimeBlock': 'createTimeBlock'
                 };
                 
@@ -398,7 +438,7 @@ exports.handler = async (event) => {
             title = await generateTitle(userMessage, messageHistory);
           }
 
-          // Process actions and embed data in links
+          // Process actions and add embedded data to links
           let processedActions = actions;
           let enhancedResponse = accumulatedResponse;
           
@@ -412,28 +452,66 @@ exports.handler = async (event) => {
             
             // Enhanced response with action links
             const actionTypes = actions.map(a => a.type.replace('create', '').toLowerCase());
-            const actionText = actionTypes.length === 1 
-              ? `a ${actionTypes[0]}` 
-              : actionTypes.length === 2
+            
+            // Check if this is a bulk plan (createBulkPlan) or mixed types that should be treated as bulk
+            const isBulkPlan = actions.some(a => a.type === 'createBulkPlan');
+            const hasMixedTypes = new Set(actionTypes).size > 1 && actions.length > 1;
+            
+            if (isBulkPlan) {
+              // Single bulk plan action
+              const bulkAction = actions.find(a => a.type === 'createBulkPlan');
+              enhancedResponse += `\n\n*I've prepared a comprehensive plan for you.*`;
+              
+              const encodedData = Buffer.from(JSON.stringify(bulkAction.data)).toString('base64');
+              const actionLink = `\n\n[Reopen Full Plan](action://bulk/${encodedData})`;
+              enhancedResponse += actionLink;
+              
+            } else if (hasMixedTypes) {
+              // Multiple different action types - combine into one bulk link
+              const combinedBulkData = {
+                planTitle: 'Comprehensive Plan',
+                planDescription: 'Plan created with multiple items',
+                items: actions.map(action => ({
+                  type: action.type,
+                  data: action.data
+                }))
+              };
+              
+              const actionText = actionTypes.length === 2
                 ? `a ${actionTypes[0]} and a ${actionTypes[1]}`
                 : `${actionTypes.slice(0, -1).join(', ')}, and a ${actionTypes[actionTypes.length - 1]}`;
-            
-            enhancedResponse += `\n\n*I've prepared ${actionText} form${actions.length > 1 ? 's' : ''} for you.*`;
-            
-            // Add action links with embedded data
-            if (processedActions.length === 1) {
+                
+              enhancedResponse += `\n\n*I've prepared ${actionText} for you.*`;
+              
+              const encodedData = Buffer.from(JSON.stringify(combinedBulkData)).toString('base64');
+              const actionLink = `\n\n[Reopen Full Plan](action://bulk/${encodedData})`;
+              enhancedResponse += actionLink;
+              
+            } else if (processedActions.length === 1) {
+              // Single action type
               const action = processedActions[0];
               const actionType = action.type === 'createMilestone' ? 'milestone' : action.type.replace('create', '').toLowerCase();
               const displayType = actionType === 'timeblock' ? 'Time Block' : 
                                 actionType === 'milestone' ? 'Milestone' :
+                                actionType === 'taskbatch' ? 'Tasks' :
                                 actionType.charAt(0).toUpperCase() + actionType.slice(1);
+              
+              enhancedResponse += `\n\n*I've prepared a ${actionType} form for you.*`;
               
               // Encode modal data directly in the link
               const encodedData = Buffer.from(JSON.stringify(action.data)).toString('base64');
               const actionLink = `\n\n[Reopen ${displayType} Form](action://${actionType}/${encodedData})`;
               enhancedResponse += actionLink;
+              
             } else {
+              // Multiple actions of the same type - keep individual links for now
+              const actionText = actionTypes.length === 1 
+                ? `${actionTypes[0]} forms` 
+                : `multiple forms`;
+                
+              enhancedResponse += `\n\n*I've prepared ${actionText} for you.*`;
               enhancedResponse += `\n\nAction links:`;
+              
               for (const action of processedActions) {
                 const actionType = action.type === 'createMilestone' ? 'milestone' : action.type.replace('create', '').toLowerCase();
                 const displayType = actionType === 'timeblock' ? 'Time Block' : 
@@ -558,7 +636,7 @@ function processActionData(functionName, args) {
         description: args.description || '',
         milestoneTitle: args.milestoneTitle || '',
         goalTitle: args.goalTitle || '',
-        status: args.status || 'todo'
+        status: 'todo'
       };
 
     case 'createTaskBatch':
@@ -569,7 +647,29 @@ function processActionData(functionName, args) {
           description: task.description || '',
           milestoneTitle: task.milestoneTitle || '',
           goalTitle: task.goalTitle || '',
-          status: task.status || 'todo'
+          status: 'todo'
+        }))
+      };
+
+    case 'createBulkPlan':
+      return {
+        planTitle: args.planTitle,
+        planDescription: args.planDescription || '',
+        goal: {
+          ...args.goal,
+          color: getDomainColor(args.goal?.domain || 'Other'),
+          icon: getDomainIcon(args.goal?.domain || 'Other')
+        },
+        milestones: (args.milestones || []).map((milestone, milestoneIndex) => ({
+          ...milestone,
+          color: getDomainColor(args.goal?.domain || 'Other'),
+          tasks: (milestone.tasks || []).map((task, taskIndex) => ({
+            id: `task_${Date.now()}_${milestoneIndex}_${taskIndex}_${Math.random().toString(36).substr(2, 9)}`,
+            title: task.title,
+            description: task.description || '',
+            status: 'todo',
+            completed: false
+          }))
         }))
       };
 

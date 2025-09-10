@@ -1,15 +1,76 @@
 // STUPIDEST POSSIBLE SOLUTION - 4 separate cards, no scrolling bullshit
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Animated, Modal, Easing } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Animated, Modal, Easing, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+
+const { width } = Dimensions.get('window');
 
 const DumbAIPlans = ({ selectedPlan, handleSelectPlan, billing, setBilling, highlightPlan, pulseCredits }) => {
   const subscription = billing || 'monthly';
   const setSubscription = setBilling || (() => {});
 
+  // AI Tier definitions (same as AIUpsellModal)
+  const aiTiers = {
+    compass: {
+      name: 'AI Light',
+      shortName: 'Light',
+      description: 'Perfect for casual planning',
+      monthlyPrice: 2.99,
+      annualPrice: 29.99,
+      icon: 'compass-outline',
+      gradient: ['#6B46C1', '#9333EA'],
+      features: [
+        'Standard personal knowledge',
+        'For occasional users',
+        'Basic AI assistance'
+      ]
+    },
+    navigator: {
+      name: 'AI Plus',
+      shortName: 'Plus',
+      description: 'Built for everyday productivity',
+      monthlyPrice: 4.99,
+      annualPrice: 49.99,
+      icon: 'navigate-circle-outline',
+      gradient: ['#DC2626', '#F97316'],
+      popular: true,
+      features: [
+        'More personal knowledge',
+        '3x more daily usage',
+        'For daily users'
+      ]
+    },
+    guide: {
+      name: 'AI Max',
+      shortName: 'Max',
+      description: 'Maximum AI capabilities',
+      monthlyPrice: 19.99,
+      annualPrice: 199.99,
+      icon: 'shield-checkmark-outline',
+      gradient: ['#0891B2', '#0D9488'],
+      features: [
+        'Maximum personal knowledge',
+        '10x more daily usage',
+        'For power users'
+      ]
+    }
+  };
+
   // ScrollView ref for resetting position
   const scrollViewRef = useRef(null);
+  
+  // Track which card is currently centered
+  const [currentScrollIndex, setCurrentScrollIndex] = useState(1); // Default to AI Plus (middle)
+  
+  // Handle scroll events to track centered card
+  const handleScroll = (event) => {
+    const cardWidth = width * 0.7 + 12;
+    const scrollX = event.nativeEvent.contentOffset.x;
+    const index = Math.round(scrollX / cardWidth);
+    setCurrentScrollIndex(index);
+  };
 
   // Animation for highlighting using Animated.sequence like achievement screen
   const highlightAnim = useRef(new Animated.Value(0)).current;
@@ -357,67 +418,206 @@ const DumbAIPlans = ({ selectedPlan, handleSelectPlan, billing, setBilling, high
       {/* Spacer to push cards down a bit */}
       <View style={{ height: 20 }} />
 
-      {/* 4 SEPARATE CARDS - BASIC SCROLLVIEW */}
+      {/* SWIPE TO EXPLORE hint */}
+      <View style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 8,
+        paddingHorizontal: 24,
+      }}>
+        <Text style={{
+          fontSize: 12,
+          color: 'rgba(255,255,255,0.3)',
+          fontWeight: '500',
+          letterSpacing: 0.5,
+        }}>
+          SWIPE TO EXPLORE
+        </Text>
+        <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.3)" />
+      </View>
+      
+      {/* GRADIENT CARDS - PREMIUM DESIGN */}
       <ScrollView 
         ref={scrollViewRef}
         horizontal 
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingRight: 16, paddingBottom: 40 }}
-        style={{ marginHorizontal: -16, marginTop: 8 }}
+        contentContainerStyle={{ paddingVertical: 20 }}
+        snapToInterval={width * 0.7 + 12}
+        decelerationRate="fast"
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
       >
-        
-        <View style={{ flexDirection: 'row', paddingLeft: 16 }}>
-        
-        <CardTemplate 
-          id="compass"
-          name="AI Light"
-          icon="compass-outline"
-          description="Perfect for casual planning"
-          features={[
-            'Personal knowledge uploads*',
-            'For occasional users'
-          ]}
-          popular={false}
-          monthlyPrice="$2.99"
-          annualPrice="$29.99"
-          monthlyCredits={500}
-          annualCreditsPerDollar={200}
-        />
-        
-        <CardTemplate 
-          id="navigator"
-          name="AI Plus"
-          icon="navigate-circle-outline"
-          description="Built for everyday productivity"
-          features={[
-            'Personal knowledge uploads*',
-            'More daily usage (3x AI Light)',
-            'For daily users'
-          ]}
-          popular={true}
-          monthlyPrice="$4.99"
-          annualPrice="$49.99"
-          monthlyCredits={1500}
-          annualCreditsPerDollar={360}
-        />
-        
-        <CardTemplate 
-          id="guide"
-          name="AI Max"
-          icon="shield-checkmark-outline"
-          description="Get the most out of LifeCompass AI"
-          features={[
-            'Personal knowledge uploads*',
-            'Heavy usage capacity (10x AI Light)',
-            'For power users'
-          ]}
-          popular={false}
-          monthlyPrice="$9.99"
-          annualPrice="$99.99"
-          monthlyCredits={5000}
-          annualCreditsPerDollar={600}
-        />
-        </View>
+        {Object.entries(aiTiers).map(([tierId, tier], index) => {
+          const isSelected = selectedPlan === tierId;
+          const isCentered = index === currentScrollIndex;
+          return (
+            <TouchableOpacity
+              key={tierId}
+              style={{
+                width: width * 0.7,
+                marginRight: 12,
+                marginLeft: index === 0 ? (width - width * 0.7) / 2 : 0,
+                marginEnd: index === Object.keys(aiTiers).length - 1 ? (width - width * 0.7) / 2 : 12,
+              }}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                handleSelectPlan(tierId);
+              }}
+              activeOpacity={0.9}
+            >
+              <LinearGradient
+                colors={isCentered ? tier.gradient : ['rgba(255,255,255,0.05)', 'rgba(255,255,255,0.02)']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{
+                  borderRadius: 24,
+                  padding: 24,
+                  borderWidth: isSelected ? 2 : 1,
+                  borderColor: isCentered ? tier.gradient[0] : 'rgba(255,255,255,0.3)',
+                  minHeight: 380,
+                  position: 'relative',
+                }}
+              >
+                {/* Popular Badge */}
+                {tier.popular && (
+                  <View style={{
+                    position: 'absolute',
+                    top: 16,
+                    right: 16,
+                    backgroundColor: '#FF6B6B',
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
+                    borderRadius: 12,
+                    shadowColor: '#FF6B6B',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.3,
+                    shadowRadius: 4,
+                    elevation: 8,
+                    zIndex: 2,
+                  }}>
+                    <Text style={{
+                      fontSize: 9,
+                      fontWeight: '700',
+                      color: '#FFFFFF',
+                      letterSpacing: 0.5,
+                    }}>
+                      POPULAR
+                    </Text>
+                  </View>
+                )}
+
+                {/* Icon */}
+                <View style={{
+                  width: 60,
+                  height: 60,
+                  borderRadius: 30,
+                  backgroundColor: isCentered ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.1)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: 20,
+                }}>
+                  <Ionicons 
+                    name={tier.icon} 
+                    size={28} 
+                    color={isCentered ? '#FFFFFF' : 'rgba(255,255,255,0.8)'} 
+                  />
+                </View>
+
+                {/* Title */}
+                <Text style={{
+                  fontSize: 24,
+                  fontWeight: '700',
+                  color: '#FFFFFF',
+                  marginBottom: 8,
+                }}>
+                  {tier.name}
+                </Text>
+
+                {/* Description */}
+                <Text style={{
+                  fontSize: 14,
+                  color: 'rgba(255,255,255,0.7)',
+                  marginBottom: 20,
+                  lineHeight: 20,
+                }}>
+                  {tier.description}
+                </Text>
+
+                {/* Price */}
+                <View style={{
+                  marginBottom: 20,
+                }}>
+                  <Text style={{
+                    fontSize: 32,
+                    fontWeight: '300',
+                    color: '#FFFFFF',
+                    letterSpacing: -1,
+                  }}>
+                    ${tier.monthlyPrice}
+                  </Text>
+                  <Text style={{
+                    fontSize: 14,
+                    color: 'rgba(255,255,255,0.6)',
+                    marginTop: 4,
+                  }}>
+                    per month
+                  </Text>
+                </View>
+
+                {/* Features */}
+                <View style={{ flex: 1 }}>
+                  {tier.features.map((feature, featureIndex) => (
+                    <View key={featureIndex} style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      marginBottom: 12,
+                    }}>
+                      <Ionicons 
+                        name="checkmark-circle" 
+                        size={16} 
+                        color={isCentered ? '#FFFFFF' : 'rgba(255,255,255,0.8)'} 
+                        style={{ marginRight: 8 }}
+                      />
+                      <Text style={{
+                        fontSize: 14,
+                        color: isCentered ? '#FFFFFF' : 'rgba(255,255,255,0.8)',
+                        flex: 1,
+                      }}>
+                        {feature}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+
+                {/* Select Button */}
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: isSelected ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.1)',
+                    borderRadius: 12,
+                    paddingVertical: 12,
+                    alignItems: 'center',
+                    marginTop: 'auto',
+                    borderWidth: isSelected ? 1 : 0,
+                    borderColor: isSelected ? 'rgba(255,255,255,0.3)' : 'transparent',
+                  }}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    handleSelectPlan(tierId);
+                  }}
+                >
+                  <Text style={{
+                    fontSize: 14,
+                    fontWeight: '600',
+                    color: '#FFFFFF',
+                  }}>
+                    {isSelected ? 'Selected' : 'Select Plan'}
+                  </Text>
+                </TouchableOpacity>
+              </LinearGradient>
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
 
       {/* Bottom spacing and info section */}

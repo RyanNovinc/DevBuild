@@ -82,8 +82,8 @@ import { API_BASE_URL } from '../config/apiConfig';
 // API endpoint for Lambda functions  
 const API_ENDPOINT = API_BASE_URL;
 
-// Messages to retain when truncating
-const MAX_MESSAGES_TO_KEEP = 30;
+// OLD: Messages to retain when truncating - REMOVED in favor of token-based limits
+// const MAX_MESSAGES_TO_KEEP = 30;
 
 // Constant for free plan limit
 const LOCAL_MAX_GOALS = 2;
@@ -260,89 +260,7 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
   // Track if user has interacted with the conversation
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
   
-  // Store modal data for action links
-  const [storedModalData, setStoredModalData] = useState({});
-  const [nextModalDataId, setNextModalDataId] = useState(1);
   
-  // AsyncStorage keys for persistent modal data
-  const MODAL_DATA_KEY = 'aiAssistant_modalData';
-  const NEXT_MODAL_ID_KEY = 'aiAssistant_nextModalId';
-  
-  // Load modal data from AsyncStorage
-  const loadModalData = async () => {
-    try {
-      const [savedModalData, savedNextId] = await Promise.all([
-        AsyncStorage.getItem(MODAL_DATA_KEY),
-        AsyncStorage.getItem(NEXT_MODAL_ID_KEY)
-      ]);
-      
-      if (savedModalData) {
-        const parsedData = JSON.parse(savedModalData);
-        setStoredModalData(parsedData);
-        console.log('💾 Loaded modal data from storage:', Object.keys(parsedData));
-      }
-      
-      if (savedNextId) {
-        const nextId = parseInt(savedNextId, 10);
-        if (!isNaN(nextId)) {
-          setNextModalDataId(nextId);
-          console.log('💾 Loaded next modal ID from storage:', nextId);
-        }
-      }
-    } catch (error) {
-      console.error('Error loading modal data from storage:', error);
-    }
-  };
-  
-  // Save modal data to AsyncStorage
-  const saveModalData = async (data, nextId) => {
-    try {
-      await Promise.all([
-        AsyncStorage.setItem(MODAL_DATA_KEY, JSON.stringify(data)),
-        AsyncStorage.setItem(NEXT_MODAL_ID_KEY, nextId.toString())
-      ]);
-      console.log('💾 Saved modal data to storage');
-    } catch (error) {
-      console.error('Error saving modal data to storage:', error);
-    }
-  };
-  
-  // Clean up old modal data (older than 7 days)
-  const cleanupOldModalData = async () => {
-    try {
-      const savedModalData = await AsyncStorage.getItem(MODAL_DATA_KEY);
-      if (!savedModalData) return;
-      
-      const parsedData = JSON.parse(savedModalData);
-      const now = Date.now();
-      const sevenDaysAgo = now - (7 * 24 * 60 * 60 * 1000); // 7 days in milliseconds
-      
-      let cleaned = false;
-      const cleanedData = {};
-      
-      for (const [id, modalInfo] of Object.entries(parsedData)) {
-        // Extract timestamp from the ID (format: timestamp_conversationIndex_randomString)
-        const idParts = id.split('_');
-        const timestamp = parseInt(idParts[0], 10);
-        
-        if (!isNaN(timestamp) && timestamp > sevenDaysAgo) {
-          // Keep data that's less than 7 days old
-          cleanedData[id] = modalInfo;
-        } else {
-          // Mark for cleanup
-          cleaned = true;
-        }
-      }
-      
-      if (cleaned) {
-        setStoredModalData(cleanedData);
-        await AsyncStorage.setItem(MODAL_DATA_KEY, JSON.stringify(cleanedData));
-        console.log('💾 Cleaned up old modal data');
-      }
-    } catch (error) {
-      console.error('Error cleaning up modal data:', error);
-    }
-  };
   
   // Goal session tracking
   const lastCreatedGoalRef = useRef({
@@ -438,150 +356,27 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
     }
   };
   
-  // Store modal data and return an ID for later retrieval
-  const storeModalData = (actionType, data) => {
-    const id = nextModalDataId.toString();
-    const newData = {
-      ...storedModalData,
-      [id]: { type: actionType, data }
-    };
-    const newNextId = nextModalDataId + 1;
-    
-    setStoredModalData(newData);
-    setNextModalDataId(newNextId);
-    
-    // Persist to AsyncStorage asynchronously
-    saveModalData(newData, newNextId).catch(error => {
-      console.error('Error persisting modal data:', error);
-    });
-    
-    return id;
-  };
-  
   // Handle action links from chat messages
-  const handleActionLink = async (actionType, encodedDataId) => {
+  const handleActionLink = async (actionType, encodedData) => {
     try {
-      console.log('🔗 handleActionLink called with:', { actionType, encodedDataId });
-      console.log('🔗 Current storedModalData:', storedModalData);
+      console.log('🔗 handleActionLink called with:', { actionType, encodedData });
       
-      // Reload from AsyncStorage to ensure we have the latest data
+      // Decode the base64 encoded data
+      let data;
       try {
-        const savedModalData = await AsyncStorage.getItem('storedModalData');
-        if (savedModalData) {
-          const parsedData = JSON.parse(savedModalData);
-          console.log('🔗 Reloaded modal data from AsyncStorage for latest updates');
-          console.log('🔗 AsyncStorage keys loaded:', Object.keys(parsedData));
-          console.log('🔗 Looking for ID:', encodedDataId);
-          console.log('🔗 ID exists in AsyncStorage?', encodedDataId in parsedData ? 'YES' : 'NO');
-          setStoredModalData(parsedData); // Update state with fresh data
-          
-          // Use fresh data for modal retrieval
-          const modalInfo = parsedData[encodedDataId];
-          if (modalInfo) {
-            console.log('✅ Found modal info in fresh data:', modalInfo);
-            console.log('✅ Full modal info data structure:', JSON.stringify(modalInfo, null, 2));
-            const { type, data } = modalInfo;
-            
-            // Verify type matches
-            if (type !== actionType) {
-              console.error('❌ Action type mismatch:', type, 'vs', actionType);
-              return;
-            }
-            
-            console.log('✅ Type matches, proceeding to open modal with fresh data');
-            
-            // Open modal with updated data
-            switch (actionType) {
-              case 'goal':
-                setCurrentGoalData(data);
-                setGoalModalVisible(true);
-                break;
-                
-              case 'milestone':
-              case 'project':
-                setCurrentProjectData(data);
-                setProjectModalVisible(true);
-                break;
-                
-              case 'task':
-                setCurrentTaskData(data);
-                setTaskModalVisible(true);
-                break;
-                
-              case 'taskbatch':
-                console.log('🔗 Opening batch task modal with fresh data:', data);
-                console.log('📋 Batch contains', data.tasks?.length || 0, 'tasks');
-                setCurrentTaskData({ batch: true, tasks: data.tasks || [] });
-                setTaskModalVisible(true);
-                break;
-                
-              case 'timeblock':
-                console.log('🔗 Opening timeblock modal with fresh data:', data);
-                console.log('🔗 Fresh data includes isCreated?', data.isCreated);
-                console.log('🔗 Fresh data includes successMessage?', data.successMessage);
-                setCurrentTimeBlockData(data);
-                setTimeBlockModalVisible(true);
-                break;
-                
-              case 'todo':
-                setCurrentTodoData(data);
-                setTodoModalVisible(true);
-                break;
-                
-              default:
-                console.error('❌ Unknown action type:', actionType);
-            }
-            return;
-          }
-        }
-      } catch (storageError) {
-        console.error('Error reloading from AsyncStorage:', storageError);
-        // Fall back to using current state data
-      }
-      
-      // Fallback: Retrieve stored data from current state
-      const modalInfo = storedModalData[encodedDataId];
-      if (!modalInfo) {
-        console.error('❌ Modal data not found for ID:', encodedDataId);
-        console.error('❌ Available keys:', Object.keys(storedModalData));
-        
-        // Additional fallback: Check if we have recent data that matches the action type
-        if (actionType === 'timeblock' && currentTimeBlockData) {
-          console.log('🔄 Using current timeblock data as fallback:', currentTimeBlockData);
-          setTimeBlockModalVisible(true);
-          return;
-        } else if (actionType === 'goal' && currentGoalData) {
-          console.log('🔄 Using current goal data as fallback:', currentGoalData);
-          setGoalModalVisible(true);
-          return;
-        } else if (actionType === 'milestone' && currentProjectData) {
-          console.log('🔄 Using current project data as fallback:', currentProjectData);
-          setProjectModalVisible(true);
-          return;
-        } else if (actionType === 'task' && currentTaskData) {
-          console.log('🔄 Using current task data as fallback:', currentTaskData);
-          setTaskModalVisible(true);
-          return;
-        }
-        
+        const decodedJson = atob(encodedData);
+        data = JSON.parse(decodedJson);
+        console.log('✅ Successfully decoded modal data:', data);
+      } catch (decodeError) {
+        console.error('❌ Failed to decode action link data:', decodeError);
+        showAlert('Action Unavailable', 'The action link data could not be decoded.');
         return;
       }
       
-      console.log('✅ Found modal info:', modalInfo);
-      console.log('✅ Full modal info data structure:', JSON.stringify(modalInfo, null, 2));
-      const { type, data } = modalInfo;
-      
-      // Verify type matches
-      if (type !== actionType) {
-        console.error('❌ Action type mismatch:', type, 'vs', actionType);
-        return;
-      }
-      
-      console.log('✅ Type matches, proceeding to open modal');
-      
-      // Reopen the appropriate modal
+      // Open appropriate modal with decoded data
       switch (actionType) {
         case 'goal':
+          console.log('🔗 Opening goal modal with decoded data');
           if (!canAddMoreGoals()) {
             showUpgradePrompt(
               `You've reached the limit of ${LOCAL_MAX_GOALS} active goals in the free version. Upgrade to Pro to track unlimited goals.`
@@ -593,54 +388,70 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
           break;
           
         case 'milestone':
-        case 'project': // Support both for backward compatibility
+        case 'project':
+          console.log('🔗 Opening milestone/project modal with decoded data');
           setCurrentProjectData(data);
           setProjectModalVisible(true);
           break;
           
         case 'task':
+          console.log('🔗 Opening task modal with decoded data');
           setCurrentTaskData(data);
           setTaskModalVisible(true);
           break;
           
         case 'taskbatch':
-          console.log('🔗 Opening batch task modal with fallback data:', data);
+          console.log('🔗 Opening batch task modal with decoded data:', data);
           console.log('📋 Batch contains', data.tasks?.length || 0, 'tasks');
           setCurrentTaskData({ batch: true, tasks: data.tasks || [] });
           setTaskModalVisible(true);
           break;
           
+        case 'bulk':
+          console.log('🔗 Opening bulk plan modal with decoded data:', data);
+          // Handle bulk plan - this could be a createBulkPlan or combined actions
+          if (data.planTitle && data.goal && data.milestones) {
+            // This is a createBulkPlan structure - convert to actions format
+            const bulkActions = [
+              {
+                type: 'createGoal',
+                data: data.goal
+              },
+              ...data.milestones.map(milestone => ({
+                type: 'createMilestone',
+                data: milestone
+              }))
+            ];
+            setBulkCreateActions(bulkActions);
+          } else if (data.items) {
+            // This is combined individual actions
+            setBulkCreateActions(data.items);
+          }
+          setBulkCreateModalVisible(true);
+          break;
+          
         case 'timeblock':
-          console.log('🔗 Opening timeblock modal with data:', data);
-          console.log('🔗 Data includes isCreated?', data.isCreated);
-          console.log('🔗 Data includes successMessage?', data.successMessage);
+          console.log('🔗 Opening timeblock modal with decoded data');
           setCurrentTimeBlockData(data);
           setTimeBlockModalVisible(true);
           break;
           
         case 'todo':
+          console.log('🔗 Opening todo modal with decoded data');
           setCurrentTodoData(data);
           setTodoModalVisible(true);
           break;
           
         default:
           console.error('❌ Unknown action type:', actionType);
+          showAlert('Action Unavailable', `Unknown action type: ${actionType}`);
       }
     } catch (error) {
       console.error('Error handling action link:', error);
+      showAlert('Error', 'An error occurred while processing the action link.');
     }
   };
   
-  
-  // Load modal data on mount and clean up old data
-  useEffect(() => {
-    const initializeModalData = async () => {
-      await loadModalData();
-      await cleanupOldModalData();
-    };
-    
-    initializeModalData();
-  }, []);
   
   // NEW: Check unlimited mode status on mount
   useEffect(() => {
@@ -1039,50 +850,8 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
     dispatch({ type: 'SET_MENU_STATE', payload: 'closing' });
   };
 
-  // Handle truncating conversation
-  const handleTruncateConversation = async () => {
-    if (!conversationId || !messages || messages.length === 0) {
-      setConversationLimitModalVisible(false);
-      return;
-    }
-    
-    try {
-      // Keep the most recent messages
-      const success = await AIService.truncateConversation(conversationId, messages, MAX_MESSAGES_TO_KEEP);
-      
-      if (success) {
-        // Update the state with truncated messages
-        const truncatedMessages = messages.slice(-MAX_MESSAGES_TO_KEEP);
-        dispatch({ type: 'SET_MESSAGES', payload: truncatedMessages });
-        
-        // Show toast notification
-        dispatch({ 
-          type: 'SHOW_TOAST', 
-          payload: 'Conversation has been trimmed to improve performance.' 
-        });
-        
-        // Reset warning state
-        setConversationSizeWarningShown(false);
-      } else {
-        // Show error toast
-        dispatch({ 
-          type: 'SHOW_TOAST', 
-          payload: 'Failed to trim conversation. Please try again.' 
-        });
-      }
-    } catch (error) {
-      console.error('Error truncating conversation:', error);
-      
-      // Show error toast
-      dispatch({ 
-        type: 'SHOW_TOAST', 
-        payload: 'An error occurred while trimming the conversation.' 
-      });
-    }
-    
-    // Close the modal
-    setConversationLimitModalVisible(false);
-  };
+  // OLD: handleTruncateConversation - REMOVED in favor of "conversation full" blocking
+  // Conversations are now blocked when over 100k tokens instead of truncated
   
   // Process actions - use bulk modal for multiple goals/milestones only
   const processActions = (actions) => {
@@ -1295,9 +1064,30 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
           clearTimeoutAndContinue();
           break;
           
+        case 'createBulkPlan':
+          console.log('Creating bulk plan modal');
+          // Convert bulk plan to actions format for the bulk modal
+          const bulkPlanActions = [
+            {
+              type: 'createGoal',
+              data: action.data.goal
+            },
+            ...action.data.milestones.map(milestone => ({
+              type: 'createMilestone',
+              data: milestone
+            }))
+          ];
+          setBulkCreateActions(bulkPlanActions);
+          setTimeout(() => {
+            console.log('📱 Delayed bulk plan modal visibility set');
+            setBulkCreateModalVisible(true);
+          }, 100);
+          clearTimeoutAndContinue();
+          break;
+          
         default:
           console.log(`Unknown action type: ${action.type}`);
-          console.log('Available action types are: createGoal, createMilestone, createTask, createTaskBatch, createTimeBlock, createTodo');
+          console.log('Available action types are: createGoal, createMilestone, createTask, createTaskBatch, createTimeBlock, createTodo, createBulkPlan');
           clearTimeout(actionTimeout);
           continueToNext(); // Continue to next action even for unknown types
       }
@@ -1359,19 +1149,23 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
         return;
       }
       
-      // Check conversation length limits (local check)
-      const estimatedTokens = AITokenManager.estimateTokens(text) * 3; // Input + expected output
-      if (AITokenManager.shouldTruncateConversation(conversationId, estimatedTokens)) {
-        console.log('Conversation length limit reached');
-        
-        // Show conversation length warning
-        if (usageWarningType === 'none') {
-          setUsageWarningType('conversation');
-        }
-        
-        // Show the conversation limit modal as fallback
+      // Check if conversation is already over limit (block new messages)
+      if (AITokenManager.shouldBlockNewMessage(conversationId)) {
+        console.log('Conversation is already over limit - blocking new message');
         setConversationLimitModalVisible(true);
         return;
+      }
+
+      // Check for progressive warnings
+      const estimatedTokens = AITokenManager.estimateTokens(text) * 3; // Input + expected output
+      const warningLevel = AITokenManager.getConversationWarningLevel(conversationId, estimatedTokens);
+      
+      if (warningLevel === 'early_warning' && usageWarningType === 'none') {
+        console.log('Conversation approaching 85% limit - showing early warning');
+        setUsageWarningType('conversation_early');
+      } else if (warningLevel === 'final_warning' && !usageWarningType.includes('final')) {
+        console.log('Conversation approaching 95% limit - showing final warning');  
+        setUsageWarningType('conversation_final');
       }
       
     } catch (error) {
@@ -1682,6 +1476,13 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
                   const currentConversationTokens = AITokenManager.getConversationTokens(conversationId);
                   const newConversationTokens = currentConversationTokens + inputTokens + outputTokens;
                   await AITokenManager.updateConversationTokens(conversationId, newConversationTokens);
+                  
+                  // Check if conversation is now over the limit (show "conversation full" modal)
+                  if (AITokenManager.shouldBlockNewMessage(conversationId)) {
+                    console.log('Conversation is now over 100k token limit - will block future messages');
+                    // Don't show modal immediately, let user read the response first
+                    // The modal will show when they try to send the next message
+                  }
                   
                   // Refresh usage status after tracking
                   await checkUsageStatus();
@@ -2675,7 +2476,7 @@ const AIAssistantContent = ({ navigation, route = {} }) => {
           setConversationLimitModalVisible(false);
           createNewConversation();
         }}
-        onTruncateConversation={handleTruncateConversation}
+        onTruncateConversation={null}
       />
       
       

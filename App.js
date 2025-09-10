@@ -5,6 +5,9 @@
 // Import PlatformFix at the very top before other imports to ensure Platform is available globally
 import './PlatformFix';
 
+// Analytics setup will be added later - for now focus on console log cleanup and basic error handling
+// TODO: Add analytics when switching to bare React Native or Expo SDK 54+
+
 // Import gesture handler polyfill - must be at the top
 import 'react-native-gesture-handler';
 
@@ -41,6 +44,7 @@ import { runStartupDataCheck } from './src/utils/StartupDataCheck';
 import * as FeatureExplorerTracker from './src/services/FeatureExplorerTracker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ReferralTracker from './src/services/ReferralTracker';
+import ShakeService from './src/services/ShakeService';
 
 // Import responsive utilities
 import {
@@ -137,9 +141,9 @@ const initializeAmplify = () => {
   }
 };
 
-// Call initialization immediately and store result
-const amplifyInitialized = initializeAmplify();
-console.log('🔧 NATIVE BUILD: Amplify initialization result:', amplifyInitialized);
+// Don't initialize immediately - wait for app to be ready
+let amplifyInitialized = false;
+console.log('🔧 NATIVE BUILD: Amplify initialization deferred to app start');
 
 // Global method to control AI button visibility
 if (typeof window !== 'undefined' && !window.setAIButtonVisible) {
@@ -184,7 +188,9 @@ LogBox.ignoreLogs([
   "The 'navigation' object hasn't been initialized yet",
   "Cannot read property 'scrollTo' of null",  // Added to suppress the ScrollView error
   'A props object containing a "key" prop is being spread into JSX',  // React Navigation key spreading warning
-  'Requiring unknown module "undefined"'  // Suppress undefined module warnings
+  'Requiring unknown module "undefined"',  // Suppress undefined module warnings
+  'ProfileScreen loading error: [Error: Operation aborted]',  // Expected during navigation transitions
+  'Operation aborted'  // Expected during component unmount/navigation
 ]);
 
 // Safely import keyboard manager for iOS
@@ -1666,6 +1672,12 @@ function AppContent({ navigationRef }) {
   useEffect(() => {
     async function initialize() {
       try {
+        // Initialize Amplify first, safely
+        if (!amplifyInitialized) {
+          amplifyInitialized = initializeAmplify();
+          console.log('🔧 Amplify initialized in app startup:', amplifyInitialized);
+        }
+        
         // Hide splash screen
         await SplashScreen.hideAsync();
         
@@ -1930,6 +1942,14 @@ const App = () => {
     };
 
     initializeReferralTracking();
+
+    // Initialize shake-to-feedback service
+    ShakeService.initialize(navigationRef);
+    
+    // Cleanup shake service on unmount
+    return () => {
+      ShakeService.cleanup();
+    };
   }, []);
 
   // Add error boundary
