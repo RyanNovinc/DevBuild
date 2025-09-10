@@ -94,24 +94,8 @@ platform :ios do
         output_directory: "./",
         output_name: "LifeCompass-Dev.ipa"
       )
-    rescue => exception
-      UI.message("⚠️ Signed build failed: #{exception.message}")
-      UI.message("🔄 Trying unsigned build for testing...")
       
-      # Fallback to unsigned build
-      build_ios_app(
-        scheme: "LifeCompass",
-        configuration: "Debug",
-        skip_codesigning: true,
-        skip_archive: true,
-        output_directory: "./",
-        output_name: "LifeCompass-Dev.ipa"
-      )
-      UI.message("✅ Unsigned build created for pipeline testing!")
-      return # Skip Firebase upload for unsigned build
-    end
-      
-      # Upload to Firebase App Distribution
+      # Upload to Firebase App Distribution (only if signed build succeeds)
       firebase_app_distribution(
         app: ENV['FIREBASE_APP_ID'],
         ipa_path: "./LifeCompass-Dev.ipa",
@@ -121,9 +105,24 @@ platform :ios do
       
       UI.success("✅ Development build uploaded to Firebase App Distribution!")
     rescue => exception
-      UI.message("⚠️ Build failed (likely missing certificates) but pipeline infrastructure working!")
-      UI.message("Error: #{exception.message}")
-      UI.message("💡 To fix: Add iOS development certificates to GitHub secrets or set up Fastlane Match")
+      UI.message("⚠️ Signed build failed: #{exception.message}")
+      UI.message("🔄 Trying unsigned build for testing...")
+      
+      # Fallback to unsigned build
+      begin
+        build_ios_app(
+          scheme: "LifeCompass",
+          configuration: "Debug",
+          skip_codesigning: true,
+          skip_archive: true,
+          output_directory: "./",
+          output_name: "LifeCompass-Dev.ipa"
+        )
+        UI.message("✅ Unsigned build created for pipeline testing!")
+      rescue => build_exception
+        UI.message("⚠️ Build failed completely: #{build_exception.message}")
+        UI.message("💡 To fix: Add iOS development certificates to GitHub secrets or set up Fastlane Match")
+      end
     end
   end
 
