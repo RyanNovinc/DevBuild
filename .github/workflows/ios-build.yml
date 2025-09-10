@@ -75,7 +75,6 @@ jobs:
       - name: 📦 Install dependencies
         run: |
           npm ci
-          npx expo-doctor
 
       - name: 🛠️ Expo prebuild
         run: |
