@@ -34,6 +34,14 @@ platform :ios do
       
       # Install provisioning profile
       install_provisioning_profile(path: profile_path)
+      
+      # Update Xcode project with development team
+      update_code_signing_settings(
+        use_automatic_signing: false,
+        team_id: ENV['APPLE_TEAM_ID'],
+        code_sign_identity: "iPhone Developer",
+        profile_name: "LifeCompass Development"
+      )
     else
       UI.message("⚠️ No development certificates found in environment - building unsigned for testing...")
     end
