@@ -12,38 +12,55 @@ platform :ios do
   lane :development do
     UI.message("🔄 Setting up development certificates...")
 
-    # Import certificates and provisioning profiles from environment variables
-    if ENV['IOS_DEVELOPMENT_CERTIFICATE_BASE64'] && ENV['IOS_DEVELOPMENT_PROVISIONING_PROFILE_BASE64']
-      UI.message("📜 Installing development certificate and provisioning profile from secrets...")
-      
-      # Decode base64 certificate and write to file
-      certificate_path = "/tmp/development_certificate.p12"
-      File.write(certificate_path, Base64.decode64(ENV['IOS_DEVELOPMENT_CERTIFICATE_BASE64']))
-      
-      # Decode base64 provisioning profile and write to file  
-      profile_path = "/tmp/development_profile.mobileprovision"
-      File.write(profile_path, Base64.decode64(ENV['IOS_DEVELOPMENT_PROVISIONING_PROFILE_BASE64']))
-      
-      # Import development certificate
-      import_certificate(
-        certificate_path: certificate_path,
-        certificate_password: "",
+    # Use Fastlane Match for certificate management
+    begin
+      match(
+        type: "development",
+        app_identifier: "com.lifecompass.app",
+        readonly: true,
         keychain_name: "fastlane_tmp_keychain",
         keychain_password: ""
       )
+      UI.message("✅ Certificates installed successfully via Match!")
+    rescue => exception
+      UI.message("⚠️ Match failed: #{exception.message}")
+      UI.message("🔄 Trying manual certificate setup...")
       
-      # Install provisioning profile
-      install_provisioning_profile(path: profile_path)
-      
-      # Update Xcode project with development team
-      update_code_signing_settings(
-        use_automatic_signing: false,
-        team_id: ENV['APPLE_TEAM_ID'],
-        code_sign_identity: "Apple Development",
-        profile_name: "LifeCompass Development"
-      )
-    else
-      UI.message("⚠️ No development certificates found in environment - building unsigned for testing...")
+      # Fallback to manual certificate setup
+      if ENV['IOS_DEVELOPMENT_CERTIFICATE_BASE64'] && ENV['IOS_DEVELOPMENT_PROVISIONING_PROFILE_BASE64']
+        UI.message("📜 Installing development certificate and provisioning profile from secrets...")
+        
+        # Decode base64 certificate and write to file
+        certificate_path = "/tmp/development_certificate.p12"
+        File.write(certificate_path, Base64.decode64(ENV['IOS_DEVELOPMENT_CERTIFICATE_BASE64']))
+        
+        # Decode base64 provisioning profile and write to file  
+        profile_path = "/tmp/development_profile.mobileprovision"
+        File.write(profile_path, Base64.decode64(ENV['IOS_DEVELOPMENT_PROVISIONING_PROFILE_BASE64']))
+        
+        # Try importing without password first, then with password
+        begin
+          import_certificate(
+            certificate_path: certificate_path,
+            certificate_password: "",
+            keychain_name: "fastlane_tmp_keychain",
+            keychain_password: ""
+          )
+        rescue
+          UI.message("🔄 Trying with 'fastlane' password...")
+          import_certificate(
+            certificate_path: certificate_path,
+            certificate_password: "fastlane",
+            keychain_name: "fastlane_tmp_keychain",
+            keychain_password: ""
+          )
+        end
+        
+        # Install provisioning profile
+        install_provisioning_profile(path: profile_path)
+      else
+        UI.message("⚠️ No development certificates found in environment - will try unsigned build...")
+      end
     end
 
     # Auto-increment build number
