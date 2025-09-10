@@ -85,7 +85,9 @@ jobs:
             export NODE_ENV=development
           fi
           
-          npx expo prebuild --platform ios --clear
+          # Clean and prebuild iOS
+          rm -rf ios
+          npx expo prebuild --platform ios
 
       - name: 📱 Install iOS dependencies
         working-directory: ios
