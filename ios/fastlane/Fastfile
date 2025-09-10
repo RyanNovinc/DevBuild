@@ -6,35 +6,50 @@ platform :ios do
     xcodes(version: "16.3", select_for_current_build_only: true) if ENV['CI']
   end
 
-  desc "Development Build - Test Build Only"
+  desc "Development Build - Firebase App Distribution"
   lane :development do
-    # Skip certificate management for now
-    UI.message("🔄 Skipping certificate management - testing build pipeline")
+    UI.message("🔄 Setting up development certificates...")
+
+    # Sync development certificates
+    match(
+      type: "development",
+      app_identifier: "com.lifecompass.app",
+      readonly: ENV['CI'] == "true"
+    )
 
     # Auto-increment build number
     increment_build_number(
       build_number: ENV['BUILD_NUMBER'] || Time.now.to_i.to_s
     )
 
-    # Test build compilation only (will fail at code signing but proves pipeline works)
-    UI.message("🏗️ Testing build compilation...")
+    UI.message("🏗️ Building development IPA...")
     
-    begin
-      build_ios_app(
-        scheme: "LifeCompass",
-        configuration: "Debug",
-        skip_codesigning: true,
-        skip_archive: true,
-        build_path: "./build",
-        output_directory: "./",
-        output_name: "LifeCompass.ipa"
-      )
-    rescue => exception
-      UI.message("⚠️ Build failed as expected (no certificates) but pipeline is working!")
-      UI.message("Error: #{exception.message}")
-    end
+    # Build the app with development certificates
+    build_ios_app(
+      scheme: "LifeCompass",
+      configuration: "Debug",
+      export_method: "development",
+      export_options: {
+        provisioningProfiles: {
+          "com.lifecompass.app" => "match Development com.lifecompass.app"
+        },
+        uploadBitcode: false,
+        uploadSymbols: true,
+        compileBitcode: false
+      },
+      output_directory: "./",
+      output_name: "LifeCompass-Dev.ipa"
+    )
 
-    UI.success("✅ GitHub Actions + Fastlane pipeline working perfectly!")
+    # Upload to Firebase App Distribution
+    firebase_app_distribution(
+      app: ENV['FIREBASE_APP_ID'],
+      ipa_path: "./LifeCompass-Dev.ipa",
+      groups: "internal-testers",
+      release_notes: "Development build #{lane_context[SharedValues::BUILD_NUMBER]} - #{Time.now.strftime('%Y-%m-%d %H:%M')}"
+    )
+
+    UI.success("✅ Development build uploaded to Firebase App Distribution!")
   end
 
   desc "Production Build - TestFlight"
