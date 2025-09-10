@@ -27,7 +27,7 @@ platform :ios do
       # Import development certificate
       import_certificate(
         certificate_path: certificate_path,
-        certificate_password: "fastlane",
+        certificate_password: "",
         keychain_name: "fastlane_tmp_keychain",
         keychain_password: ""
       )
@@ -39,7 +39,7 @@ platform :ios do
       update_code_signing_settings(
         use_automatic_signing: false,
         team_id: ENV['APPLE_TEAM_ID'],
-        code_sign_identity: "iPhone Developer",
+        code_sign_identity: "Apple Development",
         profile_name: "LifeCompass Development"
       )
     else
