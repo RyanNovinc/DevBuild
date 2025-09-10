@@ -1,0 +1,6 @@
+git_url("https://github.com/RyanNovinc/lifecompass-certificates.git")
+storage_mode("git")
+type("development")
+app_identifier(["com.lifecompass.app"])
+username(ENV['APPLE_ID'])
+team_id(ENV['APPLE_TEAM_ID'])
