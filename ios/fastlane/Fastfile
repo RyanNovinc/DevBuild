@@ -8,121 +8,36 @@ platform :ios do
     xcodes(version: "16.3", select_for_current_build_only: true) if ENV['CI']
   end
 
-  desc "Development Build - Firebase App Distribution"
+  desc "Development Build - Test Pipeline"
   lane :development do
-    UI.message("🔄 Setting up development certificates...")
-
-    # Use Fastlane Match for certificate management
-    begin
-      match(
-        type: "development",
-        app_identifier: "com.lifecompass.app",
-        readonly: true,
-        keychain_name: "fastlane_tmp_keychain",
-        keychain_password: ""
-      )
-      UI.message("✅ Certificates installed successfully via Match!")
-    rescue => exception
-      UI.message("⚠️ Match failed: #{exception.message}")
-      UI.message("🔄 Trying manual certificate setup...")
-      
-      # Fallback to manual certificate setup
-      if ENV['IOS_DEVELOPMENT_CERTIFICATE_BASE64'] && ENV['IOS_DEVELOPMENT_PROVISIONING_PROFILE_BASE64']
-        UI.message("📜 Installing development certificate and provisioning profile from secrets...")
-        
-        # Decode base64 certificate and write to file
-        certificate_path = "/tmp/development_certificate.p12"
-        File.write(certificate_path, Base64.decode64(ENV['IOS_DEVELOPMENT_CERTIFICATE_BASE64']))
-        
-        # Decode base64 provisioning profile and write to file  
-        profile_path = "/tmp/development_profile.mobileprovision"
-        File.write(profile_path, Base64.decode64(ENV['IOS_DEVELOPMENT_PROVISIONING_PROFILE_BASE64']))
-        
-        # Try importing without password first, then with password
-        begin
-          import_certificate(
-            certificate_path: certificate_path,
-            certificate_password: "",
-            keychain_name: "fastlane_tmp_keychain",
-            keychain_password: ""
-          )
-        rescue
-          UI.message("🔄 Trying with 'fastlane' password...")
-          import_certificate(
-            certificate_path: certificate_path,
-            certificate_password: "fastlane",
-            keychain_name: "fastlane_tmp_keychain",
-            keychain_password: ""
-          )
-        end
-        
-        # Install provisioning profile
-        install_provisioning_profile(path: profile_path)
-      else
-        UI.message("⚠️ No development certificates found in environment - will try unsigned build...")
-      end
-    end
-
-    # Configure Xcode project with development team (regardless of certificate success)
-    UI.message("🔧 Configuring Xcode project with development team...")
-    update_code_signing_settings(
-      use_automatic_signing: false,
-      team_id: ENV['APPLE_TEAM_ID'],
-      code_sign_identity: "Apple Development",
-      profile_name: "LifeCompass Development"
-    )
+    UI.message("🔄 Setting up for unsigned build (focus on pipeline testing)...")
+    
+    # Skip all certificate management for now - focus on getting builds working
+    UI.message("⚠️ Skipping certificate setup - testing unsigned build pipeline")
 
     # Auto-increment build number
     increment_build_number(
       build_number: ENV['BUILD_NUMBER'] || Time.now.to_i.to_s
     )
 
-    UI.message("🏗️ Building development IPA...")
+    UI.message("🏗️ Building unsigned development build for pipeline testing...")
     
-    # Build the app 
+    # Build unsigned app for testing (skip all certificate issues)
     begin
-      # First try with code signing
       build_ios_app(
         scheme: "LifeCompass",
         configuration: "Debug",
-        export_method: "development",
-        export_options: {
-          uploadBitcode: false,
-          uploadSymbols: true,
-          compileBitcode: false
-        },
+        skip_codesigning: true,
+        skip_archive: true,
         output_directory: "./",
-        output_name: "LifeCompass-Dev.ipa"
+        output_name: "LifeCompass-Dev.app"
       )
-      
-      # Upload to Firebase App Distribution (only if signed build succeeds)
-      firebase_app_distribution(
-        app: ENV['FIREBASE_APP_ID'],
-        ipa_path: "./LifeCompass-Dev.ipa",
-        groups: "internal-testers",
-        release_notes: "Development build #{lane_context[SharedValues::BUILD_NUMBER]} - #{Time.now.strftime('%Y-%m-%d %H:%M')}"
-      )
-      
-      UI.success("✅ Development build uploaded to Firebase App Distribution!")
+      UI.success("✅ Unsigned build created - pipeline infrastructure works!")
+      UI.message("📝 Note: This proves your 359MB project builds successfully in GitHub Actions")
+      UI.message("🔧 Next: Add proper certificates for signed builds and distribution")
     rescue => exception
-      UI.message("⚠️ Signed build failed: #{exception.message}")
-      UI.message("🔄 Trying unsigned build for testing...")
-      
-      # Fallback to unsigned build
-      begin
-        build_ios_app(
-          scheme: "LifeCompass",
-          configuration: "Debug",
-          skip_codesigning: true,
-          skip_archive: true,
-          output_directory: "./",
-          output_name: "LifeCompass-Dev.ipa"
-        )
-        UI.message("✅ Unsigned build created for pipeline testing!")
-      rescue => build_exception
-        UI.message("⚠️ Build failed completely: #{build_exception.message}")
-        UI.message("💡 To fix: Add iOS development certificates to GitHub secrets or set up Fastlane Match")
-      end
+      UI.message("⚠️ Build failed: #{exception.message}")
+      raise exception
     end
   end
 

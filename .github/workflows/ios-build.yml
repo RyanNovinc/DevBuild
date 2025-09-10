@@ -104,6 +104,11 @@ jobs:
           if [ -f "Gemfile-backup" ]; then
             cp Gemfile-backup ios/Gemfile
           fi
+          
+          # Fix PrivacyInfo.xcprivacy duplicate file issue
+          echo "🔧 Fixing PrivacyInfo.xcprivacy duplicates..."
+          find ios -name "PrivacyInfo.xcprivacy" -type f | head -n -1 | xargs rm -f
+          echo "✅ Removed duplicate PrivacyInfo.xcprivacy files"
 
       - name: 📱 Install iOS dependencies
         working-directory: ios
