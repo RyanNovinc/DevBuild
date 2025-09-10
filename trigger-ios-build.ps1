@@ -21,10 +21,10 @@ try {
     gh workflow run ios-build.yml --ref $Branch --field build_type=$BuildType
     
     Write-Host "✅ iOS build triggered successfully!" -ForegroundColor Green
-    Write-Host "📱 View progress at: https://github.com/yourusername/yourrepo/actions" -ForegroundColor Cyan
+    Write-Host "📱 View progress at: https://github.com/RyanNovinc/DevBuild/actions" -ForegroundColor Cyan
     
     # Open browser to actions page
-    Start-Process "https://github.com/yourusername/yourrepo/actions"
+    Start-Process "https://github.com/RyanNovinc/DevBuild/actions"
 }
 catch {
     Write-Host "❌ Failed to trigger build: $($_.Exception.Message)" -ForegroundColor Red

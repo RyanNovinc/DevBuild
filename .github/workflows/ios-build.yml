@@ -42,7 +42,6 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ env.RUBY_VERSION }}
-          bundler-cache: true
           working-directory: ios
 
       - name: 📱 Select Xcode version
@@ -96,7 +95,7 @@ jobs:
           pod install --repo-update
 
       - name: 🚀 Build Development (Firebase Distribution)
-        if: github.ref == 'refs/heads/develop' || github.event.inputs.build_type == 'development'
+        if: false  # Temporarily disabled for testing
         working-directory: ios
         env:
           MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
@@ -112,7 +111,7 @@ jobs:
           bundle exec fastlane ios development
 
       - name: 🚀 Build Production (TestFlight)
-        if: github.ref == 'refs/heads/main' || github.event.inputs.build_type == 'production'
+        if: false  # Temporarily disabled for testing
         working-directory: ios
         env:
           MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
