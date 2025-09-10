@@ -86,7 +86,8 @@
           "calendarPermission": "LifeCompass needs calendar access to sync your time blocks with your device calendar.",
           "remindersPermission": "LifeCompass can sync reminders with your time blocks for better organization."
         }
-      ]
+      ],
+      "./plugins/withPrivacyManifestFix.js"
     ],
     "sdkVersion": "53.0.0",
     "jsEngine": "jsc",
